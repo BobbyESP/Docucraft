@@ -82,9 +82,9 @@ ksp {
 }
 
 dependencies {
-//    implementation(project(":color"))
-//    implementation(project(":app:utilities"))
-//    implementation(project(":app:ui"))
+    implementation(project(":color"))
+    implementation(project(":app:utilities"))
+    implementation(project(":app:ui"))
 //---------------Core----------------//
     implementation(libs.bundles.core) //⚠️ This contains core kotlinx libraries, lifecycle runtime and Activity Compose support
 
