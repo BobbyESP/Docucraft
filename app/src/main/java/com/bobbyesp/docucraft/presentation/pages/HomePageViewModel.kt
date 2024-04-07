@@ -15,12 +15,10 @@ import com.bobbyesp.utilities.Logging
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -32,7 +30,7 @@ class HomePageViewModel @Inject constructor(
     private val savedPDFsDao: SavedPDFsDao
 ) : ViewModel() {
     private val mutableSavedPdfs = MutableStateFlow<List<SavedPdf>>(emptyList())
-    val savedPdfs: StateFlow<List<SavedPdf>> = mutableSavedPdfs
+    val savedPdfs = mutableSavedPdfs.asStateFlow()
 
     init {
         viewModelScope.launch {

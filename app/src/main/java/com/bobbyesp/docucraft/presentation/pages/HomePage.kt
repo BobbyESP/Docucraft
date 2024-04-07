@@ -54,7 +54,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 @Composable
-fun HomePage(viewModel: HomePageViewModel) {
+fun HomePage(
+    viewModel: HomePageViewModel
+) {
     val activity = LocalContext.current as Activity
     val snackbarHost = LocalSnackbarHostState.current
     val scope = rememberCoroutineScope()
@@ -160,7 +162,10 @@ private fun HomePageImpl(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                NoPDFsCard(modifier = Modifier.padding(horizontal = 12.dp), onScanNewDocument = onScanNewDocument)
+                NoPDFsCard(
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    onScanNewDocument = onScanNewDocument
+                )
             }
         }
     }
