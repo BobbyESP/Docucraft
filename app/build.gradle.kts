@@ -11,15 +11,15 @@ plugins {
 apply(plugin = libs.plugins.google.gms.get().pluginId)
 apply(plugin = "com.google.firebase.crashlytics")
 
-//val commitSignature = providers.exec {
-//    commandLine("git", "rev-parse", "--short", "HEAD")
-//}.standardOutput.asText.get().substringBefore("\n")
+val commitSignature = providers.exec {
+    commandLine("git", "rev-parse", "--short", "HEAD")
+}.standardOutput.asText.get().substringBefore("\n")
 
 val currentVersion: Version = Version.Beta(
     versionMajor = 1,
     versionMinor = 0,
     versionPatch = 0,
-    versionBuild = 4
+    versionBuild = 0
 )
 
 
@@ -72,7 +72,7 @@ android {
     applicationVariants.all {
         outputs.all {
             (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName =
-                "Metadator-${defaultConfig.versionName}-${name}.apk"
+                "Docucraft-${defaultConfig.versionName}-${name}.apk"
         }
     }
 }
