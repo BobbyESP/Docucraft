@@ -1,20 +1,23 @@
 package com.bobbyesp.docucraft.data.local.db
 
+import android.net.Uri
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import com.bobbyesp.docucraft.data.local.db.daos.SavedPDFsDao
+import com.bobbyesp.docucraft.data.local.db.entity.SavedPdfEntity
 
 const val CURRENT_VERSION = 1
 
 @Database(
-    entities = [],
+    entities = [SavedPdfEntity::class],
     version = CURRENT_VERSION,
     exportSchema = true,
     autoMigrations = [
     ]
 )
-@TypeConverters()
+@TypeConverters(UriConverters::class)
 abstract class PdfsDatabase: RoomDatabase() {
     abstract fun savedPdfsDao(): SavedPDFsDao
 }
@@ -27,3 +30,15 @@ abstract class PdfsDatabase: RoomDatabase() {
 //        }
 //    }
 //}
+
+class UriConverters {
+    @TypeConverter
+    fun fromString(value: String?): Uri? {
+        return if (value == null) null else Uri.parse(value)
+    }
+
+    @TypeConverter
+    fun toString(uri: Uri?): String? {
+        return uri?.toString()
+    }
+}

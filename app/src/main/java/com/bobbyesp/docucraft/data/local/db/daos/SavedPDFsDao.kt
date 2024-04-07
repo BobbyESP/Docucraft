@@ -1,11 +1,13 @@
 package com.bobbyesp.docucraft.data.local.db.daos
 
 import androidx.paging.PagingSource
+import androidx.room.Dao
 import androidx.room.Query
 import com.bobbyesp.docucraft.data.local.db.BaseDao
 import com.bobbyesp.docucraft.data.local.db.entity.SavedPdfEntity
 import kotlinx.coroutines.flow.Flow
 
+@Dao
 interface SavedPDFsDao: BaseDao<SavedPdfEntity> {
     @Query("SELECT * FROM saved_pdfs ORDER BY savedTimestamp DESC")
     fun loadAllPDFsPaged(): PagingSource<Int, SavedPdfEntity>

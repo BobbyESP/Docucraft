@@ -13,7 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:enableOnBackInvokedCallback="true"
-        android:theme="@style/Theme.Docucraft"
+        android:theme="@style/Theme.Docucraft.Starting"
         tools:targetApi="34">
         <activity
             android:name=".MainActivity"

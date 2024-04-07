@@ -51,7 +51,7 @@ android {
 }
 
 dependencies {
-
+    api(platform(libs.compose.bom))
     implementation(libs.core.ktx)
     implementation(libs.bundles.compose)
     implementation(libs.material)

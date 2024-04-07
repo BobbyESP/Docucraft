@@ -4,8 +4,8 @@ import androidx.room.Room
 import com.bobbyesp.docucraft.App
 import com.bobbyesp.docucraft.data.local.db.PdfsDatabase
 import com.bobbyesp.docucraft.data.local.db.daos.SavedPDFsDao
-import com.google.android.datatransport.runtime.dagger.Module
-import com.google.android.datatransport.runtime.dagger.Provides
+import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 

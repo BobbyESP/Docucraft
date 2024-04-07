@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.parcelize)
-
 }
 
 apply(plugin = libs.plugins.google.gms.get().pluginId)
@@ -122,7 +121,7 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.room.paging)
-    annotationProcessor(libs.room.compiler)
+    ksp(libs.room.compiler)
 
 //-------------------Key-value Storage-------------------//
     implementation(libs.mmkv)

@@ -5,5 +5,8 @@
     <string name="scanner_open_failed">The scanner has failed to open!</string>
     <string name="open_pdf">Open PDF</string>
     <string name="pdf_saved_correctly">The PDF has been correctly saved!</string>
-    <string name="pdf_saving_error">Something has happened while saving the PDF!</string>
+    <string name="pdf_saving_error">Something bad has happened while saving the PDF!</string>
+    <string name="no_pdfs">No PDFs saved</string>
+    <string name="no_pdfs_scanned">You have no scanned PDFs</string>
+    <string name="no_pdfs_scanned_desc">Seems like you have no scanned PDFs yet, go for them by clicking here!</string>
 </resources>

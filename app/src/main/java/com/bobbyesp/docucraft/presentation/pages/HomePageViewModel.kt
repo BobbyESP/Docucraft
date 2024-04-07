@@ -6,13 +6,21 @@ import android.net.Uri
 import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.App.Companion.APP_FILE_PROVIDER
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.data.local.db.daos.SavedPDFsDao
 import com.bobbyesp.docucraft.domain.model.SavedPdf
 import com.bobbyesp.utilities.Logging
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -20,9 +28,29 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomePageViewModel @Inject constructor(
-    @ApplicationContext applicationContext: Context
+    @ApplicationContext private val applicationContext: Context,
+    private val savedPDFsDao: SavedPDFsDao
 ) : ViewModel() {
+    private val mutableSavedPdfs = MutableStateFlow<List<SavedPdf>>(emptyList())
+    val savedPdfs: StateFlow<List<SavedPdf>> = mutableSavedPdfs
 
+    init {
+        viewModelScope.launch {
+            try {
+                savedPDFsDao.getAllSavedPDFsAsFlow()
+                    .map { savedPdfEntities ->
+                        savedPdfEntities.map { savedPdfEntity ->
+                            savedPdfEntity.toSavedPdf()
+                        }
+                    }
+                    .collect { mappedSavedPdfs ->
+                        mutableSavedPdfs.value = mappedSavedPdfs
+                    }
+            } catch (e: Exception) {
+                Logging.e(e)
+            }
+        }
+    }
     fun savePdf(
         context: Context,
         pdf: GmsDocumentScanningResult.Pdf,
@@ -56,6 +84,10 @@ class HomePageViewModel @Inject constructor(
             Logging.e(e)
             SavedPdf.emptyPdf()
         }
+    }
+
+    suspend fun savePdfToDatabase(pdf: SavedPdf) {
+        savedPDFsDao.insert(pdf.toSavedPdfEntity())
     }
 
     fun openPdfInViewer(context: Context, pdfPath: Uri) {
