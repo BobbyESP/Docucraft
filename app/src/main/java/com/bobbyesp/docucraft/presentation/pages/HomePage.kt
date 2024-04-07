@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ContentPasteOff
@@ -23,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.domain.model.SavedPdf
 import com.bobbyesp.docucraft.presentation.common.LocalSnackbarHostState
+import com.bobbyesp.docucraft.presentation.components.card.SavedPdfFileCard
 import com.bobbyesp.docucraft.presentation.theme.DocucraftTheme
 import com.bobbyesp.utilities.Toast
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
@@ -52,6 +56,8 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import my.nanihadesuka.compose.LazyColumnScrollbar
+import my.nanihadesuka.compose.ScrollbarSelectionActionable
 
 @Composable
 fun HomePage(
@@ -83,7 +89,8 @@ fun HomePage(
                     scope.launch {
                         val snackbarResult = snackbarHost.showSnackbar(
                             message = activity.getString(R.string.pdf_saved_correctly),
-                            actionLabel = activity.getString(R.string.open_pdf)
+                            actionLabel = activity.getString(R.string.open_pdf),
+                            duration = SnackbarDuration.Short
                         )
 
                         when (snackbarResult) {
@@ -114,7 +121,10 @@ fun HomePage(
                     Toast.makeToast(activity, activity.getString(R.string.scanner_open_failed))
                 }
         },
-        savedPdfs = viewModel.savedPdfs
+        savedPdfs = viewModel.savedPdfs,
+        onOpenPdf = {
+            viewModel.openPdfInViewer(activity, it.path!!)
+        }
     )
 }
 
@@ -123,7 +133,9 @@ fun HomePage(
 private fun HomePageImpl(
     savedPdfs: StateFlow<List<SavedPdf>>? = null,
     onScanNewDocument: () -> Unit = {},
+    onOpenPdf: (SavedPdf) -> Unit = {}
 ) {
+    val lazyListState = rememberLazyListState()
     val pdfs = savedPdfs?.collectAsStateWithLifecycle()?.value
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -166,6 +178,30 @@ private fun HomePageImpl(
                     modifier = Modifier.padding(horizontal = 12.dp),
                     onScanNewDocument = onScanNewDocument
                 )
+            }
+        } else {
+            LazyColumnScrollbar(
+                listState = lazyListState,
+                thumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                thumbSelectedColor = MaterialTheme.colorScheme.primary,
+                selectionActionable = ScrollbarSelectionActionable.WhenVisible,
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .background(MaterialTheme.colorScheme.background),
+                    state = lazyListState,
+                ) {
+                    items(count = pdfs.size,
+                        key = { index -> pdfs[index].savedTimestamp },
+                        contentType = { index -> pdfs[index].savedTimestamp.toString() }) { index ->
+                        val pdf = pdfs[index]
+                        SavedPdfFileCard(pdf = pdf, onClick = { onOpenPdf(pdf) }) {
+
+                        }
+                    }
+                }
             }
         }
     }

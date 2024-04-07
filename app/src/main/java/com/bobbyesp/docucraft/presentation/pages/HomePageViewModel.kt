@@ -62,7 +62,7 @@ class HomePageViewModel @Inject constructor(
 
         val outputFile = File(outputDir, "$filename.pdf")
 
-        if(outputFile.exists()) {
+        if (outputFile.exists()) {
             Logging.i("Requested PDF file already exists!")
         }
 
@@ -72,12 +72,23 @@ class HomePageViewModel @Inject constructor(
                 pdfByteStream.copyTo(outputStream)
             }
 
+            val fileSizeBytes = outputFile.length()
+
             val documentPath = FileProvider.getUriForFile(
                 context,
                 APP_FILE_PROVIDER,
                 outputFile
             )
-            SavedPdf(fileName = filename, title = filename, path = documentPath, description = null, fileSizeBytes = null, pageCount = pdf.pageCount, savedTimestamp = System.currentTimeMillis())
+
+            SavedPdf(
+                fileName = filename,
+                title = filename,
+                path = documentPath,
+                description = null,
+                fileSizeBytes = fileSizeBytes,
+                pageCount = pdf.pageCount,
+                savedTimestamp = System.currentTimeMillis()
+            )
         } catch (e: Exception) {
             Logging.e(e)
             SavedPdf.emptyPdf()

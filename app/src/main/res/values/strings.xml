@@ -9,4 +9,7 @@
     <string name="no_pdfs">No PDFs saved</string>
     <string name="no_pdfs_scanned">You have no scanned PDFs</string>
     <string name="no_pdfs_scanned_desc">Seems like you have no scanned PDFs yet, go for them by clicking here!</string>
+    <string name="file_icon">An icon representing a file</string>
+    <string name="no_description">No description</string>
+    <string name="size">Size</string>
 </resources>
