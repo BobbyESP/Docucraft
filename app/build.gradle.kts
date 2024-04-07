@@ -119,18 +119,15 @@ dependencies {
 //-------------------Key-value Storage-------------------//
     implementation(libs.mmkv)
 
-//-------------------Markdown-------------------//
-//    implementation(libs.markdown)
-
 //-------------------Image Loading-------------------//
     implementation(libs.landscapist.coil)
     implementation(libs.coil)
     implementation(libs.compose.coil
     )
 //-------------------FIREBASE-------------------//
-//    "playstoreImplementation"(platform(libs.firebase.bom))
-//    "playstoreImplementation"(libs.firebase.analytics)
-//    "playstoreImplementation"(libs.firebase.crashlytics)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
 
 //-------------------Utilities-------------------//
     implementation(libs.kotlinx.collections.immutable)
@@ -140,7 +137,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.taglib)
     implementation(libs.scrollbar)
-//    implementation(project(":crashhandler"))
 
 //-------------------Testing-------------------//
 //Android testing libraries

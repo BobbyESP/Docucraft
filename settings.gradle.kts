@@ -23,4 +23,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Docucraft"
 include(":app")
- 
+include(":app:ui")
+include(":app:utilities")
+include(":color")
