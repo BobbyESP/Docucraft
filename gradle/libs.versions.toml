@@ -77,6 +77,7 @@ firebaseAuth = "22.3.1"
 gmsPlayServicesAuth = "21.0.0"
 googleServices = "4.4.1"
 firebaseBom = "32.8.0"
+mlkit-docscanner = "16.0.0-beta1"
 
 #Others
 taglib = "1.0.0-alpha07"
@@ -215,6 +216,7 @@ chrome-custom-tabs = { group = "androidx.browser", name = "browser", version.ref
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuth" }
 gms-playservices-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "gmsPlayServicesAuth" }
 google-services = { group = "com.google.gms", name = "google-services", version.ref = "googleServices" }
+gms-mlkit-docscanner = { group = "com.google.android.gms", name = "play-services-mlkit-document-scanner", version.ref = "mlkit-docscanner" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics-ktx" }
@@ -265,6 +267,6 @@ compose = ["compose-ui-util","compose-graphics", "compose-runtime", "compose-fou
 hilt = ["compose-hilt-navigation", "hilt-android"]
 hilt-kapt = ["hilt-compiler", "hilt-ext-compiler"]
 pagination = ["paging-compose", "paging-runtime"]
-googleServices = ["firebase-auth", "gms-playservices-auth", "google-services"]
+googleServices = ["firebase-auth", "gms-playservices-auth", "google-services", "gms-mlkit-docscanner"]
 coroutines = ["kotlinx-coroutines-core", "kotlinx-coroutines-android"]
 media3 = ["media3-exoplayer", "media3-ui", "media3-session", "media3-common"]

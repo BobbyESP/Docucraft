@@ -20,7 +20,9 @@ import com.bobbyesp.docucraft.presentation.Navigator
 import com.bobbyesp.docucraft.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.presentation.theme.DocucraftTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {

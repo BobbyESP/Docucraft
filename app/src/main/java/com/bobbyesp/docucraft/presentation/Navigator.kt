@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
@@ -21,6 +22,8 @@ import com.bobbyesp.docucraft.presentation.common.LocalDrawerState
 import com.bobbyesp.docucraft.presentation.common.LocalNavController
 import com.bobbyesp.docucraft.presentation.common.LocalSnackbarHostState
 import com.bobbyesp.docucraft.presentation.common.Route
+import com.bobbyesp.docucraft.presentation.pages.HomePage
+import com.bobbyesp.docucraft.presentation.pages.HomePageViewModel
 import com.bobbyesp.ui.motion.animatedComposable
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -74,7 +77,8 @@ fun Navigator() {
                     route = Route.DocucraftNavigator.route
                 ) {
                     animatedComposable(Route.DocucraftNavigator.Home.route) {
-
+                        val homeVm = hiltViewModel<HomePageViewModel>()
+                        HomePage(viewModel = homeVm)
                     }
                 }
             }

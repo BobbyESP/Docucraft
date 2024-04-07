@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Docucraft</string>
     <string name="home">Home</string>
+    <string name="scan_new_document">Scan new document</string>
+    <string name="scanner_open_failed">The scanner has failed to open!</string>
+    <string name="open_pdf">Open PDF</string>
+    <string name="pdf_saved_correctly">The PDF has been correctly saved!</string>
+    <string name="pdf_saving_error">Something has happened while saving the PDF!</string>
 </resources>

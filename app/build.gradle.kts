@@ -122,8 +122,7 @@ dependencies {
 //-------------------Image Loading-------------------//
     implementation(libs.landscapist.coil)
     implementation(libs.coil)
-    implementation(libs.compose.coil
-    )
+    implementation(libs.compose.coil)
 //-------------------FIREBASE-------------------//
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
@@ -137,6 +136,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.taglib)
     implementation(libs.scrollbar)
+    implementation(libs.gms.mlkit.docscanner)
 
 //-------------------Testing-------------------//
 //Android testing libraries
