@@ -1,3 +1,4 @@
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -6,6 +7,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.parcelize)
+
 }
 
 apply(plugin = libs.plugins.google.gms.get().pluginId)
@@ -21,7 +23,6 @@ val currentVersion: Version = Version.Beta(
     versionPatch = 0,
     versionBuild = 0
 )
-
 
 android {
     namespace = "com.bobbyesp.docucraft"
@@ -43,7 +44,14 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+
+            extensions.configure<CrashlyticsExtension> {
+                mappingFileUploadEnabled = true
+                nativeSymbolUploadEnabled = false
+            }
+
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

@@ -58,8 +58,8 @@ fun Navigator() {
                 Snackbar(
                     modifier = Modifier,
                     snackbarData = dataReceived,
-                    containerColor = MaterialTheme.colorScheme.inverseSurface,
-                    contentColor = MaterialTheme.colorScheme.inverseOnSurface,
+//                    containerColor = MaterialTheme.colorScheme.inverseSurface,
+//                    contentColor = MaterialTheme.colorScheme.inverseOnSurface,
                 )
             }
         }
