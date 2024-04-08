@@ -45,7 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.domain.model.SavedPdf
 import com.bobbyesp.docucraft.presentation.common.LocalSnackbarHostState
-import com.bobbyesp.docucraft.presentation.components.card.SavedPdfFileCard
+import com.bobbyesp.docucraft.presentation.components.card.SavedPdfFileListItem
 import com.bobbyesp.docucraft.presentation.theme.DocucraftTheme
 import com.bobbyesp.utilities.Toast
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
@@ -210,7 +210,7 @@ private fun HomePageImpl(
                             key = { index -> pdfs[index].savedTimestamp },
                             contentType = { index -> pdfs[index].savedTimestamp.toString() }) { index ->
                             val pdf = pdfs[index]
-                            SavedPdfFileCard(pdf = pdf, onClick = { onOpenPdf(pdf) }) {
+                            SavedPdfFileListItem(pdf = pdf, onClick = { onOpenPdf(pdf) }) {
 
                             }
                         }

@@ -24,6 +24,7 @@
     <string name="change_wifi_state">Change WiFi state</string>
     <string name="read_media_audio">Read audio files</string>
     <string name="manage_external_storage">Manage external storage</string>
+    <string name="at">at</string>
 
 
 </resources>

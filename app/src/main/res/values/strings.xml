@@ -13,4 +13,7 @@
     <string name="no_description">No description</string>
     <string name="size">Size</string>
     <string name="scan">Scan</string>
+    <string name="creation_date_icon">Creation date icon</string>
+    <string name="metadata_icon">Metadata icon</string>
+    <string name="created_at">Created at</string>
 </resources>

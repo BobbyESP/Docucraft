@@ -1,5 +1,6 @@
 package com.bobbyesp.utilities
 
+import android.content.Context
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
@@ -10,6 +11,7 @@ import kotlinx.datetime.toLocalDateTime
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.time.Duration.Companion.days
 
 object Time {
     fun getZuluTimeSnapshot(): String {
@@ -32,9 +34,9 @@ object Time {
 
     fun getTime(timestamp: Long): String {
         val localDateTime = timestamp.toLocalDateTime()
-        val hour = localDateTime.hour.toString()
-        val minute = localDateTime.minute.toString()
-        val second = localDateTime.second.toString()
+        val hour = String.format(Locale.getDefault(),"%02d", localDateTime.hour)
+        val minute = String.format(Locale.getDefault(),"%02d", localDateTime.minute)
+        val second = String.format(Locale.getDefault(),"%02d", localDateTime.second)
         return "$hour:$minute:$second"
     }
 
@@ -57,6 +59,16 @@ object Time {
         //AM or PM
         val amOrPm = if (localDateTime.hour < 12) "AM" else "PM"
         return "$date $time$amOrPm"
+    }
+
+    fun formatToHumanTime(context: Context, timestamp: Long): String {
+        val dateTime = Instant.fromEpochMilliseconds(timestamp).toLocalDateTime(TimeZone.currentSystemDefault())
+        val dayOfWeek = dateTime.dayOfWeek
+        val formattedTime = dateTime.toInstant(TimeZone.currentSystemDefault())
+
+        val timeString = context.getString(R.string.at)
+
+        return "$dayOfWeek $timeString $formattedTime"
     }
 
     fun isSameDay(timestamp1: Long, timestamp2: Long): Boolean {

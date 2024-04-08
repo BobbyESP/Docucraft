@@ -24,6 +24,14 @@ data class SavedPdf(
         description = description
     )
     companion object {
-        fun emptyPdf(): SavedPdf = SavedPdf("", null, 0, null, 0, null, null)
+        fun emptyPdf(
+            fileName: String = "",
+            path: Uri? = null,
+            savedTimestamp: Long = 0,
+            fileSizeBytes: Long? = null,
+            pageCount: Int = 0,
+            title: String? = null,
+            description: String? = null
+        ): SavedPdf = SavedPdf(fileName, path, savedTimestamp, fileSizeBytes, pageCount, title, description)
     }
 }
