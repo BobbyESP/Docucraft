@@ -1,6 +1,9 @@
 package com.bobbyesp.docucraft.presentation.common
 
 import android.os.Build
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.SnackbarHostState
@@ -46,8 +49,10 @@ val LocalWindowWidthState =
 val LocalSnackbarHostState = compositionLocalOf<SnackbarHostState> { error("No snackbar host state provided") }
 val LocalDrawerState =
     compositionLocalOf<DrawerState> { error("No Drawer State has been provided") }
+@OptIn(ExperimentalSharedTransitionApi::class)
+val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope> { error("No shared transition scope provided") }
 
-@OptIn(ExperimentalMaterialNavigationApi::class)
+@OptIn(ExperimentalMaterialNavigationApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun AppLocalSettingsProvider(
     windowWidthSize: WindowWidthSizeClass,
@@ -79,25 +84,28 @@ fun AppLocalSettingsProvider(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
     appSettingsState.run {
-        CompositionLocalProvider(
-            LocalDarkTheme provides darkTheme, //Tells the app if it should use dark theme or not
-            LocalSeedColor provides seedColor, //Tells the app what color to use as seed for the palette
-            LocalDynamicColorSwitch provides isDynamicColorEnabled, //Tells the app if it should use dynamic colors or not (Android 12+ feature)
-            LocalIndexOfPaletteStyle provides paletteStyleIndex, //Tells the app what palette style to use depending on the index
-            LocalNavController provides navController,
-            LocalWindowWidthState provides windowWidthSize,
-            LocalTonalPalettes provides if (isDynamicColorEnabled && Build.VERSION.SDK_INT >= 31) dynamicDarkColorScheme(
-                LocalContext.current
-            ).toTonalPalettes()
-            else Color(seedColor).toTonalPalettes(
-                paletteStyles.getOrElse(paletteStyleIndex) { PaletteStyle.TonalSpot }
-            ), // Tells the app what is the current palette to use
-            LocalOrientation provides config.orientation,
-            LocalSnackbarHostState provides snackbarHostState,
-            LocalCoilImageLoader provides imageLoader,
-            LocalDrawerState provides drawerState
-        ) {
-            content() //The content of the app
+        SharedTransitionLayout {
+            CompositionLocalProvider(
+                LocalDarkTheme provides darkTheme, //Tells the app if it should use dark theme or not
+                LocalSeedColor provides seedColor, //Tells the app what color to use as seed for the palette
+                LocalDynamicColorSwitch provides isDynamicColorEnabled, //Tells the app if it should use dynamic colors or not (Android 12+ feature)
+                LocalIndexOfPaletteStyle provides paletteStyleIndex, //Tells the app what palette style to use depending on the index
+                LocalNavController provides navController,
+                LocalWindowWidthState provides windowWidthSize,
+                LocalTonalPalettes provides if (isDynamicColorEnabled && Build.VERSION.SDK_INT >= 31) dynamicDarkColorScheme(
+                    LocalContext.current
+                ).toTonalPalettes()
+                else Color(seedColor).toTonalPalettes(
+                    paletteStyles.getOrElse(paletteStyleIndex) { PaletteStyle.TonalSpot }
+                ), // Tells the app what is the current palette to use
+                LocalOrientation provides config.orientation,
+                LocalSnackbarHostState provides snackbarHostState,
+                LocalCoilImageLoader provides imageLoader,
+                LocalDrawerState provides drawerState,
+                LocalSharedTransitionScope provides this
+            ) {
+                content() //The content of the app
+            }
         }
     }
 }
