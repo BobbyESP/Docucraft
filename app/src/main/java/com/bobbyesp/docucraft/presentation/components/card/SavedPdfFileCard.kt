@@ -117,7 +117,7 @@ fun SavedPdfFileCard(
 
             }
             HorizontalDivider()
-            LazyVerticalGrid(columns = GridCells.Adaptive(minSize = 120.dp)) {
+            LazyVerticalGrid(modifier = Modifier.fillMaxWidth(), columns = GridCells.Adaptive(minSize = 120.dp)) {
                 //TODO: Add items
             }
         }
