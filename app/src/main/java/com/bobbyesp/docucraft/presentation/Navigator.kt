@@ -3,6 +3,7 @@ package com.bobbyesp.docucraft.presentation
 import android.annotation.SuppressLint
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -28,7 +29,6 @@ import com.bobbyesp.ui.motion.animatedComposable
 @Composable
 fun Navigator() {
     val navController = LocalNavController.current
-    val drawerState = LocalDrawerState.current
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRootRoute = rememberSaveable(navBackStackEntry, key = "currentRootRoute") {
@@ -44,10 +44,6 @@ fun Navigator() {
 
     val snackbarHostState = LocalSnackbarHostState.current
 
-    val showSnackbarMessage: suspend (String) -> Unit = { message ->
-        snackbarHostState.showSnackbar(message)
-    }
-
     Scaffold(
         snackbarHost = {
             SnackbarHost(
@@ -56,8 +52,8 @@ fun Navigator() {
                 Snackbar(
                     modifier = Modifier,
                     snackbarData = dataReceived,
-//                    containerColor = MaterialTheme.colorScheme.inverseSurface,
-//                    contentColor = MaterialTheme.colorScheme.inverseOnSurface,
+                    containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                 )
             }
         }
