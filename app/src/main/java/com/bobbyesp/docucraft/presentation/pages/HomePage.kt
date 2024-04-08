@@ -20,7 +20,7 @@ import androidx.compose.material.icons.rounded.ContentPasteOff
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -140,30 +140,38 @@ private fun HomePageImpl(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            CenterAlignedTopAppBar(title = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.app_name).uppercase(),
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = FontFamily.Monospace,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            letterSpacing = 4.sp,
-                        ),
-                    )
-                }
-            })
+            CenterAlignedTopAppBar(
+                modifier = Modifier,
+                title = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.app_name).uppercase(),
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = FontFamily.Monospace,
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                letterSpacing = 4.sp,
+                            ),
+                        )
+                    }
+                })
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onScanNewDocument) {
-                Icon(
-                    imageVector = Icons.Rounded.DocumentScanner,
-                    contentDescription = stringResource(
-                        id = R.string.scan_new_document
+            ExtendedFloatingActionButton(
+                text = {
+                    Text(text = stringResource(id = R.string.scan))
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Rounded.DocumentScanner,
+                        contentDescription = stringResource(
+                            id = R.string.scan_new_document
+                        )
                     )
-                )
-            }
+                },
+                onClick = onScanNewDocument
+            )
         }
     ) { paddingValues ->
         if (pdfs.isNullOrEmpty()) {
@@ -180,25 +188,31 @@ private fun HomePageImpl(
                 )
             }
         } else {
-            LazyColumnScrollbar(
-                listState = lazyListState,
-                thumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                thumbSelectedColor = MaterialTheme.colorScheme.primary,
-                selectionActionable = ScrollbarSelectionActionable.WhenVisible,
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
             ) {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .background(MaterialTheme.colorScheme.background),
-                    state = lazyListState,
+                LazyColumnScrollbar(
+                    listState = lazyListState,
+                    thumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    thumbSelectedColor = MaterialTheme.colorScheme.primary,
+                    selectionActionable = ScrollbarSelectionActionable.WhenVisible,
                 ) {
-                    items(count = pdfs.size,
-                        key = { index -> pdfs[index].savedTimestamp },
-                        contentType = { index -> pdfs[index].savedTimestamp.toString() }) { index ->
-                        val pdf = pdfs[index]
-                        SavedPdfFileCard(pdf = pdf, onClick = { onOpenPdf(pdf) }) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background),
+                        state = lazyListState,
+                    ) {
+                        items(
+                            count = pdfs.size,
+                            key = { index -> pdfs[index].savedTimestamp },
+                            contentType = { index -> pdfs[index].savedTimestamp.toString() }) { index ->
+                            val pdf = pdfs[index]
+                            SavedPdfFileCard(pdf = pdf, onClick = { onOpenPdf(pdf) }) {
 
+                            }
                         }
                     }
                 }
