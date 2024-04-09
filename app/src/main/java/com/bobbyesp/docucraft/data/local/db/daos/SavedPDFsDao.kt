@@ -26,4 +26,6 @@ interface SavedPDFsDao: BaseDao<SavedPdfEntity> {
 
     @Query("DELETE FROM saved_pdfs WHERE id = :pdfId")
     fun deletePDFById(pdfId: Int)
+    @Query("DELETE FROM saved_pdfs WHERE savedTimestamp = :timestamp")
+    fun deletePDFByTimestamp(timestamp: Long)
 }

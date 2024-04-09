@@ -124,7 +124,15 @@ class HomePageViewModel @Inject constructor(
         )
     }
 
+    fun deletePdf(savedPdf: SavedPdf) {
+
+    }
+
     suspend fun savePdfToDatabase(pdf: SavedPdf) {
         savedPDFsDao.insert(pdf.toSavedPdfEntity())
+    }
+
+    fun deletePdfFromDatabase(pdf: SavedPdf) {
+        savedPDFsDao.deletePDFByTimestamp(pdf.savedTimestamp)
     }
 }
