@@ -44,7 +44,10 @@ import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.domain.model.SavedPdf
 import com.bobbyesp.docucraft.presentation.theme.DocucraftTheme
-import com.bobbyesp.ui.motion.MotionConstants
+import com.bobbyesp.ui.motion.MotionConstants.DURATION_ENTER
+import com.bobbyesp.ui.motion.MotionConstants.DURATION_EXIT_SHORT
+import com.bobbyesp.ui.motion.MotionConstants.EmphasizedAccelerateEasing
+import com.bobbyesp.ui.motion.MotionConstants.EmphasizedDecelerateEasing
 import com.bobbyesp.ui.motion.MotionConstants.boundsTransformation
 import com.bobbyesp.utilities.parseFileSize
 
@@ -88,6 +91,7 @@ fun SavedPdfFileListItem(
                     .padding(horizontal = 8.dp)
             ) {
                 Text(
+                    modifier = Modifier,
                     text = pdf.title ?: pdf.fileName,
                     fontWeight = FontWeight.SemiBold,
                     style = MaterialTheme.typography.bodyLarge,
@@ -119,6 +123,59 @@ fun SavedPdfFileListItem(
                     )
                 }
             }
+        }
+    }
+}
+
+context(SharedTransitionScope)
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+fun SavedPdfListItemTransitionsWrapper(
+    modifier: Modifier = Modifier,
+    pdf: SavedPdf,
+    onClick: () -> Unit,
+    onLongPressed: () -> Unit,
+    visible: Boolean
+) {
+    var height by remember { mutableStateOf<Dp?>(null) }
+    val density = LocalDensity.current
+
+    Box(
+        modifier = modifier
+            .onSizeChanged {
+                height = density.run { it.height.toDp() }
+            }
+    ) {
+        // Since the item disappears after the animation has finished, it would disappear from the list. We want to remember how high it was, to reserve teh space
+        // Not sure how failsafe this is
+        height?.let {
+            Spacer(modifier = Modifier.height(it))
+        }
+
+        AnimatedVisibility(
+            visible = visible
+        ) {
+            SavedPdfFileListItem(
+                modifier = Modifier.sharedBounds(
+                    boundsTransform = boundsTransformation,
+                    enter = fadeIn(
+                        tween(
+                            durationMillis = DURATION_ENTER,
+                            delayMillis = DURATION_EXIT_SHORT,
+                            easing = EmphasizedDecelerateEasing
+                        )
+                    ),
+                    exit = fadeOut(
+                        tween(
+                            durationMillis = DURATION_EXIT_SHORT,
+                            easing = EmphasizedAccelerateEasing
+                        )
+                    ),
+                    sharedContentState = rememberSharedContentState(key = "${pdf.savedTimestamp}_bounds"),
+                    animatedVisibilityScope = this@AnimatedVisibility,
+                    placeHolderSize = SharedTransitionScope.PlaceHolderSize.animatedSize,
+                ),
+                pdf = pdf, onClick = onClick, onLongPressed = onLongPressed)
         }
     }
 }

@@ -95,10 +95,6 @@ class HomePageViewModel @Inject constructor(
         }
     }
 
-    suspend fun savePdfToDatabase(pdf: SavedPdf) {
-        savedPDFsDao.insert(pdf.toSavedPdfEntity())
-    }
-
     fun openPdfInViewer(context: Context, pdfPath: Uri) {
         val viewIntent = Intent(Intent.ACTION_VIEW)
         viewIntent.setDataAndType(pdfPath, "application/pdf")
@@ -111,5 +107,24 @@ class HomePageViewModel @Inject constructor(
             ),
             null
         )
+    }
+
+    fun sharePdf(context: Context, pdfPath: Uri) {
+        val shareIntent = Intent(Intent.ACTION_SEND)
+        shareIntent.putExtra(Intent.EXTRA_STREAM, pdfPath)
+        shareIntent.setDataAndType(pdfPath, "application/pdf")
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        startActivity(
+            context,
+            Intent.createChooser(
+                shareIntent,
+                context.getString(R.string.open_pdf)
+            ),
+            null
+        )
+    }
+
+    suspend fun savePdfToDatabase(pdf: SavedPdf) {
+        savedPDFsDao.insert(pdf.toSavedPdfEntity())
     }
 }

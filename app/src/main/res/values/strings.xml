@@ -4,6 +4,7 @@
     <string name="scan_new_document">Scan new document</string>
     <string name="scanner_open_failed">The scanner has failed to open!</string>
     <string name="open_pdf">Open PDF</string>
+    <string name="share_pdf">Share PDF</string>
     <string name="pdf_saved_correctly">The PDF has been correctly saved!</string>
     <string name="pdf_saving_error">Something bad has happened while saving the PDF!</string>
     <string name="no_pdfs">No PDFs saved</string>
@@ -18,4 +19,6 @@
     <string name="created_at">Created at</string>
     <string name="share">Share</string>
     <string name="open_file">Open file</string>
+    <string name="pages">pages</string>
+    <string name="error_sharing_pdf">An error ocurred sharing the PDF</string>
 </resources>

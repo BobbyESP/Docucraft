@@ -6,7 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,7 +31,11 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,7 +51,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.domain.model.SavedPdf
 import com.bobbyesp.docucraft.presentation.common.LocalSnackbarHostState
-import com.bobbyesp.docucraft.presentation.components.card.SavedPdfFileListItem
+import com.bobbyesp.docucraft.presentation.components.card.SavedPdfCardTransitionsWrapper
+import com.bobbyesp.docucraft.presentation.components.card.SavedPdfListItemTransitionsWrapper
 import com.bobbyesp.docucraft.presentation.theme.DocucraftTheme
 import com.bobbyesp.utilities.Toast
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
@@ -126,6 +131,15 @@ fun HomePage(
         savedPdfs = viewModel.savedPdfs,
         onOpenPdf = {
             viewModel.openPdfInViewer(activity, it.path!!)
+        },
+        onSharePdf = { pdf ->
+            pdf.path?.let {
+                viewModel.sharePdf(activity, it)
+            }
+
+            if(pdf.path == null) scope.launch {
+                snackbarHost.showSnackbar(activity.getString(R.string.error_sharing_pdf))
+            }
         }
     )
 }
@@ -135,7 +149,8 @@ fun HomePage(
 private fun HomePageImpl(
     savedPdfs: StateFlow<List<SavedPdf>>? = null,
     onScanNewDocument: () -> Unit = {},
-    onOpenPdf: (SavedPdf) -> Unit = {}
+    onOpenPdf: (SavedPdf) -> Unit = {},
+    onSharePdf: (SavedPdf) -> Unit = {}
 ) {
     val lazyListState = rememberLazyListState()
     val pdfs = savedPdfs?.collectAsStateWithLifecycle()?.value
@@ -190,18 +205,21 @@ private fun HomePageImpl(
                 )
             }
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                LazyColumnScrollbar(
-                    listState = lazyListState,
-                    thumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    thumbSelectedColor = MaterialTheme.colorScheme.primary,
-                    selectionActionable = ScrollbarSelectionActionable.WhenVisible,
+            SharedTransitionLayout {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
                 ) {
-                    SharedTransitionScope {
+                    LazyColumnScrollbar(
+                        listState = lazyListState,
+                        thumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        thumbSelectedColor = MaterialTheme.colorScheme.primary,
+                        selectionActionable = ScrollbarSelectionActionable.WhenVisible,
+                    ) {
+                        var cardPdf by remember {
+                            mutableStateOf<SavedPdf?>(null)
+                        }
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -213,10 +231,23 @@ private fun HomePageImpl(
                                 key = { index -> pdfs[index].savedTimestamp },
                                 contentType = { index -> pdfs[index].savedTimestamp.toString() }) { index ->
                                 val pdf = pdfs[index]
-                                SavedPdfFileListItem(pdf = pdf, onClick = { onOpenPdf(pdf) }, onLongPressed = {
-
-                                })
+                                SavedPdfListItemTransitionsWrapper(
+                                    pdf = pdf,
+                                    onClick = { onOpenPdf(pdf) },
+                                    onLongPressed = {
+                                        cardPdf = pdf
+                                    },
+                                    visible = cardPdf != pdf
+                                )
                             }
+                        }
+                        SavedPdfCardTransitionsWrapper(
+                            modifier = Modifier,
+                            pdf = cardPdf,
+                            onShareRequest = onSharePdf,
+                            onOpenPdf = { cardPdf?.let { pdf -> onOpenPdf(pdf) } }
+                        ) {
+                            cardPdf = null
                         }
                     }
                 }
