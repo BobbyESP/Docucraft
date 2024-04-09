@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Docucraft</string>
+    <string name="home">Inicio</string>
+    <string name="scan_new_document">Escanear nuevo documento</string>
+    <string name="scanner_open_failed">El escáner ha fallado al abrirse!</string>
+    <string name="open_pdf">Abrir PDF</string>
+    <string name="share_pdf">Compartir PDF</string>
+    <string name="pdf_saved_correctly">El PDF ha sido guardado correctamente!</string>
+    <string name="pdf_saving_error">Algo malo ha ocurrido al intentar guardar el PDF...</string>
+    <string name="no_pdfs">No hay PDFs guardados!</string>
+    <string name="no_pdfs_scanned">No tienes ningún PDF guardado</string>
+    <string name="no_pdfs_scanned_desc">Parece que no tienes ningún PDF guardado aún, vé a por ello hacienco click aquí!</string>
+    <string name="file_icon">Un icono representando un archivo</string>
+    <string name="no_description">Sin descripción</string>
+    <string name="size">Tamaño</string>
+    <string name="scan">Escanear</string>
+    <string name="creation_date_icon">Icono de la fecha de creación</string>
+    <string name="metadata_icon">Icono de metadatos</string>
+    <string name="created_at">Creado el</string>
+    <string name="share">Compartir</string>
+    <string name="open_file">Abrir archivo</string>
+    <string name="pages">páginas</string>
+    <string name="error_sharing_pdf">Ha ocurrido un error al intentar compartir el PDF</string>
+</resources>
