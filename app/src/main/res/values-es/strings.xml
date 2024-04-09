@@ -22,4 +22,11 @@
     <string name="open_file">Abrir archivo</string>
     <string name="pages">páginas</string>
     <string name="error_sharing_pdf">Ha ocurrido un error al intentar compartir el PDF</string>
+    <string name="delete">Eliminar</string>
+    <string name="warning">Aviso</string>
+    <string name="delete_file_title">Eliminar este archivo?</string>
+    <string name="delete_file_desc">Estás a punto de eliminar este archivo PARA SIEMPRE. La aplicación no guardará una copia de seguridad, así que asegúrate de que esta sea la acción que realmente quieres realizar.</string>
+    <string name="return_str">Volver</string>
+    <string name="file_deleted_successfully">El archivo ha sido eliminado correctamente</string>
+    <string name="error_deleting_file">Ha ocurrido un error al intentar eliminar el archivo!</string>
 </resources>

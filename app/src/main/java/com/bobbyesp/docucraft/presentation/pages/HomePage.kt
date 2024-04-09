@@ -20,6 +20,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ContentPasteOff
 import androidx.compose.material.icons.rounded.DocumentScanner
+import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -30,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +53,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.domain.model.SavedPdf
 import com.bobbyesp.docucraft.presentation.common.LocalSnackbarHostState
@@ -63,6 +69,7 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.ScrollbarSelectionActionable
 
@@ -137,8 +144,15 @@ fun HomePage(
                 viewModel.sharePdf(activity, it)
             }
 
-            if(pdf.path == null) scope.launch {
+            if (pdf.path == null) scope.launch {
                 snackbarHost.showSnackbar(activity.getString(R.string.error_sharing_pdf))
+            }
+        },
+        onDeletePdf = {
+            viewModel.viewModelScope.launch {
+                val successfullyDeleted = viewModel.deletePdf(activity, it)
+
+                snackbarHost.showSnackbar(if(successfullyDeleted) activity.getString(R.string.file_deleted_successfully) else activity.getString(R.string.error_deleting_file))
             }
         }
     )
@@ -150,10 +164,20 @@ private fun HomePageImpl(
     savedPdfs: StateFlow<List<SavedPdf>>? = null,
     onScanNewDocument: () -> Unit = {},
     onOpenPdf: (SavedPdf) -> Unit = {},
-    onSharePdf: (SavedPdf) -> Unit = {}
+    onSharePdf: (SavedPdf) -> Unit = {},
+    onDeletePdf: (SavedPdf) -> Unit = {}
 ) {
     val lazyListState = rememberLazyListState()
     val pdfs = savedPdfs?.collectAsStateWithLifecycle()?.value
+
+    var showDeleteDialog by remember {
+        mutableStateOf<Boolean>(false)
+    }
+
+    var pdfItemToRemove by remember {
+        mutableStateOf<SavedPdf?>(null)
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -245,7 +269,11 @@ private fun HomePageImpl(
                             modifier = Modifier,
                             pdf = cardPdf,
                             onShareRequest = onSharePdf,
-                            onOpenPdf = { cardPdf?.let { pdf -> onOpenPdf(pdf) } }
+                            onOpenPdf = { cardPdf?.let { pdf -> onOpenPdf(pdf) } },
+                            onDeleteRequest = {
+                                pdfItemToRemove = it
+                                showDeleteDialog = !showDeleteDialog
+                            }
                         ) {
                             cardPdf = null
                         }
@@ -254,7 +282,15 @@ private fun HomePageImpl(
             }
         }
     }
+
+    if (showDeleteDialog && pdfItemToRemove != null) {
+        DeleteFileDialog(pdf = pdfItemToRemove!!, onDeletePdf = { onDeletePdf(pdfItemToRemove!!) }, onReturnToPage = {
+            showDeleteDialog = false
+            pdfItemToRemove = null
+        })
+    }
 }
+
 
 @Composable
 fun NoPDFsCard(modifier: Modifier = Modifier, onScanNewDocument: () -> Unit) {
@@ -299,6 +335,56 @@ fun NoPDFsCard(modifier: Modifier = Modifier, onScanNewDocument: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun DeleteFileDialog(
+    pdf: SavedPdf,
+    onDeletePdf: (SavedPdf) -> Unit,
+    onReturnToPage: () -> Unit = {}
+) {
+    AlertDialog(
+        onDismissRequest = onReturnToPage,
+        icon = {
+            Icon(
+                imageVector = Icons.Rounded.Warning,
+                contentDescription = stringResource(id = R.string.warning)
+            )
+        },
+        title = {
+            Text(text = stringResource(id = R.string.delete_file_title))
+        },
+        text = {
+            Text(
+                text = stringResource(id = R.string.delete_file_desc),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onReturnToPage,
+            ) {
+                Text(text = stringResource(id = R.string.return_str))
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onDeletePdf(pdf)
+                    onReturnToPage()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text(text = stringResource(id = R.string.delete))
+            }
+        }
+    )
+}
+
+@Preview
+@Composable
+private fun DeleteFileDialogPrev() {
+    DeleteFileDialog(pdf = SavedPdf.emptyPdf(), onDeletePdf = { SavedPdf.emptyPdf() }) {}
 }
 
 @Preview

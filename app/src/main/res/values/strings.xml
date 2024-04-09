@@ -20,5 +20,12 @@
     <string name="share">Share</string>
     <string name="open_file">Open file</string>
     <string name="pages">pages</string>
-    <string name="error_sharing_pdf">An error ocurred sharing the PDF</string>
+    <string name="error_sharing_pdf">An error occurred sharing the PDF</string>
+    <string name="delete">Delete</string>
+    <string name="warning">Warning</string>
+    <string name="delete_file_title">Delete this file?</string>
+    <string name="delete_file_desc">You are about to remove this file FOREVER. The app won\'t save a backup, so please make sure that this is the action you really want to perform.</string>
+    <string name="return_str">Return</string>
+    <string name="file_deleted_successfully">The file has been successfully deleted.</string>
+    <string name="error_deleting_file">An error has occurred while deleting the file!</string>
 </resources>

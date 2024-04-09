@@ -15,10 +15,12 @@ import com.bobbyesp.utilities.Logging
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -118,21 +120,39 @@ class HomePageViewModel @Inject constructor(
             context,
             Intent.createChooser(
                 shareIntent,
-                context.getString(R.string.open_pdf)
+                context.getString(R.string.share_pdf)
             ),
             null
         )
     }
 
-    fun deletePdf(savedPdf: SavedPdf) {
-
+    suspend fun deletePdf(context: Context, savedPdf: SavedPdf): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                savedPdf.path?.let {
+                    // Assuming savedPdf.path is the URI of the file in the content provider
+                    val rowsDeleted = context.contentResolver.delete(it, null, null)
+                    // Return true if at least one row was deleted
+                    val deleted = rowsDeleted > 0
+                    if(deleted)  {
+                        viewModelScope.launch(Dispatchers.IO) {
+                            deletePdfFromDatabase(savedPdf)
+                        }
+                    }
+                    deleted
+                } ?: false // Return false if savedPdf.path is null
+            } catch(e: Exception) {
+                e.printStackTrace()
+                false
+            }
+        }
     }
 
     suspend fun savePdfToDatabase(pdf: SavedPdf) {
         savedPDFsDao.insert(pdf.toSavedPdfEntity())
     }
 
-    fun deletePdfFromDatabase(pdf: SavedPdf) {
+    private fun deletePdfFromDatabase(pdf: SavedPdf) {
         savedPDFsDao.deletePDFByTimestamp(pdf.savedTimestamp)
     }
 }

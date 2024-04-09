@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
 import androidx.compose.material.icons.rounded.AccountTree
 import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.FileOpen
 import androidx.compose.material.icons.rounded.Place
 import androidx.compose.material.icons.rounded.Share
@@ -63,8 +64,9 @@ fun SavedPdfFileCard(
     modifier: Modifier = Modifier,
     contentModifier: Modifier = Modifier,
     pdf: SavedPdf,
+    onOpenPdf: (SavedPdf) -> Unit = {},
     onShareRequest: (SavedPdf) -> Unit = {},
-    onOpenPdf: (SavedPdf) -> Unit = {}
+    onDeleteRequest: (SavedPdf) -> Unit = {}
 ) {
     val fileSize: String? by remember {
         mutableStateOf(pdf.fileSizeBytes?.let { parseFileSize(it) })
@@ -155,7 +157,7 @@ fun SavedPdfFileCard(
             }
             HorizontalDivider()
             LazyVerticalGrid(
-                modifier = Modifier.fillMaxWidth(), columns = GridCells.Adaptive(minSize = 120.dp)
+                modifier = Modifier.fillMaxWidth(), columns = GridCells.Adaptive(minSize = 100.dp)
             ) {
                 GridMenuItem(icon = { Icons.Rounded.FileOpen },
                     title = { stringResource(id = R.string.open_file) }) {
@@ -164,6 +166,10 @@ fun SavedPdfFileCard(
                 GridMenuItem(icon = { Icons.Rounded.Share },
                     title = { stringResource(id = R.string.share) }) {
                     onShareRequest(pdf)
+                }
+                GridMenuItem(icon = { Icons.Rounded.Delete },
+                    title = { stringResource(id = R.string.delete) }) {
+                    onDeleteRequest(pdf)
                 }
             }
         }
@@ -176,8 +182,9 @@ context(SharedTransitionScope)
 fun SavedPdfCardTransitionsWrapper(
     modifier: Modifier = Modifier,
     pdf: SavedPdf?,
+    onOpenPdf: (SavedPdf) -> Unit = {},
     onShareRequest: (SavedPdf) -> Unit = {},
-    onOpenPdf: (SavedPdf) -> Unit,
+    onDeleteRequest: (SavedPdf) -> Unit = {},
     onDismissRequest: () -> Unit
 ) {
     AnimatedContent(
@@ -219,7 +226,8 @@ fun SavedPdfCardTransitionsWrapper(
                 contentModifier = modifier,
                 pdf = savedPdf,
                 onShareRequest = onShareRequest,
-                onOpenPdf = onOpenPdf
+                onOpenPdf = onOpenPdf,
+                onDeleteRequest = onDeleteRequest
             )
         }
     }
