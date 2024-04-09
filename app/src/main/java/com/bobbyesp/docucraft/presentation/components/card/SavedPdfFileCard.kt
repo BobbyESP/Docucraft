@@ -155,7 +155,7 @@ fun SavedPdfFileCard(
             }
             HorizontalDivider()
             LazyVerticalGrid(
-                modifier = Modifier.fillMaxWidth(), columns = GridCells.Adaptive(minSize = 80.dp)
+                modifier = Modifier.fillMaxWidth(), columns = GridCells.Adaptive(minSize = 120.dp)
             ) {
                 GridMenuItem(icon = { Icons.Rounded.FileOpen },
                     title = { stringResource(id = R.string.open_file) }) {
@@ -188,7 +188,6 @@ fun SavedPdfCardTransitionsWrapper(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.20f))
                 .padding(16.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },

@@ -146,8 +146,6 @@ fun SavedPdfListItemTransitionsWrapper(
                 height = density.run { it.height.toDp() }
             }
     ) {
-        // Since the item disappears after the animation has finished, it would disappear from the list. We want to remember how high it was, to reserve teh space
-        // Not sure how failsafe this is
         height?.let {
             Spacer(modifier = Modifier.height(it))
         }
