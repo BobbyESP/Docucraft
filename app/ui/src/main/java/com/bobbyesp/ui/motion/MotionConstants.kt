@@ -18,7 +18,10 @@ package com.bobbyesp.ui.motion
 
 
 import android.view.animation.PathInterpolator
+import androidx.compose.animation.BoundsTransform
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -49,6 +52,11 @@ object MotionConstants {
         Easing { fraction -> emphasizedDecelerate.getInterpolation(fraction) }
     val EmphasizedAccelerateEasing =
         Easing { fraction -> emphasizedAccelerate.getInterpolation(fraction) }
+
+    @OptIn(ExperimentalSharedTransitionApi::class)
+    val boundsTransformation = BoundsTransform { _, _ ->
+        tween(durationMillis = DURATION, easing = EmphasizedEasing)
+    }
 
     const val DefaultMotionDuration: Int = 300
     const val DefaultFadeInDuration: Int = 150

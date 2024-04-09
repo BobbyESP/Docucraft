@@ -5,6 +5,8 @@ import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -128,7 +130,7 @@ fun HomePage(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 private fun HomePageImpl(
     savedPdfs: StateFlow<List<SavedPdf>>? = null,
@@ -199,19 +201,21 @@ private fun HomePageImpl(
                     thumbSelectedColor = MaterialTheme.colorScheme.primary,
                     selectionActionable = ScrollbarSelectionActionable.WhenVisible,
                 ) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
-                        state = lazyListState,
-                    ) {
-                        items(
-                            count = pdfs.size,
-                            key = { index -> pdfs[index].savedTimestamp },
-                            contentType = { index -> pdfs[index].savedTimestamp.toString() }) { index ->
-                            val pdf = pdfs[index]
-                            SavedPdfFileListItem(pdf = pdf, onClick = { onOpenPdf(pdf) }) {
+                    SharedTransitionScope {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.background),
+                            state = lazyListState,
+                        ) {
+                            items(
+                                count = pdfs.size,
+                                key = { index -> pdfs[index].savedTimestamp },
+                                contentType = { index -> pdfs[index].savedTimestamp.toString() }) { index ->
+                                val pdf = pdfs[index]
+                                SavedPdfFileListItem(pdf = pdf, onClick = { onOpenPdf(pdf) }, onLongPressed = {
 
+                                })
                             }
                         }
                     }

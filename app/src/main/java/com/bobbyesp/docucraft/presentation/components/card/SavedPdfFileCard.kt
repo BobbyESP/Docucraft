@@ -1,9 +1,8 @@
 package com.bobbyesp.docucraft.presentation.components.card
 
 import android.content.res.Configuration
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +14,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
 import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.InsertDriveFile
+import androidx.compose.material.icons.rounded.FileOpen
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,16 +37,17 @@ import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.domain.model.SavedPdf
 import com.bobbyesp.docucraft.presentation.theme.DocucraftTheme
+import com.bobbyesp.ui.components.layouts.lazygrid.GridMenuItem
 import com.bobbyesp.utilities.Time
 import com.bobbyesp.utilities.parseFileSize
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SavedPdfFileCard(
     modifier: Modifier = Modifier,
+    contentModifier: Modifier = Modifier,
     pdf: SavedPdf,
+    onShareRequest: (SavedPdf) -> Unit = {}
 ) {
-    val context = LocalContext.current
     val fileSize: String? by remember {
         mutableStateOf(pdf.fileSizeBytes?.let { parseFileSize(it) })
     }
@@ -59,7 +59,7 @@ fun SavedPdfFileCard(
         modifier = modifier
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = contentModifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.Start
         ) {
@@ -107,18 +107,37 @@ fun SavedPdfFileCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                MetadataInfo(modifier = Modifier, icon = Icons.Rounded.CalendarMonth, text = stringResource(
-                    id = R.string.created_at
-                ) + " " + creationTime)
+                MetadataInfo(
+                    modifier = Modifier, icon = Icons.Rounded.CalendarMonth, text = stringResource(
+                        id = R.string.created_at
+                    ) + " " + creationTime
+                )
 
                 fileSize?.let {
-                    MetadataInfo(modifier = Modifier, icon = Icons.AutoMirrored.Rounded.InsertDriveFile, text = stringResource(id = R.string.size) + ": " + it)
+                    MetadataInfo(
+                        modifier = Modifier,
+                        icon = Icons.AutoMirrored.Rounded.InsertDriveFile,
+                        text = stringResource(id = R.string.size) + ": " + it
+                    )
                 }
 
             }
             HorizontalDivider()
-            LazyVerticalGrid(modifier = Modifier.fillMaxWidth(), columns = GridCells.Adaptive(minSize = 120.dp)) {
-                //TODO: Add items
+            LazyVerticalGrid(
+                modifier = Modifier.fillMaxWidth(), columns = GridCells.Adaptive(minSize = 120.dp)
+            ) {
+                GridMenuItem(icon = { Icons.Rounded.FileOpen },
+                    title = { stringResource(id = R.string.open_file) }) {
+
+                }
+                GridMenuItem(icon = { Icons.Rounded.Share },
+                    title = { stringResource(id = R.string.share) }) {
+                    onShareRequest(pdf)
+                }
+                GridMenuItem(icon = { Icons.Rounded.FileOpen },
+                    title = { stringResource(id = R.string.open_file) }) {
+
+                }
             }
         }
     }
@@ -133,18 +152,25 @@ private fun MetadataInfo(modifier: Modifier = Modifier, icon: ImageVector, text:
     ) {
         Icon(
             modifier = Modifier.size(28.dp),
-            imageVector = icon, contentDescription = stringResource(
-            id = R.string.metadata_icon
-        ))
+            imageVector = icon,
+            contentDescription = stringResource(
+                id = R.string.metadata_icon
+            )
+        )
         Text(text = text, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Preview
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun CardPrev() {
     DocucraftTheme {
-        SavedPdfFileCard(pdf = SavedPdf.emptyPdf(title = "This is a test file", fileSizeBytes = 56345745))
+        SavedPdfFileCard(
+            pdf = SavedPdf.emptyPdf(
+                title = "This is a test file", fileSizeBytes = 56345745
+            )
+        )
     }
 }

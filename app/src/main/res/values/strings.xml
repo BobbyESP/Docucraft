@@ -16,4 +16,6 @@
     <string name="creation_date_icon">Creation date icon</string>
     <string name="metadata_icon">Metadata icon</string>
     <string name="created_at">Created at</string>
+    <string name="share">Share</string>
+    <string name="open_file">Open file</string>
 </resources>
