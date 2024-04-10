@@ -1,7 +1,7 @@
 package com.bobbyesp.docucraft.presentation.components.card
 
 import android.content.res.Configuration
-import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.tween
@@ -26,7 +26,6 @@ import androidx.compose.material.icons.rounded.AccountTree
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.FileOpen
-import androidx.compose.material.icons.rounded.Place
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -176,60 +175,54 @@ fun SavedPdfFileCard(
     }
 }
 
-context(SharedTransitionScope)
+context(AnimatedVisibilityScope, SharedTransitionScope)
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun SavedPdfCardTransitionsWrapper(
     modifier: Modifier = Modifier,
-    pdf: SavedPdf?,
+    pdf: SavedPdf,
     onOpenPdf: (SavedPdf) -> Unit = {},
     onShareRequest: (SavedPdf) -> Unit = {},
     onDeleteRequest: (SavedPdf) -> Unit = {},
     onDismissRequest: () -> Unit
 ) {
-    AnimatedContent(
-        modifier = Modifier,
-        targetState = pdf, label = "",
-    ) { savedPdf ->
-        if (savedPdf == null) return@AnimatedContent
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onDismissRequest
+    Box(
+        modifier = Modifier
+            .background(Color.Black.copy(alpha = 0.2f))
+            .fillMaxSize()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onDismissRequest
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        SavedPdfFileCard(
+            modifier = Modifier.padding(16.dp).sharedBounds(
+                boundsTransform = boundsTransformation,
+                enter = fadeIn(
+                    tween(
+                        durationMillis = DURATION_ENTER,
+                        delayMillis = DURATION_EXIT_SHORT,
+                        easing = EmphasizedDecelerateEasing
+                    )
                 ),
-            contentAlignment = Alignment.Center
-        ) {
-            SavedPdfFileCard(
-                modifier = Modifier.sharedBounds(
-                    boundsTransform = boundsTransformation,
-                    enter = fadeIn(
-                        tween(
-                            durationMillis = DURATION_ENTER,
-                            delayMillis = DURATION_EXIT_SHORT,
-                            easing = EmphasizedDecelerateEasing
-                        )
-                    ),
-                    exit = fadeOut(
-                        tween(
-                            durationMillis = DURATION_EXIT_SHORT,
-                            easing = EmphasizedAccelerateEasing
-                        )
-                    ),
-                    sharedContentState = rememberSharedContentState(key = "${savedPdf.savedTimestamp}_bounds"),
-                    animatedVisibilityScope = this@AnimatedContent,
-                    placeHolderSize = SharedTransitionScope.PlaceHolderSize.animatedSize,
+                exit = fadeOut(
+                    tween(
+                        durationMillis = DURATION_EXIT_SHORT,
+                        easing = EmphasizedAccelerateEasing
+                    )
                 ),
-                contentModifier = modifier,
-                pdf = savedPdf,
-                onShareRequest = onShareRequest,
-                onOpenPdf = onOpenPdf,
-                onDeleteRequest = onDeleteRequest
-            )
-        }
+                sharedContentState = rememberSharedContentState(key = "${pdf.savedTimestamp}_bounds"),
+                animatedVisibilityScope = this@AnimatedVisibilityScope,
+                placeHolderSize = SharedTransitionScope.PlaceHolderSize.animatedSize,
+            ),
+            contentModifier = modifier,
+            pdf = pdf,
+            onShareRequest = onShareRequest,
+            onOpenPdf = onOpenPdf,
+            onDeleteRequest = onDeleteRequest
+        )
     }
 }
 

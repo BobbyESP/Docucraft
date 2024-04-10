@@ -1,7 +1,6 @@
 package com.bobbyesp.docucraft.presentation.components.card
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
@@ -66,8 +65,7 @@ fun SavedPdfFileListItem(
 
     Surface(
         modifier = modifier.combinedClickable(
-            onClick = onClick,
-            onLongClick = onLongPressed
+            onClick = onClick, onLongClick = onLongPressed
         )
     ) {
         Row(
@@ -127,7 +125,7 @@ fun SavedPdfFileListItem(
     }
 }
 
-context(SharedTransitionScope)
+context(AnimatedVisibilityScope, SharedTransitionScope)
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun SavedPdfListItemTransitionsWrapper(
@@ -135,24 +133,15 @@ fun SavedPdfListItemTransitionsWrapper(
     pdf: SavedPdf,
     onClick: () -> Unit,
     onLongPressed: () -> Unit,
-    visible: Boolean
+    visible: Boolean,
 ) {
     var height by remember { mutableStateOf<Dp?>(null) }
     val density = LocalDensity.current
 
-    Box(
-        modifier = modifier
-            .onSizeChanged {
-                height = density.run { it.height.toDp() }
-            }
-    ) {
-        height?.let {
-            Spacer(modifier = Modifier.height(it))
-        }
-
-        AnimatedVisibility(
-            visible = visible
-        ) {
+    Box(modifier = modifier.onSizeChanged {
+        height = density.run { it.height.toDp() }
+    }) {
+        if (visible) {
             SavedPdfFileListItem(
                 modifier = Modifier.sharedBounds(
                     boundsTransform = boundsTransformation,
@@ -165,15 +154,14 @@ fun SavedPdfListItemTransitionsWrapper(
                     ),
                     exit = fadeOut(
                         tween(
-                            durationMillis = DURATION_EXIT_SHORT,
-                            easing = EmphasizedAccelerateEasing
+                            durationMillis = DURATION_EXIT_SHORT, easing = EmphasizedAccelerateEasing
                         )
                     ),
                     sharedContentState = rememberSharedContentState(key = "${pdf.savedTimestamp}_bounds"),
-                    animatedVisibilityScope = this@AnimatedVisibility,
+                    animatedVisibilityScope = this@AnimatedVisibilityScope,
                     placeHolderSize = SharedTransitionScope.PlaceHolderSize.animatedSize,
-                ),
-                pdf = pdf, onClick = onClick, onLongPressed = onLongPressed)
+                ), pdf = pdf, onClick = onClick, onLongPressed = onLongPressed
+            )
         }
     }
 }

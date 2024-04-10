@@ -5,8 +5,14 @@ import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -69,7 +75,6 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.ScrollbarSelectionActionable
 
@@ -152,7 +157,11 @@ fun HomePage(
             viewModel.viewModelScope.launch {
                 val successfullyDeleted = viewModel.deletePdf(activity, it)
 
-                snackbarHost.showSnackbar(if(successfullyDeleted) activity.getString(R.string.file_deleted_successfully) else activity.getString(R.string.error_deleting_file))
+                snackbarHost.showSnackbar(
+                    if (successfullyDeleted) activity.getString(R.string.file_deleted_successfully) else activity.getString(
+                        R.string.error_deleting_file
+                    )
+                )
             }
         }
     )
@@ -244,38 +253,47 @@ private fun HomePageImpl(
                         var cardPdf by remember {
                             mutableStateOf<SavedPdf?>(null)
                         }
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.background),
-                            state = lazyListState,
-                        ) {
-                            items(
-                                count = pdfs.size,
-                                key = { index -> pdfs[index].savedTimestamp },
-                                contentType = { index -> pdfs[index].savedTimestamp.toString() }) { index ->
-                                val pdf = pdfs[index]
-                                SavedPdfListItemTransitionsWrapper(
-                                    pdf = pdf,
-                                    onClick = { onOpenPdf(pdf) },
-                                    onLongPressed = {
-                                        cardPdf = pdf
-                                    },
-                                    visible = cardPdf != pdf
-                                )
-                            }
-                        }
-                        SavedPdfCardTransitionsWrapper(
+                        AnimatedContent(
                             modifier = Modifier,
-                            pdf = cardPdf,
-                            onShareRequest = onSharePdf,
-                            onOpenPdf = { cardPdf?.let { pdf -> onOpenPdf(pdf) } },
-                            onDeleteRequest = {
-                                pdfItemToRemove = it
-                                showDeleteDialog = !showDeleteDialog
+                            targetState = cardPdf,
+                            label = "Shared transition holder parent layout - Home Page"
+                        ) { newPdf ->
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.background),
+                                state = lazyListState,
+                            ) {
+                                items(
+                                    count = pdfs.size,
+                                    key = { index -> pdfs[index].savedTimestamp },
+                                    contentType = { index -> pdfs[index].savedTimestamp.toString() }) { index ->
+                                    val pdf = pdfs[index]
+
+                                    SavedPdfListItemTransitionsWrapper(
+                                        pdf = pdf,
+                                        onClick = { onOpenPdf(pdf) },
+                                        onLongPressed = {
+                                            cardPdf = pdf
+                                        },
+                                        visible = newPdf != pdf
+                                    )
+                                }
                             }
-                        ) {
-                            cardPdf = null
+                            newPdf?.let {
+                                SavedPdfCardTransitionsWrapper(
+                                    modifier = Modifier,
+                                    pdf = it,
+                                    onShareRequest = onSharePdf,
+                                    onOpenPdf = { cardPdf?.let { pdf -> onOpenPdf(pdf) } },
+                                    onDeleteRequest = {
+                                        pdfItemToRemove = it
+                                        showDeleteDialog = !showDeleteDialog
+                                    }
+                                ) {
+                                    cardPdf = null
+                                }
+                            }
                         }
                     }
                 }
@@ -284,10 +302,13 @@ private fun HomePageImpl(
     }
 
     if (showDeleteDialog && pdfItemToRemove != null) {
-        DeleteFileDialog(pdf = pdfItemToRemove!!, onDeletePdf = { onDeletePdf(pdfItemToRemove!!) }, onReturnToPage = {
-            showDeleteDialog = false
-            pdfItemToRemove = null
-        })
+        DeleteFileDialog(
+            pdf = pdfItemToRemove!!,
+            onDeletePdf = { onDeletePdf(pdfItemToRemove!!) },
+            onReturnToPage = {
+                showDeleteDialog = false
+                pdfItemToRemove = null
+            })
     }
 }
 
