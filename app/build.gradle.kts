@@ -43,7 +43,6 @@ android {
 
     buildTypes {
         release {
-
             extensions.configure<CrashlyticsExtension> {
                 mappingFileUploadEnabled = true
                 nativeSymbolUploadEnabled = false
@@ -113,9 +112,6 @@ dependencies {
 //Pagination
     implementation(libs.bundles.pagination)
 
-//-------------------Network-------------------//
-    implementation(libs.bundles.ktor)
-
 //---------------Dependency Injection---------------//
     implementation(libs.bundles.hilt)
     ksp(libs.hilt.ext.compiler)
@@ -134,6 +130,7 @@ dependencies {
     implementation(libs.landscapist.coil)
     implementation(libs.coil)
     implementation(libs.compose.coil)
+
 //-------------------FIREBASE-------------------//
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
@@ -145,7 +142,6 @@ dependencies {
     implementation(libs.profileinstaller)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.taglib)
     implementation(libs.scrollbar)
     implementation(libs.gms.mlkit.docscanner)
 

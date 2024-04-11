@@ -50,7 +50,7 @@ class App : Application() {
             encodeDefaults = true
         }
 
-        const val APP_PACKAGE_NAME = "com.bobbyesp.docucraft"
+        private const val APP_PACKAGE_NAME = "com.bobbyesp.docucraft"
         const val APP_FILE_PROVIDER = "$APP_PACKAGE_NAME.fileprovider"
     }
 }

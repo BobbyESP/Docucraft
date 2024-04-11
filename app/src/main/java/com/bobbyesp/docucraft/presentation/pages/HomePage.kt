@@ -8,11 +8,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -86,10 +81,8 @@ fun HomePage(
     val snackbarHost = LocalSnackbarHostState.current
     val scope = rememberCoroutineScope()
 
-    val scannerOptions = GmsDocumentScannerOptions.Builder()
-        .setScannerMode(SCANNER_MODE_FULL)
-        .setGalleryImportAllowed(true)
-        .setResultFormats(RESULT_FORMAT_JPEG, RESULT_FORMAT_PDF)
+    val scannerOptions = GmsDocumentScannerOptions.Builder().setScannerMode(SCANNER_MODE_FULL)
+        .setGalleryImportAllowed(true).setResultFormats(RESULT_FORMAT_JPEG, RESULT_FORMAT_PDF)
         .build()
     val scanner = GmsDocumentScanning.getClient(scannerOptions)
 
@@ -115,8 +108,7 @@ fun HomePage(
                         when (snackbarResult) {
                             SnackbarResult.Dismissed -> {}
                             SnackbarResult.ActionPerformed -> viewModel.openPdfInViewer(
-                                activity,
-                                savedPdf.path
+                                activity, savedPdf.path
                             )
                         }
                     }
@@ -128,43 +120,35 @@ fun HomePage(
             }
         }
 
-    HomePageImpl(
-        onScanNewDocument = {
-            scanner.getStartScanIntent(activity)
-                .addOnSuccessListener {
-                    scannerLauncher.launch(
-                        IntentSenderRequest.Builder(it).build()
-                    )
-                }
-                .addOnFailureListener {
-                    Toast.makeToast(activity, activity.getString(R.string.scanner_open_failed))
-                }
-        },
-        savedPdfs = viewModel.savedPdfs,
-        onOpenPdf = {
-            viewModel.openPdfInViewer(activity, it.path!!)
-        },
-        onSharePdf = { pdf ->
-            pdf.path?.let {
-                viewModel.sharePdf(activity, it)
-            }
-
-            if (pdf.path == null) scope.launch {
-                snackbarHost.showSnackbar(activity.getString(R.string.error_sharing_pdf))
-            }
-        },
-        onDeletePdf = {
-            viewModel.viewModelScope.launch {
-                val successfullyDeleted = viewModel.deletePdf(activity, it)
-
-                snackbarHost.showSnackbar(
-                    if (successfullyDeleted) activity.getString(R.string.file_deleted_successfully) else activity.getString(
-                        R.string.error_deleting_file
-                    )
-                )
-            }
+    HomePageImpl(onScanNewDocument = {
+        scanner.getStartScanIntent(activity).addOnSuccessListener {
+            scannerLauncher.launch(
+                IntentSenderRequest.Builder(it).build()
+            )
+        }.addOnFailureListener {
+            Toast.makeToast(activity, activity.getString(R.string.scanner_open_failed))
         }
-    )
+    }, savedPdfs = viewModel.savedPdfs, onOpenPdf = {
+        viewModel.openPdfInViewer(activity, it.path!!)
+    }, onSharePdf = { pdf ->
+        pdf.path?.let {
+            viewModel.sharePdf(activity, it)
+        }
+
+        if (pdf.path == null) scope.launch {
+            snackbarHost.showSnackbar(activity.getString(R.string.error_sharing_pdf))
+        }
+    }, onDeletePdf = {
+        viewModel.viewModelScope.launch {
+            val successfullyDeleted = viewModel.deletePdf(activity, it)
+
+            snackbarHost.showSnackbar(
+                if (successfullyDeleted) activity.getString(R.string.file_deleted_successfully) else activity.getString(
+                    R.string.error_deleting_file
+                )
+            )
+        }
+    })
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -180,50 +164,41 @@ private fun HomePageImpl(
     val pdfs = savedPdfs?.collectAsStateWithLifecycle()?.value
 
     var showDeleteDialog by remember {
-        mutableStateOf<Boolean>(false)
+        mutableStateOf(false)
     }
 
-    var pdfItemToRemove by remember {
+    var selectedPdf by remember {
         mutableStateOf<SavedPdf?>(null)
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            CenterAlignedTopAppBar(
-                modifier = Modifier,
-                title = {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.app_name).uppercase(),
-                            fontWeight = FontWeight.SemiBold,
-                            fontFamily = FontFamily.Monospace,
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                letterSpacing = 4.sp,
-                            ),
-                        )
-                    }
-                })
-        },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                text = {
-                    Text(text = stringResource(id = R.string.scan))
-                },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Rounded.DocumentScanner,
-                        contentDescription = stringResource(
-                            id = R.string.scan_new_document
-                        )
-                    )
-                },
-                onClick = onScanNewDocument
+    Scaffold(modifier = Modifier.fillMaxSize(), topBar = {
+        CenterAlignedTopAppBar(modifier = Modifier, title = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = stringResource(id = R.string.app_name).uppercase(),
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = FontFamily.Monospace,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        letterSpacing = 4.sp,
+                    ),
+                )
+            }
+        })
+    }, floatingActionButton = {
+        ExtendedFloatingActionButton(text = {
+            Text(text = stringResource(id = R.string.scan))
+        }, icon = {
+            Icon(
+                imageVector = Icons.Rounded.DocumentScanner,
+                contentDescription = stringResource(
+                    id = R.string.scan_new_document
+                )
             )
-        }
-    ) { paddingValues ->
+        }, onClick = onScanNewDocument
+        )
+    }) { paddingValues ->
         if (pdfs.isNullOrEmpty()) {
             Column(
                 modifier = Modifier
@@ -264,14 +239,12 @@ private fun HomePageImpl(
                                     .background(MaterialTheme.colorScheme.background),
                                 state = lazyListState,
                             ) {
-                                items(
-                                    count = pdfs.size,
+                                items(count = pdfs.size,
                                     key = { index -> pdfs[index].savedTimestamp },
                                     contentType = { index -> pdfs[index].savedTimestamp.toString() }) { index ->
                                     val pdf = pdfs[index]
 
-                                    SavedPdfListItemTransitionsWrapper(
-                                        pdf = pdf,
+                                    SavedPdfListItemTransitionsWrapper(pdf = pdf,
                                         onClick = { onOpenPdf(pdf) },
                                         onLongPressed = {
                                             cardPdf = pdf
@@ -281,16 +254,14 @@ private fun HomePageImpl(
                                 }
                             }
                             newPdf?.let {
-                                SavedPdfCardTransitionsWrapper(
-                                    modifier = Modifier,
+                                SavedPdfCardTransitionsWrapper(modifier = Modifier,
                                     pdf = it,
                                     onShareRequest = onSharePdf,
                                     onOpenPdf = { cardPdf?.let { pdf -> onOpenPdf(pdf) } },
-                                    onDeleteRequest = {
-                                        pdfItemToRemove = it
+                                    onDeleteRequest = { pdfToRemove ->
+                                        selectedPdf = pdfToRemove
                                         showDeleteDialog = !showDeleteDialog
-                                    }
-                                ) {
+                                    }) {
                                     cardPdf = null
                                 }
                             }
@@ -301,14 +272,14 @@ private fun HomePageImpl(
         }
     }
 
-    if (showDeleteDialog && pdfItemToRemove != null) {
-        DeleteFileDialog(
-            pdf = pdfItemToRemove!!,
-            onDeletePdf = { onDeletePdf(pdfItemToRemove!!) },
-            onReturnToPage = {
-                showDeleteDialog = false
-                pdfItemToRemove = null
-            })
+    if (showDeleteDialog && selectedPdf != null) {
+        DeleteFileDialog(pdf = selectedPdf!!, onDeletePdf = {
+            onDeletePdf(selectedPdf!!)
+            selectedPdf = null
+        }, onReturnToPage = {
+            showDeleteDialog = false
+            selectedPdf = null
+        })
     }
 }
 
@@ -316,8 +287,7 @@ private fun HomePageImpl(
 @Composable
 fun NoPDFsCard(modifier: Modifier = Modifier, onScanNewDocument: () -> Unit) {
     OutlinedCard(
-        modifier = modifier.fillMaxWidth(),
-        onClick = onScanNewDocument
+        modifier = modifier.fillMaxWidth(), onClick = onScanNewDocument
     ) {
         Column(
             modifier = Modifier
@@ -360,46 +330,37 @@ fun NoPDFsCard(modifier: Modifier = Modifier, onScanNewDocument: () -> Unit) {
 
 @Composable
 private fun DeleteFileDialog(
-    pdf: SavedPdf,
-    onDeletePdf: (SavedPdf) -> Unit,
-    onReturnToPage: () -> Unit = {}
+    pdf: SavedPdf, onDeletePdf: (SavedPdf) -> Unit, onReturnToPage: () -> Unit = {}
 ) {
-    AlertDialog(
-        onDismissRequest = onReturnToPage,
-        icon = {
-            Icon(
-                imageVector = Icons.Rounded.Warning,
-                contentDescription = stringResource(id = R.string.warning)
-            )
-        },
-        title = {
-            Text(text = stringResource(id = R.string.delete_file_title))
-        },
-        text = {
-            Text(
-                text = stringResource(id = R.string.delete_file_desc),
-                style = MaterialTheme.typography.bodyMedium
-            )
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onReturnToPage,
-            ) {
-                Text(text = stringResource(id = R.string.return_str))
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    onDeletePdf(pdf)
-                    onReturnToPage()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-                Text(text = stringResource(id = R.string.delete))
-            }
+    AlertDialog(onDismissRequest = onReturnToPage, icon = {
+        Icon(
+            imageVector = Icons.Rounded.Warning,
+            contentDescription = stringResource(id = R.string.warning)
+        )
+    }, title = {
+        Text(text = stringResource(id = R.string.delete_file_title))
+    }, text = {
+        Text(
+            text = stringResource(id = R.string.delete_file_desc),
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }, dismissButton = {
+        TextButton(
+            onClick = onReturnToPage,
+        ) {
+            Text(text = stringResource(id = R.string.return_str))
         }
-    )
+    }, confirmButton = {
+        Button(
+            onClick = {
+                onDeletePdf(pdf)
+                onReturnToPage()
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+        ) {
+            Text(text = stringResource(id = R.string.delete))
+        }
+    })
 }
 
 @Preview
