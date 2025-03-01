@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.ui.theme
+package com.bobbyesp.docucraft.core.presentation.theme
 
 import android.os.Build
 

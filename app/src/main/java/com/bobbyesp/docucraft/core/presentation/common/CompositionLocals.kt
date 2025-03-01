@@ -13,7 +13,7 @@ import coil.ImageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.data.local.preferences.UserPreferences.Companion.emptyUserPreferences
 import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference
-import com.bobbyesp.docucraft.ui.theme.DEFAULT_SEED_COLOR
+import com.bobbyesp.docucraft.core.presentation.theme.DEFAULT_SEED_COLOR
 import com.dokar.sonner.ToasterState
 import com.dokar.sonner.rememberToasterState
 import com.materialkolor.DynamicMaterialThemeState

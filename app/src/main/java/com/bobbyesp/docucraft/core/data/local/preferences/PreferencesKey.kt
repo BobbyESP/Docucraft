@@ -5,7 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference.Companion.DarkThemeValue
-import com.bobbyesp.docucraft.ui.theme.DEFAULT_SEED_COLOR
+import com.bobbyesp.docucraft.core.presentation.theme.DEFAULT_SEED_COLOR
 import com.materialkolor.PaletteStyle
 
 /**

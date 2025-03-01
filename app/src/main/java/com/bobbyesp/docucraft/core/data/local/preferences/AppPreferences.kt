@@ -12,9 +12,8 @@ import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.MARQUEE
 import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.PALETTE_STYLE
 import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.THEME_COLOR
 import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.USE_DYNAMIC_COLORING
-import com.bobbyesp.docucraft.core.data.local.preferences.UserPreferences
 import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference
-import com.bobbyesp.docucraft.ui.theme.isDynamicColoringSupported
+import com.bobbyesp.docucraft.core.presentation.theme.isDynamicColoringSupported
 import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
