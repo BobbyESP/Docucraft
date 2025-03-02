@@ -11,6 +11,8 @@ import kotlinx.serialization.Serializable
  * location, creation time, size, number of pages, and a thumbnail image.
  *
  * @property filename The name of the PDF file (e.g., "document.pdf").
+ * @property title The title of the PDF document.
+ * @property description A description of the PDF document.
  * @property path The Uri representing the location of the PDF file on the device's storage.
  * @property createdTimestamp The timestamp (in milliseconds) when the PDF file was created.
  * @property fileSize The size of the PDF file in bytes.
@@ -21,15 +23,19 @@ import kotlinx.serialization.Serializable
 @Immutable
 data class ScannedPdf(
     val filename: String,
+    val title: String?,
+    val description: String?,
     val path: String,
     val createdTimestamp: Long,
     val fileSize: Long,
     val pageCount: Int,
-    val thumbnail: String
+    val thumbnail: String?
 ) {
     fun ScannedPdfEntity.toModel(): ScannedPdf {
         return ScannedPdf(
             filename = filename,
+            title = title,
+            description = description,
             path = path,
             createdTimestamp = createdTimestamp,
             fileSize = fileSize,

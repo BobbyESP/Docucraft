@@ -4,4 +4,7 @@
     <string name="on">On</string>
     <string name="off">Off</string>
     <string name="home">Home</string>
+    <string name="file_icon">File icon</string>
+    <string name="no_description">No description</string>
+    <string name="size">Size</string>
 </resources>

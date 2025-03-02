@@ -11,9 +11,11 @@ data class ScannedPdfEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
     val filename: String,
+    val title: String?,
+    val description: String?,
     val path: String,
     val createdTimestamp: Long,
     val fileSize: Long,
     val pageCount: Int,
-    val thumbnail: String
+    val thumbnail: String?
 )

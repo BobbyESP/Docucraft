@@ -31,7 +31,7 @@ interface ScannedPdfDao: BaseDao<ScannedPdfEntity> {
     suspend fun getPdfsByMinPageCount(minPages: Int): List<ScannedPdfEntity>
 
     @Query("SELECT * FROM scanned_pdfs WHERE fileSize > :minSizeBytes")
-    suspend fun getLargePdfs(minSizeBytes: Long): List<ScannedPdfEntity>
+    suspend fun getPdfsByMinSize(minSizeBytes: Long): List<ScannedPdfEntity>
 
     @Query("SELECT COUNT(*) FROM scanned_pdfs")
     suspend fun getPdfCount(): Int
