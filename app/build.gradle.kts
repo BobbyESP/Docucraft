@@ -111,6 +111,9 @@ dependencies {
     //Image loading
     implementation(libs.landscapist.coil)
 
+    //Document scanner
+    implementation(libs.gms.mlkit.docscanner)
+
     //Utilities
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)

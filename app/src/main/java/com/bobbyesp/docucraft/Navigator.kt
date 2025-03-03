@@ -7,9 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.navigation
 import com.bobbyesp.docucraft.core.presentation.common.Route
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pdfScannerRouting
 
 @Composable
 fun Navigator(
@@ -22,13 +21,7 @@ fun Navigator(
         navController = navHostController,
         startDestination = Route.DocucraftNavigator
     ) {
-        navigation<Route.DocucraftNavigator>(
-            startDestination = Route.DocucraftNavigator.Home
-        ) {
-            composable<Route.DocucraftNavigator.Home> {
-
-            }
-        }
+        pdfScannerRouting()
 
     }
 }
