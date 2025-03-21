@@ -29,9 +29,9 @@ fun NavGraphBuilder.pdfScannerRouting() {
 
             LaunchedEffect(true) {
                 vm.eventFlow.collectLatest { event ->
-                    when(event) {
+                    when (event) {
                         is ScanResult -> {
-                            if(event is ScanResult.Success) {
+                            if (event is ScanResult.Success) {
                                 sonner.show(
                                     message = context.getString(R.string.pdf_saved_successfully),
                                     type = ToastType.Success
@@ -59,6 +59,32 @@ fun NavGraphBuilder.pdfScannerRouting() {
                                 message = errorMessage,
                                 type = ToastType.Error
                             )
+                        }
+
+                        is HomeViewModel.UiEvent.SavingResult -> {
+                            when (event) {
+                                is HomeViewModel.UiEvent.SavingResult.Success -> {
+                                    sonner.show(
+                                        message = context.getString(
+                                            R.string.pdf_saved_successfully_to,
+                                            event.uri.path ?: ""
+                                        ),
+                                        type = ToastType.Success
+                                    )
+                                }
+
+                                is HomeViewModel.UiEvent.SavingResult.Failure -> {
+                                    val errorMsg = event.error.message
+                                        ?: context.getString(R.string.unknown_error)
+                                    sonner.show(
+                                        message = context.getString(
+                                            R.string.pdf_saved_error_with_reason,
+                                            errorMsg
+                                        ),
+                                        type = ToastType.Error
+                                    )
+                                }
+                            }
                         }
                     }
                 }

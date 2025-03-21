@@ -16,4 +16,15 @@
     <string name="issue_opening_pdf_viewer">An issue occurred while trying to open the PDF viewer</string>
     <string name="share_pdf">Share PDF</string>
     <string name="issue_sharing_pdf">An issue occurred while trying to share the PDF</string>
+    <string name="error_loading_pdfs">Error loading PDFs</string>
+    <string name="file_size">File size</string>
+    <string name="page_count">Page count</string>
+    <string name="share">Share</string>
+    <string name="save">Save</string>
+    <string name="save_pdf">Save PDF</string>
+    <string name="delete_pdf">Delete PDF</string>
+    <string name="delete">Delete</string>
+    <string name="unknown_error">Unknown error</string>
+    <string name="pdf_saved_error_with_reason">An error occurred while saving the PDF: %1$s</string>
+    <string name="pdf_saved_successfully_to">PDF saved successfully to %1$s</string>
 </resources>

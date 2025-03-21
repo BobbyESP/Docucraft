@@ -17,6 +17,8 @@ import com.bobbyesp.docucraft.core.presentation.common.LocalNavController
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.init
 import org.koin.android.ext.android.inject
 import org.koin.compose.KoinContext
 import org.koin.core.component.KoinComponent
@@ -27,6 +29,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        FileKit.init(this)
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)

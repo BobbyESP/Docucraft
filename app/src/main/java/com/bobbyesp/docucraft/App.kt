@@ -11,6 +11,8 @@ import com.bobbyesp.docucraft.feature.pdfscanner.di.gmsScannerModule
 import com.bobbyesp.docucraft.feature.pdfscanner.di.pdfScannerViewModels
 import com.bobbyesp.docucraft.feature.pdfscanner.di.scannedPdfModule
 import com.bobbyesp.docucraft.feature.pdfscanner.di.scannedPdfsDatabaseModule
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.init
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
