@@ -49,14 +49,10 @@ fun ScannedPdfCard(
         mutableStateOf(false)
     }
 
-    val pdfUri by rememberSaveable {
-        mutableStateOf(pdf.path)
-    }
-
     Surface(
         modifier = modifier,
         onClick = {
-            onOpenPdf(pdfUri)
+            onOpenPdf(pdf.path)
         }
     ) {
         Row(
@@ -120,7 +116,7 @@ fun ScannedPdfCard(
                         dropdownMenuExpanded = false
                     },
                     onSharePdf = {
-                        onSharePdf(pdfUri)
+                        onSharePdf(pdf.path)
                     }
                 )
             }
