@@ -19,7 +19,7 @@ interface ScannedPdfDao: BaseDao<ScannedPdfEntity> {
     suspend fun getAllPdfs(): List<ScannedPdfEntity>
 
     @Query("SELECT * FROM scanned_pdfs ORDER BY createdTimestamp DESC")
-    suspend fun getAllPdfsFlow(): Flow<List<ScannedPdfEntity>>
+    fun getAllPdfsFlow(): Flow<List<ScannedPdfEntity>>
 
     @Query("SELECT * FROM scanned_pdfs ORDER BY createdTimestamp DESC LIMIT :limit")
     suspend fun getRecentPdfs(limit: Int = 5): List<ScannedPdfEntity>

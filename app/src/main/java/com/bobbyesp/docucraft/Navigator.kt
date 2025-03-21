@@ -22,6 +22,5 @@ fun Navigator(
         startDestination = Route.DocucraftNavigator
     ) {
         pdfScannerRouting()
-
     }
 }

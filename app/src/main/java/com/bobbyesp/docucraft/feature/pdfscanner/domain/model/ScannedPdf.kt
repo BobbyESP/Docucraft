@@ -31,16 +31,18 @@ data class ScannedPdf(
     val pageCount: Int,
     val thumbnail: String?
 ) {
-    fun ScannedPdfEntity.toModel(): ScannedPdf {
-        return ScannedPdf(
-            filename = filename,
-            title = title,
-            description = description,
-            path = path,
-            createdTimestamp = createdTimestamp,
-            fileSize = fileSize,
-            pageCount = pageCount,
-            thumbnail = thumbnail
-        )
+    companion object {
+        fun ScannedPdfEntity.toModel(): ScannedPdf {
+            return ScannedPdf(
+                filename = filename,
+                title = title,
+                description = description,
+                path = path,
+                createdTimestamp = createdTimestamp,
+                fileSize = fileSize,
+                pageCount = pageCount,
+                thumbnail = thumbnail
+            )
+        }
     }
 }

@@ -4,6 +4,12 @@ import android.app.Application
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import com.bobbyesp.docucraft.core.di.appCoroutinesScope
+import com.bobbyesp.docucraft.core.di.coreFunctionalitiesModule
+import com.bobbyesp.docucraft.core.di.fileManagementModule
+import com.bobbyesp.docucraft.feature.pdfscanner.di.gmsScannerModule
+import com.bobbyesp.docucraft.feature.pdfscanner.di.pdfScannerViewModels
+import com.bobbyesp.docucraft.feature.pdfscanner.di.scannedPdfModule
 import com.bobbyesp.docucraft.feature.pdfscanner.di.scannedPdfsDatabaseModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -14,7 +20,10 @@ class App: Application() {
         startKoin {
             androidLogger()
             androidContext(this@App)
-            modules(scannedPdfsDatabaseModule)
+            modules(scannedPdfsDatabaseModule, scannedPdfModule, gmsScannerModule)
+            modules(appCoroutinesScope, coreFunctionalitiesModule)
+            modules(fileManagementModule)
+            modules(pdfScannerViewModels)
         }
         packageInfo = packageManager.run {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) getPackageInfo(

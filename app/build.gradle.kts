@@ -103,13 +103,16 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.room.paging)
-    annotationProcessor(libs.room.compiler)
+    ksp(libs.room.compiler)
 
     //Key-value storage
     implementation(libs.datastore.preferences)
 
     //Image loading
     implementation(libs.landscapist.coil)
+
+    //Files management
+    implementation(libs.bundles.filekit)
 
     //Document scanner
     implementation(libs.gms.mlkit.docscanner)

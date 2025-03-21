@@ -6,5 +6,5 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val fileManagementModule = module {
-    single<FileRepository> { FileRepositoryImpl(androidContext()) }
+    single<FileRepository> { FileRepositoryImpl(context = androidContext()) }
 }

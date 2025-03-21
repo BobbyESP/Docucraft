@@ -4,20 +4,59 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
+import coil.imageLoader
+import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
+import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
+import com.bobbyesp.docucraft.core.presentation.common.LocalNavController
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.dokar.sonner.Toaster
+import com.dokar.sonner.rememberToasterState
+import org.koin.android.ext.android.inject
+import org.koin.compose.KoinContext
+import org.koin.core.component.KoinComponent
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), KoinComponent {
+
+    private val appPreferences: AppPreferences by inject()
+
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
             val navHostController = rememberNavController()
+            val sonner = rememberToasterState()
+            KoinContext {
+                DocucraftTheme {
+                    val windowSizeClass = calculateWindowSizeClass(this)
 
-            DocucraftTheme {
-                Navigator(
-                    navHostController = navHostController
-                )
+                    CompositionLocalProvider(
+                        LocalNavController provides navHostController
+                    ) {
+                        AppLocalSettingsProvider(
+                            windowWidthSize = windowSizeClass.widthSizeClass,
+                            sonner = sonner,
+                            appPreferences = appPreferences,
+                            imageLoader = imageLoader
+                        ) {
+                            Navigator(
+                                navHostController = navHostController
+                            )
+                            Toaster(
+                                state = sonner,
+                                richColors = true,
+                                darkTheme = isSystemInDarkTheme() //TODO: Change by the settings wrapper
+                            )
+                        }
+                    }
+                }
             }
         }
     }

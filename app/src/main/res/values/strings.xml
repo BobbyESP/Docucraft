@@ -8,4 +8,12 @@
     <string name="no_description">No description</string>
     <string name="size">Size</string>
     <string name="more_options">More options</string>
+    <string name="scan">Scan</string>
+    <string name="scan_new_document">Scan new document</string>
+    <string name="pdf_saved_successfully">The PDF has been saved successfully</string>
+    <string name="pdf_saved_error">An error has occurred during the scan</string>
+    <string name="open_pdf_in_viewer">Open PDF in viewer</string>
+    <string name="issue_opening_pdf_viewer">An issue occurred while trying to open the PDF viewer</string>
+    <string name="share_pdf">Share PDF</string>
+    <string name="issue_sharing_pdf">An issue occurred while trying to share the PDF</string>
 </resources>
