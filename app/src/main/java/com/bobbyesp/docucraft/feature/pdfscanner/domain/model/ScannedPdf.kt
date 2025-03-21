@@ -1,8 +1,11 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.domain.model
 
+import android.net.Uri
 import androidx.compose.runtime.Immutable
 import com.bobbyesp.docucraft.feature.pdfscanner.data.local.db.entity.ScannedPdfEntity
 import kotlinx.serialization.Serializable
+import androidx.core.net.toUri
+import com.bobbyesp.docucraft.core.util.UriSerializer
 
 /**
  * Represents a scanned PDF document.
@@ -25,7 +28,8 @@ data class ScannedPdf(
     val filename: String,
     val title: String?,
     val description: String?,
-    val path: String,
+    @Serializable(with = UriSerializer::class)
+    val path: Uri,
     val createdTimestamp: Long,
     val fileSize: Long,
     val pageCount: Int,
@@ -37,7 +41,7 @@ data class ScannedPdf(
                 filename = filename,
                 title = title,
                 description = description,
-                path = path,
+                path = path.toUri(),
                 createdTimestamp = createdTimestamp,
                 fileSize = fileSize,
                 pageCount = pageCount,

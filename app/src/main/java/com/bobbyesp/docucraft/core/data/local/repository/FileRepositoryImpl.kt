@@ -1,6 +1,7 @@
 package com.bobbyesp.docucraft.core.data.local.repository
 
 import android.content.Context
+import android.net.Uri
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.core.domain.FileDestination
 import com.bobbyesp.docucraft.core.domain.repository.FileRepository
@@ -53,8 +54,7 @@ class FileRepositoryImpl(
     }
 
     override suspend fun moveFile(
-        file: File,
-        destination: FileDestination
+        file: File, destination: FileDestination
     ) {
         saveFile(file, destination)
         deleteFile(file)
@@ -66,6 +66,15 @@ class FileRepositoryImpl(
         if (rowsDeleted == 0) {
             throw IOException("Failed to delete file: ${file.absolutePath}")
         }
+    }
+
+    override suspend fun readBytesFromUri(uri: Uri): ByteArray {
+        return context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            // Use buffered input stream for better performance with larger files
+            inputStream.buffered().use { buffered ->
+                buffered.readBytes()
+            }
+        } ?: throw IOException("Failed to read bytes from URI: $uri")
     }
 
     /**

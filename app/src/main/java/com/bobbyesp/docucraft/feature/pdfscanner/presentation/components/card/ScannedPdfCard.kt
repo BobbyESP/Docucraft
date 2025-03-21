@@ -50,7 +50,7 @@ fun ScannedPdfCard(
     }
 
     val pdfUri by rememberSaveable {
-        mutableStateOf(pdf.path.toUri())
+        mutableStateOf(pdf.path)
     }
 
     Surface(
@@ -159,7 +159,7 @@ private fun PdfOptionsDropdownPrev() {
                 filename = "Document.pdf",
                 title = "Document",
                 description = "This is a sample document",
-                path = "path",
+                path = "path".toUri(),
                 createdTimestamp = 1630000000000,
                 fileSize = 1024,
                 pageCount = 5,
@@ -181,7 +181,7 @@ private fun ScannedPdfCardPrev() {
                 title = "Document",
                 description = "This is a very very large document description" +
                         " for a sample document to see how the text wraps around the card",
-                path = "path",
+                path = "path".toUri(),
                 createdTimestamp = 1630000000000,
                 fileSize = 1024,
                 pageCount = 5,

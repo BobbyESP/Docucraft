@@ -36,5 +36,6 @@ class App: Application() {
 
     companion object {
         lateinit var packageInfo: PackageInfo
+        const val CONTENT_PROVIDER_AUTHORITY = "com.bobbyesp.docucraft.fileprovider"
     }
 }

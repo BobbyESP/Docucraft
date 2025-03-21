@@ -3,7 +3,9 @@ package com.bobbyesp.docucraft.feature.pdfscanner.data.local.repository
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.core.content.FileProvider
+import com.bobbyesp.docucraft.App
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.repository.FileRepository
 import com.bobbyesp.docucraft.feature.pdfscanner.data.local.db.dao.ScannedPdfDao
@@ -76,15 +78,14 @@ class ScannedPdfRepositoryImpl(
             if (fileSizeBytes == -1L) throw IllegalStateException("The file size is undefined")
 
             val documentPath = FileProvider.getUriForFile(
-                context, "${context.packageName}.fileprovider", File(outputFile.path)
+                context, App.CONTENT_PROVIDER_AUTHORITY, File(outputFile.path)
             )
 
             val pdfEntity = ScannedPdfEntity(
                 filename = filename,
                 title = null,
                 description = null,
-                path = documentPath.path
-                    ?: error("Failed to get document path"), // Should never be null, TODO
+                path = documentPath.toString(),
                 createdTimestamp = System.currentTimeMillis(),
                 fileSize = fileSizeBytes,
                 pageCount = scanPdfResult.pageCount,
@@ -103,13 +104,14 @@ class ScannedPdfRepositoryImpl(
     override fun sharePdf(pdfPath: Uri) {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             putExtra(Intent.EXTRA_STREAM, pdfPath)
-            type = "application/pdf"
+            setDataAndType(pdfPath, "application/pdf")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(
             Intent.createChooser(
                 shareIntent, context.getString(R.string.share_pdf)
             ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         )
 
     }
