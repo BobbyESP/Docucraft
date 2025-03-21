@@ -27,4 +27,6 @@
     <string name="unknown_error">Unknown error</string>
     <string name="pdf_saved_error_with_reason">An error occurred while saving the PDF: %1$s</string>
     <string name="pdf_saved_successfully_to">PDF saved successfully to %1$s</string>
+    <string name="pdf_deleted_successfully">The PDF has been deleted successfully</string>
+    <string name="pdf_deleted_error">An error occurred while deleting the PDF</string>
 </resources>

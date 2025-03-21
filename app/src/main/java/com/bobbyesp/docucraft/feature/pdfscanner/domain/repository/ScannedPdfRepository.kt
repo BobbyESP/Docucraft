@@ -46,38 +46,35 @@ interface ScannedPdfRepository {
     )
 
     /**
-     * Deletes the PDF file associated with the given [ScannedPdf] object.
+     * Deletes a PDF file from storage and database using its URI.
      *
      * This function performs the following actions:
-     * 1. **Verifies File Existence:** Checks if the file path specified in the [ScannedPdf.filePath] property
-     *    exists and represents a valid file.
-     * 2. **Deletes the File:** If the file exists, it attempts to delete the file from the file system.
-     * 3. **Handles Deletion Failure:** If the deletion process fails, it logs an error message with the file path
-     *    and the underlying exception.
-     * 4. **Handles Non-Existent File:** If the file does not exist, it logs a warning message with the file path.
+     * 1. **Retrieves PDF Information:** Fetches the ScannedPdf record from the database using the URI.
+     * 2. **Verifies File Existence:** Checks if the file exists at the specified path.
+     * 3. **Deletes the File:** If the file exists, it attempts to delete the file from the file system.
+     * 4. **Removes Database Record:** Removes the PDF entry from the database.
+     * 5. **Handles Errors:** Logs and propagates any errors that occur during the process.
      *
      * **Note:** This function is a suspending function and should be called within a coroutine or
      * from another suspending function.
      *
-     * @param scannedPdf The [ScannedPdf] object representing the PDF to be deleted.
-     *                   It must contain a valid `filePath` property pointing to the PDF file.
+     * @param pdfPath The URI of the PDF to be deleted.
      *
-     * @throws IllegalArgumentException If the `scannedPdf.filePath` is blank or null.
+     * @throws IllegalArgumentException If the provided URI is invalid or not found in the database.
+     * @throws IOException If there's an error accessing or deleting the file.
      * @throws Exception If some other error occurs during file deletion.
      *
      * @sample
      *  ```kotlin
-     *    // Assuming you have a ScannedPdf object called myPdf
+     *    // Assuming you have a URI for the PDF
      *    try {
-     *        deletePdf(myPdf)
+     *        deletePdf(pdfUri)
      *        println("PDF deleted successfully")
      *    } catch (e: Exception) {
      *        println("Error deleting PDF: ${e.message}")
      *    }
-     *  ```
-     *
      */
-    suspend fun deletePdf(scannedPdf: ScannedPdf)
+    suspend fun deletePdf(pdfPath: Uri)
 
     /**
      * Shares a PDF file located at the specified URI.

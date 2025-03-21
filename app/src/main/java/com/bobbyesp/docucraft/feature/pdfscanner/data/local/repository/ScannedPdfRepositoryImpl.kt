@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import com.bobbyesp.docucraft.App
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.repository.FileRepository
@@ -17,6 +18,7 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.createDirectories
+import io.github.vinceglb.filekit.delete
 import io.github.vinceglb.filekit.exists
 import io.github.vinceglb.filekit.filesDir
 import io.github.vinceglb.filekit.path
@@ -97,8 +99,33 @@ class ScannedPdfRepositoryImpl(
         }
     }
 
-    override suspend fun deletePdf(scannedPdf: ScannedPdf) {
-        // TODO("Not yet implemented")
+    override suspend fun deletePdf(pdfPath: Uri) {
+        try {
+            val pdfEntity = scannedPdfDao.fetchByPath(pdfPath.toString())
+                ?: throw IllegalArgumentException("PDF not found in database")
+
+            // Create a PlatformFile from the file path to use FileKit APIs
+            val filePath = pdfEntity.path.toUri().path
+                ?: throw IllegalArgumentException("Invalid file path in database")
+
+            val pdfFile = PlatformFile(filePath)
+
+            // Check if file exists before attempting to delete
+            if (pdfFile.exists()) {
+                // Delete the file from storage
+                pdfFile.delete()
+            } else {
+                Log.w("ScannedPdfRepository", "PDF file not found at path: $filePath")
+            }
+
+            // Remove record from database regardless of file existence
+            scannedPdfDao.deleteById(pdfEntity.id)
+
+            Log.d("ScannedPdfRepository", "PDF deleted successfully: $filePath")
+        } catch (e: Exception) {
+            Log.e("ScannedPdfRepository", "Error deleting PDF", e)
+            throw e
+        }
     }
 
     override fun sharePdf(pdfPath: Uri) {

@@ -15,6 +15,9 @@ interface ScannedPdfDao: BaseDao<ScannedPdfEntity> {
     @Query("SELECT * FROM scanned_pdfs WHERE id = :id")
     suspend fun fetchById(id: String): ScannedPdfEntity?
 
+    @Query("SELECT * FROM scanned_pdfs WHERE path = :path")
+    suspend fun fetchByPath(path: String): ScannedPdfEntity?
+
     @Query("SELECT * FROM scanned_pdfs ORDER BY createdTimestamp DESC")
     suspend fun getAllPdfs(): List<ScannedPdfEntity>
 
