@@ -3,4 +3,8 @@
     <files-path
         name="scanned-pdfs"
         path="scans/pdf" />
+
+    <files-path
+        name="thumbnails"
+        path="previews" />
 </paths>

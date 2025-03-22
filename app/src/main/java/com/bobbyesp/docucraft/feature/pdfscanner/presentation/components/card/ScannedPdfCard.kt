@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import java.util.UUID
@@ -63,17 +64,28 @@ fun ScannedPdfCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Icon(
-                modifier =
-                    Modifier.height(72.dp)
+            if (pdf.thumbnail != null) {
+                AsyncImage(
+                    modifier = Modifier
+                        .height(72.dp)
+                        .aspectRatio(1f / 1.414f) // A4 vertical aspect ratio
+                        .clip(MaterialTheme.shapes.small)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    imageModel = pdf.thumbnail,
+                )
+            } else {
+                Icon(
+                    modifier = Modifier
+                        .height(72.dp)
                         .aspectRatio(1f / 1.414f) // A4 vertical aspect ratio
                         .clip(MaterialTheme.shapes.small)
                         .background(MaterialTheme.colorScheme.primaryContainer)
                         .padding(12.dp),
-                imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
-                contentDescription = stringResource(id = R.string.file_icon),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
+                    imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
+                    contentDescription = stringResource(id = R.string.file_icon),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -162,11 +174,10 @@ fun PdfOptionsDropdown(
                 )
             },
             text = { Text(text = stringResource(id = R.string.delete)) },
-            colors =
-                MenuDefaults.itemColors(
-                    leadingIconColor = MaterialTheme.colorScheme.error,
-                    textColor = MaterialTheme.colorScheme.error,
-                ),
+            colors = MenuDefaults.itemColors(
+                leadingIconColor = MaterialTheme.colorScheme.error,
+                textColor = MaterialTheme.colorScheme.error,
+            ),
             onClick = onDeletePdf,
         )
 
@@ -178,28 +189,26 @@ fun PdfOptionsDropdown(
         ) {
             Text(
                 modifier = Modifier,
-                text =
-                    buildAnnotatedString {
-                        append(stringResource(id = R.string.file_size))
-                        append(": ")
-                        pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                        append(formatFileSize(context, scannedPdf.fileSize))
-                        pop()
-                    },
+                text = buildAnnotatedString {
+                    append(stringResource(id = R.string.file_size))
+                    append(": ")
+                    pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                    append(formatFileSize(context, scannedPdf.fileSize))
+                    pop()
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
 
             Text(
                 modifier = Modifier,
-                text =
-                    buildAnnotatedString {
-                        append(stringResource(id = R.string.page_count))
-                        append(": ")
-                        pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                        append(scannedPdf.pageCount.toString())
-                        pop()
-                    },
+                text = buildAnnotatedString {
+                    append(stringResource(id = R.string.page_count))
+                    append(": ")
+                    pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                    append(scannedPdf.pageCount.toString())
+                    pop()
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface,
             )
@@ -213,18 +222,17 @@ private fun PdfOptionsDropdownPrev() {
     DocucraftTheme {
         PdfOptionsDropdown(
             expanded = true,
-            scannedPdf =
-                ScannedPdf(
-                    filename = "Document.pdf",
-                    title = "Document",
-                    description = "This is a sample document",
-                    path = "path".toUri(),
-                    createdTimestamp = 1630000000000,
-                    fileSize = 1024,
-                    pageCount = 5,
-                    thumbnail = "thumbnail",
-                    id = UUID.randomUUID().toString(),
-                ),
+            scannedPdf = ScannedPdf(
+                filename = "Document.pdf",
+                title = "Document",
+                description = "This is a sample document",
+                path = "path".toUri(),
+                createdTimestamp = 1630000000000,
+                fileSize = 1024,
+                pageCount = 5,
+                thumbnail = "thumbnail",
+                id = UUID.randomUUID().toString(),
+            ),
             onSharePdf = {},
         )
     }
@@ -236,20 +244,17 @@ private fun PdfOptionsDropdownPrev() {
 private fun ScannedPdfCardPrev() {
     DocucraftTheme {
         ScannedPdfCard(
-            pdf =
-                ScannedPdf(
-                    filename = "Document.pdf",
-                    title = "Document",
-                    description =
-                        "This is a very very large document description" +
-                            " for a sample document to see how the text wraps around the card",
-                    path = "path".toUri(),
-                    createdTimestamp = 1630000000000,
-                    fileSize = 1024,
-                    pageCount = 5,
-                    thumbnail = "thumbnail",
-                    id = UUID.randomUUID().toString(),
-                ),
+            pdf = ScannedPdf(
+                filename = "Document.pdf",
+                title = "Document",
+                description = "This is a very very large document description" + " for a sample document to see how the text wraps around the card",
+                path = "path".toUri(),
+                createdTimestamp = 1630000000000,
+                fileSize = 1024,
+                pageCount = 5,
+                thumbnail = "thumbnail",
+                id = UUID.randomUUID().toString(),
+            ),
             onOpenPdf = {},
             onSharePdf = {},
             onSavePdf = {},
