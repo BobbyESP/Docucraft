@@ -95,6 +95,10 @@ class HomeViewModel(
         return scannedPdfsListFlow.value.find { it.path == path }
     }
 
+    fun getPdfById(pdfId: String): ScannedPdf? {
+        return scannedPdfsListFlow.value.find { it.id == pdfId }
+    }
+
     fun onEvent(event: Event) {
         when (event) {
             is Event.HandlePdfScanningResult -> {

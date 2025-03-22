@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Docucraft</string>
+    <string name="follow_system">Seguir el sistema</string>
+    <string name="on">Encendido</string>
+    <string name="off">Apagado</string>
+    <string name="home">Inicio</string>
+    <string name="file_icon">Icono de archivo</string>
+    <string name="no_description">Sin descripción</string>
+    <string name="size">Tamaño</string>
+    <string name="more_options">Más opciones</string>
+    <string name="scan">Escanear</string>
+    <string name="scan_new_document">Escanear nuevo documento</string>
+    <string name="pdf_saved_successfully">El PDF se ha guardado correctamente</string>
+    <string name="pdf_saved_error">Ha ocurrido un error durante el escaneo</string>
+    <string name="open_pdf_in_viewer">Abrir PDF en el visor</string>
+    <string name="issue_opening_pdf_viewer">Ocurrió un problema al intentar abrir el visor de PDF</string>
+    <string name="share_pdf">Compartir PDF</string>
+    <string name="issue_sharing_pdf">Ocurrió un problema al intentar compartir el PDF</string>
+    <string name="error_loading_pdfs">Error al cargar los PDFs</string>
+    <string name="file_size">Tamaño del archivo</string>
+    <string name="page_count">Cantidad de páginas</string>
+    <string name="share">Compartir</string>
+    <string name="save">Guardar</string>
+    <string name="save_pdf">Guardar PDF</string>
+    <string name="delete_pdf">Eliminar PDF</string>
+    <string name="delete">Eliminar</string>
+    <string name="unknown_error">Error desconocido</string>
+    <string name="pdf_saved_error_with_reason">Ocurrió un error al guardar el PDF: %1$s</string>
+    <string name="pdf_saved_successfully_to">PDF guardado correctamente en %1$s</string>
+    <string name="pdf_deleted_successfully">El PDF se ha eliminado correctamente</string>
+    <string name="pdf_deleted_error">Ocurrió un error al eliminar el PDF</string>
+    <string name="delete_pdf_warning_message">Estás a punto de eliminar %1$s de tu dispositivo y base de datos de la aplicación.\n\nTiene %2$s páginas y un tamaño de %3$s.\n\n¿Estás seguro de que quieres eliminarlo?</string>
+    <string name="cancel">Cancelar</string>
+    <string name="pdf_saving_cancelled">El proceso de guardado ha sido cancelado</string>
+    <string name="modify_pdf_details">Modificar detalles del PDF</string>
+    <string name="confirm">Confirmar</string>
+    <string name="edit_fields">Editar campos</string>
+    <string name="title">Título</string>
+    <string name="description">Descripción</string>
+    <string name="retry">Reintentar</string>
+</resources>
