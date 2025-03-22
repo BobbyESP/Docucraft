@@ -43,6 +43,11 @@ class ScannedPdfRepositoryImpl(
             .map { entities -> entities.map { it.toModel() } }
             .flowOn(Dispatchers.IO)
 
+    override suspend fun getPdfById(pdfId: String): ScannedPdf {
+        val entity = scannedPdfDao.fetchById(pdfId) ?: throw IllegalArgumentException("No PDF found with ID: $pdfId")
+        return entity.toModel()
+    }
+
     // TODO: Move this to FileRepository
     private suspend fun writePdf(inputUri: Uri, outputFile: PlatformFile) {
         // Ensure directory exists
@@ -128,6 +133,17 @@ class ScannedPdfRepositoryImpl(
             scannedPdfDao.insert(pdfEntity)
         } catch (e: Exception) {
             throw RuntimeException("Failed to save PDF: ${e.message}", e)
+        }
+    }
+
+    override suspend fun modifyTitleAndDescription(
+        pdfId: String,
+        title: String,
+        description: String
+    ) {
+        val updatedCount = scannedPdfDao.updateTitleAndDescription(pdfId, title, description)
+        if (updatedCount <= 0) {
+            throw IllegalArgumentException("No PDF found with ID: $pdfId")
         }
     }
 

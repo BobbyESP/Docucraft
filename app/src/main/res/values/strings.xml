@@ -32,4 +32,10 @@
     <string name="delete_pdf_warning_message">You are about to delete %1$s from your device and app database.\n\nIt has %2$s pages and is %3$s in size.\n\nAre you sure you want to delete it?</string>
     <string name="cancel">Cancel</string>
     <string name="pdf_saving_cancelled">The saving process has been cancelled</string>
+    <string name="modify_pdf_details">Modify PDF Details</string>
+    <string name="confirm">Confirm</string>
+    <string name="edit_fields">Edit fields</string>
+    <string name="title">Title</string>
+    <string name="description">Description</string>
+    <string name="retry">Retry</string>
 </resources>

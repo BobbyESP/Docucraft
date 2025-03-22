@@ -49,4 +49,10 @@ interface ScannedPdfDao : BaseDao<ScannedPdfEntity> {
 
     @Query("SELECT * FROM scanned_pdfs WHERE createdTimestamp BETWEEN :startTime AND :endTime")
     suspend fun getPdfsBetweenDates(startTime: Long, endTime: Long): List<ScannedPdfEntity>
+
+    @Query("UPDATE scanned_pdfs SET title = :title, description = :description WHERE id = :id")
+    suspend fun updateTitleAndDescription(id: String, title: String, description: String): Int
+
+    @Query("SELECT * FROM scanned_pdfs WHERE title LIKE '%' || :searchQuery || '%' OR description LIKE '%' || :searchQuery || '%'")
+    suspend fun searchPdfsByTitleOrDescription(searchQuery: String): List<ScannedPdfEntity>
 }

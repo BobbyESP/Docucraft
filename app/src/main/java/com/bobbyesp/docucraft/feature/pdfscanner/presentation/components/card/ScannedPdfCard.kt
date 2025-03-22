@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
 import androidx.compose.material.icons.rounded.DeleteForever
+import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material.icons.rounded.SaveAs
@@ -58,6 +59,7 @@ fun ScannedPdfCard(
     onSavePdf: () -> Unit,
     onSharePdf: (Uri) -> Unit,
     onDeletePdf: (Uri) -> Unit,
+    onModifyPdfFields: (String) -> Unit,
 ) {
     var dropdownMenuExpanded by remember { mutableStateOf(false) }
 
@@ -142,6 +144,7 @@ fun ScannedPdfCard(
                     onSavePdf = { onSavePdf() },
                     onSharePdf = { onSharePdf(pdf.path) },
                     onDeletePdf = { onDeletePdf(pdf.path) },
+                    onModifyPdfFields = { onModifyPdfFields(pdf.id) },
                 )
             }
         }
@@ -157,6 +160,7 @@ fun PdfOptionsDropdown(
     onSavePdf: () -> Unit = {},
     onSharePdf: () -> Unit = {},
     onDeletePdf: () -> Unit = {},
+    onModifyPdfFields: () -> Unit
 ) {
     val context = LocalContext.current
     DropdownMenu(modifier = modifier, expanded = expanded, onDismissRequest = onDismissDropdown) {
@@ -180,6 +184,17 @@ fun PdfOptionsDropdown(
             },
             text = { Text(text = stringResource(id = R.string.share)) },
             onClick = onSharePdf,
+        )
+
+        DropdownMenuItem(
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Rounded.EditNote,
+                    contentDescription = stringResource(id = R.string.edit_fields),
+                )
+            },
+            text = { Text(text = stringResource(id = R.string.edit_fields)) },
+            onClick = onModifyPdfFields,
         )
 
         DropdownMenuItem(
@@ -254,6 +269,7 @@ private fun PdfOptionsDropdownPrev() {
                     id = UUID.randomUUID().toString(),
                 ),
             onSharePdf = {},
+            onModifyPdfFields = {}
         )
     }
 }
@@ -282,6 +298,7 @@ private fun ScannedPdfCardPrev() {
             onSharePdf = {},
             onSavePdf = {},
             onDeletePdf = {},
+            onModifyPdfFields = {}
         )
     }
 }

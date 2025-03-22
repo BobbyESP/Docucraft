@@ -27,6 +27,8 @@ interface ScannedPdfRepository {
      */
     suspend fun getAllScannedPdfsFlow(): Flow<List<ScannedPdf>>
 
+    suspend fun getPdfById(pdfId: String): ScannedPdf
+
     /**
      * Saves a PDF document obtained from a document scan result to the application's internal
      * storage.
@@ -46,6 +48,8 @@ interface ScannedPdfRepository {
         scanPdfResult: GmsDocumentScanningResult.Pdf,
         filename: String = UUID.randomUUID().toString(),
     )
+
+    suspend fun modifyTitleAndDescription(pdfId: String, title: String, description: String)
 
     /**
      * Deletes a PDF file from storage and database using its URI.

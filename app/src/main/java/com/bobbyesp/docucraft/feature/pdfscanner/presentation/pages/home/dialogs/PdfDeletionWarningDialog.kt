@@ -36,7 +36,7 @@ fun PdfDeletionWarningDialog(
                 tint = MaterialTheme.colorScheme.error,
             )
         },
-        title = { Text(text = stringResource(R.string.delete_pdf), fontWeight = FontWeight.Bold) },
+        title = { Text(text = stringResource(R.string.delete_pdf), fontWeight = FontWeight.SemiBold) },
         text = {
             Text(
                 text =
