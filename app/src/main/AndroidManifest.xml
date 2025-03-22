@@ -11,12 +11,12 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Docucraft"
+        android:theme="@style/Theme.Docucraft.Starting"
         tools:targetApi="35">
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:theme="@style/Theme.Docucraft">
+            android:launchMode="singleTask"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

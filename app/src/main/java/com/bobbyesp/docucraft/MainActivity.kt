@@ -15,6 +15,8 @@ import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalNavController
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.util.state.ResourceState
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
 import io.github.vinceglb.filekit.FileKit
@@ -29,10 +31,12 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
-        FileKit.init(this)
+        super.onCreate(savedInstanceState)
         installSplashScreen()
         enableEdgeToEdge()
-        super.onCreate(savedInstanceState)
+
+        FileKit.init(this)
+
         setContent {
             val navHostController = rememberNavController()
             val sonner = rememberToasterState()
