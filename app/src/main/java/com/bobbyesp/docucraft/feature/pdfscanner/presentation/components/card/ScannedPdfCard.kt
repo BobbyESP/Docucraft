@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material.icons.rounded.SaveAs
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.DropdownMenu
@@ -43,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
+import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import java.util.UUID
@@ -64,23 +67,36 @@ fun ScannedPdfCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            val imageModifier =
+                Modifier.height(72.dp)
+                    .aspectRatio(1f / 1.414f)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+
             if (pdf.thumbnail != null) {
                 AsyncImage(
-                    modifier =
-                        Modifier.height(72.dp)
-                            .aspectRatio(1f / 1.414f) // A4 vertical aspect ratio
-                            .clip(MaterialTheme.shapes.small)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                    modifier = imageModifier,
                     imageModel = pdf.thumbnail,
+                    failure = {
+                        Placeholder(
+                            modifier = Modifier.fillMaxSize(),
+                            icon = Icons.Rounded.QuestionMark,
+                            contentDescription = stringResource(id = R.string.file_icon),
+                            colorful = true,
+                        )
+                    },
+                    loading = {
+                        Icon(
+                            modifier = Modifier.padding(12.dp),
+                            imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
+                            contentDescription = stringResource(id = R.string.file_icon),
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                    },
                 )
             } else {
                 Icon(
-                    modifier =
-                        Modifier.height(72.dp)
-                            .aspectRatio(1f / 1.414f) // A4 vertical aspect ratio
-                            .clip(MaterialTheme.shapes.small)
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                            .padding(12.dp),
+                    modifier = imageModifier.padding(12.dp),
                     imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
                     contentDescription = stringResource(id = R.string.file_icon),
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,

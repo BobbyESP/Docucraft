@@ -31,7 +31,8 @@ fun Placeholder(
     Surface(
         tonalElevation = if (colorful) 0.dp else 8.dp,
         color =
-            if (colorful) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+            if (colorful) MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.surface,
         modifier = modifier,
     ) {
         icon?.let {
@@ -41,7 +42,7 @@ fun Placeholder(
                     imageVector = icon,
                     contentDescription = contentDescription,
                     tint =
-                        if (colorful) MaterialTheme.colorScheme.onPrimary
+                        if (colorful) MaterialTheme.colorScheme.onPrimaryContainer
                         else MaterialTheme.colorScheme.onSurface,
                 )
             }
