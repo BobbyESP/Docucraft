@@ -25,6 +25,7 @@ import com.bobbyesp.docucraft.core.util.UriSerializer
 @Serializable
 @Immutable
 data class ScannedPdf(
+    val id: String,
     val filename: String,
     val title: String?,
     val description: String?,
@@ -38,6 +39,7 @@ data class ScannedPdf(
     companion object {
         fun ScannedPdfEntity.toModel(): ScannedPdf {
             return ScannedPdf(
+                id = id,
                 filename = filename,
                 title = title,
                 description = description,

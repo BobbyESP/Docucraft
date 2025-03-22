@@ -45,6 +45,8 @@ import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
+import java.util.UUID
+import kotlin.uuid.Uuid
 
 @Composable
 fun ScannedPdfCard(
@@ -248,7 +250,8 @@ private fun PdfOptionsDropdownPrev() {
                 createdTimestamp = 1630000000000,
                 fileSize = 1024,
                 pageCount = 5,
-                thumbnail = "thumbnail"
+                thumbnail = "thumbnail",
+                id = UUID.randomUUID().toString()
             ),
             onSharePdf = {}
         )
@@ -270,7 +273,8 @@ private fun ScannedPdfCardPrev() {
                 createdTimestamp = 1630000000000,
                 fileSize = 1024,
                 pageCount = 5,
-                thumbnail = "thumbnail"
+                thumbnail = "thumbnail",
+                id = UUID.randomUUID().toString()
             ),
             onOpenPdf = {},
             onSharePdf = {},

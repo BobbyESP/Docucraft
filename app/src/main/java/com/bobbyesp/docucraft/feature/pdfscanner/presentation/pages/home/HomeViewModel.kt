@@ -43,9 +43,7 @@ class HomeViewModel(
         ResourceState.Loading()
     )
     val scannedPdfsListFlow = _scannedPdfsListFlow.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        ResourceState.Loading()
+        viewModelScope, SharingStarted.WhileSubscribed(5000), ResourceState.Loading()
     )
 
     private val _eventFlow = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
@@ -117,11 +115,9 @@ class HomeViewModel(
         activity: Activity,
         listener: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>
     ) {
-        gmsDocumentScanner.getStartScanIntent(activity)
-            .addOnSuccessListener { intentSender ->
+        gmsDocumentScanner.getStartScanIntent(activity).addOnSuccessListener { intentSender ->
                 listener.launch(IntentSenderRequest.Builder(intentSender).build())
-            }
-            .addOnFailureListener { exception ->
+            }.addOnFailureListener { exception ->
                 Log.e(TAG, "Failed to start scan: ${exception.message}", exception)
                 emitUiEvent(UiEvent.ScanResult.Failure(error = exception))
             }
@@ -178,12 +174,14 @@ class HomeViewModel(
                 extension = "pdf",
                 directory = dir,
             ) ?: run {
-                emitUiEvent(UiEvent.SavingResult.Failure(error = IllegalStateException("File selection cancelled or failed")))
+                emitUiEvent(UiEvent.SavingResult.Cancelled)
                 return
             }
 
             val internalPdf = PlatformFile(scannedPdf.path)
+
             internalPdf.copyTo(file)
+
             emitUiEvent(UiEvent.SavingResult.Success(file.uri))
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save PDF: ${e.message}", e)
@@ -192,24 +190,43 @@ class HomeViewModel(
     }
 
     private fun handleScanningResult(activityResult: ActivityResult) {
-        if (activityResult.resultCode == Activity.RESULT_OK) {
-            val scannerResult =
-                GmsDocumentScanningResult.fromActivityResultIntent(activityResult.data)
-            val scannedPdf = scannerResult?.pdf
+        when (activityResult.resultCode) {
+            Activity.RESULT_OK -> {
+                val data = activityResult.data
+                if (data == null) {
+                    emitUiEvent(UiEvent.ScanResult.Failure(error = IllegalStateException("Scan result intent data is null")))
+                    return
+                }
 
-            if (scannedPdf == null) {
-                emitUiEvent(UiEvent.ScanResult.Failure(error = IllegalStateException("Scanned PDF is null")))
-                return
+                val scannerResult = GmsDocumentScanningResult.fromActivityResultIntent(data)
+                if (scannerResult == null) {
+                    emitUiEvent(UiEvent.ScanResult.Failure(error = IllegalStateException("Scanner result could not be parsed")))
+                    return
+                }
+
+                val scannedPdf = scannerResult.pdf
+                if (scannedPdf == null) {
+                    emitUiEvent(UiEvent.ScanResult.Failure(error = IllegalStateException("Scanned PDF is null")))
+                    return
+                }
+
+                viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
+                    try {
+                        scannedPdfRepository.savePdf(scannedPdf)
+                        emitUiEvent(UiEvent.ScanResult.Success)
+                    } catch (th: Throwable) {
+                        Log.e(TAG, "Failed to save the scanned PDF: ${th.message}", th)
+                        emitUiEvent(UiEvent.ScanResult.Failure(error = th))
+                    }
+                }
             }
 
-            viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
-                try {
-                    scannedPdfRepository.savePdf(scannedPdf)
-                    emitUiEvent(UiEvent.ScanResult.Success)
-                } catch (th: Throwable) {
-                    Log.e(TAG, "Failed to save the scanned PDF: ${th.message}", th)
-                    emitUiEvent(UiEvent.ScanResult.Failure(error = th))
-                }
+            Activity.RESULT_CANCELED -> {
+                emitUiEvent(UiEvent.ScanResult.Cancelled)
+            }
+
+            else -> {
+                emitUiEvent(UiEvent.ScanResult.Failure(error = IllegalStateException("Unknown result code: ${activityResult.resultCode}")))
             }
         }
     }
@@ -241,6 +258,7 @@ class HomeViewModel(
         sealed class ScanResult : UiEvent {
             data object Success : ScanResult()
             data class Failure(val error: Throwable) : ScanResult()
+            data object Cancelled : ScanResult()
         }
 
         sealed class IssueOpening : UiEvent {
@@ -251,6 +269,7 @@ class HomeViewModel(
         sealed class SavingResult : UiEvent {
             data class Success(val uri: Uri) : SavingResult()
             data class Failure(val error: Throwable) : SavingResult()
+            data object Cancelled : SavingResult()
         }
 
         sealed class DeleteResult : UiEvent {

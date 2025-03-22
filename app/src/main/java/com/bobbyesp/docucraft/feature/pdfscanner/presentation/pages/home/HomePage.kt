@@ -1,6 +1,5 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home
 
-import android.os.Environment
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,7 +23,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -35,13 +33,6 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.util.state.ResourceState
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfCard
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.createDirectories
-import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
-import io.github.vinceglb.filekit.dialogs.compose.rememberFileSaverLauncher
-import io.github.vinceglb.filekit.filesDir
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,21 +111,17 @@ fun HomePage(
                             ScannedPdfCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .animateItem(),
-                                pdf = scannedPdf,
-                                onOpenPdf = { uri ->
-                                    onEvent(HomeViewModel.Event.PdfAction.Open(uri))
-                                },
-                                onSharePdf = { uri ->
-                                    onEvent(HomeViewModel.Event.PdfAction.Share(uri))
-                                },
-                                onDeletePdf = { uri ->
-                                    onEvent(HomeViewModel.Event.WarnAboutDeletion(uri))
-                                },
-                                onSavePdf = {
-                                    onEvent(HomeViewModel.Event.PdfAction.Save(scannedPdf))
-                                }
-                            )
+                                    .animateItem(
+                                        fadeInSpec = null, fadeOutSpec = null
+                                    ), pdf = scannedPdf, onOpenPdf = { uri ->
+                                onEvent(HomeViewModel.Event.PdfAction.Open(uri))
+                            }, onSharePdf = { uri ->
+                                onEvent(HomeViewModel.Event.PdfAction.Share(uri))
+                            }, onDeletePdf = { uri ->
+                                onEvent(HomeViewModel.Event.WarnAboutDeletion(uri))
+                            }, onSavePdf = {
+                                onEvent(HomeViewModel.Event.PdfAction.Save(scannedPdf))
+                            })
                         }
                     }
                 }
