@@ -45,46 +45,52 @@ fun HomePage(
     val scannedPdfs = scannedPdfsState.value
 
     val scannerLauncher =
-        rememberLauncherForActivityResult(contract = ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartIntentSenderForResult()
+        ) { result ->
             onEvent(HomeViewModel.Event.HandlePdfScanningResult(result))
         }
 
-    Scaffold(topBar = {
-        CenterAlignedTopAppBar(
-            modifier = Modifier, title = {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = stringResource(id = R.string.app_name).uppercase(),
-                        fontWeight = FontWeight.SemiBold,
-                        fontFamily = FontFamily.Monospace,
-                        style = MaterialTheme.typography.titleLarge,
-                        letterSpacing = 4.sp
-                    )
-                }
-            })
-    }, floatingActionButton = {
-        ExtendedFloatingActionButton(text = {
-            Text(text = stringResource(id = R.string.scan))
-        }, icon = {
-            Icon(
-                imageVector = Icons.Rounded.DocumentScanner, contentDescription = stringResource(
-                    id = R.string.scan_new_document
-                )
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                modifier = Modifier,
+                title = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = stringResource(id = R.string.app_name).uppercase(),
+                            fontWeight = FontWeight.SemiBold,
+                            fontFamily = FontFamily.Monospace,
+                            style = MaterialTheme.typography.titleLarge,
+                            letterSpacing = 4.sp,
+                        )
+                    }
+                },
             )
-        }, onClick = {
-            onEvent(HomeViewModel.Event.ScanPdf(activity = activity, listener = scannerLauncher))
-        })
-    }) { padding ->
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                text = { Text(text = stringResource(id = R.string.scan)) },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Rounded.DocumentScanner,
+                        contentDescription = stringResource(id = R.string.scan_new_document),
+                    )
+                },
+                onClick = {
+                    onEvent(
+                        HomeViewModel.Event.ScanPdf(activity = activity, listener = scannerLauncher)
+                    )
+                },
+            )
+        },
+    ) { padding ->
         Crossfade(targetState = scannedPdfs) { state ->
             when (state) {
                 is ResourceState.Loading<*> -> {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
-                        contentAlignment = Alignment.Center
+                        modifier = Modifier.fillMaxSize().padding(padding),
+                        contentAlignment = Alignment.Center,
                     ) {
                         CircularProgressIndicator()
                     }
@@ -92,10 +98,8 @@ fun HomePage(
 
                 is ResourceState.Error<*> -> {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
-                        contentAlignment = Alignment.Center
+                        modifier = Modifier.fillMaxSize().padding(padding),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = state.message ?: stringResource(id = R.string.error_loading_pdfs)
@@ -104,24 +108,26 @@ fun HomePage(
                 }
 
                 is ResourceState.Success<*> -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(), contentPadding = padding
-                    ) {
+                    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = padding) {
                         items(state.data ?: emptyList()) { scannedPdf ->
                             ScannedPdfCard(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .animateItem(
-                                        fadeInSpec = null, fadeOutSpec = null
-                                    ), pdf = scannedPdf, onOpenPdf = { uri ->
-                                onEvent(HomeViewModel.Event.PdfAction.Open(uri))
-                            }, onSharePdf = { uri ->
-                                onEvent(HomeViewModel.Event.PdfAction.Share(uri))
-                            }, onDeletePdf = { uri ->
-                                onEvent(HomeViewModel.Event.WarnAboutDeletion(uri))
-                            }, onSavePdf = {
-                                onEvent(HomeViewModel.Event.PdfAction.Save(scannedPdf))
-                            })
+                                modifier =
+                                    Modifier.fillMaxWidth()
+                                        .animateItem(fadeInSpec = null, fadeOutSpec = null),
+                                pdf = scannedPdf,
+                                onOpenPdf = { uri ->
+                                    onEvent(HomeViewModel.Event.PdfAction.Open(uri))
+                                },
+                                onSharePdf = { uri ->
+                                    onEvent(HomeViewModel.Event.PdfAction.Share(uri))
+                                },
+                                onDeletePdf = { uri ->
+                                    onEvent(HomeViewModel.Event.WarnAboutDeletion(uri))
+                                },
+                                onSavePdf = {
+                                    onEvent(HomeViewModel.Event.PdfAction.Save(scannedPdf))
+                                },
+                            )
                         }
                     }
                 }

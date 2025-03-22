@@ -23,24 +23,25 @@ import io.github.vinceglb.filekit.filesDir
 import io.github.vinceglb.filekit.path
 import io.github.vinceglb.filekit.sink
 import io.github.vinceglb.filekit.size
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.io.buffered
-import java.io.File
 
 class ScannedPdfRepositoryImpl(
     private val context: Context,
     private val fileRepository: FileRepository,
-    private val scannedPdfDao: ScannedPdfDao
+    private val scannedPdfDao: ScannedPdfDao,
 ) : ScannedPdfRepository {
     override suspend fun getAllScannedPdfsFlow(): Flow<List<ScannedPdf>> =
-        scannedPdfDao.getAllPdfsFlow().map { entities ->
-            entities.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        scannedPdfDao
+            .getAllPdfsFlow()
+            .map { entities -> entities.map { it.toModel() } }
+            .flowOn(Dispatchers.IO)
 
-    //TODO: Move this to FileRepository
+    // TODO: Move this to FileRepository
     private suspend fun writePdf(inputUri: Uri, outputFile: PlatformFile) {
         // Ensure directory exists
         val parentDir = PlatformFile(outputFile.path.substringBeforeLast('/'))
@@ -62,9 +63,7 @@ class ScannedPdfRepositoryImpl(
         }
     }
 
-    override suspend fun savePdf(
-        scanPdfResult: GmsDocumentScanningResult.Pdf, filename: String
-    ) {
+    override suspend fun savePdf(scanPdfResult: GmsDocumentScanningResult.Pdf, filename: String) {
         try {
             val outputDir = PlatformFile("${FileKit.filesDir}/scans/pdf")
             if (!outputDir.exists()) {
@@ -79,20 +78,24 @@ class ScannedPdfRepositoryImpl(
 
             if (fileSizeBytes == -1L) throw IllegalStateException("The file size is undefined")
 
-            val documentPath = FileProvider.getUriForFile(
-                context, App.CONTENT_PROVIDER_AUTHORITY, File(outputFile.path)
-            )
+            val documentPath =
+                FileProvider.getUriForFile(
+                    context,
+                    App.CONTENT_PROVIDER_AUTHORITY,
+                    File(outputFile.path),
+                )
 
-            val pdfEntity = ScannedPdfEntity(
-                filename = filename,
-                title = null,
-                description = null,
-                path = documentPath.toString(),
-                createdTimestamp = System.currentTimeMillis(),
-                fileSize = fileSizeBytes,
-                pageCount = scanPdfResult.pageCount,
-                thumbnail = null
-            )
+            val pdfEntity =
+                ScannedPdfEntity(
+                    filename = filename,
+                    title = null,
+                    description = null,
+                    path = documentPath.toString(),
+                    createdTimestamp = System.currentTimeMillis(),
+                    fileSize = fileSizeBytes,
+                    pageCount = scanPdfResult.pageCount,
+                    thumbnail = null,
+                )
             scannedPdfDao.insert(pdfEntity)
         } catch (e: Exception) {
             throw RuntimeException("Failed to save PDF: ${e.message}", e)
@@ -117,7 +120,9 @@ class ScannedPdfRepositoryImpl(
                     file.delete()
                     Log.d(TAG, "Successfully deleted file: $filePath")
                 } else {
-                    throw IllegalArgumentException("File does not exist at path: $filePath. Unable to delete.")
+                    throw IllegalArgumentException(
+                        "File does not exist at path: $filePath. Unable to delete."
+                    )
                     Log.w(TAG, "File does not exist at path: $filePath")
                 }
             } else {
@@ -132,37 +137,38 @@ class ScannedPdfRepositoryImpl(
                 file.delete()
                 Log.d(TAG, "Successfully deleted file: ${file.path}")
             } else {
-                throw IllegalArgumentException("File does not exist at path: ${file.path}. Unable to delete.")
+                throw IllegalArgumentException(
+                    "File does not exist at path: ${file.path}. Unable to delete."
+                )
                 Log.w(TAG, "File does not exist at path: ${file.path}")
             }
         }
     }
 
     override fun sharePdf(pdfPath: Uri) {
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            putExtra(Intent.EXTRA_STREAM, pdfPath)
-            setDataAndType(pdfPath, "application/pdf")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
+        val shareIntent =
+            Intent(Intent.ACTION_SEND).apply {
+                putExtra(Intent.EXTRA_STREAM, pdfPath)
+                setDataAndType(pdfPath, "application/pdf")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
         context.startActivity(
-            Intent.createChooser(
-                shareIntent, context.getString(R.string.share_pdf)
-            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            Intent.createChooser(shareIntent, context.getString(R.string.share_pdf))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         )
-
     }
 
     override fun openPdfInViewer(pdfPath: Uri) {
-        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            setDataAndType(pdfPath, "application/pdf")
-        }
+        val viewIntent =
+            Intent(Intent.ACTION_VIEW).apply {
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                setDataAndType(pdfPath, "application/pdf")
+            }
 
         context.startActivity(
-            Intent.createChooser(
-                viewIntent, context.getString(R.string.open_pdf_in_viewer)
-            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            Intent.createChooser(viewIntent, context.getString(R.string.open_pdf_in_viewer))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
     }
 

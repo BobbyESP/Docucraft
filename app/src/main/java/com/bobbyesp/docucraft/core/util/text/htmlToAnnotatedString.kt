@@ -25,28 +25,34 @@ fun htmlToAnnotatedString(html: String): AnnotatedString {
         when (span) {
             is StyleSpan -> {
                 when (span.style) {
-                    Typeface.BOLD -> annotatedString.addStyle(
-                        SpanStyle(fontWeight = FontWeight.Bold),
-                        start, end
-                    )
-                    Typeface.ITALIC -> annotatedString.addStyle(
-                        SpanStyle(fontStyle = FontStyle.Italic),
-                        start, end
-                    )
+                    Typeface.BOLD ->
+                        annotatedString.addStyle(
+                            SpanStyle(fontWeight = FontWeight.Bold),
+                            start,
+                            end,
+                        )
+                    Typeface.ITALIC ->
+                        annotatedString.addStyle(
+                            SpanStyle(fontStyle = FontStyle.Italic),
+                            start,
+                            end,
+                        )
                 }
             }
-            is UnderlineSpan -> annotatedString.addStyle(
-                SpanStyle(textDecoration = TextDecoration.Underline),
-                start, end
-            )
-            is StrikethroughSpan -> annotatedString.addStyle(
-                SpanStyle(textDecoration = TextDecoration.LineThrough),
-                start, end
-            )
-            is ForegroundColorSpan -> annotatedString.addStyle(
-                SpanStyle(color = Color(span.foregroundColor)),
-                start, end
-            )
+            is UnderlineSpan ->
+                annotatedString.addStyle(
+                    SpanStyle(textDecoration = TextDecoration.Underline),
+                    start,
+                    end,
+                )
+            is StrikethroughSpan ->
+                annotatedString.addStyle(
+                    SpanStyle(textDecoration = TextDecoration.LineThrough),
+                    start,
+                    end,
+                )
+            is ForegroundColorSpan ->
+                annotatedString.addStyle(SpanStyle(color = Color(span.foregroundColor)), start, end)
         }
     }
 

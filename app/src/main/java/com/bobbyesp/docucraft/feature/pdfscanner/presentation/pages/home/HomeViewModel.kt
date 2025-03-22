@@ -39,12 +39,14 @@ class HomeViewModel(
         _eventFlow.tryEmit(UiEvent.Error(throwable))
     }
 
-    private val _scannedPdfsListFlow = MutableStateFlow<ResourceState<List<ScannedPdf>>>(
-        ResourceState.Loading()
-    )
-    val scannedPdfsListFlow = _scannedPdfsListFlow.stateIn(
-        viewModelScope, SharingStarted.WhileSubscribed(5000), ResourceState.Loading()
-    )
+    private val _scannedPdfsListFlow =
+        MutableStateFlow<ResourceState<List<ScannedPdf>>>(ResourceState.Loading())
+    val scannedPdfsListFlow =
+        _scannedPdfsListFlow.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            ResourceState.Loading(),
+        )
 
     private val _eventFlow = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
     val eventFlow = _eventFlow.asSharedFlow()
@@ -58,9 +60,7 @@ class HomeViewModel(
             try {
                 supervisorScope {
                     scannedPdfRepository.getAllScannedPdfsFlow().collect { mappedPdfs ->
-                        _scannedPdfsListFlow.update {
-                            ResourceState.Success(mappedPdfs)
-                        }
+                        _scannedPdfsListFlow.update { ResourceState.Success(mappedPdfs) }
                     }
                 }
             } catch (e: Exception) {
@@ -84,7 +84,11 @@ class HomeViewModel(
 
             is Event.ScanPdf -> {
                 if (event.activity == null) {
-                    emitUiEvent(UiEvent.ScanResult.Failure(error = IllegalStateException("Activity is null")))
+                    emitUiEvent(
+                        UiEvent.ScanResult.Failure(
+                            error = IllegalStateException("Activity is null")
+                        )
+                    )
                     return
                 }
                 scanPdf(activity = event.activity, listener = event.listener)
@@ -113,11 +117,14 @@ class HomeViewModel(
 
     private fun scanPdf(
         activity: Activity,
-        listener: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>
+        listener: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
     ) {
-        gmsDocumentScanner.getStartScanIntent(activity).addOnSuccessListener { intentSender ->
+        gmsDocumentScanner
+            .getStartScanIntent(activity)
+            .addOnSuccessListener { intentSender ->
                 listener.launch(IntentSenderRequest.Builder(intentSender).build())
-            }.addOnFailureListener { exception ->
+            }
+            .addOnFailureListener { exception ->
                 Log.e(TAG, "Failed to start scan: ${exception.message}", exception)
                 emitUiEvent(UiEvent.ScanResult.Failure(error = exception))
             }
@@ -156,27 +163,28 @@ class HomeViewModel(
     }
 
     private fun savePdf(scannedPdf: ScannedPdf) {
-        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
-            copyPdfToDirectory(scannedPdf)
-        }
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) { copyPdfToDirectory(scannedPdf) }
     }
 
     private suspend fun copyPdfToDirectory(scannedPdf: ScannedPdf) {
         try {
-            val androidDocumentsDirectory = PlatformFile(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-            )
+            val androidDocumentsDirectory =
+                PlatformFile(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                )
 
             val dir = PlatformFile(androidDocumentsDirectory, "Docucraft")
 
-            val file = FileKit.openFileSaver(
-                suggestedName = scannedPdf.title ?: scannedPdf.filename,
-                extension = "pdf",
-                directory = dir,
-            ) ?: run {
-                emitUiEvent(UiEvent.SavingResult.Cancelled)
-                return
-            }
+            val file =
+                FileKit.openFileSaver(
+                    suggestedName = scannedPdf.title ?: scannedPdf.filename,
+                    extension = "pdf",
+                    directory = dir,
+                )
+                    ?: run {
+                        emitUiEvent(UiEvent.SavingResult.Cancelled)
+                        return
+                    }
 
             val internalPdf = PlatformFile(scannedPdf.path)
 
@@ -194,19 +202,31 @@ class HomeViewModel(
             Activity.RESULT_OK -> {
                 val data = activityResult.data
                 if (data == null) {
-                    emitUiEvent(UiEvent.ScanResult.Failure(error = IllegalStateException("Scan result intent data is null")))
+                    emitUiEvent(
+                        UiEvent.ScanResult.Failure(
+                            error = IllegalStateException("Scan result intent data is null")
+                        )
+                    )
                     return
                 }
 
                 val scannerResult = GmsDocumentScanningResult.fromActivityResultIntent(data)
                 if (scannerResult == null) {
-                    emitUiEvent(UiEvent.ScanResult.Failure(error = IllegalStateException("Scanner result could not be parsed")))
+                    emitUiEvent(
+                        UiEvent.ScanResult.Failure(
+                            error = IllegalStateException("Scanner result could not be parsed")
+                        )
+                    )
                     return
                 }
 
                 val scannedPdf = scannerResult.pdf
                 if (scannedPdf == null) {
-                    emitUiEvent(UiEvent.ScanResult.Failure(error = IllegalStateException("Scanned PDF is null")))
+                    emitUiEvent(
+                        UiEvent.ScanResult.Failure(
+                            error = IllegalStateException("Scanned PDF is null")
+                        )
+                    )
                     return
                 }
 
@@ -226,7 +246,14 @@ class HomeViewModel(
             }
 
             else -> {
-                emitUiEvent(UiEvent.ScanResult.Failure(error = IllegalStateException("Unknown result code: ${activityResult.resultCode}")))
+                emitUiEvent(
+                    UiEvent.ScanResult.Failure(
+                        error =
+                            IllegalStateException(
+                                "Unknown result code: ${activityResult.resultCode}"
+                            )
+                    )
+                )
             }
         }
     }
@@ -239,15 +266,18 @@ class HomeViewModel(
     interface Event {
         data class ScanPdf(
             val activity: Activity?,
-            val listener: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>
+            val listener: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
         ) : Event
 
         data class HandlePdfScanningResult(val result: ActivityResult) : Event
 
         sealed class PdfAction : Event {
             data class Open(val pdfPath: Uri) : PdfAction()
+
             data class Save(val scannedPdf: ScannedPdf) : PdfAction()
+
             data class Share(val pdfPath: Uri) : PdfAction()
+
             data class Delete(val pdfPath: Uri) : PdfAction()
         }
 
@@ -257,23 +287,29 @@ class HomeViewModel(
     interface UiEvent {
         sealed class ScanResult : UiEvent {
             data object Success : ScanResult()
+
             data class Failure(val error: Throwable) : ScanResult()
+
             data object Cancelled : ScanResult()
         }
 
         sealed class IssueOpening : UiEvent {
             data class PdfViewer(val error: Throwable) : IssueOpening()
+
             data class ShareIntent(val error: Throwable) : IssueOpening()
         }
 
         sealed class SavingResult : UiEvent {
             data class Success(val uri: Uri) : SavingResult()
+
             data class Failure(val error: Throwable) : SavingResult()
+
             data object Cancelled : SavingResult()
         }
 
         sealed class DeleteResult : UiEvent {
             data object Success : DeleteResult()
+
             data class Failure(val error: Throwable) : DeleteResult()
         }
 

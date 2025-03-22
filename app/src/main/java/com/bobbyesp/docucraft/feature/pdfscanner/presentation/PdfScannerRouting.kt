@@ -7,11 +7,7 @@ import com.bobbyesp.docucraft.core.presentation.motion.animatedComposable
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomePageWrapper
 
 fun NavGraphBuilder.pdfScannerRouting() {
-    navigation<Route.DocucraftNavigator>(
-        startDestination = Route.DocucraftNavigator.Home
-    ) {
-        animatedComposable<Route.DocucraftNavigator.Home> {
-            HomePageWrapper()
-        }
+    navigation<Route.DocucraftNavigator>(startDestination = Route.DocucraftNavigator.Home) {
+        animatedComposable<Route.DocucraftNavigator.Home> { HomePageWrapper() }
     }
 }

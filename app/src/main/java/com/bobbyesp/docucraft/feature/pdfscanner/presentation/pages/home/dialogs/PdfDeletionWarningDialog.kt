@@ -22,39 +22,46 @@ fun PdfDeletionWarningDialog(
     modifier: Modifier = Modifier,
     scannedPdf: ScannedPdf,
     onDismiss: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
 ) {
     val context = LocalContext.current
 
-    AlertDialog(modifier = modifier, onDismissRequest = onDismiss, icon = {
-        Icon(
-            imageVector = Icons.Rounded.DeleteForever,
-            contentDescription = stringResource(R.string.delete_pdf),
-            tint = MaterialTheme.colorScheme.error
-        )
-    }, title = {
-        Text(text = stringResource(R.string.delete_pdf), fontWeight = FontWeight.Bold)
-    }, text = {
-        Text(
-            text = stringResource(
-                R.string.delete_pdf_warning_message,
-                scannedPdf.title ?: scannedPdf.filename,
-                scannedPdf.pageCount.toString(),
-                formatFileSize(context, scannedPdf.fileSize)
+    AlertDialog(
+        modifier = modifier,
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Rounded.DeleteForever,
+                contentDescription = stringResource(R.string.delete_pdf),
+                tint = MaterialTheme.colorScheme.error,
             )
-        )
-    }, confirmButton = {
-        TextButton(
-            onClick = onConfirm, colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer
+        },
+        title = { Text(text = stringResource(R.string.delete_pdf), fontWeight = FontWeight.Bold) },
+        text = {
+            Text(
+                text =
+                    stringResource(
+                        R.string.delete_pdf_warning_message,
+                        scannedPdf.title ?: scannedPdf.filename,
+                        scannedPdf.pageCount.toString(),
+                        formatFileSize(context, scannedPdf.fileSize),
+                    )
             )
-        ) {
-            Text(text = stringResource(R.string.delete))
-        }
-    }, dismissButton = {
-        TextButton(onClick = onDismiss) {
-            Text(text = stringResource(R.string.cancel))
-        }
-    })
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
+            ) {
+                Text(text = stringResource(R.string.delete))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.cancel)) }
+        },
+    )
 }

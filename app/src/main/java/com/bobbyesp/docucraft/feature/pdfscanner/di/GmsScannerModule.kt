@@ -10,12 +10,12 @@ import org.koin.dsl.module
 
 val gmsScannerModule = module {
     single<GmsDocumentScannerOptions> {
-        GmsDocumentScannerOptions.Builder().setScannerMode(SCANNER_MODE_FULL)
-            .setGalleryImportAllowed(true).setResultFormats(RESULT_FORMAT_JPEG, RESULT_FORMAT_PDF)
+        GmsDocumentScannerOptions.Builder()
+            .setScannerMode(SCANNER_MODE_FULL)
+            .setGalleryImportAllowed(true)
+            .setResultFormats(RESULT_FORMAT_JPEG, RESULT_FORMAT_PDF)
             .build()
     }
 
-    single<GmsDocumentScanner> {
-        GmsDocumentScanning.getClient(get())
-    }
+    single<GmsDocumentScanner> { GmsDocumentScanning.getClient(get()) }
 }

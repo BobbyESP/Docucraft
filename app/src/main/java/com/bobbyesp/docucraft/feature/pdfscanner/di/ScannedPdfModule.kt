@@ -12,7 +12,7 @@ val scannedPdfModule = module {
         ScannedPdfRepositoryImpl(
             context = androidContext(),
             fileRepository = get<FileRepository>(),
-            scannedPdfDao = get<ScannedPdfDao>()
+            scannedPdfDao = get<ScannedPdfDao>(),
         )
     }
 }

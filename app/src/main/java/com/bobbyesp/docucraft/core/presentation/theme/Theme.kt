@@ -9,18 +9,15 @@ import com.materialkolor.rememberDynamicMaterialThemeState
 
 @Composable
 fun DocucraftTheme(
-    themeState: DynamicMaterialThemeState = rememberDynamicMaterialThemeState(
-        seedColor = Color(DEFAULT_SEED_COLOR),
-        isDark = isSystemInDarkTheme(),
-    ),
+    themeState: DynamicMaterialThemeState =
+        rememberDynamicMaterialThemeState(
+            seedColor = Color(DEFAULT_SEED_COLOR),
+            isDark = isSystemInDarkTheme(),
+        ),
     dynamicColorEnabled: Boolean = true,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val canUseDynamicColor = dynamicColorEnabled && isDynamicColoringSupported()
 
-    DynamicMaterialTheme(
-        state = themeState,
-        animate = true,
-        content = content,
-    )
+    DynamicMaterialTheme(state = themeState, animate = true, content = content)
 }

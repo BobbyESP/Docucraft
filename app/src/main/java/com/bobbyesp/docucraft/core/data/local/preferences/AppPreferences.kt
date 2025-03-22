@@ -5,7 +5,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
-import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference.Companion.DarkThemeValue
 import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.DARK_THEME_VALUE
 import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.HIGH_CONTRAST
 import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.MARQUEE_TEXT_ENABLED
@@ -13,6 +12,7 @@ import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.PALETTE
 import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.THEME_COLOR
 import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.USE_DYNAMIC_COLORING
 import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference
+import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference.Companion.DarkThemeValue
 import com.bobbyesp.docucraft.core.presentation.theme.isDynamicColoringSupported
 import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.CoroutineScope

@@ -8,7 +8,7 @@ import com.bobbyesp.docucraft.feature.pdfscanner.data.local.db.entity.ScannedPdf
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface ScannedPdfDao: BaseDao<ScannedPdfEntity> {
+interface ScannedPdfDao : BaseDao<ScannedPdfEntity> {
     @Query("SELECT * FROM scanned_pdfs ORDER BY createdTimestamp DESC LIMIT :limit OFFSET :offset")
     fun fetchPaginated(offset: Int = 0, limit: Int = 20): PagingSource<Int, ScannedPdfEntity>
 
@@ -36,20 +36,16 @@ interface ScannedPdfDao: BaseDao<ScannedPdfEntity> {
     @Query("SELECT * FROM scanned_pdfs WHERE fileSize > :minSizeBytes")
     suspend fun getPdfsByMinSize(minSizeBytes: Long): List<ScannedPdfEntity>
 
-    @Query("SELECT COUNT(*) FROM scanned_pdfs")
-    suspend fun getPdfCount(): Int
+    @Query("SELECT COUNT(*) FROM scanned_pdfs") suspend fun getPdfCount(): Int
 
-    @Query("DELETE FROM scanned_pdfs WHERE id = :id")
-    suspend fun deleteById(id: String): Int
+    @Query("DELETE FROM scanned_pdfs WHERE id = :id") suspend fun deleteById(id: String): Int
 
     @Query("DELETE FROM scanned_pdfs WHERE path = :path")
     suspend fun deleteByPath(path: String): Int
 
-    @Query("DELETE FROM scanned_pdfs")
-    suspend fun deleteAll(): Int
+    @Query("DELETE FROM scanned_pdfs") suspend fun deleteAll(): Int
 
-    @Query("SELECT SUM(fileSize) FROM scanned_pdfs")
-    suspend fun getTotalPdfSize(): Long?
+    @Query("SELECT SUM(fileSize) FROM scanned_pdfs") suspend fun getTotalPdfSize(): Long?
 
     @Query("SELECT * FROM scanned_pdfs WHERE createdTimestamp BETWEEN :startTime AND :endTime")
     suspend fun getPdfsBetweenDates(startTime: Long, endTime: Long): List<ScannedPdfEntity>

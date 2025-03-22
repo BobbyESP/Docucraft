@@ -8,11 +8,7 @@ import org.koin.dsl.module
 
 val scannedPdfsDatabaseModule = module {
     single<PdfDatabase> {
-        Room.databaseBuilder(
-            androidContext(),
-            PdfDatabase::class.java,
-            "scanned_pdfs.db"
-        ).build()
+        Room.databaseBuilder(androidContext(), PdfDatabase::class.java, "scanned_pdfs.db").build()
     }
 
     single<ScannedPdfDao> { get<PdfDatabase>().scannedPdfDao() }

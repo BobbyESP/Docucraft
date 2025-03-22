@@ -13,6 +13,6 @@ const val CURRENT_VERSION = 1
     exportSchema = true,
     autoMigrations = [],
 )
-abstract class PdfDatabase: RoomDatabase() {
+abstract class PdfDatabase : RoomDatabase() {
     abstract fun scannedPdfDao(): ScannedPdfDao
 }

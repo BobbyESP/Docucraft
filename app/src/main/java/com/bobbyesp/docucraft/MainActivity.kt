@@ -15,8 +15,6 @@ import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalNavController
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
-import com.bobbyesp.docucraft.core.util.state.ResourceState
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
 import io.github.vinceglb.filekit.FileKit
@@ -44,22 +42,19 @@ class MainActivity : ComponentActivity(), KoinComponent {
                 DocucraftTheme {
                     val windowSizeClass = calculateWindowSizeClass(this)
 
-                    CompositionLocalProvider(
-                        LocalNavController provides navHostController
-                    ) {
+                    CompositionLocalProvider(LocalNavController provides navHostController) {
                         AppLocalSettingsProvider(
                             windowWidthSize = windowSizeClass.widthSizeClass,
                             sonner = sonner,
                             appPreferences = appPreferences,
-                            imageLoader = imageLoader
+                            imageLoader = imageLoader,
                         ) {
-                            Navigator(
-                                navHostController = navHostController
-                            )
+                            Navigator(navHostController = navHostController)
                             Toaster(
                                 state = sonner,
                                 richColors = true,
-                                darkTheme = isSystemInDarkTheme() //TODO: Change by the settings wrapper
+                                darkTheme =
+                                    isSystemInDarkTheme(), // TODO: Change by the settings wrapper
                             )
                         }
                     }

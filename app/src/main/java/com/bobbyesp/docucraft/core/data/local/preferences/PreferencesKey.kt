@@ -9,8 +9,8 @@ import com.bobbyesp.docucraft.core.presentation.theme.DEFAULT_SEED_COLOR
 import com.materialkolor.PaletteStyle
 
 /**
- * A sealed class representing different types of preference keys used in the application.
- * Each preference key has a type, a key, and a default value.
+ * A sealed class representing different types of preference keys used in the application. Each
+ * preference key has a type, a key, and a default value.
  *
  * @param T The type of the preference value.
  * @property key The key used to store the preference.

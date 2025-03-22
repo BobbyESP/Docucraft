@@ -2,16 +2,16 @@ package com.bobbyesp.docucraft.feature.pdfscanner.domain.model
 
 import android.net.Uri
 import androidx.compose.runtime.Immutable
-import com.bobbyesp.docucraft.feature.pdfscanner.data.local.db.entity.ScannedPdfEntity
-import kotlinx.serialization.Serializable
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.core.util.UriSerializer
+import com.bobbyesp.docucraft.feature.pdfscanner.data.local.db.entity.ScannedPdfEntity
+import kotlinx.serialization.Serializable
 
 /**
  * Represents a scanned PDF document.
  *
- * This data class holds information about a scanned PDF file, including its name,
- * location, creation time, size, number of pages, and a thumbnail image.
+ * This data class holds information about a scanned PDF file, including its name, location,
+ * creation time, size, number of pages, and a thumbnail image.
  *
  * @property filename The name of the PDF file (e.g., "document.pdf").
  * @property title The title of the PDF document.
@@ -29,12 +29,11 @@ data class ScannedPdf(
     val filename: String,
     val title: String?,
     val description: String?,
-    @Serializable(with = UriSerializer::class)
-    val path: Uri,
+    @Serializable(with = UriSerializer::class) val path: Uri,
     val createdTimestamp: Long,
     val fileSize: Long,
     val pageCount: Int,
-    val thumbnail: String?
+    val thumbnail: String?,
 ) {
     companion object {
         fun ScannedPdfEntity.toModel(): ScannedPdf {
@@ -47,7 +46,7 @@ data class ScannedPdf(
                 createdTimestamp = createdTimestamp,
                 fileSize = fileSize,
                 pageCount = pageCount,
-                thumbnail = thumbnail
+                thumbnail = thumbnail,
             )
         }
     }

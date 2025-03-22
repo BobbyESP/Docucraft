@@ -9,7 +9,8 @@ import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey
 
 @Stable
 data class DarkThemePreference(
-    val darkThemeValue: DarkThemeValue = DarkThemeValue.valueOf(PreferencesKey.DARK_THEME_VALUE.defaultValue),
+    val darkThemeValue: DarkThemeValue =
+        DarkThemeValue.valueOf(PreferencesKey.DARK_THEME_VALUE.defaultValue),
     val isHighContrastModeEnabled: Boolean = PreferencesKey.HIGH_CONTRAST.defaultValue,
 ) {
     companion object {

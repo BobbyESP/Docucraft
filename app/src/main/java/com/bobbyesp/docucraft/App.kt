@@ -11,13 +11,11 @@ import com.bobbyesp.docucraft.feature.pdfscanner.di.gmsScannerModule
 import com.bobbyesp.docucraft.feature.pdfscanner.di.pdfScannerViewModels
 import com.bobbyesp.docucraft.feature.pdfscanner.di.scannedPdfModule
 import com.bobbyesp.docucraft.feature.pdfscanner.di.scannedPdfsDatabaseModule
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.dialogs.init
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
 
-class App: Application() {
+class App : Application() {
     override fun onCreate() {
         startKoin {
             androidLogger()
@@ -27,12 +25,12 @@ class App: Application() {
             modules(fileManagementModule)
             modules(pdfScannerViewModels)
         }
-        packageInfo = packageManager.run {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) getPackageInfo(
-                packageName, PackageManager.PackageInfoFlags.of(0)
-            ) else
-                getPackageInfo(packageName, 0)
-        }
+        packageInfo =
+            packageManager.run {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                    getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+                else getPackageInfo(packageName, 0)
+            }
         super.onCreate()
     }
 
