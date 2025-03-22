@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
-import androidx.core.net.toUri
 import com.bobbyesp.docucraft.App
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.repository.FileRepository
@@ -41,6 +40,7 @@ class ScannedPdfRepositoryImpl(
             entities.map { it.toModel() }
         }.flowOn(Dispatchers.IO)
 
+    //TODO: Move this to FileRepository
     private suspend fun writePdf(inputUri: Uri, outputFile: PlatformFile) {
         // Ensure directory exists
         val parentDir = PlatformFile(outputFile.path.substringBeforeLast('/'))
@@ -100,31 +100,41 @@ class ScannedPdfRepositoryImpl(
     }
 
     override suspend fun deletePdf(pdfPath: Uri) {
-        try {
-            val pdfEntity = scannedPdfDao.fetchByPath(pdfPath.toString())
-                ?: throw IllegalArgumentException("PDF not found in database")
+        // First remove from database to maintain referential integrity
+        val deletedCount = scannedPdfDao.deleteByPath(pdfPath.toString())
 
-            // Create a PlatformFile from the file path to use FileKit APIs
-            val filePath = pdfEntity.path.toUri().path
-                ?: throw IllegalArgumentException("Invalid file path in database")
+        if (deletedCount <= 0) {
+            throw IllegalArgumentException("No PDF found with path: $pdfPath")
+        }
 
-            val pdfFile = PlatformFile(filePath)
-
-            // Check if file exists before attempting to delete
-            if (pdfFile.exists()) {
-                // Delete the file from storage
-                pdfFile.delete()
+        // Then attempt to delete the physical file
+        if (pdfPath.scheme == "content") {
+            // For content URIs, try to extract the file path
+            val filePath = fileRepository.getFilePathFromUri(pdfPath)
+            if (filePath != null) {
+                val file = PlatformFile(filePath)
+                if (file.exists()) {
+                    file.delete()
+                    Log.d(TAG, "Successfully deleted file: $filePath")
+                } else {
+                    throw IllegalArgumentException("File does not exist at path: $filePath. Unable to delete.")
+                    Log.w(TAG, "File does not exist at path: $filePath")
+                }
             } else {
-                Log.w("ScannedPdfRepository", "PDF file not found at path: $filePath")
+                // Fallback to direct content resolver delete for content URI
+                val rowsDeleted = context.contentResolver.delete(pdfPath, null, null)
+                Log.d(TAG, "Content resolver delete result: $rowsDeleted rows affected")
             }
-
-            // Remove record from database regardless of file existence
-            scannedPdfDao.deleteById(pdfEntity.id)
-
-            Log.d("ScannedPdfRepository", "PDF deleted successfully: $filePath")
-        } catch (e: Exception) {
-            Log.e("ScannedPdfRepository", "Error deleting PDF", e)
-            throw e
+        } else {
+            // For file URIs, convert to file path
+            val file = PlatformFile(pdfPath.path ?: "")
+            if (file.exists()) {
+                file.delete()
+                Log.d(TAG, "Successfully deleted file: ${file.path}")
+            } else {
+                throw IllegalArgumentException("File does not exist at path: ${file.path}. Unable to delete.")
+                Log.w(TAG, "File does not exist at path: ${file.path}")
+            }
         }
     }
 
@@ -154,5 +164,9 @@ class ScannedPdfRepositoryImpl(
                 viewIntent, context.getString(R.string.open_pdf_in_viewer)
             ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
+    }
+
+    companion object {
+        private const val TAG = "ScannedPdfRepository"
     }
 }

@@ -12,4 +12,6 @@ interface FileRepository {
     suspend fun deleteFile(file: File)
 
     suspend fun readBytesFromUri(uri: Uri): ByteArray
+
+    fun getFilePathFromUri(uri: Uri): String?
 }

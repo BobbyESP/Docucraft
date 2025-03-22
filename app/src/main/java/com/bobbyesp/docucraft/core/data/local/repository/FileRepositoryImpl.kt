@@ -2,6 +2,7 @@ package com.bobbyesp.docucraft.core.data.local.repository
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.core.domain.FileDestination
 import com.bobbyesp.docucraft.core.domain.repository.FileRepository
@@ -75,6 +76,30 @@ class FileRepositoryImpl(
                 buffered.readBytes()
             }
         } ?: throw IOException("Failed to read bytes from URI: $uri")
+    }
+
+    override fun getFilePathFromUri(uri: Uri): String? {
+        return try {
+            when (uri.scheme) {
+                "file" -> uri.path
+                "content" -> {
+                    val cursor = context.contentResolver.query(uri, null, null, null, null)
+                    cursor?.use {
+                        if (it.moveToFirst()) {
+                            val columnIndex = it.getColumnIndex("_data")
+                            if (columnIndex != -1) {
+                                return it.getString(columnIndex)
+                            }
+                        }
+                    }
+                    null
+                }
+                else -> null
+            }
+        } catch (e: Exception) {
+            Log.e("FileRepository", "Error extracting file path: ${e.message}", e)
+            null
+        }
     }
 
     /**

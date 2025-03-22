@@ -42,6 +42,9 @@ interface ScannedPdfDao: BaseDao<ScannedPdfEntity> {
     @Query("DELETE FROM scanned_pdfs WHERE id = :id")
     suspend fun deleteById(id: String): Int
 
+    @Query("DELETE FROM scanned_pdfs WHERE path = :path")
+    suspend fun deleteByPath(path: String): Int
+
     @Query("DELETE FROM scanned_pdfs")
     suspend fun deleteAll(): Int
 
