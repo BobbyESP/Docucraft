@@ -129,7 +129,7 @@ fun HomePage(
                                     onEvent(HomeViewModel.Event.PdfAction.Share(uri))
                                 },
                                 onDeletePdf = { uri ->
-                                    onEvent(HomeViewModel.Event.PdfAction.Delete(uri))
+                                    onEvent(HomeViewModel.Event.WarnAboutDeletion(uri))
                                 },
                                 onSavePdf = {
                                     onEvent(HomeViewModel.Event.PdfAction.Save(scannedPdf))

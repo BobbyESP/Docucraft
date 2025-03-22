@@ -41,9 +41,6 @@ class HomeViewModel(
         _eventFlow.tryEmit(UiEvent.Error(throwable))
     }
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
     private val _scannedPdfsListFlow = MutableStateFlow<ResourceState<List<ScannedPdf>>>(
         ResourceState.Loading()
     )
@@ -62,7 +59,6 @@ class HomeViewModel(
 
     private fun loadScannedPdfs() {
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
-            _isLoading.value = true
             try {
                 supervisorScope {
                     scannedPdfRepository.getAllScannedPdfsFlow().collect { mappedPdfs ->
@@ -76,10 +72,12 @@ class HomeViewModel(
                 _scannedPdfsListFlow.update {
                     ResourceState.Error(errorMessage = e.message ?: "An unexpected error occurred")
                 }
-            } finally {
-                _isLoading.value = false
             }
         }
+    }
+
+    fun getPdfByPath(path: Uri): ScannedPdf? {
+        return scannedPdfsListFlow.value.data?.find { it.path == path }
     }
 
     fun onEvent(event: Event) {
@@ -101,8 +99,14 @@ class HomeViewModel(
                     is Event.PdfAction.Open -> openPdfInViewer(pdfPath = event.pdfPath)
                     is Event.PdfAction.Save -> savePdf(scannedPdf = event.scannedPdf)
                     is Event.PdfAction.Share -> sharePdf(pdfPath = event.pdfPath)
-                    is Event.PdfAction.Delete -> deletePdf(pdfPath = event.pdfPath)
+                    is Event.PdfAction.Delete -> {
+                        deletePdf(pdfPath = event.pdfPath)
+                    }
                 }
+            }
+
+            is Event.WarnAboutDeletion -> {
+                emitUiEvent(UiEvent.IsDeletionWanted(uri = event.uri))
             }
         }
     }
@@ -231,6 +235,8 @@ class HomeViewModel(
             data class Share(val pdfPath: Uri) : PdfAction()
             data class Delete(val pdfPath: Uri) : PdfAction()
         }
+
+        data class WarnAboutDeletion(val uri: Uri) : Event
     }
 
     interface UiEvent {
@@ -255,6 +261,8 @@ class HomeViewModel(
         }
 
         data class Error(val error: Throwable) : UiEvent
+
+        data class IsDeletionWanted(val uri: Uri) : UiEvent
     }
 
     companion object {
