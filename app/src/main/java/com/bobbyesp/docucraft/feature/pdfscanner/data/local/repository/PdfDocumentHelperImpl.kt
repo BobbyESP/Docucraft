@@ -12,40 +12,43 @@ import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.PdfDocumentHe
 import java.io.File
 import java.io.FileOutputStream
 
-class PdfDocumentHelperImpl(
-    private val context: Context
-) : PdfDocumentHelper {
+class PdfDocumentHelperImpl(private val context: Context) : PdfDocumentHelper {
     companion object {
         private const val TAG = "PdfDocumentHelperImpl"
     }
 
     override fun savePdfPageAsImage(
-        pdfUri: Uri, outputFile: File, pageIndex: Int, format: Bitmap.CompressFormat, quality: Int
+        pdfUri: Uri,
+        outputFile: File,
+        pageIndex: Int,
+        format: Bitmap.CompressFormat,
+        quality: Int,
     ) {
         var parcelFileDescriptor: ParcelFileDescriptor? = null
         try {
-            parcelFileDescriptor = when (pdfUri.scheme) {
-                ContentResolver.SCHEME_FILE -> {
-                    // If it's a file URI, we can use the traditional File approach
-                    val path = pdfUri.path
-                    if (path.isNullOrEmpty()) {
-                        Log.e(TAG, "Empty path in file URI")
+            parcelFileDescriptor =
+                when (pdfUri.scheme) {
+                    ContentResolver.SCHEME_FILE -> {
+                        // If it's a file URI, we can use the traditional File approach
+                        val path = pdfUri.path
+                        if (path.isNullOrEmpty()) {
+                            Log.e(TAG, "Empty path in file URI")
+                            return
+                        }
+                        ParcelFileDescriptor.open(File(path), ParcelFileDescriptor.MODE_READ_ONLY)
+                    }
+
+                    ContentResolver.SCHEME_CONTENT -> {
+                        Log.i(TAG, "Opened file descriptor for content URI: $pdfUri")
+                        // If it's a content URI, we need to use the ContentResolver
+                        context.contentResolver.openFileDescriptor(pdfUri, "r")
+                    }
+
+                    else -> {
+                        Log.e(TAG, "Unsupported URI scheme: ${pdfUri.scheme}")
                         return
                     }
-                    ParcelFileDescriptor.open(File(path), ParcelFileDescriptor.MODE_READ_ONLY)
                 }
-
-                ContentResolver.SCHEME_CONTENT -> {
-                    Log.i(TAG, "Opened file descriptor for content URI: $pdfUri")
-                    // If it's a content URI, we need to use the ContentResolver
-                    context.contentResolver.openFileDescriptor(pdfUri, "r")
-                }
-
-                else -> {
-                    Log.e(TAG, "Unsupported URI scheme: ${pdfUri.scheme}")
-                    return
-                }
-            }
 
             if (parcelFileDescriptor == null) {
                 Log.e(TAG, "Error getting file descriptor for pdf")
@@ -61,7 +64,7 @@ class PdfDocumentHelperImpl(
                 if (pageIndex < 0 || pageIndex >= renderer.pageCount) {
                     Log.e(
                         TAG,
-                        "Page index $pageIndex out of bounds. Total pages: ${renderer.pageCount}"
+                        "Page index $pageIndex out of bounds. Total pages: ${renderer.pageCount}",
                     )
                     return
                 }
@@ -83,7 +86,8 @@ class PdfDocumentHelperImpl(
                         FileOutputStream(outputFile).use { fos ->
                             if (!bitmap.compress(format, quality, fos)) {
                                 Log.e(
-                                    TAG, "Failed to compress bitmap to ${outputFile.absolutePath}"
+                                    TAG,
+                                    "Failed to compress bitmap to ${outputFile.absolutePath}",
                                 )
                             } else {
                                 Log.d(TAG, "Successfully saved image to ${outputFile.absolutePath}")

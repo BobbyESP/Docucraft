@@ -25,21 +25,23 @@ import io.github.vinceglb.filekit.filesDir
 import io.github.vinceglb.filekit.path
 import io.github.vinceglb.filekit.sink
 import io.github.vinceglb.filekit.size
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.io.buffered
-import java.io.File
 
 class ScannedPdfRepositoryImpl(
     private val context: Context,
     private val fileRepository: FileRepository,
     private val scannedPdfDao: ScannedPdfDao,
-    private val pdfDocsHelper: PdfDocumentHelper
+    private val pdfDocsHelper: PdfDocumentHelper,
 ) : ScannedPdfRepository {
     override suspend fun getAllScannedPdfsFlow(): Flow<List<ScannedPdf>> =
-        scannedPdfDao.getAllPdfsFlow().map { entities -> entities.map { it.toModel() } }
+        scannedPdfDao
+            .getAllPdfsFlow()
+            .map { entities -> entities.map { it.toModel() } }
             .flowOn(Dispatchers.IO)
 
     // TODO: Move this to FileRepository
@@ -83,11 +85,12 @@ class ScannedPdfRepositoryImpl(
             }
 
             // Get a content URI for the saved PDF file
-            val documentUri = FileProvider.getUriForFile(
-                context,
-                App.CONTENT_PROVIDER_AUTHORITY,
-                File(pdfOutputFile.path)
-            )
+            val documentUri =
+                FileProvider.getUriForFile(
+                    context,
+                    App.CONTENT_PROVIDER_AUTHORITY,
+                    File(pdfOutputFile.path),
+                )
 
             // Prepare the directory for the thumbnail image
             val thumbnailDir = PlatformFile(FileKit.filesDir, "previews")
@@ -97,30 +100,32 @@ class ScannedPdfRepositoryImpl(
             val thumbnailFile = PlatformFile(thumbnailDir, "$filename.png")
 
             // Attempt to generate a thumbnail from the first page of the PDF
-            val thumbnailPath: String? = try {
-                pdfDocsHelper.savePdfPageAsImage(
-                    pdfUri = scanPdfResult.uri,
-                    outputFile = File(thumbnailFile.path),
-                    pageIndex = 0,
-                    format = Bitmap.CompressFormat.PNG
-                )
-                thumbnailFile.path
-            } catch (e: Exception) {
-                Log.w(TAG, "Failed to generate thumbnail: ${e.message}")
-                null
-            }
+            val thumbnailPath: String? =
+                try {
+                    pdfDocsHelper.savePdfPageAsImage(
+                        pdfUri = scanPdfResult.uri,
+                        outputFile = File(thumbnailFile.path),
+                        pageIndex = 0,
+                        format = Bitmap.CompressFormat.PNG,
+                    )
+                    thumbnailFile.path
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to generate thumbnail: ${e.message}")
+                    null
+                }
 
             // Create and insert the PDF entity into the database
-            val pdfEntity = ScannedPdfEntity(
-                filename = filename,
-                title = null,
-                description = null,
-                path = documentUri.toString(),
-                createdTimestamp = System.currentTimeMillis(),
-                fileSize = fileSizeBytes,
-                pageCount = scanPdfResult.pageCount,
-                thumbnail = thumbnailPath,
-            )
+            val pdfEntity =
+                ScannedPdfEntity(
+                    filename = filename,
+                    title = null,
+                    description = null,
+                    path = documentUri.toString(),
+                    createdTimestamp = System.currentTimeMillis(),
+                    fileSize = fileSizeBytes,
+                    pageCount = scanPdfResult.pageCount,
+                    thumbnail = thumbnailPath,
+                )
             scannedPdfDao.insert(pdfEntity)
         } catch (e: Exception) {
             throw RuntimeException("Failed to save PDF: ${e.message}", e)
@@ -171,11 +176,12 @@ class ScannedPdfRepositoryImpl(
     }
 
     override fun sharePdf(pdfPath: Uri) {
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            putExtra(Intent.EXTRA_STREAM, pdfPath)
-            setDataAndType(pdfPath, "application/pdf")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
+        val shareIntent =
+            Intent(Intent.ACTION_SEND).apply {
+                putExtra(Intent.EXTRA_STREAM, pdfPath)
+                setDataAndType(pdfPath, "application/pdf")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
         context.startActivity(
             Intent.createChooser(shareIntent, context.getString(R.string.share_pdf))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -184,10 +190,11 @@ class ScannedPdfRepositoryImpl(
     }
 
     override fun openPdfInViewer(pdfPath: Uri) {
-        val viewIntent = Intent(Intent.ACTION_VIEW).apply {
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            setDataAndType(pdfPath, "application/pdf")
-        }
+        val viewIntent =
+            Intent(Intent.ACTION_VIEW).apply {
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                setDataAndType(pdfPath, "application/pdf")
+            }
 
         context.startActivity(
             Intent.createChooser(viewIntent, context.getString(R.string.open_pdf_in_viewer))

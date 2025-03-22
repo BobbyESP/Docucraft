@@ -3,8 +3,6 @@ package com.bobbyesp.docucraft.core.presentation.components.image
 import android.content.Context
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -16,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -27,7 +24,6 @@ import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil.CoilImage
 import com.skydoves.landscapist.coil.CoilImageState
 import com.skydoves.landscapist.coil.LocalCoilImageLoader
-import java.io.FileNotFoundException
 
 @Composable
 fun AsyncImage(
@@ -37,11 +33,10 @@ fun AsyncImage(
     shape: Shape = MaterialTheme.shapes.small,
     context: Context = LocalContext.current,
     imageLoader: ImageLoader? = LocalCoilImageLoader.current,
-    imageOptions: ImageOptions = ImageOptions(
-        contentDescription = null, contentScale = ContentScale.Crop
-    ),
+    imageOptions: ImageOptions =
+        ImageOptions(contentDescription = null, contentScale = ContentScale.Crop),
     requestListener: (() -> ImageRequest.Listener)? = null,
-    onSuccessData: (CoilImageState.Success) -> Unit = { _ -> }
+    onSuccessData: (CoilImageState.Success) -> Unit = { _ -> },
 ) {
     val imageUrl by remember(imageModel) { mutableStateOf(imageModel) }
 
@@ -59,7 +54,7 @@ fun AsyncImage(
             Surface(
                 tonalElevation = 8.dp,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
+                modifier = Modifier,
             ) {
                 CircularProgressIndicator()
             }
@@ -69,7 +64,7 @@ fun AsyncImage(
                 modifier = imageModifier.fillMaxSize(),
                 icon = Icons.Rounded.QuestionMark,
                 colorful = true,
-                contentDescription = "Song cover failed to load"
+                contentDescription = "Song cover failed to load",
             )
         },
         imageLoader = { imageLoader ?: ImageLoader(context) },
