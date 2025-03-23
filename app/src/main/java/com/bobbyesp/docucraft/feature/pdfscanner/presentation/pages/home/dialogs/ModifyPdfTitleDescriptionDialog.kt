@@ -64,9 +64,13 @@ fun ModifyPdfTitleDescriptionDialog(
         },
         text = {
             Column(
-                modifier = modifier.padding(16.dp),
+                modifier = modifier,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                Text(
+                    text = stringResource(R.string.modify_pdf_details_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
                 OutlinedTextField(
                     value = titleText,
                     onValueChange = { titleText = it },

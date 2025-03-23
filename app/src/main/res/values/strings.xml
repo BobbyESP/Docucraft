@@ -38,4 +38,5 @@
     <string name="title">Title</string>
     <string name="description">Description</string>
     <string name="retry">Retry</string>
+    <string name="modify_pdf_details_description">Update the document title and description below to reflect its content and details.</string>
 </resources>
