@@ -128,19 +128,22 @@ class HomeViewModel(
                     }
 
                     is Event.PdfAction.ModifyTitleDescription -> {
-                        val scannedPdf = scannedPdfsListFlow.value.find { it.id == event.pdfId }
+                        val scannedPdf = getPdfById(event.pdfId)
                         if (scannedPdf == null) {
                             Log.i("HomeViewModel", "Scanned PDF not found")
                             emitUiEvent(UiEvent.Error(IllegalStateException("Scanned PDF not found")))
                             return
                         }
 
+                        val newTitle: String? = if(event.title.isBlank()) null else event.title
+                        val newDescription: String? = if(event.description.isBlank()) null else event.description
+
                         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
                             try {
                                 scannedPdfRepository.modifyTitleAndDescription(
                                     pdfId = scannedPdf.id,
-                                    title = event.title,
-                                    description = event.description,
+                                    title = newTitle,
+                                    description = newDescription,
                                 )
                                 emitUiEvent(UiEvent.ScanResult.Success)
                             } catch (e: Exception) {

@@ -27,7 +27,19 @@ interface ScannedPdfRepository {
      */
     suspend fun getAllScannedPdfsFlow(): Flow<List<ScannedPdf>>
 
-    suspend fun getPdfById(pdfId: String): ScannedPdf
+    /**
+     * Retrieves a scanned PDF by its unique identifier.
+     *
+     * This function fetches a ScannedPdf object based on the provided `pdfId`.
+     * It is a suspending function, meaning it can be safely called within a coroutine
+     * and will suspend execution until the PDF is retrieved or an error occurs.
+     *
+     * @param pdfId The unique identifier of the scanned PDF to retrieve. Must not be null or empty.
+     * @return The [ScannedPdf] object corresponding to the provided `pdfId`.
+     * @throws IllegalArgumentException if the `pdfId` is null or empty.
+     * @throws NoSuchElementException if no ScannedPdf with the given `pdfId` exists.
+     */
+    suspend fun getScannedPdfById(pdfId: String): ScannedPdf
 
     /**
      * Saves a PDF document obtained from a document scan result to the application's internal
@@ -49,7 +61,53 @@ interface ScannedPdfRepository {
         filename: String = UUID.randomUUID().toString(),
     )
 
-    suspend fun modifyTitleAndDescription(pdfId: String, title: String, description: String)
+    /**
+     * Modifies the title and/or description of a PDF document.
+     *
+     * This function allows updating the title and description of a PDF document identified by its ID.
+     * Either the title or the description, or both, can be modified in a single call.
+     * If a parameter is null, that specific field will not be updated.
+     *
+     * @param pdfId The unique identifier of the PDF document to be modified. Must not be null or empty.
+     * @param title The new title for the PDF document. If null, the title will not be updated.
+     * @param description The new description for the PDF document. If null, the description will not be updated.
+     *
+     * @throws IllegalArgumentException if the `pdfId` is null or empty.
+     * @throws NoSuchElementException if no ScannedPdf with the given `pdfId` exists.
+     *
+     * @sample
+     * ```kotlin
+     * // Example usage:
+     * try {
+     *     modifyTitleAndDescription("pdf123", "My New Title", "This is the updated description.")
+     *     println("PDF title and description updated successfully.")
+     * } catch (e: IllegalArgumentException) {
+     *     println("Invalid PDF ID: ${e.message}")
+     * } catch (e: SomeOtherException) {
+     *      println("Database connection issue: ${e.message}")
+     * } catch (e: AnotherException) {
+     *      println("Error updating metadata: ${e.message}")
+     * }
+     *
+     * try {
+     *      modifyTitleAndDescription("pdf456", "Only Title Updated", null)
+     *      println("PDF title updated successfully.")
+     * } catch (e: Exception) {
+     *      println("Error: ${e.message}")
+     * }
+     *
+     * try {
+     *      modifyTitleAndDescription("pdf789", null, "Only Description Updated")
+     *      println("PDF description updated successfully.")
+     * } catch (e: Exception){
+     *      println("Error: ${e.message}")
+     * }
+     *
+     * try{
+     *    modifyTitleAndDescription("", "title", "desc") //This will throw an IllegalArgumentException
+     * } catch (e: IllegalArgumentException){
+     */
+    suspend fun modifyTitleAndDescription(pdfId: String, title: String?, description: String?)
 
     /**
      * Deletes a PDF file from storage and database using its URI.

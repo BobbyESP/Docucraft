@@ -8,6 +8,8 @@ import androidx.core.content.FileProvider
 import com.bobbyesp.docucraft.App
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.repository.FileRepository
+import com.bobbyesp.docucraft.core.util.ensure
+import com.bobbyesp.docucraft.core.util.ensureParent
 import com.bobbyesp.docucraft.feature.pdfscanner.data.local.db.dao.ScannedPdfDao
 import com.bobbyesp.docucraft.feature.pdfscanner.data.local.db.entity.ScannedPdfEntity
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
@@ -21,6 +23,7 @@ import io.github.vinceglb.filekit.createDirectories
 import io.github.vinceglb.filekit.delete
 import io.github.vinceglb.filekit.exists
 import io.github.vinceglb.filekit.filesDir
+import io.github.vinceglb.filekit.parent
 import io.github.vinceglb.filekit.path
 import io.github.vinceglb.filekit.sink
 import io.github.vinceglb.filekit.size
@@ -43,18 +46,18 @@ class ScannedPdfRepositoryImpl(
             .map { entities -> entities.map { it.toModel() } }
             .flowOn(Dispatchers.IO)
 
-    override suspend fun getPdfById(pdfId: String): ScannedPdf {
-        val entity = scannedPdfDao.fetchById(pdfId) ?: throw IllegalArgumentException("No PDF found with ID: $pdfId")
+    override suspend fun getScannedPdfById(pdfId: String): ScannedPdf {
+        if(pdfId.isEmpty()) {
+            throw IllegalArgumentException("PDF ID must not be empty")
+        }
+        val entity = scannedPdfDao.fetchById(pdfId) ?: throw NoSuchElementException("No PDF found with ID: $pdfId")
         return entity.toModel()
     }
 
     // TODO: Move this to FileRepository
-    private suspend fun writePdf(inputUri: Uri, outputFile: PlatformFile) {
+    private suspend fun copyPdfToLocalFile(inputUri: Uri, outputFile: PlatformFile) {
         // Ensure directory exists
-        val parentDir = PlatformFile(outputFile.path.substringBeforeLast('/'))
-        if (!parentDir.exists()) {
-            parentDir.createDirectories(mustCreate = true)
-        }
+        outputFile.ensureParent(mustCreate = true)
 
         val sink = outputFile.sink(append = false).buffered()
 
@@ -80,7 +83,7 @@ class ScannedPdfRepositoryImpl(
             val pdfOutputFile = PlatformFile(pdfOutputDir, "$filename.pdf")
 
             // Write the PDF file
-            writePdf(scanPdfResult.uri, pdfOutputFile)
+            copyPdfToLocalFile(scanPdfResult.uri, pdfOutputFile)
 
             // Validate file size
             val fileSizeBytes = pdfOutputFile.size()
@@ -138,12 +141,17 @@ class ScannedPdfRepositoryImpl(
 
     override suspend fun modifyTitleAndDescription(
         pdfId: String,
-        title: String,
-        description: String
+        title: String?,
+        description: String?
     ) {
+        if (pdfId.isEmpty()) {
+            throw IllegalArgumentException("PDF ID must not be empty")
+        }
+
         val updatedCount = scannedPdfDao.updateTitleAndDescription(pdfId, title, description)
+
         if (updatedCount <= 0) {
-            throw IllegalArgumentException("No PDF found with ID: $pdfId")
+            throw NoSuchElementException("No PDF found with ID: $pdfId")
         }
     }
 

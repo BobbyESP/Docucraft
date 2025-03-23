@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material3.Button
@@ -25,14 +27,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscroll
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfCard
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.NotifyUserAction.OpenPdfFieldsDialog
@@ -40,6 +48,7 @@ import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeVie
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Open
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Save
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Share
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,7 +124,19 @@ fun HomePage(
                 }
 
                 HomeViewModel.LoadingState.Idle -> {
-                    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = padding) {
+                    val lazyListState = rememberLazyListState()
+                    var animatedOverscrollAmount by remember { mutableFloatStateOf(0f) }
+
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .customOverscroll(
+                                listState = lazyListState,
+                                onNewOverscrollAmount = { animatedOverscrollAmount = it })
+                            .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
+                        state = lazyListState,
+                        contentPadding = padding
+                    ) {
                         items(scannedPdfs) { scannedPdf ->
                             ScannedPdfCard(
                                 modifier = Modifier
