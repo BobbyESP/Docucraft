@@ -7,6 +7,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -124,43 +125,11 @@ fun HomePage(
                 }
 
                 HomeViewModel.LoadingState.Idle -> {
-                    val lazyListState = rememberLazyListState()
-                    var animatedOverscrollAmount by remember { mutableFloatStateOf(0f) }
-
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .customOverscroll(
-                                listState = lazyListState,
-                                onNewOverscrollAmount = { animatedOverscrollAmount = it })
-                            .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
-                        state = lazyListState,
-                        contentPadding = padding
-                    ) {
-                        items(scannedPdfs) { scannedPdf ->
-                            ScannedPdfCard(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .animateItem(fadeInSpec = null, fadeOutSpec = null),
-                                pdf = scannedPdf,
-                                onOpenPdf = { uri ->
-                                    onEvent(Open(uri))
-                                },
-                                onSharePdf = { uri ->
-                                    onEvent(Share(uri))
-                                },
-                                onDeletePdf = { uri ->
-                                    onEvent(WarnAboutDeletion(uri))
-                                },
-                                onSavePdf = {
-                                    onEvent(Save(scannedPdf))
-                                },
-                                onModifyPdfFields = { id ->
-                                    onEvent(OpenPdfFieldsDialog(id))
-
-                                })
-                        }
-                    }
+                    DisplayScannedPdfs(
+                        scannedPdfs = scannedPdfs,
+                        padding = padding,
+                        onEvent = onEvent
+                    )
                 }
 
                 HomeViewModel.LoadingState.Loading -> {
@@ -174,6 +143,51 @@ fun HomePage(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun DisplayScannedPdfs(
+    padding: PaddingValues,
+    scannedPdfs: List<ScannedPdf>,
+    onEvent: (HomeViewModel.Event) -> Unit
+) {
+    val lazyListState = rememberLazyListState()
+    var animatedOverscrollAmount by remember { mutableFloatStateOf(0f) }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .customOverscroll(
+                listState = lazyListState,
+                onNewOverscrollAmount = { animatedOverscrollAmount = it })
+            .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
+        state = lazyListState,
+        contentPadding = padding
+    ) {
+        items(scannedPdfs) { scannedPdf ->
+            ScannedPdfCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateItem(),
+                pdf = scannedPdf,
+                onOpenPdf = { uri ->
+                    onEvent(Open(uri))
+                },
+                onSharePdf = { uri ->
+                    onEvent(Share(uri))
+                },
+                onDeletePdf = { uri ->
+                    onEvent(WarnAboutDeletion(uri))
+                },
+                onSavePdf = {
+                    onEvent(Save(scannedPdf))
+                },
+                onModifyPdfFields = { id ->
+                    onEvent(OpenPdfFieldsDialog(id))
+                }
+            )
         }
     }
 }

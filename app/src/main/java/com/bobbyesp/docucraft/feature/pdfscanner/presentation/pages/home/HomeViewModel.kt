@@ -10,7 +10,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.ScannedPdfRepository
+import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.usecase.ScannedPdfUseCase
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import io.github.vinceglb.filekit.FileKit
@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 
 class HomeViewModel(
-    private val scannedPdfRepository: ScannedPdfRepository,
+    private val scannedPdfUseCase: ScannedPdfUseCase,
     private val gmsDocumentScanner: GmsDocumentScanner,
 ) : ViewModel() {
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -76,11 +76,10 @@ class HomeViewModel(
             _loadingState.update { LoadingState.Loading }
             try {
                 supervisorScope {
-                    scannedPdfRepository.getAllScannedPdfsFlow().collect { scannedPdfs ->
+                    scannedPdfUseCase.allScannedPdfsFlow().collect { scannedPdfs ->
                         _scannedPdfsListFlow.update { scannedPdfs }
 
-                        if(_loadingState.value !is LoadingState.Idle)
-                            _loadingState.update { LoadingState.Idle }
+                        if (_loadingState.value !is LoadingState.Idle) _loadingState.update { LoadingState.Idle }
                     }
                 }
             } catch (e: Exception) {
@@ -135,16 +134,13 @@ class HomeViewModel(
                             return
                         }
 
-                        val newTitle: String? = if(event.title.isBlank()) null else event.title
-                        val newDescription: String? = if(event.description.isBlank()) null else event.description
+                        val newTitle: String? = if (event.title.isBlank()) null else event.title
+                        val newDescription: String? =
+                            if (event.description.isBlank()) null else event.description
 
                         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
                             try {
-                                scannedPdfRepository.modifyTitleAndDescription(
-                                    pdfId = scannedPdf.id,
-                                    title = newTitle,
-                                    description = newDescription,
-                                )
+                                scannedPdfUseCase.modifyPdf(scannedPdf.id, newTitle, newDescription)
                                 emitUiEvent(UiEvent.ScanResult.Success)
                             } catch (e: Exception) {
                                 Log.e(TAG, "Failed to modify PDF: ${e.message}", e)
@@ -184,29 +180,25 @@ class HomeViewModel(
     }
 
     private fun openPdfInViewer(pdfPath: Uri) {
-        viewModelScope.launch(exceptionHandler) {
-            try {
-                scannedPdfRepository.openPdfInViewer(pdfPath)
-            } catch (e: Exception) {
-                emitUiEvent(UiEvent.IssueOpening.PdfViewer(error = e))
-            }
+        try {
+            scannedPdfUseCase.openPdfInViewer(pdfPath)
+        } catch (e: Exception) {
+            emitUiEvent(UiEvent.IssueOpening.PdfViewer(error = e))
         }
     }
 
     private fun sharePdf(pdfPath: Uri) {
-        viewModelScope.launch(exceptionHandler) {
-            try {
-                scannedPdfRepository.sharePdf(pdfPath)
-            } catch (e: Exception) {
-                emitUiEvent(UiEvent.IssueOpening.ShareIntent(error = e))
-            }
+        try {
+            scannedPdfUseCase.sharePdf(pdfPath)
+        } catch (e: Exception) {
+            emitUiEvent(UiEvent.IssueOpening.ShareIntent(error = e))
         }
     }
 
     private fun deletePdf(pdfPath: Uri) {
         viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
             try {
-                scannedPdfRepository.deletePdf(pdfPath)
+                scannedPdfUseCase.deleteScannedPdf(pdfPath)
                 emitUiEvent(UiEvent.DeleteResult.Success)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to delete PDF: ${e.message}", e)
@@ -294,7 +286,7 @@ class HomeViewModel(
 
                 viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
                     try {
-                        scannedPdfRepository.savePdf(scannedPdf)
+                        scannedPdfUseCase.saveScannedPdf(scannedPdf)
                         emitUiEvent(UiEvent.ScanResult.Success)
                     } catch (th: Throwable) {
                         Log.e(TAG, "Failed to save the scanned PDF: ${th.message}", th)

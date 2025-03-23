@@ -89,6 +89,7 @@ dependencies {
     //Compose libraries
     implementation(libs.bundles.compose)
     implementation(libs.materialKolor)
+    implementation(libs.haze)
 
     //Pagination
     implementation(libs.bundles.pagination)

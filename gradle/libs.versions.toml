@@ -19,7 +19,8 @@ accompanist = "0.34.0"
 
 #More UI
 androidx-paging = "3.3.6"
-materialKolor = "1.7.0"
+materialKolor = "2.0.2"
+haze = "1.5.2"
 
 #Navigation
 androidx-navigation = "2.8.9"
@@ -95,6 +96,7 @@ compose-ui-util = { group = "androidx.compose.ui", name = "ui-util", version.ref
 compose-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "androidx-compose-material3" }
 compose-material3-windowSizeClass = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "androidx-compose-material3" }
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 
 #Paging3
 paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "androidx-paging" }

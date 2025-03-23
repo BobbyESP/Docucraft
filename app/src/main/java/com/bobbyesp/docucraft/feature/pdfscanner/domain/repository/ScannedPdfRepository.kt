@@ -1,6 +1,7 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.domain.repository
 
 import android.net.Uri
+import com.bobbyesp.docucraft.feature.pdfscanner.data.local.db.entity.ScannedPdfEntity
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import java.util.UUID
@@ -57,10 +58,8 @@ interface ScannedPdfRepository {
      * @throws Exception If any other error occurs during the file saving process.
      */
     suspend fun savePdf(
-        scanPdfResult: GmsDocumentScanningResult.Pdf,
-        filename: String = UUID.randomUUID().toString(),
+        scannedPdf: ScannedPdfEntity
     )
-
     /**
      * Modifies the title and/or description of a PDF document.
      *
