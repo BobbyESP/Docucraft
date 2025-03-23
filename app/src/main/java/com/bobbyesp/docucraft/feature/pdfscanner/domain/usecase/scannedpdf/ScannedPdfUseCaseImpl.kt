@@ -21,8 +21,8 @@ import io.github.vinceglb.filekit.exists
 import io.github.vinceglb.filekit.filesDir
 import io.github.vinceglb.filekit.path
 import io.github.vinceglb.filekit.size
-import kotlinx.coroutines.flow.Flow
 import java.io.File
+import kotlinx.coroutines.flow.Flow
 
 class ScannedPdfUseCaseImpl(
     private val context: Context,
@@ -38,7 +38,7 @@ class ScannedPdfUseCaseImpl(
 
     override suspend fun saveScannedPdf(
         scanPdfResult: GmsDocumentScanningResult.Pdf,
-        filename: String
+        filename: String,
     ) {
         val pdfOutputDir = PlatformFile(FileKit.filesDir, "scans/pdf")
         pdfOutputDir.ensure(mustCreate = true)
@@ -54,23 +54,27 @@ class ScannedPdfUseCaseImpl(
         }
 
         // Get the content uri using the FileProvider
-        val documentUri = FileProvider.getUriForFile(
-            context, App.CONTENT_PROVIDER_AUTHORITY, File(pdfOutputFile.path)
-        )
+        val documentUri =
+            FileProvider.getUriForFile(
+                context,
+                App.CONTENT_PROVIDER_AUTHORITY,
+                File(pdfOutputFile.path),
+            )
 
         // Generate a thumbnail for the scanned PDF
         val thumbnailPath = generateThumbnail(documentUri, filename)
 
-        val pdfEntity = ScannedPdfEntity(
-            filename = filename,
-            title = null,
-            description = null,
-            path = documentUri.toString(),
-            createdTimestamp = System.currentTimeMillis(),
-            fileSize = fileSizeBytes,
-            pageCount = scanPdfResult.pageCount,
-            thumbnail = thumbnailPath,
-        )
+        val pdfEntity =
+            ScannedPdfEntity(
+                filename = filename,
+                title = null,
+                description = null,
+                path = documentUri.toString(),
+                createdTimestamp = System.currentTimeMillis(),
+                fileSize = fileSizeBytes,
+                pageCount = scanPdfResult.pageCount,
+                thumbnail = thumbnailPath,
+            )
 
         repository.savePdf(pdfEntity)
     }
@@ -82,7 +86,10 @@ class ScannedPdfUseCaseImpl(
 
         return try {
             pdfDocsHelper.savePdfPageAsImage(
-                pdfUri = pdfUri, outputFile = File(thumbnailFile.path), pageIndex = 0, quality = 65
+                pdfUri = pdfUri,
+                outputFile = File(thumbnailFile.path),
+                pageIndex = 0,
+                quality = 65,
             )
             thumbnailFile.path
         } catch (e: Exception) {

@@ -14,19 +14,12 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val scannedPdfModule = module {
-    single<PdfDocumentHelper> {
-        PdfDocumentHelperImpl(context = androidContext())
-    }
+    single<PdfDocumentHelper> { PdfDocumentHelperImpl(context = androidContext()) }
 
-    single<PdfFileManagementUseCase> {
-        PdfFileManagementUseCaseImpl(androidContext())
-    }
+    single<PdfFileManagementUseCase> { PdfFileManagementUseCaseImpl(androidContext()) }
 
     single<ScannedPdfRepository> {
-        ScannedPdfRepositoryImpl(
-            context = androidContext(),
-            scannedPdfDao = get<ScannedPdfDao>(),
-        )
+        ScannedPdfRepositoryImpl(context = androidContext(), scannedPdfDao = get<ScannedPdfDao>())
     }
 
     single<ScannedPdfUseCase> {

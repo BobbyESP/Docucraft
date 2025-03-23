@@ -63,11 +63,12 @@ fun HomePage(
     val scannedPdfs = scannedPdfsState.value
     val isLoading = loadingPdfs.value
 
-    val scannerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        onEvent(HomeViewModel.Event.HandlePdfScanningResult(result))
-    }
+    val scannerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartIntentSenderForResult()
+        ) { result ->
+            onEvent(HomeViewModel.Event.HandlePdfScanningResult(result))
+        }
 
     Scaffold(
         topBar = {
@@ -107,12 +108,9 @@ fun HomePage(
             when (state) {
                 is HomeViewModel.LoadingState.Error -> {
                     Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
-                        verticalArrangement = Arrangement.spacedBy(
-                            8.dp, Alignment.CenterVertically
-                        ),
+                        modifier = Modifier.fillMaxSize().padding(padding),
+                        verticalArrangement =
+                            Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
@@ -120,7 +118,8 @@ fun HomePage(
                         )
                         Button(
                             onClick = { TODO() },
-                            content = { Text(text = stringResource(id = R.string.retry)) })
+                            content = { Text(text = stringResource(id = R.string.retry)) },
+                        )
                     }
                 }
 
@@ -128,15 +127,13 @@ fun HomePage(
                     DisplayScannedPdfs(
                         scannedPdfs = scannedPdfs,
                         padding = padding,
-                        onEvent = onEvent
+                        onEvent = onEvent,
                     )
                 }
 
                 HomeViewModel.LoadingState.Loading -> {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
+                        modifier = Modifier.fillMaxSize().padding(padding),
                         contentAlignment = Alignment.Center,
                     ) {
                         CircularProgressIndicator()
@@ -151,42 +148,31 @@ fun HomePage(
 private fun DisplayScannedPdfs(
     padding: PaddingValues,
     scannedPdfs: List<ScannedPdf>,
-    onEvent: (HomeViewModel.Event) -> Unit
+    onEvent: (HomeViewModel.Event) -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
     var animatedOverscrollAmount by remember { mutableFloatStateOf(0f) }
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .customOverscroll(
-                listState = lazyListState,
-                onNewOverscrollAmount = { animatedOverscrollAmount = it })
-            .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
+        modifier =
+            Modifier.fillMaxSize()
+                .customOverscroll(
+                    listState = lazyListState,
+                    onNewOverscrollAmount = { animatedOverscrollAmount = it },
+                )
+                .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
         state = lazyListState,
-        contentPadding = padding
+        contentPadding = padding,
     ) {
         items(scannedPdfs) { scannedPdf ->
             ScannedPdfCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .animateItem(),
+                modifier = Modifier.fillMaxWidth().animateItem(),
                 pdf = scannedPdf,
-                onOpenPdf = { uri ->
-                    onEvent(Open(uri))
-                },
-                onSharePdf = { uri ->
-                    onEvent(Share(uri))
-                },
-                onDeletePdf = { uri ->
-                    onEvent(WarnAboutDeletion(uri))
-                },
-                onSavePdf = {
-                    onEvent(Save(scannedPdf))
-                },
-                onModifyPdfFields = { id ->
-                    onEvent(OpenPdfFieldsDialog(id))
-                }
+                onOpenPdf = { uri -> onEvent(Open(uri)) },
+                onSharePdf = { uri -> onEvent(Share(uri)) },
+                onDeletePdf = { uri -> onEvent(WarnAboutDeletion(uri)) },
+                onSavePdf = { onEvent(Save(scannedPdf)) },
+                onModifyPdfFields = { id -> onEvent(OpenPdfFieldsDialog(id)) },
             )
         }
     }

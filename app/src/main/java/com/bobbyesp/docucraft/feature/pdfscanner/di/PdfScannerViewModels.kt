@@ -1,7 +1,6 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.di
 
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.usecase.ScannedPdfUseCase
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.scannedpdf.ScannedPdfUseCaseImpl
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
 import org.koin.core.module.dsl.viewModel
@@ -11,7 +10,7 @@ val pdfScannerViewModels = module {
     viewModel {
         HomeViewModel(
             scannedPdfUseCase = get<ScannedPdfUseCase>(),
-            gmsDocumentScanner = get<GmsDocumentScanner>()
+            gmsDocumentScanner = get<GmsDocumentScanner>(),
         )
     }
 }

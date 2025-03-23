@@ -42,7 +42,7 @@ fun ModifyPdfTitleDescriptionDialog(
             KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences,
                 autoCorrectEnabled = true,
-                imeAction = ImeAction.Next
+                imeAction = ImeAction.Next,
             )
         )
     }
@@ -59,13 +59,13 @@ fun ModifyPdfTitleDescriptionDialog(
         title = {
             Text(
                 text = stringResource(R.string.modify_pdf_details),
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
         },
         text = {
             Column(
                 modifier = modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 OutlinedTextField(
                     value = titleText,
@@ -73,7 +73,7 @@ fun ModifyPdfTitleDescriptionDialog(
                     label = { Text(stringResource(R.string.title)) },
                     keyboardOptions = keyboardOptions,
                     shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
                     value = descriptionText,
@@ -91,9 +91,7 @@ fun ModifyPdfTitleDescriptionDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.cancel))
-            }
-        }
+            TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.cancel)) }
+        },
     )
 }

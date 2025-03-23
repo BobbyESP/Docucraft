@@ -40,32 +40,26 @@ class HomeViewModel(
     }
 
     private val _scannedPdfsListFlow = MutableStateFlow<List<ScannedPdf>>(emptyList())
-    val scannedPdfsListFlow = _scannedPdfsListFlow.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        emptyList(),
-    )
+    val scannedPdfsListFlow =
+        _scannedPdfsListFlow.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            emptyList(),
+        )
 
     private val _loadingState = MutableStateFlow<LoadingState>(LoadingState.Loading)
     val loadingState = _loadingState.asStateFlow()
-
 
     private val _eventFlow = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
     val eventFlow = _eventFlow.asSharedFlow()
 
     private val _pdfToBeRemoved = MutableStateFlow<Uri?>(null)
-    val pdfToBeRemovedFlow = _pdfToBeRemoved.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        null,
-    )
+    val pdfToBeRemovedFlow =
+        _pdfToBeRemoved.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     private val _pdfToBeModified = MutableStateFlow<ScannedPdf?>(null)
-    val pdfToBeModifiedFlow = _pdfToBeModified.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        null,
-    )
+    val pdfToBeModifiedFlow =
+        _pdfToBeModified.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     init {
         loadScannedPdfs()
@@ -79,7 +73,8 @@ class HomeViewModel(
                     scannedPdfUseCase.allScannedPdfsFlow().collect { scannedPdfs ->
                         _scannedPdfsListFlow.update { scannedPdfs }
 
-                        if (_loadingState.value !is LoadingState.Idle) _loadingState.update { LoadingState.Idle }
+                        if (_loadingState.value !is LoadingState.Idle)
+                            _loadingState.update { LoadingState.Idle }
                     }
                 }
             } catch (e: Exception) {
@@ -130,7 +125,9 @@ class HomeViewModel(
                         val scannedPdf = getPdfById(event.pdfId)
                         if (scannedPdf == null) {
                             Log.i("HomeViewModel", "Scanned PDF not found")
-                            emitUiEvent(UiEvent.Error(IllegalStateException("Scanned PDF not found")))
+                            emitUiEvent(
+                                UiEvent.Error(IllegalStateException("Scanned PDF not found"))
+                            )
                             return
                         }
 
@@ -146,9 +143,7 @@ class HomeViewModel(
                                 Log.e(TAG, "Failed to modify PDF: ${e.message}", e)
                                 emitUiEvent(UiEvent.Error(e))
                             } finally {
-                                _pdfToBeModified.update {
-                                    null
-                                }
+                                _pdfToBeModified.update { null }
                             }
                         }
                     }
@@ -156,9 +151,7 @@ class HomeViewModel(
             }
 
             is Event.NotifyUserAction.WarnAboutDeletion -> {
-                _pdfToBeRemoved.update {
-                    event.uri
-                }
+                _pdfToBeRemoved.update { event.uri }
             }
 
             is Event.NotifyUserAction.OpenPdfFieldsDialog -> {
@@ -171,7 +164,6 @@ class HomeViewModel(
             is Event.NotifyUserAction.DismissPdfTitleDescriptionDialog -> {
                 _pdfToBeModified.update { null }
             }
-
         }
     }
 
@@ -211,12 +203,15 @@ class HomeViewModel(
         activity: Activity,
         listener: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
     ) {
-        gmsDocumentScanner.getStartScanIntent(activity).addOnSuccessListener { intentSender ->
-            listener.launch(IntentSenderRequest.Builder(intentSender).build())
-        }.addOnFailureListener { exception ->
-            Log.e(TAG, "Failed to start scan: ${exception.message}", exception)
-            emitUiEvent(UiEvent.ScanResult.Failure(error = exception))
-        }
+        gmsDocumentScanner
+            .getStartScanIntent(activity)
+            .addOnSuccessListener { intentSender ->
+                listener.launch(IntentSenderRequest.Builder(intentSender).build())
+            }
+            .addOnFailureListener { exception ->
+                Log.e(TAG, "Failed to start scan: ${exception.message}", exception)
+                emitUiEvent(UiEvent.ScanResult.Failure(error = exception))
+            }
     }
 
     private fun savePdf(scannedPdf: ScannedPdf) {
@@ -225,20 +220,23 @@ class HomeViewModel(
 
     private suspend fun copyPdfToDirectory(scannedPdf: ScannedPdf) {
         try {
-            val androidDocumentsDirectory = PlatformFile(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-            )
+            val androidDocumentsDirectory =
+                PlatformFile(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                )
 
             val dir = PlatformFile(androidDocumentsDirectory, "Docucraft")
 
-            val file = FileKit.openFileSaver(
-                suggestedName = scannedPdf.title ?: scannedPdf.filename,
-                extension = "pdf",
-                directory = dir,
-            ) ?: run {
-                emitUiEvent(UiEvent.SavingResult.Cancelled)
-                return
-            }
+            val file =
+                FileKit.openFileSaver(
+                    suggestedName = scannedPdf.title ?: scannedPdf.filename,
+                    extension = "pdf",
+                    directory = dir,
+                )
+                    ?: run {
+                        emitUiEvent(UiEvent.SavingResult.Cancelled)
+                        return
+                    }
 
             val internalPdf = PlatformFile(scannedPdf.path)
 
@@ -302,9 +300,10 @@ class HomeViewModel(
             else -> {
                 emitUiEvent(
                     UiEvent.ScanResult.Failure(
-                        error = IllegalStateException(
-                            "Unknown result code: ${activityResult.resultCode}"
-                        )
+                        error =
+                            IllegalStateException(
+                                "Unknown result code: ${activityResult.resultCode}"
+                            )
                     )
                 )
             }
@@ -334,7 +333,9 @@ class HomeViewModel(
             data class Delete(val pdfPath: Uri?) : PdfAction()
 
             data class ModifyTitleDescription(
-                val title: String, val description: String, val pdfId: String
+                val title: String,
+                val description: String,
+                val pdfId: String,
             ) : PdfAction()
         }
 
@@ -342,6 +343,7 @@ class HomeViewModel(
             data class WarnAboutDeletion(val uri: Uri) : NotifyUserAction()
 
             data class OpenPdfFieldsDialog(val pdfId: String) : NotifyUserAction()
+
             data object DismissPdfTitleDescriptionDialog : NotifyUserAction()
         }
     }
@@ -380,7 +382,9 @@ class HomeViewModel(
 
     sealed class LoadingState {
         data object Loading : LoadingState()
+
         data object Idle : LoadingState()
+
         data class Error(val error: Throwable, val message: String? = null) : LoadingState()
     }
 

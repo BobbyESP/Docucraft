@@ -26,57 +26,60 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Velocity
-import kotlinx.coroutines.launch
 import kotlin.math.sign
+import kotlinx.coroutines.launch
 
 @Composable
 fun Modifier.customOverscroll(
     listState: LazyListState,
     onNewOverscrollAmount: (Float) -> Unit,
-    animationSpec: SpringSpec<Float> = spring(stiffness = Spring.StiffnessLow)
-) = customOverscroll(
-    orientation = remember { listState.layoutInfo.orientation },
-    onNewOverscrollAmount = onNewOverscrollAmount,
-    animationSpec = animationSpec
-)
+    animationSpec: SpringSpec<Float> = spring(stiffness = Spring.StiffnessLow),
+) =
+    customOverscroll(
+        orientation = remember { listState.layoutInfo.orientation },
+        onNewOverscrollAmount = onNewOverscrollAmount,
+        animationSpec = animationSpec,
+    )
 
 @Composable
 fun Modifier.customOverscroll(
     pagerState: PagerState,
     onNewOverscrollAmount: (Float) -> Unit,
-    animationSpec: SpringSpec<Float> = spring(stiffness = Spring.StiffnessLow)
-) = customOverscroll(
-    orientation = remember { pagerState.layoutInfo.orientation },
-    onNewOverscrollAmount = onNewOverscrollAmount,
-    animationSpec = animationSpec
-)
+    animationSpec: SpringSpec<Float> = spring(stiffness = Spring.StiffnessLow),
+) =
+    customOverscroll(
+        orientation = remember { pagerState.layoutInfo.orientation },
+        onNewOverscrollAmount = onNewOverscrollAmount,
+        animationSpec = animationSpec,
+    )
 
 @Composable
-fun Modifier.customOverscroll( 
-    orientation: Orientation,  
-    onNewOverscrollAmount: (Float) -> Unit,  
-    animationSpec: SpringSpec<Float> = spring(stiffness = Spring.StiffnessLow)  
+fun Modifier.customOverscroll(
+    orientation: Orientation,
+    onNewOverscrollAmount: (Float) -> Unit,
+    animationSpec: SpringSpec<Float> = spring(stiffness = Spring.StiffnessLow),
 ): Modifier {
     val overscrollAmountAnimatable = remember { Animatable(0f) }
     var length by remember { mutableFloatStateOf(1f) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        snapshotFlow { overscrollAmountAnimatable.value }.collect {
-            onNewOverscrollAmount(
-                CustomEasing.transform(it / (length * 1.5f)) * length
-            )
-        }
+        snapshotFlow { overscrollAmountAnimatable.value }
+            .collect {
+                onNewOverscrollAmount(CustomEasing.transform(it / (length * 1.5f)) * length)
+            }
     }
 
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             private fun calculateOverscroll(available: Offset): Float {
                 val previous = overscrollAmountAnimatable.value
-                val newValue = previous + when (orientation) {
-                    Orientation.Vertical -> available.y
-                    Orientation.Horizontal -> available.x
-                }
+                val newValue =
+                    previous +
+                        when (orientation) {
+                            Orientation.Vertical -> available.y
+                            Orientation.Horizontal -> available.x
+                        }
                 return when {
                     previous > 0 -> newValue.coerceAtLeast(0f)
                     previous < 0 -> newValue.coerceAtMost(0f)
@@ -85,7 +88,10 @@ fun Modifier.customOverscroll(
             }
 
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (overscrollAmountAnimatable.value != 0f && source != NestedScrollSource.SideEffect) {
+                if (
+                    overscrollAmountAnimatable.value != 0f &&
+                        source != NestedScrollSource.SideEffect
+                ) {
                     scope.launch {
                         overscrollAmountAnimatable.snapTo(calculateOverscroll(available))
                     }
@@ -95,11 +101,10 @@ fun Modifier.customOverscroll(
                 return super.onPreScroll(available, source)
             }
 
-
             override fun onPostScroll(
                 consumed: Offset,
                 available: Offset,
-                source: NestedScrollSource
+                source: NestedScrollSource,
             ): Offset {
                 scope.launch {
                     overscrollAmountAnimatable.snapTo(targetValue = calculateOverscroll(available))
@@ -108,18 +113,21 @@ fun Modifier.customOverscroll(
             }
 
             override suspend fun onPreFling(available: Velocity): Velocity {
-                val availableVelocity = when (orientation) {
-                    Orientation.Vertical -> available.y
-                    Orientation.Horizontal -> available.x
-                }
+                val availableVelocity =
+                    when (orientation) {
+                        Orientation.Vertical -> available.y
+                        Orientation.Horizontal -> available.x
+                    }
 
                 if (overscrollAmountAnimatable.value != 0f && availableVelocity != 0f) {
                     val previousSign = overscrollAmountAnimatable.value.sign
                     var consumedVelocity = availableVelocity
-                    val predictedEndValue = exponentialDecay<Float>().calculateTargetValue(
-                        initialValue = overscrollAmountAnimatable.value,
-                        initialVelocity = availableVelocity,
-                    )
+                    val predictedEndValue =
+                        exponentialDecay<Float>()
+                            .calculateTargetValue(
+                                initialValue = overscrollAmountAnimatable.value,
+                                initialVelocity = availableVelocity,
+                            )
                     if (predictedEndValue.sign == previousSign) {
                         overscrollAmountAnimatable.animateTo(
                             targetValue = 0f,
@@ -130,17 +138,14 @@ fun Modifier.customOverscroll(
                         try {
                             overscrollAmountAnimatable.animateDecay(
                                 initialVelocity = availableVelocity,
-                                animationSpec = exponentialDecay()
+                                animationSpec = exponentialDecay(),
                             ) {
                                 if (value.sign != previousSign) {
                                     consumedVelocity -= velocity
-                                    scope.launch {
-                                        overscrollAmountAnimatable.snapTo(0f)
-                                    }
+                                    scope.launch { overscrollAmountAnimatable.snapTo(0f) }
                                 }
                             }
-                        } catch (e: Exception) {
-                        }
+                        } catch (e: Exception) {}
                     }
 
                     return when (orientation) {
@@ -153,29 +158,29 @@ fun Modifier.customOverscroll(
             }
 
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-                val availableVelocity = when (orientation) {
-                    Orientation.Vertical -> available.y
-                    Orientation.Horizontal -> available.x
-                }
+                val availableVelocity =
+                    when (orientation) {
+                        Orientation.Vertical -> available.y
+                        Orientation.Horizontal -> available.x
+                    }
 
                 overscrollAmountAnimatable.animateTo(
                     targetValue = 0f,
                     initialVelocity = availableVelocity,
-                    animationSpec = animationSpec
+                    animationSpec = animationSpec,
                 )
 
                 return available
             }
-
         }
     }
 
-    return this
-        .onSizeChanged {
-            length = when (orientation) {
-                Orientation.Vertical -> it.height.toFloat()
-                Orientation.Horizontal -> it.width.toFloat()
-            }
+    return this.onSizeChanged {
+            length =
+                when (orientation) {
+                    Orientation.Vertical -> it.height.toFloat()
+                    Orientation.Horizontal -> it.width.toFloat()
+                }
         }
         .nestedScroll(nestedScrollConnection)
 }

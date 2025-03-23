@@ -6,12 +6,10 @@ import com.bobbyesp.docucraft.core.util.ensureParent
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.usecase.PdfFileManagementUseCase
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.sink
-import kotlinx.io.buffered
 import kotlin.use
+import kotlinx.io.buffered
 
-class PdfFileManagementUseCaseImpl(
-    private val context: Context,
-): PdfFileManagementUseCase {
+class PdfFileManagementUseCaseImpl(private val context: Context) : PdfFileManagementUseCase {
     override suspend fun copyToSystemStorage(inputUri: Uri, outputFile: PlatformFile) {
         // Ensure directory exists
         outputFile.ensureParent(mustCreate = true)

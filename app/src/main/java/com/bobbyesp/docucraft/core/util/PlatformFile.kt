@@ -6,13 +6,13 @@ import io.github.vinceglb.filekit.exists
 import io.github.vinceglb.filekit.parent
 
 suspend fun PlatformFile.ensure(mustCreate: Boolean = false) {
-    if(!this.exists()) {
+    if (!this.exists()) {
         this.createDirectories(mustCreate = mustCreate)
     }
 }
 
 suspend fun PlatformFile.ensureParent(mustCreate: Boolean = false) {
-    if(this.parent() != null) {
+    if (this.parent() != null) {
         this.parent()!!.ensure(mustCreate = mustCreate)
     }
 }

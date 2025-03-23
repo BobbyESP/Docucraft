@@ -26,16 +26,16 @@ class ScannedPdfRepositoryImpl(
             .flowOn(Dispatchers.IO)
 
     override suspend fun getScannedPdfById(pdfId: String): ScannedPdf {
-        if(pdfId.isEmpty()) {
+        if (pdfId.isEmpty()) {
             throw IllegalArgumentException("PDF ID must not be empty")
         }
-        val entity = scannedPdfDao.fetchById(pdfId) ?: throw NoSuchElementException("No PDF found with ID: $pdfId")
+        val entity =
+            scannedPdfDao.fetchById(pdfId)
+                ?: throw NoSuchElementException("No PDF found with ID: $pdfId")
         return entity.toModel()
     }
 
-    override suspend fun savePdf(
-        scannedPdf: ScannedPdfEntity
-    ) {
+    override suspend fun savePdf(scannedPdf: ScannedPdfEntity) {
         try {
             scannedPdfDao.insert(scannedPdf)
         } catch (e: Exception) {
@@ -46,7 +46,7 @@ class ScannedPdfRepositoryImpl(
     override suspend fun modifyTitleAndDescription(
         pdfId: String,
         title: String?,
-        description: String?
+        description: String?,
     ) {
         if (pdfId.isEmpty()) {
             throw IllegalArgumentException("PDF ID must not be empty")

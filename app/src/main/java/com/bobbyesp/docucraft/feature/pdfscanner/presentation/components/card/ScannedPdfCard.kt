@@ -160,7 +160,7 @@ fun PdfOptionsDropdown(
     onSavePdf: () -> Unit = {},
     onSharePdf: () -> Unit = {},
     onDeletePdf: () -> Unit = {},
-    onModifyPdfFields: () -> Unit
+    onModifyPdfFields: () -> Unit,
 ) {
     val context = LocalContext.current
     DropdownMenu(modifier = modifier, expanded = expanded, onDismissRequest = onDismissDropdown) {
@@ -269,7 +269,7 @@ private fun PdfOptionsDropdownPrev() {
                     id = UUID.randomUUID().toString(),
                 ),
             onSharePdf = {},
-            onModifyPdfFields = {}
+            onModifyPdfFields = {},
         )
     }
 }
@@ -298,7 +298,7 @@ private fun ScannedPdfCardPrev() {
             onSharePdf = {},
             onSavePdf = {},
             onDeletePdf = {},
-            onModifyPdfFields = {}
+            onModifyPdfFields = {},
         )
     }
 }
