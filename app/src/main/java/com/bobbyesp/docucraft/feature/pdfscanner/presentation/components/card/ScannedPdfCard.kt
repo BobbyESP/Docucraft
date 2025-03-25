@@ -163,7 +163,11 @@ fun PdfOptionsDropdown(
     onModifyPdfFields: () -> Unit,
 ) {
     val context = LocalContext.current
-    DropdownMenu(modifier = modifier, expanded = expanded, onDismissRequest = onDismissDropdown) {
+    DropdownMenu(
+        modifier = modifier,
+        expanded = expanded,
+        onDismissRequest = onDismissDropdown
+    ) {
         DropdownMenuItem(
             leadingIcon = {
                 Icon(

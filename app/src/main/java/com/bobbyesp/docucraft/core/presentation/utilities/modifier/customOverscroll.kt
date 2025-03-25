@@ -185,4 +185,4 @@ fun Modifier.customOverscroll(
         .nestedScroll(nestedScrollConnection)
 }
 
-val CustomEasing: Easing = CubicBezierEasing(0.5f, 0.5f, 1.0f, 0.25f)
+val CustomEasing: Easing = CubicBezierEasing(0.5f, 0.5f, 0.8f, 0.25f)

@@ -3,24 +3,39 @@ package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.shrinkOut
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.DocumentScanner
+import androidx.compose.material.icons.rounded.FileCopy
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,15 +43,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,6 +69,9 @@ import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeVie
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Open
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Save
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Share
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,14 +84,19 @@ fun HomePage(
     val activity = LocalActivity.current
 
     val scannedPdfs = scannedPdfsState.value
+    val thereIsNoPdfs by remember(scannedPdfs) {
+        derivedStateOf { scannedPdfs.isEmpty() }
+    }
+
     val isLoading = loadingPdfs.value
 
-    val scannerLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartIntentSenderForResult()
-        ) { result ->
-            onEvent(HomeViewModel.Event.HandlePdfScanningResult(result))
-        }
+    val hazeSource = remember { HazeState() }
+
+    val scannerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        onEvent(HomeViewModel.Event.HandlePdfScanningResult(result))
+    }
 
     Scaffold(
         topBar = {
@@ -88,29 +116,48 @@ fun HomePage(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
-                text = { Text(text = stringResource(id = R.string.scan)) },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Rounded.DocumentScanner,
-                        contentDescription = stringResource(id = R.string.scan_new_document),
+            AnimatedContent(
+                targetState = thereIsNoPdfs,
+                transitionSpec = {
+                    ContentTransform(
+                        targetContentEnter = expandIn() + fadeIn(),
+                        initialContentExit = shrinkOut() + slideOutVertically(),
                     )
                 },
-                onClick = {
-                    onEvent(
-                        HomeViewModel.Event.ScanPdf(activity = activity, listener = scannerLauncher)
+            ) { showFab ->
+                if (!showFab) {
+                    ExtendedFloatingActionButton(
+                        text = { Text(text = stringResource(id = R.string.scan)) },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Rounded.DocumentScanner,
+                                contentDescription = stringResource(id = R.string.scan_new_document),
+                            )
+                        },
+                        onClick = {
+                            onEvent(
+                                HomeViewModel.Event.ScanPdf(
+                                    activity = activity, listener = scannerLauncher
+                                )
+                            )
+                        },
                     )
-                },
-            )
+                }
+            }
         },
     ) { padding ->
-        Crossfade(targetState = isLoading) { state ->
+        Crossfade(
+            modifier = Modifier
+                .hazeSource(hazeSource)
+                .padding(padding), targetState = isLoading
+        ) { state ->
             when (state) {
                 is HomeViewModel.LoadingState.Error -> {
                     Column(
-                        modifier = Modifier.fillMaxSize().padding(padding),
-                        verticalArrangement =
-                            Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(
+                            8.dp, Alignment.CenterVertically
+                        ),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
@@ -124,16 +171,36 @@ fun HomePage(
                 }
 
                 HomeViewModel.LoadingState.Idle -> {
-                    DisplayScannedPdfs(
-                        scannedPdfs = scannedPdfs,
-                        padding = padding,
-                        onEvent = onEvent,
-                    )
+                    Crossfade(thereIsNoPdfs) { showEmptyState ->
+                        if (showEmptyState) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                EmptyStateScreen(
+                                    modifier = Modifier.hazeEffect(hazeSource), onScanPdfClick = {
+                                        onEvent(
+                                            HomeViewModel.Event.ScanPdf(
+                                                activity = activity, listener = scannerLauncher
+                                            )
+                                        )
+                                    })
+                            }
+                        } else {
+                            DisplayScannedPdfs(
+                                scannedPdfs = scannedPdfs,
+                                padding = padding,
+                                onEvent = onEvent,
+                            )
+                        }
+                    }
                 }
 
                 HomeViewModel.LoadingState.Loading -> {
                     Box(
-                        modifier = Modifier.fillMaxSize().padding(padding),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding),
                         contentAlignment = Alignment.Center,
                     ) {
                         CircularProgressIndicator()
@@ -154,25 +221,94 @@ private fun DisplayScannedPdfs(
     var animatedOverscrollAmount by remember { mutableFloatStateOf(0f) }
 
     LazyColumn(
-        modifier =
-            Modifier.fillMaxSize()
-                .customOverscroll(
-                    listState = lazyListState,
-                    onNewOverscrollAmount = { animatedOverscrollAmount = it },
-                )
-                .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
+        modifier = Modifier
+            .fillMaxSize()
+            .customOverscroll(
+                listState = lazyListState,
+                onNewOverscrollAmount = { animatedOverscrollAmount = it },
+            )
+            .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
         state = lazyListState,
-        contentPadding = padding,
     ) {
         items(scannedPdfs) { scannedPdf ->
             ScannedPdfCard(
-                modifier = Modifier.fillMaxWidth().animateItem(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateItem(),
                 pdf = scannedPdf,
                 onOpenPdf = { uri -> onEvent(Open(uri)) },
                 onSharePdf = { uri -> onEvent(Share(uri)) },
                 onDeletePdf = { uri -> onEvent(WarnAboutDeletion(uri)) },
                 onSavePdf = { onEvent(Save(scannedPdf)) },
                 onModifyPdfFields = { id -> onEvent(OpenPdfFieldsDialog(id)) },
+            )
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun EmptyStateScreen(
+    modifier: Modifier = Modifier, onScanPdfClick: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .border(
+                width = Dp.Hairline, brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = .8f),
+                        Color.White.copy(alpha = .2f),
+                    ),
+                ), shape = MaterialTheme.shapes.extraLarge
+            )
+            .padding(32.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.FileCopy,
+            contentDescription = stringResource(R.string.scan_new_document),
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Text(
+            text = stringResource(R.string.no_scanned_documents),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Text(
+            text = stringResource(R.string.scan_documents_to_see_list),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Button(
+            onClick = onScanPdfClick,
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .height(56.dp),
+            shape = MaterialTheme.shapes.medium,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.CameraAlt,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                text = stringResource(R.string.scan_new_document),
+                style = MaterialTheme.typography.labelLarge
             )
         }
     }
