@@ -25,12 +25,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.DocumentScanner
+import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.FileCopy
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,8 +45,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -54,10 +59,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscroll
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfCard
@@ -66,23 +73,20 @@ import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeVie
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Open
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Save
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Share
+import com.materialkolor.ktx.harmonize
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomePage(
-    scannedPdfsState: State<List<ScannedPdf>>,
-    loadingPdfs: State<HomeViewModel.LoadingState>,
+    scannedPdfs: List<ScannedPdf>,
+    isLoading: HomeViewModel.LoadingState,
     onEvent: (HomeViewModel.Event) -> Unit,
 ) {
     val activity = LocalActivity.current
-
-    val scannedPdfs = scannedPdfsState.value
     val thereIsNoPdfs by remember(scannedPdfs) {
         derivedStateOf { scannedPdfs.isEmpty() }
     }
-
-    val isLoading = loadingPdfs.value
 
     val scannerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
@@ -139,25 +143,17 @@ fun HomePage(
         },
     ) { padding ->
         Crossfade(
-            modifier = Modifier
-                .padding(padding), targetState = isLoading
+            modifier = Modifier.padding(padding), targetState = isLoading
         ) { state ->
             when (state) {
                 is HomeViewModel.LoadingState.Error -> {
-                    Column(
+                    Box(
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(
-                            8.dp, Alignment.CenterVertically
-                        ),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = state.message ?: stringResource(id = R.string.error_loading_pdfs)
-                        )
-                        Button(
-                            onClick = { TODO() },
-                            content = { Text(text = stringResource(id = R.string.retry)) },
-                        )
+                        ErrorContent(
+                            errorMessage = state.message,
+                            onRetry = { onEvent(HomeViewModel.Event.ReloadPdfs) })
                     }
                 }
 
@@ -188,9 +184,7 @@ fun HomePage(
 
                 HomeViewModel.LoadingState.Loading -> {
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
+                        modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
                         CircularProgressIndicator()
@@ -241,64 +235,172 @@ private fun DisplayScannedPdfs(
 fun EmptyStateScreen(
     modifier: Modifier = Modifier, onScanPdfClick: () -> Unit
 ) {
-    Column(
+    Card(
         modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
             .border(
                 width = 2.dp, brush = Brush.verticalGradient(
                     colors = listOf(
-                        MaterialTheme.colorScheme.onBackground.copy(alpha = .8f),
-                        MaterialTheme.colorScheme.onBackground.copy(alpha = .2f),
-                    ),
-                ), shape = MaterialTheme.shapes.extraLarge
-            )
-            .padding(32.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-        horizontalAlignment = Alignment.CenterHorizontally
+                        MaterialTheme.colorScheme.primary.copy(alpha = .8f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = .2f),
+                    )
+                ), shape = RoundedCornerShape(16.dp)
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+        ),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
-        Icon(
-            imageVector = Icons.Rounded.FileCopy,
-            contentDescription = stringResource(R.string.scan_new_document),
-            modifier = Modifier.size(72.dp),
-            tint = MaterialTheme.colorScheme.primary
-        )
-
-        Text(
-            text = stringResource(R.string.no_scanned_documents),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Text(
-            text = stringResource(R.string.scan_documents_to_see_list),
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Button(
-            onClick = onScanPdfClick,
+        Column(
             modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .height(56.dp),
-            shape = MaterialTheme.shapes.medium,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
+                .fillMaxWidth()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = Icons.Rounded.CameraAlt,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp)
+                imageVector = Icons.Rounded.FileCopy,
+                contentDescription = stringResource(R.string.scan_new_document),
+                modifier = Modifier.size(72.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
-
-            Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                text = stringResource(R.string.scan_new_document),
-                style = MaterialTheme.typography.labelLarge
+                text = stringResource(R.string.no_scanned_documents),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface
             )
+
+            Text(
+                text = stringResource(R.string.scan_documents_to_see_list),
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Button(
+                onClick = onScanPdfClick,
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(56.dp),
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                elevation = ButtonDefaults.elevatedButtonElevation(
+                    defaultElevation = 8.dp
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.CameraAlt,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    text = stringResource(R.string.scan_new_document),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun ErrorContent(
+    errorMessage: String?, onRetry: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .border(
+                width = 2.dp, brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.error.copy(alpha = .8f),
+                        MaterialTheme.colorScheme.error.copy(alpha = .2f),
+                    )
+                ), shape = RoundedCornerShape(16.dp)
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+                .harmonize(other = MaterialTheme.colorScheme.errorContainer)
+        ),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Error,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(64.dp)
+            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = stringResource(id = R.string.unknown_error),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = errorMessage ?: stringResource(id = R.string.error_loading_pdfs),
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+            Button(
+                onClick = onRetry,
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(50.dp),
+                shape = MaterialTheme.shapes.medium,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                elevation = ButtonDefaults.elevatedButtonElevation(
+                    defaultElevation = 8.dp
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Refresh,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(id = R.string.retry),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewMidas() {
+    DocucraftTheme {
+        HomePage(
+            scannedPdfs = emptyList(), isLoading = HomeViewModel.LoadingState.Error(
+                IllegalStateException("Error"), "Error"
+            ), onEvent = {})
     }
 }

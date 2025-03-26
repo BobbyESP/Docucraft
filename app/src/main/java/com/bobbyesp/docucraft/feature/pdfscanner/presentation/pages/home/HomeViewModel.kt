@@ -321,6 +321,8 @@ class HomeViewModel(
             val listener: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
         ) : Event
 
+        data object ReloadPdfs : Event
+
         data class HandlePdfScanningResult(val result: ActivityResult) : Event
 
         sealed class PdfAction : Event {

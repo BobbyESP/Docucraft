@@ -125,5 +125,9 @@ fun HomePageWrapper() {
         )
     }
 
-    HomePage(scannedPdfsState = scannedPdfsState, loadingPdfs = loadingState, onEvent = vm::onEvent)
+    HomePage(
+        scannedPdfs = scannedPdfsState.value,
+        isLoading = loadingState.value,
+        onEvent = vm::onEvent
+    )
 }
