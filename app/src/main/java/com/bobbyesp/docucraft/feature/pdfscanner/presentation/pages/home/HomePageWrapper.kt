@@ -30,59 +30,66 @@ fun HomePageWrapper() {
         vm.eventFlow.collectLatest { event ->
             when (event) {
                 is ScanResult -> {
-                    val (message, type) =
-                        if (event is ScanResult.Success) {
+                    val (message, type) = when (event) {
+                        is ScanResult.Success -> {
                             context.getString(R.string.pdf_saved_successfully) to ToastType.Success
-                        } else {
-                            context.getString(R.string.pdf_saved_error) to ToastType.Error
                         }
+
+                        is ScanResult.Failure -> {
+                            val errorMsg =
+                                event.error.message ?: context.getString(R.string.unknown_error)
+                            context.getString(
+                                R.string.pdf_saved_error_with_reason, errorMsg
+                            ) to ToastType.Error
+                        }
+
+                        ScanResult.Cancelled -> {
+                            context.getString(R.string.scan_cancelled) to ToastType.Info
+                        }
+                    }
                     sonner.show(message = message, type = type)
                 }
 
                 is HomeViewModel.UiEvent.IssueOpening -> {
-                    val errorMessage =
-                        when (event) {
-                            is HomeViewModel.UiEvent.IssueOpening.PdfViewer ->
-                                context.getString(R.string.issue_opening_pdf_viewer)
+                    val errorMessage = when (event) {
+                        is HomeViewModel.UiEvent.IssueOpening.PdfViewer -> context.getString(R.string.issue_opening_pdf_viewer)
 
-                            is HomeViewModel.UiEvent.IssueOpening.ShareIntent ->
-                                context.getString(R.string.issue_sharing_pdf)
-                        }
+                        is HomeViewModel.UiEvent.IssueOpening.ShareIntent -> context.getString(R.string.issue_sharing_pdf)
+                    }
                     sonner.show(message = errorMessage, type = ToastType.Error)
                 }
 
                 is HomeViewModel.UiEvent.SavingResult -> {
-                    val (message, type) =
-                        when (event) {
-                            is HomeViewModel.UiEvent.SavingResult.Success -> {
-                                context.getString(
-                                    R.string.pdf_saved_successfully_to,
-                                    event.uri.path ?: "",
-                                ) to ToastType.Success
-                            }
-
-                            is HomeViewModel.UiEvent.SavingResult.Failure -> {
-                                val errorMsg =
-                                    event.error.message ?: context.getString(R.string.unknown_error)
-                                context.getString(R.string.pdf_saved_error_with_reason, errorMsg) to
-                                    ToastType.Error
-                            }
-
-                            HomeViewModel.UiEvent.SavingResult.Cancelled -> {
-                                context.getString(R.string.pdf_saving_cancelled) to ToastType.Info
-                            }
+                    val (message, type) = when (event) {
+                        is HomeViewModel.UiEvent.SavingResult.Success -> {
+                            context.getString(
+                                R.string.pdf_saved_successfully_to,
+                                event.uri.path ?: "",
+                            ) to ToastType.Success
                         }
+
+                        is HomeViewModel.UiEvent.SavingResult.Failure -> {
+                            val errorMsg =
+                                event.error.message ?: context.getString(R.string.unknown_error)
+                            context.getString(
+                                R.string.pdf_saved_error_with_reason,
+                                errorMsg
+                            ) to ToastType.Error
+                        }
+
+                        HomeViewModel.UiEvent.SavingResult.Cancelled -> {
+                            context.getString(R.string.pdf_saving_cancelled) to ToastType.Info
+                        }
+                    }
                     sonner.show(message = message, type = type)
                 }
 
                 is HomeViewModel.UiEvent.DeleteResult -> {
-                    val (message, type) =
-                        if (event is HomeViewModel.UiEvent.DeleteResult.Success) {
-                            context.getString(R.string.pdf_deleted_successfully) to
-                                ToastType.Success
-                        } else {
-                            context.getString(R.string.pdf_deleted_error) to ToastType.Error
-                        }
+                    val (message, type) = if (event is HomeViewModel.UiEvent.DeleteResult.Success) {
+                        context.getString(R.string.pdf_deleted_successfully) to ToastType.Success
+                    } else {
+                        context.getString(R.string.pdf_deleted_error) to ToastType.Error
+                    }
                     sonner.show(message = message, type = type)
                 }
             }

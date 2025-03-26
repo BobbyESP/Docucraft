@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
@@ -166,7 +167,13 @@ fun PdfOptionsDropdown(
     DropdownMenu(
         modifier = modifier,
         expanded = expanded,
-        onDismissRequest = onDismissDropdown
+        onDismissRequest = onDismissDropdown,
+        properties = PopupProperties(
+            focusable = true,
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            clippingEnabled = true
+        )
     ) {
         DropdownMenuItem(
             leadingIcon = {

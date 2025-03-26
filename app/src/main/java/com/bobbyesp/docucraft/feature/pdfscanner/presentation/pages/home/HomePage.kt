@@ -14,7 +14,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -51,12 +50,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,9 +66,6 @@ import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeVie
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Open
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Save
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Share
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.hazeSource
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,8 +83,6 @@ fun HomePage(
     }
 
     val isLoading = loadingPdfs.value
-
-    val hazeSource = remember { HazeState() }
 
     val scannerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
@@ -148,7 +140,6 @@ fun HomePage(
     ) { padding ->
         Crossfade(
             modifier = Modifier
-                .hazeSource(hazeSource)
                 .padding(padding), targetState = isLoading
         ) { state ->
             when (state) {
@@ -178,7 +169,7 @@ fun HomePage(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 EmptyStateScreen(
-                                    modifier = Modifier.hazeEffect(hazeSource), onScanPdfClick = {
+                                    modifier = Modifier, onScanPdfClick = {
                                         onEvent(
                                             HomeViewModel.Event.ScanPdf(
                                                 activity = activity, listener = scannerLauncher
@@ -189,7 +180,6 @@ fun HomePage(
                         } else {
                             DisplayScannedPdfs(
                                 scannedPdfs = scannedPdfs,
-                                padding = padding,
                                 onEvent = onEvent,
                             )
                         }
@@ -213,7 +203,6 @@ fun HomePage(
 
 @Composable
 private fun DisplayScannedPdfs(
-    padding: PaddingValues,
     scannedPdfs: List<ScannedPdf>,
     onEvent: (HomeViewModel.Event) -> Unit,
 ) {
@@ -255,10 +244,10 @@ fun EmptyStateScreen(
     Column(
         modifier = modifier
             .border(
-                width = Dp.Hairline, brush = Brush.verticalGradient(
+                width = 2.dp, brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = .8f),
-                        Color.White.copy(alpha = .2f),
+                        MaterialTheme.colorScheme.onBackground.copy(alpha = .8f),
+                        MaterialTheme.colorScheme.onBackground.copy(alpha = .2f),
                     ),
                 ), shape = MaterialTheme.shapes.extraLarge
             )

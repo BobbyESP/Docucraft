@@ -42,4 +42,5 @@
     <string name="modify_pdf_details_description">Actualiza abajo el título y la descrpición del documento para reflejar su contenido y detalles.</string>
     <string name="scan_documents_to_see_list">Escanea tus documentos en formato PDF para verlos aquí.</string>
     <string name="no_scanned_documents">No hay documentos escaneados</string>
+    <string name="scan_cancelled">Proceso de escaneo cancelado</string>
 </resources>
