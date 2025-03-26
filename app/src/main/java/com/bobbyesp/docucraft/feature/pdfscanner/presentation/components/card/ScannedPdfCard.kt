@@ -3,6 +3,7 @@ package com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card
 import android.net.Uri
 import android.text.format.Formatter.formatFileSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -61,17 +62,24 @@ fun ScannedPdfCard(
     onSharePdf: (Uri) -> Unit,
     onDeletePdf: (Uri) -> Unit,
     onModifyPdfFields: (String) -> Unit,
+    onExpand: () -> Unit,
 ) {
     var dropdownMenuExpanded by remember { mutableStateOf(false) }
 
-    Surface(modifier = modifier, onClick = { onOpenPdf(pdf.path) }) {
+    Surface(
+        modifier = modifier.combinedClickable(
+            onClick = { onOpenPdf(pdf.path) },
+            onLongClick = onExpand,
+        ),
+    ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             val imageModifier =
-                Modifier.height(72.dp)
+                Modifier
+                    .height(72.dp)
                     .aspectRatio(1f / 1.414f)
                     .clip(MaterialTheme.shapes.small)
                     .background(MaterialTheme.colorScheme.primaryContainer)
@@ -297,7 +305,7 @@ private fun ScannedPdfCardPrev() {
                     title = "Document",
                     description =
                         "This is a very very large document description" +
-                            " for a sample document to see how the text wraps around the card",
+                                " for a sample document to see how the text wraps around the card",
                     path = "path".toUri(),
                     createdTimestamp = 1630000000000,
                     fileSize = 1024,
@@ -310,6 +318,7 @@ private fun ScannedPdfCardPrev() {
             onSavePdf = {},
             onDeletePdf = {},
             onModifyPdfFields = {},
+            onExpand = {},
         )
     }
 }

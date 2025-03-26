@@ -6,6 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.shrinkOut
@@ -76,7 +78,7 @@ import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeVie
 import com.materialkolor.ktx.harmonize
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun HomePage(
     scannedPdfs: List<ScannedPdf>,
@@ -94,105 +96,110 @@ fun HomePage(
         onEvent(HomeViewModel.Event.HandlePdfScanningResult(result))
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                modifier = Modifier,
-                title = {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = stringResource(id = R.string.app_name).uppercase(),
-                            fontWeight = FontWeight.SemiBold,
-                            fontFamily = FontFamily.Monospace,
-                            style = MaterialTheme.typography.titleLarge,
-                            letterSpacing = 4.sp,
-                        )
-                    }
-                },
-            )
-        },
-        floatingActionButton = {
-            AnimatedContent(
-                targetState = thereIsNoPdfs,
-                transitionSpec = {
-                    ContentTransform(
-                        targetContentEnter = expandIn() + fadeIn(),
-                        initialContentExit = shrinkOut() + slideOutVertically(),
-                    )
-                },
-            ) { showFab ->
-                if (!showFab) {
-                    ExtendedFloatingActionButton(
-                        text = { Text(text = stringResource(id = R.string.scan)) },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Rounded.DocumentScanner,
-                                contentDescription = stringResource(id = R.string.scan_new_document),
-                            )
-                        },
-                        onClick = {
-                            onEvent(
-                                HomeViewModel.Event.ScanPdf(
-                                    activity = activity, listener = scannerLauncher
-                                )
-                            )
-                        },
-                    )
-                }
-            }
-        },
-    ) { padding ->
-        Crossfade(
-            modifier = Modifier.padding(padding), targetState = isLoading
-        ) { state ->
-            when (state) {
-                is HomeViewModel.LoadingState.Error -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        ErrorContent(
-                            errorMessage = state.message,
-                            onRetry = { onEvent(HomeViewModel.Event.ReloadPdfs) })
-                    }
-                }
-
-                HomeViewModel.LoadingState.Idle -> {
-                    Crossfade(thereIsNoPdfs) { showEmptyState ->
-                        if (showEmptyState) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                EmptyStateScreen(
-                                    modifier = Modifier, onScanPdfClick = {
-                                        onEvent(
-                                            HomeViewModel.Event.ScanPdf(
-                                                activity = activity, listener = scannerLauncher
-                                            )
-                                        )
-                                    })
-                            }
-                        } else {
-                            DisplayScannedPdfs(
-                                scannedPdfs = scannedPdfs,
-                                onEvent = onEvent,
+    SharedTransitionLayout(
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        Scaffold(
+            topBar = {
+                CenterAlignedTopAppBar(
+                    modifier = Modifier,
+                    title = {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = stringResource(id = R.string.app_name).uppercase(),
+                                fontWeight = FontWeight.SemiBold,
+                                fontFamily = FontFamily.Monospace,
+                                style = MaterialTheme.typography.titleLarge,
+                                letterSpacing = 4.sp,
                             )
                         }
+                    },
+                )
+            },
+            floatingActionButton = {
+                AnimatedContent(
+                    targetState = thereIsNoPdfs,
+                    transitionSpec = {
+                        ContentTransform(
+                            targetContentEnter = expandIn() + fadeIn(),
+                            initialContentExit = shrinkOut() + slideOutVertically(),
+                        )
+                    },
+                ) { showFab ->
+                    if (!showFab) {
+                        ExtendedFloatingActionButton(
+                            text = { Text(text = stringResource(id = R.string.scan)) },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.DocumentScanner,
+                                    contentDescription = stringResource(id = R.string.scan_new_document),
+                                )
+                            },
+                            onClick = {
+                                onEvent(
+                                    HomeViewModel.Event.ScanPdf(
+                                        activity = activity, listener = scannerLauncher
+                                    )
+                                )
+                            },
+                        )
                     }
                 }
+            },
+        ) { padding ->
+            Crossfade(
+                modifier = Modifier.padding(padding), targetState = isLoading
+            ) { state ->
+                when (state) {
+                    is HomeViewModel.LoadingState.Error -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            ErrorContent(
+                                errorMessage = state.message,
+                                onRetry = { onEvent(HomeViewModel.Event.ReloadPdfs) })
+                        }
+                    }
 
-                HomeViewModel.LoadingState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
+                    HomeViewModel.LoadingState.Idle -> {
+                        Crossfade(thereIsNoPdfs) { showEmptyState ->
+                            if (showEmptyState) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    EmptyStateScreen(
+                                        modifier = Modifier, onScanPdfClick = {
+                                            onEvent(
+                                                HomeViewModel.Event.ScanPdf(
+                                                    activity = activity, listener = scannerLauncher
+                                                )
+                                            )
+                                        })
+                                }
+                            } else {
+                                DisplayScannedPdfs(
+                                    scannedPdfs = scannedPdfs,
+                                    onEvent = onEvent,
+                                )
+                            }
+                        }
+                    }
+
+                    HomeViewModel.LoadingState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
                 }
             }
         }
     }
+
 }
 
 @Composable
