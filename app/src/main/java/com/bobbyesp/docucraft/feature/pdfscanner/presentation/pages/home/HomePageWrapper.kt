@@ -20,11 +20,7 @@ fun HomePageWrapper() {
     val context = LocalContext.current
     val vm = koinViewModel<HomeViewModel>()
 
-    val scannedPdfsState = vm.scannedPdfsListFlow.collectAsStateWithLifecycle()
-    val loadingState = vm.loadingState.collectAsStateWithLifecycle()
-
-    val pdfToBeRemoved = vm.pdfToBeRemovedFlow.collectAsStateWithLifecycle()
-    val pdfToBeModified = vm.pdfToBeModifiedFlow.collectAsStateWithLifecycle()
+    val uiState = vm.uiState.collectAsStateWithLifecycle().value
 
     LaunchedEffect(Unit) {
         vm.eventFlow.collectLatest { event ->
@@ -96,16 +92,16 @@ fun HomePageWrapper() {
         }
     }
 
-    pdfToBeRemoved.value?.let { uri ->
+    uiState.pdfToBeRemoved?.let { scannedPdf ->
         PdfDeletionWarningDialog(
             modifier = Modifier,
-            scannedPdf = vm.getPdfByPath(uri) ?: error("Pdf not found"),
+            scannedPdf = uiState.pdfToBeRemoved,
             onDismiss = { vm.onEvent(HomeViewModel.Event.PdfAction.Delete(null)) },
-            onConfirm = { vm.onEvent(HomeViewModel.Event.PdfAction.Delete(uri)) },
+            onConfirm = { vm.onEvent(HomeViewModel.Event.PdfAction.Delete(scannedPdf.id)) },
         )
     }
 
-    pdfToBeModified.value?.let { scannedPdf ->
+    uiState.pdfToBeModified?.let { scannedPdf ->
         ModifyPdfTitleDescriptionDialog(
             modifier = Modifier,
             onDismiss = {
@@ -126,8 +122,8 @@ fun HomePageWrapper() {
     }
 
     HomePage(
-        scannedPdfs = scannedPdfsState.value,
-        isLoading = loadingState.value,
+        scannedPdfs = uiState.scannedPdfs,
+        loadingState = uiState.loadingState,
         onEvent = vm::onEvent
     )
 }

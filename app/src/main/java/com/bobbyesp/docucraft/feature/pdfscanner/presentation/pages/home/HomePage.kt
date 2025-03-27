@@ -82,7 +82,7 @@ import kotlin.math.roundToInt
 @Composable
 fun HomePage(
     scannedPdfs: List<ScannedPdf>,
-    isLoading: HomeViewModel.LoadingState,
+    loadingState: HomeViewModel.LoadingState,
     onEvent: (HomeViewModel.Event) -> Unit,
 ) {
     val activity = LocalActivity.current
@@ -148,7 +148,7 @@ fun HomePage(
             },
         ) { padding ->
             Crossfade(
-                modifier = Modifier.padding(padding), targetState = isLoading
+                modifier = Modifier.padding(padding), targetState = loadingState
             ) { state ->
                 when (state) {
                     is HomeViewModel.LoadingState.Error -> {
@@ -406,7 +406,7 @@ private fun ErrorContent(
 private fun PreviewMidas() {
     DocucraftTheme {
         HomePage(
-            scannedPdfs = emptyList(), isLoading = HomeViewModel.LoadingState.Error(
+            scannedPdfs = emptyList(), loadingState = HomeViewModel.LoadingState.Error(
                 IllegalStateException("Error"), "Error"
             ), onEvent = {})
     }

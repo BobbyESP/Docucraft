@@ -59,7 +59,7 @@ fun ScannedPdfCard(
     onOpenPdf: (Uri) -> Unit,
     onSavePdf: () -> Unit,
     onSharePdf: (Uri) -> Unit,
-    onDeletePdf: (Uri) -> Unit,
+    onDeletePdf: (String) -> Unit,
     onModifyPdfFields: (String) -> Unit,
 ) {
     var dropdownMenuExpanded by remember { mutableStateOf(false) }
@@ -148,7 +148,7 @@ fun ScannedPdfCard(
                     onDismissDropdown = { dropdownMenuExpanded = false },
                     onSavePdf = { onSavePdf() },
                     onSharePdf = { onSharePdf(pdf.path) },
-                    onDeletePdf = { onDeletePdf(pdf.path) },
+                    onDeletePdf = { onDeletePdf(pdf.id) },
                     onModifyPdfFields = { onModifyPdfFields(pdf.id) },
                 )
             }
