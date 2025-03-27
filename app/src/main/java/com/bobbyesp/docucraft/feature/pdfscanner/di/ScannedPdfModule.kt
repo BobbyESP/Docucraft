@@ -8,8 +8,8 @@ import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.PdfDocumentHe
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.ScannedPdfRepository
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.usecase.PdfFileManagementUseCase
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.usecase.ScannedPdfUseCase
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.scannedpdf.PdfFileManagementUseCaseImpl
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.scannedpdf.ScannedPdfUseCaseImpl
+import com.bobbyesp.docucraft.feature.pdfscanner.data.local.repository.usecase.scannedpdf.PdfFileManagementUseCaseImpl
+import com.bobbyesp.docucraft.feature.pdfscanner.data.local.repository.usecase.scannedpdf.ScannedPdfUseCaseImpl
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 

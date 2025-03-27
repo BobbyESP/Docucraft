@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.scannedpdf
+package com.bobbyesp.docucraft.feature.pdfscanner.data.local.repository.usecase.scannedpdf
 
 import android.content.Context
 import android.net.Uri

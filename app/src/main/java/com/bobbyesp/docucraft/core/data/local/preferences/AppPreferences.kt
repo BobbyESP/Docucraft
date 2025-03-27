@@ -50,17 +50,14 @@ class AppPreferences(
         return mapUserPreferences(preferences ?: emptyPreferences())
     }
 
-    // --> Core
     suspend fun updateFinishedOnboarding(finishedOnboarding: Boolean) {
         saveSetting(PreferencesKey.COMPLETED_ONBOARDING, finishedOnboarding)
     }
 
-    // --> UI
     suspend fun updateMarqueeTextEnabled(marqueeTextEnabled: Boolean) {
         saveSetting(MARQUEE_TEXT_ENABLED, marqueeTextEnabled)
     }
 
-    // --> Theming
     suspend fun updateDarkThemeValue(darkThemeValue: DarkThemeValue) {
         saveSetting(DARK_THEME_VALUE, darkThemeValue.name)
     }

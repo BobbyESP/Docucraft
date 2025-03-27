@@ -12,7 +12,5 @@ suspend fun PlatformFile.ensure(mustCreate: Boolean = false) {
 }
 
 suspend fun PlatformFile.ensureParent(mustCreate: Boolean = false) {
-    if (this.parent() != null) {
-        this.parent()!!.ensure(mustCreate = mustCreate)
-    }
+    this.parent()?.ensure(mustCreate = mustCreate)
 }
