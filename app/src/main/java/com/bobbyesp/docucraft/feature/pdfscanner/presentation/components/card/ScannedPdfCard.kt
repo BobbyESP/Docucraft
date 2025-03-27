@@ -3,7 +3,6 @@ package com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card
 import android.net.Uri
 import android.text.format.Formatter.formatFileSize
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -62,15 +61,12 @@ fun ScannedPdfCard(
     onSharePdf: (Uri) -> Unit,
     onDeletePdf: (Uri) -> Unit,
     onModifyPdfFields: (String) -> Unit,
-    onExpand: () -> Unit,
 ) {
     var dropdownMenuExpanded by remember { mutableStateOf(false) }
 
     Surface(
-        modifier = modifier.combinedClickable(
-            onClick = { onOpenPdf(pdf.path) },
-            onLongClick = onExpand,
-        ),
+        modifier = modifier,
+        onClick = { onOpenPdf(pdf.path) },
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -318,7 +314,6 @@ private fun ScannedPdfCardPrev() {
             onSavePdf = {},
             onDeletePdf = {},
             onModifyPdfFields = {},
-            onExpand = {},
         )
     }
 }
