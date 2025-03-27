@@ -43,6 +43,8 @@ interface ScannedPdfRepository {
      */
     suspend fun getScannedPdfById(pdfId: String): ScannedPdf
 
+    suspend fun getScannedPdfByPath(pdfPath: Uri): ScannedPdf
+
     suspend fun savePdf(scannedPdf: ScannedPdfEntity)
 
     suspend fun modifyTitleAndDescription(pdfId: String, title: String?, description: String?)

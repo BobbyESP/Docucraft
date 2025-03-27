@@ -70,7 +70,7 @@ class HomeViewModel(
             _loadingState.update { LoadingState.Loading }
             try {
                 supervisorScope {
-                    scannedPdfUseCase.allScannedPdfsFlow().collect { scannedPdfs ->
+                    scannedPdfUseCase.scannedPdfsListFlow().collect { scannedPdfs ->
                         _scannedPdfsListFlow.update { scannedPdfs }
 
                         if (_loadingState.value !is LoadingState.Idle)

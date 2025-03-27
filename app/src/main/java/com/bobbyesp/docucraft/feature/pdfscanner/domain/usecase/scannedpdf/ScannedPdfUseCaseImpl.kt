@@ -32,8 +32,16 @@ class ScannedPdfUseCaseImpl(
     private val pdfDocsHelper: PdfDocumentHelper,
 ) : ScannedPdfUseCase {
 
-    override suspend fun allScannedPdfsFlow(): Flow<List<ScannedPdf>> {
+    override suspend fun scannedPdfsListFlow(): Flow<List<ScannedPdf>> {
         return repository.getAllScannedPdfsFlow()
+    }
+
+    override suspend fun getScannedPdf(pdfId: String): ScannedPdf {
+        return repository.getScannedPdfById(pdfId)
+    }
+
+    override suspend fun getScannedPdf(pdfPath: Uri): ScannedPdf {
+        return repository.getScannedPdfByPath(pdfPath)
     }
 
     override suspend fun saveScannedPdf(

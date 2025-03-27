@@ -35,6 +35,13 @@ class ScannedPdfRepositoryImpl(
         return entity.toModel()
     }
 
+    override suspend fun getScannedPdfByPath(pdfPath: Uri): ScannedPdf {
+        val entity =
+            scannedPdfDao.fetchByPath(pdfPath.toString())
+                ?: throw NoSuchElementException("No PDF found with path: $pdfPath")
+        return entity.toModel()
+    }
+
     override suspend fun savePdf(scannedPdf: ScannedPdfEntity) {
         try {
             scannedPdfDao.insert(scannedPdf)
