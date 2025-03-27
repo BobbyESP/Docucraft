@@ -8,7 +8,7 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.viewModelScope
-import com.bobbyesp.docucraft.core.util.ext.ViewModelCoroutineBased
+import com.bobbyesp.docucraft.core.util.ViewModelCoroutineBased
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.usecase.ScannedPdfUseCase
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
