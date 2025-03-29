@@ -13,9 +13,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,13 +29,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CameraAlt
+import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.FileCopy
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -44,9 +49,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -68,8 +76,12 @@ import androidx.compose.ui.unit.sp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscroll
+import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
+import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfCard
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.others.selectiongroup.SelectionGroupItem
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.others.selectiongroup.SelectionGroupRow
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.NotifyUserAction.OpenPdfFieldsDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.NotifyUserAction.WarnAboutDeletion
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Open
@@ -82,12 +94,21 @@ import kotlin.math.roundToInt
 @Composable
 fun HomePage(
     scannedPdfs: List<ScannedPdf>,
+    filteredPdfs: List<ScannedPdf>,
+    searchQuery: String,
+    filterOptions: FilterOptions,
     loadingState: HomeViewModel.LoadingState,
     onEvent: (HomeViewModel.Event) -> Unit,
 ) {
     val activity = LocalActivity.current
     val thereIsNoPdfs by remember(scannedPdfs) {
         derivedStateOf { scannedPdfs.isEmpty() }
+    }
+
+    val pdfsToShow by remember(scannedPdfs, filteredPdfs, searchQuery, filterOptions) {
+        derivedStateOf {
+            if (searchQuery.isNotBlank() || filterOptions != FilterOptions()) filteredPdfs else scannedPdfs
+        }
     }
 
     val scannerLauncher = rememberLauncherForActivityResult(
@@ -180,8 +201,9 @@ fun HomePage(
                                 }
                             } else {
                                 DisplayScannedPdfs(
-                                    scannedPdfs = scannedPdfs,
+                                    scannedPdfs = pdfsToShow,
                                     onEvent = onEvent,
+                                    filterOptions = filterOptions,
                                 )
                             }
                         }
@@ -199,12 +221,12 @@ fun HomePage(
             }
         }
     }
-
 }
 
 @Composable
 private fun DisplayScannedPdfs(
     scannedPdfs: List<ScannedPdf>,
+    filterOptions: FilterOptions,
     onEvent: (HomeViewModel.Event) -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
@@ -220,7 +242,19 @@ private fun DisplayScannedPdfs(
             .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
         state = lazyListState,
     ) {
-        items(scannedPdfs) { scannedPdf ->
+        stickyHeader {
+            SortOptionsRow(
+                currentSortOption = filterOptions.sortBy,
+                onSortOptionChanged = { onEvent(HomeViewModel.Event.SearchFilterEvent.ApplySort(it)) },
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+
+        items(
+            items = scannedPdfs,
+            key = { scannedPdf -> scannedPdf.id },
+            contentType = { scannedPdf -> scannedPdf.javaClass.name },
+        ) { scannedPdf ->
             ScannedPdfCard(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -234,6 +268,96 @@ private fun DisplayScannedPdfs(
             )
         }
     }
+}
+
+@Composable
+fun SortOptionsRow(
+    currentSortOption: SortOption,
+    onSortOptionChanged: (SortOption) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        SelectionGroupRow(
+            modifier = Modifier
+                .weight(1f)
+                .horizontalScroll(rememberScrollState())
+        ) {
+            SortOption.Criteria.entries.forEach { criteria ->
+                SelectionGroupItem(
+                    selected = currentSortOption.criteria == criteria, onClick = {
+                        onSortOptionChanged(SortOption(criteria, currentSortOption.order))
+                    }) {
+                    Text(criteria.getLocalizedName())
+                }
+            }
+        }
+
+        VerticalDivider(
+            color = MaterialTheme.colorScheme.outline,
+            modifier = Modifier
+                .height(24.dp)
+                .padding(horizontal = 8.dp)
+        )
+
+        IconButton(
+            onClick = {
+                val newOrder = if (currentSortOption.order == SortOption.Order.ASC) {
+                    SortOption.Order.DESC
+                } else {
+                    SortOption.Order.ASC
+                }
+                onSortOptionChanged(SortOption(currentSortOption.criteria, newOrder))
+            }) {
+            Icon(
+                imageVector = currentSortOption.getSortIcon(),
+                contentDescription = if (currentSortOption.order == SortOption.Order.ASC) {
+                    stringResource(R.string.sort_ascending)
+                } else {
+                    stringResource(R.string.sort_descending)
+                }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = modifier,
+        placeholder = { Text(stringResource(R.string.search_documents)) },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = stringResource(R.string.search)
+            )
+        },
+        trailingIcon = {
+            if (query.isNotEmpty()) {
+                IconButton(onClick = onClear) {
+                    Icon(
+                        imageVector = Icons.Rounded.Clear,
+                        contentDescription = stringResource(R.string.clear_search)
+                    )
+                }
+            }
+        },
+        singleLine = true,
+        shape = MaterialTheme.shapes.large
+    )
 }
 
 
@@ -406,8 +530,14 @@ private fun ErrorContent(
 private fun PreviewMidas() {
     DocucraftTheme {
         HomePage(
-            scannedPdfs = emptyList(), loadingState = HomeViewModel.LoadingState.Error(
+            scannedPdfs = emptyList(),
+            loadingState = HomeViewModel.LoadingState.Error(
                 IllegalStateException("Error"), "Error"
-            ), onEvent = {})
+            ),
+            onEvent = {},
+            filteredPdfs = emptyList(),
+            searchQuery = "",
+            filterOptions = FilterOptions()
+        )
     }
 }

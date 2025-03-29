@@ -28,6 +28,12 @@ interface ScannedPdfRepository {
      */
     suspend fun getAllScannedPdfsFlow(): Flow<List<ScannedPdf>>
 
+    suspend fun searchPdfsByName(query: String): List<ScannedPdf>
+
+    suspend fun searchPdfsByDescription(query: String): List<ScannedPdf>
+
+    suspend fun searchPdfsByTitleOrDescription(query: String): List<ScannedPdf>
+
     /**
      * Retrieves a scanned PDF by its unique identifier.
      *

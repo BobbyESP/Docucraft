@@ -124,6 +124,9 @@ fun HomePageWrapper() {
     HomePage(
         scannedPdfs = uiState.scannedPdfs,
         loadingState = uiState.loadingState,
-        onEvent = vm::onEvent
+        filteredPdfs = uiState.filteredPdfs,
+        filterOptions = uiState.filterOptions,
+        searchQuery = uiState.searchQuery,
+        onEvent = vm::onEvent,
     )
 }

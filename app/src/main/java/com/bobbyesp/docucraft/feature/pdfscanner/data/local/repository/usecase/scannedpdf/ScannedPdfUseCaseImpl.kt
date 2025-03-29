@@ -36,6 +36,10 @@ class ScannedPdfUseCaseImpl(
         return repository.getAllScannedPdfsFlow()
     }
 
+    override suspend fun searchPdfs(query: String): List<ScannedPdf> {
+        return repository.searchPdfsByTitleOrDescription(query)
+    }
+
     override suspend fun getScannedPdf(pdfId: String): ScannedPdf {
         return repository.getScannedPdfById(pdfId)
     }

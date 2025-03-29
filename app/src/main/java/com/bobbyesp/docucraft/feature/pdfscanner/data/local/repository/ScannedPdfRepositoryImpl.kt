@@ -25,6 +25,34 @@ class ScannedPdfRepositoryImpl(
             .map { entities -> entities.map { it.toModel() } }
             .flowOn(Dispatchers.IO)
 
+    override suspend fun searchPdfsByName(query: String): List<ScannedPdf> {
+        if (query.isEmpty()) {
+            return emptyList()
+        }
+        val nameResults = scannedPdfDao.searchPdfsByName(query)
+        return nameResults.map { it.toModel() }
+    }
+
+    override suspend fun searchPdfsByDescription(query: String): List<ScannedPdf> {
+        if (query.isEmpty()) {
+            return emptyList()
+        }
+        val descResults = scannedPdfDao.searchPdfsByDescription(query)
+        return descResults.map { it.toModel() }
+    }
+
+    override suspend fun searchPdfsByTitleOrDescription(query: String): List<ScannedPdf> {
+        if (query.isEmpty()) {
+            return emptyList()
+        }
+        val nameResults = scannedPdfDao.searchPdfsByName(query)
+        val titleDescResults = scannedPdfDao.searchPdfsByTitleOrDescription(query)
+
+        return (nameResults + titleDescResults)
+            .distinctBy { it.id }
+            .map { it.toModel() }
+    }
+
     override suspend fun getScannedPdfById(pdfId: String): ScannedPdf {
         if (pdfId.isEmpty()) {
             throw IllegalArgumentException("PDF ID must not be empty")

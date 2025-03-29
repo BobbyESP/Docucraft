@@ -30,6 +30,9 @@ interface ScannedPdfDao : BaseDao<ScannedPdfEntity> {
     @Query("SELECT * FROM scanned_pdfs WHERE filename LIKE '%' || :searchQuery || '%'")
     suspend fun searchPdfsByName(searchQuery: String): List<ScannedPdfEntity>
 
+    @Query("SELECT * FROM scanned_pdfs WHERE description LIKE '%' || :searchQuery || '%'")
+    suspend fun searchPdfsByDescription(searchQuery: String): List<ScannedPdfEntity>
+
     @Query("SELECT * FROM scanned_pdfs WHERE pageCount >= :minPages")
     suspend fun getPdfsByMinPageCount(minPages: Int): List<ScannedPdfEntity>
 

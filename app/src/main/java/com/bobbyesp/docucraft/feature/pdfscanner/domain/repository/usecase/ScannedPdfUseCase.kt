@@ -38,6 +38,8 @@ interface ScannedPdfUseCase {
      */
     suspend fun scannedPdfsListFlow(): Flow<List<ScannedPdf>>
 
+    suspend fun searchPdfs(query: String): List<ScannedPdf>
+
     /**
      * Retrieves a scanned PDF document by its unique identifier.
      *

@@ -43,4 +43,13 @@
     <string name="scan_documents_to_see_list">Escanea tus documentos en formato PDF para verlos aquí.</string>
     <string name="no_scanned_documents">No hay documentos escaneados</string>
     <string name="scan_cancelled">Proceso de escaneo cancelado</string>
+    <string name="date">Fecha</string>
+    <string name="name">Nombre</string>
+    <string name="filter">Filtro</string>
+    <string name="clear_filters">Limpiar filtros</string>
+    <string name="search_documents">Buscar documentos</string>
+    <string name="search">Buscar</string>
+    <string name="clear_search">Limpiar búsqueda</string>
+    <string name="sort_ascending">Ordenar ascendentemente</string>
+    <string name="sort_descending">Ordenar descendentemente</string>
 </resources>

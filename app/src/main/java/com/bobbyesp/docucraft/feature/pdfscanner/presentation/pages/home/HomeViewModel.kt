@@ -9,6 +9,8 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.core.util.ViewModelCoroutineBased
+import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
+import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.usecase.ScannedPdfUseCase
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
@@ -48,6 +50,9 @@ class HomeViewModel(
         val loadingState: LoadingState = LoadingState.Loading,
         val pdfToBeRemoved: ScannedPdf? = null,
         val pdfToBeModified: ScannedPdf? = null,
+        val searchQuery: String = "",
+        val filterOptions: FilterOptions = FilterOptions(),
+        val filteredPdfs: List<ScannedPdf> = emptyList()
     )
 
     private val _eventFlow = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
@@ -84,7 +89,73 @@ class HomeViewModel(
         }
     }
 
-    suspend fun getPdfById(pdfId: String): ScannedPdf? {
+    private val HomeViewState.hasActiveFilters: Boolean
+        get() = filterOptions.minPageCount != null || filterOptions.minFileSize != null || filterOptions.dateRange != null || filterOptions.sortBy != SortOption.DateDesc
+
+    private fun applySearchAndFilters() {
+        launchIO {
+            val currentState = _uiState.value
+            val query = currentState.searchQuery
+            val filterOptions = currentState.filterOptions
+
+            var result = currentState.scannedPdfs
+
+            if (query.isNotBlank()) {
+                try {
+                    // Use the existing DAO methods for search
+                    val searchResults = scannedPdfUseCase.searchPdfs(query)
+                    result = result.filter { pdf -> searchResults.any { it.id == pdf.id } }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Search failed: ${e.message}", e)
+                    // Fallback to in-memory filtering
+                    result = result.filter { pdf ->
+                        pdf.title?.contains(
+                            query,
+                            ignoreCase = true
+                        ) == true || pdf.filename.contains(
+                            query,
+                            ignoreCase = true
+                        ) || pdf.description?.contains(query, ignoreCase = true) == true
+                    }
+                }
+            }
+
+            filterOptions.minPageCount?.let { minPages ->
+                result = result.filter { it.pageCount >= minPages }
+            }
+
+            filterOptions.minFileSize?.let { minSize ->
+                result = result.filter { it.fileSize >= minSize }
+            }
+
+            filterOptions.dateRange?.let { (start, end) ->
+                result = result.filter { it.createdTimestamp in start..end }
+            }
+
+            result = when (filterOptions.sortBy.criteria) {
+                SortOption.Criteria.DATE -> {
+                    if (filterOptions.sortBy.order == SortOption.Order.DESC) result.sortedByDescending { it.createdTimestamp }
+                    else result.sortedBy { it.createdTimestamp }
+                }
+
+                SortOption.Criteria.NAME -> {
+                    if (filterOptions.sortBy.order == SortOption.Order.DESC) result.sortedByDescending {
+                        it.title ?: it.filename
+                    }
+                    else result.sortedBy { it.title ?: it.filename }
+                }
+
+                SortOption.Criteria.SIZE -> {
+                    if (filterOptions.sortBy.order == SortOption.Order.DESC) result.sortedByDescending { it.fileSize }
+                    else result.sortedBy { it.fileSize }
+                }
+            }
+
+            _uiState.update { it.copy(filteredPdfs = result) }
+        }
+    }
+
+    suspend fun getPdfById(pdfId: String): ScannedPdf {
         return scannedPdfUseCase.getScannedPdf(pdfId)
     }
 
@@ -117,7 +188,7 @@ class HomeViewModel(
                             launchIO {
                                 val scannedPdf = getPdfById(
                                     event.id
-                                ) ?: throw IllegalArgumentException("PDF not found")
+                                )
 
                                 deletePdf(scannedPdf.path)
                             }
@@ -127,7 +198,6 @@ class HomeViewModel(
                     is Event.PdfAction.ModifyTitleDescription -> {
                         launchIO {
                             val scannedPdf = getPdfById(event.pdfId)
-                                ?: throw IllegalArgumentException("PDF not found")
                             val newTitle: String? = if (event.title.isBlank()) null else event.title
                             val newDescription: String? =
                                 if (event.description.isBlank()) null else event.description
@@ -148,33 +218,68 @@ class HomeViewModel(
                 }
             }
 
-            is Event.NotifyUserAction.WarnAboutDeletion -> {
-                launchIO {
-                    val scannedPdf =
-                        getPdfById(event.pdfId) ?: throw IllegalArgumentException("PDF not found")
+            is Event.NotifyUserAction -> {
+                when (event) {
+                    is Event.NotifyUserAction.DismissPdfTitleDescriptionDialog -> {
+                        _uiState.update {
+                            it.copy(pdfToBeModified = null)
+                        }
+                    }
 
-                    _uiState.update {
-                        it.copy(pdfToBeRemoved = scannedPdf)
+                    is Event.NotifyUserAction.WarnAboutDeletion -> {
+                        launchIO {
+                            val scannedPdf = getPdfById(event.pdfId)
+
+                            _uiState.update {
+                                it.copy(pdfToBeRemoved = scannedPdf)
+                            }
+                        }
+                    }
+
+                    is Event.NotifyUserAction.OpenPdfFieldsDialog -> {
+                        launchIO {
+                            val scannedPdf = getPdfById(event.pdfId)
+
+                            _uiState.update {
+                                it.copy(pdfToBeModified = scannedPdf)
+                            }
+                        }
                     }
                 }
             }
 
-            is Event.NotifyUserAction.OpenPdfFieldsDialog -> {
-                launchIO {
-                    val scannedPdf =
-                        getPdfById(event.pdfId) ?: throw IllegalArgumentException("PDF not found")
-
-                    _uiState.update {
-                        it.copy(pdfToBeModified = scannedPdf)
+            is Event.SearchFilterEvent -> {
+                when (event) {
+                    is Event.SearchFilterEvent.ApplyFilter -> {
+                        _uiState.update { it.copy(filterOptions = event.filterOptions) }
+                        applySearchAndFilters()
                     }
-                }
-            }
 
-            is Event.NotifyUserAction.DismissPdfTitleDescriptionDialog -> {
-                _uiState.update {
-                    it.copy(
-                        pdfToBeModified = null
-                    )
+                    Event.SearchFilterEvent.ClearFilters -> {
+                        _uiState.update { it.copy(filterOptions = FilterOptions()) }
+                        applySearchAndFilters()
+                    }
+
+                    Event.SearchFilterEvent.ClearSearch -> {
+                        _uiState.update { it.copy(searchQuery = "") }
+                        applySearchAndFilters()
+                    }
+
+                    is Event.SearchFilterEvent.UpdateSearchQuery -> {
+                        _uiState.update { it.copy(searchQuery = event.query) }
+                        applySearchAndFilters()
+                    }
+
+                    is Event.SearchFilterEvent.ApplySort -> {
+                        _uiState.update {
+                            it.copy(
+                                filterOptions = it.filterOptions.copy(
+                                    sortBy = event.sortOption
+                                )
+                            )
+                        }
+                        applySearchAndFilters()
+                    }
                 }
             }
         }
@@ -354,6 +459,14 @@ class HomeViewModel(
             data class OpenPdfFieldsDialog(val pdfId: String) : NotifyUserAction()
 
             data object DismissPdfTitleDescriptionDialog : NotifyUserAction()
+        }
+
+        sealed class SearchFilterEvent : Event {
+            data class UpdateSearchQuery(val query: String) : SearchFilterEvent()
+            data class ApplySort(val sortOption: SortOption) : SearchFilterEvent()
+            data class ApplyFilter(val filterOptions: FilterOptions) : SearchFilterEvent()
+            data object ClearSearch : SearchFilterEvent()
+            data object ClearFilters : SearchFilterEvent()
         }
     }
 

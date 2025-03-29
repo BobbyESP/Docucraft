@@ -42,4 +42,13 @@
     <string name="no_scanned_documents">No scanned documents</string>
     <string name="scan_documents_to_see_list">Scan your documents in PDF format to see them here.</string>
     <string name="scan_cancelled">Scan process cancelled</string>
+    <string name="date">Date</string>
+    <string name="name">Name</string>
+    <string name="filter">Filter</string>
+    <string name="clear_filters">Clean filters</string>
+    <string name="search_documents">Search documents</string>
+    <string name="search">Search</string>
+    <string name="clear_search">Clear search</string>
+    <string name="sort_ascending">Sort ascending</string>
+    <string name="sort_descending">Sort descending</string>
 </resources>
