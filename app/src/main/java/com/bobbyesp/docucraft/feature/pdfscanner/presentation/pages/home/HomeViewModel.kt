@@ -25,9 +25,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.supervisorScope
 
 class HomeViewModel(
     private val scannedPdfUseCase: ScannedPdfUseCase,
@@ -59,32 +59,28 @@ class HomeViewModel(
     val eventFlow = _eventFlow.asSharedFlow()
 
     init {
-        loadScannedPdfs()
+        launchIO {
+            loadScannedPdfs()
+        }
     }
 
-    private fun loadScannedPdfs() {
-        launchIO {
-            _uiState.update { it.copy(loadingState = LoadingState.Loading) }
-            try {
-                supervisorScope {
-                    scannedPdfUseCase.scannedPdfsListFlow().collect { scannedPdfs ->
-                        _uiState.update { it.copy(scannedPdfs = scannedPdfs) }
+    private suspend fun loadScannedPdfs() {
+        _uiState.update { it.copy(loadingState = LoadingState.Loading) }
+        scannedPdfUseCase.scannedPdfsListFlow().catch { e ->
+            Log.e(TAG, "Failed to retrieve PDFs: ${e.message}", e)
+            _uiState.update {
+                it.copy(
+                    loadingState = LoadingState.Error(e, "Failed to load PDFs")
+                )
+            }
+            emitUiEvent(UiEvent.Error(e))
+        }.collect { scannedPdfs ->
+            _uiState.update { it.copy(scannedPdfs = scannedPdfs) }
 
-                        if (_uiState.value.loadingState !is LoadingState.Idle) _uiState.update {
-                            it.copy(
-                                loadingState = LoadingState.Idle
-                            )
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to retrieve PDFs: ${e.message}", e)
-                _uiState.update {
-                    it.copy(
-                        loadingState = LoadingState.Error(e, "Failed to load PDFs")
-                    )
-                }
-                emitUiEvent(UiEvent.Error(e))
+            if (_uiState.value.loadingState !is LoadingState.Idle) _uiState.update {
+                it.copy(
+                    loadingState = LoadingState.Idle
+                )
             }
         }
     }
@@ -110,11 +106,9 @@ class HomeViewModel(
                     // Fallback to in-memory filtering
                     result = result.filter { pdf ->
                         pdf.title?.contains(
-                            query,
-                            ignoreCase = true
+                            query, ignoreCase = true
                         ) == true || pdf.filename.contains(
-                            query,
-                            ignoreCase = true
+                            query, ignoreCase = true
                         ) || pdf.description?.contains(query, ignoreCase = true) == true
                     }
                 }
@@ -180,7 +174,7 @@ class HomeViewModel(
             is Event.PdfAction -> {
                 when (event) {
                     is Event.PdfAction.Open -> openPdfInViewer(pdfPath = event.pdfPath)
-                    is Event.PdfAction.Save -> savePdf(scannedPdf = event.scannedPdf)
+                    is Event.PdfAction.Save -> launchIO { copyPdfToDirectory(event.scannedPdf) }
                     is Event.PdfAction.Share -> sharePdf(pdfPath = event.pdfPath)
                     is Event.PdfAction.Delete -> {
                         _uiState.update { it.copy(pdfToBeRemoved = null) }
@@ -306,15 +300,13 @@ class HomeViewModel(
         }
     }
 
-    private fun deletePdf(pdfPath: Uri) {
-        launchIO {
-            try {
-                scannedPdfUseCase.deleteScannedPdf(pdfPath)
-                emitUiEvent(UiEvent.DeleteResult.Success)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to delete PDF: ${e.message}", e)
-                emitUiEvent(UiEvent.DeleteResult.Failure(error = e))
-            }
+    private suspend fun deletePdf(pdfPath: Uri) {
+        try {
+            scannedPdfUseCase.deleteScannedPdf(pdfPath)
+            emitUiEvent(UiEvent.DeleteResult.Success)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to delete PDF: ${e.message}", e)
+            emitUiEvent(UiEvent.DeleteResult.Failure(error = e))
         }
     }
 
@@ -328,10 +320,6 @@ class HomeViewModel(
             Log.e(TAG, "Failed to start scan: ${exception.message}", exception)
             emitUiEvent(UiEvent.ScanResult.Failure(error = exception))
         }
-    }
-
-    private fun savePdf(scannedPdf: ScannedPdf) {
-        launchIO { copyPdfToDirectory(scannedPdf) }
     }
 
     private suspend fun copyPdfToDirectory(scannedPdf: ScannedPdf) {
