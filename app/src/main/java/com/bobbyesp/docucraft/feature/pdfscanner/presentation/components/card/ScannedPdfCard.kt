@@ -64,18 +64,14 @@ fun ScannedPdfCard(
 ) {
     var dropdownMenuExpanded by remember { mutableStateOf(false) }
 
-    Surface(
-        modifier = modifier,
-        onClick = { onOpenPdf(pdf.path) },
-    ) {
+    Surface(modifier = modifier, onClick = { onOpenPdf(pdf.path) }) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             val imageModifier =
-                Modifier
-                    .height(72.dp)
+                Modifier.height(72.dp)
                     .aspectRatio(1f / 1.414f)
                     .clip(MaterialTheme.shapes.small)
                     .background(MaterialTheme.colorScheme.primaryContainer)
@@ -172,12 +168,13 @@ fun PdfOptionsDropdown(
         modifier = modifier,
         expanded = expanded,
         onDismissRequest = onDismissDropdown,
-        properties = PopupProperties(
-            focusable = true,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true,
-            clippingEnabled = true
-        )
+        properties =
+            PopupProperties(
+                focusable = true,
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true,
+                clippingEnabled = true,
+            ),
     ) {
         DropdownMenuItem(
             leadingIcon = {
@@ -301,7 +298,7 @@ private fun ScannedPdfCardPrev() {
                     title = "Document",
                     description =
                         "This is a very very large document description" +
-                                " for a sample document to see how the text wraps around the card",
+                            " for a sample document to see how the text wraps around the card",
                     path = "path".toUri(),
                     createdTimestamp = 1630000000000,
                     fileSize = 1024,

@@ -12,15 +12,11 @@ abstract class ViewModelCoroutineBased() : ViewModel() {
 
     // Add this at the top of your ViewModel class
     protected fun ViewModel.launchIO(block: suspend CoroutineScope.() -> Unit) {
-        viewModelScope.launch(Dispatchers.IO + exceptionHandler) {
-            block()
-        }
+        viewModelScope.launch(Dispatchers.IO + exceptionHandler) { block() }
     }
 
     // For operations that don't need IO dispatcher
     protected fun ViewModel.launchSafe(block: suspend CoroutineScope.() -> Unit) {
-        viewModelScope.launch(exceptionHandler) {
-            block()
-        }
+        viewModelScope.launch(exceptionHandler) { block() }
     }
 }

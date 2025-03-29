@@ -10,7 +10,9 @@ import com.bobbyesp.docucraft.R
 
 data class SortOption(val criteria: Criteria, val order: Order) {
     enum class Criteria {
-        DATE, NAME, SIZE;
+        DATE,
+        NAME,
+        SIZE;
 
         @Composable
         fun getLocalizedName(): String {
@@ -22,12 +24,14 @@ data class SortOption(val criteria: Criteria, val order: Order) {
         }
 
         companion object {
-            @Composable
-            fun toString(criteria: Criteria): String = criteria.getLocalizedName()
+            @Composable fun toString(criteria: Criteria): String = criteria.getLocalizedName()
         }
     }
 
-    enum class Order { ASC, DESC }
+    enum class Order {
+        ASC,
+        DESC,
+    }
 
     @Composable
     fun getSortIcon(): ImageVector {

@@ -48,9 +48,7 @@ class ScannedPdfRepositoryImpl(
         val nameResults = scannedPdfDao.searchPdfsByName(query)
         val titleDescResults = scannedPdfDao.searchPdfsByTitleOrDescription(query)
 
-        return (nameResults + titleDescResults)
-            .distinctBy { it.id }
-            .map { it.toModel() }
+        return (nameResults + titleDescResults).distinctBy { it.id }.map { it.toModel() }
     }
 
     override suspend fun getScannedPdfById(pdfId: String): ScannedPdf {

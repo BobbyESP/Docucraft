@@ -3,7 +3,6 @@ package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
@@ -36,7 +35,8 @@ fun ModifyPdfTitleDescriptionDialog(
     description: String?,
 ) {
     var titleText by rememberSaveable(key = "pdfNewTitle") { mutableStateOf(title ?: "") }
-    var descriptionText by rememberSaveable(key = "pdfNewDescription") { mutableStateOf(description ?: "") }
+    var descriptionText by
+        rememberSaveable(key = "pdfNewDescription") { mutableStateOf(description ?: "") }
 
     val keyboardOptions by remember {
         mutableStateOf(
@@ -64,10 +64,7 @@ fun ModifyPdfTitleDescriptionDialog(
             )
         },
         text = {
-            Column(
-                modifier = modifier,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = stringResource(R.string.modify_pdf_details_description),
                     style = MaterialTheme.typography.bodyMedium,
