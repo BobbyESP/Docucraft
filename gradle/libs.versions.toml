@@ -12,7 +12,7 @@ splashscreen = "1.0.1"
 leakcanary = "2.13"
 
 #Compose
-compose-bom = "2025.03.00"
+compose-bom = "2025.03.01"
 androidx-compose-material3 = "1.3.1"
 compose-util = "1.7.8"
 accompanist = "0.34.0"
@@ -46,12 +46,12 @@ koin = "4.0.0"
 room = "2.6.1"
 
 #High performance key-value storage
-datastore = "1.1.3"
+datastore = "1.1.4"
 
 #Firebase, GMS...
 gmsPlayServicesAuth = "21.3.0"
 googleServices = "4.4.2"
-firebaseBom = "33.10.0"
+firebaseBom = "33.11.0"
 
 #Others
 qrcodeKotlinAndroid = "4.2.0"
@@ -69,7 +69,7 @@ androidx-test-ext-junit = "1.2.1"
 espresso-core = "3.6.1"
 
 #Others
-androidx-baselineprofile = "1.3.3"
+androidx-baselineprofile = "1.3.4"
 profileinstaller = "1.4.1"
 scrollbar = "2.2.0"
 ktfmt = "0.20.1"

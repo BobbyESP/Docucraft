@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.ktfmt.gradle)
+    alias(libs.plugins.google.gms)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 android {
@@ -124,6 +126,11 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.scrollbar)
     implementation(libs.sonner)
+
+    //Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
 
     implementation(libs.profileinstaller)
 

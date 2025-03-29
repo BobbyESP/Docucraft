@@ -44,7 +44,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -55,6 +54,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
@@ -71,6 +71,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -105,28 +106,29 @@ fun HomePage(
     val activity = LocalActivity.current
     val thereIsNoPdfs by remember(scannedPdfs) { derivedStateOf { scannedPdfs.isEmpty() } }
 
-    val pdfsToShow by
-        remember(scannedPdfs, filteredPdfs, searchQuery, filterOptions) {
-            derivedStateOf {
-                if (searchQuery.isNotBlank() || filterOptions != FilterOptions()) filteredPdfs
-                else scannedPdfs
-            }
+    val pdfsToShow by remember(scannedPdfs, filteredPdfs, searchQuery, filterOptions) {
+        derivedStateOf {
+            if (searchQuery.isNotBlank() || filterOptions != FilterOptions()) filteredPdfs
+            else scannedPdfs
         }
+    }
 
-    val scannerLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartIntentSenderForResult()
-        ) { result ->
-            onEvent(HomeViewModel.Event.HandlePdfScanningResult(result))
-        }
+    val scannerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        onEvent(HomeViewModel.Event.HandlePdfScanningResult(result))
+    }
 
     SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar(
+                TopAppBar(
                     modifier = Modifier,
                     title = {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(
+                            horizontalAlignment = Alignment.Start,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             Text(
                                 text = stringResource(id = R.string.app_name).uppercase(),
                                 fontWeight = FontWeight.SemiBold,
@@ -134,8 +136,27 @@ fun HomePage(
                                 style = MaterialTheme.typography.titleLarge,
                                 letterSpacing = 4.sp,
                             )
+                            Text(
+                                text = stringResource(id = R.string.app_tagline),
+                                fontWeight = FontWeight.Light,
+                                fontFamily = FontFamily.Monospace,
+                                style = MaterialTheme.typography.labelMedium,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     },
+                    actions = {
+//                        IconButton(
+//                            onClick = {
+//                                //onEvent(HomeViewModel.Event.ToggleSearchBar)
+//                            }
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Rounded.Search,
+//                                contentDescription = stringResource(id = R.string.search),
+//                            )
+//                        }
+                    }
                 )
             },
             floatingActionButton = {
@@ -154,8 +175,7 @@ fun HomePage(
                             icon = {
                                 Icon(
                                     imageVector = Icons.Rounded.DocumentScanner,
-                                    contentDescription =
-                                        stringResource(id = R.string.scan_new_document),
+                                    contentDescription = stringResource(id = R.string.scan_new_document),
                                 )
                             },
                             onClick = {
@@ -238,13 +258,13 @@ private fun DisplayScannedPdfs(
     var animatedOverscrollAmount by remember { mutableFloatStateOf(0f) }
 
     LazyColumn(
-        modifier =
-            Modifier.fillMaxSize()
-                .customOverscroll(
-                    listState = lazyListState,
-                    onNewOverscrollAmount = { animatedOverscrollAmount = it },
-                )
-                .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
+        modifier = Modifier
+            .fillMaxSize()
+            .customOverscroll(
+                listState = lazyListState,
+                onNewOverscrollAmount = { animatedOverscrollAmount = it },
+            )
+            .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
         state = lazyListState,
     ) {
         stickyHeader {
@@ -253,20 +273,18 @@ private fun DisplayScannedPdfs(
                 onSortOptionChanged = {
                     onEvent(HomeViewModel.Event.SearchFilterEvent.ApplySort(it))
                 },
-                modifier =
-                    Modifier.background(
-                            // fade to transparent from background
-                            brush =
-                                Brush.verticalGradient(
-                                    colors =
-                                        listOf(
-                                            MaterialTheme.colorScheme.background,
-                                            Color.Transparent,
-                                        ),
-                                    startY = 100f,
-                                )
+                modifier = Modifier
+                    .background(
+                        // fade to transparent from background
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.background,
+                                Color.Transparent,
+                            ),
+                            startY = 100f,
                         )
-                        .padding(16.dp),
+                    )
+                    .padding(16.dp),
             )
         }
 
@@ -276,7 +294,9 @@ private fun DisplayScannedPdfs(
             contentType = { scannedPdf -> scannedPdf.javaClass.name },
         ) { scannedPdf ->
             ScannedPdfCard(
-                modifier = Modifier.fillMaxWidth().animateItem(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateItem(),
                 pdf = scannedPdf,
                 onOpenPdf = { uri -> onEvent(Open(uri)) },
                 onSharePdf = { uri -> onEvent(Share(uri)) },
@@ -295,15 +315,27 @@ fun SortOptionsRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        SelectionGroupRow(modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
+        SelectionGroupRow(
+            modifier = Modifier
+                .weight(1f)
+                .horizontalScroll(rememberScrollState())
+        ) {
             SortOption.Criteria.entries.forEach { criteria ->
                 SelectionGroupItem(
                     selected = currentSortOption.criteria == criteria,
-                    onClick = { onSortOptionChanged(SortOption(criteria, currentSortOption.order)) },
+                    onClick = {
+                        onSortOptionChanged(
+                            SortOption(
+                                criteria, currentSortOption.order
+                            )
+                        )
+                    },
                 ) {
                     Text(criteria.getLocalizedName())
                 }
@@ -312,28 +344,27 @@ fun SortOptionsRow(
 
         VerticalDivider(
             color = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.height(24.dp).padding(horizontal = 8.dp),
+            modifier = Modifier
+                .height(24.dp)
+                .padding(horizontal = 8.dp),
         )
 
         IconButton(
             onClick = {
-                val newOrder =
-                    if (currentSortOption.order == SortOption.Order.ASC) {
-                        SortOption.Order.DESC
-                    } else {
-                        SortOption.Order.ASC
-                    }
+                val newOrder = if (currentSortOption.order == SortOption.Order.ASC) {
+                    SortOption.Order.DESC
+                } else {
+                    SortOption.Order.ASC
+                }
                 onSortOptionChanged(SortOption(currentSortOption.criteria, newOrder))
-            }
-        ) {
+            }) {
             Icon(
                 imageVector = currentSortOption.getSortIcon(),
-                contentDescription =
-                    if (currentSortOption.order == SortOption.Order.ASC) {
-                        stringResource(R.string.sort_ascending)
-                    } else {
-                        stringResource(R.string.sort_descending)
-                    },
+                contentDescription = if (currentSortOption.order == SortOption.Order.ASC) {
+                    stringResource(R.string.sort_ascending)
+                } else {
+                    stringResource(R.string.sort_descending)
+                },
             )
         }
     }
@@ -377,31 +408,29 @@ fun SearchBar(
 @Composable
 fun EmptyStateScreen(modifier: Modifier = Modifier, onScanPdfClick: () -> Unit) {
     Card(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .border(
-                    width = 2.dp,
-                    brush =
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = .8f),
-                                    MaterialTheme.colorScheme.primary.copy(alpha = .2f),
-                                )
-                        ),
-                    shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .border(
+                width = 2.dp,
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = .8f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = .2f),
+                    )
                 ),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+                shape = RoundedCornerShape(16.dp),
             ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+        ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -429,10 +458,11 @@ fun EmptyStateScreen(modifier: Modifier = Modifier, onScanPdfClick: () -> Unit) 
 
             Button(
                 onClick = onScanPdfClick,
-                modifier = Modifier.fillMaxWidth(0.8f).height(56.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(56.dp),
                 shape = MaterialTheme.shapes.medium,
-                colors =
-                    ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 8.dp),
             ) {
                 Icon(
@@ -455,33 +485,30 @@ fun EmptyStateScreen(modifier: Modifier = Modifier, onScanPdfClick: () -> Unit) 
 @Composable
 private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
     Card(
-        modifier =
-            Modifier.fillMaxWidth()
-                .padding(16.dp)
-                .border(
-                    width = 2.dp,
-                    brush =
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    MaterialTheme.colorScheme.error.copy(alpha = .8f),
-                                    MaterialTheme.colorScheme.error.copy(alpha = .2f),
-                                )
-                        ),
-                    shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .border(
+                width = 2.dp,
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.error.copy(alpha = .8f),
+                        MaterialTheme.colorScheme.error.copy(alpha = .2f),
+                    )
                 ),
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    MaterialTheme.colorScheme
-                        .surfaceColorAtElevation(6.dp)
-                        .harmonize(other = MaterialTheme.colorScheme.errorContainer)
+                shape = RoundedCornerShape(16.dp),
             ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+                .harmonize(other = MaterialTheme.colorScheme.errorContainer)
+        ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -511,10 +538,11 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
             }
             Button(
                 onClick = onRetry,
-                modifier = Modifier.fillMaxWidth(0.8f).height(50.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(50.dp),
                 shape = MaterialTheme.shapes.medium,
-                colors =
-                    ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 8.dp),
             ) {
                 Icon(
@@ -538,8 +566,10 @@ private fun PreviewMidas() {
     DocucraftTheme {
         HomePage(
             scannedPdfs = emptyList(),
-            loadingState =
-                HomeViewModel.LoadingState.Error(IllegalStateException("Error"), "Error"),
+            loadingState = HomeViewModel.LoadingState.Error(
+                IllegalStateException("Error"),
+                "Error"
+            ),
             onEvent = {},
             filteredPdfs = emptyList(),
             searchQuery = "",

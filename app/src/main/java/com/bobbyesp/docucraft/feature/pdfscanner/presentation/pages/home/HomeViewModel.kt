@@ -234,22 +234,18 @@ class HomeViewModel(
                 when (event) {
                     is Event.SearchFilterEvent.ApplyFilter -> {
                         _uiState.update { it.copy(filterOptions = event.filterOptions) }
-                        applySearchAndFilters()
                     }
 
                     Event.SearchFilterEvent.ClearFilters -> {
                         _uiState.update { it.copy(filterOptions = FilterOptions()) }
-                        applySearchAndFilters()
                     }
 
                     Event.SearchFilterEvent.ClearSearch -> {
                         _uiState.update { it.copy(searchQuery = "") }
-                        applySearchAndFilters()
                     }
 
                     is Event.SearchFilterEvent.UpdateSearchQuery -> {
                         _uiState.update { it.copy(searchQuery = event.query) }
-                        applySearchAndFilters()
                     }
 
                     is Event.SearchFilterEvent.ApplySort -> {
@@ -258,9 +254,9 @@ class HomeViewModel(
                                 filterOptions = it.filterOptions.copy(sortBy = event.sortOption)
                             )
                         }
-                        applySearchAndFilters()
                     }
                 }
+                applySearchAndFilters()
             }
         }
     }
