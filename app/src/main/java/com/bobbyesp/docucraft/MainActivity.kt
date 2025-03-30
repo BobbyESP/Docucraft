@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
@@ -15,6 +16,8 @@ import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalNavController
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.widgets.ACTION_SCAN_PDF
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
 import io.github.vinceglb.filekit.FileKit
@@ -26,6 +29,7 @@ import org.koin.core.component.KoinComponent
 class MainActivity : ComponentActivity(), KoinComponent {
 
     private val appPreferences: AppPreferences by inject()
+    private val homeViewModel by inject<HomeViewModel>()
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,6 +38,21 @@ class MainActivity : ComponentActivity(), KoinComponent {
         enableEdgeToEdge()
 
         FileKit.init(this)
+
+        if (intent?.action == ACTION_SCAN_PDF) {
+            val scannerLauncher = registerForActivityResult(
+                ActivityResultContracts.StartIntentSenderForResult()
+            ) { result ->
+                homeViewModel.onEvent(HomeViewModel.Event.HandlePdfScanningResult(result))
+            }
+
+            homeViewModel.onEvent(
+                HomeViewModel.Event.ScanPdf(
+                    activity = this,
+                    listener = scannerLauncher
+                )
+            )
+        }
 
         setContent {
             val navHostController = rememberNavController()

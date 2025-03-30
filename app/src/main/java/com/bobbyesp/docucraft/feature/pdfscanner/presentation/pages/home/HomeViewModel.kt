@@ -6,6 +6,7 @@ import android.os.Environment
 import android.util.Log
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.core.util.ViewModelCoroutineBased
@@ -305,7 +306,7 @@ class HomeViewModel(
 
     private fun scanPdf(
         activity: Activity,
-        listener: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
+        listener: ActivityResultLauncher<IntentSenderRequest>,
     ) {
         gmsDocumentScanner.getStartScanIntent(activity).addOnSuccessListener { intentSender ->
             listener.launch(IntentSenderRequest.Builder(intentSender).build())
@@ -411,7 +412,7 @@ class HomeViewModel(
     interface Event {
         data class ScanPdf(
             val activity: Activity?,
-            val listener: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
+            val listener: ActivityResultLauncher<IntentSenderRequest>,
         ) : Event
 
         data object ReloadPdfs : Event
