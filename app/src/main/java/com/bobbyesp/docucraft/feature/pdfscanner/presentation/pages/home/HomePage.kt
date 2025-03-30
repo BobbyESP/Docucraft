@@ -56,9 +56,11 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.surfaceColorAtElevation
@@ -85,9 +87,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.text.AnimatedCounter
-import com.bobbyesp.docucraft.core.presentation.motion.MotionConstants.InitialOffset
-import com.bobbyesp.docucraft.core.presentation.motion.materialSharedAxisXIn
-import com.bobbyesp.docucraft.core.presentation.motion.materialSharedAxisXOut
+import com.bobbyesp.docucraft.core.presentation.motion.DefaultContentTransform
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscroll
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
@@ -147,12 +147,9 @@ fun HomePage(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     AnimatedContent(
-                        targetState = showSearchbar, transitionSpec = {
-                            ContentTransform(
-                                targetContentEnter = materialSharedAxisXIn(initialOffsetX = { (it * 0.15f).toInt() }),
-                                initialContentExit = materialSharedAxisXOut(targetOffsetX = { -(it * InitialOffset).toInt() }),
-                            )
-                        }, label = "SearchBarTransition"
+                        targetState = showSearchbar,
+                        transitionSpec = { DefaultContentTransform },
+                        label = "SearchBarTransition"
                     ) { isSearchVisible ->
                         if (isSearchVisible) {
                             Column(
@@ -248,14 +245,24 @@ fun HomePage(
                                     )
                                 }
                             }, actions = {
-                                IconButton(
-                                    onClick = {
-                                        onEvent(HomeViewModel.Event.SearchUIEvent.ShowSearchBar(true))
-                                    }) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Search,
-                                        contentDescription = stringResource(id = R.string.search),
-                                    )
+                                AnimatedContent(
+                                    targetState = thereIsNoPdfs,
+                                ) { noPdfs ->
+                                    if (!noPdfs) {
+                                        IconButton(
+                                            onClick = {
+                                                onEvent(
+                                                    HomeViewModel.Event.SearchUIEvent.ShowSearchBar(
+                                                        true
+                                                    )
+                                                )
+                                            }) {
+                                            Icon(
+                                                imageVector = Icons.Rounded.Search,
+                                                contentDescription = stringResource(id = R.string.search),
+                                            )
+                                        }
+                                    }
                                 }
                             })
                         }
@@ -482,10 +489,11 @@ fun SearchBar(
     onClear: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    TextField(
+    OutlinedTextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier,
+        colors = TextFieldDefaults.colors(),
         placeholder = {
             Text(
                 text = stringResource(R.string.doc_name_or_description),

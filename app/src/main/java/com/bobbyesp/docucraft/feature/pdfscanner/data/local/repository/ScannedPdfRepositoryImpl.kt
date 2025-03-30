@@ -101,33 +101,6 @@ class ScannedPdfRepositoryImpl(
         }
     }
 
-    override fun sharePdf(pdfPath: Uri) {
-        val shareIntent =
-            Intent(Intent.ACTION_SEND).apply {
-                putExtra(Intent.EXTRA_STREAM, pdfPath)
-                setDataAndType(pdfPath, "application/pdf")
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-        context.startActivity(
-            Intent.createChooser(shareIntent, context.getString(R.string.share_pdf))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        )
-    }
-
-    override fun openPdfInViewer(pdfPath: Uri) {
-        val viewIntent =
-            Intent(Intent.ACTION_VIEW).apply {
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                setDataAndType(pdfPath, "application/pdf")
-            }
-
-        context.startActivity(
-            Intent.createChooser(viewIntent, context.getString(R.string.open_pdf_in_viewer))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        )
-    }
-
     companion object {
         private const val TAG = "ScannedPdfRepository"
     }

@@ -28,6 +28,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Velocity
 import kotlin.math.sign
 import kotlinx.coroutines.launch
+import kotlin.math.pow
 
 @Composable
 fun Modifier.customOverscroll(
@@ -66,7 +67,7 @@ fun Modifier.customOverscroll(
     LaunchedEffect(Unit) {
         snapshotFlow { overscrollAmountAnimatable.value }
             .collect {
-                onNewOverscrollAmount(CustomEasing.transform(it / (length * 1.5f)) * length)
+                onNewOverscrollAmount(SmoothOverscrollEasing.transform(it / (length * 1.5f)) * length)
             }
     }
 
@@ -185,4 +186,14 @@ fun Modifier.customOverscroll(
         .nestedScroll(nestedScrollConnection)
 }
 
-val CustomEasing: Easing = CubicBezierEasing(0.5f, 0.5f, 0.8f, 0.25f)
+val CustomEasing: Easing = CubicBezierEasing(0.8f, 0.2f, 0.4f, 0.7f)
+
+object SmoothOverscrollEasing : Easing {
+    override fun transform(fraction: Float): Float {
+        val absValue = kotlin.math.abs(fraction)
+        val sign = fraction.sign
+
+        val transformed = absValue.pow(1.5f).toFloat() * 0.6f
+        return transformed.coerceAtMost(0.6f) * sign
+    }
+}
