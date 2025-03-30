@@ -48,6 +48,7 @@ class HomeViewModel(
         val pdfToBeRemoved: ScannedPdf? = null,
         val pdfToBeModified: ScannedPdf? = null,
         val searchQuery: String = "",
+        val showingSearchBar: Boolean = false,
         val filterOptions: FilterOptions = FilterOptions(),
         val filteredPdfs: List<ScannedPdf> = emptyList(),
     )
