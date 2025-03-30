@@ -131,7 +131,7 @@ fun HomePageWrapper() {
         loadingState = uiState.loadingState,
         filteredPdfs = uiState.filteredPdfs,
         filterOptions = uiState.filterOptions,
-        searchQuery = uiState.searchQuery,
+        searchState = uiState.searchState,
         onEvent = vm::onEvent,
     )
 }

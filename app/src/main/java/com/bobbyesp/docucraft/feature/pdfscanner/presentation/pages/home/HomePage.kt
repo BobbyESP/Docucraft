@@ -1,6 +1,5 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home
 
-import android.net.Uri
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -67,7 +66,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -75,6 +73,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -83,7 +82,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.text.AnimatedCounter
 import com.bobbyesp.docucraft.core.presentation.motion.MotionConstants.InitialOffset
 import com.bobbyesp.docucraft.core.presentation.motion.materialSharedAxisXIn
 import com.bobbyesp.docucraft.core.presentation.motion.materialSharedAxisXOut
@@ -112,7 +113,7 @@ import kotlin.math.roundToInt
 fun HomePage(
     scannedPdfs: List<ScannedPdf>,
     filteredPdfs: List<ScannedPdf>,
-    searchQuery: String,
+    searchState: HomeViewModel.SearchViewState,
     filterOptions: FilterOptions,
     loadingState: HomeViewModel.LoadingState,
     onEvent: (HomeViewModel.Event) -> Unit,
@@ -120,14 +121,18 @@ fun HomePage(
     val activity = LocalActivity.current
     val thereIsNoPdfs by remember(scannedPdfs) { derivedStateOf { scannedPdfs.isEmpty() } }
 
-    val pdfsToShow by remember(scannedPdfs, filteredPdfs, searchQuery, filterOptions) {
+    val pdfsToShow by remember(scannedPdfs, filteredPdfs, searchState.searchQuery, filterOptions) {
         derivedStateOf {
-            if (searchQuery.isNotBlank() || filterOptions != FilterOptions()) filteredPdfs
+            if (searchState.searchQuery.isNotBlank() || filterOptions != FilterOptions()) filteredPdfs
             else scannedPdfs
         }
     }
 
-    var showSearchbar by remember { mutableStateOf(false) }
+    val searchResultsCount by remember(
+        pdfsToShow, searchState.searchQuery, filterOptions
+    ) { derivedStateOf { pdfsToShow.size } }
+
+    val showSearchbar = searchState.showingSearchBar
 
     val scannerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
@@ -164,7 +169,8 @@ fun HomePage(
                             ) {
                                 Text(
                                     text = stringResource(id = R.string.search_documents),
-                                    style = MaterialTheme.typography.titleLarge,
+                                    style = MaterialTheme.typography.titleMediumEmphasized,
+                                    fontFamily = FontFamily.Monospace,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
@@ -175,7 +181,7 @@ fun HomePage(
                                 ) {
                                     SearchBar(
                                         modifier = Modifier.weight(1f),
-                                        query = searchQuery,
+                                        query = searchState.searchQuery,
                                         onQueryChange = {
                                             onEvent(
                                                 HomeViewModel.Event.SearchFilterEvent.UpdateSearchQuery(
@@ -186,7 +192,11 @@ fun HomePage(
                                         onClear = { onEvent(HomeViewModel.Event.SearchFilterEvent.ClearSearch) })
                                     IconButton(
                                         onClick = {
-                                            showSearchbar = false
+                                            onEvent(
+                                                HomeViewModel.Event.SearchUIEvent.ShowSearchBar(
+                                                    false
+                                                )
+                                            )
                                             onEvent(HomeViewModel.Event.SearchFilterEvent.ClearSearch)
                                         }) {
                                         Icon(
@@ -195,6 +205,26 @@ fun HomePage(
                                         )
                                     }
                                 }
+                                AnimatedCounter(
+                                    count = searchResultsCount,
+                                    modifier = Modifier,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    fontFamily = FontFamily.Monospace,
+                                    trailingContent = {
+                                        Text(
+                                            text = buildAnnotatedString {
+                                                append(" ")
+                                                append(
+                                                    stringResource(
+                                                        id = R.string.results
+                                                    ).lowercase()
+                                                )
+                                            },
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontFamily = FontFamily.Monospace,
+                                        )
+                                    })
                             }
                         } else {
                             TopAppBar(modifier = Modifier, title = {
@@ -220,7 +250,7 @@ fun HomePage(
                             }, actions = {
                                 IconButton(
                                     onClick = {
-                                        showSearchbar = !showSearchbar
+                                        onEvent(HomeViewModel.Event.SearchUIEvent.ShowSearchBar(true))
                                     }) {
                                     Icon(
                                         imageVector = Icons.Rounded.Search,
@@ -651,7 +681,7 @@ private fun PreviewMidas() {
                     filename = "document1.pdf",
                     title = "Document 1",
                     description = "Description for document 1",
-                    path = Uri.parse("content://com.example.documents/document/1"),
+                    path = "content://com.example.documents/document/1".toUri(),
                     createdTimestamp = System.currentTimeMillis(),
                     fileSize = 1024,
                     pageCount = 10,
@@ -661,7 +691,7 @@ private fun PreviewMidas() {
                     filename = "document2.pdf",
                     title = "Document 2",
                     description = "Description for document 2",
-                    path = Uri.parse("content://com.example.documents/document/2"),
+                    path = "content://com.example.documents/document/2".toUri(),
                     createdTimestamp = System.currentTimeMillis(),
                     fileSize = 2048,
                     pageCount = 20,
@@ -671,7 +701,10 @@ private fun PreviewMidas() {
             loadingState = HomeViewModel.LoadingState.Idle,
             onEvent = {},
             filteredPdfs = emptyList(),
-            searchQuery = "",
+            searchState = HomeViewModel.SearchViewState(
+                searchQuery = "Pito pito",
+                showingSearchBar = true,
+            ),
             filterOptions = FilterOptions(),
         )
     }

@@ -47,10 +47,14 @@ class HomeViewModel(
         val loadingState: LoadingState = LoadingState.Loading,
         val pdfToBeRemoved: ScannedPdf? = null,
         val pdfToBeModified: ScannedPdf? = null,
-        val searchQuery: String = "",
-        val showingSearchBar: Boolean = false,
+        val searchState: SearchViewState = SearchViewState(),
         val filterOptions: FilterOptions = FilterOptions(),
         val filteredPdfs: List<ScannedPdf> = emptyList(),
+    )
+
+    data class SearchViewState(
+        val searchQuery: String = "",
+        val showingSearchBar: Boolean = false,
     )
 
     private val _eventFlow = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
@@ -62,34 +66,30 @@ class HomeViewModel(
 
     private suspend fun loadScannedPdfs() {
         _uiState.update { it.copy(loadingState = LoadingState.Loading) }
-        scannedPdfUseCase
-            .scannedPdfsListFlow()
-            .catch { e ->
-                Log.e(TAG, "Failed to retrieve PDFs: ${e.message}", e)
-                _uiState.update {
-                    it.copy(loadingState = LoadingState.Error(e, "Failed to load PDFs"))
-                }
-                emitUiEvent(UiEvent.Error(e))
+        scannedPdfUseCase.scannedPdfsListFlow().catch { e ->
+            Log.e(TAG, "Failed to retrieve PDFs: ${e.message}", e)
+            _uiState.update {
+                it.copy(loadingState = LoadingState.Error(e, "Failed to load PDFs"))
             }
-            .collect { scannedPdfs ->
-                _uiState.update { it.copy(scannedPdfs = scannedPdfs) }
-                if (_uiState.value.hasActiveFilters) applySearchAndFilters()
-                if (_uiState.value.loadingState !is LoadingState.Idle)
-                    _uiState.update { it.copy(loadingState = LoadingState.Idle) }
+            emitUiEvent(UiEvent.Error(e))
+        }.collect { scannedPdfs ->
+            _uiState.update { it.copy(scannedPdfs = scannedPdfs) }
+            if (_uiState.value.hasActiveFilters) applySearchAndFilters()
+            if (_uiState.value.loadingState !is LoadingState.Idle) _uiState.update {
+                it.copy(
+                    loadingState = LoadingState.Idle
+                )
             }
+        }
     }
 
     private val HomeViewState.hasActiveFilters: Boolean
-        get() =
-            filterOptions.minPageCount != null ||
-                filterOptions.minFileSize != null ||
-                filterOptions.dateRange != null ||
-                filterOptions.sortBy != SortOption.DateDesc
+        get() = filterOptions.minPageCount != null || filterOptions.minFileSize != null || filterOptions.dateRange != null || filterOptions.sortBy != SortOption.DateDesc
 
     private fun applySearchAndFilters() {
         launchIO {
             val currentState = _uiState.value
-            val query = currentState.searchQuery
+            val query = currentState.searchState.searchQuery
             val filterOptions = currentState.filterOptions
 
             var result = currentState.scannedPdfs
@@ -102,12 +102,13 @@ class HomeViewModel(
                 } catch (e: Exception) {
                     Log.e(TAG, "Search failed: ${e.message}", e)
                     // Fallback to in-memory filtering
-                    result =
-                        result.filter { pdf ->
-                            pdf.title?.contains(query, ignoreCase = true) == true ||
-                                pdf.filename.contains(query, ignoreCase = true) ||
-                                pdf.description?.contains(query, ignoreCase = true) == true
-                        }
+                    result = result.filter { pdf ->
+                        pdf.title?.contains(
+                            query, ignoreCase = true
+                        ) == true || pdf.filename.contains(
+                            query, ignoreCase = true
+                        ) || pdf.description?.contains(query, ignoreCase = true) == true
+                    }
                 }
             }
 
@@ -123,26 +124,24 @@ class HomeViewModel(
                 result = result.filter { it.createdTimestamp in start..end }
             }
 
-            result =
-                when (filterOptions.sortBy.criteria) {
-                    SortOption.Criteria.DATE -> {
-                        if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                            result.sortedByDescending { it.createdTimestamp }
-                        else result.sortedBy { it.createdTimestamp }
-                    }
-
-                    SortOption.Criteria.NAME -> {
-                        if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                            result.sortedByDescending { it.title ?: it.filename }
-                        else result.sortedBy { it.title ?: it.filename }
-                    }
-
-                    SortOption.Criteria.SIZE -> {
-                        if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                            result.sortedByDescending { it.fileSize }
-                        else result.sortedBy { it.fileSize }
-                    }
+            result = when (filterOptions.sortBy.criteria) {
+                SortOption.Criteria.DATE -> {
+                    if (filterOptions.sortBy.order == SortOption.Order.DESC) result.sortedByDescending { it.createdTimestamp }
+                    else result.sortedBy { it.createdTimestamp }
                 }
+
+                SortOption.Criteria.NAME -> {
+                    if (filterOptions.sortBy.order == SortOption.Order.DESC) result.sortedByDescending {
+                        it.title ?: it.filename
+                    }
+                    else result.sortedBy { it.title ?: it.filename }
+                }
+
+                SortOption.Criteria.SIZE -> {
+                    if (filterOptions.sortBy.order == SortOption.Order.DESC) result.sortedByDescending { it.fileSize }
+                    else result.sortedBy { it.fileSize }
+                }
+            }
 
             _uiState.update { it.copy(filteredPdfs = result) }
         }
@@ -242,11 +241,15 @@ class HomeViewModel(
                     }
 
                     Event.SearchFilterEvent.ClearSearch -> {
-                        _uiState.update { it.copy(searchQuery = "") }
+                        _uiState.update { it.copy(searchState = it.searchState.copy(searchQuery = "")) }
                     }
 
                     is Event.SearchFilterEvent.UpdateSearchQuery -> {
-                        _uiState.update { it.copy(searchQuery = event.query) }
+                        _uiState.update {
+                            it.copy(
+                                searchState = it.searchState.copy(searchQuery = event.query)
+                            )
+                        }
                     }
 
                     is Event.SearchFilterEvent.ApplySort -> {
@@ -258,6 +261,14 @@ class HomeViewModel(
                     }
                 }
                 applySearchAndFilters()
+            }
+
+            is Event.SearchUIEvent -> {
+                when (event) {
+                    is Event.SearchUIEvent.ShowSearchBar -> {
+                        _uiState.update { it.copy(searchState = it.searchState.copy(showingSearchBar = event.show)) }
+                    }
+                }
             }
         }
     }
@@ -296,36 +307,30 @@ class HomeViewModel(
         activity: Activity,
         listener: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
     ) {
-        gmsDocumentScanner
-            .getStartScanIntent(activity)
-            .addOnSuccessListener { intentSender ->
-                listener.launch(IntentSenderRequest.Builder(intentSender).build())
-            }
-            .addOnFailureListener { exception ->
-                Log.e(TAG, "Failed to start scan: ${exception.message}", exception)
-                emitUiEvent(UiEvent.ScanResult.Failure(error = exception))
-            }
+        gmsDocumentScanner.getStartScanIntent(activity).addOnSuccessListener { intentSender ->
+            listener.launch(IntentSenderRequest.Builder(intentSender).build())
+        }.addOnFailureListener { exception ->
+            Log.e(TAG, "Failed to start scan: ${exception.message}", exception)
+            emitUiEvent(UiEvent.ScanResult.Failure(error = exception))
+        }
     }
 
     private suspend fun copyPdfToDirectory(scannedPdf: ScannedPdf) {
         try {
-            val androidDocumentsDirectory =
-                PlatformFile(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-                )
+            val androidDocumentsDirectory = PlatformFile(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+            )
 
             val dir = PlatformFile(androidDocumentsDirectory, "Docucraft")
 
-            val file =
-                FileKit.openFileSaver(
-                    suggestedName = scannedPdf.title ?: scannedPdf.filename,
-                    extension = "pdf",
-                    directory = dir,
-                )
-                    ?: run {
-                        emitUiEvent(UiEvent.SavingResult.Cancelled)
-                        return
-                    }
+            val file = FileKit.openFileSaver(
+                suggestedName = scannedPdf.title ?: scannedPdf.filename,
+                extension = "pdf",
+                directory = dir,
+            ) ?: run {
+                emitUiEvent(UiEvent.SavingResult.Cancelled)
+                return
+            }
 
             val internalPdf = PlatformFile(scannedPdf.path)
 
@@ -389,10 +394,9 @@ class HomeViewModel(
             else -> {
                 emitUiEvent(
                     UiEvent.ScanResult.Failure(
-                        error =
-                            IllegalStateException(
-                                "Unknown result code: ${activityResult.resultCode}"
-                            )
+                        error = IllegalStateException(
+                            "Unknown result code: ${activityResult.resultCode}"
+                        )
                     )
                 )
             }
@@ -441,13 +445,17 @@ class HomeViewModel(
         sealed class SearchFilterEvent : Event {
             data class UpdateSearchQuery(val query: String) : SearchFilterEvent()
 
+            data object ClearSearch : SearchFilterEvent()
+
             data class ApplySort(val sortOption: SortOption) : SearchFilterEvent()
 
             data class ApplyFilter(val filterOptions: FilterOptions) : SearchFilterEvent()
 
-            data object ClearSearch : SearchFilterEvent()
-
             data object ClearFilters : SearchFilterEvent()
+        }
+
+        sealed class SearchUIEvent : Event {
+            data class ShowSearchBar(val show: Boolean) : SearchUIEvent()
         }
     }
 

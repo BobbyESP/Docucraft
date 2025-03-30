@@ -54,4 +54,5 @@
     <string name="app_tagline">Effortlessly scan your documents with AI</string>
     <string name="exit_search">Exit search</string>
     <string name="doc_name_or_description">Document name or description</string>
+    <string name="results">Results</string>
 </resources>

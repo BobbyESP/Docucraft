@@ -25,14 +25,16 @@ sealed class Version(
 ) {
     abstract fun toVersionName(): String
 
-    fun toVersionCode(): Int {
+    fun toVersionCode(
+        extraDigit: String = "",
+    ): Int {
         val minorExtraDigit = if (versionMinor > 9) {
             (versionMinor / 10).toString()
         } else {
             ""
         }
 
-        return "$versionMajor$minorExtraDigit$versionPatch$versionBuild".toInt()
+        return "$versionMajor$minorExtraDigit$versionPatch$versionBuild$extraDigit".toInt()
     }
 
     class Stable(versionMajor: Int, versionMinor: Int, versionPatch: Int) :
@@ -54,7 +56,7 @@ sealed class Version(
     }
 
     class Alpha(
-        versionMajor: Int, versionMinor: Int, versionPatch: Int, commitId: String
+        versionMajor: Int, versionMinor: Int, versionPatch: Int, commitId: String,
     ) : Version(versionMajor, versionMinor, versionPatch, commitId = commitId) {
         override fun toVersionName(): String =
             "${versionMajor}.${versionMinor}.${versionPatch}-alpha.$commitId"
@@ -68,5 +70,14 @@ val currentVersion: Version = Version.Alpha(
     commitId = commitSignature
 )
 
-val versionCode by extra(currentVersion.toVersionCode())
+val versionCode by extra(
+    currentVersion.toVersionCode(
+        extraDigit = when(currentVersion) {
+            is Version.Stable -> ""
+            is Version.ReleaseCandidate -> "${currentVersion.versionBuild}"
+            is Version.Beta -> "${currentVersion.versionBuild}"
+            is Version.Alpha -> currentVersion.commitId.filter { it.isDigit() }
+        }
+    )
+)
 val versionName by extra(currentVersion.toVersionName())
