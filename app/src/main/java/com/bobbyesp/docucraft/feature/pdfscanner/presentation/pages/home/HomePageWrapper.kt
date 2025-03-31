@@ -1,5 +1,6 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home
 
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -15,6 +16,7 @@ import com.dokar.sonner.ToastType
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomePageWrapper() {
     val sonner = LocalSonner.current
@@ -31,14 +33,14 @@ fun HomePageWrapper() {
                         when (event) {
                             is ScanResult.Success -> {
                                 context.getString(R.string.pdf_saved_successfully) to
-                                    ToastType.Success
+                                        ToastType.Success
                             }
 
                             is ScanResult.Failure -> {
                                 val errorMsg =
                                     event.error.message ?: context.getString(R.string.unknown_error)
                                 context.getString(R.string.pdf_saved_error_with_reason, errorMsg) to
-                                    ToastType.Error
+                                        ToastType.Error
                             }
 
                             ScanResult.Cancelled -> {
@@ -74,7 +76,7 @@ fun HomePageWrapper() {
                                 val errorMsg =
                                     event.error.message ?: context.getString(R.string.unknown_error)
                                 context.getString(R.string.pdf_saved_error_with_reason, errorMsg) to
-                                    ToastType.Error
+                                        ToastType.Error
                             }
 
                             HomeViewModel.UiEvent.SavingResult.Cancelled -> {
@@ -88,17 +90,29 @@ fun HomePageWrapper() {
                     val (message, type) =
                         if (event is HomeViewModel.UiEvent.DeleteResult.Success) {
                             context.getString(R.string.pdf_deleted_successfully) to
-                                ToastType.Success
+                                    ToastType.Success
                         } else {
                             context.getString(R.string.pdf_deleted_error) to ToastType.Error
                         }
                     sonner.show(message = message, type = type)
                 }
+
+//                is HomeViewModel.UiEvent.PdfInformation -> {
+//                    when(event) {
+//                        is HomeViewModel.UiEvent.PdfInformation.Show -> {
+//
+//                        }
+//
+//                        HomeViewModel.UiEvent.PdfInformation.Dismiss -> {
+//                            vm.onEvent(HomeViewModel.Event.NotifyUserAction.DismissPdfInformation)
+//                        }
+//                    }
+//                }
             }
         }
     }
 
-    if(uiState.pdfToBeRemoved is TemporalState.Present) {
+    if (uiState.pdfToBeRemoved is TemporalState.Present) {
         val scannedPdf = uiState.pdfToBeRemoved.value
         PdfDeletionWarningDialog(
             modifier = Modifier,
@@ -108,7 +122,7 @@ fun HomePageWrapper() {
         )
     }
 
-    if(uiState.pdfToBeModified is TemporalState.Present) {
+    if (uiState.pdfToBeModified is TemporalState.Present) {
         val scannedPdf = uiState.pdfToBeModified.value
         ModifyPdfTitleDescriptionDialog(
             modifier = Modifier,
@@ -127,6 +141,13 @@ fun HomePageWrapper() {
             title = scannedPdf.title,
             description = scannedPdf.description,
         )
+    }
+
+    if (uiState.pdfToShowInformation is TemporalState.Present) {
+        val scannedPdf = uiState.pdfToShowInformation.value
+
+        //TODO
+
     }
 
     HomePage(

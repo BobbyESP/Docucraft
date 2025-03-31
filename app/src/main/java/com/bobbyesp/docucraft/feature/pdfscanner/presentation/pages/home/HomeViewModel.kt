@@ -4,12 +4,12 @@ import android.app.Activity
 import android.net.Uri
 import android.os.Environment
 import android.util.Log
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.core.util.state.TemporalState
+import com.bobbyesp.docucraft.core.util.state.TemporalState.*
 import com.bobbyesp.docucraft.core.util.viewModel.ViewModelCoroutineBased
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
@@ -47,8 +47,9 @@ class HomeViewModel(
     data class HomeViewState(
         val scannedPdfs: List<ScannedPdf> = emptyList<ScannedPdf>(),
         val loadingState: LoadingState = LoadingState.Loading,
-        val pdfToBeRemoved: TemporalState<ScannedPdf> = TemporalState.NotPresent,
-        val pdfToBeModified: TemporalState<ScannedPdf> = TemporalState.NotPresent,
+        val pdfToBeRemoved: TemporalState<ScannedPdf> = NotPresent,
+        val pdfToBeModified: TemporalState<ScannedPdf> = NotPresent,
+        val pdfToShowInformation: TemporalState<ScannedPdf> = NotPresent,
         val searchState: SearchViewState = SearchViewState(),
         val filterOptions: FilterOptions = FilterOptions(),
         val filteredPdfs: List<ScannedPdf> = emptyList(),
@@ -211,14 +212,20 @@ class HomeViewModel(
             is Event.NotifyUserAction -> {
                 when (event) {
                     is Event.NotifyUserAction.DismissPdfTitleDescriptionDialog -> {
-                        _uiState.update { it.copy(pdfToBeModified = TemporalState.NotPresent) }
+                        _uiState.update { it.copy(pdfToBeModified = NotPresent) }
                     }
 
                     is Event.NotifyUserAction.WarnAboutDeletion -> {
                         launchIO {
                             val scannedPdf = getPdfById(event.pdfId)
 
-                            _uiState.update { it.copy(pdfToBeRemoved = TemporalState.Present(scannedPdf)) }
+                            _uiState.update {
+                                it.copy(
+                                    pdfToBeRemoved = Present(
+                                        scannedPdf
+                                    )
+                                )
+                            }
                         }
                     }
 
@@ -226,8 +233,30 @@ class HomeViewModel(
                         launchIO {
                             val scannedPdf = getPdfById(event.pdfId)
 
-                            _uiState.update { it.copy(pdfToBeModified = TemporalState.Present(scannedPdf)) }
+                            _uiState.update {
+                                it.copy(
+                                    pdfToBeModified = Present(
+                                        scannedPdf
+                                    )
+                                )
+                            }
                         }
+                    }
+
+                    is Event.NotifyUserAction.ShowPdfInformation -> {
+                        launchIO {
+                            val scannedPdf = getPdfById(event.pdfId)
+
+                            emitUiEvent(
+                                UiEvent.PdfInformation.Show(scannedPdf)
+                            )
+                        }
+                    }
+
+                    Event.NotifyUserAction.DismissPdfInformation -> {
+                        emitUiEvent(
+                            UiEvent.PdfInformation.Dismiss
+                        )
                     }
                 }
             }
@@ -442,6 +471,10 @@ class HomeViewModel(
             data class OpenPdfFieldsDialog(val pdfId: String) : NotifyUserAction()
 
             data object DismissPdfTitleDescriptionDialog : NotifyUserAction()
+
+            data class ShowPdfInformation(val pdfId: String) : NotifyUserAction()
+
+            data object DismissPdfInformation : NotifyUserAction()
         }
 
         sealed class SearchFilterEvent : Event {
@@ -488,6 +521,12 @@ class HomeViewModel(
             data object Success : DeleteResult()
 
             data class Failure(val error: Throwable) : DeleteResult()
+        }
+
+        sealed class PdfInformation : UiEvent {
+            data class Show(val scannedPdf: ScannedPdf) : PdfInformation()
+
+            data object Dismiss : PdfInformation()
         }
 
         data class Error(val error: Throwable) : UiEvent
