@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.common.LocalSonner
+import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.UiEvent.ScanResult
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.ModifyPdfTitleDescriptionDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.PdfDeletionWarningDialog
@@ -97,16 +98,18 @@ fun HomePageWrapper() {
         }
     }
 
-    uiState.pdfToBeRemoved?.let { scannedPdf ->
+    if(uiState.pdfToBeRemoved is TemporalState.Present) {
+        val scannedPdf = uiState.pdfToBeRemoved.value
         PdfDeletionWarningDialog(
             modifier = Modifier,
-            scannedPdf = uiState.pdfToBeRemoved,
+            scannedPdf = scannedPdf,
             onDismiss = { vm.onEvent(HomeViewModel.Event.PdfAction.Delete(null)) },
             onConfirm = { vm.onEvent(HomeViewModel.Event.PdfAction.Delete(scannedPdf.id)) },
         )
     }
 
-    uiState.pdfToBeModified?.let { scannedPdf ->
+    if(uiState.pdfToBeModified is TemporalState.Present) {
+        val scannedPdf = uiState.pdfToBeModified.value
         ModifyPdfTitleDescriptionDialog(
             modifier = Modifier,
             onDismiss = {

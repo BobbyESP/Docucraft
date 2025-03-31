@@ -9,6 +9,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.viewModelScope
+import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.core.util.viewModel.ViewModelCoroutineBased
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
@@ -46,8 +47,8 @@ class HomeViewModel(
     data class HomeViewState(
         val scannedPdfs: List<ScannedPdf> = emptyList<ScannedPdf>(),
         val loadingState: LoadingState = LoadingState.Loading,
-        val pdfToBeRemoved: ScannedPdf? = null,
-        val pdfToBeModified: ScannedPdf? = null,
+        val pdfToBeRemoved: TemporalState<ScannedPdf> = TemporalState.NotPresent,
+        val pdfToBeModified: TemporalState<ScannedPdf> = TemporalState.NotPresent,
         val searchState: SearchViewState = SearchViewState(),
         val filterOptions: FilterOptions = FilterOptions(),
         val filteredPdfs: List<ScannedPdf> = emptyList(),
@@ -176,7 +177,7 @@ class HomeViewModel(
                     is Event.PdfAction.Save -> launchIO { copyPdfToDirectory(event.scannedPdf) }
                     is Event.PdfAction.Share -> sharePdf(pdfPath = event.pdfPath)
                     is Event.PdfAction.Delete -> {
-                        _uiState.update { it.copy(pdfToBeRemoved = null) }
+                        _uiState.update { it.copy(pdfToBeRemoved = TemporalState.NotPresent) }
                         event.id?.let {
                             launchIO {
                                 val scannedPdf = getPdfById(event.id)
@@ -200,7 +201,7 @@ class HomeViewModel(
                                 Log.e(TAG, "Failed to modify PDF: ${e.message}", e)
                                 emitUiEvent(UiEvent.Error(e))
                             } finally {
-                                _uiState.update { it.copy(pdfToBeModified = null) }
+                                _uiState.update { it.copy(pdfToBeModified = TemporalState.NotPresent) }
                             }
                         }
                     }
@@ -210,14 +211,14 @@ class HomeViewModel(
             is Event.NotifyUserAction -> {
                 when (event) {
                     is Event.NotifyUserAction.DismissPdfTitleDescriptionDialog -> {
-                        _uiState.update { it.copy(pdfToBeModified = null) }
+                        _uiState.update { it.copy(pdfToBeModified = TemporalState.NotPresent) }
                     }
 
                     is Event.NotifyUserAction.WarnAboutDeletion -> {
                         launchIO {
                             val scannedPdf = getPdfById(event.pdfId)
 
-                            _uiState.update { it.copy(pdfToBeRemoved = scannedPdf) }
+                            _uiState.update { it.copy(pdfToBeRemoved = TemporalState.Present(scannedPdf)) }
                         }
                     }
 
@@ -225,7 +226,7 @@ class HomeViewModel(
                         launchIO {
                             val scannedPdf = getPdfById(event.pdfId)
 
-                            _uiState.update { it.copy(pdfToBeModified = scannedPdf) }
+                            _uiState.update { it.copy(pdfToBeModified = TemporalState.Present(scannedPdf)) }
                         }
                     }
                 }
