@@ -1,0 +1,18 @@
+package com.bobbyesp.docucraft.core.presentation.components.animtable
+
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.Spring
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.bobbyesp.docucraft.core.presentation.utilities.AnimatableSaver
+
+@Composable
+fun rememberAnimatable(
+    initialValue: Float,
+    visibilityThreshold: Float = Spring.DefaultDisplacementThreshold,
+): Animatable<Float, AnimationVector1D> {
+    return rememberSaveable(saver = AnimatableSaver) {
+        Animatable(initialValue, visibilityThreshold)
+    }
+}

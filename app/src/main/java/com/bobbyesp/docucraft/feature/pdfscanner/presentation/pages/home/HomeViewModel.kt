@@ -9,7 +9,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.viewModelScope
-import com.bobbyesp.docucraft.core.util.ViewModelCoroutineBased
+import com.bobbyesp.docucraft.core.util.viewModel.ViewModelCoroutineBased
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf

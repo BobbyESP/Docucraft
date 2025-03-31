@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.core.util
+package com.bobbyesp.docucraft.core.util.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
