@@ -9,7 +9,8 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.core.util.state.TemporalState
-import com.bobbyesp.docucraft.core.util.state.TemporalState.*
+import com.bobbyesp.docucraft.core.util.state.TemporalState.NotPresent
+import com.bobbyesp.docucraft.core.util.state.TemporalState.Present
 import com.bobbyesp.docucraft.core.util.viewModel.ViewModelCoroutineBased
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
@@ -45,7 +46,7 @@ class HomeViewModel(
         _uiState.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeViewState())
 
     data class HomeViewState(
-        val scannedPdfs: List<ScannedPdf> = emptyList<ScannedPdf>(),
+        val scannedPdfs: List<ScannedPdf> = emptyList(),
         val loadingState: LoadingState = LoadingState.Loading,
         val pdfToBeRemoved: TemporalState<ScannedPdf> = NotPresent,
         val pdfToBeModified: TemporalState<ScannedPdf> = NotPresent,
@@ -178,7 +179,7 @@ class HomeViewModel(
                     is Event.PdfAction.Save -> launchIO { copyPdfToDirectory(event.scannedPdf) }
                     is Event.PdfAction.Share -> sharePdf(pdfPath = event.pdfPath)
                     is Event.PdfAction.Delete -> {
-                        _uiState.update { it.copy(pdfToBeRemoved = TemporalState.NotPresent) }
+                        _uiState.update { it.copy(pdfToBeRemoved = NotPresent) }
                         event.id?.let {
                             launchIO {
                                 val scannedPdf = getPdfById(event.id)
@@ -191,9 +192,8 @@ class HomeViewModel(
                     is Event.PdfAction.ModifyTitleDescription -> {
                         launchIO {
                             val scannedPdf = getPdfById(event.pdfId)
-                            val newTitle: String? = if (event.title.isBlank()) null else event.title
-                            val newDescription: String? =
-                                if (event.description.isBlank()) null else event.description
+                            val newTitle: String? = event.title.ifBlank { null }
+                            val newDescription: String? = event.description.ifBlank { null }
 
                             try {
                                 scannedPdfUseCase.modifyPdf(scannedPdf.id, newTitle, newDescription)
@@ -202,7 +202,7 @@ class HomeViewModel(
                                 Log.e(TAG, "Failed to modify PDF: ${e.message}", e)
                                 emitUiEvent(UiEvent.Error(e))
                             } finally {
-                                _uiState.update { it.copy(pdfToBeModified = TemporalState.NotPresent) }
+                                _uiState.update { it.copy(pdfToBeModified = NotPresent) }
                             }
                         }
                     }
@@ -244,18 +244,8 @@ class HomeViewModel(
                     }
 
                     is Event.NotifyUserAction.ShowPdfInformation -> {
-                        launchIO {
-                            val scannedPdf = getPdfById(event.pdfId)
-
-                            emitUiEvent(
-                                UiEvent.PdfInformation.Show(scannedPdf)
-                            )
-                        }
-                    }
-
-                    Event.NotifyUserAction.DismissPdfInformation -> {
                         emitUiEvent(
-                            UiEvent.PdfInformation.Dismiss
+                            UiEvent.PdfInformation.Show(event.id)
                         )
                     }
                 }
@@ -472,9 +462,7 @@ class HomeViewModel(
 
             data object DismissPdfTitleDescriptionDialog : NotifyUserAction()
 
-            data class ShowPdfInformation(val pdfId: String) : NotifyUserAction()
-
-            data object DismissPdfInformation : NotifyUserAction()
+            data class ShowPdfInformation(val id: String) : NotifyUserAction()
         }
 
         sealed class SearchFilterEvent : Event {
@@ -524,9 +512,7 @@ class HomeViewModel(
         }
 
         sealed class PdfInformation : UiEvent {
-            data class Show(val scannedPdf: ScannedPdf) : PdfInformation()
-
-            data object Dismiss : PdfInformation()
+            data class Show(val id: String) : PdfInformation()
         }
 
         data class Error(val error: Throwable) : UiEvent

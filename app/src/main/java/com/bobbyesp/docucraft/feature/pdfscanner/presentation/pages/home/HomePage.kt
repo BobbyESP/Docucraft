@@ -1,5 +1,6 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home
 
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -678,16 +679,17 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
 }
 
 @Preview
+@Preview(uiMode = UI_MODE_NIGHT_YES)
 @Composable
-private fun PreviewMidas() {
+private fun PreviewHomePage() {
     DocucraftTheme {
         HomePage(
             scannedPdfs = listOf(
                 ScannedPdf(
                     id = "1",
                     filename = "document1.pdf",
-                    title = "Document 1",
-                    description = "Description for document 1",
+                    title = "Documento 1 de prueba. Título corto",
+                    description = "Description para el documento 1. La descripción no va a ser muy larga.",
                     path = "content://com.example.documents/document/1".toUri(),
                     createdTimestamp = System.currentTimeMillis(),
                     fileSize = 1024,
@@ -696,8 +698,9 @@ private fun PreviewMidas() {
                 ), ScannedPdf(
                     id = "2",
                     filename = "document2.pdf",
-                    title = "Document 2",
-                    description = "Description for document 2",
+                    title = "Apuntes de programación",
+                    description = "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " +
+                        "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
                     path = "content://com.example.documents/document/2".toUri(),
                     createdTimestamp = System.currentTimeMillis(),
                     fileSize = 2048,
@@ -709,8 +712,8 @@ private fun PreviewMidas() {
             onEvent = {},
             filteredPdfs = emptyList(),
             searchState = HomeViewModel.SearchViewState(
-                searchQuery = "Doc",
-                showingSearchBar = true,
+                searchQuery = "",
+                showingSearchBar = false,
             ),
             filterOptions = FilterOptions(),
         )

@@ -16,6 +16,8 @@ val pdfScannerViewModels = module {
     }
 
     viewModel {
-        PdfInformationBottomSheetViewModel()
+        PdfInformationBottomSheetViewModel(
+            scannedPdfUseCase = get<ScannedPdfUseCase>(),
+        )
     }
 }

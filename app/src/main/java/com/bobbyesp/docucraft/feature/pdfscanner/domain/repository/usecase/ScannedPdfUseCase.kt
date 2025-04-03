@@ -39,6 +39,21 @@ interface ScannedPdfUseCase {
      */
     suspend fun scannedPdfsListFlow(): Flow<List<ScannedPdf>>
 
+    /**
+     * Searches for scanned PDFs whose titles or descriptions match the given query.
+     *
+     * This function performs a search operation on the available scanned PDF documents. It looks for
+     * matches in the title or description fields of each [ScannedPdf] object. The search is
+     * case-insensitive and returns a list of all matching PDFs.
+     *
+     * The function is marked as `suspend`, meaning it must be called within a coroutine or another
+     * suspending function. This is because the search operation may involve iterating through a large
+     * dataset or performing I/O operations.
+     *
+     * @param query The search query string. This string is used to find matching titles or descriptions.
+     * @return A [List] of [ScannedPdf] objects that match the query. The list may be empty if no
+     *   matching PDFs are found.
+     */
     suspend fun searchPdfs(query: String): List<ScannedPdf>
 
     /**
