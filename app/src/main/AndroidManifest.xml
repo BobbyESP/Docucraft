@@ -44,6 +44,10 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/scan_pdf_widget_info" />
         </receiver>
+
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="ocr"/>
     </application>
 
 </manifest>

@@ -22,15 +22,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -154,15 +152,13 @@ fun HomePage(
                         if (isSearchVisible) {
                             Column(
                                 modifier = Modifier
-                                    .windowInsetsPadding(
-                                        WindowInsets.systemBars.only(
-                                            WindowInsetsSides.Horizontal + WindowInsetsSides.Top
-                                        )
-                                    )
-                                    .fillMaxWidth()
                                     .background(MaterialTheme.colorScheme.surface)
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    .fillMaxWidth()
+                                    .windowInsetsPadding(
+                                        WindowInsets.safeDrawing
+                                    ),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 Text(
                                     text = stringResource(id = R.string.search_documents),
@@ -699,8 +695,7 @@ private fun PreviewHomePage() {
                     id = "2",
                     filename = "document2.pdf",
                     title = "Apuntes de programación",
-                    description = "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " +
-                        "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
+                    description = "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " + "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
                     path = "content://com.example.documents/document/2".toUri(),
                     createdTimestamp = System.currentTimeMillis(),
                     fileSize = 2048,

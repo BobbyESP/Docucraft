@@ -120,6 +120,7 @@ dependencies {
 
     //Document scanner
     implementation(libs.gms.mlkit.docscanner)
+    implementation(libs.gms.mlkit.text.recognition)
 
     //Utilities
     implementation(libs.kotlinx.collections.immutable)
