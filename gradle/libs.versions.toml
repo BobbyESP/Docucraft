@@ -7,7 +7,7 @@ appcompat = "1.7.0"
 core-ktx = "1.15.0"
 lifecycle-runtime-ktx = "2.8.7"
 activity-compose = "1.10.1"
-ksp = "2.1.0-1.0.29"
+ksp = "2.1.20-1.0.32"
 splashscreen = "1.0.1"
 leakcanary = "2.14"
 
@@ -15,7 +15,7 @@ leakcanary = "2.14"
 compose-bom = "2025.03.01"
 androidx-compose-material3 = "1.3.1"
 compose-util = "1.7.8"
-accompanist = "0.36.0"
+accompanist = "0.37.2"
 glance = "1.1.1"
 
 #More UI
@@ -63,6 +63,7 @@ filekit = "0.10.0-beta01"
 
 #MLKit
 mlkit-docscanner = "16.0.0-beta1"
+mlkit-text-recognition = "19.0.1"
 
 #Tests
 junit = "4.13.2"
@@ -120,7 +121,6 @@ kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 #Accompanist
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
-accompanist-webview = { group = "com.google.accompanist", name = "accompanist-webview", version.ref = "accompanist" }
 
 #Image loading
 landscapist-coil = { group = "com.github.skydoves", name = "landscapist-coil", version.ref = "landscapistCoil" }
@@ -164,7 +164,7 @@ firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashly
 
 #MLKit
 gms-mlkit-docscanner = { group = "com.google.android.gms", name = "play-services-mlkit-document-scanner", version.ref = "mlkit-docscanner" }
-gms-mlkit-text-recognition = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition", version.ref = "mlkit-docscanner" }
+gms-mlkit-text-recognition = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition", version.ref = "mlkit-text-recognition" }
 
 #Others
 qrcode-kotlin-android = { module = "io.github.g0dkar:qrcode-kotlin-android", version.ref = "qrcodeKotlinAndroid" }
@@ -204,7 +204,7 @@ androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "and
 [bundles]
 core = ["core-ktx", "lifecycle-runtime-ktx", "lifecycle-compose-runtime", "lifecycle-compose-viewModel", "activity-compose", "core-appcompat", "core-splashscreen"]
 ktor = ["ktor-android", "ktor-okhttp" ,"ktor-core", "ktor-serialization", "ktor-logging", "ktor-contentnegotiation", "ktor-encoding"]
-accompanist = ["accompanist-permissions", "accompanist-webview"]
+accompanist = ["accompanist-permissions"]
 compose = ["compose-ui-util", "compose-graphics", "compose-runtime", "compose-foundation", "compose-material-iconsExtended", "compose-animation", "compose-ui", "compose-material3", "compose-navigation", "compose-material3-windowSizeClass"]
 glance = ["glance", "glance-appwidget", "glance-material3"]
 koin = ["koin-android", "koin-compose"]
