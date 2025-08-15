@@ -14,12 +14,12 @@ plugins {
 
 android {
     namespace = "com.bobbyesp.docucraft"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.bobbyesp.docucraft"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
 
         versionCode = rootProject.extra["versionCode"] as Int
         versionName = rootProject.extra["versionName"] as String
@@ -50,9 +50,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
-    }
-    kotlinOptions {
-        jvmTarget = "21"
     }
 
     buildFeatures {
@@ -120,7 +117,7 @@ dependencies {
 
     //Document scanner
     implementation(libs.gms.mlkit.docscanner)
-    implementation(libs.gms.mlkit.text.recognition)
+    //implementation(libs.gms.mlkit.text.recognition)
 
     //Utilities
     implementation(libs.kotlinx.collections.immutable)

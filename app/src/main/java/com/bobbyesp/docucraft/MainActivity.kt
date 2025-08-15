@@ -48,8 +48,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
             homeViewModel.onEvent(
                 HomeViewModel.Event.ScanPdf(
-                    activity = this,
-                    listener = scannerLauncher
+                    activity = this, listener = scannerLauncher
                 )
             )
         }
@@ -57,25 +56,22 @@ class MainActivity : ComponentActivity(), KoinComponent {
         setContent {
             val navHostController = rememberNavController()
             val sonner = rememberToasterState()
-            KoinContext {
-                DocucraftTheme {
-                    val windowSizeClass = calculateWindowSizeClass(this)
+            DocucraftTheme {
+                val windowSizeClass = calculateWindowSizeClass(this)
 
-                    CompositionLocalProvider(LocalNavController provides navHostController) {
-                        AppLocalSettingsProvider(
-                            windowWidthSize = windowSizeClass.widthSizeClass,
-                            sonner = sonner,
-                            appPreferences = appPreferences,
-                            imageLoader = imageLoader,
-                        ) {
-                            Navigator(navHostController = navHostController)
-                            Toaster(
-                                state = sonner,
-                                richColors = true,
-                                darkTheme =
-                                    isSystemInDarkTheme(), // TODO: Change by the settings wrapper
-                            )
-                        }
+                CompositionLocalProvider(LocalNavController provides navHostController) {
+                    AppLocalSettingsProvider(
+                        windowWidthSize = windowSizeClass.widthSizeClass,
+                        sonner = sonner,
+                        appPreferences = appPreferences,
+                        imageLoader = imageLoader,
+                    ) {
+                        Navigator(navHostController = navHostController)
+                        Toaster(
+                            state = sonner,
+                            richColors = true,
+                            darkTheme = isSystemInDarkTheme(), // TODO: Change by the settings wrapper
+                        )
                     }
                 }
             }

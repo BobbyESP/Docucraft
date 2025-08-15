@@ -63,11 +63,11 @@ sealed class Version(
     }
 }
 
-val currentVersion: Version = Version.Alpha(
+val currentVersion: Version = Version.Beta(
     versionMajor = 1,
     versionMinor = 0,
     versionPatch = 0,
-    commitId = commitSignature
+    versionBuild = 1,
 )
 
 val versionCode by extra(

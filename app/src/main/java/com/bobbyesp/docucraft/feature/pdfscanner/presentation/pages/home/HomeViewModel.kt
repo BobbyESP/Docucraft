@@ -42,8 +42,11 @@ class HomeViewModel(
     }
 
     private val _uiState: MutableStateFlow<HomeViewState> = MutableStateFlow(HomeViewState())
-    val uiState =
-        _uiState.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), HomeViewState())
+    val uiState = _uiState.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HomeViewState()
+    )
 
     data class HomeViewState(
         val scannedPdfs: List<ScannedPdf> = emptyList(),
@@ -77,12 +80,16 @@ class HomeViewModel(
             }
             emitUiEvent(UiEvent.Error(e))
         }.collect { scannedPdfs ->
-            _uiState.update { it.copy(scannedPdfs = scannedPdfs) }
-            if (_uiState.value.hasActiveFilters) applySearchAndFilters()
-            if (_uiState.value.loadingState !is LoadingState.Idle) _uiState.update {
-                it.copy(
-                    loadingState = LoadingState.Idle
-                )
+            with(_uiState.value) {
+                _uiState.update { it.copy(scannedPdfs = scannedPdfs) }
+                if (hasActiveFilters) applySearchAndFilters()
+                if (loadingState !is LoadingState.Idle) {
+                    _uiState.update {
+                        it.copy(
+                            loadingState = LoadingState.Idle
+                        )
+                    }
+                }
             }
         }
     }
@@ -176,7 +183,7 @@ class HomeViewModel(
             is Event.PdfAction -> {
                 when (event) {
                     is Event.PdfAction.Open -> openPdfInViewer(pdfPath = event.pdfPath)
-                    is Event.PdfAction.Save -> launchIO { copyPdfToDirectory(event.scannedPdf) }
+                    is Event.PdfAction.Save -> copyPdfToDirectory(event.scannedPdf)
                     is Event.PdfAction.Share -> sharePdf(pdfPath = event.pdfPath)
                     is Event.PdfAction.Delete -> {
                         _uiState.update { it.copy(pdfToBeRemoved = NotPresent) }
@@ -336,31 +343,33 @@ class HomeViewModel(
         }
     }
 
-    private suspend fun copyPdfToDirectory(scannedPdf: ScannedPdf) {
-        try {
-            val androidDocumentsDirectory = PlatformFile(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-            )
+    private fun copyPdfToDirectory(scannedPdf: ScannedPdf) {
+        launchIO {
+            try {
+                val androidDocumentsDirectory = PlatformFile(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+                )
 
-            val dir = PlatformFile(androidDocumentsDirectory, "Docucraft")
+                val dir = PlatformFile(androidDocumentsDirectory, "Docucraft")
 
-            val file = FileKit.openFileSaver(
-                suggestedName = scannedPdf.title ?: scannedPdf.filename,
-                extension = "pdf",
-                directory = dir,
-            ) ?: run {
-                emitUiEvent(UiEvent.SavingResult.Cancelled)
-                return
+                val file = FileKit.openFileSaver(
+                    suggestedName = scannedPdf.title ?: scannedPdf.filename,
+                    extension = "pdf",
+                    directory = dir,
+                ) ?: run {
+                    emitUiEvent(UiEvent.SavingResult.Cancelled)
+                    return@launchIO
+                }
+
+                val internalPdf = PlatformFile(scannedPdf.path)
+
+                internalPdf.copyTo(file)
+
+                emitUiEvent(UiEvent.SavingResult.Success(file.uri))
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save PDF: ${e.message}", e)
+                emitUiEvent(UiEvent.SavingResult.Failure(error = e))
             }
-
-            val internalPdf = PlatformFile(scannedPdf.path)
-
-            internalPdf.copyTo(file)
-
-            emitUiEvent(UiEvent.SavingResult.Success(file.uri))
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to save PDF: ${e.message}", e)
-            emitUiEvent(UiEvent.SavingResult.Failure(error = e))
         }
     }
 
@@ -409,7 +418,9 @@ class HomeViewModel(
             }
 
             Activity.RESULT_CANCELED -> {
-                emitUiEvent(UiEvent.ScanResult.Cancelled)
+                Log.i(
+                    TAG, "PDF scanning was cancelled by the user"
+                )
             }
 
             else -> {
