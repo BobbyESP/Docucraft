@@ -1,7 +1,5 @@
-package com.bobbyesp.docucraft.core.presentation.utilities
+package com.bobbyesp.docucraft.core.presentation.utilities.modifier
 
-import android.content.res.Configuration
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableLongStateOf
@@ -16,11 +14,10 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.dp
-import kotlin.math.min
 import kotlinx.coroutines.delay
+import kotlin.math.min
 
 /**
  * A [Modifier] that draws a border around elements that are recomposing. The border increases in
@@ -99,8 +96,3 @@ private val recomposeModifier =
             }
         }
     }
-
-@Composable
-fun isDeviceInLandscape(): Boolean {
-    return LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
-}
