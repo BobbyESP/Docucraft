@@ -41,7 +41,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
-import com.bobbyesp.docucraft.core.presentation.components.animtable.rememberAnimatable
+import com.bobbyesp.docucraft.core.presentation.components.animatable.rememberAnimatable
 import com.bobbyesp.docucraft.core.presentation.utilities.isDeviceInLandscape
 import kotlinx.coroutines.launch
 import my.nanihadesuka.compose.LazyColumnScrollbar

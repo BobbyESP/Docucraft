@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.core.presentation.components.animtable
+package com.bobbyesp.docucraft.core.presentation.components.animatable
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
