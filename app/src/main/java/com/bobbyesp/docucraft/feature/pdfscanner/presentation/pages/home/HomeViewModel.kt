@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
+import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.core.util.state.TemporalState.NotPresent
@@ -22,13 +23,14 @@ import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.copyTo
 import io.github.vinceglb.filekit.dialogs.openFileSaver
-import io.github.vinceglb.filekit.dialogs.uri
+import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
@@ -42,7 +44,9 @@ class HomeViewModel(
     }
 
     private val _uiState: MutableStateFlow<HomeViewState> = MutableStateFlow(HomeViewState())
-    val uiState = _uiState.stateIn(
+    val uiState = _uiState.onStart {
+        launchIO { loadScannedPdfs() }
+    }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = HomeViewState()
@@ -66,10 +70,6 @@ class HomeViewModel(
 
     private val _eventFlow = MutableSharedFlow<UiEvent>(extraBufferCapacity = 1)
     val eventFlow = _eventFlow.asSharedFlow()
-
-    init {
-        launchIO { loadScannedPdfs() }
-    }
 
     private suspend fun loadScannedPdfs() {
         _uiState.update { it.copy(loadingState = LoadingState.Loading) }
@@ -365,7 +365,7 @@ class HomeViewModel(
 
                 internalPdf.copyTo(file)
 
-                emitUiEvent(UiEvent.SavingResult.Success(file.uri))
+                emitUiEvent(UiEvent.SavingResult.Success(file.path.toUri()))
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to save PDF: ${e.message}", e)
                 emitUiEvent(UiEvent.SavingResult.Failure(error = e))
