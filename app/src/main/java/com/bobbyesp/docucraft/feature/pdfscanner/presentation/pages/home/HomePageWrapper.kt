@@ -9,9 +9,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.common.LocalSonner
 import com.bobbyesp.docucraft.core.util.state.TemporalState
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.UiEvent.ScanResult
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.ModifyPdfTitleDescriptionDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.PdfDeletionWarningDialog
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.UiEvent.ScanResult
 import com.dokar.sonner.ToastType
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
@@ -33,14 +34,14 @@ fun HomePageWrapper() {
                         when (event) {
                             is ScanResult.Success -> {
                                 context.getString(R.string.pdf_saved_successfully) to
-                                        ToastType.Success
+                                    ToastType.Success
                             }
 
                             is ScanResult.Failure -> {
                                 val errorMsg =
                                     event.error.message ?: context.getString(R.string.unknown_error)
                                 context.getString(R.string.pdf_saved_error_with_reason, errorMsg) to
-                                        ToastType.Error
+                                    ToastType.Error
                             }
 
                             ScanResult.Cancelled -> {
@@ -76,7 +77,7 @@ fun HomePageWrapper() {
                                 val errorMsg =
                                     event.error.message ?: context.getString(R.string.unknown_error)
                                 context.getString(R.string.pdf_saved_error_with_reason, errorMsg) to
-                                        ToastType.Error
+                                    ToastType.Error
                             }
 
                             HomeViewModel.UiEvent.SavingResult.Cancelled -> {
@@ -90,24 +91,25 @@ fun HomePageWrapper() {
                     val (message, type) =
                         if (event is HomeViewModel.UiEvent.DeleteResult.Success) {
                             context.getString(R.string.pdf_deleted_successfully) to
-                                    ToastType.Success
+                                ToastType.Success
                         } else {
                             context.getString(R.string.pdf_deleted_error) to ToastType.Error
                         }
                     sonner.show(message = message, type = type)
                 }
 
-//                is HomeViewModel.UiEvent.PdfInformation -> {
-//                    when(event) {
-//                        is HomeViewModel.UiEvent.PdfInformation.Show -> {
-//
-//                        }
-//
-//                        HomeViewModel.UiEvent.PdfInformation.Dismiss -> {
-//                            vm.onEvent(HomeViewModel.Event.NotifyUserAction.DismissPdfInformation)
-//                        }
-//                    }
-//                }
+            //                is HomeViewModel.UiEvent.PdfInformation -> {
+            //                    when(event) {
+            //                        is HomeViewModel.UiEvent.PdfInformation.Show -> {
+            //
+            //                        }
+            //
+            //                        HomeViewModel.UiEvent.PdfInformation.Dismiss -> {
+            //
+            // vm.onEvent(HomeViewModel.Event.NotifyUserAction.DismissPdfInformation)
+            //                        }
+            //                    }
+            //                }
             }
         }
     }
@@ -146,7 +148,7 @@ fun HomePageWrapper() {
     if (uiState.pdfToShowInformation is TemporalState.Present) {
         val scannedPdf = uiState.pdfToShowInformation.value
 
-        //TODO
+        // TODO
 
     }
 

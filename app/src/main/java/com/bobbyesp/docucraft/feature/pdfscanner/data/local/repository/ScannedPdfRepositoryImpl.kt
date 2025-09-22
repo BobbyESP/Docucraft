@@ -1,9 +1,7 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.data.local.repository
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.feature.pdfscanner.data.local.db.dao.ScannedPdfDao
 import com.bobbyesp.docucraft.feature.pdfscanner.data.local.db.entity.ScannedPdfEntity
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf

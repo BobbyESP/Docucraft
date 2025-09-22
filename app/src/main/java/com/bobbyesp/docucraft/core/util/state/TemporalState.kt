@@ -3,19 +3,18 @@ package com.bobbyesp.docucraft.core.util.state
 /**
  * Sealed interface for representing the presence state of a ViewModel item over time.
  *
- * This interface is used to represent whether a value of type [T] is currently
- * present or not within a given context, often used in ViewModels to handle
- * asynchronous data loading or changes in data availability.
+ * This interface is used to represent whether a value of type [T] is currently present or not
+ * within a given context, often used in ViewModels to handle asynchronous data loading or changes
+ * in data availability.
  *
  * It offers two distinct states:
- * - [NotPresent]: Indicates that a value is currently absent. This could mean
- *   that the data hasn't been loaded yet, has been cleared, or doesn't exist.
- * - [Present]: Indicates that a value of type [T] is currently available.
- *   The actual value can be accessed via the `value` property.
+ * - [NotPresent]: Indicates that a value is currently absent. This could mean that the data hasn't
+ *   been loaded yet, has been cleared, or doesn't exist.
+ * - [Present]: Indicates that a value of type [T] is currently available. The actual value can be
+ *   accessed via the `value` property.
  *
- * This approach allows for a more type-safe and explicit way to handle
- * situations where data might not be immediately available, avoiding the need
- * for nullable types in some cases.
+ * This approach allows for a more type-safe and explicit way to handle situations where data might
+ * not be immediately available, avoiding the need for nullable types in some cases.
  *
  * Example usage:
  * ```kotlin
@@ -36,5 +35,6 @@ package com.bobbyesp.docucraft.core.util.state
  */
 sealed interface TemporalState<out T> {
     object NotPresent : TemporalState<Nothing>
+
     data class Present<out T>(val value: T) : TemporalState<T>
 }

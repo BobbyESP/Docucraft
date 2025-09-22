@@ -24,9 +24,7 @@ android {
         versionCode = rootProject.extra["versionCode"] as Int
         versionName = rootProject.extra["versionName"] as String
 
-        vectorDrawables {
-            useSupportLibrary = true
-        }
+        vectorDrawables { useSupportLibrary = true }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -36,14 +34,15 @@ android {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
 
     applicationVariants.all {
         outputs.all {
-            (this as BaseVariantOutputImpl).outputFileName = "Docucraft-${defaultConfig.versionName}-${name}.apk"
+            (this as BaseVariantOutputImpl).outputFileName =
+                "Docucraft-${defaultConfig.versionName}-${name}.apk"
         }
     }
 
@@ -52,22 +51,18 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    buildFeatures {
-        compose = true
-    }
+    buildFeatures { compose = true }
 
-    composeCompiler {
-        reportsDestination = layout.buildDirectory.dir("compose_compiler")
-    }
+    composeCompiler { reportsDestination = layout.buildDirectory.dir("compose_compiler") }
 }
 
 ktfmt {
     // Google style - 2 space indentation & automatically adds/removes trailing commas
-    //googleStyle()
+    // googleStyle()
 
-    // KotlinLang style - 4 space indentation - From https://kotlinlang.org/docs/coding-conventions.html
+    // KotlinLang style - 4 space indentation - From
+    // https://kotlinlang.org/docs/coding-conventions.html
     kotlinLangStyle()
-
 }
 
 ksp {
@@ -78,67 +73,68 @@ ksp {
 dependencies {
     implementation(libs.bundles.core)
     implementation(libs.bundles.coroutines)
+    implementation(libs.google.fonts)
 
-    //Core UI libraries
+    // Core UI libraries
     api(platform(libs.compose.bom))
 
-    //Accompanist libraries
+    // Accompanist libraries
     implementation(libs.bundles.accompanist)
 
-    //Compose libraries
+    // Compose libraries
     implementation(libs.bundles.compose)
     implementation(libs.materialKolor)
-    implementation(libs.haze)
     implementation(libs.bundles.glance)
+    implementation(libs.bundles.nav3)
 
-    //Pagination
+    // Pagination
     implementation(libs.bundles.pagination)
 
-    //Network
+    // Network
     implementation(libs.bundles.ktor)
 
-    //Dependency injection
+    // Dependency injection
     implementation(libs.bundles.koin)
 
-    //Database
+    // Database
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.room.paging)
     ksp(libs.room.compiler)
 
-    //Key-value storage
+    // Key-value storage
     implementation(libs.datastore.preferences)
 
-    //Image loading
+    // Image loading
     implementation(libs.landscapist.coil)
 
-    //Files management
+    // Files management
     implementation(libs.bundles.filekit)
 
-    //Document scanner
+    // Document scanner
     implementation(libs.gms.mlkit.docscanner)
-    //implementation(libs.gms.mlkit.text.recognition)
+    // implementation(libs.gms.mlkit.text.recognition)
 
-    //Utilities
+    // Utilities
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.scrollbar)
     implementation(libs.sonner)
 
-    //Firebase
+    // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
 
     implementation(libs.profileinstaller)
 
-    //Android testing libraries
+    // Android testing libraries
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    //Compose testing and tooling libraries
+    // Compose testing and tooling libraries
     androidTestImplementation(platform(libs.compose.bom))
     implementation(libs.compose.tooling.preview)
     debugImplementation(libs.compose.tooling)

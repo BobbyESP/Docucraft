@@ -72,7 +72,7 @@ fun ScannedPdfCard(
         ) {
             val imageModifier =
                 Modifier.height(72.dp)
-                    .aspectRatio(1f / 1.414f)
+                    .aspectRatio(1f / 1.414f) // 9:16 aspect ratio
                     .clip(MaterialTheme.shapes.small)
                     .background(MaterialTheme.colorScheme.primaryContainer)
 

@@ -14,7 +14,7 @@ enum class NavigatorInfo(val icon: ImageVector, @StringRes val title: Int) {
     companion object {
         fun fromRoute(route: Route): NavigatorInfo? {
             return when (route) {
-                is Route.DocucraftNavigator -> HOME
+                is Route.Home -> HOME
                 else -> null
             }
         }

@@ -156,7 +156,6 @@ class ScannedPdfUseCaseImpl(
         }
     }
 
-
     override fun sharePdf(pdfPath: Uri) {
         val shareIntent =
             Intent(Intent.ACTION_SEND).apply {

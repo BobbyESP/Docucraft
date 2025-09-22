@@ -65,70 +65,70 @@ inline fun <reified T : Any> NavGraphBuilder.slideInVerticallyComposable(
 inline fun <reified T : Any> NavGraphBuilder.animatedComposablePredictiveBack(
     deepLinks: List<NavDeepLink> = emptyList(),
     noinline content: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit,
-) = composable<T>(
-    deepLinks = deepLinks,
-    enterTransition = { materialSharedAxisXIn(initialOffsetX = { (it * 0.15f).toInt() }) },
-    exitTransition = {
-        materialSharedAxisXOut(targetOffsetX = { -(it * InitialOffset).toInt() })
-    },
-    popEnterTransition = {
-        scaleIn(
-            animationSpec = tween(
-                durationMillis = DURATION_ENTER, easing = EmphasizedDecelerate
-            ),
-            initialScale = 0.9f,
-        ) + materialSharedAxisXIn(initialOffsetX = { -(it * InitialOffset).toInt() })
-    },
-    popExitTransition = {
-        materialSharedAxisXOut(targetOffsetX = { (it * InitialOffset).toInt() }) + scaleOut(
-            targetScale = 0.9f,
-            animationSpec = tween(
-                durationMillis = DURATION_EXIT, easing = EmphasizedAccelerate
-            ),
-        )
-    },
-    content = content,
-)
+) =
+    composable<T>(
+        deepLinks = deepLinks,
+        enterTransition = { materialSharedAxisXIn(initialOffsetX = { (it * 0.15f).toInt() }) },
+        exitTransition = {
+            materialSharedAxisXOut(targetOffsetX = { -(it * InitialOffset).toInt() })
+        },
+        popEnterTransition = {
+            scaleIn(
+                animationSpec =
+                    tween(durationMillis = DURATION_ENTER, easing = EmphasizedDecelerate),
+                initialScale = 0.9f,
+            ) + materialSharedAxisXIn(initialOffsetX = { -(it * InitialOffset).toInt() })
+        },
+        popExitTransition = {
+            materialSharedAxisXOut(targetOffsetX = { (it * InitialOffset).toInt() }) +
+                scaleOut(
+                    targetScale = 0.9f,
+                    animationSpec =
+                        tween(durationMillis = DURATION_EXIT, easing = EmphasizedAccelerate),
+                )
+        },
+        content = content,
+    )
 
 inline fun <reified T : Any> NavGraphBuilder.animatedComposableLegacy(
     deepLinks: List<NavDeepLink> = emptyList(),
     noinline content: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit,
-) = composable<T>(
-    deepLinks = deepLinks,
-    enterTransition = {
-        materialSharedAxisXIn(initialOffsetX = { (it * InitialOffset).toInt() })
-    },
-    exitTransition = {
-        materialSharedAxisXOut(targetOffsetX = { -(it * InitialOffset).toInt() })
-    },
-    popEnterTransition = {
-        materialSharedAxisXIn(initialOffsetX = { -(it * InitialOffset).toInt() })
-    },
-    popExitTransition = {
-        materialSharedAxisXOut(targetOffsetX = { (it * InitialOffset).toInt() })
-    },
-    content = content,
-)
+) =
+    composable<T>(
+        deepLinks = deepLinks,
+        enterTransition = {
+            materialSharedAxisXIn(initialOffsetX = { (it * InitialOffset).toInt() })
+        },
+        exitTransition = {
+            materialSharedAxisXOut(targetOffsetX = { -(it * InitialOffset).toInt() })
+        },
+        popEnterTransition = {
+            materialSharedAxisXIn(initialOffsetX = { -(it * InitialOffset).toInt() })
+        },
+        popExitTransition = {
+            materialSharedAxisXOut(targetOffsetX = { (it * InitialOffset).toInt() })
+        },
+        content = content,
+    )
 
 inline fun <reified T : Any> NavGraphBuilder.animatedComposableVariant(
     deepLinks: List<NavDeepLink> = emptyList(),
     noinline content: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit,
-) = composable<T>(
-    deepLinks = deepLinks,
-    enterTransition = {
-        slideInHorizontally(
-            tweenEnter(),
-            initialOffsetX = { (it * InitialOffset).toInt() }) + fadeIn(fadeEnterSpec)
-    },
-    exitTransition = { fadeOut(fadeExitSpec) },
-    popEnterTransition = { fadeIn(fadeEnterSpec) },
-    popExitTransition = {
-        slideOutHorizontally(
-            tweenExit(),
-            targetOffsetX = { (it * InitialOffset).toInt() }) + fadeOut(fadeExitSpec)
-    },
-    content = content,
-)
+) =
+    composable<T>(
+        deepLinks = deepLinks,
+        enterTransition = {
+            slideInHorizontally(tweenEnter(), initialOffsetX = { (it * InitialOffset).toInt() }) +
+                fadeIn(fadeEnterSpec)
+        },
+        exitTransition = { fadeOut(fadeExitSpec) },
+        popEnterTransition = { fadeIn(fadeEnterSpec) },
+        popExitTransition = {
+            slideOutHorizontally(tweenExit(), targetOffsetX = { (it * InitialOffset).toInt() }) +
+                fadeOut(fadeExitSpec)
+        },
+        content = content,
+    )
 
 val springSpec =
     spring(stiffness = Spring.StiffnessMedium, visibilityThreshold = IntOffset.VisibilityThreshold)
@@ -137,46 +137,47 @@ inline fun <reified T : Any> NavGraphBuilder.slideInVerticallyComposableLegacy(
     deepLinks: List<NavDeepLink> = emptyList(),
     typeMap: Map<KType, @JvmSuppressWildcards NavType<*>> = emptyMap(),
     noinline content: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit,
-) = composable<T>(
-    deepLinks = deepLinks,
-    typeMap = typeMap,
-    enterTransition = {
-        slideInVertically(initialOffsetY = { it }, animationSpec = tweenEnter()) + fadeIn()
-    },
-    exitTransition = { slideOutVertically() },
-    popEnterTransition = { slideInVertically() },
-    popExitTransition = {
-        slideOutVertically(targetOffsetY = { it }, animationSpec = tweenExit()) + fadeOut()
-    },
-    content = content,
-)
+) =
+    composable<T>(
+        deepLinks = deepLinks,
+        typeMap = typeMap,
+        enterTransition = {
+            slideInVertically(initialOffsetY = { it }, animationSpec = tweenEnter()) + fadeIn()
+        },
+        exitTransition = { slideOutVertically() },
+        popEnterTransition = { slideInVertically() },
+        popExitTransition = {
+            slideOutVertically(targetOffsetY = { it }, animationSpec = tweenExit()) + fadeOut()
+        },
+        content = content,
+    )
 
 inline fun <reified T : Any> NavGraphBuilder.slideInVerticallyComposablePredictiveBack(
     deepLinks: List<NavDeepLink> = emptyList(),
     typeMap: Map<KType, @JvmSuppressWildcards NavType<*>> = emptyMap(),
     noinline content: @Composable AnimatedVisibilityScope.(NavBackStackEntry) -> Unit,
-) = composable<T>(
-    deepLinks = deepLinks,
-    typeMap = typeMap,
-    enterTransition = { materialSharedAxisYIn(initialOffsetY = { (it * 0.25f).toInt() }) },
-    exitTransition = {
-        materialSharedAxisYOut(targetOffsetY = { -(it * InitialOffset * 1.5f).toInt() })
-    },
-    popEnterTransition = {
-        scaleIn(
-            animationSpec = tween(
-                durationMillis = DURATION_ENTER, easing = EmphasizedDecelerate
-            ),
-            initialScale = 0.85f,
-        ) + materialSharedAxisYIn(initialOffsetY = { -(it * InitialOffset * 1.5f).toInt() })
-    },
-    popExitTransition = {
-        materialSharedAxisYOut(targetOffsetY = { (it * InitialOffset * 1.5f).toInt() }) + scaleOut(
-            targetScale = 0.85f,
-            animationSpec = tween(
-                durationMillis = DURATION_EXIT, easing = EmphasizedAccelerate
-            ),
-        )
-    },
-    content = content,
-)
+) =
+    composable<T>(
+        deepLinks = deepLinks,
+        typeMap = typeMap,
+        enterTransition = { materialSharedAxisYIn(initialOffsetY = { (it * 0.25f).toInt() }) },
+        exitTransition = {
+            materialSharedAxisYOut(targetOffsetY = { -(it * InitialOffset * 1.5f).toInt() })
+        },
+        popEnterTransition = {
+            scaleIn(
+                animationSpec =
+                    tween(durationMillis = DURATION_ENTER, easing = EmphasizedDecelerate),
+                initialScale = 0.85f,
+            ) + materialSharedAxisYIn(initialOffsetY = { -(it * InitialOffset * 1.5f).toInt() })
+        },
+        popExitTransition = {
+            materialSharedAxisYOut(targetOffsetY = { (it * InitialOffset * 1.5f).toInt() }) +
+                scaleOut(
+                    targetScale = 0.85f,
+                    animationSpec =
+                        tween(durationMillis = DURATION_EXIT, easing = EmphasizedAccelerate),
+                )
+        },
+        content = content,
+    )

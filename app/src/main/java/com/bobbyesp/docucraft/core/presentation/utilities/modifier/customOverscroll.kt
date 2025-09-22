@@ -26,9 +26,9 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Velocity
+import kotlin.math.pow
 import kotlin.math.sign
 import kotlinx.coroutines.launch
-import kotlin.math.pow
 
 @Composable
 fun Modifier.customOverscroll(
@@ -67,7 +67,9 @@ fun Modifier.customOverscroll(
     LaunchedEffect(Unit) {
         snapshotFlow { overscrollAmountAnimatable.value }
             .collect {
-                onNewOverscrollAmount(SmoothOverscrollEasing.transform(it / (length * 1.5f)) * length)
+                onNewOverscrollAmount(
+                    SmoothOverscrollEasing.transform(it / (length * 1.5f)) * length
+                )
             }
     }
 

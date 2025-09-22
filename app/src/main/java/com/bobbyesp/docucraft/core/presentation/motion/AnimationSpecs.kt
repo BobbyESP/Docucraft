@@ -19,24 +19,19 @@ fun PathInterpolator.toEasing(): Easing {
     return Easing { f -> this.getInterpolation(f) }
 }
 
-fun <T> tweenEnter(
-    delayMillis: Int = DURATION_EXIT,
-    durationMillis: Int = DURATION_ENTER
-) =
+fun <T> tweenEnter(delayMillis: Int = DURATION_EXIT, durationMillis: Int = DURATION_ENTER) =
     tween<T>(
         delayMillis = delayMillis,
         durationMillis = durationMillis,
-        easing = EmphasizedDecelerateEasing
+        easing = EmphasizedDecelerateEasing,
     )
 
-fun <T> tweenExit(
-    delayMillis: Int = DURATION_EXIT_SHORT,
-    durationMillis: Int = DURATION_EXIT
-) = tween<T>(
-    delayMillis = delayMillis,
-    durationMillis = durationMillis,
-    easing = EmphasizedAccelerateEasing
-)
+fun <T> tweenExit(delayMillis: Int = DURATION_EXIT_SHORT, durationMillis: Int = DURATION_EXIT) =
+    tween<T>(
+        delayMillis = delayMillis,
+        durationMillis = durationMillis,
+        easing = EmphasizedAccelerateEasing,
+    )
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 val DefaultBoundsTransform = BoundsTransform { _, _ ->
@@ -46,5 +41,6 @@ val DefaultBoundsTransform = BoundsTransform { _, _ ->
 val DefaultContentTransform: ContentTransform =
     ContentTransform(
         targetContentEnter = materialSharedAxisXIn(initialOffsetX = { (it * 0.15f).toInt() }),
-        initialContentExit = materialSharedAxisXOut(targetOffsetX = { -(it * InitialOffset).toInt() }),
+        initialContentExit =
+            materialSharedAxisXOut(targetOffsetX = { -(it * InitialOffset).toInt() }),
     )

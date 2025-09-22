@@ -35,8 +35,7 @@ fun ModifyPdfTitleDescriptionDialog(
     description: String?,
 ) {
     var titleText by rememberSaveable { mutableStateOf(title ?: "") }
-    var descriptionText by
-        rememberSaveable { mutableStateOf(description ?: "") }
+    var descriptionText by rememberSaveable { mutableStateOf(description ?: "") }
 
     val keyboardOptions by remember {
         mutableStateOf(

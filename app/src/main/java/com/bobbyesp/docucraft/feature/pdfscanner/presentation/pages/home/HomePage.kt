@@ -8,7 +8,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.shrinkOut
@@ -94,18 +93,19 @@ import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfCard
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.others.selectiongroup.SelectionGroupItem
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.others.selectiongroup.SelectionGroupRow
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.NotifyUserAction.OpenPdfFieldsDialog
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.NotifyUserAction.WarnAboutDeletion
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Open
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Save
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeViewModel.Event.PdfAction.Share
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.Event.NotifyUserAction.OpenPdfFieldsDialog
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.Event.NotifyUserAction.WarnAboutDeletion
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.Event.PdfAction.Open
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.Event.PdfAction.Save
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.Event.PdfAction.Share
 import com.materialkolor.ktx.harmonize
 import kotlin.math.roundToInt
 
 @OptIn(
     ExperimentalMaterial3Api::class,
     ExperimentalSharedTransitionApi::class,
-    ExperimentalMaterial3ExpressiveApi::class
+    ExperimentalMaterial3ExpressiveApi::class,
 )
 @Composable
 fun HomePage(
@@ -119,131 +119,127 @@ fun HomePage(
     val activity = LocalActivity.current
     val thereIsNoPdfs by remember(scannedPdfs) { derivedStateOf { scannedPdfs.isEmpty() } }
 
-    val pdfsToShow by remember(scannedPdfs, filteredPdfs, searchState.searchQuery, filterOptions) {
-        derivedStateOf {
-            if (searchState.searchQuery.isNotBlank() || filterOptions != FilterOptions()) filteredPdfs
-            else scannedPdfs
+    val pdfsToShow by
+        remember(scannedPdfs, filteredPdfs, searchState.searchQuery, filterOptions) {
+            derivedStateOf {
+                if (searchState.searchQuery.isNotBlank() || filterOptions != FilterOptions.default)
+                    filteredPdfs
+                else scannedPdfs
+            }
         }
-    }
 
-    val searchResultsCount by remember(
-        pdfsToShow, searchState.searchQuery, filterOptions
-    ) { derivedStateOf { pdfsToShow.size } }
+    val searchResultsCount by
+        remember(pdfsToShow, searchState.searchQuery, filterOptions) {
+            derivedStateOf { pdfsToShow.size }
+        }
 
     val showSearchbar = searchState.showingSearchBar
 
-    val scannerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        onEvent(HomeViewModel.Event.HandlePdfScanningResult(result))
-    }
+    val scannerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartIntentSenderForResult()
+        ) { result ->
+            onEvent(HomeViewModel.Event.HandlePdfScanningResult(result))
+        }
 
-    SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            topBar = {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    AnimatedContent(
-                        targetState = showSearchbar,
-                        transitionSpec = { DefaultContentTransform },
-                        label = "SearchBarTransition"
-                    ) { isSearchVisible ->
-                        if (isSearchVisible) {
-                            Column(
-                                modifier = Modifier
-                                    .background(MaterialTheme.colorScheme.surface)
+    Scaffold(
+        topBar = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                AnimatedContent(
+                    targetState = showSearchbar,
+                    transitionSpec = { DefaultContentTransform },
+                    label = "SearchBarTransition",
+                ) { isSearchVisible ->
+                    if (isSearchVisible) {
+                        Column(
+                            modifier =
+                                Modifier.background(MaterialTheme.colorScheme.surface)
                                     .padding(horizontal = 16.dp, vertical = 8.dp)
                                     .fillMaxWidth()
-                                    .windowInsetsPadding(
-                                        WindowInsets.safeDrawing
-                                    ),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    .windowInsetsPadding(WindowInsets.safeDrawing),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.search_documents),
+                                style = MaterialTheme.typography.titleMediumEmphasized,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
-                                Text(
-                                    text = stringResource(id = R.string.search_documents),
-                                    style = MaterialTheme.typography.titleMediumEmphasized,
-                                    fontFamily = FontFamily.Monospace,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    SearchBar(
-                                        modifier = Modifier.weight(1f),
-                                        query = searchState.searchQuery,
-                                        onQueryChange = {
-                                            onEvent(
-                                                HomeViewModel.Event.SearchFilterEvent.UpdateSearchQuery(
-                                                    it
-                                                )
+                                SearchBar(
+                                    modifier = Modifier.weight(1f),
+                                    query = searchState.searchQuery,
+                                    onQueryChange = {
+                                        onEvent(
+                                            HomeViewModel.Event.SearchFilterEvent.UpdateSearchQuery(
+                                                it
                                             )
-                                        },
-                                        onClear = { onEvent(HomeViewModel.Event.SearchFilterEvent.ClearSearch) })
-                                    IconButton(
-                                        onClick = {
-                                            onEvent(
-                                                HomeViewModel.Event.SearchUIEvent.ShowSearchBar(
-                                                    false
-                                                )
-                                            )
-                                            onEvent(HomeViewModel.Event.SearchFilterEvent.ClearSearch)
-                                        }) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Clear,
-                                            contentDescription = stringResource(id = R.string.exit_search),
                                         )
+                                    },
+                                    onClear = {
+                                        onEvent(HomeViewModel.Event.SearchFilterEvent.ClearSearch)
+                                    },
+                                )
+                                IconButton(
+                                    onClick = {
+                                        onEvent(
+                                            HomeViewModel.Event.SearchUIEvent.ShowSearchBar(false)
+                                        )
+                                        onEvent(HomeViewModel.Event.SearchFilterEvent.ClearSearch)
                                     }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.Clear,
+                                        contentDescription =
+                                            stringResource(id = R.string.exit_search),
+                                    )
                                 }
-                                AnimatedCounter(
-                                    count = searchResultsCount,
-                                    modifier = Modifier,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = FontFamily.Monospace,
-                                    trailingContent = {
-                                        Text(
-                                            text = buildAnnotatedString {
+                            }
+                            AnimatedCounter(
+                                count = searchResultsCount,
+                                modifier = Modifier,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = FontFamily.Monospace,
+                                trailingContent = {
+                                    Text(
+                                        text =
+                                            buildAnnotatedString {
                                                 append(" ")
                                                 append(
-                                                    stringResource(
-                                                        id = R.string.results
-                                                    ).lowercase()
+                                                    stringResource(id = R.string.results)
+                                                        .lowercase()
                                                 )
                                             },
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontFamily = FontFamily.Monospace,
-                                        )
-                                    })
-                            }
-                        } else {
-                            TopAppBar(modifier = Modifier, title = {
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontFamily = FontFamily.Monospace,
+                                    )
+                                },
+                            )
+                        }
+                    } else {
+                        TopAppBar(
+                            modifier = Modifier,
+                            title = {
                                 Column(
                                     horizontalAlignment = Alignment.Start,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
                                 ) {
                                     Text(
                                         text = stringResource(id = R.string.app_name).uppercase(),
                                         fontWeight = FontWeight.SemiBold,
-                                        fontFamily = FontFamily.Monospace,
                                         style = MaterialTheme.typography.titleLarge,
                                         letterSpacing = 4.sp,
                                     )
-                                    Text(
-                                        text = stringResource(id = R.string.app_tagline),
-                                        fontWeight = FontWeight.Light,
-                                        fontFamily = FontFamily.Monospace,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
                                 }
-                            }, actions = {
-                                AnimatedContent(
-                                    targetState = thereIsNoPdfs,
-                                ) { noPdfs ->
+                            },
+                            actions = {
+                                AnimatedContent(targetState = thereIsNoPdfs) { noPdfs ->
                                     if (!noPdfs) {
                                         IconButton(
                                             onClick = {
@@ -252,102 +248,97 @@ fun HomePage(
                                                         true
                                                     )
                                                 )
-                                            }) {
+                                            }
+                                        ) {
                                             Icon(
                                                 imageVector = Icons.Rounded.Search,
-                                                contentDescription = stringResource(id = R.string.search),
+                                                contentDescription =
+                                                    stringResource(id = R.string.search),
                                             )
                                         }
                                     }
                                 }
-                            })
-                        }
+                            },
+                        )
+                    }
+                }
+            }
+        },
+        floatingActionButton = {
+            AnimatedContent(
+                targetState = thereIsNoPdfs,
+                transitionSpec = {
+                    ContentTransform(
+                        targetContentEnter = expandIn() + fadeIn(),
+                        initialContentExit = shrinkOut() + slideOutVertically(),
+                    )
+                },
+            ) { showFab ->
+                if (!showFab) {
+                    ExtendedFloatingActionButton(
+                        text = { Text(text = stringResource(id = R.string.scan)) },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Rounded.DocumentScanner,
+                                contentDescription = stringResource(id = R.string.scan_new_document),
+                            )
+                        },
+                        onClick = {
+                            onEvent(
+                                HomeViewModel.Event.ScanPdf(
+                                    activity = activity,
+                                    listener = scannerLauncher,
+                                )
+                            )
+                        },
+                    )
+                }
+            }
+        },
+    ) { padding ->
+        Crossfade(modifier = Modifier.padding(padding), targetState = loadingState) { state ->
+            when (state) {
+                is HomeViewModel.LoadingState.Error -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        ErrorContent(
+                            errorMessage = state.message,
+                            onRetry = { onEvent(HomeViewModel.Event.ReloadPdfs) },
+                        )
+                    }
+                }
 
-                    }
-                }
-            },
-            floatingActionButton = {
-                AnimatedContent(
-                    targetState = thereIsNoPdfs,
-                    transitionSpec = {
-                        ContentTransform(
-                            targetContentEnter = expandIn() + fadeIn(),
-                            initialContentExit = shrinkOut() + slideOutVertically(),
-                        )
-                    },
-                ) { showFab ->
-                    if (!showFab) {
-                        ExtendedFloatingActionButton(
-                            text = { Text(text = stringResource(id = R.string.scan)) },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.DocumentScanner,
-                                    contentDescription = stringResource(id = R.string.scan_new_document),
+                HomeViewModel.LoadingState.Idle -> {
+                    Crossfade(thereIsNoPdfs) { showEmptyState ->
+                        if (showEmptyState) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                EmptyStateScreen(
+                                    modifier = Modifier,
+                                    onScanPdfClick = {
+                                        onEvent(
+                                            HomeViewModel.Event.ScanPdf(
+                                                activity = activity,
+                                                listener = scannerLauncher,
+                                            )
+                                        )
+                                    },
                                 )
-                            },
-                            onClick = {
-                                onEvent(
-                                    HomeViewModel.Event.ScanPdf(
-                                        activity = activity,
-                                        listener = scannerLauncher,
-                                    )
-                                )
-                            },
-                        )
-                    }
-                }
-            },
-        ) { padding ->
-            Crossfade(modifier = Modifier.padding(padding), targetState = loadingState) { state ->
-                when (state) {
-                    is HomeViewModel.LoadingState.Error -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            ErrorContent(
-                                errorMessage = state.message,
-                                onRetry = { onEvent(HomeViewModel.Event.ReloadPdfs) },
+                            }
+                        } else {
+                            DisplayScannedPdfs(
+                                scannedPdfs = pdfsToShow,
+                                onEvent = onEvent,
+                                filterOptions = filterOptions,
                             )
                         }
                     }
+                }
 
-                    HomeViewModel.LoadingState.Idle -> {
-                        Crossfade(thereIsNoPdfs) { showEmptyState ->
-                            if (showEmptyState) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    EmptyStateScreen(
-                                        modifier = Modifier,
-                                        onScanPdfClick = {
-                                            onEvent(
-                                                HomeViewModel.Event.ScanPdf(
-                                                    activity = activity,
-                                                    listener = scannerLauncher,
-                                                )
-                                            )
-                                        },
-                                    )
-                                }
-                            } else {
-                                DisplayScannedPdfs(
-                                    scannedPdfs = pdfsToShow,
-                                    onEvent = onEvent,
-                                    filterOptions = filterOptions,
-                                )
-                            }
-                        }
-                    }
-
-                    HomeViewModel.LoadingState.Loading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CircularProgressIndicator()
-                        }
+                HomeViewModel.LoadingState.Loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
                     }
                 }
             }
@@ -365,13 +356,13 @@ private fun DisplayScannedPdfs(
     var animatedOverscrollAmount by remember { mutableFloatStateOf(0f) }
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .customOverscroll(
-                listState = lazyListState,
-                onNewOverscrollAmount = { animatedOverscrollAmount = it },
-            )
-            .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
+        modifier =
+            Modifier.fillMaxSize()
+                .customOverscroll(
+                    listState = lazyListState,
+                    onNewOverscrollAmount = { animatedOverscrollAmount = it },
+                )
+                .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
         state = lazyListState,
     ) {
         stickyHeader {
@@ -380,18 +371,20 @@ private fun DisplayScannedPdfs(
                 onSortOptionChanged = {
                     onEvent(HomeViewModel.Event.SearchFilterEvent.ApplySort(it))
                 },
-                modifier = Modifier
-                    .background(
-                        // fade to transparent from background
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.background,
-                                Color.Transparent,
-                            ),
-                            startY = 100f,
+                modifier =
+                    Modifier.background(
+                            // fade to transparent from background
+                            brush =
+                                Brush.verticalGradient(
+                                    colors =
+                                        listOf(
+                                            MaterialTheme.colorScheme.background,
+                                            Color.Transparent,
+                                        ),
+                                    startY = 100f,
+                                )
                         )
-                    )
-                    .padding(8.dp),
+                        .padding(8.dp),
             )
         }
 
@@ -401,9 +394,7 @@ private fun DisplayScannedPdfs(
             contentType = { scannedPdf -> scannedPdf.javaClass.name },
         ) { scannedPdf ->
             ScannedPdfCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .animateItem(),
+                modifier = Modifier.fillMaxWidth().animateItem(),
                 pdf = scannedPdf,
                 onOpenPdf = { uri -> onEvent(Open(uri)) },
                 onSharePdf = { uri -> onEvent(Share(uri)) },
@@ -422,27 +413,15 @@ fun SortOptionsRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        SelectionGroupRow(
-            modifier = Modifier
-                .weight(1f)
-                .horizontalScroll(rememberScrollState())
-        ) {
+        SelectionGroupRow(modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
             SortOption.Criteria.entries.forEach { criteria ->
                 SelectionGroupItem(
                     selected = currentSortOption.criteria == criteria,
-                    onClick = {
-                        onSortOptionChanged(
-                            SortOption(
-                                criteria, currentSortOption.order
-                            )
-                        )
-                    },
+                    onClick = { onSortOptionChanged(SortOption(criteria, currentSortOption.order)) },
                 ) {
                     Text(criteria.getLocalizedName())
                 }
@@ -451,27 +430,28 @@ fun SortOptionsRow(
 
         VerticalDivider(
             color = MaterialTheme.colorScheme.outline,
-            modifier = Modifier
-                .height(24.dp)
-                .padding(horizontal = 8.dp),
+            modifier = Modifier.height(24.dp).padding(horizontal = 8.dp),
         )
 
         IconButton(
             onClick = {
-                val newOrder = if (currentSortOption.order == SortOption.Order.ASC) {
-                    SortOption.Order.DESC
-                } else {
-                    SortOption.Order.ASC
-                }
+                val newOrder =
+                    if (currentSortOption.order == SortOption.Order.ASC) {
+                        SortOption.Order.DESC
+                    } else {
+                        SortOption.Order.ASC
+                    }
                 onSortOptionChanged(SortOption(currentSortOption.criteria, newOrder))
-            }) {
+            }
+        ) {
             Icon(
                 imageVector = currentSortOption.getSortIcon(),
-                contentDescription = if (currentSortOption.order == SortOption.Order.ASC) {
-                    stringResource(R.string.sort_ascending)
-                } else {
-                    stringResource(R.string.sort_descending)
-                },
+                contentDescription =
+                    if (currentSortOption.order == SortOption.Order.ASC) {
+                        stringResource(R.string.sort_ascending)
+                    } else {
+                        stringResource(R.string.sort_descending)
+                    },
             )
         }
     }
@@ -494,7 +474,7 @@ fun SearchBar(
             Text(
                 text = stringResource(R.string.doc_name_or_description),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         },
         leadingIcon = {
@@ -522,29 +502,31 @@ fun SearchBar(
 @Composable
 fun EmptyStateScreen(modifier: Modifier = Modifier, onScanPdfClick: () -> Unit) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .border(
-                width = 2.dp,
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = .8f),
-                        MaterialTheme.colorScheme.primary.copy(alpha = .2f),
-                    )
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                .border(
+                    width = 2.dp,
+                    brush =
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = .8f),
+                                    MaterialTheme.colorScheme.primary.copy(alpha = .2f),
+                                )
+                        ),
+                    shape = RoundedCornerShape(16.dp),
                 ),
-                shape = RoundedCornerShape(16.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
             ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
-        ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -572,11 +554,10 @@ fun EmptyStateScreen(modifier: Modifier = Modifier, onScanPdfClick: () -> Unit) 
 
             Button(
                 onClick = onScanPdfClick,
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(56.dp),
+                modifier = Modifier.fillMaxWidth(0.8f).height(56.dp),
                 shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                colors =
+                    ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 8.dp),
             ) {
                 Icon(
@@ -599,30 +580,33 @@ fun EmptyStateScreen(modifier: Modifier = Modifier, onScanPdfClick: () -> Unit) 
 @Composable
 private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .border(
-                width = 2.dp,
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.error.copy(alpha = .8f),
-                        MaterialTheme.colorScheme.error.copy(alpha = .2f),
-                    )
+        modifier =
+            Modifier.fillMaxWidth()
+                .padding(16.dp)
+                .border(
+                    width = 2.dp,
+                    brush =
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    MaterialTheme.colorScheme.error.copy(alpha = .8f),
+                                    MaterialTheme.colorScheme.error.copy(alpha = .2f),
+                                )
+                        ),
+                    shape = RoundedCornerShape(16.dp),
                 ),
-                shape = RoundedCornerShape(16.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    MaterialTheme.colorScheme
+                        .surfaceColorAtElevation(6.dp)
+                        .harmonize(other = MaterialTheme.colorScheme.errorContainer)
             ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
-                .harmonize(other = MaterialTheme.colorScheme.errorContainer)
-        ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -652,11 +636,10 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
             }
             Button(
                 onClick = onRetry,
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth(0.8f).height(50.dp),
                 shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                colors =
+                    ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 8.dp),
             ) {
                 Icon(
@@ -680,37 +663,39 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
 private fun PreviewHomePage() {
     DocucraftTheme {
         HomePage(
-            scannedPdfs = listOf(
-                ScannedPdf(
-                    id = "1",
-                    filename = "document1.pdf",
-                    title = "Documento 1 de prueba. Título corto",
-                    description = "Description para el documento 1. La descripción no va a ser muy larga.",
-                    path = "content://com.example.documents/document/1".toUri(),
-                    createdTimestamp = System.currentTimeMillis(),
-                    fileSize = 1024,
-                    pageCount = 10,
-                    thumbnail = "content://com.example.thumbnails/thumbnail/1"
-                ), ScannedPdf(
-                    id = "2",
-                    filename = "document2.pdf",
-                    title = "Apuntes de programación",
-                    description = "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " + "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
-                    path = "content://com.example.documents/document/2".toUri(),
-                    createdTimestamp = System.currentTimeMillis(),
-                    fileSize = 2048,
-                    pageCount = 20,
-                    thumbnail = "content://com.example.thumbnails/thumbnail/2"
-                )
-            ),
+            scannedPdfs =
+                listOf(
+                    ScannedPdf(
+                        id = "1",
+                        filename = "document1.pdf",
+                        title = "Documento 1 de prueba. Título corto",
+                        description =
+                            "Description para el documento 1. La descripción no va a ser muy larga.",
+                        path = "content://com.example.documents/document/1".toUri(),
+                        createdTimestamp = System.currentTimeMillis(),
+                        fileSize = 1024,
+                        pageCount = 10,
+                        thumbnail = "content://com.example.thumbnails/thumbnail/1",
+                    ),
+                    ScannedPdf(
+                        id = "2",
+                        filename = "document2.pdf",
+                        title = "Apuntes de programación",
+                        description =
+                            "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " +
+                                "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
+                        path = "content://com.example.documents/document/2".toUri(),
+                        createdTimestamp = System.currentTimeMillis(),
+                        fileSize = 2048,
+                        pageCount = 20,
+                        thumbnail = "content://com.example.thumbnails/thumbnail/2",
+                    ),
+                ),
             loadingState = HomeViewModel.LoadingState.Idle,
             onEvent = {},
             filteredPdfs = emptyList(),
-            searchState = HomeViewModel.SearchViewState(
-                searchQuery = "",
-                showingSearchBar = false,
-            ),
-            filterOptions = FilterOptions(),
+            searchState = HomeViewModel.SearchViewState(searchQuery = "", showingSearchBar = false),
+            filterOptions = FilterOptions.default,
         )
     }
 }

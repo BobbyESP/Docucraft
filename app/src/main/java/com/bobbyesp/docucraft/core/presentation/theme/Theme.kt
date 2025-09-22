@@ -19,7 +19,7 @@ fun DocucraftTheme(
             seedColor = MaterialTheme.colorScheme.primary,
             style = PaletteStyle.Expressive,
             isDark = isSystemInDarkTheme(),
-            specVersion = ColorSpec.SpecVersion.SPEC_2025
+            specVersion = ColorSpec.SpecVersion.SPEC_2025,
         ),
     content: @Composable () -> Unit,
 ) {
@@ -27,6 +27,6 @@ fun DocucraftTheme(
         state = themeState,
         motionScheme = MotionScheme.expressive(),
         animate = true,
-        content = content
+        content = content,
     )
 }

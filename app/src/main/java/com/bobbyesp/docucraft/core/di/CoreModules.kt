@@ -7,6 +7,8 @@ import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.data.local.preferences.datastore.dataStore
+import com.bobbyesp.docucraft.core.presentation.common.Route
+import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,6 +23,8 @@ val appCoroutinesScope = module {
 }
 
 val coreFunctionalitiesModule = module {
+    single<TopLevelBackStack<Route>> { TopLevelBackStack(startKey = Route.Home) }
+
     single<DataStore<Preferences>> { androidContext().dataStore }
     single<AppPreferences> {
         AppPreferences(dataStore = get(), scope = get(qualifier = named("AppMainSupervisedScope")))

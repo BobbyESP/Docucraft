@@ -27,37 +27,29 @@ const val ACTION_SCAN_PDF = "com.bobbyesp.docucraft.ACTION_SCAN_PDF"
 class ScanPdfDocumentWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val scanText = context.getString(R.string.scan_new_document)
-        provideContent {
-            ScanPdfWidgetContent(scanButtonText = scanText)
-        }
+        provideContent { ScanPdfWidgetContent(scanButtonText = scanText) }
     }
 }
 
 @GlanceComposable
 @Composable
-fun ScanPdfWidgetContent(
-    scanButtonText: String,
-) {
+fun ScanPdfWidgetContent(scanButtonText: String) {
     GlanceTheme {
         Row(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .background(
-                    GlanceTheme.colors.background
-                )
-                .padding(16.dp),
+            modifier =
+                GlanceModifier.fillMaxSize()
+                    .background(GlanceTheme.colors.background)
+                    .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Button(
                 text = scanButtonText,
                 onClick = actionRunCallback<ScanPdfActionCallback>(),
-                modifier = GlanceModifier
-                    .fillMaxSize()
-                    .background(
-                        GlanceTheme.colors.primary
-                    )
-                    .padding(16.dp),
+                modifier =
+                    GlanceModifier.fillMaxSize()
+                        .background(GlanceTheme.colors.primary)
+                        .padding(16.dp),
             )
         }
     }
@@ -67,12 +59,13 @@ class ScanPdfActionCallback : ActionCallback {
     override suspend fun onAction(
         context: Context,
         glanceId: GlanceId,
-        parameters: ActionParameters
+        parameters: ActionParameters,
     ) {
-        val intent = Intent(context, MainActivity::class.java).apply {
-            action = ACTION_SCAN_PDF
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
+        val intent =
+            Intent(context, MainActivity::class.java).apply {
+                action = ACTION_SCAN_PDF
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
         context.startActivity(intent)
     }
 }

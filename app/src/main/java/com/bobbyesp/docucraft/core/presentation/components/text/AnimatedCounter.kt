@@ -30,30 +30,26 @@ fun AnimatedCounter(
     fontFamily: FontFamily? = null,
     trailingContent: @Composable (() -> Unit)? = null,
 ) {
-    var oldCount by remember {
-        mutableIntStateOf(count)
-    }
-    SideEffect {
-        oldCount = count
-    }
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+    var oldCount by remember { mutableIntStateOf(count) }
+    SideEffect { oldCount = count }
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         val countString = count.toString()
         val oldCountString = oldCount.toString()
         countString.indices.forEach { i ->
             val oldChar = oldCountString.getOrNull(i)
             val newChar = countString[i]
-            val char = if (oldChar == newChar) {
-                oldCountString[i]
-            } else {
-                countString[i]
-            }
+            val char =
+                if (oldChar == newChar) {
+                    oldCountString[i]
+                } else {
+                    countString[i]
+                }
             AnimatedContent(
-                targetState = char, transitionSpec = {
+                targetState = char,
+                transitionSpec = {
                     slideInVertically { it } togetherWith slideOutVertically { -it }
-                }, label = "AnimatedCounter"
+                },
+                label = "AnimatedCounter",
             ) { character ->
                 Text(
                     text = character.toString(),
@@ -61,12 +57,10 @@ fun AnimatedCounter(
                     fontFamily = fontFamily,
                     fontStyle = fontStyle,
                     fontWeight = fontWeight,
-                    softWrap = false
+                    softWrap = false,
                 )
             }
         }
-        trailingContent?.let {
-            it()
-        }
+        trailingContent?.let { it() }
     }
 }
