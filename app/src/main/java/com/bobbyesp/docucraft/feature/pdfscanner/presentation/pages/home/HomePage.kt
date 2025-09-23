@@ -47,7 +47,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -338,7 +338,7 @@ fun HomePage(
 
                 HomeViewModel.LoadingState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                        CircularWavyProgressIndicator()
                     }
                 }
             }
@@ -459,7 +459,7 @@ fun SortOptionsRow(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun SearchBar(
+private fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     onClear: () -> Unit,

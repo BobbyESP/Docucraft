@@ -7,7 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-abstract class ViewModelCoroutineBased() : ViewModel() {
+abstract class CoroutineBasedViewModel() : ViewModel() {
     abstract val exceptionHandler: CoroutineExceptionHandler
 
     protected fun ViewModel.launchIO(block: suspend CoroutineScope.() -> Unit) {

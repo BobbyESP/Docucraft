@@ -8,7 +8,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import coil.ImageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.data.local.preferences.UserPreferences.Companion.emptyUserPreferences
@@ -30,9 +29,6 @@ val LocalOrientation = compositionLocalOf<Int> { error("No orientation provided"
 
 val LocalAppPreferencesController =
     staticCompositionLocalOf<AppPreferences> { error("No settings controller provided") }
-
-val LocalNavController =
-    compositionLocalOf<NavHostController> { error("No nav controller provided") }
 
 val LocalWindowWidthState = staticCompositionLocalOf {
     WindowWidthSizeClass.Compact

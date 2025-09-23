@@ -10,7 +10,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.core.util.state.TemporalState
-import com.bobbyesp.docucraft.core.util.viewModel.ViewModelCoroutineBased
+import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
@@ -35,7 +35,7 @@ import kotlinx.coroutines.flow.update
 class HomeViewModel(
     private val scannedPdfUseCase: ScannedPdfUseCase,
     private val gmsDocumentScanner: GmsDocumentScanner,
-) : ViewModelCoroutineBased() {
+) : CoroutineBasedViewModel() {
     override val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         Log.e(TAG, "Coroutine exception: ${throwable.message}", throwable)
         _eventFlow.tryEmit(UiEvent.Error(throwable))
