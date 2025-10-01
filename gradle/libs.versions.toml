@@ -6,29 +6,27 @@ kotlin = "2.2.20"
 appcompat = "1.7.1"
 core-ktx = "1.17.0"
 lifecycle-runtime-ktx = "2.9.4"
-activity-compose = "1.12.0-alpha08"
+activity-compose = "1.12.0-alpha09"
 ksp = "2.2.20-2.0.3"
 splashscreen = "1.0.1"
 leakcanary = "2.14"
-google-fonts = "1.9.1"
+google-fonts = "1.9.2"
 
 lifecycleNav3ViewModel = "1.0.0-alpha04"
-nav3Core = "1.0.0-alpha09"
+nav3Core = "1.0.0-alpha10"
 
 #Compose
-compose-bom = "2025.09.00"
-androidx-compose-material3 = "1.4.0-rc01"
-compose-util = "1.9.1"
+compose-bom = "2025.09.01"
+androidx-compose-material3 = "1.4.0"
+compose-util = "1.9.2"
 accompanist = "0.37.3"
 glance = "1.1.1"
 
 #More UI
 androidx-paging = "3.3.6"
 materialKolor = "3.0.1"
-haze = "1.6.10"
-
 #Navigation
-androidx-navigation = "2.9.4"
+androidx-navigation = "2.9.5"
 
 #Coroutines
 kotlinx-coroutines = "1.10.2"
@@ -39,7 +37,7 @@ kotlinx-serializationJson = "1.9.0"
 kotlinx-collectionsImmutable = "0.4.0"
 
 #Image loading
-landscapistCoil = "2.6.0"
+landscapistCoil = "2.6.1"
 
 #Network
 ktor = "3.3.0"
@@ -48,7 +46,7 @@ ktor = "3.3.0"
 koin = "4.1.1"
 
 #Database
-room = "2.8.0"
+room = "2.8.1"
 
 #High performance key-value storage
 datastore = "1.1.7"
@@ -66,7 +64,7 @@ sonner = "0.3.8"
 filekit = "0.11.0"
 
 #MLKit
-mlkit-docscanner = "16.0.0-beta1"
+mlkit-docscanner = "16.0.0"
 mlkit-text-recognition = "19.0.1"
 
 #Tests
