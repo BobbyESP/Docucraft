@@ -18,7 +18,7 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 
 @Composable
-fun PdfDeletionWarningDialog(
+fun DeletePdfConfirmationDialog(
     modifier: Modifier = Modifier,
     scannedPdf: ScannedPdf,
     onDismiss: () -> Unit,

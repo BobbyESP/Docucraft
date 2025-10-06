@@ -19,39 +19,53 @@ interface ScannedPdfDao : BaseDao<ScannedPdfEntity> {
     suspend fun fetchByPath(path: String): ScannedPdfEntity?
 
     @Query("SELECT * FROM scanned_pdfs ORDER BY createdTimestamp DESC")
-    suspend fun getAllPdfs(): List<ScannedPdfEntity>
-
-    @Query("SELECT * FROM scanned_pdfs ORDER BY createdTimestamp DESC")
-    fun getAllPdfsFlow(): Flow<List<ScannedPdfEntity>>
+    fun observeAllPdfs(): Flow<List<ScannedPdfEntity>>
 
     @Query("SELECT * FROM scanned_pdfs ORDER BY createdTimestamp DESC LIMIT :limit")
-    suspend fun getRecentPdfs(limit: Int = 5): List<ScannedPdfEntity>
+    suspend fun fetchRecentPdfs(limit: Int = 5): List<ScannedPdfEntity>
 
     @Query("SELECT * FROM scanned_pdfs WHERE filename LIKE '%' || :searchQuery || '%'")
-    suspend fun searchPdfsByName(searchQuery: String): List<ScannedPdfEntity>
+    suspend fun searchPdfsByFilename(searchQuery: String): List<ScannedPdfEntity>
 
     @Query("SELECT * FROM scanned_pdfs WHERE description LIKE '%' || :searchQuery || '%'")
     suspend fun searchPdfsByDescription(searchQuery: String): List<ScannedPdfEntity>
 
-    @Query("SELECT * FROM scanned_pdfs WHERE pageCount >= :minPages")
-    suspend fun getPdfsByMinPageCount(minPages: Int): List<ScannedPdfEntity>
-
-    @Query("SELECT * FROM scanned_pdfs WHERE fileSize > :minSizeBytes")
-    suspend fun getPdfsByMinSize(minSizeBytes: Long): List<ScannedPdfEntity>
-
-    @Query("SELECT COUNT(*) FROM scanned_pdfs") suspend fun getPdfCount(): Int
-
-    @Query("DELETE FROM scanned_pdfs WHERE id = :id") suspend fun deleteById(id: String): Int
+    @Query("SELECT COUNT(*) FROM scanned_pdfs")
+    suspend fun fetchPdfCount(): Int
 
     @Query("DELETE FROM scanned_pdfs WHERE path = :path")
     suspend fun deleteByPath(path: String): Int
 
-    @Query("DELETE FROM scanned_pdfs") suspend fun deleteAll(): Int
+    @Query("DELETE FROM scanned_pdfs WHERE id = :id")
+    suspend fun deleteById(id: String): Int
 
-    @Query("SELECT SUM(fileSize) FROM scanned_pdfs") suspend fun getTotalPdfSize(): Long?
+    @Query("DELETE FROM scanned_pdfs")
+    suspend fun deleteAll(): Int
 
-    @Query("SELECT * FROM scanned_pdfs WHERE createdTimestamp BETWEEN :startTime AND :endTime")
-    suspend fun getPdfsBetweenDates(startTime: Long, endTime: Long): List<ScannedPdfEntity>
+    @Query("SELECT * FROM scanned_pdfs WHERE createdTimestamp BETWEEN :startTime AND :endTime ORDER BY createdTimestamp DESC")
+    suspend fun fetchPdfsInDateRange(startTime: Long, endTime: Long): List<ScannedPdfEntity>
+
+    @Query(
+        """
+        SELECT * FROM scanned_pdfs 
+        WHERE (:searchQuery IS NULL OR 
+               title LIKE '%' || :searchQuery || '%' OR 
+               filename LIKE '%' || :searchQuery || '%' OR 
+               description LIKE '%' || :searchQuery || '%')
+        AND (:startTime IS NULL OR createdTimestamp >= :startTime)
+        AND (:endTime IS NULL OR createdTimestamp <= :endTime)
+        AND (:minPages IS NULL OR pageCount >= :minPages)
+        AND (:minSize IS NULL OR fileSize >= :minSize)
+        ORDER BY createdTimestamp DESC
+    """
+    )
+    suspend fun searchPdfsWithFilters(
+        searchQuery: String? = null,
+        startTime: Long? = null,
+        endTime: Long? = null,
+        minPages: Int? = null,
+        minSize: Long? = null
+    ): List<ScannedPdfEntity>
 
     @Query("UPDATE scanned_pdfs SET title = :title, description = :description WHERE id = :id")
     suspend fun updateTitleAndDescription(id: String, title: String?, description: String?): Int

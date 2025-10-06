@@ -148,7 +148,7 @@ fun Modifier.customOverscroll(
                                     scope.launch { overscrollAmountAnimatable.snapTo(0f) }
                                 }
                             }
-                        } catch (e: Exception) {}
+                        } catch (e: Exception) { /* Ignore this exception */ }
                     }
 
                     return when (orientation) {

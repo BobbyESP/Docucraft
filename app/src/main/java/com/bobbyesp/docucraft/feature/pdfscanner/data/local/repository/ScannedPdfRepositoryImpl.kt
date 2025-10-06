@@ -17,17 +17,19 @@ class ScannedPdfRepositoryImpl(
     private val scannedPdfDao: ScannedPdfDao,
 ) : ScannedPdfRepository {
 
+    //TODO: Remove unnecessary functions
+
     override suspend fun getAllScannedPdfsFlow(): Flow<List<ScannedPdf>> =
         scannedPdfDao
-            .getAllPdfsFlow()
+            .observeAllPdfs()
             .map { entities -> entities.map { it.toModel() } }
             .flowOn(Dispatchers.IO)
 
-    override suspend fun searchPdfsByName(query: String): List<ScannedPdf> {
+    override suspend fun searchPdfsByFilename(query: String): List<ScannedPdf> {
         if (query.isEmpty()) {
             return emptyList()
         }
-        val nameResults = scannedPdfDao.searchPdfsByName(query)
+        val nameResults = scannedPdfDao.searchPdfsByFilename(query)
         return nameResults.map { it.toModel() }
     }
 
@@ -43,16 +45,14 @@ class ScannedPdfRepositoryImpl(
         if (query.isEmpty()) {
             return emptyList()
         }
-        val nameResults = scannedPdfDao.searchPdfsByName(query)
+        val nameResults = scannedPdfDao.searchPdfsByFilename(query)
         val titleDescResults = scannedPdfDao.searchPdfsByTitleOrDescription(query)
 
         return (nameResults + titleDescResults).distinctBy { it.id }.map { it.toModel() }
     }
 
     override suspend fun getScannedPdfById(pdfId: String): ScannedPdf {
-        if (pdfId.isEmpty()) {
-            throw IllegalArgumentException("PDF ID must not be empty")
-        }
+        require(pdfId.isNotEmpty()) { "PDF ID must not be empty" }
         val entity =
             scannedPdfDao.fetchById(pdfId)
                 ?: throw NoSuchElementException("No PDF found with ID: $pdfId")
@@ -79,9 +79,7 @@ class ScannedPdfRepositoryImpl(
         title: String?,
         description: String?,
     ) {
-        if (pdfId.isEmpty()) {
-            throw IllegalArgumentException("PDF ID must not be empty")
-        }
+        require(pdfId.isNotEmpty()) { "PDF ID must not be empty" }
 
         val updatedCount = scannedPdfDao.updateTitleAndDescription(pdfId, title, description)
 

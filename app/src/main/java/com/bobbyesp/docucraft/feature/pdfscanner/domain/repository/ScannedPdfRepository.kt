@@ -52,7 +52,7 @@ interface ScannedPdfRepository {
      *
      * @see ScannedPdf
      */
-    suspend fun searchPdfsByName(query: String): List<ScannedPdf>
+    suspend fun searchPdfsByFilename(query: String): List<ScannedPdf>
 
     /**
      * Searches for PDF documents based on a description query.
@@ -121,7 +121,6 @@ interface ScannedPdfRepository {
      * @return A `ScannedPdf` object containing the metadata and content of the PDF file.
      * @throws IllegalArgumentException If the provided `pdfPath` is null or invalid, or if the file
      *   at the specified path is not a PDF.
-     * @throws FileNotFoundException if the file specified by the path does not exist.
      * @throws Exception if any other error occurs during the process. For example if the read
      *   operation is interrupted.
      * @see ScannedPdf
@@ -164,7 +163,6 @@ interface ScannedPdfRepository {
      * @param description The new description for the PDF document. If null, the description will
      *   not be updated.
      * @throws IllegalArgumentException if the `pdfId` is null or empty.
-     * @throws FileNotFoundException if the file specified by the path does not exist.
      * @sample
      *
      * ```kotlin
