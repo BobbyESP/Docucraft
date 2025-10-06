@@ -26,31 +26,48 @@ class DeleteScannedPdfUseCase(
         deletePhysicalFile(pdfPath)
     }
 
-    private fun deletePhysicalFile(pdfPath: Uri) {
+    private suspend fun deletePhysicalFile(pdfPath: Uri) {
         when (pdfPath.scheme) {
             "content" -> {
                 val filePath = fileRepository.getFilePathFromUri(pdfPath)
                 if (filePath != null) {
-                    val file = PlatformFile(filePath)
-                    if (file.exists()) {
-                        file.delete()
-                        Log.d(TAG, "Successfully deleted file: $filePath")
-                    } else {
-                        Log.w(TAG, "File does not exist at path: $filePath")
+                    try {
+                        val file = PlatformFile(filePath)
+                        if (file.exists()) {
+                            file.delete()
+                            Log.d(TAG, "Successfully deleted file: $filePath")
+                        } else {
+                            Log.w(TAG, "File does not exist at path: $filePath")
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error deleting file: ${e.message}", e)
                     }
                 } else {
                     // Fallback: delete using ContentResolver
-                    val rowsDeleted = context.contentResolver.delete(pdfPath, null, null)
-                    Log.d(TAG, "ContentResolver deleted $rowsDeleted rows")
+                    try {
+                        val rowsDeleted = context.contentResolver.delete(pdfPath, null, null)
+                        Log.d(TAG, "ContentResolver deleted $rowsDeleted rows")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error deleting via ContentResolver: ${e.message}", e)
+                    }
                 }
             }
             "file" -> {
-                val file = PlatformFile(pdfPath.path ?: "")
-                if (file.exists()) {
-                    file.delete()
-                    Log.d(TAG, "Successfully deleted file: ${file.path}")
+                val filePath = pdfPath.path
+                if (!filePath.isNullOrBlank()) {
+                    try {
+                        val file = PlatformFile(filePath)
+                        if (file.exists()) {
+                            file.delete()
+                            Log.d(TAG, "Successfully deleted file: $filePath")
+                        } else {
+                            Log.w(TAG, "File does not exist at path: $filePath")
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error deleting file: ${e.message}", e)
+                    }
                 } else {
-                    Log.w(TAG, "File does not exist at path: ${file.path}")
+                    Log.w(TAG, "Invalid file path from URI: $pdfPath")
                 }
             }
             else -> {
@@ -63,4 +80,3 @@ class DeleteScannedPdfUseCase(
         private const val TAG = "DeleteScannedPdfUseCase"
     }
 }
-

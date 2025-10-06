@@ -1,7 +1,6 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
 import com.bobbyesp.docucraft.App
@@ -77,4 +76,3 @@ class SaveScannedPdfUseCase(
         private const val TAG = "SaveScannedPdfUseCase"
     }
 }
-

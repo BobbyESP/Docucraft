@@ -61,7 +61,7 @@ qrcodeKotlinAndroid = "4.5.0"
 sonner = "0.3.8"
 
 # File management
-filekit = "0.11.0"
+filekit = "0.12.0"
 
 #MLKit
 mlkit-docscanner = "16.0.0"

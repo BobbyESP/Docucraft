@@ -14,8 +14,7 @@ import java.io.FileOutputStream
 
 /**
  * Implementation of PdfDocumentService.
- * Renamed from PdfDocumentHelperImpl to reflect new naming convention.
- * Moved to data layer service package as it handles infrastructure concerns.
+ * Handles PDF document operations like extracting pages as images.
  */
 class PdfDocumentServiceImpl(private val context: Context) : PdfDocumentService {
     companion object {
@@ -34,7 +33,6 @@ class PdfDocumentServiceImpl(private val context: Context) : PdfDocumentService 
             parcelFileDescriptor =
                 when (pdfUri.scheme) {
                     ContentResolver.SCHEME_FILE -> {
-                        // If it's a file URI, we can use the traditional File approach
                         val path = pdfUri.path
                         if (path.isNullOrEmpty()) {
                             Log.e(TAG, "Empty path in file URI")
@@ -45,7 +43,6 @@ class PdfDocumentServiceImpl(private val context: Context) : PdfDocumentService 
 
                     ContentResolver.SCHEME_CONTENT -> {
                         Log.i(TAG, "Opened file descriptor for content URI: $pdfUri")
-                        // If it's a content URI, we need to use the ContentResolver
                         context.contentResolver.openFileDescriptor(pdfUri, "r")
                     }
 
@@ -75,19 +72,15 @@ class PdfDocumentServiceImpl(private val context: Context) : PdfDocumentService 
                 }
 
                 renderer.openPage(pageIndex).use { page ->
-                    // Create a bitmap with appropriate dimensions
                     val bitmap = createBitmap(page.width, page.height)
-                    // Render the PDF page onto the bitmap
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
 
                     try {
-                        // Ensure we're using a file path, not a content URI
                         if (!outputFile.exists() && !outputFile.createNewFile()) {
                             Log.e(TAG, "Failed to create output file at ${outputFile.absolutePath}")
                             return
                         }
 
-                        // Write the bitmap to the output file
                         FileOutputStream(outputFile).use { fos ->
                             if (!bitmap.compress(format, quality, fos)) {
                                 Log.e(
@@ -114,3 +107,4 @@ class PdfDocumentServiceImpl(private val context: Context) : PdfDocumentService 
         }
     }
 }
+
