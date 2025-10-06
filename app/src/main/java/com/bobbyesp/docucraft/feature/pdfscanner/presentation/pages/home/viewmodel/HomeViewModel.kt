@@ -14,7 +14,7 @@ import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.usecase.ScannedPdfUseCase
+import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.*
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import io.github.vinceglb.filekit.FileKit
@@ -32,8 +32,20 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
+/**
+ * ViewModel for the Home screen.
+ * Now uses individual use cases instead of a monolithic "UseCase" interface.
+ * Each use case has a single responsibility, following SOLID principles.
+ */
 class HomeViewModel(
-    private val scannedPdfUseCase: ScannedPdfUseCase,
+    private val getAllScannedPdfsUseCase: GetAllScannedPdfsUseCase,
+    private val searchPdfsUseCase: SearchPdfsUseCase,
+    private val getScannedPdfByIdUseCase: GetScannedPdfByIdUseCase,
+    private val saveScannedPdfUseCase: SaveScannedPdfUseCase,
+    private val deleteScannedPdfUseCase: DeleteScannedPdfUseCase,
+    private val updatePdfMetadataUseCase: UpdatePdfMetadataUseCase,
+    private val openPdfInViewerUseCase: OpenPdfInViewerUseCase,
+    private val sharePdfUseCase: SharePdfUseCase,
     private val gmsDocumentScanner: GmsDocumentScanner,
 ) : CoroutineBasedViewModel() {
     override val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -69,8 +81,7 @@ class HomeViewModel(
 
     private suspend fun loadScannedPdfs() {
         _uiState.update { it.copy(loadingState = LoadingState.Loading) }
-        scannedPdfUseCase
-            .scannedPdfsListFlow()
+        getAllScannedPdfsUseCase()
             .catch { e ->
                 Log.e(TAG, "Failed to retrieve PDFs: ${e.message}", e)
                 _uiState.update {
@@ -106,8 +117,7 @@ class HomeViewModel(
 
             if (query.isNotBlank()) {
                 try {
-                    // Use the existing DAO methods for search
-                    val searchResults = scannedPdfUseCase.searchPdfs(query)
+                    val searchResults = searchPdfsUseCase(query)
                     result = result.filter { pdf -> searchResults.any { it.id == pdf.id } }
                 } catch (e: Exception) {
                     Log.e(TAG, "Search failed: ${e.message}", e)
@@ -159,7 +169,7 @@ class HomeViewModel(
     }
 
     suspend fun getPdfById(pdfId: String): ScannedPdf {
-        return scannedPdfUseCase.getScannedPdf(pdfId)
+        return getScannedPdfByIdUseCase(pdfId)
     }
 
     fun onEvent(event: Event) {
@@ -203,7 +213,7 @@ class HomeViewModel(
                             val newDescription: String? = event.description.ifBlank { null }
 
                             try {
-                                scannedPdfUseCase.modifyPdf(scannedPdf.id, newTitle, newDescription)
+                                updatePdfMetadataUseCase(scannedPdf.id, newTitle, newDescription)
                                 emitUiEvent(UiEvent.ScanResult.Success)
                             } catch (e: Exception) {
                                 Log.e(TAG, "Failed to modify PDF: ${e.message}", e)
@@ -303,7 +313,7 @@ class HomeViewModel(
 
     private fun openPdfInViewer(pdfPath: Uri) {
         try {
-            scannedPdfUseCase.openPdfInViewer(pdfPath)
+            openPdfInViewerUseCase(pdfPath)
         } catch (e: Exception) {
             emitUiEvent(UiEvent.IssueOpening.PdfViewer(error = e))
         }
@@ -311,7 +321,7 @@ class HomeViewModel(
 
     private fun sharePdf(pdfPath: Uri) {
         try {
-            scannedPdfUseCase.sharePdf(pdfPath)
+            sharePdfUseCase(pdfPath)
         } catch (e: Exception) {
             emitUiEvent(UiEvent.IssueOpening.ShareIntent(error = e))
         }
@@ -319,7 +329,7 @@ class HomeViewModel(
 
     private suspend fun deletePdf(pdfPath: Uri) {
         try {
-            scannedPdfUseCase.deleteScannedPdf(pdfPath)
+            deleteScannedPdfUseCase(pdfPath)
             emitUiEvent(UiEvent.DeleteResult.Success)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to delete PDF: ${e.message}", e)
@@ -409,7 +419,9 @@ class HomeViewModel(
 
                 launchIO {
                     try {
-                        scannedPdfUseCase.saveScannedPdf(scannedPdf)
+                        // Generate filename
+                        val filename = "scan_${System.currentTimeMillis()}"
+                        saveScannedPdfUseCase(scannedPdf, filename)
                         emitUiEvent(UiEvent.ScanResult.Success)
                     } catch (th: Throwable) {
                         Log.e(TAG, "Failed to save the scanned PDF: ${th.message}", th)

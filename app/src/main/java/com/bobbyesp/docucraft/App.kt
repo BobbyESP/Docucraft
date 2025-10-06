@@ -9,7 +9,7 @@ import com.bobbyesp.docucraft.core.di.coreFunctionalitiesModule
 import com.bobbyesp.docucraft.core.di.fileManagementModule
 import com.bobbyesp.docucraft.feature.pdfscanner.di.gmsScannerModule
 import com.bobbyesp.docucraft.feature.pdfscanner.di.pdfScannerViewModels
-import com.bobbyesp.docucraft.feature.pdfscanner.di.scannedPdfModule
+import com.bobbyesp.docucraft.feature.pdfscanner.di.pdfScannerDataModule
 import com.bobbyesp.docucraft.feature.pdfscanner.di.scannedPdfsDatabaseModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -20,7 +20,7 @@ class App : Application() {
         startKoin {
             androidLogger()
             androidContext(this@App)
-            modules(scannedPdfsDatabaseModule, scannedPdfModule, gmsScannerModule)
+            modules(scannedPdfsDatabaseModule, pdfScannerDataModule, gmsScannerModule)
             modules(appCoroutinesScope, coreFunctionalitiesModule)
             modules(fileManagementModule)
             modules(pdfScannerViewModels)

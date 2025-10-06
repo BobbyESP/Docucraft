@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.pdfscanner.data.local.repository
+package com.bobbyesp.docucraft.feature.pdfscanner.data.local.service
 
 import android.content.ContentResolver
 import android.content.Context
@@ -8,13 +8,18 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.graphics.createBitmap
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.PdfDocumentHelper
+import com.bobbyesp.docucraft.feature.pdfscanner.domain.service.PdfDocumentService
 import java.io.File
 import java.io.FileOutputStream
 
-class PdfDocumentHelperImpl(private val context: Context) : PdfDocumentHelper {
+/**
+ * Implementation of PdfDocumentService.
+ * Renamed from PdfDocumentHelperImpl to reflect new naming convention.
+ * Moved to data layer service package as it handles infrastructure concerns.
+ */
+class PdfDocumentServiceImpl(private val context: Context) : PdfDocumentService {
     companion object {
-        private const val TAG = "PdfDocumentHelperImpl"
+        private const val TAG = "PdfDocumentServiceImpl"
     }
 
     override fun savePdfPageAsImage(
