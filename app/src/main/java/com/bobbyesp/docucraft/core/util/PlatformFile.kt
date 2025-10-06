@@ -5,12 +5,12 @@ import io.github.vinceglb.filekit.createDirectories
 import io.github.vinceglb.filekit.exists
 import io.github.vinceglb.filekit.parent
 
-suspend fun PlatformFile.ensure(mustCreate: Boolean = false) {
+fun PlatformFile.ensure(mustCreate: Boolean = false) {
     if (!this.exists()) {
         this.createDirectories(mustCreate = mustCreate)
     }
 }
 
-suspend fun PlatformFile.ensureParent(mustCreate: Boolean = false) {
+fun PlatformFile.ensureParent(mustCreate: Boolean = false) {
     this.parent()?.ensure(mustCreate = mustCreate)
 }

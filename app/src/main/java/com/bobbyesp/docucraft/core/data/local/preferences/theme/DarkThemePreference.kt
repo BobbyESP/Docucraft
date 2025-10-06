@@ -7,6 +7,8 @@ import androidx.compose.ui.res.stringResource
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey
 
+//TODO: Rewrite the theming system
+
 @Stable
 data class DarkThemePreference(
     val darkThemeValue: DarkThemeValue =
