@@ -6,3 +6,5 @@ import androidx.glance.appwidget.GlanceAppWidgetReceiver
 class ScanPdfWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = ScanPdfDocumentWidget()
 }
+
+

@@ -16,35 +16,30 @@ import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomePag
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun Navigator(
-    topLevelBackStack: TopLevelBackStack<Route>
-) {
+fun Navigator(topLevelBackStack: TopLevelBackStack<Route>) {
     NavDisplay(
         modifier = Modifier.fillMaxSize(),
         backStack = topLevelBackStack.backStack,
         onBack = { topLevelBackStack.removeLast() },
-        entryProvider = entryProvider {
-            entry<Route.Home> {
-                HomePageWrapper()
-            }
-            entry<Route.Playground> {
-                PlaygroundPage()
-            }
-        },
+        entryProvider =
+            entryProvider {
+                entry<Route.Home> { HomePageWrapper() }
+                entry<Route.Playground> { PlaygroundPage() }
+            },
         transitionSpec = {
             // Slide in from right when navigating forward
             slideInHorizontally(initialOffsetX = { it }) togetherWith
-                    slideOutHorizontally(targetOffsetX = { -it })
+                slideOutHorizontally(targetOffsetX = { -it })
         },
         popTransitionSpec = {
             // Slide in from left when navigating back
             slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                    slideOutHorizontally(targetOffsetX = { it })
+                slideOutHorizontally(targetOffsetX = { it })
         },
         predictivePopTransitionSpec = {
             // Slide in from left when navigating back
             slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                    slideOutHorizontally(targetOffsetX = { it })
-        }
+                slideOutHorizontally(targetOffsetX = { it })
+        },
     )
 }

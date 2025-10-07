@@ -5,8 +5,8 @@ import android.net.Uri
 import java.io.File
 
 /**
- * Service interface for PDF document operations.
- * Renamed from PdfDocumentHelper to better reflect its purpose as a service layer component.
+ * Service interface for PDF document operations. Renamed from PdfDocumentHelper to better reflect
+ * its purpose as a service layer component.
  */
 interface PdfDocumentService {
     /**
@@ -45,4 +45,3 @@ interface PdfDocumentService {
         quality: Int = 80,
     )
 }
-

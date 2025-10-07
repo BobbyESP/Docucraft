@@ -11,22 +11,16 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 /**
- * Dependency injection module for PDF Scanner feature.
- * Renamed from scannedPdfModule to better reflect its purpose.
- * Provides: repositories, services, and use cases.
+ * Dependency injection module for PDF Scanner feature. Renamed from scannedPdfModule to better
+ * reflect its purpose. Provides: repositories, services, and use cases.
  */
 val pdfScannerDataModule = module {
     // Service layer
-    single<PdfDocumentService> {
-        PdfDocumentServiceImpl(context = androidContext())
-    }
+    single<PdfDocumentService> { PdfDocumentServiceImpl(context = androidContext()) }
 
     // Repository layer
     single<ScannedPdfRepository> {
-        ScannedPdfRepositoryImpl(
-            context = androidContext(),
-            scannedPdfDao = get<ScannedPdfDao>()
-        )
+        ScannedPdfRepositoryImpl(context = androidContext(), scannedPdfDao = get<ScannedPdfDao>())
     }
 
     // Use cases - each with single responsibility
@@ -44,7 +38,7 @@ val pdfScannerDataModule = module {
         DeleteScannedPdfUseCase(
             context = androidContext(),
             repository = get(),
-            fileRepository = get<FileRepository>()
+            fileRepository = get<FileRepository>(),
         )
     }
 
@@ -53,7 +47,7 @@ val pdfScannerDataModule = module {
             context = androidContext(),
             repository = get(),
             copyPdfFileUseCase = get(),
-            generatePdfThumbnailUseCase = get()
+            generatePdfThumbnailUseCase = get(),
         )
     }
 }

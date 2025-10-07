@@ -9,9 +9,7 @@ import androidx.compose.ui.Modifier
 
 @Composable
 fun PlaygroundPage(modifier: Modifier = Modifier) {
-    Scaffold(
-        modifier = modifier.fillMaxSize()
-    ) { paddingValues ->
+    Scaffold(modifier = modifier.fillMaxSize()) { paddingValues ->
         Text("Playground Page", modifier = Modifier.padding(paddingValues).fillMaxSize())
     }
 }

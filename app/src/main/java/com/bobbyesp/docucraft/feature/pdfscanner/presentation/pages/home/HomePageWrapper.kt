@@ -9,8 +9,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.common.LocalSonner
 import com.bobbyesp.docucraft.core.util.state.TemporalState
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.EditPdfDetailsDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.DeletePdfConfirmationDialog
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.EditPdfDetailsDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.UiEvent.ScanResult
 import com.dokar.sonner.ToastType

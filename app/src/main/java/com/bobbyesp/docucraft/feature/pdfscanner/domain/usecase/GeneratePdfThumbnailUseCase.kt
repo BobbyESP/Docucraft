@@ -10,13 +10,11 @@ import io.github.vinceglb.filekit.path
 import java.io.File
 
 /**
- * Use case for generating a thumbnail image from a PDF's first page.
- * Single responsibility: thumbnail generation.
+ * Use case for generating a thumbnail image from a PDF's first page. Single responsibility:
+ * thumbnail generation.
  */
-class GeneratePdfThumbnailUseCase(
-    private val pdfDocumentService: PdfDocumentService
-) {
-    suspend operator fun invoke(pdfUri: Uri, filename: String): String {
+class GeneratePdfThumbnailUseCase(private val pdfDocumentService: PdfDocumentService) {
+    operator fun invoke(pdfUri: Uri, filename: String): String {
         val thumbnailDir = PlatformFile(FileKit.filesDir, "previews")
         thumbnailDir.ensure(mustCreate = true)
         val thumbnailFile = PlatformFile(thumbnailDir, "$filename.png")

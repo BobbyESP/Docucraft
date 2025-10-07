@@ -69,3 +69,5 @@ class ScanPdfActionCallback : ActionCallback {
         context.startActivity(intent)
     }
 }
+
+

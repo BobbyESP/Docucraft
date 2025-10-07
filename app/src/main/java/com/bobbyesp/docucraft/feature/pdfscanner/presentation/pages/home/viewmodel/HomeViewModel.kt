@@ -27,9 +27,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * ViewModel for the Home screen.
- * Now uses individual use cases instead of a monolithic "UseCase" interface.
- * Each use case has a single responsibility, following SOLID principles.
+ * ViewModel for the Home screen. Now uses individual use cases instead of a monolithic "UseCase"
+ * interface. Each use case has a single responsibility, following SOLID principles.
  */
 class HomeViewModel(
     private val getAllScannedPdfsUseCase: GetAllScannedPdfsUseCase,
@@ -82,9 +81,7 @@ class HomeViewModel(
                         _uiState.updateValue { it.copy(loadingState = LoadingState.Loading) }
                     },
                     onEach = { scannedPdfs ->
-                        _uiState.updateValue { state ->
-                            state.copy(scannedPdfs = scannedPdfs)
-                        }
+                        _uiState.updateValue { state -> state.copy(scannedPdfs = scannedPdfs) }
 
                         if (_uiState.value.hasActiveFilters) {
                             applySearchAndFilters()
@@ -100,7 +97,7 @@ class HomeViewModel(
                             it.copy(loadingState = LoadingState.Error(error, "Failed to load PDFs"))
                         }
                         _eventFlow.emitEvent(UiEvent.Error(error))
-                    }
+                    },
                 )
         }
     }
@@ -214,7 +211,7 @@ class HomeViewModel(
                         modifyPdfMetadata(
                             pdfId = event.pdfId,
                             title = event.title,
-                            description = event.description
+                            description = event.description,
                         )
                     }
                 }
@@ -306,7 +303,7 @@ class HomeViewModel(
             onError = { error ->
                 logError("Failed to modify PDF: ${error.message}", error)
                 _eventFlow.emitEvent(UiEvent.Error(error))
-            }
+            },
         ) {
             val scannedPdf = getPdfById(pdfId)
             val newTitle: String? = title.ifBlank { null }
@@ -314,9 +311,7 @@ class HomeViewModel(
 
             updatePdfMetadataUseCase(scannedPdf.id, newTitle, newDescription)
 
-            _uiState.updateValue {
-                it.copy(pdfToBeModified = TemporalState.NotPresent)
-            }
+            _uiState.updateValue { it.copy(pdfToBeModified = TemporalState.NotPresent) }
         }
     }
 
@@ -367,13 +362,11 @@ class HomeViewModel(
             onError = { error ->
                 logError("Failed to save PDF: ${error.message}", error)
                 _eventFlow.emitEvent(UiEvent.SavingResult.Failure(error = error))
-            }
+            },
         ) {
             val androidDocumentsDirectory =
                 PlatformFile(
-                    Environment.getExternalStoragePublicDirectory(
-                        Environment.DIRECTORY_DOCUMENTS
-                    )
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
                 )
 
             val dir = PlatformFile(androidDocumentsDirectory, "Docucraft")
@@ -458,7 +451,7 @@ class HomeViewModel(
             onError = { error ->
                 logError("Failed to save the scanned PDF: ${error.message}", error)
                 _eventFlow.emitEvent(UiEvent.ScanResult.Failure(error = error))
-            }
+            },
         ) {
             val filename = "scan_${System.currentTimeMillis()}"
             saveScannedPdfUseCase(scannedPdf, filename)

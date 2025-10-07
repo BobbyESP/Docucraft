@@ -10,8 +10,7 @@ import io.github.vinceglb.filekit.delete
 import io.github.vinceglb.filekit.exists
 
 /**
- * Use case for deleting a scanned PDF.
- * Handles both database removal and physical file deletion.
+ * Use case for deleting a scanned PDF. Handles both database removal and physical file deletion.
  */
 class DeleteScannedPdfUseCase(
     private val context: Context,

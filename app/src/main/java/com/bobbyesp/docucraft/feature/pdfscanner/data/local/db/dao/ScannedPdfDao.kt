@@ -30,19 +30,18 @@ interface ScannedPdfDao : BaseDao<ScannedPdfEntity> {
     @Query("SELECT * FROM scanned_pdfs WHERE description LIKE '%' || :searchQuery || '%'")
     suspend fun searchPdfsByDescription(searchQuery: String): List<ScannedPdfEntity>
 
-    @Query("SELECT COUNT(*) FROM scanned_pdfs")
-    suspend fun fetchPdfCount(): Int
+    @Query("SELECT COUNT(*) FROM scanned_pdfs") suspend fun fetchPdfCount(): Int
 
     @Query("DELETE FROM scanned_pdfs WHERE path = :path")
     suspend fun deleteByPath(path: String): Int
 
-    @Query("DELETE FROM scanned_pdfs WHERE id = :id")
-    suspend fun deleteById(id: String): Int
+    @Query("DELETE FROM scanned_pdfs WHERE id = :id") suspend fun deleteById(id: String): Int
 
-    @Query("DELETE FROM scanned_pdfs")
-    suspend fun deleteAll(): Int
+    @Query("DELETE FROM scanned_pdfs") suspend fun deleteAll(): Int
 
-    @Query("SELECT * FROM scanned_pdfs WHERE createdTimestamp BETWEEN :startTime AND :endTime ORDER BY createdTimestamp DESC")
+    @Query(
+        "SELECT * FROM scanned_pdfs WHERE createdTimestamp BETWEEN :startTime AND :endTime ORDER BY createdTimestamp DESC"
+    )
     suspend fun fetchPdfsInDateRange(startTime: Long, endTime: Long): List<ScannedPdfEntity>
 
     @Query(
@@ -64,7 +63,7 @@ interface ScannedPdfDao : BaseDao<ScannedPdfEntity> {
         startTime: Long? = null,
         endTime: Long? = null,
         minPages: Int? = null,
-        minSize: Long? = null
+        minSize: Long? = null,
     ): List<ScannedPdfEntity>
 
     @Query("UPDATE scanned_pdfs SET title = :title, description = :description WHERE id = :id")

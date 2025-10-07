@@ -13,8 +13,8 @@ import java.io.File
 import java.io.FileOutputStream
 
 /**
- * Implementation of PdfDocumentService.
- * Handles PDF document operations like extracting pages as images.
+ * Implementation of PdfDocumentService. Handles PDF document operations like extracting pages as
+ * images.
  */
 class PdfDocumentServiceImpl(private val context: Context) : PdfDocumentService {
     companion object {
@@ -107,4 +107,3 @@ class PdfDocumentServiceImpl(private val context: Context) : PdfDocumentService 
         }
     }
 }
-

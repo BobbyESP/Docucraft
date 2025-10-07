@@ -16,9 +16,9 @@ import io.github.vinceglb.filekit.size
 import java.io.File
 
 /**
- * Use case for saving a scanned PDF from GMS scanner result.
- * Handles: file copying, thumbnail generation, and database persistence.
- * This is a coordinator use case that orchestrates multiple operations.
+ * Use case for saving a scanned PDF from GMS scanner result. Handles: file copying, thumbnail
+ * generation, and database persistence. This is a coordinator use case that orchestrates multiple
+ * operations.
  */
 class SaveScannedPdfUseCase(
     private val context: Context,
@@ -26,10 +26,7 @@ class SaveScannedPdfUseCase(
     private val copyPdfFileUseCase: CopyPdfFileUseCase,
     private val generatePdfThumbnailUseCase: GeneratePdfThumbnailUseCase,
 ) {
-    suspend operator fun invoke(
-        scanPdfResult: GmsDocumentScanningResult.Pdf,
-        filename: String,
-    ) {
+    suspend operator fun invoke(scanPdfResult: GmsDocumentScanningResult.Pdf, filename: String) {
         // Create output directory
         val pdfOutputDir = PlatformFile(FileKit.filesDir, "scans/pdf")
         pdfOutputDir.ensure(mustCreate = true)
@@ -43,31 +40,34 @@ class SaveScannedPdfUseCase(
         require(fileSizeBytes > 0) { "The file size is invalid." }
 
         // Get content URI using FileProvider
-        val documentUri = FileProvider.getUriForFile(
-            context,
-            App.CONTENT_PROVIDER_AUTHORITY,
-            File(pdfOutputFile.path),
-        )
+        val documentUri =
+            FileProvider.getUriForFile(
+                context,
+                App.CONTENT_PROVIDER_AUTHORITY,
+                File(pdfOutputFile.path),
+            )
 
         // Generate thumbnail
-        val thumbnailPath = try {
-            generatePdfThumbnailUseCase(documentUri, filename)
-        } catch (e: Exception) {
-            Log.w(TAG, "Error generating thumbnail: ${e.message}")
-            null
-        }
+        val thumbnailPath =
+            try {
+                generatePdfThumbnailUseCase(documentUri, filename)
+            } catch (e: Exception) {
+                Log.w(TAG, "Error generating thumbnail: ${e.message}")
+                null
+            }
 
         // Create entity and save to database
-        val pdfEntity = ScannedPdfEntity(
-            filename = filename,
-            title = null,
-            description = null,
-            path = documentUri.toString(),
-            createdTimestamp = System.currentTimeMillis(),
-            fileSize = fileSizeBytes,
-            pageCount = scanPdfResult.pageCount,
-            thumbnail = thumbnailPath,
-        )
+        val pdfEntity =
+            ScannedPdfEntity(
+                filename = filename,
+                title = null,
+                description = null,
+                path = documentUri.toString(),
+                createdTimestamp = System.currentTimeMillis(),
+                fileSize = fileSizeBytes,
+                pageCount = scanPdfResult.pageCount,
+                thumbnail = thumbnailPath,
+            )
 
         repository.savePdf(pdfEntity)
     }

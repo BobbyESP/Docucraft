@@ -17,7 +17,7 @@ class ScannedPdfRepositoryImpl(
     private val scannedPdfDao: ScannedPdfDao,
 ) : ScannedPdfRepository {
 
-    //TODO: Remove unnecessary functions
+    // TODO: Remove unnecessary functions
 
     override suspend fun getAllScannedPdfsFlow(): Flow<List<ScannedPdf>> =
         scannedPdfDao
