@@ -10,7 +10,6 @@ pluginManagement {
         mavenCentral()
         gradlePluginPortal()
         maven("https://jitpack.io")
-        maven("https://androidx.dev/snapshots/builds/14144115/artifacts/repository")
     }
 }
 dependencyResolutionManagement {
@@ -19,7 +18,6 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven("https://jitpack.io")
-        maven("https://androidx.dev/snapshots/builds/14144115/artifacts/repository")
     }
 }
 

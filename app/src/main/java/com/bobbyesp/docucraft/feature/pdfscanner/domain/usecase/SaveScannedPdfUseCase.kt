@@ -43,7 +43,7 @@ class SaveScannedPdfUseCase(
         val documentUri =
             FileProvider.getUriForFile(
                 context,
-                App.CONTENT_PROVIDER_AUTHORITY,
+                App.getAuthority(context),
                 File(pdfOutputFile.path),
             )
 

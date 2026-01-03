@@ -1,6 +1,7 @@
 package com.bobbyesp.docucraft
 
 import android.app.Application
+import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
@@ -25,17 +26,20 @@ class App : Application() {
             modules(fileManagementModule)
             modules(pdfScannerViewModels)
         }
-        packageInfo =
-            packageManager.run {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-                    getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
-                else getPackageInfo(packageName, 0)
-            }
+        packageInfo = packageManager.run {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) getPackageInfo(
+                packageName,
+                PackageManager.PackageInfoFlags.of(0)
+            )
+            else getPackageInfo(packageName, 0)
+        }
         super.onCreate()
     }
 
     companion object {
         lateinit var packageInfo: PackageInfo
-        const val CONTENT_PROVIDER_AUTHORITY = "com.bobbyesp.docucraft.fileprovider"
+        fun getAuthority(context: Context): String {
+            return "${context.packageName}.fileprovider"
+        }
     }
 }
