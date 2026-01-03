@@ -85,5 +85,5 @@ To build and run this project locally, follow these steps:
 
 ## 📄 License
 
-[MIT License](LICENSE)
+[GPL-3.0](LICENSE)
 
