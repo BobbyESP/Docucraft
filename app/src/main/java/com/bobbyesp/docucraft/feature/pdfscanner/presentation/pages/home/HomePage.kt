@@ -1,9 +1,6 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
-import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.Crossfade
@@ -93,12 +90,6 @@ import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfCard
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.others.selectiongroup.SelectionGroupItem
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.others.selectiongroup.SelectionGroupRow
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.Event.NotifyUserAction.OpenPdfFieldsDialog
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.Event.NotifyUserAction.WarnAboutDeletion
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.Event.PdfAction.Open
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.Event.PdfAction.Save
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.Event.PdfAction.Share
 import com.materialkolor.ktx.harmonize
 import kotlin.math.roundToInt
 
@@ -109,44 +100,37 @@ import kotlin.math.roundToInt
 )
 @Composable
 fun HomePage(
-    scannedPdfs: List<ScannedPdf>,
-    filteredPdfs: List<ScannedPdf>,
-    searchState: HomeViewModel.SearchViewState,
-    filterOptions: FilterOptions,
-    loadingState: HomeViewModel.LoadingState,
-    onEvent: (HomeViewModel.Event) -> Unit,
+    uiState: HomeUiState,
+    onAction: (HomeUiAction) -> Unit,
+    onScanClick: () -> Unit,
 ) {
-    val activity = LocalActivity.current
-    val thereIsNoPdfs by remember(scannedPdfs) { derivedStateOf { scannedPdfs.isEmpty() } }
+    val scannedPdfs = uiState.scannedPdfs
+    val filteredPdfs = uiState.filteredPdfs
+    val searchQuery = uiState.searchQuery
+    val filterOptions = uiState.filterOptions
+    val isSearchBarVisible = uiState.isSearchBarVisible
+
+    val isScanListEmpty by remember(scannedPdfs) { derivedStateOf { scannedPdfs.isEmpty() } }
 
     val pdfsToShow by
-        remember(scannedPdfs, filteredPdfs, searchState.searchQuery, filterOptions) {
+        remember(scannedPdfs, filteredPdfs, searchQuery, filterOptions) {
             derivedStateOf {
-                if (searchState.searchQuery.isNotBlank() || filterOptions != FilterOptions.default)
+                if (searchQuery.isNotBlank() || filterOptions != FilterOptions.default)
                     filteredPdfs
                 else scannedPdfs
             }
         }
 
     val searchResultsCount by
-        remember(pdfsToShow, searchState.searchQuery, filterOptions) {
+        remember(pdfsToShow, searchQuery, filterOptions) {
             derivedStateOf { pdfsToShow.size }
-        }
-
-    val showSearchbar = searchState.showingSearchBar
-
-    val scannerLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartIntentSenderForResult()
-        ) { result ->
-            onEvent(HomeViewModel.Event.HandlePdfScanningResult(result))
         }
 
     Scaffold(
         topBar = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 AnimatedContent(
-                    targetState = showSearchbar,
+                    targetState = isSearchBarVisible,
                     transitionSpec = { DefaultContentTransform },
                     label = "SearchBarTransition",
                 ) { isSearchVisible ->
@@ -173,24 +157,18 @@ fun HomePage(
                             ) {
                                 SearchBar(
                                     modifier = Modifier.weight(1f),
-                                    query = searchState.searchQuery,
+                                    query = searchQuery,
                                     onQueryChange = {
-                                        onEvent(
-                                            HomeViewModel.Event.SearchFilterEvent.UpdateSearchQuery(
-                                                it
-                                            )
-                                        )
+                                        onAction(HomeUiAction.UpdateSearchQuery(it))
                                     },
                                     onClear = {
-                                        onEvent(HomeViewModel.Event.SearchFilterEvent.ClearSearch)
+                                        onAction(HomeUiAction.ClearSearch)
                                     },
                                 )
                                 IconButton(
                                     onClick = {
-                                        onEvent(
-                                            HomeViewModel.Event.SearchUIEvent.ShowSearchBar(false)
-                                        )
-                                        onEvent(HomeViewModel.Event.SearchFilterEvent.ClearSearch)
+                                        onAction(HomeUiAction.ToggleSearchBar(false))
+                                        onAction(HomeUiAction.ClearSearch)
                                     }
                                 ) {
                                     Icon(
@@ -239,15 +217,11 @@ fun HomePage(
                                 }
                             },
                             actions = {
-                                AnimatedContent(targetState = thereIsNoPdfs) { noPdfs ->
+                                AnimatedContent(targetState = isScanListEmpty) { noPdfs ->
                                     if (!noPdfs) {
                                         IconButton(
                                             onClick = {
-                                                onEvent(
-                                                    HomeViewModel.Event.SearchUIEvent.ShowSearchBar(
-                                                        true
-                                                    )
-                                                )
+                                                onAction(HomeUiAction.ToggleSearchBar(true))
                                             }
                                         ) {
                                             Icon(
@@ -266,7 +240,7 @@ fun HomePage(
         },
         floatingActionButton = {
             AnimatedContent(
-                targetState = thereIsNoPdfs,
+                targetState = isScanListEmpty,
                 transitionSpec = {
                     ContentTransform(
                         targetContentEnter = expandIn() + fadeIn(),
@@ -283,62 +257,42 @@ fun HomePage(
                                 contentDescription = stringResource(id = R.string.scan_new_document),
                             )
                         },
-                        onClick = {
-                            onEvent(
-                                HomeViewModel.Event.ScanPdf(
-                                    activity = activity,
-                                    listener = scannerLauncher,
-                                )
-                            )
-                        },
+                        onClick = onScanClick,
                     )
                 }
             }
         },
     ) { padding ->
-        Crossfade(modifier = Modifier.padding(padding), targetState = loadingState) { state ->
-            when (state) {
-                is HomeViewModel.LoadingState.Error -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        ErrorContent(
-                            errorMessage = state.message,
-                            onRetry = { onEvent(HomeViewModel.Event.ReloadPdfs) },
-                        )
-                    }
+        Crossfade(modifier = Modifier.padding(padding), targetState = uiState.isLoadingPdfs) { isLoading ->
+            if (isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularWavyProgressIndicator()
                 }
-
-                HomeViewModel.LoadingState.Idle -> {
-                    Crossfade(thereIsNoPdfs) { showEmptyState ->
-                        if (showEmptyState) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                EmptyStateScreen(
-                                    modifier = Modifier,
-                                    onScanPdfClick = {
-                                        onEvent(
-                                            HomeViewModel.Event.ScanPdf(
-                                                activity = activity,
-                                                listener = scannerLauncher,
-                                            )
-                                        )
-                                    },
-                                )
-                            }
-                        } else {
-                            DisplayScannedPdfs(
-                                scannedPdfs = pdfsToShow,
-                                onEvent = onEvent,
-                                filterOptions = filterOptions,
+            } else if (uiState.loadError != null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    ErrorContent(
+                        errorMessage = uiState.loadError.message,
+                        onRetry = { onAction(HomeUiAction.LoadPdfs) },
+                    )
+                }
+            } else {
+                Crossfade(isScanListEmpty) { showEmptyState ->
+                    if (showEmptyState) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            EmptyStateScreen(
+                                modifier = Modifier,
+                                onScanPdfClick = onScanClick,
                             )
                         }
-                    }
-                }
-
-                HomeViewModel.LoadingState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularWavyProgressIndicator()
+                    } else {
+                        DisplayScannedPdfs(
+                            scannedPdfs = pdfsToShow,
+                            onAction = onAction,
+                            filterOptions = filterOptions,
+                        )
                     }
                 }
             }
@@ -350,7 +304,7 @@ fun HomePage(
 private fun DisplayScannedPdfs(
     scannedPdfs: List<ScannedPdf>,
     filterOptions: FilterOptions,
-    onEvent: (HomeViewModel.Event) -> Unit,
+    onAction: (HomeUiAction) -> Unit,
 ) {
     val lazyListState = rememberLazyListState()
     var animatedOverscrollAmount by remember { mutableFloatStateOf(0f) }
@@ -369,7 +323,7 @@ private fun DisplayScannedPdfs(
             SortOptionsRow(
                 currentSortOption = filterOptions.sortBy,
                 onSortOptionChanged = {
-                    onEvent(HomeViewModel.Event.SearchFilterEvent.ApplySort(it))
+                    onAction(HomeUiAction.ApplySort(it))
                 },
                 modifier =
                     Modifier.background(
@@ -396,11 +350,11 @@ private fun DisplayScannedPdfs(
             ScannedPdfCard(
                 modifier = Modifier.fillMaxWidth().animateItem(),
                 pdf = scannedPdf,
-                onOpenPdf = { uri -> onEvent(Open(uri)) },
-                onSharePdf = { uri -> onEvent(Share(uri)) },
-                onDeletePdf = { uri -> onEvent(WarnAboutDeletion(uri)) },
-                onSavePdf = { onEvent(Save(scannedPdf)) },
-                onModifyPdfFields = { id -> onEvent(OpenPdfFieldsDialog(id)) },
+                onOpenPdf = { uri -> onAction(HomeUiAction.OpenPdf(uri)) },
+                onSharePdf = { uri -> onAction(HomeUiAction.SharePdf(uri)) },
+                onDeletePdf = { uri -> onAction(HomeUiAction.ShowDeleteConfirmation(uri)) },
+                onSavePdf = { onAction(HomeUiAction.SavePdf(scannedPdf)) },
+                onModifyPdfFields = { id -> onAction(HomeUiAction.ShowEditDialog(id)) },
             )
         }
     }
@@ -663,14 +617,15 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
 private fun PreviewHomePage() {
     DocucraftTheme {
         HomePage(
-            scannedPdfs =
+            uiState = HomeUiState(
+                scannedPdfs =
                 listOf(
                     ScannedPdf(
                         id = "1",
                         filename = "document1.pdf",
                         title = "Documento 1 de prueba. Título corto",
                         description =
-                            "Description para el documento 1. La descripción no va a ser muy larga.",
+                        "Description para el documento 1. La descripción no va a ser muy larga.",
                         path = "content://com.example.documents/document/1".toUri(),
                         createdTimestamp = System.currentTimeMillis(),
                         fileSize = 1024,
@@ -682,7 +637,7 @@ private fun PreviewHomePage() {
                         filename = "document2.pdf",
                         title = "Apuntes de programación",
                         description =
-                            "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " +
+                        "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " +
                                 "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
                         path = "content://com.example.documents/document/2".toUri(),
                         createdTimestamp = System.currentTimeMillis(),
@@ -690,12 +645,10 @@ private fun PreviewHomePage() {
                         pageCount = 20,
                         thumbnail = "content://com.example.thumbnails/thumbnail/2",
                     ),
-                ),
-            loadingState = HomeViewModel.LoadingState.Idle,
-            onEvent = {},
-            filteredPdfs = emptyList(),
-            searchState = HomeViewModel.SearchViewState(searchQuery = "", showingSearchBar = false),
-            filterOptions = FilterOptions.default,
+                )
+            ),
+            onAction = {},
+            onScanClick = {},
         )
     }
 }

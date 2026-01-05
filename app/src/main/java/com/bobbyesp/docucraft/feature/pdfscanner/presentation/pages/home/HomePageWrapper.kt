@@ -1,5 +1,8 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -7,109 +10,119 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.domain.repository.DocumentScannerRepository
 import com.bobbyesp.docucraft.core.presentation.common.LocalSonner
 import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.DeletePdfConfirmationDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.EditPdfDetailsDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel.UiEvent.ScanResult
 import com.dokar.sonner.ToastType
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomePageWrapper() {
     val sonner = LocalSonner.current
     val context = LocalContext.current
+    val activity = context as? Activity
     val vm = koinViewModel<HomeViewModel>()
+    val documentScannerRepository = koinInject<DocumentScannerRepository>()
 
     val uiState = vm.uiState.collectAsStateWithLifecycle().value
 
+    val scannerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        vm.onAction(HomeUiAction.OnScanResultReceived(result))
+    }
+
+    val onScanClick: () -> Unit = {
+        vm.onAction(HomeUiAction.OnScanButtonClicked)
+    }
+
     LaunchedEffect(Unit) {
-        vm.eventFlow.collectLatest { event ->
-            when (event) {
-                is ScanResult -> {
-                    val (message, type) =
-                        when (event) {
-                            is ScanResult.Success -> {
-                                context.getString(R.string.pdf_saved_successfully) to
-                                    ToastType.Success
-                            }
-
-                            is ScanResult.Failure -> {
-                                val errorMsg =
-                                    event.error.message ?: context.getString(R.string.unknown_error)
-                                context.getString(R.string.pdf_saved_error_with_reason, errorMsg) to
-                                    ToastType.Error
-                            }
-
-                            ScanResult.Cancelled -> {
-                                context.getString(R.string.scan_cancelled) to ToastType.Info
-                            }
-                        }
-                    sonner.show(message = message, type = type)
+        vm.eventFlow.collectLatest { effect ->
+            when (effect) {
+                HomeUiEffect.LaunchScanner -> {
+                    activity?.let { act ->
+                        documentScannerRepository.launchScanner(act, scannerLauncher)
+                    }
                 }
-
-                is HomeViewModel.UiEvent.IssueOpening -> {
-                    val errorMessage =
-                        when (event) {
-                            is HomeViewModel.UiEvent.IssueOpening.PdfViewer ->
-                                context.getString(R.string.issue_opening_pdf_viewer)
-
-                            is HomeViewModel.UiEvent.IssueOpening.ShareIntent ->
-                                context.getString(R.string.issue_sharing_pdf)
-                        }
-                    sonner.show(message = errorMessage, type = ToastType.Error)
+                is HomeUiEffect.ScanSuccess -> {
+                    sonner.show(
+                        message = context.resources.getString(R.string.pdf_saved_successfully),
+                        type = ToastType.Success
+                    )
                 }
-
-                is HomeViewModel.UiEvent.SavingResult -> {
-                    val (message, type) =
-                        when (event) {
-                            is HomeViewModel.UiEvent.SavingResult.Success -> {
-                                context.getString(
-                                    R.string.pdf_saved_successfully_to,
-                                    event.uri.path ?: "",
-                                ) to ToastType.Success
-                            }
-
-                            is HomeViewModel.UiEvent.SavingResult.Failure -> {
-                                val errorMsg =
-                                    event.error.message ?: context.getString(R.string.unknown_error)
-                                context.getString(R.string.pdf_saved_error_with_reason, errorMsg) to
-                                    ToastType.Error
-                            }
-
-                            HomeViewModel.UiEvent.SavingResult.Cancelled -> {
-                                context.getString(R.string.pdf_saving_cancelled) to ToastType.Info
-                            }
-                        }
-                    sonner.show(message = message, type = type)
+                is HomeUiEffect.ScanFailure -> {
+                    val errorMsg = effect.error.message ?: context.resources.getString(R.string.unknown_error)
+                    sonner.show(
+                        message = context.resources.getString(R.string.pdf_saved_error_with_reason, errorMsg),
+                        type = ToastType.Error
+                    )
                 }
-
-                is HomeViewModel.UiEvent.DeleteResult -> {
-                    val (message, type) =
-                        if (event is HomeViewModel.UiEvent.DeleteResult.Success) {
-                            context.getString(R.string.pdf_deleted_successfully) to
-                                ToastType.Success
-                        } else {
-                            context.getString(R.string.pdf_deleted_error) to ToastType.Error
-                        }
-                    sonner.show(message = message, type = type)
+                is HomeUiEffect.OpenPdfViewerFailure -> {
+                    sonner.show(
+                        message = context.resources.getString(R.string.issue_opening_pdf_viewer),
+                        type = ToastType.Error
+                    )
                 }
-
-            //                is HomeViewModel.UiEvent.PdfInformation -> {
-            //                    when(event) {
-            //                        is HomeViewModel.UiEvent.PdfInformation.Show -> {
-            //
-            //                        }
-            //
-            //                        HomeViewModel.UiEvent.PdfInformation.Dismiss -> {
-            //
-            // vm.onEvent(HomeViewModel.Event.NotifyUserAction.DismissPdfInformation)
-            //                        }
-            //                    }
-            //                }
+                is HomeUiEffect.SharePdfFailure -> {
+                    sonner.show(
+                        message = context.resources.getString(R.string.issue_sharing_pdf),
+                        type = ToastType.Error
+                    )
+                }
+                is HomeUiEffect.SaveSuccess -> {
+                    val path = effect.uri.path ?: ""
+                    sonner.show(
+                        message = context.resources.getString(
+                            R.string.pdf_saved_successfully_to,
+                            path
+                        ),
+                        type = ToastType.Success
+                    )
+                }
+                is HomeUiEffect.SaveFailure -> {
+                    val errorMsg = effect.error.message ?: context.resources.getString(R.string.unknown_error)
+                    sonner.show(
+                        message = context.resources.getString(R.string.pdf_saved_error_with_reason, errorMsg),
+                        type = ToastType.Error
+                    )
+                }
+                HomeUiEffect.SaveCancelled -> {
+                    sonner.show(
+                        message = context.resources.getString(R.string.pdf_saving_cancelled),
+                        type = ToastType.Info
+                    )
+                }
+                HomeUiEffect.DeleteSuccess -> {
+                    sonner.show(
+                        message = context.resources.getString(R.string.pdf_deleted_successfully),
+                        type = ToastType.Success
+                    )
+                }
+                is HomeUiEffect.DeleteFailure -> {
+                    sonner.show(
+                        message = context.resources.getString(R.string.pdf_deleted_error),
+                        type = ToastType.Error
+                    )
+                }
+                is HomeUiEffect.ShowError -> {
+                    sonner.show(
+                        message = effect.error.message ?: context.resources.getString(R.string.unknown_error),
+                        type = ToastType.Error
+                    )
+                }
+                is HomeUiEffect.ShowMessage -> {
+                    sonner.show(message = effect.message, type = ToastType.Normal)
+                }
+                is HomeUiEffect.ShowPdfInfoDialog -> {
+                    // TODO: Handle showing info dialog
+                }
             }
         }
     }
@@ -119,8 +132,8 @@ fun HomePageWrapper() {
         DeletePdfConfirmationDialog(
             modifier = Modifier,
             scannedPdf = scannedPdf,
-            onDismiss = { vm.onEvent(HomeViewModel.Event.PdfAction.Delete(null)) },
-            onConfirm = { vm.onEvent(HomeViewModel.Event.PdfAction.Delete(scannedPdf.id)) },
+            onDismiss = { vm.onAction(HomeUiAction.DeletePdf(null)) },
+            onConfirm = { vm.onAction(HomeUiAction.DeletePdf(scannedPdf.id)) },
         )
     }
 
@@ -129,12 +142,12 @@ fun HomePageWrapper() {
         EditPdfDetailsDialog(
             modifier = Modifier,
             onDismiss = {
-                vm.onEvent(HomeViewModel.Event.NotifyUserAction.DismissPdfTitleDescriptionDialog)
+                vm.onAction(HomeUiAction.DismissDialogs)
             },
             onConfirm = { title, description ->
-                vm.onEvent(
-                    HomeViewModel.Event.PdfAction.ModifyTitleDescription(
-                        pdfId = scannedPdf.id,
+                vm.onAction(
+                    HomeUiAction.UpdatePdfMetadata(
+                        id = scannedPdf.id,
                         title = title,
                         description = description,
                     )
@@ -145,19 +158,9 @@ fun HomePageWrapper() {
         )
     }
 
-    if (uiState.pdfToShowInformation is TemporalState.Present) {
-        val scannedPdf = uiState.pdfToShowInformation.value
-
-        // TODO
-
-    }
-
     HomePage(
-        scannedPdfs = uiState.scannedPdfs,
-        loadingState = uiState.loadingState,
-        filteredPdfs = uiState.filteredPdfs,
-        filterOptions = uiState.filterOptions,
-        searchState = uiState.searchState,
-        onEvent = vm::onEvent,
+        uiState = uiState,
+        onAction = vm::onAction,
+        onScanClick = onScanClick,
     )
 }

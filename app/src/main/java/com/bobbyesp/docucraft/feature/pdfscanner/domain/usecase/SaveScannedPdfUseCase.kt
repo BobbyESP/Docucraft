@@ -1,9 +1,11 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
 import com.bobbyesp.docucraft.App
+import com.bobbyesp.docucraft.core.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.core.util.ensure
 import com.bobbyesp.docucraft.feature.pdfscanner.data.local.db.entity.ScannedPdfEntity
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.repository.ScannedPdfRepository
@@ -26,6 +28,53 @@ class SaveScannedPdfUseCase(
     private val copyPdfFileUseCase: CopyPdfFileUseCase,
     private val generatePdfThumbnailUseCase: GeneratePdfThumbnailUseCase,
 ) {
+    suspend operator fun invoke(scannedDocument: ScannedDocument, filename: String) {
+        // Create output directory
+        val pdfOutputDir = PlatformFile(FileKit.filesDir, "scans/pdf")
+        pdfOutputDir.ensure(mustCreate = true)
+        val pdfOutputFile = PlatformFile(pdfOutputDir, "$filename.pdf")
+
+        // Copy the scanned PDF to internal storage
+        val sourceUri = Uri.parse(scannedDocument.uriString)
+        copyPdfFileUseCase(sourceUri, pdfOutputFile)
+
+        // Validate file size
+        val fileSizeBytes = pdfOutputFile.size()
+        require(fileSizeBytes > 0) { "The file size is invalid." }
+
+        // Get content URI using FileProvider
+        val documentUri =
+            FileProvider.getUriForFile(
+                context,
+                App.getAuthority(context),
+                File(pdfOutputFile.path),
+            )
+
+        // Generate thumbnail
+        val thumbnailPath =
+            try {
+                generatePdfThumbnailUseCase(documentUri, filename)
+            } catch (e: Exception) {
+                Log.w(TAG, "Error generating thumbnail: ${e.message}")
+                null
+            }
+
+        // Create entity and save to database
+        val pdfEntity =
+            ScannedPdfEntity(
+                filename = filename,
+                title = null,
+                description = null,
+                path = documentUri.toString(),
+                createdTimestamp = scannedDocument.timestamp,
+                fileSize = fileSizeBytes,
+                pageCount = scannedDocument.pageCount,
+                thumbnail = thumbnailPath,
+            )
+
+        repository.savePdf(pdfEntity)
+    }
+
     suspend operator fun invoke(scanPdfResult: GmsDocumentScanningResult.Pdf, filename: String) {
         // Create output directory
         val pdfOutputDir = PlatformFile(FileKit.filesDir, "scans/pdf")

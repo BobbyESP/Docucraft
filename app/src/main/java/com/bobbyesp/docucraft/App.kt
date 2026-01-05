@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import com.bobbyesp.docucraft.core.di.appCoroutinesScope
 import com.bobbyesp.docucraft.core.di.coreFunctionalitiesModule
+import com.bobbyesp.docucraft.core.di.coreModule
 import com.bobbyesp.docucraft.core.di.fileManagementModule
 import com.bobbyesp.docucraft.feature.pdfscanner.di.gmsScannerModule
 import com.bobbyesp.docucraft.feature.pdfscanner.di.pdfScannerDataModule
@@ -18,13 +19,20 @@ import org.koin.core.context.GlobalContext.startKoin
 
 class App : Application() {
     override fun onCreate() {
+        super.onCreate()
         startKoin {
             androidLogger()
             androidContext(this@App)
-            modules(scannedPdfsDatabaseModule, pdfScannerDataModule, gmsScannerModule)
-            modules(appCoroutinesScope, coreFunctionalitiesModule)
-            modules(fileManagementModule)
-            modules(pdfScannerViewModels)
+            modules(
+                scannedPdfsDatabaseModule,
+                pdfScannerDataModule,
+                gmsScannerModule,
+                pdfScannerViewModels,
+                appCoroutinesScope,
+                coreModule,
+                coreFunctionalitiesModule,
+                fileManagementModule,
+            )
         }
         packageInfo = packageManager.run {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) getPackageInfo(
@@ -33,7 +41,6 @@ class App : Application() {
             )
             else getPackageInfo(packageName, 0)
         }
-        super.onCreate()
     }
 
     companion object {
