@@ -11,9 +11,6 @@ import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.*
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeUiAction
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeUiEffect
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeUiState
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.copyTo
@@ -27,8 +24,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for the Home screen. Now uses individual use cases instead of a monolithic "UseCase"
- * interface. Each use case has a single responsibility, following SOLID principles.
+ * ViewModel for the Home screen. Each use case has a single responsibility, following SOLID principles.
  */
 class HomeViewModel(
     private val getAllScannedPdfsUseCase: GetAllScannedPdfsUseCase,
@@ -211,21 +207,26 @@ class HomeViewModel(
         launchIO {
             getAllScannedPdfsUseCase()
                 .collectSafely(
-                    onLoading = { _uiState.updateValue { it.copy(isLoadingPdfs = true) } },
+                    onLoading = { _uiState.updateValue { it.copy(loadState = LoadState.Loading) } },
                     onEach = { scannedPdfs ->
-                        _uiState.updateValue { state -> state.copy(scannedPdfs = scannedPdfs) }
+                        _uiState.updateValue { state ->
+                            state.copy(
+                                scannedPdfs = scannedPdfs,
+                                loadState = LoadState.Idle // Data loaded successfully
+                            )
+                        }
 
                         if (_uiState.value.hasActiveFilters) {
                             applySearchAndFilters()
                         }
-
-                        if (_uiState.value.isLoadingPdfs) {
-                            _uiState.updateValue { it.copy(isLoadingPdfs = false) }
-                        }
                     },
                     onError = { error ->
                         logError("Failed to retrieve PDFs: ${error.message}", error)
-                        _uiState.updateValue { it.copy(isLoadingPdfs = false, loadError = error) }
+                        _uiState.updateValue {
+                            it.copy(
+                                loadState = LoadState.Error(error.message ?: "Unknown error")
+                            )
+                        }
                         sendEvent(HomeUiEffect.ShowError(error))
                     },
                 )

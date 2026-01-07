@@ -3,12 +3,14 @@ package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -90,6 +92,9 @@ import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfCard
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.others.selectiongroup.SelectionGroupItem
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.others.selectiongroup.SelectionGroupRow
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeUiAction
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeUiState
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.PageContentState
 import com.materialkolor.ktx.harmonize
 import kotlin.math.roundToInt
 
@@ -254,35 +259,42 @@ fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick
             }
         },
     ) { padding ->
-        Crossfade(modifier = Modifier.padding(padding), targetState = uiState.isLoadingPdfs) {
-            isLoading ->
-            if (isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularWavyProgressIndicator()
+        AnimatedContent(
+            modifier = Modifier.padding(padding),
+            targetState = uiState.contentState,
+            transitionSpec = {
+                fadeIn(tween(300)) togetherWith fadeOut(tween(300))
+            },
+            label = "PageContentTransition",
+        ) { targetState ->
+            when (targetState) {
+                PageContentState.LOADING -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularWavyProgressIndicator()
+                    }
                 }
-            } else if (uiState.loadError != null) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    ErrorContent(
-                        errorMessage = uiState.loadError.message,
-                        onRetry = { onAction(HomeUiAction.LoadPdfs) },
-                    )
-                }
-            } else {
-                Crossfade(isScanListEmpty) { showEmptyState ->
-                    if (showEmptyState) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            EmptyStateScreen(modifier = Modifier, onScanPdfClick = onScanClick)
-                        }
-                    } else {
-                        DisplayScannedPdfs(
-                            scannedPdfs = pdfsToShow,
-                            onAction = onAction,
-                            filterOptions = filterOptions,
+                PageContentState.ERROR -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        ErrorContent(
+                            errorMessage = uiState.errorMessage,
+                            onRetry = { onAction(HomeUiAction.LoadPdfs) },
                         )
                     }
+                }
+                PageContentState.EMPTY -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        EmptyStateScreen(modifier = Modifier, onScanPdfClick = onScanClick)
+                    }
+                }
+                PageContentState.SUCCESS -> {
+                    DisplayScannedPdfs(
+                        scannedPdfs = pdfsToShow,
+                        onAction = onAction,
+                        filterOptions = filterOptions,
+                    )
                 }
             }
         }

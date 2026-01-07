@@ -12,10 +12,9 @@ import coil.imageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.domain.repository.DocumentScannerRepository
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
-import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeUiAction
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeUiAction
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.widgets.ACTION_SCAN_PDF
 import com.dokar.sonner.Toaster

@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home
+package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel
 
 import android.net.Uri
 import com.bobbyesp.docucraft.core.domain.model.ScannedDocument
@@ -12,6 +12,19 @@ import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
  * Effects (Outputs).
  */
 
+enum class PageContentState {
+    LOADING,
+    ERROR,
+    EMPTY,
+    SUCCESS
+}
+
+sealed interface LoadState {
+    data object Idle : LoadState
+    data object Loading : LoadState
+    data class Error(val message: String) : LoadState
+}
+
 // --- STATE ---
 data class HomeUiState(
     // Data
@@ -19,8 +32,7 @@ data class HomeUiState(
     val filteredPdfs: List<ScannedPdf> = emptyList(),
 
     // Global Loading & Error
-    val isLoadingPdfs: Boolean = false,
-    val loadError: Throwable? = null,
+    val loadState: LoadState = LoadState.Loading,
 
     // Dialogs & Temporal States (Using TemporalState helper)
     val pdfToBeRemoved: TemporalState<ScannedPdf> = TemporalState.NotPresent,
@@ -37,6 +49,19 @@ data class HomeUiState(
     val lastScannedDocument: ScannedDocument? = null,
     val scanUserMessage: String? = null,
 ) {
+    val contentState: PageContentState
+        get() =
+            when (loadState) {
+                LoadState.Loading -> PageContentState.LOADING
+                is LoadState.Error -> PageContentState.ERROR
+                LoadState.Idle -> {
+                    if (scannedPdfs.isEmpty()) PageContentState.EMPTY else PageContentState.SUCCESS
+                }
+            }
+
+    val errorMessage: String?
+        get() = (loadState as? LoadState.Error)?.message
+
     val hasActiveFilters: Boolean
         get() =
             filterOptions.minPageCount != null ||
