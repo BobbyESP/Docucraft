@@ -2,12 +2,12 @@
 #General, lifecycle and core
 agp = "8.13.2"
 firebaseCrashlyticsGradle = "3.0.6"
-kotlin = "2.2.21"
+kotlin = "2.3.0"
 appcompat = "1.7.1"
 core-ktx = "1.17.0"
 lifecycle-runtime-ktx = "2.10.0"
-activity-compose = "1.12.1"
-ksp = "2.2.20-2.0.3"
+activity-compose = "1.12.2"
+ksp = "2.3.4"
 splashscreen = "1.2.0"
 leakcanary = "2.14"
 google-fonts = "1.10.0"
@@ -15,7 +15,7 @@ google-fonts = "1.10.0"
 nav3Core = "1.0.0"
 
 #Compose
-compose-bom = "2025.12.00"
+compose-bom = "2025.12.01"
 androidx-compose-material3 = "1.4.0"
 compose-util = "1.10.0"
 accompanist = "0.37.3"
@@ -36,7 +36,7 @@ kotlinx-serializationJson = "1.9.0"
 kotlinx-collectionsImmutable = "0.4.0"
 
 #Image loading
-landscapistCoil = "2.6.1"
+landscapistCoil = "2.8.2"
 
 #Network
 ktor = "3.3.3"
@@ -51,7 +51,7 @@ room = "2.8.4"
 datastore = "1.2.0"
 
 #Firebase, GMS...
-gmsPlayServicesAuth = "21.4.0"
+gmsPlayServicesAuth = "21.5.0"
 googleServices = "4.4.4"
 firebaseBom = "34.7.0"
 
@@ -207,6 +207,7 @@ firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "
 google-gms = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 ktfmt-gradle = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt" }
 androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidx-baselineprofile" }
+stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version = "0.6.6" }
 
 [bundles]
 core = ["core-ktx", "lifecycle-runtime-ktx", "lifecycle-compose-runtime", "lifecycle-compose-viewModel", "activity-compose", "core-appcompat", "core-splashscreen"]

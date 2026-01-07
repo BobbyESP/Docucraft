@@ -140,11 +140,11 @@ fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick
                     transitionSpec = {
                         ContentTransform(
                             targetContentEnter = slideInHorizontally(
-                                animationSpec = usableMotionScheme.fastSpatialSpec(),
+                                animationSpec = usableMotionScheme.defaultSpatialSpec(),
                             ) + fadeIn(usableMotionScheme.defaultEffectsSpec()),
                             initialContentExit =
                                 slideOutHorizontally(
-                                    animationSpec = usableMotionScheme.fastSpatialSpec(),
+                                    animationSpec = usableMotionScheme.defaultSpatialSpec(),
                                 ) + fadeOut(usableMotionScheme.defaultEffectsSpec()),
                         )
                     },

@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.google.gms) apply false
     alias(libs.plugins.firebase.crashlytics) apply false
+    alias(libs.plugins.stability.analyzer) apply false
     //alias(libs.plugins.androidTest) apply false
 }
 

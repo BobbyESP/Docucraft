@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.ktfmt.gradle)
     alias(libs.plugins.google.gms)
     alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.stability.analyzer)
 }
 
 android {
