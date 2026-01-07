@@ -5,12 +5,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
-import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.DARK_THEME_VALUE
-import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.HIGH_CONTRAST
-import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.MARQUEE_TEXT_ENABLED
-import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.PALETTE_STYLE
-import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.THEME_COLOR
-import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.USE_DYNAMIC_COLORING
+import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.Companion.DARK_THEME_VALUE
+import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.Companion.HIGH_CONTRAST
+import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.Companion.MARQUEE_TEXT_ENABLED
+import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.Companion.PALETTE_STYLE
+import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.Companion.THEME_COLOR
+import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey.Companion.USE_DYNAMIC_COLORING
 import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference
 import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference.Companion.DarkThemeValue
 import com.bobbyesp.docucraft.core.presentation.theme.isDynamicColoringSupported
@@ -18,7 +18,6 @@ import com.materialkolor.PaletteStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.io.IOException
@@ -50,27 +49,9 @@ class AppPreferences(
         return mapUserPreferences(preferences ?: emptyPreferences())
     }
 
-    suspend fun updateFinishedOnboarding(finishedOnboarding: Boolean) {
-        saveSetting(PreferencesKey.COMPLETED_ONBOARDING, finishedOnboarding)
-    }
-
-    suspend fun updateMarqueeTextEnabled(marqueeTextEnabled: Boolean) {
-        saveSetting(MARQUEE_TEXT_ENABLED, marqueeTextEnabled)
-    }
-
-    suspend fun updateDarkThemeValue(darkThemeValue: DarkThemeValue) {
-        saveSetting(DARK_THEME_VALUE, darkThemeValue.name)
-    }
-
-    suspend fun updateHighContrast(highContrast: Boolean) {
-        saveSetting(HIGH_CONTRAST, highContrast)
-    }
-
-    suspend fun updateDarkThemePreferences(darkThemePreference: DarkThemePreference) {
-        saveSetting(DARK_THEME_VALUE, darkThemePreference.darkThemeValue.name)
-        saveSetting(HIGH_CONTRAST, darkThemePreference.isHighContrastModeEnabled)
-    }
-
+    /**
+     * Special handling for dynamic coloring which requires device support.
+     */
     suspend fun updateDynamicColoring(dynamicColoring: Boolean, onCantEnable: () -> Unit) {
         if (dynamicColoring && !isDynamicColoringSupported()) {
             onCantEnable()
@@ -81,12 +62,13 @@ class AppPreferences(
         }
     }
 
-    suspend fun updateThemeColor(themeColor: Int) {
-        saveSetting(THEME_COLOR, themeColor)
-    }
-
-    suspend fun updatePaletteStyle(paletteStyle: PaletteStyle) {
-        saveSetting(PALETTE_STYLE, paletteStyle.name)
+    /**
+     * Updates the simplified Dark Theme preferences (Value + Contrast).
+     * This is a composite update helper.
+     */
+    suspend fun updateDarkThemePreferences(darkThemePreference: DarkThemePreference) {
+        saveSetting(DARK_THEME_VALUE, darkThemePreference.darkThemeValue.name)
+        saveSetting(HIGH_CONTRAST, darkThemePreference.isHighContrastModeEnabled)
     }
 
     private fun mapUserPreferences(preferences: Preferences): UserPreferences {
@@ -118,18 +100,10 @@ class AppPreferences(
         return DarkThemePreference(currentDarkThemeValue, highContrast)
     }
 
-    suspend fun fetchInitialPreferences() =
-        mapUserPreferences(dataStore.data.first().toPreferences())
 
     override suspend fun <T> saveSetting(key: PreferencesKey<T>, value: T) {
         dataStore.edit { preferences ->
-            when (value) {
-                is String -> preferences[key.key] = value
-                is Boolean -> preferences[key.key] = value
-                is Int -> preferences[key.key] = value
-                else ->
-                    throw IllegalArgumentException("Unsupported type: ${value!!::class.simpleName}")
-            }
+            preferences[key.key] = value
         }
     }
 

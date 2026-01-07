@@ -6,7 +6,6 @@ import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
-import com.materialkolor.DynamicMaterialExpressiveTheme
 import com.materialkolor.DynamicMaterialThemeState
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
@@ -25,6 +24,7 @@ fun DocucraftTheme(
     content: @Composable () -> Unit,
 ) {
     MaterialExpressiveTheme(
+        colorScheme = themeState.colorScheme,
         motionScheme = MotionScheme.expressive(),
         content = content,
     )

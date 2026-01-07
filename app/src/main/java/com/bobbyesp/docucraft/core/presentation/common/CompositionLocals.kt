@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
+import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferencesController
 import com.bobbyesp.docucraft.core.data.local.preferences.UserPreferences.Companion.emptyUserPreferences
 import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference
 import com.bobbyesp.docucraft.core.presentation.theme.DEFAULT_SEED_COLOR
@@ -28,7 +29,7 @@ val LocalDynamicThemeState =
 val LocalOrientation = compositionLocalOf<Int> { error("No orientation provided") }
 
 val LocalAppPreferencesController =
-    staticCompositionLocalOf<AppPreferences> { error("No settings controller provided") }
+    staticCompositionLocalOf<AppPreferencesController> { error("No settings controller provided") }
 
 val LocalWindowWidthState = staticCompositionLocalOf {
     WindowWidthSizeClass.Compact

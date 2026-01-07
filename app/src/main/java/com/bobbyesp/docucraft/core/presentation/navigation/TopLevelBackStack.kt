@@ -1,5 +1,6 @@
 package com.bobbyesp.docucraft.core.presentation.navigation
 
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -16,6 +17,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
  *   type.
  * @param startKey The key of the initial top-level destination.
  */
+@Stable
 class TopLevelBackStack<T : Any>(startKey: T) {
 
     // Maintain a stack for each top level route
@@ -29,6 +31,11 @@ class TopLevelBackStack<T : Any>(startKey: T) {
     // Expose the back stack so it can be rendered by the NavDisplay
     val backStack = mutableStateListOf(startKey)
 
+    /*
+     * Updates the back stack to reflect the current state of the top-level stacks.
+     * We re-add the whole list since in terms of a balance between stability and performance
+     * is better than having to rearrange the list and sync partial changes (insertion/deletion).
+     */
     private fun updateBackStack() =
         backStack.apply {
             clear()
