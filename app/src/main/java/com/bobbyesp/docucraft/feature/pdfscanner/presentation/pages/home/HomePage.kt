@@ -28,7 +28,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -90,7 +90,8 @@ import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscr
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfCard
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfListItem
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfCardPosition
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.others.selectiongroup.SelectionGroupItem
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.others.selectiongroup.SelectionGroupRow
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeUiAction
@@ -276,6 +277,7 @@ private fun DisplayScannedPdfs(
                 )
                 .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
         state = listState,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         stickyHeader {
             SortOptionsRow(
@@ -299,19 +301,30 @@ private fun DisplayScannedPdfs(
             )
         }
 
-        items(
+        itemsIndexed(
             items = scannedPdfs,
-            key = { scannedPdf -> scannedPdf.id },
-            contentType = { scannedPdf -> scannedPdf.javaClass.name },
-        ) { scannedPdf ->
-            ScannedPdfCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .animateItem(),
+            key = { _, scannedPdf -> scannedPdf.id },
+            contentType = { _, scannedPdf -> scannedPdf.javaClass.name },
+        ) { index, scannedPdf ->
+            val position =
+                when {
+                    scannedPdfs.size == 1 -> ScannedPdfCardPosition.SINGLE
+                    index == 0 -> ScannedPdfCardPosition.TOP
+                    index == scannedPdfs.lastIndex -> ScannedPdfCardPosition.BOTTOM
+                    else -> ScannedPdfCardPosition.MIDDLE
+                }
+
+            ScannedPdfListItem(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .animateItem(),
                 pdf = scannedPdf,
+                position = position,
                 onOpenPdf = { uri -> onAction(HomeUiAction.OpenPdf(uri)) },
                 onSharePdf = { uri -> onAction(HomeUiAction.SharePdf(uri)) },
-                onDeletePdf = { uri -> onAction(HomeUiAction.ShowDeleteConfirmation(uri)) },
+                onDeletePdf = { id -> onAction(HomeUiAction.ShowDeleteConfirmation(id)) },
                 onSavePdf = { onAction(HomeUiAction.SavePdf(scannedPdf)) },
                 onModifyPdfFields = { id -> onAction(HomeUiAction.ShowEditDialog(id)) },
             )
