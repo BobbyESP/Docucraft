@@ -14,15 +14,15 @@ sealed interface Route {
             get() = Icons.Rounded.Home
     }
 
-    @Serializable
-    data object Playground : Route, TopLevelRoute {
-        override val icon: ImageVector
-            get() = Icons.Rounded.DataObject
-    }
+//    @Serializable
+//    data object Playground : Route, TopLevelRoute {
+//        override val icon: ImageVector
+//            get() = Icons.Rounded.DataObject
+//    }
 }
 
 interface TopLevelRoute {
     val icon: ImageVector
 }
 
-val TopLevelRoutes = listOf<TopLevelRoute>(Route.Home, Route.Playground)
+val TopLevelRoutes = listOf<TopLevelRoute>(Route.Home) //Route.Playground

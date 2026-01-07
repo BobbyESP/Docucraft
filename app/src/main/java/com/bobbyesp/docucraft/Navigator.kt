@@ -11,7 +11,6 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
-import com.bobbyesp.docucraft.core.presentation.pages.playground.PlaygroundPage
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomePageWrapper
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -24,7 +23,6 @@ fun Navigator(topLevelBackStack: TopLevelBackStack<Route>) {
         entryProvider =
             entryProvider {
                 entry<Route.Home> { HomePageWrapper() }
-                entry<Route.Playground> { PlaygroundPage() }
             },
         transitionSpec = {
             // Slide in from right when navigating forward
