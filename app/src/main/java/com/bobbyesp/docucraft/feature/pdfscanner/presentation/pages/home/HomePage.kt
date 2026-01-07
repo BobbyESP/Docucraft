@@ -9,6 +9,8 @@ import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
@@ -30,6 +32,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -53,6 +56,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.motionScheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -83,7 +87,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.text.AnimatedCounter
-import com.bobbyesp.docucraft.core.presentation.motion.DefaultContentTransform
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscroll
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
@@ -113,29 +116,45 @@ fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick
 
     val isScanListEmpty by remember(scannedPdfs) { derivedStateOf { scannedPdfs.isEmpty() } }
 
+    val listState = rememberLazyListState()
+    val expandedFab by remember { derivedStateOf { !listState.isScrollInProgress } }
+
     val pdfsToShow by
-        remember(scannedPdfs, filteredPdfs, searchQuery, filterOptions) {
-            derivedStateOf {
-                if (searchQuery.isNotBlank() || filterOptions != FilterOptions.default) filteredPdfs
-                else scannedPdfs
-            }
+    remember(scannedPdfs, filteredPdfs, searchQuery, filterOptions) {
+        derivedStateOf {
+            if (searchQuery.isNotBlank() || filterOptions != FilterOptions.default) filteredPdfs
+            else scannedPdfs
         }
+    }
 
     val searchResultsCount by
-        remember(pdfsToShow, searchQuery, filterOptions) { derivedStateOf { pdfsToShow.size } }
+    remember(pdfsToShow, searchQuery, filterOptions) { derivedStateOf { pdfsToShow.size } }
+
+    val usableMotionScheme = motionScheme
 
     Scaffold(
         topBar = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 AnimatedContent(
                     targetState = isSearchBarVisible,
-                    transitionSpec = { DefaultContentTransform },
+                    transitionSpec = {
+                        ContentTransform(
+                            targetContentEnter = slideInHorizontally(
+                                animationSpec = usableMotionScheme.fastSpatialSpec(),
+                            ) + fadeIn(usableMotionScheme.defaultEffectsSpec()),
+                            initialContentExit =
+                                slideOutHorizontally(
+                                    animationSpec = usableMotionScheme.fastSpatialSpec(),
+                                ) + fadeOut(usableMotionScheme.defaultEffectsSpec()),
+                        )
+                    },
                     label = "SearchBarTransition",
                 ) { isSearchVisible ->
                     if (isSearchVisible) {
                         Column(
                             modifier =
-                                Modifier.background(MaterialTheme.colorScheme.surface)
+                                Modifier
+                                    .background(MaterialTheme.colorScheme.surface)
                                     .padding(horizontal = 16.dp, vertical = 8.dp)
                                     .fillMaxWidth()
                                     .windowInsetsPadding(WindowInsets.statusBars),
@@ -205,16 +224,15 @@ fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick
                                     verticalArrangement = Arrangement.spacedBy(4.dp),
                                 ) {
                                     Text(
-                                        text = stringResource(id = R.string.app_name).uppercase(),
+                                        text = stringResource(id = R.string.app_name),
                                         fontWeight = FontWeight.SemiBold,
                                         style = MaterialTheme.typography.titleLarge,
-                                        letterSpacing = 4.sp,
                                     )
                                 }
                             },
                             actions = {
-                                AnimatedContent(targetState = isScanListEmpty) { noPdfs ->
-                                    if (!noPdfs) {
+                                AnimatedContent(targetState = isScanListEmpty) { hasDocuments ->
+                                    if (!hasDocuments) {
                                         IconButton(
                                             onClick = {
                                                 onAction(HomeUiAction.ToggleSearchBar(true))
@@ -247,6 +265,7 @@ fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick
                 if (!showFab) {
                     ExtendedFloatingActionButton(
                         text = { Text(text = stringResource(id = R.string.scan)) },
+                        expanded = expandedFab,
                         icon = {
                             Icon(
                                 imageVector = Icons.Rounded.DocumentScanner,
@@ -273,6 +292,7 @@ fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick
                         CircularWavyProgressIndicator()
                     }
                 }
+
                 PageContentState.ERROR -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         ErrorContent(
@@ -281,6 +301,7 @@ fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick
                         )
                     }
                 }
+
                 PageContentState.EMPTY -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -289,11 +310,13 @@ fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick
                         EmptyStateScreen(modifier = Modifier, onScanPdfClick = onScanClick)
                     }
                 }
+
                 PageContentState.SUCCESS -> {
                     DisplayScannedPdfs(
                         scannedPdfs = pdfsToShow,
                         onAction = onAction,
                         filterOptions = filterOptions,
+                        listState = listState,
                     )
                 }
             }
@@ -306,26 +329,28 @@ private fun DisplayScannedPdfs(
     scannedPdfs: List<ScannedPdf>,
     filterOptions: FilterOptions,
     onAction: (HomeUiAction) -> Unit,
+    listState: LazyListState,
 ) {
-    val lazyListState = rememberLazyListState()
     var animatedOverscrollAmount by remember { mutableFloatStateOf(0f) }
 
     LazyColumn(
         modifier =
-            Modifier.fillMaxSize()
+            Modifier
+                .fillMaxSize()
                 .customOverscroll(
-                    listState = lazyListState,
+                    listState = listState,
                     onNewOverscrollAmount = { animatedOverscrollAmount = it },
                 )
                 .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
-        state = lazyListState,
+        state = listState,
     ) {
         stickyHeader {
             SortOptionsRow(
                 currentSortOption = filterOptions.sortBy,
                 onSortOptionChanged = { onAction(HomeUiAction.ApplySort(it)) },
                 modifier =
-                    Modifier.background(
+                    Modifier
+                        .background(
                             // fade to transparent from background
                             brush =
                                 Brush.verticalGradient(
@@ -347,7 +372,9 @@ private fun DisplayScannedPdfs(
             contentType = { scannedPdf -> scannedPdf.javaClass.name },
         ) { scannedPdf ->
             ScannedPdfCard(
-                modifier = Modifier.fillMaxWidth().animateItem(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .animateItem(),
                 pdf = scannedPdf,
                 onOpenPdf = { uri -> onAction(HomeUiAction.OpenPdf(uri)) },
                 onSharePdf = { uri -> onAction(HomeUiAction.SharePdf(uri)) },
@@ -355,6 +382,10 @@ private fun DisplayScannedPdfs(
                 onSavePdf = { onAction(HomeUiAction.SavePdf(scannedPdf)) },
                 onModifyPdfFields = { id -> onAction(HomeUiAction.ShowEditDialog(id)) },
             )
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(88.dp))
         }
     }
 }
@@ -366,15 +397,28 @@ fun SortOptionsRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        SelectionGroupRow(modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState())) {
+        SelectionGroupRow(
+            modifier = Modifier
+                .weight(1f)
+                .horizontalScroll(rememberScrollState())
+        ) {
             SortOption.Criteria.entries.forEach { criteria ->
                 SelectionGroupItem(
                     selected = currentSortOption.criteria == criteria,
-                    onClick = { onSortOptionChanged(SortOption(criteria, currentSortOption.order)) },
+                    onClick = {
+                        onSortOptionChanged(
+                            SortOption(
+                                criteria,
+                                currentSortOption.order
+                            )
+                        )
+                    },
                 ) {
                     Text(criteria.getLocalizedName())
                 }
@@ -383,7 +427,9 @@ fun SortOptionsRow(
 
         VerticalDivider(
             color = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.height(24.dp).padding(horizontal = 8.dp),
+            modifier = Modifier
+                .height(24.dp)
+                .padding(horizontal = 8.dp),
         )
 
         IconButton(
@@ -479,7 +525,9 @@ fun EmptyStateScreen(modifier: Modifier = Modifier, onScanPdfClick: () -> Unit) 
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -507,7 +555,9 @@ fun EmptyStateScreen(modifier: Modifier = Modifier, onScanPdfClick: () -> Unit) 
 
             Button(
                 onClick = onScanPdfClick,
-                modifier = Modifier.fillMaxWidth(0.8f).height(56.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(56.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors =
                     ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -534,7 +584,8 @@ fun EmptyStateScreen(modifier: Modifier = Modifier, onScanPdfClick: () -> Unit) 
 private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
     Card(
         modifier =
-            Modifier.fillMaxWidth()
+            Modifier
+                .fillMaxWidth()
                 .padding(16.dp)
                 .border(
                     width = 2.dp,
@@ -559,7 +610,9 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -589,7 +642,9 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
             }
             Button(
                 onClick = onRetry,
-                modifier = Modifier.fillMaxWidth(0.8f).height(50.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(50.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors =
                     ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -638,7 +693,7 @@ private fun PreviewHomePage() {
                                 title = "Apuntes de programación",
                                 description =
                                     "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " +
-                                        "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
+                                            "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
                                 path = "content://com.example.documents/document/2".toUri(),
                                 createdTimestamp = System.currentTimeMillis(),
                                 fileSize = 2048,
