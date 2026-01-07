@@ -27,7 +27,7 @@ val coreFunctionalitiesModule = module {
 
     single<DataStore<Preferences>> { androidContext().dataStore }
     single<AppPreferences> {
-        AppPreferences(dataStore = get(), scope = get(qualifier = named("AppMainSupervisedScope")))
+        AppPreferences(dataStore = get())
     }
 
     single<ImageLoader> {

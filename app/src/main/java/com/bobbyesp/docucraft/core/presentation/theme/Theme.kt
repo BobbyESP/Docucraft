@@ -1,30 +1,31 @@
 package com.bobbyesp.docucraft.core.presentation.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
-import com.materialkolor.DynamicMaterialThemeState
+import androidx.compose.ui.graphics.Color
 import com.materialkolor.PaletteStyle
-import com.materialkolor.dynamiccolor.ColorSpec
 import com.materialkolor.rememberDynamicMaterialThemeState
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocucraftTheme(
-    themeState: DynamicMaterialThemeState =
-        rememberDynamicMaterialThemeState(
-            seedColor = MaterialTheme.colorScheme.primary,
-            style = PaletteStyle.Expressive,
-            isDark = isSystemInDarkTheme(),
-            specVersion = ColorSpec.SpecVersion.SPEC_2025,
-        ),
+    colorScheme: ColorScheme? = null,
     content: @Composable () -> Unit,
 ) {
+    val finalColorScheme =
+        colorScheme
+            ?: rememberDynamicMaterialThemeState(
+                seedColor = Color.Blue,
+                style = PaletteStyle.Expressive,
+                isDark = isSystemInDarkTheme(),
+            ).colorScheme
+
     MaterialExpressiveTheme(
-        colorScheme = themeState.colorScheme,
+        colorScheme = finalColorScheme,
         motionScheme = MotionScheme.expressive(),
         content = content,
     )

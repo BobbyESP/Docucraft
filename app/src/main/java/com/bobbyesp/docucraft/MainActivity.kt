@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -13,6 +12,7 @@ import coil.imageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.domain.repository.DocumentScannerRepository
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
+import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
@@ -51,22 +51,21 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
         setContent {
             val sonner = rememberToasterState()
-            DocucraftTheme {
-                val windowSizeClass = calculateWindowSizeClass(this)
 
-                AppLocalSettingsProvider(
-                    windowWidthSize = windowSizeClass.widthSizeClass,
-                    sonner = sonner,
-                    appPreferences = appPreferences,
-                    imageLoader = imageLoader,
-                ) {
-                    Navigator(topLevelBackStack = topLevelBackStack)
-                    Toaster(
-                        state = sonner,
-                        richColors = true,
-                        darkTheme = isSystemInDarkTheme(), // TODO: Change by the settings wrapper
-                    )
-                }
+            val windowSizeClass = calculateWindowSizeClass(this)
+
+            AppLocalSettingsProvider(
+                windowWidthSize = windowSizeClass.widthSizeClass,
+                sonner = sonner,
+                appPreferences = appPreferences,
+                imageLoader = imageLoader,
+            ) {
+                Navigator(topLevelBackStack = topLevelBackStack)
+                Toaster(
+                    state = sonner,
+                    richColors = true,
+                    darkTheme = com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme.current.isDarkTheme(),
+                )
             }
         }
     }

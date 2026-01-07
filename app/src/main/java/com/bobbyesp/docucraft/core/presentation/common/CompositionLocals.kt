@@ -1,22 +1,27 @@
 package com.bobbyesp.docucraft.core.presentation.common
 
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
-import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferencesController
-import com.bobbyesp.docucraft.core.data.local.preferences.UserPreferences.Companion.emptyUserPreferences
+import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey
 import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference
+import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference.DarkThemeValue
 import com.bobbyesp.docucraft.core.presentation.theme.DEFAULT_SEED_COLOR
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.presentation.theme.isDynamicColoringSupported
 import com.dokar.sonner.ToasterState
 import com.dokar.sonner.rememberToasterState
-import com.materialkolor.DynamicMaterialThemeState
 import com.materialkolor.rememberDynamicMaterialThemeState
 import com.skydoves.landscapist.coil.LocalCoilImageLoader
 
@@ -24,8 +29,6 @@ val LocalDarkTheme =
     compositionLocalOf<DarkThemePreference> { error("No Dark Theme preferences provided") }
 val LocalSeedColor = compositionLocalOf { DEFAULT_SEED_COLOR }
 val LocalDynamicColoringSwitch = compositionLocalOf { false }
-val LocalDynamicThemeState =
-    compositionLocalOf<DynamicMaterialThemeState> { error("No theme state provided") }
 val LocalOrientation = compositionLocalOf<Int> { error("No orientation provided") }
 
 val LocalAppPreferencesController =
@@ -41,46 +44,72 @@ val LocalSonner = compositionLocalOf<ToasterState> { error("No sonner toaster st
 fun AppLocalSettingsProvider(
     windowWidthSize: WindowWidthSizeClass,
     sonner: ToasterState = rememberToasterState(),
-    appPreferences: AppPreferences,
+    appPreferences: AppPreferencesController,
     imageLoader: ImageLoader,
     content: @Composable () -> Unit,
 ) {
-    val settingsFlow =
-        appPreferences.userPreferencesFlow.collectAsStateWithLifecycle(
-            initialValue = emptyUserPreferences()
-        )
+    val seedColor by appPreferences.getSettingFlow(PreferencesKey.THEME_COLOR, null)
+        .collectAsStateWithLifecycle(initialValue = PreferencesKey.THEME_COLOR.defaultValue)
 
-    val seedColor = settingsFlow.value.themeColor
-    val darkTheme = settingsFlow.value.darkThemePreference
-    val themeStyle = settingsFlow.value.paletteStyle
+    val useDynamicColoring by appPreferences.getSettingFlow(PreferencesKey.USE_DYNAMIC_COLORING, null)
+        .collectAsStateWithLifecycle(initialValue = PreferencesKey.USE_DYNAMIC_COLORING.defaultValue)
+
+    val paletteStyleName by appPreferences.getSettingFlow(PreferencesKey.PALETTE_STYLE, null)
+        .collectAsStateWithLifecycle(initialValue = PreferencesKey.PALETTE_STYLE.defaultValue)
+    val paletteStyle = com.materialkolor.PaletteStyle.valueOf(paletteStyleName)
+
+    val darkThemeValueName by appPreferences.getSettingFlow(PreferencesKey.DARK_THEME_VALUE, null)
+        .collectAsStateWithLifecycle(initialValue = PreferencesKey.DARK_THEME_VALUE.defaultValue)
+
+    val darkThemeValue = try {
+        DarkThemeValue.valueOf(darkThemeValueName)
+    } catch (e: IllegalArgumentException) {
+        when (darkThemeValueName) {
+            "ON" -> DarkThemeValue.DARK
+            "OFF" -> DarkThemeValue.LIGHT
+            else -> DarkThemeValue.FOLLOW_SYSTEM
+        }
+    }
+
+    val isHighContrast by appPreferences.getSettingFlow(PreferencesKey.HIGH_CONTRAST, null)
+        .collectAsStateWithLifecycle(initialValue = PreferencesKey.HIGH_CONTRAST.defaultValue)
+
+    val darkTheme = DarkThemePreference(
+        darkThemeValue = darkThemeValue,
+        isHighContrastModeEnabled = isHighContrast,
+    )
 
     val config = LocalConfiguration.current
+    val context = LocalContext.current
 
-    val themeState =
+    val isDark = darkTheme.isDarkTheme()
+
+    val colorScheme = if (useDynamicColoring && isDynamicColoringSupported()) {
+        if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else {
         rememberDynamicMaterialThemeState(
             seedColor = Color(seedColor),
-            isDark = darkTheme.isDarkTheme(),
-            style = themeStyle,
+            isDark = isDark,
+            style = paletteStyle,
             isAmoled = darkTheme.isHighContrastModeEnabled,
-        )
+        ).colorScheme
+    }
 
     CompositionLocalProvider(
         LocalDarkTheme provides darkTheme, // Tells the app what dark theme to use
         // TODO: Modify to handle multiple colors (like based on images)
-        LocalSeedColor provides
-            seedColor, // Tells the app what color to use as seed for the palette
-        LocalDynamicColoringSwitch provides
-            settingsFlow.value
-                .useDynamicColoring, // Tells the app if it should use dynamic colors or not
+        LocalSeedColor provides seedColor, // Tells the app what color to use as seed for the palette
+        LocalDynamicColoringSwitch provides useDynamicColoring, // Tells the app if it should use dynamic colors or not
         // (Android
         // 12+ feature)
-        LocalDynamicThemeState provides themeState, // Provides the theme state to the app
         LocalAppPreferencesController provides appPreferences,
         LocalWindowWidthState provides windowWidthSize,
         LocalOrientation provides config.orientation,
         LocalSonner provides sonner,
         LocalCoilImageLoader provides imageLoader,
     ) {
-        content() // The content of the app
+        DocucraftTheme(colorScheme = colorScheme) {
+            content() // The content of the app
+        }
     }
 }
