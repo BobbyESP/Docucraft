@@ -2,6 +2,8 @@ package com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract
 
 import com.bobbyesp.docucraft.core.domain.model.ScannedDocument
 
+//TODO: Use these in the UI
+
 data class ScanUiState(
     val isLoading: Boolean = false,
     val scannedDocument: ScannedDocument? = null,

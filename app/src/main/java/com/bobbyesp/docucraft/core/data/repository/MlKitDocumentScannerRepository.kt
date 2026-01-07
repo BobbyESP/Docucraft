@@ -7,6 +7,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import com.bobbyesp.docucraft.core.data.datasource.MlKitDataSource
+import com.bobbyesp.docucraft.core.domain.error.DomainError
 import com.bobbyesp.docucraft.core.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.core.domain.repository.DocumentScannerRepository
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
@@ -20,7 +21,6 @@ import kotlinx.coroutines.withContext
  * It delegates the actual processing to the DataSource and ensures thread safety.
  */
 class MlKitDocumentScannerRepository(
-    private val context: Context,
     private val dataSource: MlKitDataSource
 ) : DocumentScannerRepository {
 
@@ -32,7 +32,7 @@ class MlKitDocumentScannerRepository(
                 }
 
                 val scannerResult = GmsDocumentScanningResult.fromActivityResultIntent(input.data)
-                    ?: throw IllegalArgumentException("Invalid result provided by the scanner")
+                    ?: throw DomainError.ScanCancelled("Scan was cancelled by the user. No result retrieved.")
 
                 val document = dataSource.processScanningResult(scannerResult)
                 Result.success(document)

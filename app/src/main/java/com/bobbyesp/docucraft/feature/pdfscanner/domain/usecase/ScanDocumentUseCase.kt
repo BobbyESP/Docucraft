@@ -1,5 +1,6 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase
 
+import com.bobbyesp.docucraft.core.domain.error.DomainError
 import com.bobbyesp.docucraft.core.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.core.domain.repository.DocumentScannerRepository
 import com.bobbyesp.docucraft.core.util.Resource
@@ -27,6 +28,10 @@ class ScanDocumentUseCase(
                 emit(Resource.Success(document))
             },
             onFailure = { error ->
+                if(error is DomainError.ScanCancelled) {
+                    emit(Resource.Idle())
+                    return@fold
+                }
                 emit(Resource.Error(message = error.message ?: "Unknown error", error = error))
             }
         )

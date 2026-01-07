@@ -11,5 +11,5 @@ val coreModule = module {
     single<MlKitDataSource> { MlKitDataSourceImpl() }
 
     // Repository
-    single<DocumentScannerRepository> { MlKitDocumentScannerRepository(get(), get()) }
+    single<DocumentScannerRepository> { MlKitDocumentScannerRepository(get()) }
 }
