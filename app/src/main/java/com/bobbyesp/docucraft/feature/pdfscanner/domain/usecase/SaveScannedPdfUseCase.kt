@@ -44,11 +44,7 @@ class SaveScannedPdfUseCase(
 
         // Get content URI using FileProvider
         val documentUri =
-            FileProvider.getUriForFile(
-                context,
-                App.getAuthority(context),
-                File(pdfOutputFile.path),
-            )
+            FileProvider.getUriForFile(context, App.getAuthority(context), File(pdfOutputFile.path))
 
         // Generate thumbnail
         val thumbnailPath =
@@ -90,11 +86,7 @@ class SaveScannedPdfUseCase(
 
         // Get content URI using FileProvider
         val documentUri =
-            FileProvider.getUriForFile(
-                context,
-                App.getAuthority(context),
-                File(pdfOutputFile.path),
-            )
+            FileProvider.getUriForFile(context, App.getAuthority(context), File(pdfOutputFile.path))
 
         // Generate thumbnail
         val thumbnailPath =

@@ -9,17 +9,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Concrete implementation of the ML Kit Data Source.
- * Handles the direct interaction with ML Kit classes.
+ * Concrete implementation of the ML Kit Data Source. Handles the direct interaction with ML Kit
+ * classes.
  */
 class MlKitDataSourceImpl : MlKitDataSource {
 
     override suspend fun processScanningResult(result: Any): ScannedDocument {
         return withContext(Dispatchers.Default) {
             if (result !is GmsDocumentScanningResult) {
-                throw ScannerException("Expected GmsDocumentScanningResult but received ${result::class.java.simpleName}")
+                throw ScannerException(
+                    "Expected GmsDocumentScanningResult but received ${result::class.java.simpleName}"
+                )
             }
-            // Mapping can be computationally expensive if we process many pages, so we use Default dispatcher
+            // Mapping can be computationally expensive if we process many pages, so we use Default
+            // dispatcher
             MlKitMapper.mapToDomain(result)
         }
     }

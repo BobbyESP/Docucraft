@@ -21,7 +21,6 @@ import io.github.vinceglb.filekit.dialogs.openFileSaver
 import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -61,9 +60,7 @@ class HomeViewModel(
     }
 
     private fun sendEvent(effect: HomeUiEffect) {
-        viewModelScope.launch {
-            _uiEffect.send(effect)
-        }
+        viewModelScope.launch { _uiEffect.send(effect) }
     }
 
     fun onAction(action: HomeUiAction) {
@@ -103,7 +100,9 @@ class HomeViewModel(
             is HomeUiAction.ShowDeleteConfirmation -> {
                 launchIO {
                     val scannedPdf = getPdfById(action.id)
-                    _uiState.updateValue { it.copy(pdfToBeRemoved = TemporalState.Present(scannedPdf)) }
+                    _uiState.updateValue {
+                        it.copy(pdfToBeRemoved = TemporalState.Present(scannedPdf))
+                    }
                 }
             }
 
@@ -111,11 +110,7 @@ class HomeViewModel(
                 launchIO {
                     val scannedPdf = getPdfById(action.id)
                     _uiState.updateValue {
-                        it.copy(
-                            pdfToBeModified = TemporalState.Present(
-                                scannedPdf
-                            )
-                        )
+                        it.copy(pdfToBeModified = TemporalState.Present(scannedPdf))
                     }
                 }
             }
@@ -129,7 +124,7 @@ class HomeViewModel(
                     it.copy(
                         pdfToBeRemoved = TemporalState.NotPresent,
                         pdfToBeModified = TemporalState.NotPresent,
-                        pdfToShowInformation = TemporalState.NotPresent
+                        pdfToShowInformation = TemporalState.NotPresent,
                     )
                 }
             }
@@ -150,7 +145,9 @@ class HomeViewModel(
             }
 
             is HomeUiAction.ApplySort -> {
-                _uiState.updateValue { it.copy(filterOptions = it.filterOptions.copy(sortBy = action.sortOption)) }
+                _uiState.updateValue {
+                    it.copy(filterOptions = it.filterOptions.copy(sortBy = action.sortOption))
+                }
                 applySearchAndFilters()
             }
 
@@ -198,15 +195,12 @@ class HomeViewModel(
                             it.copy(isScanning = false, scanUserMessage = resource.message)
                         }
                         sendEvent(
-                            HomeUiEffect.ScanFailure(
-                                resource.error ?: Exception(
-                                    resource.message
-                                )
-                            )
+                            HomeUiEffect.ScanFailure(resource.error ?: Exception(resource.message))
                         )
                     }
 
-                    else -> { /* Ignore other states */
+                    else -> {
+                        /* Ignore other states */
                     }
                 }
             }
@@ -217,9 +211,7 @@ class HomeViewModel(
         launchIO {
             getAllScannedPdfsUseCase()
                 .collectSafely(
-                    onLoading = {
-                        _uiState.updateValue { it.copy(isLoadingPdfs = true) }
-                    },
+                    onLoading = { _uiState.updateValue { it.copy(isLoadingPdfs = true) } },
                     onEach = { scannedPdfs ->
                         _uiState.updateValue { state -> state.copy(scannedPdfs = scannedPdfs) }
 
@@ -233,9 +225,7 @@ class HomeViewModel(
                     },
                     onError = { error ->
                         logError("Failed to retrieve PDFs: ${error.message}", error)
-                        _uiState.updateValue {
-                            it.copy(isLoadingPdfs = false, loadError = error)
-                        }
+                        _uiState.updateValue { it.copy(isLoadingPdfs = false, loadError = error) }
                         sendEvent(HomeUiEffect.ShowError(error))
                     },
                 )
@@ -260,8 +250,8 @@ class HomeViewModel(
                     result =
                         result.filter { pdf ->
                             pdf.title?.contains(query, ignoreCase = true) == true ||
-                                    pdf.filename.contains(query, ignoreCase = true) ||
-                                    pdf.description?.contains(query, ignoreCase = true) == true
+                                pdf.filename.contains(query, ignoreCase = true) ||
+                                pdf.description?.contains(query, ignoreCase = true) == true
                         }
                 }
             }
@@ -311,7 +301,9 @@ class HomeViewModel(
         executeAsync(
             onSuccess = {
                 logInfo("PDF metadata updated successfully")
-                sendEvent(HomeUiEffect.ScanSuccess) // Reusing ScanSuccess as generic success or create new one
+                sendEvent(
+                    HomeUiEffect.ScanSuccess
+                ) // Reusing ScanSuccess as generic success or create new one
             },
             onError = { error ->
                 logError("Failed to modify PDF: ${error.message}", error)

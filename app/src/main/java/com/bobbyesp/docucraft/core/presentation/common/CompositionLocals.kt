@@ -14,7 +14,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferencesController
-import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey
+import com.bobbyesp.docucraft.core.data.local.preferences.AppSettings
 import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference
 import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference.DarkThemeValue
 import com.bobbyesp.docucraft.core.presentation.theme.DEFAULT_SEED_COLOR
@@ -48,58 +48,84 @@ fun AppLocalSettingsProvider(
     imageLoader: ImageLoader,
     content: @Composable () -> Unit,
 ) {
-    val seedColor by appPreferences.getSettingFlow(PreferencesKey.THEME_COLOR, null)
-        .collectAsStateWithLifecycle(initialValue = PreferencesKey.THEME_COLOR.defaultValue)
+    val seedColor by
+        appPreferences
+            .getSettingFlow(AppSettings.Theming.THEME_COLOR, null)
+            .collectAsStateWithLifecycle(
+                initialValue = AppSettings.Theming.THEME_COLOR.defaultValue
+            )
 
-    val useDynamicColoring by appPreferences.getSettingFlow(PreferencesKey.USE_DYNAMIC_COLORING, null)
-        .collectAsStateWithLifecycle(initialValue = PreferencesKey.USE_DYNAMIC_COLORING.defaultValue)
+    val useDynamicColoring by
+        appPreferences
+            .getSettingFlow(AppSettings.Theming.USE_DYNAMIC_COLORING, null)
+            .collectAsStateWithLifecycle(
+                initialValue = AppSettings.Theming.USE_DYNAMIC_COLORING.defaultValue
+            )
 
-    val paletteStyleName by appPreferences.getSettingFlow(PreferencesKey.PALETTE_STYLE, null)
-        .collectAsStateWithLifecycle(initialValue = PreferencesKey.PALETTE_STYLE.defaultValue)
+    val paletteStyleName by
+        appPreferences
+            .getSettingFlow(AppSettings.Theming.PALETTE_STYLE, null)
+            .collectAsStateWithLifecycle(
+                initialValue = AppSettings.Theming.PALETTE_STYLE.defaultValue
+            )
     val paletteStyle = com.materialkolor.PaletteStyle.valueOf(paletteStyleName)
 
-    val darkThemeValueName by appPreferences.getSettingFlow(PreferencesKey.DARK_THEME_VALUE, null)
-        .collectAsStateWithLifecycle(initialValue = PreferencesKey.DARK_THEME_VALUE.defaultValue)
+    val darkThemeValueName by
+        appPreferences
+            .getSettingFlow(AppSettings.Theming.DARK_THEME_VALUE, null)
+            .collectAsStateWithLifecycle(
+                initialValue = AppSettings.Theming.DARK_THEME_VALUE.defaultValue
+            )
 
-    val darkThemeValue = try {
-        DarkThemeValue.valueOf(darkThemeValueName)
-    } catch (e: IllegalArgumentException) {
-        when (darkThemeValueName) {
-            "ON" -> DarkThemeValue.DARK
-            "OFF" -> DarkThemeValue.LIGHT
-            else -> DarkThemeValue.FOLLOW_SYSTEM
+    val darkThemeValue =
+        try {
+            DarkThemeValue.valueOf(darkThemeValueName)
+        } catch (_: IllegalArgumentException) {
+            when (darkThemeValueName) {
+                "ON" -> DarkThemeValue.DARK
+                "OFF" -> DarkThemeValue.LIGHT
+                else -> DarkThemeValue.FOLLOW_SYSTEM
+            }
         }
-    }
 
-    val isHighContrast by appPreferences.getSettingFlow(PreferencesKey.HIGH_CONTRAST, null)
-        .collectAsStateWithLifecycle(initialValue = PreferencesKey.HIGH_CONTRAST.defaultValue)
+    val isHighContrast by
+        appPreferences
+            .getSettingFlow(AppSettings.Theming.HIGH_CONTRAST, null)
+            .collectAsStateWithLifecycle(
+                initialValue = AppSettings.Theming.HIGH_CONTRAST.defaultValue
+            )
 
-    val darkTheme = DarkThemePreference(
-        darkThemeValue = darkThemeValue,
-        isHighContrastModeEnabled = isHighContrast,
-    )
+    val darkTheme =
+        DarkThemePreference(
+            darkThemeValue = darkThemeValue,
+            isHighContrastModeEnabled = isHighContrast,
+        )
 
     val config = LocalConfiguration.current
     val context = LocalContext.current
 
     val isDark = darkTheme.isDarkTheme()
 
-    val colorScheme = if (useDynamicColoring && isDynamicColoringSupported()) {
-        if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-    } else {
-        rememberDynamicMaterialThemeState(
-            seedColor = Color(seedColor),
-            isDark = isDark,
-            style = paletteStyle,
-            isAmoled = darkTheme.isHighContrastModeEnabled,
-        ).colorScheme
-    }
+    val colorScheme =
+        if (useDynamicColoring && isDynamicColoringSupported()) {
+            if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        } else {
+            rememberDynamicMaterialThemeState(
+                    seedColor = Color(seedColor),
+                    isDark = isDark,
+                    style = paletteStyle,
+                    isAmoled = darkTheme.isHighContrastModeEnabled,
+                )
+                .colorScheme
+        }
 
     CompositionLocalProvider(
         LocalDarkTheme provides darkTheme, // Tells the app what dark theme to use
         // TODO: Modify to handle multiple colors (like based on images)
-        LocalSeedColor provides seedColor, // Tells the app what color to use as seed for the palette
-        LocalDynamicColoringSwitch provides useDynamicColoring, // Tells the app if it should use dynamic colors or not
+        LocalSeedColor provides
+            seedColor, // Tells the app what color to use as seed for the palette
+        LocalDynamicColoringSwitch provides
+            useDynamicColoring, // Tells the app if it should use dynamic colors or not
         // (Android
         // 12+ feature)
         LocalAppPreferencesController provides appPreferences,

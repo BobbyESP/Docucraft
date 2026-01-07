@@ -99,11 +99,7 @@ import kotlin.math.roundToInt
     ExperimentalMaterial3ExpressiveApi::class,
 )
 @Composable
-fun HomePage(
-    uiState: HomeUiState,
-    onAction: (HomeUiAction) -> Unit,
-    onScanClick: () -> Unit,
-) {
+fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick: () -> Unit) {
     val scannedPdfs = uiState.scannedPdfs
     val filteredPdfs = uiState.filteredPdfs
     val searchQuery = uiState.searchQuery
@@ -115,16 +111,13 @@ fun HomePage(
     val pdfsToShow by
         remember(scannedPdfs, filteredPdfs, searchQuery, filterOptions) {
             derivedStateOf {
-                if (searchQuery.isNotBlank() || filterOptions != FilterOptions.default)
-                    filteredPdfs
+                if (searchQuery.isNotBlank() || filterOptions != FilterOptions.default) filteredPdfs
                 else scannedPdfs
             }
         }
 
     val searchResultsCount by
-        remember(pdfsToShow, searchQuery, filterOptions) {
-            derivedStateOf { pdfsToShow.size }
-        }
+        remember(pdfsToShow, searchQuery, filterOptions) { derivedStateOf { pdfsToShow.size } }
 
     Scaffold(
         topBar = {
@@ -161,9 +154,7 @@ fun HomePage(
                                     onQueryChange = {
                                         onAction(HomeUiAction.UpdateSearchQuery(it))
                                     },
-                                    onClear = {
-                                        onAction(HomeUiAction.ClearSearch)
-                                    },
+                                    onClear = { onAction(HomeUiAction.ClearSearch) },
                                 )
                                 IconButton(
                                     onClick = {
@@ -263,7 +254,8 @@ fun HomePage(
             }
         },
     ) { padding ->
-        Crossfade(modifier = Modifier.padding(padding), targetState = uiState.isLoadingPdfs) { isLoading ->
+        Crossfade(modifier = Modifier.padding(padding), targetState = uiState.isLoadingPdfs) {
+            isLoading ->
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularWavyProgressIndicator()
@@ -282,10 +274,7 @@ fun HomePage(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center,
                         ) {
-                            EmptyStateScreen(
-                                modifier = Modifier,
-                                onScanPdfClick = onScanClick,
-                            )
+                            EmptyStateScreen(modifier = Modifier, onScanPdfClick = onScanClick)
                         }
                     } else {
                         DisplayScannedPdfs(
@@ -322,9 +311,7 @@ private fun DisplayScannedPdfs(
         stickyHeader {
             SortOptionsRow(
                 currentSortOption = filterOptions.sortBy,
-                onSortOptionChanged = {
-                    onAction(HomeUiAction.ApplySort(it))
-                },
+                onSortOptionChanged = { onAction(HomeUiAction.ApplySort(it)) },
                 modifier =
                     Modifier.background(
                             // fade to transparent from background
@@ -617,36 +604,37 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
 private fun PreviewHomePage() {
     DocucraftTheme {
         HomePage(
-            uiState = HomeUiState(
-                scannedPdfs =
-                listOf(
-                    ScannedPdf(
-                        id = "1",
-                        filename = "document1.pdf",
-                        title = "Documento 1 de prueba. Título corto",
-                        description =
-                        "Description para el documento 1. La descripción no va a ser muy larga.",
-                        path = "content://com.example.documents/document/1".toUri(),
-                        createdTimestamp = System.currentTimeMillis(),
-                        fileSize = 1024,
-                        pageCount = 10,
-                        thumbnail = "content://com.example.thumbnails/thumbnail/1",
-                    ),
-                    ScannedPdf(
-                        id = "2",
-                        filename = "document2.pdf",
-                        title = "Apuntes de programación",
-                        description =
-                        "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " +
-                                "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
-                        path = "content://com.example.documents/document/2".toUri(),
-                        createdTimestamp = System.currentTimeMillis(),
-                        fileSize = 2048,
-                        pageCount = 20,
-                        thumbnail = "content://com.example.thumbnails/thumbnail/2",
-                    ),
-                )
-            ),
+            uiState =
+                HomeUiState(
+                    scannedPdfs =
+                        listOf(
+                            ScannedPdf(
+                                id = "1",
+                                filename = "document1.pdf",
+                                title = "Documento 1 de prueba. Título corto",
+                                description =
+                                    "Description para el documento 1. La descripción no va a ser muy larga.",
+                                path = "content://com.example.documents/document/1".toUri(),
+                                createdTimestamp = System.currentTimeMillis(),
+                                fileSize = 1024,
+                                pageCount = 10,
+                                thumbnail = "content://com.example.thumbnails/thumbnail/1",
+                            ),
+                            ScannedPdf(
+                                id = "2",
+                                filename = "document2.pdf",
+                                title = "Apuntes de programación",
+                                description =
+                                    "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " +
+                                        "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
+                                path = "content://com.example.documents/document/2".toUri(),
+                                createdTimestamp = System.currentTimeMillis(),
+                                fileSize = 2048,
+                                pageCount = 20,
+                                thumbnail = "content://com.example.thumbnails/thumbnail/2",
+                            ),
+                        )
+                ),
             onAction = {},
             onScanClick = {},
         )

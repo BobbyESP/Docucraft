@@ -26,9 +26,7 @@ val coreFunctionalitiesModule = module {
     single<TopLevelBackStack<Route>> { TopLevelBackStack(startKey = Route.Home) }
 
     single<DataStore<Preferences>> { androidContext().dataStore }
-    single<AppPreferences> {
-        AppPreferences(dataStore = get())
-    }
+    single<AppPreferences> { AppPreferences(dataStore = get()) }
 
     single<ImageLoader> {
         val context = androidContext()

@@ -11,8 +11,8 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 /**
- * Dependency injection module for PDF Scanner feature.
- * Provides: repositories, services, and use cases.
+ * Dependency injection module for PDF Scanner feature. Provides: repositories, services, and use
+ * cases.
  */
 val pdfScannerDataModule = module {
     // Service layer
@@ -52,4 +52,3 @@ val pdfScannerDataModule = module {
         )
     }
 }
-

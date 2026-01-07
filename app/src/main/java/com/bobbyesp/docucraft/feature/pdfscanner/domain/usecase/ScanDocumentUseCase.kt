@@ -8,12 +8,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 /**
- * Use case for scanning a document.
- * It orchestrates the scanning process using the DocumentScannerRepository.
+ * Use case for scanning a document. It orchestrates the scanning process using the
+ * DocumentScannerRepository.
  */
-class ScanDocumentUseCase(
-    private val scannerRepository: DocumentScannerRepository
-) {
+class ScanDocumentUseCase(private val scannerRepository: DocumentScannerRepository) {
     /**
      * Executes the document scanning process.
      *
@@ -24,16 +22,14 @@ class ScanDocumentUseCase(
         emit(Resource.Loading())
         val result = scannerRepository.scanDocument(input)
         result.fold(
-            onSuccess = { document ->
-                emit(Resource.Success(document))
-            },
+            onSuccess = { document -> emit(Resource.Success(document)) },
             onFailure = { error ->
-                if(error is DomainError.ScanCancelled) {
+                if (error is DomainError.ScanCancelled) {
                     emit(Resource.Idle())
                     return@fold
                 }
                 emit(Resource.Error(message = error.message ?: "Unknown error", error = error))
-            }
+            },
         )
     }
 }

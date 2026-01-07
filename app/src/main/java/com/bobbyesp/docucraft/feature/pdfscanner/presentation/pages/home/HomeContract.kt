@@ -8,8 +8,8 @@ import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 
 /**
- * Defines the contract for the Home Screen (MVI Pattern).
- * Contains the State, Actions (Inputs), and Effects (Outputs).
+ * Defines the contract for the Home Screen (MVI Pattern). Contains the State, Actions (Inputs), and
+ * Effects (Outputs).
  */
 
 // --- STATE ---
@@ -35,10 +35,11 @@ data class HomeUiState(
     // Scanning State
     val isScanning: Boolean = false,
     val lastScannedDocument: ScannedDocument? = null,
-    val scanUserMessage: String? = null
+    val scanUserMessage: String? = null,
 ) {
     val hasActiveFilters: Boolean
-        get() = filterOptions.minPageCount != null ||
+        get() =
+            filterOptions.minPageCount != null ||
                 filterOptions.minFileSize != null ||
                 filterOptions.dateRange != null ||
                 filterOptions.sortBy != SortOption.DateDesc
@@ -51,28 +52,43 @@ sealed interface HomeUiAction {
 
     // Scanning
     data object OnScanButtonClicked : HomeUiAction
+
     data class OnScanResultReceived(val result: Any) : HomeUiAction
+
     data object OnScanErrorDismissed : HomeUiAction
 
     // PDF Operations (User Intents)
     data class OpenPdf(val uri: Uri) : HomeUiAction
+
     data class SavePdf(val pdf: ScannedPdf) : HomeUiAction
+
     data class SharePdf(val uri: Uri) : HomeUiAction
+
     data class DeletePdf(val id: String?) : HomeUiAction // null id means cancel/dismiss
-    data class UpdatePdfMetadata(val id: String, val title: String, val description: String) : HomeUiAction
+
+    data class UpdatePdfMetadata(val id: String, val title: String, val description: String) :
+        HomeUiAction
 
     // Dialog Triggers
     data class ShowDeleteConfirmation(val id: String) : HomeUiAction
+
     data class ShowEditDialog(val id: String) : HomeUiAction
+
     data class ShowPdfInfo(val id: String) : HomeUiAction
+
     data object DismissDialogs : HomeUiAction
 
     // Search & Filter
     data class UpdateSearchQuery(val query: String) : HomeUiAction
+
     data object ClearSearch : HomeUiAction
+
     data class ToggleSearchBar(val isVisible: Boolean) : HomeUiAction
+
     data class ApplySort(val sortOption: SortOption) : HomeUiAction
+
     data class ApplyFilter(val filterOptions: FilterOptions) : HomeUiAction
+
     data object ClearFilters : HomeUiAction
 }
 
@@ -80,21 +96,28 @@ sealed interface HomeUiAction {
 sealed interface HomeUiEffect {
     // Generic
     data class ShowError(val error: Throwable) : HomeUiEffect
+
     data class ShowMessage(val message: String) : HomeUiEffect
 
     // Operation Results
     data object LaunchScanner : HomeUiEffect
+
     data object ScanSuccess : HomeUiEffect
+
     data class ScanFailure(val error: Throwable) : HomeUiEffect
 
     data class SaveSuccess(val uri: Uri) : HomeUiEffect
+
     data class SaveFailure(val error: Throwable) : HomeUiEffect
+
     data object SaveCancelled : HomeUiEffect
 
     data object DeleteSuccess : HomeUiEffect
+
     data class DeleteFailure(val error: Throwable) : HomeUiEffect
 
     data class OpenPdfViewerFailure(val error: Throwable) : HomeUiEffect
+
     data class SharePdfFailure(val error: Throwable) : HomeUiEffect
 
     data class ShowPdfInfoDialog(val id: String) : HomeUiEffect

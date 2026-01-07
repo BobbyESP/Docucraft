@@ -12,17 +12,15 @@ import com.materialkolor.rememberDynamicMaterialThemeState
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun DocucraftTheme(
-    colorScheme: ColorScheme? = null,
-    content: @Composable () -> Unit,
-) {
+fun DocucraftTheme(colorScheme: ColorScheme? = null, content: @Composable () -> Unit) {
     val finalColorScheme =
         colorScheme
             ?: rememberDynamicMaterialThemeState(
-                seedColor = Color.Blue,
-                style = PaletteStyle.Expressive,
-                isDark = isSystemInDarkTheme(),
-            ).colorScheme
+                    seedColor = Color.Blue,
+                    style = PaletteStyle.Expressive,
+                    isDark = isSystemInDarkTheme(),
+                )
+                .colorScheme
 
     MaterialExpressiveTheme(
         colorScheme = finalColorScheme,

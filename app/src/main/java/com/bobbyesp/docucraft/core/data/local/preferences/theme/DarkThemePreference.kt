@@ -13,7 +13,7 @@ data class DarkThemePreference(
     enum class DarkThemeValue {
         FOLLOW_SYSTEM,
         DARK,
-        LIGHT
+        LIGHT,
     }
 
     /**

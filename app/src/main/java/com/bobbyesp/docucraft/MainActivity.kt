@@ -15,7 +15,6 @@ import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
-import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomeUiAction
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.widgets.ACTION_SCAN_PDF
@@ -43,7 +42,8 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
         if (intent?.action == ACTION_SCAN_PDF) {
             val scannerLauncher =
-                registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+                registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+                    result ->
                     homeViewModel.onAction(HomeUiAction.OnScanResultReceived(result))
                 }
             documentScannerRepository.launchScanner(this, scannerLauncher)
@@ -64,7 +64,9 @@ class MainActivity : ComponentActivity(), KoinComponent {
                 Toaster(
                     state = sonner,
                     richColors = true,
-                    darkTheme = com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme.current.isDarkTheme(),
+                    darkTheme =
+                        com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme.current
+                            .isDarkTheme(),
                 )
             }
         }

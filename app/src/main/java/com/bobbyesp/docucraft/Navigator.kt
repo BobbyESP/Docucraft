@@ -20,10 +20,7 @@ fun Navigator(topLevelBackStack: TopLevelBackStack<Route>) {
         modifier = Modifier.fillMaxSize(),
         backStack = topLevelBackStack.backStack,
         onBack = { topLevelBackStack.removeLast() },
-        entryProvider =
-            entryProvider {
-                entry<Route.Home> { HomePageWrapper() }
-            },
+        entryProvider = entryProvider { entry<Route.Home> { HomePageWrapper() } },
         transitionSpec = {
             // Slide in from right when navigating forward
             slideInHorizontally(initialOffsetX = { it }) togetherWith
