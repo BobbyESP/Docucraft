@@ -140,7 +140,7 @@ object SelectionGroupDefaults {
             return SelectionGroupItemColors(
                 activeContainerColor = colorScheme.primary,
                 activeContentColor = colorScheme.onPrimary,
-                inactiveContainerColor = colorScheme.surfaceContainer,
+                inactiveContainerColor = colorScheme.surfaceContainerHigh,
                 inactiveContentColor = colorScheme.onSurface,
                 disabledActiveContainerColor = colorScheme.onSurface.copy(alpha = 0.12f),
                 disabledActiveContentColor = colorScheme.onSurface.copy(alpha = 0.38f),

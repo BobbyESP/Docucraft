@@ -197,7 +197,7 @@ object SmoothOverscrollEasing : Easing {
         val absValue = kotlin.math.abs(fraction)
         val sign = fraction.sign
 
-        val transformed = absValue.pow(1.5f).toFloat() * 0.6f
+        val transformed = absValue.pow(1.5f) * 0.6f
         return transformed.coerceAtMost(0.6f) * sign
     }
 }

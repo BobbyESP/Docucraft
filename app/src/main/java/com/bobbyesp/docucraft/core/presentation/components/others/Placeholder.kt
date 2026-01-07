@@ -51,7 +51,6 @@ fun Placeholder(
 }
 
 @Preview
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun PlaceholderPreview() {
     MaterialTheme {
@@ -65,13 +64,12 @@ private fun PlaceholderPreview() {
 }
 
 @Preview
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun PlaceholderPreviewNonColourful() {
     MaterialTheme {
         Placeholder(
             modifier = Modifier.width(200.dp).aspectRatio(1f),
-            icon = Icons.Default.Lyrics,
+            icon = Icons.Rounded.Lyrics,
             colorful = false,
             contentDescription = "Song cover",
         )

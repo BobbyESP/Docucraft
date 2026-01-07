@@ -1,4 +1,5 @@
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
@@ -31,19 +32,22 @@ android {
     }
 
     buildTypes {
-        debug {
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
-        }
+
         release {
             ndk { debugSymbolLevel = "FULL" }
 
             isShrinkResources = true
             isMinifyEnabled = true
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+        }
+
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
         }
     }
 
@@ -55,11 +59,24 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
-    buildFeatures { compose = true }
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17) // Use the enum for target JVM version
+        }
+    }
+
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
+    buildFeatures {
+        compose = true
+    }
 
     composeCompiler { reportsDestination = layout.buildDirectory.dir("compose_compiler") }
 }
@@ -81,7 +98,6 @@ ksp {
 dependencies {
     implementation(libs.bundles.core)
     implementation(libs.bundles.coroutines)
-    implementation(libs.google.fonts)
 
     // Core UI libraries
     api(platform(libs.compose.bom))
@@ -94,12 +110,6 @@ dependencies {
     implementation(libs.materialKolor)
     implementation(libs.bundles.glance)
     implementation(libs.bundles.nav3)
-
-    // Pagination
-    implementation(libs.bundles.pagination)
-
-    // Network
-    implementation(libs.bundles.ktor)
 
     // Dependency injection
     implementation(libs.bundles.koin)
@@ -127,7 +137,6 @@ dependencies {
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.scrollbar)
     implementation(libs.sonner)
 
     // Firebase

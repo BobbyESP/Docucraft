@@ -8,7 +8,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.bobbyesp.docucraft.R
 
 @Immutable
-enum class NavigatorInfo(val icon: ImageVector, @StringRes val title: Int) {
+enum class NavigatorInfo(val icon: ImageVector, @param:StringRes val title: Int) {
     HOME(icon = Icons.Rounded.Home, title = R.string.home);
 
     companion object {
