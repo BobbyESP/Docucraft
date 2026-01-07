@@ -98,6 +98,7 @@ ksp {
 dependencies {
     implementation(libs.bundles.core)
     implementation(libs.bundles.coroutines)
+    implementation(libs.google.fonts)
 
     // Core UI libraries
     api(platform(libs.compose.bom))

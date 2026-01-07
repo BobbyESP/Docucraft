@@ -16,6 +16,7 @@
         tools:targetApi="36">
         <activity
             android:name=".MainActivity"
+            android:windowSoftInputMode="adjustResize"
             android:launchMode="singleTask"
             android:exported="true">
             <intent-filter>

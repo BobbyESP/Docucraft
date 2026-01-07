@@ -5,32 +5,27 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -56,10 +51,10 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.motionScheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
@@ -68,26 +63,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
-import com.bobbyesp.docucraft.core.presentation.components.text.AnimatedCounter
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.presentation.theme.dmSerifTextFont
 import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscroll
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
@@ -101,6 +99,11 @@ import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmod
 import com.materialkolor.ktx.harmonize
 import kotlin.math.roundToInt
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.MaterialTheme.motionScheme
+
 @OptIn(
     ExperimentalMaterial3Api::class,
     ExperimentalSharedTransitionApi::class,
@@ -112,14 +115,11 @@ fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick
     val filteredPdfs = uiState.filteredPdfs
     val searchQuery = uiState.searchQuery
     val filterOptions = uiState.filterOptions
-    val isSearchBarVisible = uiState.isSearchBarVisible
-
-    val isScanListEmpty by remember(scannedPdfs) { derivedStateOf { scannedPdfs.isEmpty() } }
 
     val listState = rememberLazyListState()
-    val expandedFab by remember { derivedStateOf { !listState.isScrollInProgress } }
+    val isFabExpanded by remember { derivedStateOf { !listState.isScrollInProgress } }
 
-    val pdfsToShow by
+    val visiblePdfs by
     remember(scannedPdfs, filteredPdfs, searchQuery, filterOptions) {
         derivedStateOf {
             if (searchQuery.isNotBlank() || filterOptions != FilterOptions.default) filteredPdfs
@@ -127,153 +127,86 @@ fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick
         }
     }
 
-    val searchResultsCount by
-    remember(pdfsToShow, searchQuery, filterOptions) { derivedStateOf { pdfsToShow.size } }
-
+    val focusManager = LocalFocusManager.current
     val usableMotionScheme = motionScheme
 
     Scaffold(
+        modifier = Modifier.pointerInput(Unit) {
+            detectTapGestures(onTap = {
+                focusManager.clearFocus()
+            })
+        },
         topBar = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                AnimatedContent(
-                    targetState = isSearchBarVisible,
-                    transitionSpec = {
-                        ContentTransform(
-                            targetContentEnter = slideInHorizontally(
-                                animationSpec = usableMotionScheme.defaultSpatialSpec(),
-                            ) + fadeIn(usableMotionScheme.defaultEffectsSpec()),
-                            initialContentExit =
-                                slideOutHorizontally(
-                                    animationSpec = usableMotionScheme.defaultSpatialSpec(),
-                                ) + fadeOut(usableMotionScheme.defaultEffectsSpec()),
-                        )
-                    },
-                    label = "SearchBarTransition",
-                ) { isSearchVisible ->
-                    if (isSearchVisible) {
-                        Column(
-                            modifier =
-                                Modifier
-                                    .background(MaterialTheme.colorScheme.surface)
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                                    .fillMaxWidth()
-                                    .windowInsetsPadding(WindowInsets.statusBars),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.search_documents),
-                                style = MaterialTheme.typography.titleMediumEmphasized,
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                            ) {
-                                SearchBar(
-                                    modifier = Modifier.weight(1f),
-                                    query = searchQuery,
-                                    onQueryChange = {
-                                        onAction(HomeUiAction.UpdateSearchQuery(it))
-                                    },
-                                    onClear = { onAction(HomeUiAction.ClearSearch) },
-                                )
-                                IconButton(
-                                    onClick = {
-                                        onAction(HomeUiAction.ToggleSearchBar(false))
-                                        onAction(HomeUiAction.ClearSearch)
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Rounded.Clear,
-                                        contentDescription =
-                                            stringResource(id = R.string.exit_search),
-                                    )
-                                }
-                            }
-                            AnimatedCounter(
-                                count = searchResultsCount,
-                                modifier = Modifier,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                fontFamily = FontFamily.Monospace,
-                                trailingContent = {
-                                    Text(
-                                        text =
-                                            buildAnnotatedString {
-                                                append(" ")
-                                                append(
-                                                    stringResource(id = R.string.results)
-                                                        .lowercase()
-                                                )
-                                            },
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontFamily = FontFamily.Monospace,
-                                    )
-                                },
-                            )
-                        }
-                    } else {
-                        TopAppBar(
-                            modifier = Modifier,
-                            title = {
-                                Column(
-                                    horizontalAlignment = Alignment.Start,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
-                                    Text(
-                                        text = stringResource(id = R.string.app_name),
-                                        fontWeight = FontWeight.SemiBold,
-                                        style = MaterialTheme.typography.titleLarge,
-                                    )
-                                }
-                            },
-                            actions = {
-                                AnimatedContent(targetState = isScanListEmpty) { hasDocuments ->
-                                    if (!hasDocuments) {
-                                        IconButton(
-                                            onClick = {
-                                                onAction(HomeUiAction.ToggleSearchBar(true))
-                                            }
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Rounded.Search,
-                                                contentDescription =
-                                                    stringResource(id = R.string.search),
-                                            )
-                                        }
-                                    }
-                                }
-                            },
+            TopAppBar(
+                modifier = Modifier,
+                title = {
+                    Column(
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.app_name),
+                            fontFamily = dmSerifTextFont,
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.titleLarge,
                         )
                     }
-                }
-            }
+                },
+            )
         },
         floatingActionButton = {
+            var isSearchFocused by remember { mutableStateOf(false) }
+
             AnimatedContent(
-                targetState = isScanListEmpty,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 32.dp)
+                    .windowInsetsPadding(WindowInsets.ime),
+                targetState = uiState.contentState == PageContentState.SUCCESS,
                 transitionSpec = {
                     ContentTransform(
-                        targetContentEnter = expandIn() + fadeIn(),
-                        initialContentExit = shrinkOut() + slideOutVertically(),
+                        targetContentEnter = slideInVertically(
+                            animationSpec = usableMotionScheme.defaultSpatialSpec()
+                        ) + fadeIn(tween(500)),
+                        initialContentExit = slideOutVertically(
+                            usableMotionScheme.defaultSpatialSpec()
+                        ) + fadeOut(tween(500)),
                     )
                 },
-            ) { showFab ->
-                if (!showFab) {
-                    ExtendedFloatingActionButton(
-                        text = { Text(text = stringResource(id = R.string.scan)) },
-                        expanded = expandedFab,
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Rounded.DocumentScanner,
-                                contentDescription = stringResource(id = R.string.scan_new_document),
+            ) { isFabAndSearchVisible ->
+                when (isFabAndSearchVisible) {
+                    true -> {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            SearchBar(
+                                query = searchQuery,
+                                onQueryChange = {
+                                    onAction(HomeUiAction.UpdateSearchQuery(it))
+                                },
+                                onClear = { onAction(HomeUiAction.ClearSearch) },
+                                onFocusChange = { isSearchFocused = it },
+                                modifier = Modifier.weight(1f),
                             )
-                        },
-                        onClick = onScanClick,
-                    )
+
+                            ExtendedFloatingActionButton(
+                                text = { Text(text = stringResource(id = R.string.scan)) },
+                                expanded = isFabExpanded && !isSearchFocused,
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Rounded.DocumentScanner,
+                                        contentDescription = stringResource(id = R.string.scan_new_document),
+                                    )
+                                },
+                                onClick = onScanClick,
+                            )
+                        }
+                    }
+
+                    false -> {}
                 }
             }
         },
@@ -313,7 +246,7 @@ fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick
 
                 PageContentState.SUCCESS -> {
                     DisplayScannedPdfs(
-                        scannedPdfs = pdfsToShow,
+                        scannedPdfs = visiblePdfs,
                         onAction = onAction,
                         filterOptions = filterOptions,
                         listState = listState,
@@ -462,39 +395,57 @@ private fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     onClear: () -> Unit,
+    onFocusChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier,
-        colors = TextFieldDefaults.colors(),
-        placeholder = {
-            Text(
-                text = stringResource(R.string.doc_name_or_description),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Rounded.Search,
-                contentDescription = stringResource(R.string.search),
-            )
-        },
-        trailingIcon = {
-            if (query.isNotEmpty()) {
-                IconButton(onClick = onClear) {
-                    Icon(
-                        imageVector = Icons.Rounded.Clear,
-                        contentDescription = stringResource(R.string.clear_search),
-                    )
-                }
-            }
-        },
-        singleLine = true,
+    Surface(
+        modifier = modifier.shadow(4.dp, MaterialTheme.shapes.large),
         shape = MaterialTheme.shapes.large,
-    )
+        color = MaterialTheme.colorScheme.surface,
+    ) {
+        TextField(
+            value = query,
+            onValueChange = onQueryChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { onFocusChange(it.isFocused) },
+            colors = TextFieldDefaults.colors(
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                errorIndicatorColor = MaterialTheme.colorScheme.error,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
+            placeholder = {
+                Text(
+                    modifier = modifier.alpha(0.66f),
+                    text = stringResource(R.string.doc_name_or_description),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Rounded.Search,
+                    contentDescription = stringResource(R.string.search),
+                )
+            },
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = onClear) {
+                        Icon(
+                            imageVector = Icons.Rounded.Clear,
+                            contentDescription = stringResource(R.string.clear_search),
+                        )
+                    }
+                }
+            },
+            singleLine = true,
+            shape = MaterialTheme.shapes.large,
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
