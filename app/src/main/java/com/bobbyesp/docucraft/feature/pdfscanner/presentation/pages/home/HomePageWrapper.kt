@@ -1,7 +1,10 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
@@ -17,34 +20,90 @@ import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.EditPdfDetailsDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel
 import com.dokar.sonner.ToastType
-import kotlinx.coroutines.flow.collectLatest
+import com.dokar.sonner.ToasterState
+import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomePageWrapper() {
     val sonner = LocalSonner.current
-    val context = LocalContext.current
-    val activity = context as? Activity
     val vm = koinViewModel<HomeViewModel>()
     val documentScannerRepository = koinInject<DocumentScannerRepository>()
 
     val uiState = vm.uiState.collectAsStateWithLifecycle().value
 
-    val scannerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        vm.onAction(HomeUiAction.OnScanResultReceived(result))
-    }
-
     val onScanClick: () -> Unit = {
         vm.onAction(HomeUiAction.OnScanButtonClicked)
     }
 
+    HandleHomeUiEffects(
+        effectFlow = vm.uiEffect,
+        sonner = sonner,
+        documentScannerRepository = documentScannerRepository,
+        onScanResult = { result ->
+            vm.onAction(HomeUiAction.OnScanResultReceived(result))
+        }
+    )
+
+    if (uiState.pdfToBeRemoved is TemporalState.Present) {
+        val scannedPdf = uiState.pdfToBeRemoved.value
+        DeletePdfConfirmationDialog(
+            modifier = Modifier,
+            scannedPdf = scannedPdf,
+            onDismiss = { vm.onAction(HomeUiAction.DeletePdf(null)) },
+            onConfirm = { vm.onAction(HomeUiAction.DeletePdf(scannedPdf.id)) },
+        )
+    }
+
+    if (uiState.pdfToBeModified is TemporalState.Present) {
+        val scannedPdf = uiState.pdfToBeModified.value
+        EditPdfDetailsDialog(
+            modifier = Modifier,
+            onDismiss = {
+                vm.onAction(HomeUiAction.DismissDialogs)
+            },
+            onConfirm = { title, description ->
+                vm.onAction(
+                    HomeUiAction.UpdatePdfMetadata(
+                        id = scannedPdf.id,
+                        title = title,
+                        description = description,
+                    )
+                )
+            },
+            title = scannedPdf.title,
+            description = scannedPdf.description,
+        )
+    }
+
+    HomePage(
+        uiState = uiState,
+        onAction = vm::onAction,
+        onScanClick = onScanClick,
+    )
+}
+
+@SuppressLint("LocalContextResourcesRead")
+@Composable
+fun HandleHomeUiEffects(
+    effectFlow: Flow<HomeUiEffect>,
+    sonner: ToasterState,
+    documentScannerRepository: DocumentScannerRepository,
+    onScanResult: (ActivityResult) -> Unit,
+) {
+    val context = LocalContext.current
+    val activity = LocalActivity.current
+
+    val scannerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        onScanResult(result)
+    }
+
     LaunchedEffect(Unit) {
-        vm.eventFlow.collectLatest { effect ->
+        effectFlow.collect { effect ->
             when (effect) {
                 HomeUiEffect.LaunchScanner -> {
                     activity?.let { act ->
@@ -126,41 +185,4 @@ fun HomePageWrapper() {
             }
         }
     }
-
-    if (uiState.pdfToBeRemoved is TemporalState.Present) {
-        val scannedPdf = uiState.pdfToBeRemoved.value
-        DeletePdfConfirmationDialog(
-            modifier = Modifier,
-            scannedPdf = scannedPdf,
-            onDismiss = { vm.onAction(HomeUiAction.DeletePdf(null)) },
-            onConfirm = { vm.onAction(HomeUiAction.DeletePdf(scannedPdf.id)) },
-        )
-    }
-
-    if (uiState.pdfToBeModified is TemporalState.Present) {
-        val scannedPdf = uiState.pdfToBeModified.value
-        EditPdfDetailsDialog(
-            modifier = Modifier,
-            onDismiss = {
-                vm.onAction(HomeUiAction.DismissDialogs)
-            },
-            onConfirm = { title, description ->
-                vm.onAction(
-                    HomeUiAction.UpdatePdfMetadata(
-                        id = scannedPdf.id,
-                        title = title,
-                        description = description,
-                    )
-                )
-            },
-            title = scannedPdf.title,
-            description = scannedPdf.description,
-        )
-    }
-
-    HomePage(
-        uiState = uiState,
-        onAction = vm::onAction,
-        onScanClick = onScanClick,
-    )
 }

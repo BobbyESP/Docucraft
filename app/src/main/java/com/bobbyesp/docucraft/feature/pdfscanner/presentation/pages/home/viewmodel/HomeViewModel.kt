@@ -1,10 +1,9 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel
 
-import android.app.Activity
 import android.net.Uri
 import android.os.Environment
-import androidx.activity.result.ActivityResult
 import androidx.core.net.toUri
+import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.core.util.Resource
 import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
@@ -20,11 +19,13 @@ import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.copyTo
 import io.github.vinceglb.filekit.dialogs.openFileSaver
 import io.github.vinceglb.filekit.path
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel for the Home screen. Now uses individual use cases instead of a monolithic "UseCase"
@@ -46,10 +47,9 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    // Events using
-    private val eventFlowPair = createEventFlow<HomeUiEffect>()
-    private val _eventFlow: MutableSharedFlow<HomeUiEffect> = eventFlowPair.first
-    val eventFlow: SharedFlow<HomeUiEffect> = eventFlowPair.second
+    // Events using Channel for one-time events
+    private val _uiEffect = Channel<HomeUiEffect>(Channel.BUFFERED)
+    val uiEffect = _uiEffect.receiveAsFlow()
 
     init {
         // Load PDFs on initialization with safe collection
@@ -57,14 +57,20 @@ class HomeViewModel(
     }
 
     override fun onCoroutineException(throwable: Throwable) {
-        _eventFlow.emitEvent(HomeUiEffect.ShowError(throwable))
+        sendEvent(HomeUiEffect.ShowError(throwable))
+    }
+
+    private fun sendEvent(effect: HomeUiEffect) {
+        viewModelScope.launch {
+            _uiEffect.send(effect)
+        }
     }
 
     fun onAction(action: HomeUiAction) {
         when (action) {
             // Scanning
             HomeUiAction.OnScanButtonClicked -> {
-                _eventFlow.emitEvent(HomeUiEffect.LaunchScanner)
+                sendEvent(HomeUiEffect.LaunchScanner)
             }
 
             is HomeUiAction.OnScanResultReceived -> processScanResult(action.result)
@@ -115,7 +121,7 @@ class HomeViewModel(
             }
 
             is HomeUiAction.ShowPdfInfo -> {
-                _eventFlow.emitEvent(HomeUiEffect.ShowPdfInfoDialog(action.id))
+                sendEvent(HomeUiEffect.ShowPdfInfoDialog(action.id))
             }
 
             HomeUiAction.DismissDialogs -> {
@@ -178,11 +184,11 @@ class HomeViewModel(
                             try {
                                 val filename = "Scan_${System.currentTimeMillis()}"
                                 saveScannedPdfUseCase(it, filename)
-                                _eventFlow.emitEvent(HomeUiEffect.ScanSuccess)
+                                sendEvent(HomeUiEffect.ScanSuccess)
                                 // Refresh list
                                 loadScannedPdfs()
                             } catch (e: Exception) {
-                                _eventFlow.emitEvent(HomeUiEffect.ScanFailure(e))
+                                sendEvent(HomeUiEffect.ScanFailure(e))
                             }
                         }
                     }
@@ -191,7 +197,7 @@ class HomeViewModel(
                         _uiState.updateValue {
                             it.copy(isScanning = false, scanUserMessage = resource.message)
                         }
-                        _eventFlow.emitEvent(
+                        sendEvent(
                             HomeUiEffect.ScanFailure(
                                 resource.error ?: Exception(
                                     resource.message
@@ -230,7 +236,7 @@ class HomeViewModel(
                         _uiState.updateValue {
                             it.copy(isLoadingPdfs = false, loadError = error)
                         }
-                        _eventFlow.emitEvent(HomeUiEffect.ShowError(error))
+                        sendEvent(HomeUiEffect.ShowError(error))
                     },
                 )
         }
@@ -305,11 +311,11 @@ class HomeViewModel(
         executeAsync(
             onSuccess = {
                 logInfo("PDF metadata updated successfully")
-                _eventFlow.emitEvent(HomeUiEffect.ScanSuccess) // Reusing ScanSuccess as generic success or create new one
+                sendEvent(HomeUiEffect.ScanSuccess) // Reusing ScanSuccess as generic success or create new one
             },
             onError = { error ->
                 logError("Failed to modify PDF: ${error.message}", error)
-                _eventFlow.emitEvent(HomeUiEffect.ShowError(error))
+                sendEvent(HomeUiEffect.ShowError(error))
             },
         ) {
             val scannedPdf = getPdfById(pdfId)
@@ -326,7 +332,7 @@ class HomeViewModel(
         try {
             openPdfInViewerUseCase(pdfPath)
         } catch (e: Exception) {
-            _eventFlow.emitEvent(HomeUiEffect.OpenPdfViewerFailure(error = e))
+            sendEvent(HomeUiEffect.OpenPdfViewerFailure(error = e))
         }
     }
 
@@ -334,17 +340,17 @@ class HomeViewModel(
         try {
             sharePdfUseCase(pdfPath)
         } catch (e: Exception) {
-            _eventFlow.emitEvent(HomeUiEffect.SharePdfFailure(error = e))
+            sendEvent(HomeUiEffect.SharePdfFailure(error = e))
         }
     }
 
     private suspend fun deletePdf(pdfPath: Uri) {
         try {
             deleteScannedPdfUseCase(pdfPath)
-            _eventFlow.emitEvent(HomeUiEffect.DeleteSuccess)
+            sendEvent(HomeUiEffect.DeleteSuccess)
         } catch (e: Exception) {
             logError("Failed to delete PDF: ${e.message}", e)
-            _eventFlow.emitEvent(HomeUiEffect.DeleteFailure(error = e))
+            sendEvent(HomeUiEffect.DeleteFailure(error = e))
         }
     }
 
@@ -352,11 +358,11 @@ class HomeViewModel(
         executeAsync(
             onSuccess = { uri: Uri ->
                 logInfo("PDF saved successfully to: $uri")
-                _eventFlow.emitEvent(HomeUiEffect.SaveSuccess(uri))
+                sendEvent(HomeUiEffect.SaveSuccess(uri))
             },
             onError = { error ->
                 logError("Failed to save PDF: ${error.message}", error)
-                _eventFlow.emitEvent(HomeUiEffect.SaveFailure(error = error))
+                sendEvent(HomeUiEffect.SaveFailure(error = error))
             },
         ) {
             val androidDocumentsDirectory =
@@ -373,7 +379,7 @@ class HomeViewModel(
                     directory = dir,
                 )
                     ?: run {
-                        _eventFlow.emitEvent(HomeUiEffect.SaveCancelled)
+                        sendEvent(HomeUiEffect.SaveCancelled)
                         return@executeAsync Uri.EMPTY
                     }
 
