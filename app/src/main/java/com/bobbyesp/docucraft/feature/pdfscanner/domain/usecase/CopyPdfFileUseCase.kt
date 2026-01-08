@@ -12,7 +12,7 @@ import kotlinx.io.buffered
  * operation.
  */
 class CopyPdfFileUseCase(private val context: Context) {
-    suspend operator fun invoke(inputUri: Uri, outputFile: PlatformFile) {
+    operator fun invoke(inputUri: Uri, outputFile: PlatformFile) {
         // Ensure parent directory exists
         outputFile.ensureParent(mustCreate = true)
 

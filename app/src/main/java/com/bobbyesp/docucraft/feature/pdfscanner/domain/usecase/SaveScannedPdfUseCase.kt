@@ -16,6 +16,7 @@ import io.github.vinceglb.filekit.filesDir
 import io.github.vinceglb.filekit.path
 import io.github.vinceglb.filekit.size
 import java.io.File
+import androidx.core.net.toUri
 
 /**
  * Use case for saving a scanned PDF from GMS scanner result. Handles: file copying, thumbnail
@@ -35,7 +36,7 @@ class SaveScannedPdfUseCase(
         val pdfOutputFile = PlatformFile(pdfOutputDir, "$filename.pdf")
 
         // Copy the scanned PDF to internal storage
-        val sourceUri = Uri.parse(scannedDocument.uriString)
+        val sourceUri = scannedDocument.uriString.toUri()
         copyPdfFileUseCase(sourceUri, pdfOutputFile)
 
         // Validate file size
