@@ -5,7 +5,7 @@
 
     <style name="Theme.Docucraft.Starting" parent="Theme.SplashScreen">
         <item name="postSplashScreenTheme">@style/Theme.Docucraft</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/round_document_scanner_24</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/docucraft_logo_clean</item>
     </style>
 
 </resources>
