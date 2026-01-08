@@ -1,5 +1,12 @@
 package com.bobbyesp.docucraft.core.presentation.common
 
+import androidx.annotation.FloatRange
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -8,6 +15,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -119,6 +128,14 @@ fun AppLocalSettingsProvider(
                 .colorScheme
         }
 
+    @FloatRange(from = 0.0, to = 1.0)
+    val contentWidthRatio: Float = when (windowWidthSize) {
+        WindowWidthSizeClass.Compact -> 1f
+        WindowWidthSizeClass.Medium -> 0.75f
+        WindowWidthSizeClass.Expanded -> 0.5f
+        else -> 0.66f
+    }
+
     CompositionLocalProvider(
         LocalDarkTheme provides darkTheme, // Tells the app what dark theme to use
         // TODO: Modify to handle multiple colors (like based on images)
@@ -135,7 +152,21 @@ fun AppLocalSettingsProvider(
         LocalCoilImageLoader provides imageLoader,
     ) {
         DocucraftTheme(colorScheme = colorScheme) {
-            content() // The content of the app
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(contentWidthRatio),
+                    contentAlignment = Alignment.Center
+                ) {
+                    content()
+                }
+            }
         }
     }
 }

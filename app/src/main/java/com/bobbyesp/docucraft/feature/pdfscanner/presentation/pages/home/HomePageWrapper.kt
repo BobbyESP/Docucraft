@@ -152,12 +152,6 @@ fun HandleHomeUiEffects(
                         type = ToastType.Error,
                     )
                 }
-                HomeUiEffect.SaveCancelled -> {
-                    sonner.show(
-                        message = context.resources.getString(R.string.pdf_saving_cancelled),
-                        type = ToastType.Info,
-                    )
-                }
                 HomeUiEffect.DeleteSuccess -> {
                     sonner.show(
                         message = context.resources.getString(R.string.pdf_deleted_successfully),

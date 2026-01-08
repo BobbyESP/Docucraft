@@ -135,8 +135,6 @@ sealed interface HomeUiEffect {
 
     data class SaveFailure(val error: Throwable) : HomeUiEffect
 
-    data object SaveCancelled : HomeUiEffect
-
     data object DeleteSuccess : HomeUiEffect
 
     data class DeleteFailure(val error: Throwable) : HomeUiEffect

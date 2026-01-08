@@ -11,6 +11,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.ui.Alignment
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import coil.imageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
@@ -69,6 +70,8 @@ class MainActivity : ComponentActivity(), KoinComponent {
                 Toaster(
                     state = sonner,
                     richColors = true,
+                    showCloseButton = true,
+                    alignment = Alignment.TopCenter,
                     darkTheme =
                         LocalDarkTheme.current
                             .isDarkTheme(),

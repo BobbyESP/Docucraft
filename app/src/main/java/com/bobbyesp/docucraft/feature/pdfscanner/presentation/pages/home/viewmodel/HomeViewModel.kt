@@ -350,8 +350,10 @@ class HomeViewModel(
     private fun copyPdfToDirectory(scannedPdf: ScannedPdf) {
         executeAsync(
             onSuccess = { uri: Uri ->
-                logInfo("PDF saved successfully to: $uri")
-                sendEvent(HomeUiEffect.SaveSuccess(uri))
+                if(uri != Uri.EMPTY) {
+                    logInfo("PDF saved successfully to: $uri")
+                    sendEvent(HomeUiEffect.SaveSuccess(uri))
+                }
             },
             onError = { error ->
                 logError("Failed to save PDF: ${error.message}", error)
@@ -372,7 +374,6 @@ class HomeViewModel(
                     directory = dir,
                 )
                     ?: run {
-                        sendEvent(HomeUiEffect.SaveCancelled)
                         return@executeAsync Uri.EMPTY
                     }
 
