@@ -1,9 +1,9 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import com.bobbyesp.docucraft.App
 import com.bobbyesp.docucraft.core.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.core.util.ensure
@@ -16,7 +16,6 @@ import io.github.vinceglb.filekit.filesDir
 import io.github.vinceglb.filekit.path
 import io.github.vinceglb.filekit.size
 import java.io.File
-import androidx.core.net.toUri
 
 /**
  * Use case for saving a scanned PDF from GMS scanner result. Handles: file copying, thumbnail
