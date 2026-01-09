@@ -111,7 +111,12 @@ import androidx.compose.material3.MaterialTheme.motionScheme
     ExperimentalMaterial3ExpressiveApi::class,
 )
 @Composable
-fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick: () -> Unit) {
+    fun HomePage(
+    uiState: HomeUiState,
+    onAction: (HomeUiAction) -> Unit,
+    onScanClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val scannedPdfs = uiState.scannedPdfs
     val filteredPdfs = uiState.filteredPdfs
     val searchQuery = uiState.searchQuery
@@ -132,7 +137,7 @@ fun HomePage(uiState: HomeUiState, onAction: (HomeUiAction) -> Unit, onScanClick
     val usableMotionScheme = motionScheme
 
     Scaffold(
-        modifier = Modifier.pointerInput(Unit) {
+        modifier = modifier.pointerInput(Unit) {
             detectTapGestures(onTap = {
                 focusManager.clearFocus()
             })

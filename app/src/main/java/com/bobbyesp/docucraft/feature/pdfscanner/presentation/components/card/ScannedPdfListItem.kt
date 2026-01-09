@@ -74,14 +74,14 @@ enum class ScannedPdfCardPosition {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun ScannedPdfListItem(
-    modifier: Modifier = Modifier,
     pdf: ScannedPdf,
-    position: ScannedPdfCardPosition = ScannedPdfCardPosition.SINGLE,
     onOpenPdf: (Uri) -> Unit,
     onSavePdf: () -> Unit,
     onSharePdf: (Uri) -> Unit,
     onDeletePdf: (String) -> Unit,
     onModifyPdfFields: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    position: ScannedPdfCardPosition = ScannedPdfCardPosition.SINGLE
 ) {
     val shape =
         when (position) {
@@ -205,14 +205,14 @@ fun ScannedPdfListItem(
 
 @Composable
 fun PdfOptionsDropdown(
-    modifier: Modifier = Modifier,
     scannedPdf: ScannedPdf,
-    expanded: Boolean,
+    modifier: Modifier = Modifier,
+    expanded: Boolean = false,
+    onModifyPdfFields: () -> Unit = {},
     onDismissDropdown: () -> Unit = {},
     onSavePdf: () -> Unit = {},
     onSharePdf: () -> Unit = {},
-    onDeletePdf: () -> Unit = {},
-    onModifyPdfFields: () -> Unit,
+    onDeletePdf: () -> Unit = {}
 ) {
     val context = LocalContext.current
     DropdownMenu(
@@ -342,7 +342,7 @@ private fun ScannedPdfListItemPrev() {
 
 @Preview
 @Composable
-private fun ListScannedPdfListItemPrev() {
+private fun ListScannedPdfListItemPreview() {
     DocucraftTheme {
         val list =
             List(11) {
