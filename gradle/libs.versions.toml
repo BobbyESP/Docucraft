@@ -22,10 +22,7 @@ accompanist = "0.37.3"
 glance = "1.1.1"
 
 #More UI
-androidx-paging = "3.3.6"
 materialKolor = "5.0.0-alpha04"
-#Navigation
-androidx-navigation = "2.9.6"
 
 #Coroutines
 kotlinx-coroutines = "1.10.2"
@@ -38,9 +35,6 @@ kotlinx-collectionsImmutable = "0.4.0"
 #Image loading
 landscapistCoil = "2.8.2"
 
-#Network
-ktor = "3.3.3"
-
 #Dependency injection
 koin = "4.1.1"
 
@@ -51,7 +45,6 @@ room = "2.8.4"
 datastore = "1.2.0"
 
 #Firebase, GMS...
-gmsPlayServicesAuth = "21.5.0"
 googleServices = "4.4.4"
 firebaseBom = "34.7.0"
 
@@ -101,23 +94,15 @@ compose-material3 = { group = "androidx.compose.material3", name = "material3", 
 compose-material3-windowSizeClass = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "androidx-compose-material3" }
 materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
 
-# EXPERIMENTAL - Material3 Navigation3 (based on androidx.navigation3)
+# Navigation3
 androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "nav3Core" }
 androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "nav3Core" }
-
 androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycle-runtime-ktx" }
 
 #Glance
 glance = { group = "androidx.glance", name = "glance", version.ref = "glance" }
 glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
 glance-material3 = { group = "androidx.glance", name = "glance-material3", version.ref = "glance" }
-
-#Paging3
-paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "androidx-paging" }
-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "androidx-paging" }
-
-#Compose UI Navigation
-compose-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation" }
 
 #Kotlin Immutable Collections
 kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable", version.ref = "kotlinx-collectionsImmutable" }
@@ -131,15 +116,6 @@ accompanist-permissions = { group = "com.google.accompanist", name = "accompanis
 
 #Image loading
 landscapist-coil = { group = "com.github.skydoves", name = "landscapist-coil", version.ref = "landscapistCoil" }
-
-#KNetwork
-ktor-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
-ktor-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
-ktor-serialization = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
-ktor-logging = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
-ktor-contentnegotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
-ktor-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
-ktor-encoding = { group = "io.ktor", name = "ktor-client-encoding", version.ref = "ktor" }
 
 #Dependency injection
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
@@ -162,10 +138,7 @@ kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime",
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 #Firebase and GMS
-google-services = { group = "com.google.gms", name = "google-services", version.ref = "googleServices" }
-gms-playservices-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "gmsPlayServicesAuth" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
-firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 
@@ -174,9 +147,7 @@ gms-mlkit-docscanner = { group = "com.google.android.gms", name = "play-services
 gms-mlkit-text-recognition = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition", version.ref = "mlkit-text-recognition" }
 
 #Others
-qrcode-kotlin-android = { module = "io.github.g0dkar:qrcode-kotlin-android", version.ref = "qrcodeKotlinAndroid" }
 sonner = { module = "io.github.dokar3:sonner", version.ref = "sonner" }
-scrollbar = { group = "com.github.nanihadesuka", name = "LazyColumnScrollbar", version.ref = "scrollbar" }
 
 # File mangement
 filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekit" }
@@ -196,7 +167,6 @@ profileinstaller = { group = "androidx.profileinstaller", name = "profileinstall
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-android-library = { id = "com.android.library", version.ref = "agp" }
 android-kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
@@ -211,13 +181,10 @@ stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", ve
 
 [bundles]
 core = ["core-ktx", "lifecycle-runtime-ktx", "lifecycle-compose-runtime", "lifecycle-compose-viewModel", "activity-compose", "core-appcompat", "core-splashscreen"]
-ktor = ["ktor-android", "ktor-okhttp" ,"ktor-core", "ktor-serialization", "ktor-logging", "ktor-contentnegotiation", "ktor-encoding"]
 accompanist = ["accompanist-permissions"]
-compose = ["compose-ui-util", "compose-graphics", "compose-runtime", "compose-foundation", "compose-material-iconsExtended", "compose-animation", "compose-ui", "compose-material3", "compose-navigation", "compose-material3-windowSizeClass"]
+compose = ["compose-ui-util", "compose-graphics", "compose-runtime", "compose-foundation", "compose-material-iconsExtended", "compose-animation", "compose-ui", "compose-material3", "compose-material3-windowSizeClass"]
 nav3 = ["androidx-navigation3-runtime", "androidx-navigation3-ui", "androidx-lifecycle-viewmodel-navigation3"]
 glance = ["glance", "glance-appwidget", "glance-material3"]
 koin = ["koin-android", "koin-compose"]
-pagination = ["paging-compose", "paging-runtime"]
-googleServices = ["firebase-auth", "gms-playservices-auth", "google-services"]
 filekit = ["filekit-core", "filekit-dialogs", "filekit-dialogs-compose"]
 coroutines = ["kotlinx-coroutines-core", "kotlinx-coroutines-android"]
