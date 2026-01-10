@@ -16,6 +16,7 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.repository.DocumentScannerRepository
 import com.bobbyesp.docucraft.core.presentation.common.LocalSonner
 import com.bobbyesp.docucraft.core.util.state.TemporalState
+import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.DeletePdfConfirmationDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.EditPdfDetailsDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeUiAction
@@ -29,41 +30,43 @@ import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomePageWrapper(modifier: Modifier = Modifier) {
+fun HomePageWrapper(
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = koinViewModel()
+) {
     val sonner = LocalSonner.current
-    val vm = koinViewModel<HomeViewModel>()
     val documentScannerRepository = koinInject<DocumentScannerRepository>()
 
-    val uiState by vm.uiState.collectAsStateWithLifecycle()
-    val scannedPdfs by vm.scannedPdfs.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val scannedPdfs by viewModel.scannedPdfs.collectAsStateWithLifecycle()
 
-    val onScanClick: () -> Unit = { vm.onAction(HomeUiAction.OnScanButtonClicked) }
+    val onScanClick: () -> Unit = { viewModel.onAction(HomeUiAction.OnScanButtonClicked) }
 
     HandleHomeUiEffects(
-        effectFlow = vm.uiEffect,
+        effectFlow = viewModel.uiEffect,
         sonner = sonner,
         documentScannerRepository = documentScannerRepository,
-        onScanResult = { result -> vm.onAction(HomeUiAction.OnScanResultReceived(result)) },
+        onScanResult = { result -> viewModel.onAction(HomeUiAction.OnScanResultReceived(result)) },
     )
 
     val pdfToBeRemoved = uiState.pdfToBeRemoved
     if (pdfToBeRemoved is TemporalState.Present<*>) {
-        val scannedPdf = pdfToBeRemoved.value as? com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf ?: return
+        val scannedPdf = pdfToBeRemoved.value as ScannedPdf
         DeletePdfConfirmationDialog(
             scannedPdf = scannedPdf,
-            onDismiss = { vm.onAction(HomeUiAction.DeletePdf(null)) },
-            onConfirm = { vm.onAction(HomeUiAction.DeletePdf(scannedPdf.id)) },
+            onDismiss = { viewModel.onAction(HomeUiAction.DeletePdf(null)) },
+            onConfirm = { viewModel.onAction(HomeUiAction.DeletePdf(scannedPdf.id)) },
             modifier = Modifier,
         )
     }
 
     val pdfToBeModified = uiState.pdfToBeModified
     if (pdfToBeModified is TemporalState.Present<*>) {
-        val scannedPdf = pdfToBeModified.value as? com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf ?: return
+        val scannedPdf = pdfToBeModified.value as ScannedPdf
         EditPdfDetailsDialog(
-            onDismiss = { vm.onAction(HomeUiAction.DismissDialogs) },
+            onDismiss = { viewModel.onAction(HomeUiAction.DismissDialogs) },
             onConfirm = { title, description ->
-                vm.onAction(
+                viewModel.onAction(
                     HomeUiAction.UpdatePdfMetadata(
                         id = scannedPdf.id,
                         title = title,
@@ -81,7 +84,7 @@ fun HomePageWrapper(modifier: Modifier = Modifier) {
         modifier = modifier,
         uiState = uiState,
         scannedPdfs = scannedPdfs,
-        onAction = vm::onAction,
+        onAction = viewModel::onAction,
         onScanClick = onScanClick
     )
 }

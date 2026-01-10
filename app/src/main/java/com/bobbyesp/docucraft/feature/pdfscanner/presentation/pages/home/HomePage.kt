@@ -104,6 +104,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme.motionScheme
+import com.bobbyesp.docucraft.util.MockData
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.LoadState
 
 @OptIn(
     ExperimentalMaterial3Api::class,
@@ -126,12 +128,9 @@ import androidx.compose.material3.MaterialTheme.motionScheme
 
     val contentState =
         when (uiState.loadState) {
-            com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.LoadState
-                .Loading -> PageContentState.LOADING
-            is com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.LoadState
-                .Error -> PageContentState.ERROR
-            com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.LoadState
-                .Idle -> {
+            LoadState.Loading -> PageContentState.LOADING
+            is LoadState.Error -> PageContentState.ERROR
+            LoadState.Idle -> {
                 if (uiState.isRepositoryEmpty) PageContentState.EMPTY else PageContentState.SUCCESS
             }
         }
@@ -183,39 +182,35 @@ import androidx.compose.material3.MaterialTheme.motionScheme
                     )
                 },
             ) { isFabAndSearchVisible ->
-                when (isFabAndSearchVisible) {
-                    true -> {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            SearchBar(
-                                query = searchQuery,
-                                onQueryChange = {
-                                    onAction(HomeUiAction.UpdateSearchQuery(it))
-                                },
-                                onClear = { onAction(HomeUiAction.ClearSearch) },
-                                onFocusChange = { isSearchFocused = it },
-                                modifier = Modifier.weight(1f),
-                            )
+                if(isFabAndSearchVisible) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        SearchBar(
+                            query = searchQuery,
+                            onQueryChange = {
+                                onAction(HomeUiAction.UpdateSearchQuery(it))
+                            },
+                            onClear = { onAction(HomeUiAction.ClearSearch) },
+                            onFocusChange = { isSearchFocused = it },
+                            modifier = Modifier.weight(1f),
+                        )
 
-                            ExtendedFloatingActionButton(
-                                text = { Text(text = stringResource(id = R.string.scan)) },
-                                expanded = isFabExpanded && !isSearchFocused,
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.Rounded.DocumentScanner,
-                                        contentDescription = stringResource(id = R.string.scan_new_document),
-                                    )
-                                },
-                                onClick = onScanClick,
-                            )
-                        }
+                        ExtendedFloatingActionButton(
+                            text = { Text(text = stringResource(id = R.string.scan)) },
+                            expanded = isFabExpanded && !isSearchFocused,
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Rounded.DocumentScanner,
+                                    contentDescription = stringResource(id = R.string.scan_new_document),
+                                )
+                            },
+                            onClick = onScanClick,
+                        )
                     }
-
-                    false -> {}
                 }
             }
         },
@@ -287,10 +282,10 @@ private fun DisplayScannedPdfs(
         state = listState,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        stickyHeader {
+        stickyHeader(contentType = "documentsFilter") {
             SortOptionsRow(
                 currentSortOption = filterOptions.sortBy,
-                onSortOptionChanged = { onAction(HomeUiAction.ApplySort(it)) },
+                onSortOptionChange = { onAction(HomeUiAction.ApplySort(it)) },
                 modifier =
                     Modifier
                         .background(
@@ -338,7 +333,7 @@ private fun DisplayScannedPdfs(
             )
         }
 
-        item {
+        item(contentType = "bottomBarActionsSpacer") {
             Spacer(modifier = Modifier.height(88.dp))
         }
     }
@@ -347,7 +342,7 @@ private fun DisplayScannedPdfs(
 @Composable
 fun SortOptionsRow(
     currentSortOption: SortOption,
-    onSortOptionChanged: (SortOption) -> Unit,
+    onSortOptionChange: (SortOption) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -366,7 +361,7 @@ fun SortOptionsRow(
                 SelectionGroupItem(
                     selected = currentSortOption.criteria == criteria,
                     onClick = {
-                        onSortOptionChanged(
+                        onSortOptionChange(
                             SortOption(
                                 criteria,
                                 currentSortOption.order
@@ -394,7 +389,7 @@ fun SortOptionsRow(
                     } else {
                         SortOption.Order.ASC
                     }
-                onSortOptionChanged(SortOption(currentSortOption.criteria, newOrder))
+                onSortOptionChange(SortOption(currentSortOption.criteria, newOrder))
             }
         ) {
             Icon(
@@ -440,7 +435,7 @@ private fun SearchBar(
             ),
             placeholder = {
                 Text(
-                    modifier = modifier.alpha(0.66f),
+                    modifier = Modifier.alpha(0.66f),
                     text = stringResource(R.string.doc_name_or_description),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -471,7 +466,7 @@ private fun SearchBar(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun EmptyStateScreen(modifier: Modifier = Modifier, onScanPdfClick: () -> Unit) {
+fun EmptyStateScreen(onScanPdfClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(
         modifier =
             modifier
@@ -640,38 +635,11 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
 @Preview
 @Preview(uiMode = UI_MODE_NIGHT_YES)
 @Composable
-private fun PreviewHomePage() {
+private fun PreviewsHomePage() {
     DocucraftTheme {
         HomePage(
             uiState = HomeUiState(),
-            scannedPdfs =
-                listOf(
-                    ScannedPdf(
-                        id = "1",
-                        filename = "document1.pdf",
-                        title = "Documento 1 de prueba. Título corto",
-                        description =
-                            "Description para el documento 1. La descripción no va a ser muy larga.",
-                        path = "content://com.example.documents/document/1".toUri(),
-                        createdTimestamp = System.currentTimeMillis(),
-                        fileSize = 1024,
-                        pageCount = 10,
-                        thumbnail = "content://com.example.thumbnails/thumbnail/1",
-                    ),
-                    ScannedPdf(
-                        id = "2",
-                        filename = "document2.pdf",
-                        title = "Apuntes de programación",
-                        description =
-                            "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " +
-                                "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
-                        path = "content://com.example.documents/document/2".toUri(),
-                        createdTimestamp = System.currentTimeMillis(),
-                        fileSize = 2048,
-                        pageCount = 20,
-                        thumbnail = "content://com.example.thumbnails/thumbnail/2",
-                    ),
-                ),
+            scannedPdfs = MockData.Documents.pdfsList,
             onAction = {},
             onScanClick = {},
         )
