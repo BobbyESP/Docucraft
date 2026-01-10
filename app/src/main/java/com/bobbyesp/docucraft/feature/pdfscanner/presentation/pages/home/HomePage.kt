@@ -113,25 +113,28 @@ import androidx.compose.material3.MaterialTheme.motionScheme
 @Composable
     fun HomePage(
     uiState: HomeUiState,
+    scannedPdfs: List<ScannedPdf>,
     onAction: (HomeUiAction) -> Unit,
     onScanClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val scannedPdfs = uiState.scannedPdfs
-    val filteredPdfs = uiState.filteredPdfs
     val searchQuery = uiState.searchQuery
     val filterOptions = uiState.filterOptions
 
     val listState = rememberLazyListState()
     val isFabExpanded by remember { derivedStateOf { !listState.isScrollInProgress } }
 
-    val visiblePdfs by
-    remember(scannedPdfs, filteredPdfs, searchQuery, filterOptions) {
-        derivedStateOf {
-            if (searchQuery.isNotBlank() || filterOptions != FilterOptions.default) filteredPdfs
-            else scannedPdfs
+    val contentState =
+        when (uiState.loadState) {
+            com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.LoadState
+                .Loading -> PageContentState.LOADING
+            is com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.LoadState
+                .Error -> PageContentState.ERROR
+            com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.LoadState
+                .Idle -> {
+                if (uiState.isRepositoryEmpty) PageContentState.EMPTY else PageContentState.SUCCESS
+            }
         }
-    }
 
     val focusManager = LocalFocusManager.current
     val usableMotionScheme = motionScheme
@@ -168,7 +171,7 @@ import androidx.compose.material3.MaterialTheme.motionScheme
                     .fillMaxWidth()
                     .padding(start = 32.dp)
                     .windowInsetsPadding(WindowInsets.ime),
-                targetState = uiState.contentState == PageContentState.SUCCESS,
+                targetState = contentState == PageContentState.SUCCESS,
                 transitionSpec = {
                     ContentTransform(
                         targetContentEnter = slideInVertically(
@@ -219,7 +222,7 @@ import androidx.compose.material3.MaterialTheme.motionScheme
     ) { padding ->
         AnimatedContent(
             modifier = Modifier.padding(padding),
-            targetState = uiState.contentState,
+            targetState = contentState,
             transitionSpec = {
                 fadeIn(tween(300)) togetherWith fadeOut(tween(300))
             },
@@ -252,7 +255,7 @@ import androidx.compose.material3.MaterialTheme.motionScheme
 
                 PageContentState.SUCCESS -> {
                     DisplayScannedPdfs(
-                        scannedPdfs = visiblePdfs,
+                        scannedPdfs = scannedPdfs,
                         onAction = onAction,
                         filterOptions = filterOptions,
                         listState = listState,
@@ -640,36 +643,34 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
 private fun PreviewHomePage() {
     DocucraftTheme {
         HomePage(
-            uiState =
-                HomeUiState(
-                    scannedPdfs =
-                        listOf(
-                            ScannedPdf(
-                                id = "1",
-                                filename = "document1.pdf",
-                                title = "Documento 1 de prueba. Título corto",
-                                description =
-                                    "Description para el documento 1. La descripción no va a ser muy larga.",
-                                path = "content://com.example.documents/document/1".toUri(),
-                                createdTimestamp = System.currentTimeMillis(),
-                                fileSize = 1024,
-                                pageCount = 10,
-                                thumbnail = "content://com.example.thumbnails/thumbnail/1",
-                            ),
-                            ScannedPdf(
-                                id = "2",
-                                filename = "document2.pdf",
-                                title = "Apuntes de programación",
-                                description =
-                                    "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " +
-                                            "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
-                                path = "content://com.example.documents/document/2".toUri(),
-                                createdTimestamp = System.currentTimeMillis(),
-                                fileSize = 2048,
-                                pageCount = 20,
-                                thumbnail = "content://com.example.thumbnails/thumbnail/2",
-                            ),
-                        )
+            uiState = HomeUiState(),
+            scannedPdfs =
+                listOf(
+                    ScannedPdf(
+                        id = "1",
+                        filename = "document1.pdf",
+                        title = "Documento 1 de prueba. Título corto",
+                        description =
+                            "Description para el documento 1. La descripción no va a ser muy larga.",
+                        path = "content://com.example.documents/document/1".toUri(),
+                        createdTimestamp = System.currentTimeMillis(),
+                        fileSize = 1024,
+                        pageCount = 10,
+                        thumbnail = "content://com.example.thumbnails/thumbnail/1",
+                    ),
+                    ScannedPdf(
+                        id = "2",
+                        filename = "document2.pdf",
+                        title = "Apuntes de programación",
+                        description =
+                            "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " +
+                                "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
+                        path = "content://com.example.documents/document/2".toUri(),
+                        createdTimestamp = System.currentTimeMillis(),
+                        fileSize = 2048,
+                        pageCount = 20,
+                        thumbnail = "content://com.example.thumbnails/thumbnail/2",
+                    ),
                 ),
             onAction = {},
             onScanClick = {},

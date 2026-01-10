@@ -16,11 +16,9 @@ import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.copyTo
 import io.github.vinceglb.filekit.dialogs.openFileSaver
 import io.github.vinceglb.filekit.path
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 /**
@@ -42,14 +40,82 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    val scannedPdfs: StateFlow<List<ScannedPdf>> =
+        combine(
+                flow { emitAll(getAllScannedPdfsUseCase()) }
+                    .onEach { list ->
+                        _uiState.updateValue { it.copy(isRepositoryEmpty = list.isEmpty()) }
+                    },
+                _uiState.map { it.searchQuery }.distinctUntilChanged(),
+                _uiState.map { it.filterOptions }.distinctUntilChanged(),
+            ) { pdfs, query, filterOptions ->
+                var result = pdfs
+
+                if (query.isNotBlank()) {
+                    try {
+                        val searchResults = searchPdfsUseCase(query)
+                        result = result.filter { pdf -> searchResults.any { it.id == pdf.id } }
+                    } catch (e: Exception) {
+                        logError("Search failed: ${e.message}", e)
+                        // Fallback to in-memory filtering
+                        result =
+                            result.filter { pdf ->
+                                pdf.title?.contains(query, ignoreCase = true) == true ||
+                                    pdf.filename.contains(query, ignoreCase = true) ||
+                                    pdf.description?.contains(query, ignoreCase = true) == true
+                            }
+                    }
+                }
+
+                filterOptions.minPageCount?.let { minPages ->
+                    result = result.filter { it.pageCount >= minPages }
+                }
+
+                filterOptions.minFileSize?.let { minSize ->
+                    result = result.filter { it.fileSize >= minSize }
+                }
+
+                filterOptions.dateRange?.let { (start, end) ->
+                    result = result.filter { it.createdTimestamp in start..end }
+                }
+
+                result =
+                    when (filterOptions.sortBy.criteria) {
+                        SortOption.Criteria.DATE -> {
+                            if (filterOptions.sortBy.order == SortOption.Order.DESC)
+                                result.sortedByDescending { it.createdTimestamp }
+                            else result.sortedBy { it.createdTimestamp }
+                        }
+
+                        SortOption.Criteria.NAME -> {
+                            if (filterOptions.sortBy.order == SortOption.Order.DESC)
+                                result.sortedByDescending { it.title ?: it.filename }
+                            else result.sortedBy { it.title ?: it.filename }
+                        }
+
+                        SortOption.Criteria.SIZE -> {
+                            if (filterOptions.sortBy.order == SortOption.Order.DESC)
+                                result.sortedByDescending { it.fileSize }
+                            else result.sortedBy { it.fileSize }
+                        }
+                    }
+                result
+            }
+            .onStart { _uiState.updateValue { it.copy(loadState = LoadState.Loading) } }
+            .catch { error ->
+                logError("Failed to retrieve PDFs: ${error.message}", error)
+                _uiState.updateValue {
+                    it.copy(loadState = LoadState.Error(error.message ?: "Unknown error"))
+                }
+                sendEvent(HomeUiEffect.ShowError(error))
+            }
+            .onEach { _uiState.updateValue { it.copy(loadState = LoadState.Idle) } }
+            .flowOn(Dispatchers.IO)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     // Events using Channel for one-time events
     private val _uiEffect = Channel<HomeUiEffect>(Channel.BUFFERED)
     val uiEffect = _uiEffect.receiveAsFlow()
-
-    init {
-        // Load PDFs on initialization with safe collection
-        loadScannedPdfs()
-    }
 
     override fun onCoroutineException(throwable: Throwable) {
         sendEvent(HomeUiEffect.ShowError(throwable))
@@ -70,9 +136,6 @@ class HomeViewModel(
             is HomeUiAction.OnScanErrorDismissed -> {
                 _uiState.updateValue { it.copy(scanUserMessage = null) }
             }
-
-            // Loading
-            HomeUiAction.LoadPdfs -> loadScannedPdfs()
 
             // PDF Operations
             is HomeUiAction.OpenPdf -> openPdfInViewer(action.uri)
@@ -128,12 +191,10 @@ class HomeViewModel(
             // Search & Filter
             is HomeUiAction.UpdateSearchQuery -> {
                 _uiState.updateValue { it.copy(searchQuery = action.query) }
-                applySearchAndFilters()
             }
 
             HomeUiAction.ClearSearch -> {
                 _uiState.updateValue { it.copy(searchQuery = "") }
-                applySearchAndFilters()
             }
 
             is HomeUiAction.ToggleSearchBar -> {
@@ -144,17 +205,14 @@ class HomeViewModel(
                 _uiState.updateValue {
                     it.copy(filterOptions = it.filterOptions.copy(sortBy = action.sortOption))
                 }
-                applySearchAndFilters()
             }
 
             is HomeUiAction.ApplyFilter -> {
                 _uiState.updateValue { it.copy(filterOptions = action.filterOptions) }
-                applySearchAndFilters()
             }
 
             HomeUiAction.ClearFilters -> {
                 _uiState.updateValue { it.copy(filterOptions = FilterOptions.default) }
-                applySearchAndFilters()
             }
         }
     }
@@ -178,8 +236,6 @@ class HomeViewModel(
                                 val filename = "Scan_${System.currentTimeMillis()}"
                                 saveScannedPdfUseCase(it, filename)
                                 sendEvent(HomeUiEffect.ScanSuccess)
-                                // Refresh list
-                                loadScannedPdfs()
                             } catch (e: Exception) {
                                 sendEvent(HomeUiEffect.ScanFailure(e))
                             }
@@ -203,96 +259,7 @@ class HomeViewModel(
         }
     }
 
-    private fun loadScannedPdfs() {
-        launchIO {
-            getAllScannedPdfsUseCase()
-                .collectSafely(
-                    onLoading = { _uiState.updateValue { it.copy(loadState = LoadState.Loading) } },
-                    onEach = { scannedPdfs ->
-                        _uiState.updateValue { state ->
-                            state.copy(
-                                scannedPdfs = scannedPdfs,
-                                loadState = LoadState.Idle // Data loaded successfully
-                            )
-                        }
 
-                        if (_uiState.value.hasActiveFilters) {
-                            applySearchAndFilters()
-                        }
-                    },
-                    onError = { error ->
-                        logError("Failed to retrieve PDFs: ${error.message}", error)
-                        _uiState.updateValue {
-                            it.copy(
-                                loadState = LoadState.Error(error.message ?: "Unknown error")
-                            )
-                        }
-                        sendEvent(HomeUiEffect.ShowError(error))
-                    },
-                )
-        }
-    }
-
-    private fun applySearchAndFilters() {
-        launchIO {
-            val currentState = _uiState.value
-            val query = currentState.searchQuery
-            val filterOptions = currentState.filterOptions
-
-            var result = currentState.scannedPdfs
-
-            if (query.isNotBlank()) {
-                try {
-                    val searchResults = searchPdfsUseCase(query)
-                    result = result.filter { pdf -> searchResults.any { it.id == pdf.id } }
-                } catch (e: Exception) {
-                    logError("Search failed: ${e.message}", e)
-                    // Fallback to in-memory filtering
-                    result =
-                        result.filter { pdf ->
-                            pdf.title?.contains(query, ignoreCase = true) == true ||
-                                pdf.filename.contains(query, ignoreCase = true) ||
-                                pdf.description?.contains(query, ignoreCase = true) == true
-                        }
-                }
-            }
-
-            filterOptions.minPageCount?.let { minPages ->
-                result = result.filter { it.pageCount >= minPages }
-            }
-
-            filterOptions.minFileSize?.let { minSize ->
-                result = result.filter { it.fileSize >= minSize }
-            }
-
-            filterOptions.dateRange?.let { (start, end) ->
-                result = result.filter { it.createdTimestamp in start..end }
-            }
-
-            result =
-                when (filterOptions.sortBy.criteria) {
-                    SortOption.Criteria.DATE -> {
-                        if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                            result.sortedByDescending { it.createdTimestamp }
-                        else result.sortedBy { it.createdTimestamp }
-                    }
-
-                    SortOption.Criteria.NAME -> {
-                        if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                            result.sortedByDescending { it.title ?: it.filename }
-                        else result.sortedBy { it.title ?: it.filename }
-                    }
-
-                    SortOption.Criteria.SIZE -> {
-                        if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                            result.sortedByDescending { it.fileSize }
-                        else result.sortedBy { it.fileSize }
-                    }
-                }
-
-            _uiState.updateValue { it.copy(filteredPdfs = result) }
-        }
-    }
 
     private suspend fun getPdfById(pdfId: String): ScannedPdf {
         return getScannedPdfByIdUseCase(pdfId)

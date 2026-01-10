@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -28,12 +29,13 @@ import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomePageWrapper() {
+fun HomePageWrapper(modifier: Modifier = Modifier) {
     val sonner = LocalSonner.current
     val vm = koinViewModel<HomeViewModel>()
     val documentScannerRepository = koinInject<DocumentScannerRepository>()
 
-    val uiState = vm.uiState.collectAsStateWithLifecycle().value
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val scannedPdfs by vm.scannedPdfs.collectAsStateWithLifecycle()
 
     val onScanClick: () -> Unit = { vm.onAction(HomeUiAction.OnScanButtonClicked) }
 
@@ -44,8 +46,9 @@ fun HomePageWrapper() {
         onScanResult = { result -> vm.onAction(HomeUiAction.OnScanResultReceived(result)) },
     )
 
-    if (uiState.pdfToBeRemoved is TemporalState.Present) {
-        val scannedPdf = uiState.pdfToBeRemoved.value
+    val pdfToBeRemoved = uiState.pdfToBeRemoved
+    if (pdfToBeRemoved is TemporalState.Present<*>) {
+        val scannedPdf = pdfToBeRemoved.value as? com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf ?: return
         DeletePdfConfirmationDialog(
             modifier = Modifier,
             scannedPdf = scannedPdf,
@@ -54,8 +57,9 @@ fun HomePageWrapper() {
         )
     }
 
-    if (uiState.pdfToBeModified is TemporalState.Present) {
-        val scannedPdf = uiState.pdfToBeModified.value
+    val pdfToBeModified = uiState.pdfToBeModified
+    if (pdfToBeModified is TemporalState.Present<*>) {
+        val scannedPdf = pdfToBeModified.value as? com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf ?: return
         EditPdfDetailsDialog(
             modifier = Modifier,
             onDismiss = { vm.onAction(HomeUiAction.DismissDialogs) },
@@ -73,12 +77,18 @@ fun HomePageWrapper() {
         )
     }
 
-    HomePage(uiState = uiState, onAction = vm::onAction, onScanClick = onScanClick)
+    HomePage(
+        modifier = modifier,
+        uiState = uiState,
+        scannedPdfs = scannedPdfs,
+        onAction = vm::onAction,
+        onScanClick = onScanClick
+    )
 }
 
 @SuppressLint("LocalContextResourcesRead")
 @Composable
-fun HandleHomeUiEffects(
+private fun HandleHomeUiEffects(
     effectFlow: Flow<HomeUiEffect>,
     sonner: ToasterState,
     documentScannerRepository: DocumentScannerRepository,

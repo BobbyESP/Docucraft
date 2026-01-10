@@ -27,10 +27,6 @@ sealed interface LoadState {
 
 // --- STATE ---
 data class HomeUiState(
-    // Data
-    val scannedPdfs: List<ScannedPdf> = emptyList(),
-    val filteredPdfs: List<ScannedPdf> = emptyList(),
-
     // Global Loading & Error
     val loadState: LoadState = LoadState.Loading,
 
@@ -48,16 +44,10 @@ data class HomeUiState(
     val isScanning: Boolean = false,
     val lastScannedDocument: ScannedDocument? = null,
     val scanUserMessage: String? = null,
+
+    // Data Availability
+    val isRepositoryEmpty: Boolean = true,
 ) {
-    val contentState: PageContentState
-        get() =
-            when (loadState) {
-                LoadState.Loading -> PageContentState.LOADING
-                is LoadState.Error -> PageContentState.ERROR
-                LoadState.Idle -> {
-                    if (scannedPdfs.isEmpty()) PageContentState.EMPTY else PageContentState.SUCCESS
-                }
-            }
 
     val errorMessage: String?
         get() = (loadState as? LoadState.Error)?.message
@@ -72,9 +62,6 @@ data class HomeUiState(
 
 // --- ACTIONS (Inputs from UI) ---
 sealed interface HomeUiAction {
-    // Lifecycle / Data Loading
-    data object LoadPdfs : HomeUiAction
-
     // Scanning
     data object OnScanButtonClicked : HomeUiAction
 
