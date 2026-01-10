@@ -19,10 +19,10 @@ import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 
 @Composable
 fun DeletePdfConfirmationDialog(
-    modifier: Modifier = Modifier,
     scannedPdf: ScannedPdf,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
 

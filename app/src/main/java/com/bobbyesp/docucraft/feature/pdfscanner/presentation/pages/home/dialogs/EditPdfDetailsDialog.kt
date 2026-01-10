@@ -28,11 +28,11 @@ import com.bobbyesp.docucraft.R
 
 @Composable
 fun EditPdfDetailsDialog(
-    modifier: Modifier = Modifier,
     onDismiss: () -> Unit,
     onConfirm: (String, String) -> Unit,
     title: String?,
     description: String?,
+    modifier: Modifier = Modifier
 ) {
     var titleText by rememberSaveable { mutableStateOf(title ?: "") }
     var descriptionText by rememberSaveable { mutableStateOf(description ?: "") }

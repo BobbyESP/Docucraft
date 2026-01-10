@@ -50,10 +50,10 @@ fun HomePageWrapper(modifier: Modifier = Modifier) {
     if (pdfToBeRemoved is TemporalState.Present<*>) {
         val scannedPdf = pdfToBeRemoved.value as? com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf ?: return
         DeletePdfConfirmationDialog(
-            modifier = Modifier,
             scannedPdf = scannedPdf,
             onDismiss = { vm.onAction(HomeUiAction.DeletePdf(null)) },
             onConfirm = { vm.onAction(HomeUiAction.DeletePdf(scannedPdf.id)) },
+            modifier = Modifier,
         )
     }
 
@@ -61,7 +61,6 @@ fun HomePageWrapper(modifier: Modifier = Modifier) {
     if (pdfToBeModified is TemporalState.Present<*>) {
         val scannedPdf = pdfToBeModified.value as? com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf ?: return
         EditPdfDetailsDialog(
-            modifier = Modifier,
             onDismiss = { vm.onAction(HomeUiAction.DismissDialogs) },
             onConfirm = { title, description ->
                 vm.onAction(
@@ -74,6 +73,7 @@ fun HomePageWrapper(modifier: Modifier = Modifier) {
             },
             title = scannedPdf.title,
             description = scannedPdf.description,
+            modifier = Modifier,
         )
     }
 
