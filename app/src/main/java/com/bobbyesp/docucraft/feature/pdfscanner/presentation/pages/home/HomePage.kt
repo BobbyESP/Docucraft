@@ -239,7 +239,7 @@ import androidx.compose.material3.MaterialTheme.motionScheme
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         ErrorContent(
                             errorMessage = uiState.errorMessage,
-                            onRetry = { onAction(HomeUiAction.LoadPdfs) },
+                            onRetry = { /* TODO */ },
                         )
                     }
                 }
