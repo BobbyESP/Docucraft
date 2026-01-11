@@ -13,7 +13,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +29,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CameraAlt
@@ -82,7 +80,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.dmSerifTextFont
@@ -92,20 +89,20 @@ import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfListItem
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfCardPosition
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.others.selectiongroup.SelectionGroupItem
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.others.selectiongroup.SelectionGroupRow
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeUiAction
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeUiState
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.PageContentState
+import com.bobbyesp.docucraft.core.presentation.components.selectiongroup.SelectionGroupRow
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.sheet.ScannedPdfOptionsSheet
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.HomeUiAction
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.HomeUiState
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.PageContentState
 import com.materialkolor.ktx.harmonize
 import kotlin.math.roundToInt
-
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme.motionScheme
 import com.bobbyesp.docucraft.util.MockData
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.LoadState
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.LoadState
+import com.bobbyesp.docucraft.core.util.state.TemporalState
 
 @OptIn(
     ExperimentalMaterial3Api::class,
@@ -113,9 +110,8 @@ import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmod
     ExperimentalMaterial3ExpressiveApi::class,
 )
 @Composable
-    fun HomePage(
+fun HomePage(
     uiState: HomeUiState,
-    scannedPdfs: List<ScannedPdf>,
     onAction: (HomeUiAction) -> Unit,
     onScanClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -137,6 +133,19 @@ import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmod
 
     val focusManager = LocalFocusManager.current
     val usableMotionScheme = motionScheme
+
+    val pdfForOptionsState = uiState.pdfForOptions
+    if (pdfForOptionsState is TemporalState.Present) {
+        val pdf = pdfForOptionsState.value
+        ScannedPdfOptionsSheet(
+            scannedPdf = pdf,
+            onDismissRequest = { onAction(HomeUiAction.DismissOptionsSheet) },
+            onSavePdf = { onAction(HomeUiAction.SavePdf(pdf)) },
+            onSharePdf = { onAction(HomeUiAction.SharePdf(pdf.path)) },
+            onDeletePdf = { onAction(HomeUiAction.ShowDeleteConfirmation(pdf.id)) },
+            onModifyPdfFields = { onAction(HomeUiAction.ShowEditDialog(pdf.id)) }
+        )
+    }
 
     Scaffold(
         modifier = modifier.pointerInput(Unit) {
@@ -250,7 +259,7 @@ import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmod
 
                 PageContentState.SUCCESS -> {
                     DisplayScannedPdfs(
-                        scannedPdfs = scannedPdfs,
+                        scannedPdfs = uiState.scannedPdfs,
                         onAction = onAction,
                         filterOptions = filterOptions,
                         listState = listState,
@@ -326,10 +335,7 @@ private fun DisplayScannedPdfs(
                 pdf = scannedPdf,
                 position = position,
                 onOpenPdf = { uri -> onAction(HomeUiAction.OpenPdf(uri)) },
-                onSharePdf = { uri -> onAction(HomeUiAction.SharePdf(uri)) },
-                onDeletePdf = { id -> onAction(HomeUiAction.ShowDeleteConfirmation(id)) },
-                onSavePdf = { onAction(HomeUiAction.SavePdf(scannedPdf)) },
-                onModifyPdfFields = { id -> onAction(HomeUiAction.ShowEditDialog(id)) },
+                onMoreOptionsClick = { onAction(HomeUiAction.ShowOptionsSheet(scannedPdf.id)) }
             )
         }
 
@@ -339,6 +345,7 @@ private fun DisplayScannedPdfs(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SortOptionsRow(
     currentSortOption: SortOption,
@@ -353,26 +360,15 @@ fun SortOptionsRow(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         SelectionGroupRow(
-            modifier = Modifier
-                .weight(1f)
-                .horizontalScroll(rememberScrollState())
-        ) {
-            SortOption.Criteria.entries.forEach { criteria ->
-                SelectionGroupItem(
-                    selected = currentSortOption.criteria == criteria,
-                    onClick = {
-                        onSortOptionChange(
-                            SortOption(
-                                criteria,
-                                currentSortOption.order
-                            )
-                        )
-                    },
-                ) {
-                    Text(criteria.getLocalizedName())
-                }
-            }
-        }
+            options = SortOption.Criteria.entries,
+            selectedOption = currentSortOption.criteria,
+            onOptionSelected = { criteria ->
+                onSortOptionChange(SortOption(criteria, currentSortOption.order))
+            },
+            modifier = Modifier.weight(1f),
+            key = { it.name },
+            labelContent = { Text(it.getLocalizedName()) }
+        )
 
         VerticalDivider(
             color = MaterialTheme.colorScheme.outline,
@@ -383,13 +379,7 @@ fun SortOptionsRow(
 
         IconButton(
             onClick = {
-                val newOrder =
-                    if (currentSortOption.order == SortOption.Order.ASC) {
-                        SortOption.Order.DESC
-                    } else {
-                        SortOption.Order.ASC
-                    }
-                onSortOptionChange(SortOption(currentSortOption.criteria, newOrder))
+                onSortOptionChange(SortOption(currentSortOption.criteria, currentSortOption.order.reverse()))
             }
         ) {
             Icon(
@@ -638,8 +628,7 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
 private fun PreviewsHomePage() {
     DocucraftTheme {
         HomePage(
-            uiState = HomeUiState(),
-            scannedPdfs = MockData.Documents.pdfsList,
+            uiState = HomeUiState(scannedPdfs = MockData.Documents.pdfsList),
             onAction = {},
             onScanClick = {},
         )

@@ -11,6 +11,10 @@ import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.*
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.HomeUiAction
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.HomeUiEffect
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.HomeUiState
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.LoadState
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.copyTo
@@ -18,7 +22,17 @@ import io.github.vinceglb.filekit.dialogs.openFileSaver
 import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -40,78 +54,97 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    val scannedPdfs: StateFlow<List<ScannedPdf>> =
-        combine(
-                flow { emitAll(getAllScannedPdfsUseCase()) }
-                    .onEach { list ->
-                        _uiState.updateValue { it.copy(isRepositoryEmpty = list.isEmpty()) }
-                    },
+    init {
+        observePdfs()
+    }
+
+    private fun observePdfs() {
+        viewModelScope.launch(Dispatchers.IO) {
+            combine(
+                flow { emitAll(getAllScannedPdfsUseCase()) },
                 _uiState.map { it.searchQuery }.distinctUntilChanged(),
                 _uiState.map { it.filterOptions }.distinctUntilChanged(),
             ) { pdfs, query, filterOptions ->
-                var result = pdfs
-
-                if (query.isNotBlank()) {
-                    try {
-                        val searchResults = searchPdfsUseCase(query)
-                        result = result.filter { pdf -> searchResults.any { it.id == pdf.id } }
-                    } catch (e: Exception) {
-                        logError("Search failed: ${e.message}", e)
-                        // Fallback to in-memory filtering
-                        result =
-                            result.filter { pdf ->
-                                pdf.title?.contains(query, ignoreCase = true) == true ||
-                                    pdf.filename.contains(query, ignoreCase = true) ||
-                                    pdf.description?.contains(query, ignoreCase = true) == true
-                            }
+                filterAndSortPdfs(pdfs, query, filterOptions)
+            }
+                .onStart { _uiState.updateValue { it.copy(loadState = LoadState.Loading) } }
+                .catch { error ->
+                    logError("Failed to retrieve PDFs: ${error.message}", error)
+                    _uiState.updateValue {
+                        it.copy(loadState = LoadState.Error(error.message ?: "Unknown error"))
+                    }
+                    sendEvent(HomeUiEffect.ShowError(error))
+                }
+                .collect { (filteredList, isRepositoryEmpty) ->
+                    _uiState.updateValue {
+                        it.copy(
+                            scannedPdfs = filteredList,
+                            isRepositoryEmpty = isRepositoryEmpty,
+                            loadState = LoadState.Idle
+                        )
                     }
                 }
+        }
+    }
 
-                filterOptions.minPageCount?.let { minPages ->
-                    result = result.filter { it.pageCount >= minPages }
-                }
+    private suspend fun filterAndSortPdfs(
+        originalPdfsList: List<ScannedPdf>,
+        query: String,
+        filterOptions: FilterOptions
+    ): Pair<List<ScannedPdf>, Boolean> {
+        var result = originalPdfsList
 
-                filterOptions.minFileSize?.let { minSize ->
-                    result = result.filter { it.fileSize >= minSize }
-                }
-
-                filterOptions.dateRange?.let { (start, end) ->
-                    result = result.filter { it.createdTimestamp in start..end }
-                }
-
+        if (query.isNotBlank()) {
+            try {
+                val searchResults = searchPdfsUseCase(query)
+                result = result.filter { pdf -> searchResults.any { it.id == pdf.id } }
+            } catch (e: Exception) {
+                logError("Search failed: ${e.message}", e)
+                // Fallback to in-memory filtering
                 result =
-                    when (filterOptions.sortBy.criteria) {
-                        SortOption.Criteria.DATE -> {
-                            if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                                result.sortedByDescending { it.createdTimestamp }
-                            else result.sortedBy { it.createdTimestamp }
-                        }
-
-                        SortOption.Criteria.NAME -> {
-                            if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                                result.sortedByDescending { it.title ?: it.filename }
-                            else result.sortedBy { it.title ?: it.filename }
-                        }
-
-                        SortOption.Criteria.SIZE -> {
-                            if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                                result.sortedByDescending { it.fileSize }
-                            else result.sortedBy { it.fileSize }
-                        }
+                    result.filter { pdf ->
+                        pdf.title?.contains(query, ignoreCase = true) == true ||
+                                pdf.filename.contains(query, ignoreCase = true) ||
+                                pdf.description?.contains(query, ignoreCase = true) == true
                     }
-                result
             }
-            .onStart { _uiState.updateValue { it.copy(loadState = LoadState.Loading) } }
-            .catch { error ->
-                logError("Failed to retrieve PDFs: ${error.message}", error)
-                _uiState.updateValue {
-                    it.copy(loadState = LoadState.Error(error.message ?: "Unknown error"))
+        }
+
+        filterOptions.minPageCount?.let { minPages ->
+            result = result.filter { it.pageCount >= minPages }
+        }
+
+        filterOptions.minFileSize?.let { minSize ->
+            result = result.filter { it.fileSize >= minSize }
+        }
+
+        filterOptions.dateRange?.let { (start, end) ->
+            result = result.filter { it.createdTimestamp in start..end }
+        }
+
+        result =
+            when (filterOptions.sortBy.criteria) {
+                SortOption.Criteria.DATE -> {
+                    if (filterOptions.sortBy.order == SortOption.Order.DESC)
+                        result.sortedByDescending { it.createdTimestamp }
+                    else result.sortedBy { it.createdTimestamp }
                 }
-                sendEvent(HomeUiEffect.ShowError(error))
+
+                SortOption.Criteria.NAME -> {
+                    if (filterOptions.sortBy.order == SortOption.Order.DESC)
+                        result.sortedByDescending { it.title ?: it.filename }
+                    else result.sortedBy { it.title ?: it.filename }
+                }
+
+                SortOption.Criteria.SIZE -> {
+                    if (filterOptions.sortBy.order == SortOption.Order.DESC)
+                        result.sortedByDescending { it.fileSize }
+                    else result.sortedBy { it.fileSize }
+                }
             }
-            .onEach { _uiState.updateValue { it.copy(loadState = LoadState.Idle) } }
-            .flowOn(Dispatchers.IO)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+        return result to originalPdfsList.isEmpty()
+    }
 
     // Events using Channel for one-time events
     private val _uiEffect = Channel<HomeUiEffect>(Channel.BUFFERED)
@@ -178,12 +211,29 @@ class HomeViewModel(
                 sendEvent(HomeUiEffect.ShowPdfInfoDialog(action.id))
             }
 
+            is HomeUiAction.ShowOptionsSheet -> {
+                launchIO {
+                    val scannedPdf = getPdfById(action.id)
+                    _uiState.updateValue {
+                        it.copy(pdfForOptions = TemporalState.Present(scannedPdf))
+                    }
+                }
+            }
+
             HomeUiAction.DismissDialogs -> {
                 _uiState.updateValue {
                     it.copy(
                         pdfToBeRemoved = TemporalState.NotPresent,
                         pdfToBeModified = TemporalState.NotPresent,
                         pdfToShowInformation = TemporalState.NotPresent,
+                    )
+                }
+            }
+
+            is HomeUiAction.DismissOptionsSheet -> {
+                _uiState.updateValue {
+                    it.copy(
+                        pdfForOptions = TemporalState.NotPresent
                     )
                 }
             }
@@ -260,7 +310,6 @@ class HomeViewModel(
     }
 
 
-
     private suspend fun getPdfById(pdfId: String): ScannedPdf {
         return getScannedPdfByIdUseCase(pdfId)
     }
@@ -317,7 +366,7 @@ class HomeViewModel(
     private fun copyPdfToDirectory(scannedPdf: ScannedPdf) {
         executeAsync(
             onSuccess = { uri: Uri ->
-                if(uri != Uri.EMPTY) {
+                if (uri != Uri.EMPTY) {
                     logInfo("PDF saved successfully to: $uri")
                     sendEvent(HomeUiEffect.SaveSuccess(uri))
                 }

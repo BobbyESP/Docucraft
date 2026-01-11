@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel
+package com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract
 
 import android.net.Uri
 import com.bobbyesp.docucraft.core.domain.model.ScannedDocument
@@ -30,10 +30,15 @@ data class HomeUiState(
     // Global Loading & Error
     val loadState: LoadState = LoadState.Loading,
 
-    // Dialogs & Temporal States (Using TemporalState helper)
+    // Data
+    val scannedPdfs: List<ScannedPdf> = emptyList(),
+    val isRepositoryEmpty: Boolean = true,
+
+    // Dialogs & Temporal States
     val pdfToBeRemoved: TemporalState<ScannedPdf> = TemporalState.NotPresent,
     val pdfToBeModified: TemporalState<ScannedPdf> = TemporalState.NotPresent,
     val pdfToShowInformation: TemporalState<ScannedPdf> = TemporalState.NotPresent,
+    val pdfForOptions: TemporalState<ScannedPdf> = TemporalState.NotPresent,
 
     // Search & Filter State
     val searchQuery: String = "",
@@ -44,9 +49,6 @@ data class HomeUiState(
     val isScanning: Boolean = false,
     val lastScannedDocument: ScannedDocument? = null,
     val scanUserMessage: String? = null,
-
-    // Data Availability
-    val isRepositoryEmpty: Boolean = true,
 ) {
 
     val errorMessage: String?
@@ -55,11 +57,13 @@ data class HomeUiState(
     val hasActiveFilters: Boolean
         get() =
             filterOptions.minPageCount != null ||
-                filterOptions.minFileSize != null ||
-                filterOptions.dateRange != null ||
-                filterOptions.sortBy != SortOption.DateDesc
-}
+                    filterOptions.minFileSize != null ||
+                    filterOptions.dateRange != null ||
+                    filterOptions.sortBy != SortOption.DateDesc
 
+    val isEmptyResult: Boolean
+        get() = scannedPdfs.isEmpty() && !isRepositoryEmpty
+}
 // --- ACTIONS (Inputs from UI) ---
 sealed interface HomeUiAction {
     // Scanning
@@ -88,7 +92,10 @@ sealed interface HomeUiAction {
 
     data class ShowPdfInfo(val id: String) : HomeUiAction
 
+    data class ShowOptionsSheet(val id: String) : HomeUiAction
+
     data object DismissDialogs : HomeUiAction
+    data object DismissOptionsSheet : HomeUiAction
 
     // Search & Filter
     data class UpdateSearchQuery(val query: String) : HomeUiAction

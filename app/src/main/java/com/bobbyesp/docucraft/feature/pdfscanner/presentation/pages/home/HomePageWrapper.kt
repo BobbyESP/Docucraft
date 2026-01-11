@@ -19,8 +19,8 @@ import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.DeletePdfConfirmationDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.EditPdfDetailsDialog
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeUiAction
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeUiEffect
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.HomeUiAction
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.HomeUiEffect
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel
 import com.dokar.sonner.ToastType
 import com.dokar.sonner.ToasterState
@@ -38,7 +38,6 @@ fun HomePageWrapper(
     val documentScannerRepository = koinInject<DocumentScannerRepository>()
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val scannedPdfs by viewModel.scannedPdfs.collectAsStateWithLifecycle()
 
     val onScanClick: () -> Unit = { viewModel.onAction(HomeUiAction.OnScanButtonClicked) }
 
@@ -83,12 +82,12 @@ fun HomePageWrapper(
     HomePage(
         modifier = modifier,
         uiState = uiState,
-        scannedPdfs = scannedPdfs,
         onAction = viewModel::onAction,
         onScanClick = onScanClick
     )
 }
 
+@Suppress("EffectKeys")
 @SuppressLint("LocalContextResourcesRead")
 @Composable
 private fun HandleHomeUiEffects(

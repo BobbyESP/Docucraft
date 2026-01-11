@@ -4,10 +4,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.bobbyesp.docucraft.R
 
+@Immutable
 data class SortOption(val criteria: Criteria, val order: Order) {
     enum class Criteria {
         DATE,
@@ -30,7 +32,14 @@ data class SortOption(val criteria: Criteria, val order: Order) {
 
     enum class Order {
         ASC,
-        DESC,
+        DESC;
+
+        fun reverse(): Order {
+            return when (this) {
+                ASC -> DESC
+                DESC -> ASC
+            }
+        }
     }
 
     @Composable
