@@ -1,12 +1,17 @@
 package com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.sheet
 
 import android.text.format.Formatter.formatFileSize
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material.icons.Icons
@@ -16,6 +21,7 @@ import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material.icons.rounded.SaveAs
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -111,7 +117,8 @@ fun ScannedPdfOptionsSheet(
     )
 
     ModalBottomSheet(
-        onDismissRequest = onDismissRequest, sheetState = sheetState, modifier = modifier
+        onDismissRequest = onDismissRequest, sheetState = sheetState, modifier = modifier,
+        contentWindowInsets = { BottomSheetDefaults.windowInsets }
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
@@ -128,7 +135,7 @@ fun ScannedPdfOptionsSheet(
                     imageModel = scannedPdf.thumbnail,
                     failure = {
                         Placeholder(
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.heightIn(min = 48.dp),
                             icon = Icons.Rounded.QuestionMark,
                             contentDescription = stringResource(id = R.string.file_icon),
                             colorful = true,
@@ -138,7 +145,7 @@ fun ScannedPdfOptionsSheet(
                         Icon(
                             modifier = Modifier
                                 .padding(12.dp)
-                                .fillMaxSize(),
+                                .heightIn(min = 48.dp),
                             imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
                             contentDescription = stringResource(id = R.string.file_icon),
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -185,11 +192,13 @@ fun ScannedPdfOptionsSheet(
                 .clip(MaterialTheme.shapes.medium), thickness = 3.dp
         )
 
-        DocumentActionsRow(
-            options = options,
-            onOptionSelect = hideAndExecute,
-            modifier = Modifier,
-        )
+        Box(modifier = Modifier.heightIn(min = 120.dp)) {
+            DocumentActionsRow(
+                options = options,
+                onOptionSelect = hideAndExecute,
+                modifier = Modifier,
+            )
+        }
     }
 }
 
@@ -209,9 +218,9 @@ private inline fun DocumentActionsRow(
                     title = option.title,
                     containerColor = {
                         when(option.importance) {
-                            ActionImportance.PRIMARY -> MaterialTheme.colorScheme.primaryContainer
-                            ActionImportance.SECONDARY -> MaterialTheme.colorScheme.secondaryContainer
-                            ActionImportance.DESTRUCTIVE -> MaterialTheme.colorScheme.errorContainer
+                            ActionImportance.PRIMARY -> MaterialTheme.colorScheme.primary
+                            ActionImportance.SECONDARY -> MaterialTheme.colorScheme.secondary
+                            ActionImportance.DESTRUCTIVE -> MaterialTheme.colorScheme.error
                         }
                     },
                     enabled = true,

@@ -16,7 +16,7 @@ nav3Core = "1.0.0"
 
 #Compose
 compose-bom = "2025.12.01"
-androidx-compose-material3 = "1.4.0"
+androidx-compose-material3 = "1.5.0-alpha11"
 compose-util = "1.10.0"
 accompanist = "0.37.3"
 glance = "1.1.1"
