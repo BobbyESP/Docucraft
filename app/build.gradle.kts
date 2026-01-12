@@ -151,6 +151,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
+//    androidTestImplementation(libs.mockk.android)
+//    androidTestImplementation(libs.kotlinx.coroutines.test)
 
     // Compose testing and tooling libraries
     androidTestImplementation(platform(libs.compose.bom))
