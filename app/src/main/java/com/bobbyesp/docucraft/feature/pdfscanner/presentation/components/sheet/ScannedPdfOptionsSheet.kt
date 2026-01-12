@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
@@ -126,7 +128,8 @@ fun ScannedPdfOptionsSheet(
             scannedPdf.thumbnail?.let {
                 val imageModifier =
                     Modifier
-                        .fillMaxWidth(0.25f)
+                        .widthIn(max = 120.dp)
+                        .aspectRatio(0.707f)
                         .clip(MaterialShapes.Slanted.toShape())
                         .background(MaterialTheme.colorScheme.primaryContainer)
 
