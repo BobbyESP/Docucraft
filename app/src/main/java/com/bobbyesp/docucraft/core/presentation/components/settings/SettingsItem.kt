@@ -14,6 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,7 +22,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
+@Immutable
 data class SettingsItem(
     val title: String,
     val supportingText: String,
@@ -64,7 +68,7 @@ fun SettingsItem(item: SettingsItem, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun SettingsGroup(items: List<SettingsItem>, modifier: Modifier = Modifier) {
+fun SettingsGroup(items: ImmutableList<SettingsItem>, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         items.fastForEachIndexed { index, item ->
             SettingsItem(
@@ -121,7 +125,7 @@ fun SettingsItemPreview() {
 fun SettingsGroupPreview() {
     SettingsGroup(
         items =
-            listOf(
+            persistentListOf(
                 SettingsItem(
                     title = "Title",
                     supportingText = "Supporting Text",

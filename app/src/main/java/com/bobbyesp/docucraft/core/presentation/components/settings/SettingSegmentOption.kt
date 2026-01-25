@@ -19,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,15 +30,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun SettingSegmentOptions(
     title: String,
     supportingText: String,
     icon: ImageVector,
-    options: List<SettingSegmentOption>,
+    options: ImmutableList<SettingSegmentOption>,
     selectedOptionIndex: Int,
     modifier: Modifier = Modifier,
 ) {
@@ -51,7 +54,9 @@ fun SettingSegmentOptions(
             contentDescription = null,
         )
 
-        Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
+        Column(modifier = Modifier
+            .weight(1f)
+            .padding(horizontal = 16.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
@@ -67,7 +72,7 @@ fun SettingSegmentOptions(
 
         Box(
             modifier =
-                modifier
+                Modifier
                     .width(IntrinsicSize.Min)
                     .height(IntrinsicSize.Min)
                     .clip(ShapeDefaults.ExtraLarge)
@@ -76,16 +81,17 @@ fun SettingSegmentOptions(
             var midPoint by remember { mutableStateOf(0.dp) }
             val density = LocalDensity.current
             val capsuleOffset by
-                animateDpAsState(
-                    targetValue = if (selectedOptionIndex == 0) 0.dp else midPoint,
-                    label = "capsule-offset-animation",
-                )
+            animateDpAsState(
+                targetValue = if (selectedOptionIndex == 0) 0.dp else midPoint,
+                label = "capsule-offset-animation",
+            )
 
             Box(
                 modifier =
-                    Modifier.fillMaxHeight()
+                    Modifier
+                        .fillMaxHeight()
                         .fillMaxWidth(.5f)
-                        .offset(x = capsuleOffset)
+                        .offset { IntOffset(capsuleOffset.value.toInt(), 0) }
                         .clip(ShapeDefaults.ExtraLarge)
                         .background(color = MaterialTheme.colorScheme.primary)
             )
@@ -106,7 +112,10 @@ fun SettingSegmentOptions(
                                 MaterialTheme.colorScheme.onPrimary
                             } else MaterialTheme.colorScheme.onSurface,
                         modifier =
-                            Modifier.padding(8.dp).clip(CircleShape).clickable { option.onClick() },
+                            Modifier
+                                .clickable { option.onClick() }
+                                .padding(8.dp)
+                                .clip(CircleShape),
                     )
                 }
             }
@@ -114,6 +123,7 @@ fun SettingSegmentOptions(
     }
 }
 
+@Immutable
 data class SettingSegmentOption(
     val icon: ImageVector,
     val contentDescription: String,

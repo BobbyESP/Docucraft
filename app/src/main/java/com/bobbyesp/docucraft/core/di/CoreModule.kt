@@ -6,7 +6,7 @@ import com.bobbyesp.docucraft.core.data.repository.MlKitDocumentScannerRepositor
 import com.bobbyesp.docucraft.core.domain.repository.DocumentScannerRepository
 import org.koin.dsl.module
 
-val coreModule = module {
+val mlKitModule = module {
     // Data Source
     single<MlKitDataSource> { MlKitDataSourceImpl() }
 

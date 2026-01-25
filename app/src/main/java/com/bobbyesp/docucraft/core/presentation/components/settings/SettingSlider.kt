@@ -16,14 +16,14 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SettingSlider(
-    modifier: Modifier = Modifier,
     title: String,
     value: Float,
     onValueChange: (Float) -> Unit,
-    onValueChangeFinished: () -> Unit,
+    onValueChangeFinish: () -> Unit,
+    modifier: Modifier = Modifier,
     valueToShow: String? = null,
     @IntRange steps: Int = 0,
-    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f
 ) {
     Column(modifier = modifier) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -45,7 +45,7 @@ fun SettingSlider(
         Slider(
             value = value,
             onValueChange = onValueChange,
-            onValueChangeFinished = onValueChangeFinished,
+            onValueChangeFinished = onValueChangeFinish,
             steps = steps,
             valueRange = valueRange,
             modifier = Modifier.fillMaxWidth(),

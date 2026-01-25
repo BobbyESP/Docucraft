@@ -7,7 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import com.bobbyesp.docucraft.core.di.appCoroutinesScope
 import com.bobbyesp.docucraft.core.di.coreFunctionalitiesModule
-import com.bobbyesp.docucraft.core.di.coreModule
+import com.bobbyesp.docucraft.core.di.mlKitModule
 import com.bobbyesp.docucraft.core.di.fileManagementModule
 import com.bobbyesp.docucraft.feature.pdfscanner.di.gmsScannerModule
 import com.bobbyesp.docucraft.feature.pdfscanner.di.pdfScannerDataModule
@@ -29,7 +29,7 @@ class App : Application() {
                 gmsScannerModule,
                 pdfScannerViewModels,
                 appCoroutinesScope,
-                coreModule,
+                mlKitModule,
                 coreFunctionalitiesModule,
                 fileManagementModule,
             )
