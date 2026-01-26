@@ -26,16 +26,13 @@ fun <T> SelectionGroupRow(
     onOptionSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
     key: ((T) -> Any)? = null,
-    labelContent: @Composable (T) -> Unit = { Text(it.toString()) }
+    labelContent: @Composable (T) -> Unit = { Text(it.toString()) },
 ) {
     LazyRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
     ) {
-        items(
-            items = options,
-            key = key
-        ) { item ->
+        items(items = options, key = key) { item ->
             ToggleButton(
                 checked = item == selectedOption,
                 onCheckedChange = { isChecked ->
@@ -43,7 +40,7 @@ fun <T> SelectionGroupRow(
                         onOptionSelected(item)
                     }
                 },
-                content = { labelContent(item) }
+                content = { labelContent(item) },
             )
         }
     }
@@ -59,9 +56,8 @@ private fun Preview() {
             SelectionGroupRow(
                 options = itemSet,
                 selectedOption = selectedOption,
-                onOptionSelected = { selectedOption = it }
+                onOptionSelected = { selectedOption = it },
             )
         }
     }
 }
-

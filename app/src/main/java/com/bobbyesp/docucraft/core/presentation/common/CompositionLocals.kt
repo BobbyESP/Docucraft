@@ -129,12 +129,13 @@ fun AppLocalSettingsProvider(
         }
 
     @FloatRange(from = 0.0, to = 1.0)
-    val contentWidthRatio: Float = when (windowWidthSize) {
-        WindowWidthSizeClass.Compact -> 1f
-        WindowWidthSizeClass.Medium -> 0.75f
-        WindowWidthSizeClass.Expanded -> 0.5f
-        else -> 0.66f
-    }
+    val contentWidthRatio: Float =
+        when (windowWidthSize) {
+            WindowWidthSizeClass.Compact -> 1f
+            WindowWidthSizeClass.Medium -> 0.75f
+            WindowWidthSizeClass.Expanded -> 0.5f
+            else -> 0.66f
+        }
 
     CompositionLocalProvider(
         LocalDarkTheme provides darkTheme, // Tells the app what dark theme to use
@@ -153,16 +154,12 @@ fun AppLocalSettingsProvider(
     ) {
         DocucraftTheme(colorScheme = colorScheme) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
-                contentAlignment = Alignment.Center
+                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center,
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(contentWidthRatio),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier.fillMaxHeight().fillMaxWidth(contentWidthRatio),
+                    contentAlignment = Alignment.Center,
                 ) {
                     content()
                 }

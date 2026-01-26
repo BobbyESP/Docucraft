@@ -17,10 +17,10 @@ import com.bobbyesp.docucraft.core.domain.repository.DocumentScannerRepository
 import com.bobbyesp.docucraft.core.presentation.common.LocalSonner
 import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.DeletePdfConfirmationDialog
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.EditPdfDetailsDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.HomeUiEffect
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.DeletePdfConfirmationDialog
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.dialogs.EditPdfDetailsDialog
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel
 import com.dokar.sonner.ToastType
 import com.dokar.sonner.ToasterState
@@ -30,10 +30,7 @@ import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomePageWrapper(
-    modifier: Modifier = Modifier,
-    viewModel: HomeViewModel = koinViewModel()
-) {
+fun HomePageWrapper(modifier: Modifier = Modifier, viewModel: HomeViewModel = koinViewModel()) {
     val sonner = LocalSonner.current
     val documentScannerRepository = koinInject<DocumentScannerRepository>()
 
@@ -83,7 +80,7 @@ fun HomePageWrapper(
         modifier = modifier,
         uiState = uiState,
         onAction = viewModel::onAction,
-        onScanClick = onScanClick
+        onScanClick = onScanClick,
     )
 }
 

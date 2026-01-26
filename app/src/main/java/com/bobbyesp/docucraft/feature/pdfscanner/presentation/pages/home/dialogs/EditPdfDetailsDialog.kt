@@ -32,7 +32,7 @@ fun EditPdfDetailsDialog(
     onConfirm: (String, String) -> Unit,
     title: String?,
     description: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var titleText by rememberSaveable { mutableStateOf(title ?: "") }
     var descriptionText by rememberSaveable { mutableStateOf(description ?: "") }

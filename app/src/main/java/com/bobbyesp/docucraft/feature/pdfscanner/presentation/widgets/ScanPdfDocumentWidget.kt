@@ -39,11 +39,7 @@ const val ACTION_SCAN_PDF = "com.bobbyesp.docucraft.ACTION_SCAN_PDF"
 class ScanPdfDocumentWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val scanText = context.getString(R.string.scan_new_document)
-        provideContent {
-            GlanceTheme {
-                ScanPdfWidgetContent(scanButtonText = scanText)
-            }
-        }
+        provideContent { GlanceTheme { ScanPdfWidgetContent(scanButtonText = scanText) } }
     }
 }
 
@@ -52,18 +48,16 @@ class ScanPdfDocumentWidget : GlanceAppWidget() {
 fun ScanPdfWidgetContent(scanButtonText: String) {
 
     Box(
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .background(GlanceTheme.colors.background)
-            .padding(8.dp),
-        contentAlignment = Alignment.Center
+        modifier =
+            GlanceModifier.fillMaxSize().background(GlanceTheme.colors.background).padding(8.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .background(GlanceTheme.colors.primaryContainer)
-                .cornerRadius(16.dp)
-                .clickable(actionRunCallback<ScanPdfActionCallback>()),
+            modifier =
+                GlanceModifier.fillMaxSize()
+                    .background(GlanceTheme.colors.primaryContainer)
+                    .cornerRadius(16.dp)
+                    .clickable(actionRunCallback<ScanPdfActionCallback>()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -71,16 +65,17 @@ fun ScanPdfWidgetContent(scanButtonText: String) {
                 provider = ImageProvider(R.drawable.ic_scan_camera),
                 contentDescription = null,
                 modifier = GlanceModifier.size(32.dp),
-                colorFilter = ColorFilter.tint(GlanceTheme.colors.onPrimaryContainer)
+                colorFilter = ColorFilter.tint(GlanceTheme.colors.onPrimaryContainer),
             )
             Spacer(modifier = GlanceModifier.height(4.dp))
             Text(
                 text = scanButtonText,
-                style = TextStyle(
-                    color = GlanceTheme.colors.onPrimaryContainer,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                style =
+                    TextStyle(
+                        color = GlanceTheme.colors.onPrimaryContainer,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                    ),
             )
         }
     }

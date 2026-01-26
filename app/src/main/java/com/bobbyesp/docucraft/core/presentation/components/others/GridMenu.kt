@@ -40,7 +40,7 @@ fun GridMenu(
     state: LazyGridState = rememberLazyGridState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(8.dp),
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(8.dp)
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(8.dp),
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 100.dp),
@@ -49,7 +49,7 @@ fun GridMenu(
         contentPadding = contentPadding,
         verticalArrangement = verticalArrangement,
         horizontalArrangement = horizontalArrangement,
-        content = content
+        content = content,
     )
 }
 
@@ -66,35 +66,30 @@ fun LazyGridScope.GridMenuItem(
     item(span = span) {
         Button(
             onClick = onClick,
-            shapes = ButtonShapes(
-                shape = ShapeDefaults.ExtraLarge,
-                pressedShape = ShapeDefaults.Large
-            ),
+            shapes =
+                ButtonShapes(shape = ShapeDefaults.ExtraLarge, pressedShape = ShapeDefaults.Large),
             modifier = modifier.fillMaxWidth().heightIn(min = 84.dp),
             enabled = enabled,
-            colors = ButtonDefaults.elevatedButtonColors(
-                containerColor = containerColor(),
-                contentColor = contentColorFor(containerColor())
-            ),
+            colors =
+                ButtonDefaults.elevatedButtonColors(
+                    containerColor = containerColor(),
+                    contentColor = contentColorFor(containerColor()),
+                ),
             elevation = ButtonDefaults.elevatedButtonElevation(),
             border = null,
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
             ) {
-                Icon(
-                    modifier = Modifier.size(32.dp),
-                    imageVector = icon,
-                    contentDescription = null,
-                )
+                Icon(modifier = Modifier.size(32.dp), imageVector = icon, contentDescription = null)
 
                 Text(
                     text = stringResource(title),
                     style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

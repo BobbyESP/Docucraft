@@ -1,7 +1,7 @@
 package com.bobbyesp.docucraft
 
-import android.os.Bundle
 import android.content.Intent
+import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -48,8 +48,8 @@ class MainActivity : ComponentActivity(), KoinComponent {
         FileKit.init(this)
 
         scannerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
-                    result ->
+            registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result
+                ->
                 homeViewModel.onAction(HomeUiAction.OnScanResultReceived(result))
             }
 
@@ -72,9 +72,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
                     richColors = true,
                     showCloseButton = true,
                     alignment = Alignment.TopCenter,
-                    darkTheme =
-                        LocalDarkTheme.current
-                            .isDarkTheme(),
+                    darkTheme = LocalDarkTheme.current.isDarkTheme(),
                 )
             }
         }
@@ -88,7 +86,8 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Fix for FileKit memory leak: Clear the static registry reference if it points to this activity
+        // Fix for FileKit memory leak: Clear the static registry reference if it points to this
+        // activity
         try {
             val fileKitClass = Class.forName("io.github.vinceglb.filekit.dialogs.FileKitDialog")
             val registryField = fileKitClass.getDeclaredField("_registry")

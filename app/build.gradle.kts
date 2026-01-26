@@ -16,7 +16,10 @@ plugins {
 
 android {
     namespace = "com.bobbyesp.docucraft"
-    compileSdk = 36
+
+    compileSdk {
+        version = release(36)
+    }
 
     defaultConfig {
         applicationId = "com.bobbyesp.docucraft"
@@ -32,7 +35,6 @@ android {
     }
 
     buildTypes {
-
         release {
             ndk { debugSymbolLevel = "FULL" }
 
@@ -74,9 +76,7 @@ android {
         includeInBundle = false
     }
 
-    buildFeatures {
-        compose = true
-    }
+    buildFeatures { compose = true }
 
     composeCompiler { reportsDestination = layout.buildDirectory.dir("compose_compiler") }
 }
@@ -151,8 +151,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
-//    androidTestImplementation(libs.mockk.android)
-//    androidTestImplementation(libs.kotlinx.coroutines.test)
+    //    androidTestImplementation(libs.mockk.android)
+    //    androidTestImplementation(libs.kotlinx.coroutines.test)
 
     // Compose testing and tooling libraries
     androidTestImplementation(platform(libs.compose.bom))

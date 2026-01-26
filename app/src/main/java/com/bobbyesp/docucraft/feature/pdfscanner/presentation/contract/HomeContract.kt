@@ -11,17 +11,18 @@ import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
  * Defines the contract for the Home Screen (MVI Pattern). Contains the State, Actions (Inputs), and
  * Effects (Outputs).
  */
-
 enum class PageContentState {
     LOADING,
     ERROR,
     EMPTY,
-    SUCCESS
+    SUCCESS,
 }
 
 sealed interface LoadState {
     data object Idle : LoadState
+
     data object Loading : LoadState
+
     data class Error(val message: String) : LoadState
 }
 
@@ -57,13 +58,14 @@ data class HomeUiState(
     val hasActiveFilters: Boolean
         get() =
             filterOptions.minPageCount != null ||
-                    filterOptions.minFileSize != null ||
-                    filterOptions.dateRange != null ||
-                    filterOptions.sortBy != SortOption.DateDesc
+                filterOptions.minFileSize != null ||
+                filterOptions.dateRange != null ||
+                filterOptions.sortBy != SortOption.DateDesc
 
     val isEmptyResult: Boolean
         get() = scannedPdfs.isEmpty() && !isRepositoryEmpty
 }
+
 // --- ACTIONS (Inputs from UI) ---
 sealed interface HomeUiAction {
     // Scanning
@@ -95,6 +97,7 @@ sealed interface HomeUiAction {
     data class ShowOptionsSheet(val id: String) : HomeUiAction
 
     data object DismissDialogs : HomeUiAction
+
     data object DismissOptionsSheet : HomeUiAction
 
     // Search & Filter

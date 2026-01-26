@@ -54,9 +54,7 @@ fun SettingSegmentOptions(
             contentDescription = null,
         )
 
-        Column(modifier = Modifier
-            .weight(1f)
-            .padding(horizontal = 16.dp)) {
+        Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
@@ -72,8 +70,7 @@ fun SettingSegmentOptions(
 
         Box(
             modifier =
-                Modifier
-                    .width(IntrinsicSize.Min)
+                Modifier.width(IntrinsicSize.Min)
                     .height(IntrinsicSize.Min)
                     .clip(ShapeDefaults.ExtraLarge)
                     .background(color = MaterialTheme.colorScheme.surfaceContainerHighest)
@@ -81,15 +78,14 @@ fun SettingSegmentOptions(
             var midPoint by remember { mutableStateOf(0.dp) }
             val density = LocalDensity.current
             val capsuleOffset by
-            animateDpAsState(
-                targetValue = if (selectedOptionIndex == 0) 0.dp else midPoint,
-                label = "capsule-offset-animation",
-            )
+                animateDpAsState(
+                    targetValue = if (selectedOptionIndex == 0) 0.dp else midPoint,
+                    label = "capsule-offset-animation",
+                )
 
             Box(
                 modifier =
-                    Modifier
-                        .fillMaxHeight()
+                    Modifier.fillMaxHeight()
                         .fillMaxWidth(.5f)
                         .offset { IntOffset(capsuleOffset.value.toInt(), 0) }
                         .clip(ShapeDefaults.ExtraLarge)
@@ -112,10 +108,7 @@ fun SettingSegmentOptions(
                                 MaterialTheme.colorScheme.onPrimary
                             } else MaterialTheme.colorScheme.onSurface,
                         modifier =
-                            Modifier
-                                .clickable { option.onClick() }
-                                .padding(8.dp)
-                                .clip(CircleShape),
+                            Modifier.clickable { option.onClick() }.padding(8.dp).clip(CircleShape),
                     )
                 }
             }

@@ -46,11 +46,11 @@ datastore = "1.2.0"
 
 #Firebase, GMS...
 googleServices = "4.4.4"
-firebaseBom = "34.7.0"
+firebaseBom = "34.8.0"
 
 #Others
 qrcodeKotlinAndroid = "4.5.0"
-sonner = "0.3.8"
+sonner = "0.3.9"
 
 # File management
 filekit = "0.12.0"

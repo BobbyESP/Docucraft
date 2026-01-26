@@ -22,7 +22,7 @@ fun DeletePdfConfirmationDialog(
     scannedPdf: ScannedPdf,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
 

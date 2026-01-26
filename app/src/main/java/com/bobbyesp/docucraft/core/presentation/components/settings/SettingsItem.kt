@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -78,21 +79,15 @@ fun SettingsGroup(items: ImmutableList<SettingsItem>, modifier: Modifier = Modif
                         .clip(
                             when {
                                 items.size == 1 -> {
-                                    MaterialTheme.shapes.extraLarge
+                                    DocucraftShapeDefaults.middleListItemShape
                                 }
 
                                 index == 0 -> {
-                                    MaterialTheme.shapes.extraLarge.copy(
-                                        bottomStart = MaterialTheme.shapes.medium.bottomStart,
-                                        bottomEnd = MaterialTheme.shapes.medium.bottomEnd,
-                                    )
+                                    DocucraftShapeDefaults.topListItemShape
                                 }
 
                                 index == items.lastIndex -> {
-                                    MaterialTheme.shapes.extraLarge.copy(
-                                        topStart = MaterialTheme.shapes.medium.topStart,
-                                        topEnd = MaterialTheme.shapes.medium.topEnd,
-                                    )
+                                    DocucraftShapeDefaults.bottomListItemShape
                                 }
 
                                 else -> {

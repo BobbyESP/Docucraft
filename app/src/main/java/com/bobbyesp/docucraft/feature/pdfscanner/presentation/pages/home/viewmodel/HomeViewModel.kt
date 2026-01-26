@@ -36,7 +36,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for the Home screen. Each use case has a single responsibility, following SOLID principles.
+ * ViewModel for the Home screen. Each use case has a single responsibility, following SOLID
+ * principles.
  */
 class HomeViewModel(
     private val getAllScannedPdfsUseCase: GetAllScannedPdfsUseCase,
@@ -61,12 +62,12 @@ class HomeViewModel(
     private fun observePdfs() {
         viewModelScope.launch(Dispatchers.IO) {
             combine(
-                flow { emitAll(getAllScannedPdfsUseCase()) },
-                _uiState.map { it.searchQuery }.distinctUntilChanged(),
-                _uiState.map { it.filterOptions }.distinctUntilChanged(),
-            ) { pdfs, query, filterOptions ->
-                filterAndSortPdfs(pdfs, query, filterOptions)
-            }
+                    flow { emitAll(getAllScannedPdfsUseCase()) },
+                    _uiState.map { it.searchQuery }.distinctUntilChanged(),
+                    _uiState.map { it.filterOptions }.distinctUntilChanged(),
+                ) { pdfs, query, filterOptions ->
+                    filterAndSortPdfs(pdfs, query, filterOptions)
+                }
                 .onStart { _uiState.updateValue { it.copy(loadState = LoadState.Loading) } }
                 .catch { error ->
                     logError("Failed to retrieve PDFs: ${error.message}", error)
@@ -80,7 +81,7 @@ class HomeViewModel(
                         it.copy(
                             scannedPdfs = filteredList,
                             isRepositoryEmpty = isRepositoryEmpty,
-                            loadState = LoadState.Idle
+                            loadState = LoadState.Idle,
                         )
                     }
                 }
@@ -90,7 +91,7 @@ class HomeViewModel(
     private suspend fun filterAndSortPdfs(
         originalPdfsList: List<ScannedPdf>,
         query: String,
-        filterOptions: FilterOptions
+        filterOptions: FilterOptions,
     ): Pair<List<ScannedPdf>, Boolean> {
         var result = originalPdfsList
 
@@ -104,8 +105,8 @@ class HomeViewModel(
                 result =
                     result.filter { pdf ->
                         pdf.title?.contains(query, ignoreCase = true) == true ||
-                                pdf.filename.contains(query, ignoreCase = true) ||
-                                pdf.description?.contains(query, ignoreCase = true) == true
+                            pdf.filename.contains(query, ignoreCase = true) ||
+                            pdf.description?.contains(query, ignoreCase = true) == true
                     }
             }
         }
@@ -231,11 +232,7 @@ class HomeViewModel(
             }
 
             is HomeUiAction.DismissOptionsSheet -> {
-                _uiState.updateValue {
-                    it.copy(
-                        pdfForOptions = TemporalState.NotPresent
-                    )
-                }
+                _uiState.updateValue { it.copy(pdfForOptions = TemporalState.NotPresent) }
             }
 
             // Search & Filter
@@ -308,7 +305,6 @@ class HomeViewModel(
             }
         }
     }
-
 
     private suspend fun getPdfById(pdfId: String): ScannedPdf {
         return getScannedPdfByIdUseCase(pdfId)

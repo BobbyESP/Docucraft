@@ -18,13 +18,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -49,6 +52,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.motionScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -81,28 +85,24 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.selectiongroup.SelectionGroupRow
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.dmSerifTextFont
 import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscroll
+import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfListItem
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfCardPosition
-import com.bobbyesp.docucraft.core.presentation.components.selectiongroup.SelectionGroupRow
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.card.ScannedPdfListItem
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.components.sheet.ScannedPdfOptionsSheet
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.HomeUiState
+import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.LoadState
 import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.PageContentState
+import com.bobbyesp.docucraft.util.MockData
 import com.materialkolor.ktx.harmonize
 import kotlin.math.roundToInt
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.MaterialTheme.motionScheme
-import com.bobbyesp.docucraft.util.MockData
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.LoadState
-import com.bobbyesp.docucraft.core.util.state.TemporalState
 
 @OptIn(
     ExperimentalMaterial3Api::class,
@@ -114,7 +114,7 @@ fun HomePage(
     uiState: HomeUiState,
     onAction: (HomeUiAction) -> Unit,
     onScanClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val searchQuery = uiState.searchQuery
     val filterOptions = uiState.filterOptions
@@ -143,16 +143,15 @@ fun HomePage(
             onSavePdf = { onAction(HomeUiAction.SavePdf(pdf)) },
             onSharePdf = { onAction(HomeUiAction.SharePdf(pdf.path)) },
             onDeletePdf = { onAction(HomeUiAction.ShowDeleteConfirmation(pdf.id)) },
-            onModifyPdfFields = { onAction(HomeUiAction.ShowEditDialog(pdf.id)) }
+            onModifyPdfFields = { onAction(HomeUiAction.ShowEditDialog(pdf.id)) },
         )
     }
 
     Scaffold(
-        modifier = modifier.pointerInput(Unit) {
-            detectTapGestures(onTap = {
-                focusManager.clearFocus()
-            })
-        },
+        modifier =
+            modifier.pointerInput(Unit) {
+                detectTapGestures(onTap = { focusManager.clearFocus() })
+            },
         topBar = {
             TopAppBar(
                 modifier = Modifier,
@@ -175,34 +174,32 @@ fun HomePage(
             var isSearchFocused by remember { mutableStateOf(false) }
 
             AnimatedContent(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 32.dp)
-                    .windowInsetsPadding(WindowInsets.ime),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(start = 32.dp)
+                        .windowInsetsPadding(WindowInsets.ime),
                 targetState = contentState == PageContentState.SUCCESS,
                 transitionSpec = {
                     ContentTransform(
-                        targetContentEnter = slideInVertically(
-                            animationSpec = usableMotionScheme.defaultSpatialSpec()
-                        ) + fadeIn(tween(500)),
-                        initialContentExit = slideOutVertically(
-                            usableMotionScheme.defaultSpatialSpec()
-                        ) + fadeOut(tween(500)),
+                        targetContentEnter =
+                            slideInVertically(
+                                animationSpec = usableMotionScheme.defaultSpatialSpec()
+                            ) + fadeIn(tween(500)),
+                        initialContentExit =
+                            slideOutVertically(usableMotionScheme.defaultSpatialSpec()) +
+                                fadeOut(tween(500)),
                     )
                 },
             ) { isFabAndSearchVisible ->
-                if(isFabAndSearchVisible) {
+                if (isFabAndSearchVisible) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         SearchBar(
                             query = searchQuery,
-                            onQueryChange = {
-                                onAction(HomeUiAction.UpdateSearchQuery(it))
-                            },
+                            onQueryChange = { onAction(HomeUiAction.UpdateSearchQuery(it)) },
                             onClear = { onAction(HomeUiAction.ClearSearch) },
                             onFocusChange = { isSearchFocused = it },
                             modifier = Modifier.weight(1f),
@@ -214,7 +211,8 @@ fun HomePage(
                             icon = {
                                 Icon(
                                     imageVector = Icons.Rounded.DocumentScanner,
-                                    contentDescription = stringResource(id = R.string.scan_new_document),
+                                    contentDescription =
+                                        stringResource(id = R.string.scan_new_document),
                                 )
                             },
                             onClick = onScanClick,
@@ -227,9 +225,7 @@ fun HomePage(
         AnimatedContent(
             modifier = Modifier.padding(padding),
             targetState = contentState,
-            transitionSpec = {
-                fadeIn(tween(300)) togetherWith fadeOut(tween(300))
-            },
+            transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
             label = "PageContentTransition",
         ) { targetState ->
             when (targetState) {
@@ -241,18 +237,12 @@ fun HomePage(
 
                 PageContentState.ERROR -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        ErrorContent(
-                            errorMessage = uiState.errorMessage,
-                            onRetry = { /* TODO */ },
-                        )
+                        ErrorContent(errorMessage = uiState.errorMessage, onRetry = { /* TODO */ })
                     }
                 }
 
                 PageContentState.EMPTY -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         EmptyStateScreen(modifier = Modifier, onScanPdfClick = onScanClick)
                     }
                 }
@@ -281,8 +271,7 @@ private fun DisplayScannedPdfs(
 
     LazyColumn(
         modifier =
-            Modifier
-                .fillMaxSize()
+            Modifier.fillMaxSize()
                 .customOverscroll(
                     listState = listState,
                     onNewOverscrollAmount = { animatedOverscrollAmount = it },
@@ -296,8 +285,7 @@ private fun DisplayScannedPdfs(
                 currentSortOption = filterOptions.sortBy,
                 onSortOptionChange = { onAction(HomeUiAction.ApplySort(it)) },
                 modifier =
-                    Modifier
-                        .background(
+                    Modifier.background(
                             // fade to transparent from background
                             brush =
                                 Brush.verticalGradient(
@@ -327,21 +315,15 @@ private fun DisplayScannedPdfs(
                 }
 
             ScannedPdfListItem(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .animateItem(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).animateItem(),
                 pdf = scannedPdf,
                 position = position,
                 onOpenPdf = { uri -> onAction(HomeUiAction.OpenPdf(uri)) },
-                onMoreOptionsClick = { onAction(HomeUiAction.ShowOptionsSheet(scannedPdf.id)) }
+                onMoreOptionsClick = { onAction(HomeUiAction.ShowOptionsSheet(scannedPdf.id)) },
             )
         }
 
-        item(contentType = "bottomBarActionsSpacer") {
-            Spacer(modifier = Modifier.height(88.dp))
-        }
+        item(contentType = "bottomBarActionsSpacer") { Spacer(modifier = Modifier.height(88.dp)) }
     }
 }
 
@@ -353,9 +335,7 @@ fun SortOptionsRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -367,19 +347,19 @@ fun SortOptionsRow(
             },
             modifier = Modifier.weight(1f),
             key = { it.name },
-            labelContent = { Text(it.getLocalizedName()) }
+            labelContent = { Text(it.getLocalizedName()) },
         )
 
         VerticalDivider(
             color = MaterialTheme.colorScheme.outline,
-            modifier = Modifier
-                .height(24.dp)
-                .padding(horizontal = 8.dp),
+            modifier = Modifier.height(24.dp).padding(horizontal = 8.dp),
         )
 
         IconButton(
             onClick = {
-                onSortOptionChange(SortOption(currentSortOption.criteria, currentSortOption.order.reverse()))
+                onSortOptionChange(
+                    SortOption(currentSortOption.criteria, currentSortOption.order.reverse())
+                )
             }
         ) {
             Icon(
@@ -412,17 +392,16 @@ private fun SearchBar(
         TextField(
             value = query,
             onValueChange = onQueryChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged { onFocusChange(it.isFocused) },
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-                errorIndicatorColor = MaterialTheme.colorScheme.error,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ),
+            modifier = Modifier.fillMaxWidth().onFocusChanged { onFocusChange(it.isFocused) },
+            colors =
+                TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    errorIndicatorColor = MaterialTheme.colorScheme.error,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
             placeholder = {
                 Text(
                     modifier = Modifier.alpha(0.66f),
@@ -482,9 +461,7 @@ fun EmptyStateScreen(onScanPdfClick: () -> Unit, modifier: Modifier = Modifier) 
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -512,9 +489,7 @@ fun EmptyStateScreen(onScanPdfClick: () -> Unit, modifier: Modifier = Modifier) 
 
             Button(
                 onClick = onScanPdfClick,
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(56.dp),
+                modifier = Modifier.fillMaxWidth(0.8f).height(56.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors =
                     ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -541,8 +516,7 @@ fun EmptyStateScreen(onScanPdfClick: () -> Unit, modifier: Modifier = Modifier) 
 private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
     Card(
         modifier =
-            Modifier
-                .fillMaxWidth()
+            Modifier.fillMaxWidth()
                 .padding(16.dp)
                 .border(
                     width = 2.dp,
@@ -567,9 +541,7 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -599,9 +571,7 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
             }
             Button(
                 onClick = onRetry,
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth(0.8f).height(50.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors =
                     ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),

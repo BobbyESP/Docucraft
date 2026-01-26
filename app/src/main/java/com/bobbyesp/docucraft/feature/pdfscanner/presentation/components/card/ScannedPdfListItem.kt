@@ -51,7 +51,7 @@ enum class ScannedPdfCardPosition {
     TOP,
     MIDDLE,
     BOTTOM,
-    SINGLE
+    SINGLE,
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
@@ -61,7 +61,7 @@ fun ScannedPdfListItem(
     onOpenPdf: (Uri) -> Unit,
     onMoreOptionsClick: () -> Unit,
     modifier: Modifier = Modifier,
-    position: ScannedPdfCardPosition = ScannedPdfCardPosition.SINGLE
+    position: ScannedPdfCardPosition = ScannedPdfCardPosition.SINGLE,
 ) {
     val shape =
         when (position) {
@@ -73,20 +73,20 @@ fun ScannedPdfListItem(
 
     Surface(
         modifier =
-            modifier.clip(shape).combinedClickable(
-                role = Role.Button,
-                onClick = { onOpenPdf(pdf.path) },
-                onLongClick = onMoreOptionsClick,
-            ),
+            modifier
+                .clip(shape)
+                .combinedClickable(
+                    role = Role.Button,
+                    onClick = { onOpenPdf(pdf.path) },
+                    onLongClick = onMoreOptionsClick,
+                ),
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             val imageModifier =
                 Modifier.widthIn(max = 58.dp)
@@ -97,9 +97,7 @@ fun ScannedPdfListItem(
             Box(modifier = imageModifier) {
                 if (LocalInspectionMode.current) {
                     Icon(
-                        modifier = Modifier
-                            .padding(12.dp)
-                            .fillMaxSize(),
+                        modifier = Modifier.padding(12.dp).fillMaxSize(),
                         imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
                         contentDescription = stringResource(id = R.string.file_icon),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -118,9 +116,7 @@ fun ScannedPdfListItem(
                         },
                         loading = {
                             Icon(
-                                modifier = Modifier
-                                    .padding(12.dp)
-                                    .fillMaxSize(),
+                                modifier = Modifier.padding(12.dp).fillMaxSize(),
                                 imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
                                 contentDescription = stringResource(id = R.string.file_icon),
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -129,9 +125,7 @@ fun ScannedPdfListItem(
                     )
                 } else {
                     Icon(
-                        modifier = Modifier
-                            .padding(12.dp)
-                            .fillMaxSize(),
+                        modifier = Modifier.padding(12.dp).fillMaxSize(),
                         imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
                         contentDescription = stringResource(id = R.string.file_icon),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -155,7 +149,7 @@ fun ScannedPdfListItem(
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
@@ -176,19 +170,19 @@ private fun ScannedPdfListItemPreview() {
         ScannedPdfListItem(
             modifier = Modifier,
             pdf =
-            ScannedPdf(
-                filename = "Document.pdf",
-                title = "Document",
-                description = "This is a sample document",
-                path = "path".toUri(),
-                createdTimestamp = 1630000000000,
-                fileSize = 1024,
-                pageCount = 5,
-                thumbnail = "thumbnail",
-                id = UUID.randomUUID().toString(),
-            ),
+                ScannedPdf(
+                    filename = "Document.pdf",
+                    title = "Document",
+                    description = "This is a sample document",
+                    path = "path".toUri(),
+                    createdTimestamp = 1630000000000,
+                    fileSize = 1024,
+                    pageCount = 5,
+                    thumbnail = "thumbnail",
+                    id = UUID.randomUUID().toString(),
+                ),
             onOpenPdf = {},
-            onMoreOptionsClick = {}
+            onMoreOptionsClick = {},
         )
     }
 }
@@ -213,7 +207,7 @@ private fun ListScannedPdfListItemPreview() {
             }
         LazyColumn(
             modifier = Modifier.background(MaterialTheme.colorScheme.surface),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             itemsIndexed(items = list, key = { _, item -> item.id }) { index, item ->
                 val position =
@@ -229,7 +223,7 @@ private fun ListScannedPdfListItemPreview() {
                     pdf = item,
                     position = position,
                     onOpenPdf = {},
-                    onMoreOptionsClick = {}
+                    onMoreOptionsClick = {},
                 )
             }
         }
