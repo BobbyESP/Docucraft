@@ -1,15 +1,15 @@
 package com.bobbyesp.docucraft
 
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.DeleteScannedPdfUseCase
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.GetAllScannedPdfsUseCase
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.GetScannedPdfByIdUseCase
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.OpenPdfInViewerUseCase
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.SaveScannedPdfUseCase
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.ScanDocumentUseCase
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.SearchPdfsUseCase
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.SharePdfUseCase
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.usecase.UpdatePdfMetadataUseCase
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentByIdUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ScanDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.viewmodel.HomeViewModel
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Before
@@ -18,28 +18,28 @@ import org.junit.Before
 class HomeViewModelTest {
 
     private lateinit var viewModel: HomeViewModel
-    private val getAllScannedPdfsUseCase: GetAllScannedPdfsUseCase = mockk()
-    private val searchPdfsUseCase: SearchPdfsUseCase = mockk()
-    private val getScannedPdfByIdUseCase: GetScannedPdfByIdUseCase = mockk()
-    private val saveScannedPdfUseCase: SaveScannedPdfUseCase = mockk()
-    private val deleteScannedPdfUseCase: DeleteScannedPdfUseCase = mockk()
-    private val updatePdfMetadataUseCase: UpdatePdfMetadataUseCase = mockk()
-    private val openPdfInViewerUseCase: OpenPdfInViewerUseCase = mockk()
-    private val sharePdfUseCase: SharePdfUseCase = mockk()
+    private val observeDocumentsUseCase: ObserveDocumentsUseCase = mockk()
+    private val searchDocumentsUseCase: SearchDocumentsUseCase = mockk()
+    private val getDocumentByIdUseCase: GetDocumentByIdUseCase = mockk()
+    private val saveScannedDocumentUseCase: SaveScannedDocumentUseCase = mockk()
+    private val deleteDocumentUseCase: DeleteDocumentUseCase = mockk()
+    private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase = mockk()
+    private val openDocumentInViewerUseCase: OpenDocumentInViewerUseCase = mockk()
+    private val shareDocumentUseCase: ShareDocumentUseCase = mockk()
     private val scanDocumentUseCase: ScanDocumentUseCase = mockk()
 
     @Before
     fun setup() {
         viewModel =
             HomeViewModel(
-                getAllScannedPdfsUseCase,
-                searchPdfsUseCase,
-                getScannedPdfByIdUseCase,
-                saveScannedPdfUseCase,
-                deleteScannedPdfUseCase,
-                updatePdfMetadataUseCase,
-                openPdfInViewerUseCase,
-                sharePdfUseCase,
+                observeDocumentsUseCase,
+                searchDocumentsUseCase,
+                getDocumentByIdUseCase,
+                saveScannedDocumentUseCase,
+                deleteDocumentUseCase,
+                updateDocumentFieldsUseCase,
+                openDocumentInViewerUseCase,
+                shareDocumentUseCase,
                 scanDocumentUseCase,
             )
     }

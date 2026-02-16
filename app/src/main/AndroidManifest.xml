@@ -37,7 +37,7 @@
         </provider>
 
         <receiver
-            android:name=".feature.pdfscanner.presentation.widgets.ScanPdfWidgetReceiver"
+            android:name=".feature.docscanner.presentation.widgets.ScanPdfWidgetReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

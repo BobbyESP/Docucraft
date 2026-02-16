@@ -87,7 +87,7 @@ val currentVersion: Version = Version.Beta(
     major = 1,
     minor = 0,
     patch = 0,
-    build = 7
+    build = 8
 )
 
 val versionCode by extra(currentVersion.toVersionCode())

@@ -15,14 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import coil.imageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
-import com.bobbyesp.docucraft.core.domain.repository.DocumentScannerRepository
+import com.bobbyesp.docucraft.mlkit.domain.repository.DocumentScannerService
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.contract.HomeUiAction
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.viewmodel.HomeViewModel
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.widgets.ACTION_SCAN_PDF
+import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
+import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.viewmodel.HomeViewModel
+import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.ACTION_SCAN_PDF
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
 import io.github.vinceglb.filekit.FileKit
@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
     private val appPreferences: AppPreferences by inject()
     private val homeViewModel by inject<HomeViewModel>()
-    private val documentScannerRepository by inject<DocumentScannerRepository>()
+    private val documentScannerService by inject<DocumentScannerService>()
     private val topLevelBackStack by inject<TopLevelBackStack<Route>>()
 
     private lateinit var scannerLauncher: ActivityResultLauncher<IntentSenderRequest>
@@ -105,7 +105,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == ACTION_SCAN_PDF) {
-            documentScannerRepository.launchScanner(this, scannerLauncher)
+            documentScannerService.launchScanner(this, scannerLauncher)
             intent.action = null
         }
     }

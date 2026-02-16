@@ -13,7 +13,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
-import com.bobbyesp.docucraft.feature.pdfscanner.presentation.pages.home.HomePageWrapper
+import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.HomePageWrapper
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

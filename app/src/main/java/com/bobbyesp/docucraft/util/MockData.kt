@@ -1,7 +1,7 @@
 package com.bobbyesp.docucraft.util
 
 import androidx.core.net.toUri
-import com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedPdf
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 

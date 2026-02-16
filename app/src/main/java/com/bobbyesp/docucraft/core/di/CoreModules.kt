@@ -16,13 +16,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
-val appCoroutinesScope = module {
-    single<CoroutineScope>(qualifier = named("AppMainSupervisedScope")) {
-        CoroutineScope(SupervisorJob())
-    }
-}
-
-val coreFunctionalitiesModule = module {
+val commonModule = module {
     single<TopLevelBackStack<Route>> { TopLevelBackStack(startKey = Route.Home) }
 
     single<DataStore<Preferences>> { androidContext().dataStore }
@@ -45,5 +39,9 @@ val coreFunctionalitiesModule = module {
             .bitmapFactoryMaxParallelism(12)
             .dispatcher(Dispatchers.IO)
             .build()
+    }
+
+    single<CoroutineScope>(qualifier = named("AppMainSupervisedScope")) {
+        CoroutineScope(SupervisorJob())
     }
 }

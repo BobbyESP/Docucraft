@@ -5,14 +5,13 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
-import com.bobbyesp.docucraft.core.di.appCoroutinesScope
-import com.bobbyesp.docucraft.core.di.coreFunctionalitiesModule
+import com.bobbyesp.docucraft.core.di.commonModule
 import com.bobbyesp.docucraft.core.di.fileManagementModule
-import com.bobbyesp.docucraft.core.di.mlKitModule
-import com.bobbyesp.docucraft.feature.pdfscanner.di.gmsScannerModule
-import com.bobbyesp.docucraft.feature.pdfscanner.di.pdfScannerDataModule
-import com.bobbyesp.docucraft.feature.pdfscanner.di.pdfScannerViewModels
-import com.bobbyesp.docucraft.feature.pdfscanner.di.scannedPdfsDatabaseModule
+import com.bobbyesp.docucraft.feature.docscanner.di.gmsScannerModule
+import com.bobbyesp.docucraft.feature.docscanner.di.mlKitModule
+import com.bobbyesp.docucraft.feature.docscanner.di.pdfScannerDataModule
+import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerViewModels
+import com.bobbyesp.docucraft.feature.docscanner.di.scannedPdfsDatabaseModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
@@ -27,10 +26,9 @@ class App : Application() {
                 scannedPdfsDatabaseModule,
                 pdfScannerDataModule,
                 gmsScannerModule,
-                pdfScannerViewModels,
-                appCoroutinesScope,
+                documentScannerViewModels,
                 mlKitModule,
-                coreFunctionalitiesModule,
+                commonModule,
                 fileManagementModule,
             )
         }

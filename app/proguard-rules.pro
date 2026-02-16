@@ -91,7 +91,7 @@
 }
 
 # Keep ScannedPdf model for PDF deletion dialog
--keep class com.bobbyesp.docucraft.feature.pdfscanner.domain.model.ScannedPdf { *; }
+-keep class com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedPdf { *; }
 
 # Keep Parcelable implementations
 -keepclassmembers class * implements android.os.Parcelable {
