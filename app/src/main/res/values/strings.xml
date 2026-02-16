@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Docucraft</string>
+    <string name="app_name" translatable="false">Docucraft</string>
     <string name="follow_system">Follow system</string>
     <string name="on">On</string>
     <string name="off">Off</string>

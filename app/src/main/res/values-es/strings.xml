@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Docucraft</string>
     <string name="follow_system">Seguir el sistema</string>
     <string name="on">Encendido</string>
     <string name="off">Apagado</string>
