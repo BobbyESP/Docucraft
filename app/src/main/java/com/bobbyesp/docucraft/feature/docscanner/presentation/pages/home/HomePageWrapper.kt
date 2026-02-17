@@ -20,7 +20,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.dialogs.DeleteDocumentConfirmationDialog
-import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.dialogs.EditPdfDetailsDialog
+import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.dialogs.EditDocumentDetailsDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.viewmodel.HomeViewModel
 import com.dokar.sonner.ToastType
 import com.dokar.sonner.ToasterState
@@ -59,7 +59,7 @@ fun HomePageWrapper(modifier: Modifier = Modifier, viewModel: HomeViewModel = ko
     val pdfToBeModified = uiState.documentForModification
     if (pdfToBeModified is TemporalState.Present<*>) {
         val scannedDocument = pdfToBeModified.value as ScannedDocument
-        EditPdfDetailsDialog(
+        EditDocumentDetailsDialog(
             onDismiss = { viewModel.onAction(HomeUiAction.DismissDialogs) },
             onConfirm = { title, description ->
                 viewModel.onAction(

@@ -6,7 +6,7 @@ import androidx.room.RoomDatabase
 import com.bobbyesp.docucraft.feature.docscanner.data.local.db.dao.ScannedDocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedDocumentEntity
 
-// TODO: Add labels to the database. The user might want to categorize the scanned PDFs.
+// TODO: Add labels to the database. The user might want to categorize the scanned documents.
 
 const val CURRENT_VERSION = 2
 

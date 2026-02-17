@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.Flow
 interface ScannedDocumentsRepository {
 
     /**
-     * Retrieves a reactive stream of all scanned PDFs currently available in the system.
+     * Retrieves a reactive stream of all scanned documents currently available in the system.
      *
      * This function subscribes to the underlying data source (e.g., Room database) and emits
      * a new list of [ScannedDocument] objects whenever the data set changes. This includes events
@@ -75,9 +75,9 @@ interface ScannedDocumentsRepository {
      * - verifying the physical file existence.
      * - Triggering the [observeDocuments] flow to emit the new list.
      *
-     * @param scannedPdf The entity object containing the data to be saved.
+     * @param scannedDocument The entity object containing the data to be saved.
      */
-    suspend fun saveDocument(scannedPdf: ScannedDocumentEntity)
+    suspend fun saveDocument(scannedDocument: ScannedDocumentEntity)
 
     /**
      * Updates specific metadata fields (title and/or description) of an existing document.

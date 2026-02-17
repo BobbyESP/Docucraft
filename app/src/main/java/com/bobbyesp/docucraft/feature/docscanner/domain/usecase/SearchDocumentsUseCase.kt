@@ -9,7 +9,6 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannedDocume
  */
 class SearchDocumentsUseCase(private val repository: ScannedDocumentsRepository) {
     suspend operator fun invoke(query: String): List<ScannedDocument> {
-        if (query.isBlank()) return emptyList()
         return repository.searchDocuments(query)
     }
 }

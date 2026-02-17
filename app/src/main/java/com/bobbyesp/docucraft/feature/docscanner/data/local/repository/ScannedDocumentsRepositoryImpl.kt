@@ -19,7 +19,7 @@ class ScannedDocumentsRepositoryImpl(
 
     override suspend fun observeDocuments(): Flow<List<ScannedDocument>> =
         scannedDocumentDao
-            .observeAllPdfs()
+            .observeDocuments()
             .map { entities -> entities.map { it.toModel() } }
             .flowOn(Dispatchers.IO)
 
@@ -28,36 +28,29 @@ class ScannedDocumentsRepositoryImpl(
             return emptyList()
         }
 
-        // Search for name coincidences
-        val nameResults = scannedDocumentDao.searchPdfsByFilename(query)
-        
-        // Search for title or description coincidences
-        val titleDescResults = scannedDocumentDao.searchPdfsByTitleOrDescription(query)
+        val result = scannedDocumentDao.searchDocuments(searchQuery = query)
 
-        // Combine results and remove duplicates
-        val combinedResults = (nameResults + titleDescResults).distinctBy { it.id }
-
-        return combinedResults.map { it.toModel() }
+        return result.map { it.toModel() }
     }
 
     override suspend fun getDocument(id: String): ScannedDocument {
-        require(id.isNotEmpty()) { "document ID must not be empty" }
+        require(id.isNotEmpty()) { "Document ID must not be empty" }
         val entity =
-            scannedDocumentDao.fetchById(id)
+            scannedDocumentDao.getById(id)
                 ?: throw NoSuchElementException("No document found with ID: $id")
         return entity.toModel()
     }
 
     override suspend fun getDocument(path: Uri): ScannedDocument {
         val entity =
-            scannedDocumentDao.fetchByPath(path.toString())
+            scannedDocumentDao.getByPath(path.toString())
                 ?: throw NoSuchElementException("No document found with path: $path")
         return entity.toModel()
     }
 
-    override suspend fun saveDocument(scannedPdf: ScannedDocumentEntity) {
+    override suspend fun saveDocument(scannedDocument: ScannedDocumentEntity) {
         try {
-            scannedDocumentDao.insert(scannedPdf)
+            scannedDocumentDao.insert(scannedDocument)
         } catch (e: Exception) {
             throw RuntimeException("Failed to save document: ${e.message}", e)
         }
@@ -70,7 +63,7 @@ class ScannedDocumentsRepositoryImpl(
     ) {
         require(id.isNotEmpty()) { "document ID must not be empty" }
 
-        val updatedCount = scannedDocumentDao.updateTitleAndDescription(id, title, description)
+        val updatedCount = scannedDocumentDao.updateDocumentDetails(id, title, description)
 
         if (updatedCount <= 0) {
             throw NoSuchElementException("No document found with ID: $id")

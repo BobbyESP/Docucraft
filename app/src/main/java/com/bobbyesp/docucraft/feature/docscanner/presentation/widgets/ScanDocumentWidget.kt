@@ -33,20 +33,20 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.bobbyesp.docucraft.MainActivity
 import com.bobbyesp.docucraft.R
+import androidx.compose.ui.Modifier
 
-const val ACTION_SCAN_PDF = "com.bobbyesp.docucraft.ACTION_SCAN_PDF"
+const val ACTION_SCAN_DOCUMENT = "com.bobbyesp.docucraft.ACTION_SCAN_DOCUMENT"
 
-class ScanPdfDocumentWidget : GlanceAppWidget() {
+class ScanDocumentWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val scanText = context.getString(R.string.doc_scan_new)
-        provideContent { GlanceTheme { ScanPdfWidgetContent(scanButtonText = scanText) } }
+        provideContent { GlanceTheme { ScanDocumentWidgetContent(scanButtonText = scanText) } }
     }
 }
 
-@GlanceComposable
 @Composable
-fun ScanPdfWidgetContent(scanButtonText: String) {
-
+@GlanceComposable
+fun ScanDocumentWidgetContent(scanButtonText: String, modifier: Modifier = Modifier) {
     Box(
         modifier =
             GlanceModifier.fillMaxSize().background(GlanceTheme.colors.background).padding(8.dp),
@@ -57,7 +57,7 @@ fun ScanPdfWidgetContent(scanButtonText: String) {
                 GlanceModifier.fillMaxSize()
                     .background(GlanceTheme.colors.primaryContainer)
                     .cornerRadius(16.dp)
-                    .clickable(actionRunCallback<ScanPdfActionCallback>()),
+                    .clickable(actionRunCallback<ScanDocumentActionCallback>()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -81,7 +81,7 @@ fun ScanPdfWidgetContent(scanButtonText: String) {
     }
 }
 
-class ScanPdfActionCallback : ActionCallback {
+class ScanDocumentActionCallback : ActionCallback {
     override suspend fun onAction(
         context: Context,
         glanceId: GlanceId,
@@ -89,7 +89,7 @@ class ScanPdfActionCallback : ActionCallback {
     ) {
         val intent =
             Intent(context, MainActivity::class.java).apply {
-                action = ACTION_SCAN_PDF
+                action = ACTION_SCAN_DOCUMENT
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
         context.startActivity(intent)

@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 
 @Composable
-fun EditPdfDetailsDialog(
+fun EditDocumentDetailsDialog(
     onDismiss: () -> Unit,
     onConfirm: (String, String) -> Unit,
     title: String?,

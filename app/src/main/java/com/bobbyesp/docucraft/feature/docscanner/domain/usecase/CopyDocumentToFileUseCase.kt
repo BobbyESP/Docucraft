@@ -8,7 +8,7 @@ import io.github.vinceglb.filekit.sink
 import kotlinx.io.buffered
 
 /**
- * Use case for copying a PDF file from a URI to local storage. Single responsibility: file copying
+ * Use case for copying a document file from a URI to local storage. Single responsibility: file copying
  * operation.
  */
 class CopyDocumentToFileUseCase(private val context: Context) {

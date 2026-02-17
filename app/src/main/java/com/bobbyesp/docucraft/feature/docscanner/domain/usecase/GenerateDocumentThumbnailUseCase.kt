@@ -19,8 +19,8 @@ class GenerateDocumentThumbnailUseCase(private val documentOperationsService: Do
         thumbnailDir.ensure(mustCreate = true)
         val thumbnailFile = PlatformFile(thumbnailDir, "$filename.png")
 
-        documentOperationsService.savePdfPageAsImage(
-            pdfUri = pdfUri,
+        documentOperationsService.saveDocumentPageAsImage(
+            documentUri = pdfUri,
             outputFile = File(thumbnailFile.path),
             pageIndex = 0,
             quality = THUMBNAIL_QUALITY,

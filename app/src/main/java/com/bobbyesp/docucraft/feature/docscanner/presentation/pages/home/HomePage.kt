@@ -51,6 +51,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.motionScheme
 import androidx.compose.material3.Scaffold
@@ -75,8 +76,10 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -93,8 +96,8 @@ import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedPdfCardPosition
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedPdfListItem
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentCardPosition
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.ScannedDocumentOptionsSheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
@@ -134,16 +137,15 @@ fun HomePage(
     val focusManager = LocalFocusManager.current
     val usableMotionScheme = motionScheme
 
-    val pdfForOptionsState = uiState.documentForActionMenu
-    if (pdfForOptionsState is TemporalState.Present) {
-        val pdf = pdfForOptionsState.value
+    if (uiState.documentForActionMenu is TemporalState.Present) {
+        val document = uiState.documentForActionMenu.value
         ScannedDocumentOptionsSheet(
-            scannedDocument = pdf,
+            scannedDocument = document,
             onDismissRequest = { onAction(HomeUiAction.DismissOptionsSheet) },
-            onSavePdf = { onAction(HomeUiAction.SaveDocument(pdf)) },
-            onSharePdf = { onAction(HomeUiAction.ShareDocument(pdf.path)) },
-            onDeletePdf = { onAction(HomeUiAction.ShowDeleteConfirmation(pdf.id)) },
-            onModifyPdfFields = { onAction(HomeUiAction.ShowEditDialog(pdf.id)) },
+            onSavePdf = { onAction(HomeUiAction.SaveDocument(document)) },
+            onSharePdf = { onAction(HomeUiAction.ShareDocument(document.path)) },
+            onDeletePdf = { onAction(HomeUiAction.ShowDeleteConfirmation(document.id)) },
+            onModifyPdfFields = { onAction(HomeUiAction.ShowEditDialog(document.id)) },
         )
     }
 
@@ -175,7 +177,8 @@ fun HomePage(
 
             AnimatedContent(
                 modifier =
-                    Modifier.fillMaxWidth()
+                    Modifier
+                        .fillMaxWidth()
                         .padding(start = 32.dp)
                         .windowInsetsPadding(WindowInsets.ime),
                 targetState = contentState == PageContentState.SUCCESS,
@@ -187,7 +190,7 @@ fun HomePage(
                             ) + fadeIn(tween(500)),
                         initialContentExit =
                             slideOutVertically(usableMotionScheme.defaultSpatialSpec()) +
-                                fadeOut(tween(500)),
+                                    fadeOut(tween(500)),
                     )
                 },
             ) { isFabAndSearchVisible ->
@@ -248,7 +251,7 @@ fun HomePage(
                 }
 
                 PageContentState.SUCCESS -> {
-                    DisplayScannedPdfs(
+                    ScannedDocumentsList(
                         scannedDocuments = uiState.scannedDocuments,
                         onAction = onAction,
                         filterOptions = filterOptions,
@@ -261,17 +264,20 @@ fun HomePage(
 }
 
 @Composable
-private fun DisplayScannedPdfs(
+private fun ScannedDocumentsList(
     scannedDocuments: List<ScannedDocument>,
     filterOptions: FilterOptions,
     onAction: (HomeUiAction) -> Unit,
     listState: LazyListState,
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
+
     var animatedOverscrollAmount by remember { mutableFloatStateOf(0f) }
 
     LazyColumn(
         modifier =
-            Modifier.fillMaxSize()
+            Modifier
+                .fillMaxSize()
                 .customOverscroll(
                     listState = listState,
                     onNewOverscrollAmount = { animatedOverscrollAmount = it },
@@ -283,9 +289,13 @@ private fun DisplayScannedPdfs(
         stickyHeader(contentType = "documentsFilter") {
             SortOptionsRow(
                 currentSortOption = filterOptions.sortBy,
-                onSortOptionChange = { onAction(HomeUiAction.ApplySort(it)) },
+                onSortOptionChange = {
+                    onAction(HomeUiAction.ApplySort(it))
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                },
                 modifier =
-                    Modifier.background(
+                    Modifier
+                        .background(
                             // fade to transparent from background
                             brush =
                                 Brush.verticalGradient(
@@ -303,23 +313,26 @@ private fun DisplayScannedPdfs(
 
         itemsIndexed(
             items = scannedDocuments,
-            key = { _, scannedPdf -> scannedPdf.id },
-            contentType = { _, scannedPdf -> scannedPdf.javaClass.name },
-        ) { index, scannedPdf ->
+            key = { _, scannedDocument -> scannedDocument.id },
+            contentType = { _, scannedDocument -> scannedDocument.javaClass.name },
+        ) { index, scannedDocument ->
             val position =
                 when {
-                    scannedDocuments.size == 1 -> ScannedPdfCardPosition.SINGLE
-                    index == 0 -> ScannedPdfCardPosition.TOP
-                    index == scannedDocuments.lastIndex -> ScannedPdfCardPosition.BOTTOM
-                    else -> ScannedPdfCardPosition.MIDDLE
+                    scannedDocuments.size == 1 -> ScannedDocumentCardPosition.SINGLE
+                    index == 0 -> ScannedDocumentCardPosition.TOP
+                    index == scannedDocuments.lastIndex -> ScannedDocumentCardPosition.BOTTOM
+                    else -> ScannedDocumentCardPosition.MIDDLE
                 }
 
-            ScannedPdfListItem(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).animateItem(),
-                pdf = scannedPdf,
+            ScannedDocumentListItem(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .animateItem(),
+                pdf = scannedDocument,
                 position = position,
-                onOpenPdf = { uri -> onAction(HomeUiAction.OpenDocument(uri)) },
-                onMoreOptionsClick = { onAction(HomeUiAction.ShowOptionsSheet(scannedPdf.id)) },
+                onItemClick = { uri -> onAction(HomeUiAction.OpenDocument(uri)) },
+                onItemLongClick = { onAction(HomeUiAction.ShowOptionsSheet(scannedDocument.id)) },
             )
         }
 
@@ -335,7 +348,9 @@ fun SortOptionsRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -352,10 +367,16 @@ fun SortOptionsRow(
 
         VerticalDivider(
             color = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.height(24.dp).padding(horizontal = 8.dp),
+            modifier = Modifier
+                .height(24.dp)
+                .padding(horizontal = 8.dp),
         )
 
         IconButton(
+            modifier = Modifier,
+            colors = IconButtonDefaults.iconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+            ),
             onClick = {
                 onSortOptionChange(
                     SortOption(currentSortOption.criteria, currentSortOption.order.reverse())
@@ -392,7 +413,9 @@ private fun SearchBar(
         TextField(
             value = query,
             onValueChange = onQueryChange,
-            modifier = Modifier.fillMaxWidth().onFocusChanged { onFocusChange(it.isFocused) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { onFocusChange(it.isFocused) },
             colors =
                 TextFieldDefaults.colors(
                     focusedIndicatorColor = Color.Transparent,
@@ -461,7 +484,9 @@ fun EmptyStateScreen(onScanPdfClick: () -> Unit, modifier: Modifier = Modifier) 
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -489,7 +514,9 @@ fun EmptyStateScreen(onScanPdfClick: () -> Unit, modifier: Modifier = Modifier) 
 
             Button(
                 onClick = onScanPdfClick,
-                modifier = Modifier.fillMaxWidth(0.8f).height(56.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(56.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors =
                     ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
@@ -516,7 +543,8 @@ fun EmptyStateScreen(onScanPdfClick: () -> Unit, modifier: Modifier = Modifier) 
 private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
     Card(
         modifier =
-            Modifier.fillMaxWidth()
+            Modifier
+                .fillMaxWidth()
                 .padding(16.dp)
                 .border(
                     width = 2.dp,
@@ -541,7 +569,9 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -571,7 +601,9 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
             }
             Button(
                 onClick = onRetry,
-                modifier = Modifier.fillMaxWidth(0.8f).height(50.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(50.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors =
                     ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),

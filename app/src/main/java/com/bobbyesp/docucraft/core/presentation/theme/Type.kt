@@ -3,6 +3,7 @@ package com.bobbyesp.docucraft.core.presentation.theme
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.ui.text.googlefonts.GoogleFont
@@ -18,7 +19,16 @@ val provider =
 
 val dmSerifTextFontName = GoogleFont("DM Serif Text")
 
-val dmSerifTextFont = FontFamily(Font(googleFont = dmSerifTextFontName, fontProvider = provider))
+val dmSerifTextFont = FontFamily(
+    androidx.compose.ui.text.font.Font(
+        resId = R.font.dm_serif_text_regular,
+        weight = FontWeight.Normal,
+    ),
+    Font(
+        googleFont = dmSerifTextFontName,
+        fontProvider = provider
+    )
+)
 
 // Set of Material typography styles to start with
 val Typography =

@@ -25,7 +25,7 @@ val gmsScannerModule = module {
         GmsDocumentScannerOptions.Builder()
             .setScannerMode(SCANNER_MODE_FULL)
             .setGalleryImportAllowed(true)
-            .setResultFormats(RESULT_FORMAT_JPEG, RESULT_FORMAT_PDF)
+            .setResultFormats(RESULT_FORMAT_PDF)
             .build()
     }
 

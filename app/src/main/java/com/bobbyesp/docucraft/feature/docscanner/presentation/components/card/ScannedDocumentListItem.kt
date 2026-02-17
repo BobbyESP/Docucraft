@@ -47,7 +47,7 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import java.util.UUID
 
-enum class ScannedPdfCardPosition {
+enum class ScannedDocumentCardPosition {
     TOP,
     MIDDLE,
     BOTTOM,
@@ -56,19 +56,19 @@ enum class ScannedPdfCardPosition {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun ScannedPdfListItem(
+fun ScannedDocumentListItem(
     pdf: ScannedDocument,
-    onOpenPdf: (Uri) -> Unit,
-    onMoreOptionsClick: () -> Unit,
+    onItemClick: (Uri) -> Unit,
+    onItemLongClick: () -> Unit,
     modifier: Modifier = Modifier,
-    position: ScannedPdfCardPosition = ScannedPdfCardPosition.SINGLE,
+    position: ScannedDocumentCardPosition = ScannedDocumentCardPosition.SINGLE,
 ) {
     val shape =
         when (position) {
-            ScannedPdfCardPosition.TOP -> DocucraftShapeDefaults.topListItemShape
-            ScannedPdfCardPosition.MIDDLE -> DocucraftShapeDefaults.middleListItemShape
-            ScannedPdfCardPosition.BOTTOM -> DocucraftShapeDefaults.bottomListItemShape
-            ScannedPdfCardPosition.SINGLE -> DocucraftShapeDefaults.cardShape
+            ScannedDocumentCardPosition.TOP -> DocucraftShapeDefaults.topListItemShape
+            ScannedDocumentCardPosition.MIDDLE -> DocucraftShapeDefaults.middleListItemShape
+            ScannedDocumentCardPosition.BOTTOM -> DocucraftShapeDefaults.bottomListItemShape
+            ScannedDocumentCardPosition.SINGLE -> DocucraftShapeDefaults.cardShape
         }
 
     Surface(
@@ -77,8 +77,8 @@ fun ScannedPdfListItem(
                 .clip(shape)
                 .combinedClickable(
                     role = Role.Button,
-                    onClick = { onOpenPdf(pdf.path) },
-                    onLongClick = onMoreOptionsClick,
+                    onClick = { onItemClick(pdf.path) },
+                    onLongClick = onItemLongClick,
                 ),
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -153,7 +153,7 @@ fun ScannedPdfListItem(
                 )
             }
 
-            IconButton(onClick = onMoreOptionsClick) {
+            IconButton(onClick = onItemLongClick) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
                     contentDescription = stringResource(id = R.string.more_options),
@@ -165,9 +165,9 @@ fun ScannedPdfListItem(
 
 @Preview
 @Composable
-private fun ScannedPdfListItemPreview() {
+private fun ScannedDocumentListItemPreview() {
     DocucraftTheme {
-        ScannedPdfListItem(
+        ScannedDocumentListItem(
             modifier = Modifier,
             pdf =
                 ScannedDocument(
@@ -181,15 +181,15 @@ private fun ScannedPdfListItemPreview() {
                     thumbnail = "thumbnail",
                     id = UUID.randomUUID().toString(),
                 ),
-            onOpenPdf = {},
-            onMoreOptionsClick = {},
+            onItemClick = {},
+            onItemLongClick = {},
         )
     }
 }
 
 @Preview
 @Composable
-private fun ListScannedPdfListItemPreview() {
+private fun ListScannedDocumentListItemPreview() {
     DocucraftTheme {
         val list =
             List(11) {
@@ -212,18 +212,18 @@ private fun ListScannedPdfListItemPreview() {
             itemsIndexed(items = list, key = { _, item -> item.id }) { index, item ->
                 val position =
                     when {
-                        list.size == 1 -> ScannedPdfCardPosition.SINGLE
-                        index == 0 -> ScannedPdfCardPosition.TOP
-                        index == list.lastIndex -> ScannedPdfCardPosition.BOTTOM
-                        else -> ScannedPdfCardPosition.MIDDLE
+                        list.size == 1 -> ScannedDocumentCardPosition.SINGLE
+                        index == 0 -> ScannedDocumentCardPosition.TOP
+                        index == list.lastIndex -> ScannedDocumentCardPosition.BOTTOM
+                        else -> ScannedDocumentCardPosition.MIDDLE
                     }
 
-                ScannedPdfListItem(
+                ScannedDocumentListItem(
                     modifier = Modifier,
                     pdf = item,
                     position = position,
-                    onOpenPdf = {},
-                    onMoreOptionsClick = {},
+                    onItemClick = {},
+                    onItemLongClick = {},
                 )
             }
         }

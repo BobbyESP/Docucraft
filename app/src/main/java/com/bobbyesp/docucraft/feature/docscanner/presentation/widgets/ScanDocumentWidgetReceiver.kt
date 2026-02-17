@@ -8,8 +8,8 @@ import androidx.glance.appwidget.updateAll
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
-class ScanPdfWidgetReceiver : GlanceAppWidgetReceiver() {
-    override val glanceAppWidget: GlanceAppWidget = ScanPdfDocumentWidget()
+class ScanDocumentWidgetReceiver : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget: GlanceAppWidget = ScanDocumentWidget()
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)

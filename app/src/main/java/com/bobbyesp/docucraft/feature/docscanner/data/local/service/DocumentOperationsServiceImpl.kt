@@ -21,8 +21,8 @@ class DocumentOperationsServiceImpl(private val context: Context) : DocumentOper
         private const val TAG = "PdfDocumentServiceImpl"
     }
 
-    override fun savePdfPageAsImage(
-        pdfUri: Uri,
+    override fun saveDocumentPageAsImage(
+        documentUri: Uri,
         outputFile: File,
         pageIndex: Int,
         format: Bitmap.CompressFormat,
@@ -31,9 +31,9 @@ class DocumentOperationsServiceImpl(private val context: Context) : DocumentOper
         var parcelFileDescriptor: ParcelFileDescriptor? = null
         try {
             parcelFileDescriptor =
-                when (pdfUri.scheme) {
+                when (documentUri.scheme) {
                     ContentResolver.SCHEME_FILE -> {
-                        val path = pdfUri.path
+                        val path = documentUri.path
                         if (path.isNullOrEmpty()) {
                             Log.e(TAG, "Empty path in file URI")
                             return
@@ -42,18 +42,18 @@ class DocumentOperationsServiceImpl(private val context: Context) : DocumentOper
                     }
 
                     ContentResolver.SCHEME_CONTENT -> {
-                        Log.i(TAG, "Opened file descriptor for content URI: $pdfUri")
-                        context.contentResolver.openFileDescriptor(pdfUri, "r")
+                        Log.i(TAG, "Opened file descriptor for content URI: $documentUri")
+                        context.contentResolver.openFileDescriptor(documentUri, "r")
                     }
 
                     else -> {
-                        Log.e(TAG, "Unsupported URI scheme: ${pdfUri.scheme}")
+                        Log.e(TAG, "Unsupported URI scheme: ${documentUri.scheme}")
                         return
                     }
                 }
 
             if (parcelFileDescriptor == null) {
-                Log.e(TAG, "Error getting file descriptor for pdf")
+                Log.e(TAG, "Error getting file descriptor for document")
                 return
             }
 

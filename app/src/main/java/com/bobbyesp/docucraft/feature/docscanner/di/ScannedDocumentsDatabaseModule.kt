@@ -6,7 +6,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.local.db.dao.ScannedDocume
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
-val scannedPdfsDatabaseModule = module {
+val scannedDocumentsDatabaseModule = module {
     single<DocumentsDatabase> {
         Room.databaseBuilder(androidContext(), DocumentsDatabase::class.java, "scanned_pdfs.db").build()
     }
