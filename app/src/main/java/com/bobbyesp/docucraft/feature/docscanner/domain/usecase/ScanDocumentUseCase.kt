@@ -1,7 +1,7 @@
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
 import com.bobbyesp.docucraft.mlkit.domain.error.OperationFailure
-import com.bobbyesp.docucraft.mlkit.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.mlkit.domain.model.Document
 import com.bobbyesp.docucraft.mlkit.domain.repository.DocumentScannerService
 import com.bobbyesp.docucraft.core.util.Resource
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +18,7 @@ class ScanDocumentUseCase(private val scannerRepository: DocumentScannerService)
      * @param input The input image data (e.g., Bitmap, ImageProxy).
      * @return A Flow emitting the status of the scan (Loading -> Success/Error).
      */
-    operator fun invoke(input: Any): Flow<Resource<ScannedDocument>> = flow {
+    operator fun invoke(input: Any): Flow<Resource<Document>> = flow {
         emit(Resource.Loading())
         val result = scannerRepository.scanDocument(input)
         result.fold(

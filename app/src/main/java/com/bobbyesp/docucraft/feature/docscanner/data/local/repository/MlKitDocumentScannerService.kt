@@ -6,7 +6,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import com.bobbyesp.docucraft.mlkit.domain.error.OperationFailure
-import com.bobbyesp.docucraft.mlkit.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.mlkit.domain.model.Document
 import com.bobbyesp.docucraft.mlkit.domain.datsource.MlKitDataSource
 import com.bobbyesp.docucraft.mlkit.domain.repository.DocumentScannerService
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
@@ -22,7 +22,7 @@ import kotlinx.coroutines.withContext
 class MlKitDocumentScannerService(private val dataSource: MlKitDataSource) :
     DocumentScannerService {
 
-    override suspend fun scanDocument(input: Any): Result<ScannedDocument> {
+    override suspend fun scanDocument(input: Any): Result<Document> {
         return withContext(Dispatchers.IO) {
             try {
                 if (input !is ActivityResult) {

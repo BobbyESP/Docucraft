@@ -1,7 +1,7 @@
 package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.core.domain.repository.FileRepository
-import com.bobbyesp.docucraft.feature.docscanner.data.local.db.dao.ScannedPdfDao
+import com.bobbyesp.docucraft.feature.docscanner.data.local.db.dao.ScannedDocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.local.repository.ScannedDocumentsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.local.service.DocumentOperationsServiceImpl
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannedDocumentsRepository
@@ -11,16 +11,16 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 /**
- * Dependency injection module for PDF Scanner feature. Provides: repositories, services, and use
+ * Dependency injection module for Document Scanner feature. Provides: repositories, services, and use
  * cases.
  */
-val pdfScannerDataModule = module {
+val documentScannerDataModule = module {
     // Service layer
     single<DocumentOperationsService> { DocumentOperationsServiceImpl(context = androidContext()) }
 
     // Repository layer
     single<ScannedDocumentsRepository> {
-        ScannedDocumentsRepositoryImpl(context = androidContext(), scannedPdfDao = get<ScannedPdfDao>())
+        ScannedDocumentsRepositoryImpl(context = androidContext(), scannedDocumentDao = get<ScannedDocumentDao>())
     }
 
     // Use cases

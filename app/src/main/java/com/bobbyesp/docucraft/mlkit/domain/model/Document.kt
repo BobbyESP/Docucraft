@@ -7,7 +7,7 @@ import androidx.compose.runtime.Immutable
  * implementation (ML Kit, etc).
  */
 @Immutable
-data class ScannedDocument(
+data class Document(
     val uriString: String,
     val pageCount: Int = 1,
     val timestamp: Long = System.currentTimeMillis(),

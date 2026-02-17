@@ -92,10 +92,10 @@ import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscr
 import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedPdf
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedPdfCardPosition
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedPdfListItem
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.ScannedPdfOptionsSheet
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.ScannedDocumentOptionsSheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.LoadState
@@ -123,25 +123,25 @@ fun HomePage(
     val isFabExpanded by remember { derivedStateOf { !listState.isScrollInProgress } }
 
     val contentState =
-        when (uiState.loadState) {
+        when (uiState.fetchState) {
             LoadState.Loading -> PageContentState.LOADING
             is LoadState.Error -> PageContentState.ERROR
             LoadState.Idle -> {
-                if (uiState.isRepositoryEmpty) PageContentState.EMPTY else PageContentState.SUCCESS
+                if (!uiState.hasDocuments) PageContentState.EMPTY else PageContentState.SUCCESS
             }
         }
 
     val focusManager = LocalFocusManager.current
     val usableMotionScheme = motionScheme
 
-    val pdfForOptionsState = uiState.pdfForOptions
+    val pdfForOptionsState = uiState.documentForActionMenu
     if (pdfForOptionsState is TemporalState.Present) {
         val pdf = pdfForOptionsState.value
-        ScannedPdfOptionsSheet(
-            scannedPdf = pdf,
+        ScannedDocumentOptionsSheet(
+            scannedDocument = pdf,
             onDismissRequest = { onAction(HomeUiAction.DismissOptionsSheet) },
-            onSavePdf = { onAction(HomeUiAction.SavePdf(pdf)) },
-            onSharePdf = { onAction(HomeUiAction.SharePdf(pdf.path)) },
+            onSavePdf = { onAction(HomeUiAction.SaveDocument(pdf)) },
+            onSharePdf = { onAction(HomeUiAction.ShareDocument(pdf.path)) },
             onDeletePdf = { onAction(HomeUiAction.ShowDeleteConfirmation(pdf.id)) },
             onModifyPdfFields = { onAction(HomeUiAction.ShowEditDialog(pdf.id)) },
         )
@@ -249,7 +249,7 @@ fun HomePage(
 
                 PageContentState.SUCCESS -> {
                     DisplayScannedPdfs(
-                        scannedPdfs = uiState.scannedPdfs,
+                        scannedDocuments = uiState.scannedDocuments,
                         onAction = onAction,
                         filterOptions = filterOptions,
                         listState = listState,
@@ -262,7 +262,7 @@ fun HomePage(
 
 @Composable
 private fun DisplayScannedPdfs(
-    scannedPdfs: List<ScannedPdf>,
+    scannedDocuments: List<ScannedDocument>,
     filterOptions: FilterOptions,
     onAction: (HomeUiAction) -> Unit,
     listState: LazyListState,
@@ -302,15 +302,15 @@ private fun DisplayScannedPdfs(
         }
 
         itemsIndexed(
-            items = scannedPdfs,
+            items = scannedDocuments,
             key = { _, scannedPdf -> scannedPdf.id },
             contentType = { _, scannedPdf -> scannedPdf.javaClass.name },
         ) { index, scannedPdf ->
             val position =
                 when {
-                    scannedPdfs.size == 1 -> ScannedPdfCardPosition.SINGLE
+                    scannedDocuments.size == 1 -> ScannedPdfCardPosition.SINGLE
                     index == 0 -> ScannedPdfCardPosition.TOP
-                    index == scannedPdfs.lastIndex -> ScannedPdfCardPosition.BOTTOM
+                    index == scannedDocuments.lastIndex -> ScannedPdfCardPosition.BOTTOM
                     else -> ScannedPdfCardPosition.MIDDLE
                 }
 
@@ -318,7 +318,7 @@ private fun DisplayScannedPdfs(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).animateItem(),
                 pdf = scannedPdf,
                 position = position,
-                onOpenPdf = { uri -> onAction(HomeUiAction.OpenPdf(uri)) },
+                onOpenPdf = { uri -> onAction(HomeUiAction.OpenDocument(uri)) },
                 onMoreOptionsClick = { onAction(HomeUiAction.ShowOptionsSheet(scannedPdf.id)) },
             )
         }
@@ -598,7 +598,7 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
 private fun PreviewsHomePage() {
     DocucraftTheme {
         HomePage(
-            uiState = HomeUiState(scannedPdfs = MockData.Documents.pdfsList),
+            uiState = HomeUiState(scannedDocuments = MockData.Documents.documentsList),
             onAction = {},
             onScanClick = {},
         )

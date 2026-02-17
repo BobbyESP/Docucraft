@@ -15,11 +15,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.bobbyesp.docucraft.R
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedPdf
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 
 @Composable
-fun DeletePdfConfirmationDialog(
-    scannedPdf: ScannedPdf,
+fun DeleteDocumentConfirmationDialog(
+    scannedDocument: ScannedDocument,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
@@ -44,9 +44,9 @@ fun DeletePdfConfirmationDialog(
                 text =
                     stringResource(
                         R.string.doc_delete_warning_message,
-                        scannedPdf.title ?: scannedPdf.filename,
-                        scannedPdf.pageCount.toString(),
-                        formatFileSize(context, scannedPdf.fileSize),
+                        scannedDocument.title ?: scannedDocument.filename,
+                        scannedDocument.pageCount.toString(),
+                        formatFileSize(context, scannedDocument.fileSize),
                     )
             )
         },

@@ -1,12 +1,12 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.contract
 
-import com.bobbyesp.docucraft.mlkit.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.mlkit.domain.model.Document
 
 // TODO: Use these in the UI
 
 data class ScanUiState(
     val isLoading: Boolean = false,
-    val scannedDocument: ScannedDocument? = null,
+    val document: Document? = null,
     val userMessage: String? = null,
 )
 

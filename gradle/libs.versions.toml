@@ -170,7 +170,6 @@ mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "moc
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-android-kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

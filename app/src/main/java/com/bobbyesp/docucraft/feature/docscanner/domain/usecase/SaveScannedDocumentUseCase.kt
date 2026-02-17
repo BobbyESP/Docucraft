@@ -5,9 +5,9 @@ import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.App
-import com.bobbyesp.docucraft.mlkit.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.mlkit.domain.model.Document
 import com.bobbyesp.docucraft.core.util.ensure
-import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedPdfEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedDocumentEntity
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannedDocumentsRepository
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import io.github.vinceglb.filekit.FileKit
@@ -28,14 +28,14 @@ class SaveScannedDocumentUseCase(
     private val copyDocumentToFileUseCase: CopyDocumentToFileUseCase,
     private val generateDocumentThumbnailUseCase: GenerateDocumentThumbnailUseCase,
 ) {
-    suspend operator fun invoke(scannedDocument: ScannedDocument, filename: String) {
+    suspend operator fun invoke(document: Document, filename: String) {
         // Create output directory
         val pdfOutputDir = PlatformFile(FileKit.filesDir, "scans/pdf")
         pdfOutputDir.ensure(mustCreate = true)
         val pdfOutputFile = PlatformFile(pdfOutputDir, "$filename.pdf")
 
         // Copy the scanned PDF to internal storage
-        val sourceUri = scannedDocument.uriString.toUri()
+        val sourceUri = document.uriString.toUri()
         copyDocumentToFileUseCase(sourceUri, pdfOutputFile)
 
         // Validate file size
@@ -57,14 +57,14 @@ class SaveScannedDocumentUseCase(
 
         // Create entity and save to database
         val pdfEntity =
-            ScannedPdfEntity(
+            ScannedDocumentEntity(
                 filename = filename,
                 title = null,
                 description = null,
                 path = documentUri.toString(),
-                createdTimestamp = scannedDocument.timestamp,
+                createdTimestamp = document.timestamp,
                 fileSize = fileSizeBytes,
-                pageCount = scannedDocument.pageCount,
+                pageCount = document.pageCount,
                 thumbnail = thumbnailPath,
             )
 
@@ -99,7 +99,7 @@ class SaveScannedDocumentUseCase(
 
         // Create entity and save to database
         val pdfEntity =
-            ScannedPdfEntity(
+            ScannedDocumentEntity(
                 filename = filename,
                 title = null,
                 description = null,

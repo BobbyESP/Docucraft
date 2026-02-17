@@ -1,8 +1,8 @@
 package com.bobbyesp.docucraft.feature.docscanner.domain.repository
 
 import android.net.Uri
-import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedPdfEntity
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedPdf
+import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedDocumentEntity
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import kotlinx.coroutines.flow.Flow
 
 interface ScannedDocumentsRepository {
@@ -11,15 +11,15 @@ interface ScannedDocumentsRepository {
      * Retrieves a reactive stream of all scanned PDFs currently available in the system.
      *
      * This function subscribes to the underlying data source (e.g., Room database) and emits
-     * a new list of [ScannedPdf] objects whenever the data set changes. This includes events
+     * a new list of [ScannedDocument] objects whenever the data set changes. This includes events
      * such as adding a new scan, deleting a document, or updating a document's metadata.
      *
      * The returned [Flow] is infinite and will continue to emit updates until the consumer
      * cancels the collection.
      *
-     * @return A [Flow] emitting the complete list of [ScannedPdf]s representing the current state.
+     * @return A [Flow] emitting the complete list of [ScannedDocument]s representing the current state.
      */
-    suspend fun observeDocuments(): Flow<List<ScannedPdf>>
+    suspend fun observeDocuments(): Flow<List<ScannedDocument>>
 
     /**
      * Performs a unified search across all text fields of the scanned documents.
@@ -33,10 +33,10 @@ interface ScannedDocumentsRepository {
      * to specify which field to filter by.
      *
      * @param query The text string to search for.
-     * @return A list of [ScannedPdf] objects where the query matches at least one of the searchable fields.
+     * @return A list of [ScannedDocument] objects where the query matches at least one of the searchable fields.
      *         Returns an empty list if no matches are found.
      */
-    suspend fun searchDocuments(query: String): List<ScannedPdf>
+    suspend fun searchDocuments(query: String): List<ScannedDocument>
 
     /**
      * Retrieves a single scanned PDF by its unique identifier.
@@ -45,10 +45,10 @@ interface ScannedDocumentsRepository {
      * This is useful for opening details screens or performing operations on a specific item.
      *
      * @param id The unique identifier string of the PDF to retrieve.
-     * @return The [ScannedPdf] domain object corresponding to the ID.
+     * @return The [ScannedDocument] domain object corresponding to the ID.
      * @throws NoSuchElementException If no document is found with the provided ID.
      */
-    suspend fun getDocument(id: String): ScannedPdf
+    suspend fun getDocument(id: String): ScannedDocument
 
     /**
      * Retrieves a ScannedPdf object based on its file location URI.
@@ -58,16 +58,16 @@ interface ScannedDocumentsRepository {
      * from the [path] if the entry is not fully cached.
      *
      * @param path The [Uri] pointing to the PDF file location.
-     * @return A [ScannedPdf] object representing the file at the given path.
+     * @return A [ScannedDocument] object representing the file at the given path.
      * @throws IllegalArgumentException If the URI is invalid or the file does not exist.
      */
-    suspend fun getDocument(path: Uri): ScannedPdf
+    suspend fun getDocument(path: Uri): ScannedDocument
 
     /**
      * Persists a new scanned PDF entity to storage.
      *
      * This function handles the creation of a new record in the database. It interprets the
-     * provided [ScannedPdfEntity], which contains the raw data structure (path, dimensions,
+     * provided [ScannedDocumentEntity], which contains the raw data structure (path, dimensions,
      * initial metadata), and commits it to the persistent store.
      *
      * Operations may include:
@@ -77,7 +77,7 @@ interface ScannedDocumentsRepository {
      *
      * @param scannedPdf The entity object containing the data to be saved.
      */
-    suspend fun saveDocument(scannedPdf: ScannedPdfEntity)
+    suspend fun saveDocument(scannedPdf: ScannedDocumentEntity)
 
     /**
      * Updates specific metadata fields (title and/or description) of an existing document.

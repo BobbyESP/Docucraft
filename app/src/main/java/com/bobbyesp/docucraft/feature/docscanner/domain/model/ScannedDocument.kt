@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.compose.runtime.Immutable
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.core.util.UriSerializer
-import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedPdfEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedDocumentEntity
 import kotlinx.serialization.Serializable
 
 /**
@@ -24,7 +24,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 @Immutable
-data class ScannedPdf(
+data class ScannedDocument(
     val id: String,
     val filename: String,
     val title: String?,
@@ -36,8 +36,8 @@ data class ScannedPdf(
     val thumbnail: String?,
 ) {
     companion object {
-        fun ScannedPdfEntity.toModel(): ScannedPdf {
-            return ScannedPdf(
+        fun ScannedDocumentEntity.toModel(): ScannedDocument {
+            return ScannedDocument(
                 id = id,
                 filename = filename,
                 title = title,

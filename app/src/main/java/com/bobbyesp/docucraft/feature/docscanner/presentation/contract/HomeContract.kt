@@ -1,11 +1,11 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.contract
 
 import android.net.Uri
-import com.bobbyesp.docucraft.mlkit.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedPdf
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.mlkit.domain.model.Document
 
 /**
  * Defines the contract for the Home Screen (MVI Pattern). Contains the State, Actions (Inputs), and
@@ -29,17 +29,17 @@ sealed interface LoadState {
 // --- STATE ---
 data class HomeUiState(
     // Global Loading & Error
-    val loadState: LoadState = LoadState.Loading,
+    val fetchState: LoadState = LoadState.Loading,
 
     // Data
-    val scannedPdfs: List<ScannedPdf> = emptyList(),
-    val isRepositoryEmpty: Boolean = true,
+    val scannedDocuments: List<ScannedDocument> = emptyList(),
+    val hasDocuments: Boolean = true,
 
     // Dialogs & Temporal States
-    val pdfToBeRemoved: TemporalState<ScannedPdf> = TemporalState.NotPresent,
-    val pdfToBeModified: TemporalState<ScannedPdf> = TemporalState.NotPresent,
-    val pdfToShowInformation: TemporalState<ScannedPdf> = TemporalState.NotPresent,
-    val pdfForOptions: TemporalState<ScannedPdf> = TemporalState.NotPresent,
+    val documentForRemoval: TemporalState<ScannedDocument> = TemporalState.NotPresent,
+    val documentForModification: TemporalState<ScannedDocument> = TemporalState.NotPresent,
+    val documentInfoCandidate: TemporalState<ScannedDocument> = TemporalState.NotPresent,
+    val documentForActionMenu: TemporalState<ScannedDocument> = TemporalState.NotPresent,
 
     // Search & Filter State
     val searchQuery: String = "",
@@ -48,12 +48,12 @@ data class HomeUiState(
 
     // Scanning State
     val isScanning: Boolean = false,
-    val lastScannedDocument: ScannedDocument? = null,
+    val mostRecentScan: Document? = null,
     val scanUserMessage: String? = null,
 ) {
 
     val errorMessage: String?
-        get() = (loadState as? LoadState.Error)?.message
+        get() = (fetchState as? LoadState.Error)?.message
 
     val hasActiveFilters: Boolean
         get() =
@@ -63,7 +63,7 @@ data class HomeUiState(
                 filterOptions.sortBy != SortOption.DateDesc
 
     val isEmptyResult: Boolean
-        get() = scannedPdfs.isEmpty() && !isRepositoryEmpty
+        get() = scannedDocuments.isEmpty() && hasDocuments
 }
 
 // --- ACTIONS (Inputs from UI) ---
@@ -75,16 +75,16 @@ sealed interface HomeUiAction {
 
     data object OnScanErrorDismissed : HomeUiAction
 
-    // PDF Operations (User Intents)
-    data class OpenPdf(val uri: Uri) : HomeUiAction
+    // Document Operations (User Intents)
+    data class OpenDocument(val uri: Uri) : HomeUiAction
 
-    data class SavePdf(val pdf: ScannedPdf) : HomeUiAction
+    data class SaveDocument(val document: ScannedDocument) : HomeUiAction
 
-    data class SharePdf(val uri: Uri) : HomeUiAction
+    data class ShareDocument(val uri: Uri) : HomeUiAction
 
-    data class DeletePdf(val id: String?) : HomeUiAction // null id means cancel/dismiss
+    data class DeleteDocument(val id: String?) : HomeUiAction // null id means cancel/dismiss
 
-    data class UpdatePdfMetadata(val id: String, val title: String, val description: String) :
+    data class UpdateDocumentFields(val id: String, val title: String, val description: String) :
         HomeUiAction
 
     // Dialog Triggers
@@ -92,7 +92,7 @@ sealed interface HomeUiAction {
 
     data class ShowEditDialog(val id: String) : HomeUiAction
 
-    data class ShowPdfInfo(val id: String) : HomeUiAction
+    data class ShowDocumentInfo(val id: String) : HomeUiAction
 
     data class ShowOptionsSheet(val id: String) : HomeUiAction
 
@@ -136,9 +136,9 @@ sealed interface HomeUiEffect {
 
     data class DeleteFailure(val error: Throwable) : HomeUiEffect
 
-    data class OpenPdfViewerFailure(val error: Throwable) : HomeUiEffect
+    data class OpenDocumentViewerFailure(val error: Throwable) : HomeUiEffect
 
-    data class SharePdfFailure(val error: Throwable) : HomeUiEffect
+    data class ShareDocumentFailure(val error: Throwable) : HomeUiEffect
 
-    data class ShowPdfInfoDialog(val id: String) : HomeUiEffect
+    data class ShowDocumentInformationDialog(val id: String) : HomeUiEffect
 }

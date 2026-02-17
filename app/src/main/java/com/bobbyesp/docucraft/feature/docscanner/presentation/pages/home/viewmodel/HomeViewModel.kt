@@ -9,7 +9,7 @@ import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedPdf
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.*
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
@@ -56,57 +56,57 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        observePdfs()
+        observeDocuments()
     }
 
-    private fun observePdfs() {
+    private fun observeDocuments() {
         viewModelScope.launch(Dispatchers.IO) {
             combine(
-                    flow { emitAll(observeDocumentsUseCase()) },
-                    _uiState.map { it.searchQuery }.distinctUntilChanged(),
-                    _uiState.map { it.filterOptions }.distinctUntilChanged(),
-                ) { pdfs, query, filterOptions ->
-                    filterAndSortPdfs(pdfs, query, filterOptions)
-                }
-                .onStart { _uiState.updateValue { it.copy(loadState = LoadState.Loading) } }
+                flow { emitAll(observeDocumentsUseCase()) },
+                _uiState.map { it.searchQuery }.distinctUntilChanged(),
+                _uiState.map { it.filterOptions }.distinctUntilChanged(),
+            ) { documents, query, filterOptions ->
+                applyFiltersAndSort(documents, query, filterOptions)
+            }
+                .onStart { _uiState.updateValue { it.copy(fetchState = LoadState.Loading) } }
                 .catch { error ->
-                    logError("Failed to retrieve PDFs: ${error.message}", error)
+                    logError("Failed to retrieve documents: ${error.message}", error)
                     _uiState.updateValue {
-                        it.copy(loadState = LoadState.Error(error.message ?: "Unknown error"))
+                        it.copy(fetchState = LoadState.Error(error.message ?: "Unknown error"))
                     }
                     sendEvent(HomeUiEffect.ShowError(error))
                 }
                 .collect { (filteredList, isRepositoryEmpty) ->
                     _uiState.updateValue {
                         it.copy(
-                            scannedPdfs = filteredList,
-                            isRepositoryEmpty = isRepositoryEmpty,
-                            loadState = LoadState.Idle,
+                            scannedDocuments = filteredList,
+                            hasDocuments = !isRepositoryEmpty,
+                            fetchState = LoadState.Idle,
                         )
                     }
                 }
         }
     }
 
-    private suspend fun filterAndSortPdfs(
-        originalPdfsList: List<ScannedPdf>,
+    private suspend fun applyFiltersAndSort(
+        unfilteredDocuments: List<ScannedDocument>,
         query: String,
         filterOptions: FilterOptions,
-    ): Pair<List<ScannedPdf>, Boolean> {
-        var result = originalPdfsList
+    ): Pair<List<ScannedDocument>, Boolean> {
+        var result = unfilteredDocuments
 
         if (query.isNotBlank()) {
             try {
                 val searchResults = searchDocumentsUseCase(query)
-                result = result.filter { pdf -> searchResults.any { it.id == pdf.id } }
+                result = result.filter { document -> searchResults.any { it.id == document.id } }
             } catch (e: Exception) {
                 logError("Search failed: ${e.message}", e)
                 // Fallback to in-memory filtering
                 result =
-                    result.filter { pdf ->
-                        pdf.title?.contains(query, ignoreCase = true) == true ||
-                            pdf.filename.contains(query, ignoreCase = true) ||
-                            pdf.description?.contains(query, ignoreCase = true) == true
+                    result.filter { document ->
+                        document.title?.contains(query, ignoreCase = true) == true ||
+                                document.filename.contains(query, ignoreCase = true) ||
+                                document.description?.contains(query, ignoreCase = true) == true
                     }
             }
         }
@@ -144,7 +144,7 @@ class HomeViewModel(
                 }
             }
 
-        return result to originalPdfsList.isEmpty()
+        return result to unfilteredDocuments.isEmpty()
     }
 
     // Events using Channel for one-time events
@@ -171,52 +171,52 @@ class HomeViewModel(
                 _uiState.updateValue { it.copy(scanUserMessage = null) }
             }
 
-            // PDF Operations
-            is HomeUiAction.OpenPdf -> openPdfInViewer(action.uri)
-            is HomeUiAction.SavePdf -> copyPdfToDirectory(action.pdf)
-            is HomeUiAction.SharePdf -> sharePdf(action.uri)
-            is HomeUiAction.DeletePdf -> {
-                _uiState.updateValue { it.copy(pdfToBeRemoved = TemporalState.NotPresent) }
+            // Document Operations
+            is HomeUiAction.OpenDocument -> onViewDocument(action.uri)
+            is HomeUiAction.SaveDocument -> onExportDocument(action.document)
+            is HomeUiAction.ShareDocument -> onShareDocument(action.uri)
+            is HomeUiAction.DeleteDocument -> {
+                _uiState.updateValue { it.copy(documentForRemoval = TemporalState.NotPresent) }
                 action.id?.let { id ->
                     launchIO {
-                        val scannedPdf = getPdfById(id)
-                        deletePdf(scannedPdf.path)
+                        val scannedDocument = getDocumentByIdUseCase(id)
+                        onDeleteDocument(scannedDocument.path)
                     }
                 }
             }
 
-            is HomeUiAction.UpdatePdfMetadata -> {
-                modifyPdfMetadata(action.id, action.title, action.description)
+            is HomeUiAction.UpdateDocumentFields -> {
+                updateDocumentFields(action.id, action.title, action.description)
             }
 
             // Dialogs
             is HomeUiAction.ShowDeleteConfirmation -> {
                 launchIO {
-                    val scannedPdf = getPdfById(action.id)
+                    val scannedDocument = getDocumentByIdUseCase(action.id)
                     _uiState.updateValue {
-                        it.copy(pdfToBeRemoved = TemporalState.Present(scannedPdf))
+                        it.copy(documentForRemoval = TemporalState.Present(scannedDocument))
                     }
                 }
             }
 
             is HomeUiAction.ShowEditDialog -> {
                 launchIO {
-                    val scannedPdf = getPdfById(action.id)
+                    val scannedDocument = getDocumentByIdUseCase(action.id)
                     _uiState.updateValue {
-                        it.copy(pdfToBeModified = TemporalState.Present(scannedPdf))
+                        it.copy(documentForModification = TemporalState.Present(scannedDocument))
                     }
                 }
             }
 
-            is HomeUiAction.ShowPdfInfo -> {
-                sendEvent(HomeUiEffect.ShowPdfInfoDialog(action.id))
+            is HomeUiAction.ShowDocumentInfo -> {
+                sendEvent(HomeUiEffect.ShowDocumentInformationDialog(action.id))
             }
 
             is HomeUiAction.ShowOptionsSheet -> {
                 launchIO {
-                    val scannedPdf = getPdfById(action.id)
+                    val scannedDocument = getDocumentByIdUseCase(action.id)
                     _uiState.updateValue {
-                        it.copy(pdfForOptions = TemporalState.Present(scannedPdf))
+                        it.copy(documentForActionMenu = TemporalState.Present(scannedDocument))
                     }
                 }
             }
@@ -224,15 +224,15 @@ class HomeViewModel(
             HomeUiAction.DismissDialogs -> {
                 _uiState.updateValue {
                     it.copy(
-                        pdfToBeRemoved = TemporalState.NotPresent,
-                        pdfToBeModified = TemporalState.NotPresent,
-                        pdfToShowInformation = TemporalState.NotPresent,
+                        documentForRemoval = TemporalState.NotPresent,
+                        documentForModification = TemporalState.NotPresent,
+                        documentInfoCandidate = TemporalState.NotPresent,
                     )
                 }
             }
 
             is HomeUiAction.DismissOptionsSheet -> {
-                _uiState.updateValue { it.copy(pdfForOptions = TemporalState.NotPresent) }
+                _uiState.updateValue { it.copy(documentForActionMenu = TemporalState.NotPresent) }
             }
 
             // Search & Filter
@@ -275,7 +275,7 @@ class HomeViewModel(
                     is Resource.Success -> {
                         val document = resource.data
                         _uiState.updateValue {
-                            it.copy(isScanning = false, lastScannedDocument = document)
+                            it.copy(isScanning = false, mostRecentScan = document)
                         }
                         // Auto-save logic
                         document?.let {
@@ -306,69 +306,68 @@ class HomeViewModel(
         }
     }
 
-    private suspend fun getPdfById(pdfId: String): ScannedPdf {
-        return getDocumentByIdUseCase(pdfId)
-    }
-
-    private fun modifyPdfMetadata(pdfId: String, title: String, description: String) {
+    private fun updateDocumentFields(documentId: String, title: String, description: String) {
         executeAsync(
             onSuccess = {
-                logInfo("PDF metadata updated successfully")
+                logInfo("Document metadata updated successfully")
                 sendEvent(
                     HomeUiEffect.ScanSuccess
                 ) // Reusing ScanSuccess as generic success or create new one
             },
             onError = { error ->
-                logError("Failed to modify PDF: ${error.message}", error)
+                logError("Failed to modify Document: ${error.message}", error)
                 sendEvent(HomeUiEffect.ShowError(error))
             },
         ) {
-            val scannedPdf = getPdfById(pdfId)
+            val scannedDocument = getDocumentByIdUseCase(documentId)
             val newTitle: String? = title.ifBlank { null }
             val newDescription: String? = description.ifBlank { null }
 
-            updateDocumentFieldsUseCase(scannedPdf.id, newTitle, newDescription)
+            updateDocumentFieldsUseCase(scannedDocument.id, newTitle, newDescription)
 
-            _uiState.updateValue { it.copy(pdfToBeModified = TemporalState.NotPresent) }
+            _uiState.updateValue { it.copy(documentForModification = TemporalState.NotPresent) }
         }
     }
 
-    private fun openPdfInViewer(pdfPath: Uri) {
+    private fun onViewDocument(documentUri: Uri) {
         try {
-            openDocumentInViewerUseCase(pdfPath)
+            openDocumentInViewerUseCase(documentUri)
         } catch (e: Exception) {
-            sendEvent(HomeUiEffect.OpenPdfViewerFailure(error = e))
+            sendEvent(HomeUiEffect.OpenDocumentViewerFailure(error = e))
         }
     }
 
-    private fun sharePdf(pdfPath: Uri) {
+    private fun onShareDocument(documentUri: Uri) {
         try {
-            shareDocumentUseCase(pdfPath)
+            shareDocumentUseCase(documentUri)
         } catch (e: Exception) {
-            sendEvent(HomeUiEffect.SharePdfFailure(error = e))
+            sendEvent(HomeUiEffect.ShareDocumentFailure(error = e))
         }
     }
 
-    private suspend fun deletePdf(pdfPath: Uri) {
+    private suspend fun onDeleteDocument(documentUri: Uri) {
         try {
-            deleteDocumentUseCase(pdfPath)
+            deleteDocumentUseCase(documentUri)
             sendEvent(HomeUiEffect.DeleteSuccess)
         } catch (e: Exception) {
-            logError("Failed to delete PDF: ${e.message}", e)
+            logError("Failed to delete Document: ${e.message}", e)
             sendEvent(HomeUiEffect.DeleteFailure(error = e))
         }
     }
 
-    private fun copyPdfToDirectory(scannedPdf: ScannedPdf) {
+    private fun onExportDocument(scannedDocument: ScannedDocument) {
         executeAsync(
             onSuccess = { uri: Uri ->
                 if (uri != Uri.EMPTY) {
-                    logInfo("PDF saved successfully to: $uri")
+                    logInfo("Document saved successfully to: $uri")
                     sendEvent(HomeUiEffect.SaveSuccess(uri))
+                } else {
+                    logError("Document save failed")
+                    sendEvent(HomeUiEffect.SaveFailure(error = Exception("Failed to save Document")))
                 }
             },
             onError = { error ->
-                logError("Failed to save PDF: ${error.message}", error)
+                logError("Failed to save Document: ${error.message}", error)
                 sendEvent(HomeUiEffect.SaveFailure(error = error))
             },
         ) {
@@ -381,7 +380,7 @@ class HomeViewModel(
 
             val file =
                 FileKit.openFileSaver(
-                    suggestedName = scannedPdf.title ?: scannedPdf.filename,
+                    suggestedName = scannedDocument.title ?: scannedDocument.filename,
                     extension = "pdf",
                     directory = dir,
                 )
@@ -389,8 +388,8 @@ class HomeViewModel(
                         return@executeAsync Uri.EMPTY
                     }
 
-            val internalPdf = PlatformFile(scannedPdf.path)
-            internalPdf.copyTo(file)
+            val internalDocument = PlatformFile(scannedDocument.path)
+            internalDocument.copyTo(file)
 
             file.path.toUri()
         }

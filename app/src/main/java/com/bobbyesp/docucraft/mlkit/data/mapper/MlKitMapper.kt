@@ -1,7 +1,7 @@
 package com.bobbyesp.docucraft.mlkit.data.mapper
 
 import android.net.Uri
-import com.bobbyesp.docucraft.mlkit.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.mlkit.domain.model.Document
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 
 /**
@@ -10,11 +10,11 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
  */
 object MlKitMapper {
 
-    fun mapToDomain(result: GmsDocumentScanningResult): ScannedDocument {
+    fun mapToDomain(result: GmsDocumentScanningResult): Document {
         // Prefer PDF URI if available, otherwise use the first page's URI
         val uri = result.pdf?.uri ?: result.pages?.firstOrNull()?.imageUri ?: Uri.EMPTY
         val pageCount = result.pages?.size ?: 0
 
-        return ScannedDocument(uriString = uri.toString(), pageCount = pageCount)
+        return Document(uriString = uri.toString(), pageCount = pageCount)
     }
 }

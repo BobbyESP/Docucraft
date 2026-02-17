@@ -1,7 +1,7 @@
 package com.bobbyesp.docucraft.mlkit.data.datasource
 
 import com.bobbyesp.docucraft.mlkit.domain.exception.ScannerException
-import com.bobbyesp.docucraft.mlkit.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.mlkit.domain.model.Document
 import com.bobbyesp.docucraft.mlkit.data.mapper.MlKitMapper
 import com.bobbyesp.docucraft.mlkit.domain.datsource.MlKitDataSource
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
  */
 class MlKitDataSourceImpl : MlKitDataSource {
 
-    override suspend fun processDocumentScanResult(result: Any): ScannedDocument {
+    override suspend fun processDocumentScanResult(result: Any): Document {
         return withContext(Dispatchers.Default) {
             if (result !is GmsDocumentScanningResult) {
                 throw ScannerException(

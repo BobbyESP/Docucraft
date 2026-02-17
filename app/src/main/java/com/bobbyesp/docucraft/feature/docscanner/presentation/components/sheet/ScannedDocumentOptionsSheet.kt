@@ -49,7 +49,7 @@ import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.components.others.GridMenu
 import com.bobbyesp.docucraft.core.presentation.components.others.GridMenuItem
 import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedPdf
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
@@ -62,7 +62,7 @@ private enum class ActionImportance {
 }
 
 @Immutable
-private data class PdfOption(
+private data class DocumentAction(
     val icon: ImageVector,
     val title: Int,
     val importance: ActionImportance,
@@ -71,8 +71,8 @@ private data class PdfOption(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ScannedPdfOptionsSheet(
-    scannedPdf: ScannedPdf,
+fun ScannedDocumentOptionsSheet(
+    scannedDocument: ScannedDocument,
     onDismissRequest: () -> Unit,
     onSavePdf: () -> Unit,
     onSharePdf: () -> Unit,
@@ -97,25 +97,25 @@ fun ScannedPdfOptionsSheet(
 
     val options =
         persistentListOf(
-            PdfOption(
+            DocumentAction(
                 icon = Icons.Rounded.SaveAs,
                 title = R.string.save,
                 importance = ActionImportance.PRIMARY,
                 action = onSavePdf,
             ),
-            PdfOption(
+            DocumentAction(
                 icon = Icons.Rounded.Share,
                 title = R.string.share,
                 importance = ActionImportance.PRIMARY,
                 action = onSharePdf,
             ),
-            PdfOption(
+            DocumentAction(
                 icon = Icons.Rounded.EditNote,
                 title = R.string.edit_fields,
                 importance = ActionImportance.SECONDARY,
                 action = onModifyPdfFields,
             ),
-            PdfOption(
+            DocumentAction(
                 icon = Icons.Rounded.DeleteForever,
                 title = R.string.delete,
                 importance = ActionImportance.DESTRUCTIVE,
@@ -133,7 +133,7 @@ fun ScannedPdfOptionsSheet(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            scannedPdf.thumbnail?.let {
+            scannedDocument.thumbnail?.let {
                 val imageModifier =
                     Modifier.widthIn(max = 120.dp)
                         .aspectRatio(0.707f)
@@ -142,7 +142,7 @@ fun ScannedPdfOptionsSheet(
 
                 AsyncImage(
                     modifier = imageModifier,
-                    imageModel = scannedPdf.thumbnail,
+                    imageModel = scannedDocument.thumbnail,
                     failure = {
                         Placeholder(
                             modifier = Modifier.heightIn(min = 48.dp),
@@ -168,7 +168,7 @@ fun ScannedPdfOptionsSheet(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = scannedPdf.title ?: scannedPdf.filename,
+                    text = scannedDocument.title ?: scannedDocument.filename,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
@@ -179,13 +179,13 @@ fun ScannedPdfOptionsSheet(
                             append(stringResource(id = R.string.file_size))
                             append(": ")
                             pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                            append(formatFileSize(context, scannedPdf.fileSize))
+                            append(formatFileSize(context, scannedDocument.fileSize))
                             pop()
                             append(" • ")
                             append(stringResource(id = R.string.page_count))
                             append(": ")
                             pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                            append(scannedPdf.pageCount.toString())
+                            append(scannedDocument.pageCount.toString())
                             pop()
                         },
                     style = MaterialTheme.typography.bodySmall,
@@ -214,7 +214,7 @@ fun ScannedPdfOptionsSheet(
 
 @Composable
 private inline fun DocumentActionsRow(
-    options: ImmutableList<PdfOption>,
+    options: ImmutableList<DocumentAction>,
     crossinline onOptionSelect: (() -> Unit) -> Unit,
     modifier: Modifier = Modifier,
 ) {

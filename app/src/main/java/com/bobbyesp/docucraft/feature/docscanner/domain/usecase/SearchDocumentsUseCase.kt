@@ -1,6 +1,6 @@
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedPdf
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannedDocumentsRepository
 
 /**
@@ -8,7 +8,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannedDocume
  * operation.
  */
 class SearchDocumentsUseCase(private val repository: ScannedDocumentsRepository) {
-    suspend operator fun invoke(query: String): List<ScannedPdf> {
+    suspend operator fun invoke(query: String): List<ScannedDocument> {
         if (query.isBlank()) return emptyList()
         return repository.searchDocuments(query)
     }

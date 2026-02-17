@@ -6,8 +6,8 @@ import java.util.UUID
 import kotlinx.serialization.Serializable
 
 @Serializable
-@Entity(tableName = "scanned_pdfs")
-data class ScannedPdfEntity(
+@Entity(tableName = "scanned_documents")
+data class ScannedDocumentEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val filename: String,
     val title: String?,

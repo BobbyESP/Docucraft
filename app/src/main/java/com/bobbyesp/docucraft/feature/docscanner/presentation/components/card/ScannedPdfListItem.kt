@@ -44,7 +44,7 @@ import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedPdf
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import java.util.UUID
 
 enum class ScannedPdfCardPosition {
@@ -57,7 +57,7 @@ enum class ScannedPdfCardPosition {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun ScannedPdfListItem(
-    pdf: ScannedPdf,
+    pdf: ScannedDocument,
     onOpenPdf: (Uri) -> Unit,
     onMoreOptionsClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -170,7 +170,7 @@ private fun ScannedPdfListItemPreview() {
         ScannedPdfListItem(
             modifier = Modifier,
             pdf =
-                ScannedPdf(
+                ScannedDocument(
                     filename = "Document.pdf",
                     title = "Document",
                     description = "This is a sample document",
@@ -193,7 +193,7 @@ private fun ListScannedPdfListItemPreview() {
     DocucraftTheme {
         val list =
             List(11) {
-                ScannedPdf(
+                ScannedDocument(
                     filename = "Document $it.pdf",
                     title = "Document $it",
                     description = if (it % 2 == 0) "This is a sample document $it" else null,

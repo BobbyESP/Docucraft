@@ -16,10 +16,10 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.mlkit.domain.repository.DocumentScannerService
 import com.bobbyesp.docucraft.core.presentation.common.LocalSonner
 import com.bobbyesp.docucraft.core.util.state.TemporalState
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedPdf
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
-import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.dialogs.DeletePdfConfirmationDialog
+import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.dialogs.DeleteDocumentConfirmationDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.dialogs.EditPdfDetailsDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.viewmodel.HomeViewModel
 import com.dokar.sonner.ToastType
@@ -45,33 +45,33 @@ fun HomePageWrapper(modifier: Modifier = Modifier, viewModel: HomeViewModel = ko
         onScanResult = { result -> viewModel.onAction(HomeUiAction.OnScanResultReceived(result)) },
     )
 
-    val pdfToBeRemoved = uiState.pdfToBeRemoved
+    val pdfToBeRemoved = uiState.documentForRemoval
     if (pdfToBeRemoved is TemporalState.Present<*>) {
-        val scannedPdf = pdfToBeRemoved.value as ScannedPdf
-        DeletePdfConfirmationDialog(
-            scannedPdf = scannedPdf,
-            onDismiss = { viewModel.onAction(HomeUiAction.DeletePdf(null)) },
-            onConfirm = { viewModel.onAction(HomeUiAction.DeletePdf(scannedPdf.id)) },
+        val scannedDocument = pdfToBeRemoved.value as ScannedDocument
+        DeleteDocumentConfirmationDialog(
+            scannedDocument = scannedDocument,
+            onDismiss = { viewModel.onAction(HomeUiAction.DeleteDocument(null)) },
+            onConfirm = { viewModel.onAction(HomeUiAction.DeleteDocument(scannedDocument.id)) },
             modifier = Modifier,
         )
     }
 
-    val pdfToBeModified = uiState.pdfToBeModified
+    val pdfToBeModified = uiState.documentForModification
     if (pdfToBeModified is TemporalState.Present<*>) {
-        val scannedPdf = pdfToBeModified.value as ScannedPdf
+        val scannedDocument = pdfToBeModified.value as ScannedDocument
         EditPdfDetailsDialog(
             onDismiss = { viewModel.onAction(HomeUiAction.DismissDialogs) },
             onConfirm = { title, description ->
                 viewModel.onAction(
-                    HomeUiAction.UpdatePdfMetadata(
-                        id = scannedPdf.id,
+                    HomeUiAction.UpdateDocumentFields(
+                        id = scannedDocument.id,
                         title = title,
                         description = description,
                     )
                 )
             },
-            title = scannedPdf.title,
-            description = scannedPdf.description,
+            title = scannedDocument.title,
+            description = scannedDocument.description,
             modifier = Modifier,
         )
     }
@@ -129,13 +129,13 @@ private fun HandleHomeUiEffects(
                         type = ToastType.Error,
                     )
                 }
-                is HomeUiEffect.OpenPdfViewerFailure -> {
+                is HomeUiEffect.OpenDocumentViewerFailure -> {
                     sonner.show(
                         message = context.resources.getString(R.string.issue_opening_doc_viewer),
                         type = ToastType.Error,
                     )
                 }
-                is HomeUiEffect.SharePdfFailure -> {
+                is HomeUiEffect.ShareDocumentFailure -> {
                     sonner.show(
                         message = context.resources.getString(R.string.issue_sharing_doc),
                         type = ToastType.Error,
@@ -184,7 +184,7 @@ private fun HandleHomeUiEffects(
                 is HomeUiEffect.ShowMessage -> {
                     sonner.show(message = effect.message, type = ToastType.Normal)
                 }
-                is HomeUiEffect.ShowPdfInfoDialog -> {
+                is HomeUiEffect.ShowDocumentInformationDialog -> {
                     // TODO: Handle showing info dialog
                 }
             }

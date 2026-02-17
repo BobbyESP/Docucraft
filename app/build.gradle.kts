@@ -1,9 +1,9 @@
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.android.kotlin)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.parcelize)
@@ -53,22 +53,9 @@ android {
         }
     }
 
-    applicationVariants.all {
-        outputs.all {
-            (this as BaseVariantOutputImpl).outputFileName =
-                "Docucraft-${defaultConfig.versionName}-${name}.apk"
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17) // Use the enum for target JVM version
-        }
     }
 
     dependenciesInfo {
@@ -77,8 +64,18 @@ android {
     }
 
     buildFeatures { compose = true }
+}
 
-    composeCompiler { reportsDestination = layout.buildDirectory.dir("compose_compiler") }
+
+composeCompiler {
+    reportsDestination = layout.buildDirectory.dir("compose_compiler")
+}
+
+kotlin {
+    compilerOptions {
+        languageVersion = KotlinVersion.DEFAULT
+        jvmTarget.set(JvmTarget.JVM_17) // Use the enum for target JVM version
+    }
 }
 
 ktfmt {

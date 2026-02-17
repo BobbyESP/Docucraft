@@ -1,15 +1,15 @@
 package com.bobbyesp.docucraft.util
 
 import androidx.core.net.toUri
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedPdf
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 object MockData {
     object Documents {
-        val pdfsList: ImmutableList<ScannedPdf> =
+        val documentsList: ImmutableList<ScannedDocument> =
             persistentListOf(
-                ScannedPdf(
+                ScannedDocument(
                     id = "1",
                     filename = "document1.pdf",
                     title = "Documento 1 de prueba. Título corto",
@@ -21,7 +21,7 @@ object MockData {
                     pageCount = 10,
                     thumbnail = "content://com.example.thumbnails/thumbnail/1",
                 ),
-                ScannedPdf(
+                ScannedDocument(
                     id = "2",
                     filename = "document2.pdf",
                     title = "Apuntes de programación",

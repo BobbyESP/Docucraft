@@ -3,7 +3,7 @@ package com.bobbyesp.docucraft.mlkit.domain.repository
 import android.app.Activity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
-import com.bobbyesp.docucraft.mlkit.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.mlkit.domain.model.Document
 
 /**
  * Interface for the Document Scanner. This abstracts the underlying implementation (e.g., Google ML
@@ -17,7 +17,7 @@ interface DocumentScannerService {
      * @param input The image source to be analyzed.
      * @return A Resource containing the ScannedDocument if successful.
      */
-    suspend fun scanDocument(input: Any): Result<ScannedDocument>
+    suspend fun scanDocument(input: Any): Result<Document>
 
     /**
      * Launches the scanner UI.
