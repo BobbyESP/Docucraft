@@ -15,7 +15,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
-import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.HomePageWrapper
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.HomeScreenWrapper
 import kotlinx.collections.immutable.persistentListOf
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -34,7 +34,7 @@ fun Navigator(
         ),
         onBack = { rootBackStack.pop() },
         entryProvider = entryProvider {
-            entry<Route.Home> { HomePageWrapper() }
+            entry<Route.Home> { HomeScreenWrapper() }
         },
         transitionSpec = {
             // Slide in from right when navigating forward

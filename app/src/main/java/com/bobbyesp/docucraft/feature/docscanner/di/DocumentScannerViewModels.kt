@@ -1,7 +1,7 @@
 package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.*
-import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.viewmodel.HomeViewModel
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 

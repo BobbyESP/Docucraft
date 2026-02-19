@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home
+package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home
 
 import android.annotation.SuppressLint
 import androidx.activity.compose.LocalActivity
@@ -19,9 +19,9 @@ import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
-import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.dialogs.DeleteDocumentConfirmationDialog
-import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.dialogs.EditDocumentDetailsDialog
-import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.viewmodel.HomeViewModel
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentConfirmationDialog
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsDialog
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import com.dokar.sonner.ToastType
 import com.dokar.sonner.ToasterState
 import kotlinx.coroutines.flow.Flow
@@ -30,7 +30,7 @@ import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomePageWrapper(modifier: Modifier = Modifier, viewModel: HomeViewModel = koinViewModel()) {
+fun HomeScreenWrapper(modifier: Modifier = Modifier, viewModel: HomeViewModel = koinViewModel()) {
     val sonner = LocalSonner.current
     val documentScannerService = koinInject<DocumentScannerService>()
 
@@ -76,7 +76,7 @@ fun HomePageWrapper(modifier: Modifier = Modifier, viewModel: HomeViewModel = ko
         )
     }
 
-    HomePage(
+    HomeScreen(
         modifier = modifier,
         uiState = uiState,
         onAction = viewModel::onAction,

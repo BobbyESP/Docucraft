@@ -114,6 +114,9 @@ dependencies {
     implementation(libs.bundles.glance)
     implementation(libs.bundles.nav3)
 
+    // PDF Viewer
+    implementation(libs.androidx.pdfviewer)
+
     // Dependency injection
     implementation(libs.bundles.koin)
 

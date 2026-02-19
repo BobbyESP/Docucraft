@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.dialogs
+package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs
 
 import android.text.format.Formatter.formatFileSize
 import androidx.compose.material.icons.Icons

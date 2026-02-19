@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home
+package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.animation.AnimatedContent
@@ -113,7 +113,7 @@ import kotlin.math.roundToInt
     ExperimentalMaterial3ExpressiveApi::class,
 )
 @Composable
-fun HomePage(
+fun HomeScreen(
     uiState: HomeUiState,
     onAction: (HomeUiAction) -> Unit,
     onScanClick: () -> Unit,
@@ -627,9 +627,9 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
 @Preview
 @Preview(uiMode = UI_MODE_NIGHT_YES)
 @Composable
-private fun PreviewsHomePage() {
+private fun PreviewsHomeScreen() {
     DocucraftTheme {
-        HomePage(
+        HomeScreen(
             uiState = HomeUiState(scannedDocuments = MockData.Documents.documentsList),
             onAction = {},
             onScanClick = {},

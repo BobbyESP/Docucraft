@@ -10,7 +10,7 @@ class CopyApkPlugin : Plugin<Project> {
         val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
 
         androidComponents.onVariants { variant ->
-            // variantName será "Debug", "Release", etc.
+            // variantName will be "Debug", "Release", etc.
             val variantName = variant.name.replaceFirstChar { it.uppercase() }
 
             val copyTask = project.tasks.register<CopyApkTask>("copy${variantName}Apk") {
@@ -19,7 +19,7 @@ class CopyApkPlugin : Plugin<Project> {
 
                 apkFolder.set((variant as ApplicationVariant).artifacts.get(SingleArtifact.APK))
                 builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
-                outputDirectory.set(project.layout.buildDirectory.dir("outputs/apk-renamed/${variant.name}"))
+                outputDirectory.set(project.layout.buildDirectory.dir("outputs/apk/${variant.name}"))
                 appName.set("Docucraft")
                 versionNameStr.set(variant.outputs.first().versionName.getOrElse(""))
             }

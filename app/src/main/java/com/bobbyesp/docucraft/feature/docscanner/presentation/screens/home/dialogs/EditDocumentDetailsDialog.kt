@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.dialogs
+package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

@@ -21,7 +21,7 @@ import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.rememberTopLevelBackStack
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
-import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.viewmodel.HomeViewModel
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.ACTION_SCAN_DOCUMENT
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState

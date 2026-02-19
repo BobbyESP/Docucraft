@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.viewmodel
+package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel
 
 import android.net.Uri
 import android.os.Environment
