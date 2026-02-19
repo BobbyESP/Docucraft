@@ -7,10 +7,10 @@ import android.content.pm.PackageManager
 import android.os.Build
 import com.bobbyesp.docucraft.core.di.commonModule
 import com.bobbyesp.docucraft.core.di.fileManagementModule
-import com.bobbyesp.docucraft.feature.docscanner.di.gmsScannerModule
-import com.bobbyesp.docucraft.feature.docscanner.di.mlKitModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerDataModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerViewModels
+import com.bobbyesp.docucraft.feature.docscanner.di.gmsScannerModule
+import com.bobbyesp.docucraft.feature.docscanner.di.mlKitModule
 import com.bobbyesp.docucraft.feature.docscanner.di.scannedDocumentsDatabaseModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger

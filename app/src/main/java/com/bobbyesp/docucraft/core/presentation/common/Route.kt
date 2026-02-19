@@ -3,12 +3,13 @@ package com.bobbyesp.docucraft.core.presentation.common
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed interface Route {
+sealed interface Route: NavKey {
     @Serializable
-    data object Home : Route, TopLevelRoute {
+    data object Home : Route, TopLevelRoute, NavKey {
         override val icon: ImageVector
             get() = Icons.Rounded.Home
     }

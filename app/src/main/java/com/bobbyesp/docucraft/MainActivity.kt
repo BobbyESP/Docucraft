@@ -19,7 +19,7 @@ import com.bobbyesp.docucraft.mlkit.domain.repository.DocumentScannerService
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.common.Route
-import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
+import com.bobbyesp.docucraft.core.presentation.navigation.rememberTopLevelBackStack
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.pages.home.viewmodel.HomeViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.ACTION_SCAN_DOCUMENT
@@ -35,7 +35,6 @@ class MainActivity : ComponentActivity(), KoinComponent {
     private val appPreferences: AppPreferences by inject()
     private val homeViewModel by inject<HomeViewModel>()
     private val documentScannerService by inject<DocumentScannerService>()
-    private val topLevelBackStack by inject<TopLevelBackStack<Route>>()
 
     private lateinit var scannerLauncher: ActivityResultLauncher<IntentSenderRequest>
 
@@ -59,6 +58,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
             val sonner = rememberToasterState()
 
             val windowSizeClass = calculateWindowSizeClass(this)
+            val rootBackStack = rememberTopLevelBackStack(startRoute = Route.Home)
 
             AppLocalSettingsProvider(
                 windowWidthSize = windowSizeClass.widthSizeClass,
@@ -66,7 +66,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
                 appPreferences = appPreferences,
                 imageLoader = imageLoader,
             ) {
-                Navigator(topLevelBackStack = topLevelBackStack)
+                Navigator(rootBackStack = rootBackStack)
                 Toaster(
                     state = sonner,
                     richColors = true,
