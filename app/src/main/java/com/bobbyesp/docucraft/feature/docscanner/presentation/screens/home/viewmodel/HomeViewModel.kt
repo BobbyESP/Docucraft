@@ -82,7 +82,9 @@ class HomeViewModel(
                         it.copy(
                             visibleDocuments = filteredList,
                             hasDocuments = !isRepositoryEmpty,
-                            fetchState = ScreenState.Success(data = Unit),
+                            fetchState = if (isRepositoryEmpty) ScreenState.Idle() else ScreenState.Success(
+                                Unit
+                            ),
                         )
                     }
                 }

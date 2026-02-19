@@ -235,22 +235,21 @@ fun HomeScreen(
                 }
 
                 // Idle is gonna represent an empty state
-
-                is ScreenState.Success<*> -> {
-                    if(uiState.hasDocuments) {
-                        ScannedDocumentsList(
-                            scannedDocuments = uiState.visibleDocuments,
-                            onAction = onAction,
-                            filterOptions = filterOptions,
-                            listState = listState,
-                        )
-                    } else {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            EmptyStateScreen(modifier = Modifier, onScanPdfClick = onScanClick)
-                        }
+                is ScreenState.Idle<*> -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        EmptyStateScreen(modifier = Modifier, onScanPdfClick = onScanClick)
                     }
                 }
-                is ScreenState.Idle<*> -> { /* IGNORE */ }
+
+                is ScreenState.Success<*> -> {
+                    ScannedDocumentsList(
+                        scannedDocuments = uiState.visibleDocuments,
+                        onAction = onAction,
+                        filterOptions = filterOptions,
+                        listState = listState,
+                    )
+                }
+
             }
         }
     }
