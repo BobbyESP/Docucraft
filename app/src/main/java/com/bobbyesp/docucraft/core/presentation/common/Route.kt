@@ -14,6 +14,11 @@ sealed interface Route: NavKey {
             get() = Icons.Rounded.Home
     }
 
+    @Serializable
+    data class PdfViewer(
+        val documentUri: String
+    ) : Route, NavKey
+
     //    @Serializable
     //    data object Playground : Route, TopLevelRoute {
     //        override val icon: ImageVector

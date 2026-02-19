@@ -4,7 +4,9 @@ import android.net.Uri
 import android.os.Environment
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
-import com.bobbyesp.docucraft.core.util.Resource
+import com.bobbyesp.docucraft.core.presentation.common.Route
+import com.bobbyesp.docucraft.core.util.state.ScreenState
+import com.bobbyesp.docucraft.core.util.state.ResourceState
 import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
@@ -14,7 +16,6 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.*
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.LoadState
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.copyTo
@@ -68,20 +69,20 @@ class HomeViewModel(
             ) { documents, query, filterOptions ->
                 applyFiltersAndSort(documents, query, filterOptions)
             }
-                .onStart { _uiState.updateValue { it.copy(fetchState = LoadState.Loading) } }
+                .onStart { _uiState.updateValue { it.copy(fetchState = ScreenState.Loading()) } }
                 .catch { error ->
                     logError("Failed to retrieve documents: ${error.message}", error)
                     _uiState.updateValue {
-                        it.copy(fetchState = LoadState.Error(error.message ?: "Unknown error"))
+                        it.copy(fetchState = ScreenState.Error(error.message ?: "Unknown error"))
                     }
                     sendEvent(HomeUiEffect.ShowError(error))
                 }
                 .collect { (filteredList, isRepositoryEmpty) ->
                     _uiState.updateValue {
                         it.copy(
-                            scannedDocuments = filteredList,
+                            visibleDocuments = filteredList,
                             hasDocuments = !isRepositoryEmpty,
-                            fetchState = LoadState.Idle,
+                            fetchState = ScreenState.Success(data = Unit),
                         )
                     }
                 }
@@ -172,7 +173,7 @@ class HomeViewModel(
             }
 
             // Document Operations
-            is HomeUiAction.OpenDocument -> onViewDocument(action.uri)
+            is HomeUiAction.OpenDocument -> sendEvent(HomeUiEffect.Navigate(Route.PdfViewer(action.uri.toString())))
             is HomeUiAction.SaveDocument -> onExportDocument(action.document)
             is HomeUiAction.ShareDocument -> onShareDocument(action.uri)
             is HomeUiAction.DeleteDocument -> {
@@ -268,11 +269,11 @@ class HomeViewModel(
         launchIO {
             scanDocumentUseCase(result).collect { resource ->
                 when (resource) {
-                    is Resource.Loading -> {
+                    is ResourceState.Loading -> {
                         _uiState.updateValue { it.copy(isScanning = true) }
                     }
 
-                    is Resource.Success -> {
+                    is ResourceState.Success -> {
                         val document = resource.data
                         _uiState.updateValue {
                             it.copy(isScanning = false, mostRecentScan = document)
@@ -289,17 +290,13 @@ class HomeViewModel(
                         }
                     }
 
-                    is Resource.Error -> {
+                    is ResourceState.Error -> {
                         _uiState.updateValue {
                             it.copy(isScanning = false, scanUserMessage = resource.message)
                         }
                         sendEvent(
-                            HomeUiEffect.ScanFailure(resource.error ?: Exception(resource.message))
+                            HomeUiEffect.ScanFailure(Exception(resource.message))
                         )
-                    }
-
-                    else -> {
-                        /* Ignore other states */
                     }
                 }
             }

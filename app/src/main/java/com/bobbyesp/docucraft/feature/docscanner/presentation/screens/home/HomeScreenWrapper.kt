@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.mlkit.domain.repository.DocumentScannerService
 import com.bobbyesp.docucraft.core.presentation.common.LocalSonner
+import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
@@ -30,7 +31,11 @@ import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreenWrapper(modifier: Modifier = Modifier, viewModel: HomeViewModel = koinViewModel()) {
+fun HomeScreenWrapper(
+    onNavigate: (Route) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = koinViewModel()
+) {
     val sonner = LocalSonner.current
     val documentScannerService = koinInject<DocumentScannerService>()
 
@@ -43,6 +48,7 @@ fun HomeScreenWrapper(modifier: Modifier = Modifier, viewModel: HomeViewModel = 
         sonner = sonner,
         documentScannerService = documentScannerService,
         onScanResult = { result -> viewModel.onAction(HomeUiAction.OnScanResultReceived(result)) },
+        onNavigate = onNavigate
     )
 
     val pdfToBeRemoved = uiState.documentForRemoval
@@ -92,6 +98,7 @@ private fun HandleHomeUiEffects(
     sonner: ToasterState,
     documentScannerService: DocumentScannerService,
     onScanResult: (ActivityResult) -> Unit,
+    onNavigate: (Route) -> Unit
 ) {
     val context = LocalContext.current
     val activity = LocalActivity.current
@@ -111,12 +118,14 @@ private fun HandleHomeUiEffects(
                         documentScannerService.launchScanner(act, scannerLauncher)
                     }
                 }
+
                 is HomeUiEffect.ScanSuccess -> {
                     sonner.show(
                         message = context.resources.getString(R.string.doc_saved_successfully),
                         type = ToastType.Success,
                     )
                 }
+
                 is HomeUiEffect.ScanFailure -> {
                     val errorMsg =
                         effect.error.message ?: context.resources.getString(R.string.unknown_error)
@@ -129,18 +138,24 @@ private fun HandleHomeUiEffects(
                         type = ToastType.Error,
                     )
                 }
+                is HomeUiEffect.Navigate -> {
+                    onNavigate(effect.route)
+                }
+
                 is HomeUiEffect.OpenDocumentViewerFailure -> {
                     sonner.show(
                         message = context.resources.getString(R.string.issue_opening_doc_viewer),
                         type = ToastType.Error,
                     )
                 }
+
                 is HomeUiEffect.ShareDocumentFailure -> {
                     sonner.show(
                         message = context.resources.getString(R.string.issue_sharing_doc),
                         type = ToastType.Error,
                     )
                 }
+
                 is HomeUiEffect.SaveSuccess -> {
                     val path = effect.uri.path ?: ""
                     sonner.show(
@@ -149,6 +164,7 @@ private fun HandleHomeUiEffects(
                         type = ToastType.Success,
                     )
                 }
+
                 is HomeUiEffect.SaveFailure -> {
                     val errorMsg =
                         effect.error.message ?: context.resources.getString(R.string.unknown_error)
@@ -161,18 +177,21 @@ private fun HandleHomeUiEffects(
                         type = ToastType.Error,
                     )
                 }
+
                 HomeUiEffect.DeleteSuccess -> {
                     sonner.show(
                         message = context.resources.getString(R.string.doc_deleted_successfully),
                         type = ToastType.Success,
                     )
                 }
+
                 is HomeUiEffect.DeleteFailure -> {
                     sonner.show(
                         message = context.resources.getString(R.string.doc_deleted_error),
                         type = ToastType.Error,
                     )
                 }
+
                 is HomeUiEffect.ShowError -> {
                     sonner.show(
                         message =
@@ -181,12 +200,15 @@ private fun HandleHomeUiEffects(
                         type = ToastType.Error,
                     )
                 }
+
                 is HomeUiEffect.ShowMessage -> {
                     sonner.show(message = effect.message, type = ToastType.Normal)
                 }
+
                 is HomeUiEffect.ShowDocumentInformationDialog -> {
                     // TODO: Handle showing info dialog
                 }
+
             }
         }
     }

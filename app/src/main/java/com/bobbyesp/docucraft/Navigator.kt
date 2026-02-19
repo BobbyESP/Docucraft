@@ -9,13 +9,16 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.bhuvaneshw.pdf.compose.PdfSource
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.HomeScreenWrapper
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
 import kotlinx.collections.immutable.persistentListOf
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -34,7 +37,14 @@ fun Navigator(
         ),
         onBack = { rootBackStack.pop() },
         entryProvider = entryProvider {
-            entry<Route.Home> { HomeScreenWrapper() }
+            entry<Route.Home> { HomeScreenWrapper(
+                onNavigate = { rootBackStack.push(it) }
+            ) }
+            entry<Route.PdfViewer> { key ->
+                PdfViewerScreen(
+                    source = PdfSource.ContentUri(key.documentUri.toUri())
+                )
+            }
         },
         transitionSpec = {
             // Slide in from right when navigating forward

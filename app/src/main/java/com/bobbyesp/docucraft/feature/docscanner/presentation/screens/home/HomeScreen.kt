@@ -92,6 +92,7 @@ import com.bobbyesp.docucraft.core.presentation.components.selectiongroup.Select
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.dmSerifTextFont
 import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscroll
+import com.bobbyesp.docucraft.core.util.state.ScreenState
 import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
@@ -101,8 +102,6 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.Sc
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.ScannedDocumentOptionsSheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.LoadState
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.PageContentState
 import com.bobbyesp.docucraft.util.MockData
 import com.materialkolor.ktx.harmonize
 import kotlin.math.roundToInt
@@ -124,15 +123,6 @@ fun HomeScreen(
 
     val listState = rememberLazyListState()
     val isFabExpanded by remember { derivedStateOf { !listState.isScrollInProgress } }
-
-    val contentState =
-        when (uiState.fetchState) {
-            LoadState.Loading -> PageContentState.LOADING
-            is LoadState.Error -> PageContentState.ERROR
-            LoadState.Idle -> {
-                if (!uiState.hasDocuments) PageContentState.EMPTY else PageContentState.SUCCESS
-            }
-        }
 
     val focusManager = LocalFocusManager.current
     val usableMotionScheme = motionScheme
@@ -181,7 +171,7 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .padding(start = 32.dp)
                         .windowInsetsPadding(WindowInsets.ime),
-                targetState = contentState == PageContentState.SUCCESS,
+                targetState = uiState.hasDocuments,
                 transitionSpec = {
                     ContentTransform(
                         targetContentEnter =
@@ -227,37 +217,40 @@ fun HomeScreen(
     ) { padding ->
         AnimatedContent(
             modifier = Modifier.padding(padding),
-            targetState = contentState,
+            targetState = uiState.fetchState,
             transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
             label = "PageContentTransition",
         ) { targetState ->
             when (targetState) {
-                PageContentState.LOADING -> {
+                is ScreenState.Loading<*> -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularWavyProgressIndicator()
                     }
                 }
 
-                PageContentState.ERROR -> {
+                is ScreenState.Error<*> -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         ErrorContent(errorMessage = uiState.errorMessage, onRetry = { /* TODO */ })
                     }
                 }
 
-                PageContentState.EMPTY -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        EmptyStateScreen(modifier = Modifier, onScanPdfClick = onScanClick)
+                // Idle is gonna represent an empty state
+
+                is ScreenState.Success<*> -> {
+                    if(uiState.hasDocuments) {
+                        ScannedDocumentsList(
+                            scannedDocuments = uiState.visibleDocuments,
+                            onAction = onAction,
+                            filterOptions = filterOptions,
+                            listState = listState,
+                        )
+                    } else {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            EmptyStateScreen(modifier = Modifier, onScanPdfClick = onScanClick)
+                        }
                     }
                 }
-
-                PageContentState.SUCCESS -> {
-                    ScannedDocumentsList(
-                        scannedDocuments = uiState.scannedDocuments,
-                        onAction = onAction,
-                        filterOptions = filterOptions,
-                        listState = listState,
-                    )
-                }
+                is ScreenState.Idle<*> -> { /* IGNORE */ }
             }
         }
     }
@@ -630,7 +623,7 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
 private fun PreviewsHomeScreen() {
     DocucraftTheme {
         HomeScreen(
-            uiState = HomeUiState(scannedDocuments = MockData.Documents.documentsList),
+            uiState = HomeUiState(visibleDocuments = MockData.Documents.documentsList),
             onAction = {},
             onScanClick = {},
         )
