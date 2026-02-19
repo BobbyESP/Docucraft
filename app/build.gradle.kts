@@ -1,17 +1,17 @@
-import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
-    alias(libs.plugins.android.application)
+    id(libs.plugins.android.application.get().pluginId)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.kotlin.parcelize)
+    id(libs.plugins.kotlin.parcelize.get().pluginId)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.ktfmt.gradle)
     alias(libs.plugins.google.gms)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.stability.analyzer)
+    id("copy-apk-plugin")
 }
 
 android {
@@ -23,8 +23,13 @@ android {
 
     defaultConfig {
         applicationId = "com.bobbyesp.docucraft"
-        minSdk = 24
-        targetSdk = 36
+        minSdk {
+            version = release(24)
+        }
+
+        targetSdk {
+            version = release(36)
+        }
 
         versionCode = rootProject.extra["versionCode"] as Int
         versionName = rootProject.extra["versionName"] as String
@@ -53,6 +58,7 @@ android {
         }
     }
 
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -65,7 +71,6 @@ android {
 
     buildFeatures { compose = true }
 }
-
 
 composeCompiler {
     reportsDestination = layout.buildDirectory.dir("compose_compiler")

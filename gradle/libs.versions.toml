@@ -168,6 +168,10 @@ espresso-core = { group = "androidx.test.espresso", name = "espresso-core", vers
 profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 
+#BuildSrc
+gradle = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
