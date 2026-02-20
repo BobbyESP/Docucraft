@@ -11,7 +11,7 @@
 	<string name="unknown_error">Unbekannter Fehler</string>
 	<string name="file_size">Dateigröße</string>
 	<string name="save">Speichern</string>
-	<string name="doc_saved_error_with_reason">Beim Speichern des Dokuments ist ein Fehler aufgetreten: %1$s</string>
+	<string name="doc_save_error_with_reason">Beim Speichern des Dokuments ist ein Fehler aufgetreten: %1$s</string>
 	<string name="doc_save">Dokument speichern</string>
 	<string name="clear_filters">Filter löschen</string>
 	<string name="on">An</string>
@@ -20,7 +20,7 @@
 	<string name="doc_delete">Dokument löschen</string>
 	<string name="scan">Scannen</string>
 	<string name="off">Aus</string>
-	<string name="doc_deleted_error">Beim Löschen des Dokuments ist ein Fehler aufgetreten</string>
+	<string name="doc_delete_error">Beim Löschen des Dokuments ist ein Fehler aufgetreten</string>
 	<string name="app_tagline">Scannen Sie Ihre Dokumente mühelos mit KI</string>
 	<string name="date">Datum</string>
 	<string name="cancel">Abbrechen</string>
@@ -34,7 +34,7 @@
 	<string name="doc_saving_cancelled">Der Speichervorgang wurde abgebrochen</string>
     <string name="search_documents">Dokumente suchen</string>
 	<string name="sort_descending">Absteigend sortieren</string>
-	<string name="doc_saved_error">Beim Scannen ist ein Fehler aufgetreten</string>
+	<string name="doc_scan_error">Beim Scannen ist ein Fehler aufgetreten</string>
 	<string name="issue_opening_doc_viewer">Beim Öffnen des Dokumentenviewers ist ein Problem aufgetreten</string>
 	<string name="results">Ergebnisse</string>
 	<string name="doc_scan_new">Neues Dokument scannen</string>

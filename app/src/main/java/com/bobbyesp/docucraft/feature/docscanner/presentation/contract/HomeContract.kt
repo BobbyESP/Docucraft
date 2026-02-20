@@ -75,8 +75,6 @@ sealed interface HomeUiAction {
 
     data class ShowEditDialog(val id: String) : HomeUiAction
 
-    data class ShowDocumentInfo(val id: String) : HomeUiAction
-
     data class ShowOptionsSheet(val id: String) : HomeUiAction
 
     data object DismissDialogs : HomeUiAction
@@ -99,31 +97,7 @@ sealed interface HomeUiAction {
 
 // --- EFFECTS (One-off Events for UI) ---
 sealed interface HomeUiEffect {
-    // Generic
-    data class ShowError(val error: Throwable) : HomeUiEffect
-
-    data class ShowMessage(val message: String) : HomeUiEffect
-
     data class Navigate(val route: Route) : HomeUiEffect
 
-    // Operation Results
     data object LaunchScanner : HomeUiEffect
-
-    data object ScanSuccess : HomeUiEffect
-
-    data class ScanFailure(val error: Throwable) : HomeUiEffect
-
-    data class SaveSuccess(val uri: Uri) : HomeUiEffect
-
-    data class SaveFailure(val error: Throwable) : HomeUiEffect
-
-    data object DeleteSuccess : HomeUiEffect
-
-    data class DeleteFailure(val error: Throwable) : HomeUiEffect
-
-    data class OpenDocumentViewerFailure(val error: Throwable) : HomeUiEffect
-
-    data class ShareDocumentFailure(val error: Throwable) : HomeUiEffect
-
-    data class ShowDocumentInformationDialog(val id: String) : HomeUiEffect
 }

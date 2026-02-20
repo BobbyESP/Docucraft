@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import coil.imageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
+import com.bobbyesp.docucraft.core.data.local.repository.InAppNotificationServiceImpl
+import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.mlkit.domain.repository.DocumentScannerService
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
@@ -22,9 +24,9 @@ import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.rememberTopLevelBackStack
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
+import com.bobbyesp.docucraft.feature.docscanner.presentation.util.DocumentScannerLauncher
 import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.ACTION_SCAN_DOCUMENT
 import com.dokar.sonner.Toaster
-import com.dokar.sonner.rememberToasterState
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
 import org.koin.android.ext.android.inject
@@ -35,6 +37,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
     private val appPreferences: AppPreferences by inject()
     private val homeViewModel by inject<HomeViewModel>()
     private val documentScannerService by inject<DocumentScannerService>()
+    private val inAppNotificationsService by inject<InAppNotificationsService>()
 
     private lateinit var scannerLauncher: ActivityResultLauncher<IntentSenderRequest>
 
@@ -45,6 +48,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
         enableEdgeToEdge()
 
         FileKit.init(this)
+        val sonnerManager = inAppNotificationsService as InAppNotificationServiceImpl
 
         scannerLauncher =
             registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result
@@ -55,24 +59,25 @@ class MainActivity : ComponentActivity(), KoinComponent {
         handleIntent(intent)
 
         setContent {
-            val sonner = rememberToasterState()
-
             val windowSizeClass = calculateWindowSizeClass(this)
             val rootBackStack = rememberTopLevelBackStack(startRoute = Route.Home)
 
             AppLocalSettingsProvider(
                 windowWidthSize = windowSizeClass.widthSizeClass,
-                sonner = sonner,
+                sonner = sonnerManager.sonnerState,
                 appPreferences = appPreferences,
                 imageLoader = imageLoader,
             ) {
                 Navigator(rootBackStack = rootBackStack)
+
                 Toaster(
-                    state = sonner,
+                    state = sonnerManager.sonnerState,
                     richColors = true,
                     showCloseButton = true,
                     alignment = Alignment.TopCenter,
-                    darkTheme = LocalDarkTheme.current.isDarkTheme(),
+                    darkTheme =
+                        LocalDarkTheme.current
+                            .isDarkTheme(),
                 )
             }
         }
@@ -105,7 +110,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == ACTION_SCAN_DOCUMENT) {
-            documentScannerService.launchScanner(this, scannerLauncher)
+            DocumentScannerLauncher.launch(this, scannerLauncher)
             intent.action = null
         }
     }

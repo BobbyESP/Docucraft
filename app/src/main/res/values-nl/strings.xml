@@ -6,7 +6,7 @@
 	<string name="doc_scan_to_see_document_list">Scan uw documenten om ze hier in een lijst te zien.</string>
 	<string name="doc_share">Document delen</string>
 	<string name="exit_search">Zoeken afsluiten</string>
-    <string name="doc_saved_error">Er is een fout opgetreden tijdens het scannen</string>
+    <string name="doc_scan_error">Er is een fout opgetreden tijdens het scannen</string>
 	<string name="scan">Scannen</string>
 	<string name="description">Beschrijving</string>
 	<string name="doc_save">Document opslaan</string>
@@ -28,7 +28,7 @@
 	<string name="file_icon">Bestandspictogram</string>
 	<string name="doc_saving_cancelled">Het opslaan is geannuleerd</string>
 	<string name="no_description">Geen beschrijving</string>
-	<string name="doc_deleted_error">Er is een fout opgetreden bij het verwijderen van het document</string>
+	<string name="doc_delete_error">Er is een fout opgetreden bij het verwijderen van het document</string>
 	<string name="no_scanned_documents">Geen gescande documenten</string>
 	<string name="date">Datum</string>
 	<string name="sort_ascending">Oplopend sorteren</string>
@@ -43,7 +43,7 @@
 	<string name="doc_delete_warning_message">U staat op het punt om %1$s te verwijderen van uw apparaat en de app-database.\n\nHet heeft %2$s pagina\'s en is %3$s groot.\n\nWeet u zeker dat u het wilt verwijderen?</string>
 	<string name="file_size">Bestandsgrootte</string>
 	<string name="edit_fields">Velden bewerken</string>
-	<string name="doc_saved_error_with_reason">Er is een fout opgetreden bij het opslaan van het document: %1$s</string>
+	<string name="doc_save_error_with_reason">Er is een fout opgetreden bij het opslaan van het document: %1$s</string>
 	<string name="unknown_error">Onbekende fout</string>
 	<string name="doc_name_or_description">Documentnaam of beschrijving</string>
 	<string name="page_count">Aantal pagina\'s</string>

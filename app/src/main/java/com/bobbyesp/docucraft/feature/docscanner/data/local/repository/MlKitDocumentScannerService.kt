@@ -1,16 +1,10 @@
 package com.bobbyesp.docucraft.feature.docscanner.data.local.repository
 
-import android.app.Activity
-import android.util.Log
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.IntentSenderRequest
 import com.bobbyesp.docucraft.mlkit.domain.error.OperationFailure
 import com.bobbyesp.docucraft.mlkit.domain.model.Document
 import com.bobbyesp.docucraft.mlkit.domain.datsource.MlKitDataSource
 import com.bobbyesp.docucraft.mlkit.domain.repository.DocumentScannerService
-import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
-import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -41,38 +35,5 @@ class MlKitDocumentScannerService(private val dataSource: MlKitDataSource) :
                 Result.failure(e)
             }
         }
-    }
-
-    override fun launchScanner(
-        activity: Activity,
-        launcher: ActivityResultLauncher<IntentSenderRequest>,
-    ) {
-        Log.i("MlKitDocumentScannerRepo", "Launching document scanner")
-        val options =
-            GmsDocumentScannerOptions.Builder()
-                .setGalleryImportAllowed(true)
-                .setPageLimit(100)
-                .setResultFormats(
-                    GmsDocumentScannerOptions.RESULT_FORMAT_JPEG,
-                    GmsDocumentScannerOptions.RESULT_FORMAT_PDF,
-                )
-                .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
-                .build()
-
-        val scanner = GmsDocumentScanning.getClient(options)
-
-        scanner
-            .getStartScanIntent(activity)
-            .addOnSuccessListener { intentSender ->
-                launcher.launch(IntentSenderRequest.Builder(intentSender).build())
-            }
-            .addOnFailureListener {
-                Log.e(
-                    "MlKitDocumentScannerRepo",
-                    "Error launching document scanner: ${it.message}",
-                    it,
-                )
-                // Handle failure (maybe log it)
-            }
     }
 }

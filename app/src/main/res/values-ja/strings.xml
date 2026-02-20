@@ -5,7 +5,7 @@
 	<string name="follow_system">システムに従う</string>
 	<string name="doc_scan_to_see_document_list">ドキュメントをスキャンすると、ここに一覧表示されます。</string>
 	<string name="file_icon">ファイルアイコン</string>
-	<string name="doc_saved_error">スキャン中にエラーが発生しました</string>
+	<string name="doc_scan_error">スキャン中にエラーが発生しました</string>
 	<string name="doc_save">ドキュメントを保存</string>
 	<string name="unknown_error">不明なエラー</string>
 	<string name="off">オフ</string>
@@ -26,7 +26,7 @@
 	<string name="doc_saved_successfully">ドキュメントが正常に保存されました</string>
 	<string name="retry">再試行</string>
 	<string name="doc_saved_successfully_to">ドキュメントは %1$s に正常に保存されました</string>
-	<string name="doc_deleted_error">ドキュメントの削除中にエラーが発生しました</string>
+	<string name="doc_delete_error">ドキュメントの削除中にエラーが発生しました</string>
 	<string name="name">名前</string>
 	<string name="cancel">キャンセル</string>
 	<string name="edit_fields">フィールドを編集</string>
@@ -50,7 +50,7 @@
 	<string name="filter">フィルター</string>
 	<string name="app_tagline">AIで簡単にドキュメントをスキャン</string>
 	<string name="issue_opening_doc_viewer">ドキュメントビューアを開こうとして問題が発生しました</string>
-	<string name="doc_saved_error_with_reason">ドキュメントの保存中にエラーが発生しました: %1$s</string>
+	<string name="doc_save_error_with_reason">ドキュメントの保存中にエラーが発生しました: %1$s</string>
 	<string name="confirm">確認</string>
 	<string name="doc_share">ドキュメントを共有</string>
 	<string name="home">ホーム</string>

@@ -1,8 +1,5 @@
 package com.bobbyesp.docucraft.mlkit.domain.repository
 
-import android.app.Activity
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.IntentSenderRequest
 import com.bobbyesp.docucraft.mlkit.domain.model.Document
 
 /**
@@ -18,12 +15,4 @@ interface DocumentScannerService {
      * @return A Resource containing the ScannedDocument if successful.
      */
     suspend fun scanDocument(input: Any): Result<Document>
-
-    /**
-     * Launches the scanner UI.
-     *
-     * @param activity The Activity instance required to start the scan intent.
-     * @param launcher The ActivityResultLauncher to handle the result.
-     */
-    fun launchScanner(activity: Activity, launcher: ActivityResultLauncher<IntentSenderRequest>)
 }

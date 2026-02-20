@@ -7,6 +7,9 @@ import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.data.local.preferences.datastore.dataStore
+import com.bobbyesp.docucraft.core.data.local.repository.InAppNotificationServiceImpl
+import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
+import com.bobbyesp.docucraft.core.domain.usecase.ShowSimpleNotificationUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -40,4 +43,12 @@ val commonModule = module {
     single<CoroutineScope>(qualifier = named("AppMainSupervisedScope")) {
         CoroutineScope(SupervisorJob())
     }
+}
+
+val notificationsServiceModule = module {
+    single<InAppNotificationsService> {
+        InAppNotificationServiceImpl()
+    }
+
+    factory { ShowSimpleNotificationUseCase(context = androidContext(), inAppNotificationsService = get()) }
 }

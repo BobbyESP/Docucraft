@@ -3,14 +3,14 @@
 
 	<string name="date">Data</string>
 	<string name="doc_name_or_description">Nome ou descrição do documento</string>
-	<string name="doc_saved_error_with_reason">Ocorreu um erro ao salvar o documento: %1$s</string>
+	<string name="doc_save_error_with_reason">Ocorreu um erro ao salvar o documento: %1$s</string>
 	<string name="doc_share">Compartilhar documento</string>
 	<string name="no_description">Sem descrição</string>
 	<string name="on">Ligado</string>
 	<string name="confirm">Confirmar</string>
 	<string name="clear_filters">Limpar filtros</string>
 	<string name="search">Pesquisar</string>
-	<string name="doc_deleted_error">Ocorreu um erro ao excluir o documento</string>
+	<string name="doc_delete_error">Ocorreu um erro ao excluir o documento</string>
 	<string name="no_scanned_documents">Nenhum documento escaneado</string>
 	<string name="search_documents">Pesquisar documentos</string>
 	<string name="filter">Filtrar</string>
@@ -54,7 +54,7 @@
 	<string name="sort_ascending">Ordenar crescente</string>
 	<string name="file_size">Tamanho do arquivo</string>
 	<string name="doc_save">Salvar documento</string>
-	<string name="doc_saved_error">Ocorreu um erro durante a digitalização</string>
+	<string name="doc_scan_error">Ocorreu um erro durante a digitalização</string>
 	<string name="follow_system">Seguir sistema</string>
 	<string name="clear_search">Limpar pesquisa</string>
 </resources>

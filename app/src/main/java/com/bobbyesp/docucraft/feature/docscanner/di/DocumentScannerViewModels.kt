@@ -1,5 +1,6 @@
 package com.bobbyesp.docucraft.feature.docscanner.di
 
+import com.bobbyesp.docucraft.core.domain.usecase.ShowSimpleNotificationUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.*
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import org.koin.core.module.dsl.viewModel
@@ -17,6 +18,7 @@ val documentScannerViewModels = module {
             openDocumentInViewerUseCase = get<OpenDocumentInViewerUseCase>(),
             shareDocumentUseCase = get<ShareDocumentUseCase>(),
             scanDocumentUseCase = get<ScanDocumentUseCase>(),
+            showSimpleNotificationUseCase = get<ShowSimpleNotificationUseCase>(),
         )
     }
 }

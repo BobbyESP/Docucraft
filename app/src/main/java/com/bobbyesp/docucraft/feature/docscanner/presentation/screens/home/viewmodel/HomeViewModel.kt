@@ -4,15 +4,26 @@ import android.net.Uri
 import android.os.Environment
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
+import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
+import com.bobbyesp.docucraft.core.domain.usecase.ShowSimpleNotificationUseCase
 import com.bobbyesp.docucraft.core.presentation.common.Route
-import com.bobbyesp.docucraft.core.util.state.ScreenState
 import com.bobbyesp.docucraft.core.util.state.ResourceState
+import com.bobbyesp.docucraft.core.util.state.ScreenState
 import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.*
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentByIdUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ScanDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
@@ -50,6 +61,7 @@ class HomeViewModel(
     private val openDocumentInViewerUseCase: OpenDocumentInViewerUseCase,
     private val shareDocumentUseCase: ShareDocumentUseCase,
     private val scanDocumentUseCase: ScanDocumentUseCase,
+    private val showSimpleNotificationUseCase: ShowSimpleNotificationUseCase,
 ) : CoroutineBasedViewModel() {
 
     // State management
@@ -75,7 +87,7 @@ class HomeViewModel(
                     _uiState.updateValue {
                         it.copy(fetchState = ScreenState.Error(error.message ?: "Unknown error"))
                     }
-                    sendEvent(HomeUiEffect.ShowError(error))
+                    showSimpleNotificationUseCase(error)
                 }
                 .collect { (filteredList, isRepositoryEmpty) ->
                     _uiState.updateValue {
@@ -155,7 +167,7 @@ class HomeViewModel(
     val uiEffect = _uiEffect.receiveAsFlow()
 
     override fun onCoroutineException(throwable: Throwable) {
-        sendEvent(HomeUiEffect.ShowError(throwable))
+        showSimpleNotificationUseCase(throwable)
     }
 
     private fun sendEvent(effect: HomeUiEffect) {
@@ -209,10 +221,6 @@ class HomeViewModel(
                         it.copy(documentForModification = TemporalState.Present(scannedDocument))
                     }
                 }
-            }
-
-            is HomeUiAction.ShowDocumentInfo -> {
-                sendEvent(HomeUiEffect.ShowDocumentInformationDialog(action.id))
             }
 
             is HomeUiAction.ShowOptionsSheet -> {
@@ -285,9 +293,16 @@ class HomeViewModel(
                             try {
                                 val filename = "Scan_${System.currentTimeMillis()}"
                                 saveScannedDocumentUseCase(it, filename)
-                                sendEvent(HomeUiEffect.ScanSuccess)
+                                showSimpleNotificationUseCase(
+                                    R.string.doc_saved_successfully,
+                                    type = NotificationType.Success
+                                )
                             } catch (e: Exception) {
-                                sendEvent(HomeUiEffect.ScanFailure(e))
+                                showSimpleNotificationUseCase(
+                                    R.string.doc_scan_error,
+                                    e.message ?: "Unknown error",
+                                    type = NotificationType.Error
+                                )
                             }
                         }
                     }
@@ -296,9 +311,19 @@ class HomeViewModel(
                         _uiState.updateValue {
                             it.copy(isScanning = false, scanUserMessage = resource.message)
                         }
-                        sendEvent(
-                            HomeUiEffect.ScanFailure(Exception(resource.message))
-                        )
+
+                        if (resource.message != null) {
+                            showSimpleNotificationUseCase(
+                                R.string.doc_scan_error,
+                                resource.message,
+                                type = NotificationType.Error
+                            )
+                        } else {
+                            showSimpleNotificationUseCase(
+                                R.string.unknown_error,
+                                type = NotificationType.Error
+                            )
+                        }
                     }
                 }
             }
@@ -309,13 +334,15 @@ class HomeViewModel(
         executeAsync(
             onSuccess = {
                 logInfo("Document metadata updated successfully")
-                sendEvent(
-                    HomeUiEffect.ScanSuccess
-                ) // Reusing ScanSuccess as generic success or create new one
+                showSimpleNotificationUseCase(
+                    resId = R.string.doc_updated_successfully,
+                    type = NotificationType.Success
+
+                )
             },
             onError = { error ->
                 logError("Failed to modify Document: ${error.message}", error)
-                sendEvent(HomeUiEffect.ShowError(error))
+                showSimpleNotificationUseCase(error)
             },
         ) {
             val scannedDocument = getDocumentByIdUseCase(documentId)
@@ -332,7 +359,10 @@ class HomeViewModel(
         try {
             openDocumentInViewerUseCase(documentUri)
         } catch (e: Exception) {
-            sendEvent(HomeUiEffect.OpenDocumentViewerFailure(error = e))
+            showSimpleNotificationUseCase(
+                resId = R.string.issue_opening_doc_viewer,
+                type = NotificationType.Error
+            )
         }
     }
 
@@ -340,17 +370,26 @@ class HomeViewModel(
         try {
             shareDocumentUseCase(documentUri)
         } catch (e: Exception) {
-            sendEvent(HomeUiEffect.ShareDocumentFailure(error = e))
+            showSimpleNotificationUseCase(
+                resId = R.string.issue_sharing_doc,
+                type = NotificationType.Error
+            )
         }
     }
 
     private suspend fun onDeleteDocument(documentUri: Uri) {
         try {
             deleteDocumentUseCase(documentUri)
-            sendEvent(HomeUiEffect.DeleteSuccess)
+            showSimpleNotificationUseCase(
+                resId = R.string.doc_deleted_successfully,
+                type = NotificationType.Success
+            )
         } catch (e: Exception) {
             logError("Failed to delete Document: ${e.message}", e)
-            sendEvent(HomeUiEffect.DeleteFailure(error = e))
+            showSimpleNotificationUseCase(
+                resId = R.string.doc_delete_error,
+                type = NotificationType.Error
+            )
         }
     }
 
@@ -359,15 +398,20 @@ class HomeViewModel(
             onSuccess = { uri: Uri ->
                 if (uri != Uri.EMPTY) {
                     logInfo("Document saved successfully to: $uri")
-                    sendEvent(HomeUiEffect.SaveSuccess(uri))
-                } else {
-                    logError("Document save failed")
-                    sendEvent(HomeUiEffect.SaveFailure(error = Exception("Failed to save Document")))
+                    showSimpleNotificationUseCase(
+                        R.string.doc_saved_successfully_to,
+                        uri.path.toString(),
+                        NotificationType.Success
+                    )
                 }
             },
             onError = { error ->
-                logError("Failed to save Document: ${error.message}", error)
-                sendEvent(HomeUiEffect.SaveFailure(error = error))
+                logError("Failed to save document: ${error.message}", error)
+                showSimpleNotificationUseCase(
+                    R.string.doc_save_error_with_reason,
+                    error.message ?: "Unknown error",
+                    type = NotificationType.Error
+                )
             },
         ) {
             val androidDocumentsDirectory =

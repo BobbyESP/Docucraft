@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
-	<string name="doc_deleted_error">حدث خطأ أثناء حذف المستند</string>
+	<string name="doc_delete_error">حدث خطأ أثناء حذف المستند</string>
 	<string name="doc_saving_cancelled">تم إلغاء عملية الحفظ</string>
 	<string name="issue_opening_doc_viewer">حدثت مشكلة أثناء محاولة فتح عارض المستندات</string>
 	<string name="name">الاسم</string>
@@ -10,12 +10,12 @@
 	<string name="scan">مسح ضوئي</string>
 	<string name="sort_descending">فرز تنازلي</string>
 	<string name="app_tagline">امسح مستنداتك ضوئياً بسهولة باستخدام الذكاء الاصطناعي</string>
-	<string name="doc_saved_error">حدث خطأ أثناء المسح الضوئي</string>
+	<string name="doc_scan_error">حدث خطأ أثناء المسح الضوئي</string>
 	<string name="doc_modify_details_description">قم بتحديث عنوان المستند والوصف أدناه ليعكسا محتواه وتفاصيله.</string>
 	<string name="error_loading_docs">خطأ في تحميل المستندات</string>
 	<string name="size">الحجم</string>
 	<string name="scan_cancelled">تم إلغاء عملية المسح الضوئي</string>
-	<string name="doc_saved_error_with_reason">حدث خطأ أثناء حفظ المستند: %1$s</string>
+	<string name="doc_save_error_with_reason">حدث خطأ أثناء حفظ المستند: %1$s</string>
 	<string name="delete">حذف</string>
 	<string name="exit_search">الخروج من البحث</string>
 	<string name="doc_name_or_description">اسم المستند أو الوصف</string>

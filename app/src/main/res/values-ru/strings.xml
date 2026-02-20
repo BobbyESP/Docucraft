@@ -2,7 +2,7 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
 	<string name="issue_sharing_doc">Произошла ошибка при попытке поделиться документом</string>
-	<string name="doc_saved_error">Произошла ошибка во время сканирования</string>
+	<string name="doc_scan_error">Произошла ошибка во время сканирования</string>
 	<string name="doc_saving_cancelled">Процесс сохранения был отменен</string>
 	<string name="no_description">Нет описания</string>
 	<string name="clear_search">Очистить поиск</string>
@@ -31,7 +31,7 @@
 	<string name="doc_saved_successfully">Документ успешно сохранен</string>
 	<string name="search_documents">Поиск документов</string>
 	<string name="cancel">Отмена</string>
-	<string name="doc_deleted_error">Произошла ошибка при удалении документа</string>
+	<string name="doc_delete_error">Произошла ошибка при удалении документа</string>
 	<string name="date">Дата</string>
 	<string name="app_tagline">Легко сканируйте документы с помощью ИИ</string>
 	<string name="unknown_error">Неизвестная ошибка</string>
@@ -46,7 +46,7 @@
 	<string name="doc_modify_details_description">Обновите название и описание документа ниже, чтобы отразить его содержание и детали.</string>
 	<string name="page_count">Количество страниц</string>
 	<string name="size">Размер</string>
-	<string name="doc_saved_error_with_reason">Произошла ошибка при сохранении документа: %1$s</string>
+	<string name="doc_save_error_with_reason">Произошла ошибка при сохранении документа: %1$s</string>
 	<string name="filter">Фильтр</string>
 	<string name="doc_saved_successfully_to">Документ успешно сохранен в %1$s</string>
 	<string name="doc_delete">Удалить документ</string>

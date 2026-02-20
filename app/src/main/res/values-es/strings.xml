@@ -11,7 +11,7 @@
     <string name="scan">Escanear</string>
     <string name="doc_scan_new">Escanear nuevo documento</string>
     <string name="doc_saved_successfully">El documento se ha guardado correctamente</string>
-    <string name="doc_saved_error">Ha ocurrido un error durante el escaneo</string>
+    <string name="doc_scan_error">Ha ocurrido un error durante el escaneo</string>
     <string name="doc_open_in_viewer">Abrir documento en el visor</string>
     <string name="issue_opening_doc_viewer">Ocurrió un problema al intentar abrir el visor de documentos</string>
     <string name="doc_share">Compartir documento</string>
@@ -25,10 +25,10 @@
     <string name="doc_delete">Eliminar documento</string>
     <string name="delete">Eliminar</string>
     <string name="unknown_error">Error desconocido</string>
-    <string name="doc_saved_error_with_reason">Ocurrió un error al guardar el documento: %1$s</string>
+    <string name="doc_save_error_with_reason">Ocurrió un error al guardar el documento: %1$s</string>
     <string name="doc_saved_successfully_to">Documento guardado correctamente en %1$s</string>
     <string name="doc_deleted_successfully">El documento se ha eliminado correctamente</string>
-    <string name="doc_deleted_error">Ocurrió un error al eliminar el documento</string>
+    <string name="doc_delete_error">Ocurrió un error al eliminar el documento</string>
     <string name="doc_delete_warning_message">Estás a punto de eliminar %1$s de tu dispositivo y base de datos de la aplicación.\n\nTiene %2$s páginas y un tamaño de %3$s.\n\n¿Estás seguro de que quieres eliminarlo?</string>
     <string name="cancel">Cancelar</string>
     <string name="doc_saving_cancelled">El proceso de guardado ha sido cancelado</string>

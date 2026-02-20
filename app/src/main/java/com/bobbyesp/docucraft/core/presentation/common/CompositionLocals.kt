@@ -1,11 +1,8 @@
 package com.bobbyesp.docucraft.core.presentation.common
 
-import androidx.annotation.FloatRange
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -52,39 +49,39 @@ val LocalSonner = compositionLocalOf<ToasterState> { error("No sonner toaster st
 @Composable
 fun AppLocalSettingsProvider(
     windowWidthSize: WindowWidthSizeClass,
-    sonner: ToasterState = rememberToasterState(),
     appPreferences: AppPreferencesController,
     imageLoader: ImageLoader,
-    content: @Composable () -> Unit,
+    sonner: ToasterState = rememberToasterState(),
+    content: @Composable () -> Unit
 ) {
     val seedColor by
-        appPreferences
-            .getSettingFlow(AppSettings.Theming.THEME_COLOR, null)
-            .collectAsStateWithLifecycle(
-                initialValue = AppSettings.Theming.THEME_COLOR.defaultValue
-            )
+    appPreferences
+        .getSettingFlow(AppSettings.Theming.THEME_COLOR, null)
+        .collectAsStateWithLifecycle(
+            initialValue = AppSettings.Theming.THEME_COLOR.defaultValue
+        )
 
     val useDynamicColoring by
-        appPreferences
-            .getSettingFlow(AppSettings.Theming.USE_DYNAMIC_COLORING, null)
-            .collectAsStateWithLifecycle(
-                initialValue = AppSettings.Theming.USE_DYNAMIC_COLORING.defaultValue
-            )
+    appPreferences
+        .getSettingFlow(AppSettings.Theming.USE_DYNAMIC_COLORING, null)
+        .collectAsStateWithLifecycle(
+            initialValue = AppSettings.Theming.USE_DYNAMIC_COLORING.defaultValue
+        )
 
     val paletteStyleName by
-        appPreferences
-            .getSettingFlow(AppSettings.Theming.PALETTE_STYLE, null)
-            .collectAsStateWithLifecycle(
-                initialValue = AppSettings.Theming.PALETTE_STYLE.defaultValue
-            )
+    appPreferences
+        .getSettingFlow(AppSettings.Theming.PALETTE_STYLE, null)
+        .collectAsStateWithLifecycle(
+            initialValue = AppSettings.Theming.PALETTE_STYLE.defaultValue
+        )
     val paletteStyle = com.materialkolor.PaletteStyle.valueOf(paletteStyleName)
 
     val darkThemeValueName by
-        appPreferences
-            .getSettingFlow(AppSettings.Theming.DARK_THEME_VALUE, null)
-            .collectAsStateWithLifecycle(
-                initialValue = AppSettings.Theming.DARK_THEME_VALUE.defaultValue
-            )
+    appPreferences
+        .getSettingFlow(AppSettings.Theming.DARK_THEME_VALUE, null)
+        .collectAsStateWithLifecycle(
+            initialValue = AppSettings.Theming.DARK_THEME_VALUE.defaultValue
+        )
 
     val darkThemeValue =
         try {
@@ -98,11 +95,11 @@ fun AppLocalSettingsProvider(
         }
 
     val isHighContrast by
-        appPreferences
-            .getSettingFlow(AppSettings.Theming.HIGH_CONTRAST, null)
-            .collectAsStateWithLifecycle(
-                initialValue = AppSettings.Theming.HIGH_CONTRAST.defaultValue
-            )
+    appPreferences
+        .getSettingFlow(AppSettings.Theming.HIGH_CONTRAST, null)
+        .collectAsStateWithLifecycle(
+            initialValue = AppSettings.Theming.HIGH_CONTRAST.defaultValue
+        )
 
     val darkTheme =
         DarkThemePreference(
@@ -120,30 +117,20 @@ fun AppLocalSettingsProvider(
             if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         } else {
             rememberDynamicMaterialThemeState(
-                    seedColor = Color(seedColor),
-                    isDark = isDark,
-                    style = paletteStyle,
-                    isAmoled = darkTheme.isHighContrastModeEnabled,
-                )
+                seedColor = Color(seedColor),
+                isDark = isDark,
+                style = paletteStyle,
+                isAmoled = darkTheme.isHighContrastModeEnabled,
+            )
                 .colorScheme
-        }
-
-    @FloatRange(from = 0.0, to = 1.0)
-    val contentWidthRatio: Float =
-        when (windowWidthSize) {
-            WindowWidthSizeClass.Compact -> 1f
-            WindowWidthSizeClass.Medium -> 0.75f
-            WindowWidthSizeClass.Expanded -> 0.5f
-            else -> 0.66f
         }
 
     CompositionLocalProvider(
         LocalDarkTheme provides darkTheme, // Tells the app what dark theme to use
-        // TODO: Modify to handle multiple colors (like based on images)
         LocalSeedColor provides
-            seedColor, // Tells the app what color to use as seed for the palette
+                seedColor, // Tells the app what color to use as seed for the palette
         LocalDynamicColoringSwitch provides
-            useDynamicColoring, // Tells the app if it should use dynamic colors or not
+                useDynamicColoring, // Tells the app if it should use dynamic colors or not
         // (Android
         // 12+ feature)
         LocalAppPreferencesController provides appPreferences,
@@ -154,15 +141,12 @@ fun AppLocalSettingsProvider(
     ) {
         DocucraftTheme(colorScheme = colorScheme) {
             Box(
-                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center,
             ) {
-                Box(
-                    modifier = Modifier.fillMaxHeight().fillMaxWidth(contentWidthRatio),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    content()
-                }
+                content()
             }
         }
     }

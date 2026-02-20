@@ -11,7 +11,7 @@
     <string name="scan">Scan</string>
     <string name="doc_scan_new">Scan new document</string>
     <string name="doc_saved_successfully">The document has been saved successfully</string>
-    <string name="doc_saved_error">An error has occurred during the scan</string>
+    <string name="doc_scan_error">An error has occurred during the scan</string>
     <string name="doc_open_in_viewer">Open document in viewer</string>
     <string name="issue_opening_doc_viewer">An issue occurred while trying to open the document viewer</string>
     <string name="doc_share">Share document</string>
@@ -25,10 +25,10 @@
     <string name="doc_delete">Delete document</string>
     <string name="delete">Delete</string>
     <string name="unknown_error">Unknown error</string>
-    <string name="doc_saved_error_with_reason">An error occurred while saving the document: %1$s</string>
+    <string name="doc_save_error_with_reason">An error occurred while saving the document: %1$s</string>
     <string name="doc_saved_successfully_to">Document saved successfully to %1$s</string>
     <string name="doc_deleted_successfully">The document has been deleted successfully</string>
-    <string name="doc_deleted_error">An error occurred while deleting the document</string>
+    <string name="doc_delete_error">An error occurred while deleting the document</string>
     <string name="doc_delete_warning_message">You are about to delete %1$s from your device and app database.\n\nIt has %2$s pages and is %3$s in size.\n\nAre you sure you want to delete it?</string>
     <string name="cancel">Cancel</string>
     <string name="doc_saving_cancelled">The saving process has been cancelled</string>
@@ -55,4 +55,5 @@
     <string name="exit_search">Exit search</string>
     <string name="doc_name_or_description">Document name or description</string>
     <string name="results">Results</string>
+    <string name="doc_updated_successfully">Document successfully updated</string>
 </resources>

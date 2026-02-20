@@ -47,13 +47,13 @@
 	<string name="name">Nome</string>
 	<string name="doc_share">Condividi documento</string>
 	<string name="search_documents">Cerca documenti</string>
-	<string name="doc_deleted_error">Si è verificato un errore durante l\'eliminazione del documento</string>
+	<string name="doc_delete_error">Si è verificato un errore durante l\'eliminazione del documento</string>
 	<string name="doc_open_in_viewer">Apri documento nel visualizzatore</string>
 	<string name="off">Spento</string>
 	<string name="retry">Riprova</string>
 	<string name="error_loading_docs">Errore durante il caricamento dei documenti</string>
-	<string name="doc_saved_error">Si è verificato un errore durante la scansione</string>
+	<string name="doc_scan_error">Si è verificato un errore durante la scansione</string>
 	<string name="file_size">Dimensione file</string>
 	<string name="on">Attivo</string>
-	<string name="doc_saved_error_with_reason">Si è verificato un errore durante il salvataggio del documento: %1$s</string>
+	<string name="doc_save_error_with_reason">Si è verificato un errore durante il salvataggio del documento: %1$s</string>
 </resources>

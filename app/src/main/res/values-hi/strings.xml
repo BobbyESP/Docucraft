@@ -22,7 +22,7 @@
 	<string name="more_options">अधिक विकल्प</string>
 	<string name="scan">स्कैन करें</string>
 	<string name="doc_open_in_viewer">दर्शक में दस्तावेज़ खोलें</string>
-	<string name="doc_saved_error">स्कैन के दौरान एक त्रुटि हुई है</string>
+	<string name="doc_scan_error">स्कैन के दौरान एक त्रुटि हुई है</string>
 	<string name="no_scanned_documents">कोई स्कैन किए गए दस्तावेज़ नहीं</string>
 	<string name="description">विवरण</string>
 	<string name="error_loading_docs">दस्तावेज़ लोड करने में त्रुटि</string>
@@ -34,7 +34,7 @@
 	<string name="app_tagline">एआई के साथ आसानी से अपने दस्तावेजों को स्कैन करें</string>
 	<string name="retry">पुनः प्रयास करें</string>
 	<string name="sort_descending">अवरोही क्रम में क्रमबद्ध करें</string>
-	<string name="doc_deleted_error">दस्तावेज़ को हटाने में एक त्रुटि हुई</string>
+	<string name="doc_delete_error">दस्तावेज़ को हटाने में एक त्रुटि हुई</string>
 	<string name="save">सहेजें</string>
 	<string name="page_count">पृष्ठों की संख्या</string>
 	<string name="size">आकार</string>
@@ -54,6 +54,6 @@
 	<string name="unknown_error">अज्ञात त्रुटि</string>
 	<string name="results">परिणाम</string>
 	<string name="clear_filters">फ़िल्टर साफ़ करें</string>
-	<string name="doc_saved_error_with_reason">दस्तावेज़ को सहेजने में त्रुटि हुई: %1$s</string>
+	<string name="doc_save_error_with_reason">दस्तावेज़ को सहेजने में त्रुटि हुई: %1$s</string>
 	<string name="search">खोजें</string>
 </resources>
