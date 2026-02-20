@@ -2,6 +2,7 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -19,6 +20,7 @@ fun PdfViewerScreen(source: PdfSource, modifier: Modifier = Modifier) {
         PdfViewer(
             modifier = Modifier.padding(paddingValues),
             pdfState = pdfState,
+            containerColor = MaterialTheme.colorScheme.background,
         )
     }
 }
