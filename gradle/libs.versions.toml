@@ -28,7 +28,6 @@ materialKolor = "5.0.0-alpha06"
 
 #PDF Viewer
 pdfviewer = "1.1.5-alpha01"
-androidx-pdf = "1.0.0-alpha13"
 
 #Coroutines
 kotlinx-coroutines = "1.10.2"
@@ -55,7 +54,6 @@ googleServices = "4.4.4"
 firebaseBom = "34.9.0"
 
 #Others
-qrcodeKotlinAndroid = "4.5.0"
 sonner = "0.3.9"
 
 # File management
@@ -74,7 +72,6 @@ mockk = "1.14.9"
 #Others
 androidx-baselineprofile = "1.4.1"
 profileinstaller = "1.4.1"
-scrollbar = "2.2.0"
 ktfmt = "0.25.0"
 
 [libraries]
@@ -113,9 +110,6 @@ androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecy
 pdfviewer = { group = "com.github.bhuvaneshw.pdfviewer", name = "compose", version.ref = "pdfviewer"}
 pdfviewer-ui = { group = "com.github.bhuvaneshw.pdfviewer", name = "compose-ui", version.ref = "pdfviewer"}
 
-## Google's
-androidx-pdf = { group = "androidx.pdf", name = "pdf-viewer-fragment", version.ref = "androidx-pdf" }
-
 #Glance
 glance = { group = "androidx.glance", name = "glance", version.ref = "glance" }
 glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }
@@ -127,7 +121,6 @@ kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotli
 #Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
-kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 
 #Accompanist
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }

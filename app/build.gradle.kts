@@ -118,7 +118,6 @@ dependencies {
     // PDF Viewer
     implementation(libs.pdfviewer)
     implementation(libs.pdfviewer.ui)
-    implementation(libs.androidx.pdf)
 
 
     // Dependency injection
