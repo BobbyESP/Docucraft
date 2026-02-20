@@ -1,7 +1,7 @@
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens
 
-import com.bobbyesp.docucraft.core.util.state.ScreenState
+import android.net.Uri
 
 data class PdfViewerUiState(
-    val state: ScreenState<Unit> = ScreenState.Loading()
+    val currentUri: Uri = Uri.EMPTY,
 )

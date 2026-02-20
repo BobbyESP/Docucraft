@@ -104,6 +104,7 @@ dependencies {
 
     // Core UI libraries
     api(platform(libs.compose.bom))
+    implementation(libs.androidx.fragment.compose)
 
     // Accompanist libraries
     implementation(libs.bundles.accompanist)
@@ -116,6 +117,9 @@ dependencies {
 
     // PDF Viewer
     implementation(libs.pdfviewer)
+    implementation(libs.pdfviewer.ui)
+    implementation(libs.androidx.pdf)
+
 
     // Dependency injection
     implementation(libs.bundles.koin)
