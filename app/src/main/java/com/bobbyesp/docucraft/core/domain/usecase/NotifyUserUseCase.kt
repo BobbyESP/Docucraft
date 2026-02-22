@@ -1,20 +1,19 @@
 package com.bobbyesp.docucraft.core.domain.usecase
 
-import android.content.Context
 import androidx.annotation.StringRes
-import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 
-class ShowSimpleNotificationUseCase(
-    private val context: Context,
+class NotifyUserUseCase(
+    private val stringProvider: StringProvider,
     private val inAppNotificationsService: InAppNotificationsService
 ) {
     operator fun invoke(@StringRes resId: Int, vararg formatArgs: Any, type: NotificationType = NotificationType.Normal) {
         inAppNotificationsService.show(
             InAppNotification(
-                message = context.getString(resId, *formatArgs),
+                message = stringProvider.get(resId, *formatArgs),
                 type = type,
             )
         )
@@ -23,7 +22,7 @@ class ShowSimpleNotificationUseCase(
     operator fun invoke(throwable: Throwable) {
         inAppNotificationsService.show(
             InAppNotification(
-                message = throwable.message ?: context.getString(R.string.unknown_error),
+                message = stringProvider.getError(throwable),
                 type = NotificationType.Error,
             )
         )

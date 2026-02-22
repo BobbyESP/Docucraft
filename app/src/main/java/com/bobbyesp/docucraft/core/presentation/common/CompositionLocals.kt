@@ -21,8 +21,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferencesController
 import com.bobbyesp.docucraft.core.data.local.preferences.AppSettings
-import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference
-import com.bobbyesp.docucraft.core.data.local.preferences.theme.DarkThemePreference.DarkThemeValue
+import com.bobbyesp.docucraft.core.presentation.preferences.theme.DarkThemePreference
+import com.bobbyesp.docucraft.core.presentation.preferences.theme.DarkThemePreference.DarkThemeValue
 import com.bobbyesp.docucraft.core.presentation.theme.DEFAULT_SEED_COLOR
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.isDynamicColoringSupported

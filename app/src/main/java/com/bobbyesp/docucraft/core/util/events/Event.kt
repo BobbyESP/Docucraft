@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.core.util.state
+package com.bobbyesp.docucraft.core.util.events
 
 /**
  * An [Event] is a wrapper class that provides a way to handle events once.

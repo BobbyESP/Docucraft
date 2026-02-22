@@ -122,7 +122,6 @@ fun HomeScreen(
     val filterOptions = uiState.filterOptions
 
     val listState = rememberLazyListState()
-    val isFabExpanded by remember { derivedStateOf { !listState.isScrollInProgress } }
 
     val focusManager = LocalFocusManager.current
     val usableMotionScheme = motionScheme
@@ -200,7 +199,7 @@ fun HomeScreen(
 
                         ExtendedFloatingActionButton(
                             text = { Text(text = stringResource(id = R.string.scan)) },
-                            expanded = isFabExpanded && !isSearchFocused,
+                            expanded = !isSearchFocused,
                             icon = {
                                 Icon(
                                     imageVector = Icons.Rounded.DocumentScanner,

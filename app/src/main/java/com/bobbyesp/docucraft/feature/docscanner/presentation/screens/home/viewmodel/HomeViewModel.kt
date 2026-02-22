@@ -6,7 +6,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
-import com.bobbyesp.docucraft.core.domain.usecase.ShowSimpleNotificationUseCase
+import com.bobbyesp.docucraft.core.domain.usecase.NotifyUserUseCase
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.util.state.ResourceState
 import com.bobbyesp.docucraft.core.util.state.ScreenState
@@ -61,7 +61,7 @@ class HomeViewModel(
     private val openDocumentInViewerUseCase: OpenDocumentInViewerUseCase,
     private val shareDocumentUseCase: ShareDocumentUseCase,
     private val scanDocumentUseCase: ScanDocumentUseCase,
-    private val showSimpleNotificationUseCase: ShowSimpleNotificationUseCase,
+    private val notifyUserUseCase: NotifyUserUseCase,
 ) : CoroutineBasedViewModel() {
 
     // State management
@@ -87,7 +87,7 @@ class HomeViewModel(
                     _uiState.updateValue {
                         it.copy(fetchState = ScreenState.Error(error.message ?: "Unknown error"))
                     }
-                    showSimpleNotificationUseCase(error)
+                    notifyUserUseCase(error)
                 }
                 .collect { (filteredList, isRepositoryEmpty) ->
                     _uiState.updateValue {
@@ -167,7 +167,7 @@ class HomeViewModel(
     val uiEffect = _uiEffect.receiveAsFlow()
 
     override fun onCoroutineException(throwable: Throwable) {
-        showSimpleNotificationUseCase(throwable)
+        notifyUserUseCase(throwable)
     }
 
     private fun sendEvent(effect: HomeUiEffect) {
@@ -293,12 +293,12 @@ class HomeViewModel(
                             try {
                                 val filename = "Scan_${System.currentTimeMillis()}"
                                 saveScannedDocumentUseCase(it, filename)
-                                showSimpleNotificationUseCase(
+                                notifyUserUseCase(
                                     R.string.doc_saved_successfully,
                                     type = NotificationType.Success
                                 )
                             } catch (e: Exception) {
-                                showSimpleNotificationUseCase(
+                                notifyUserUseCase(
                                     R.string.doc_scan_error,
                                     e.message ?: "Unknown error",
                                     type = NotificationType.Error
@@ -313,13 +313,13 @@ class HomeViewModel(
                         }
 
                         if (resource.message != null) {
-                            showSimpleNotificationUseCase(
+                            notifyUserUseCase(
                                 R.string.doc_scan_error,
                                 resource.message,
                                 type = NotificationType.Error
                             )
                         } else {
-                            showSimpleNotificationUseCase(
+                            notifyUserUseCase(
                                 R.string.unknown_error,
                                 type = NotificationType.Error
                             )
@@ -334,7 +334,7 @@ class HomeViewModel(
         executeAsync(
             onSuccess = {
                 logInfo("Document metadata updated successfully")
-                showSimpleNotificationUseCase(
+                notifyUserUseCase(
                     resId = R.string.doc_updated_successfully,
                     type = NotificationType.Success
 
@@ -342,7 +342,7 @@ class HomeViewModel(
             },
             onError = { error ->
                 logError("Failed to modify Document: ${error.message}", error)
-                showSimpleNotificationUseCase(error)
+                notifyUserUseCase(error)
             },
         ) {
             val scannedDocument = getDocumentByIdUseCase(documentId)
@@ -359,7 +359,7 @@ class HomeViewModel(
         try {
             openDocumentInViewerUseCase(documentUri)
         } catch (e: Exception) {
-            showSimpleNotificationUseCase(
+            notifyUserUseCase(
                 resId = R.string.issue_opening_doc_viewer,
                 type = NotificationType.Error
             )
@@ -370,7 +370,7 @@ class HomeViewModel(
         try {
             shareDocumentUseCase(documentUri)
         } catch (e: Exception) {
-            showSimpleNotificationUseCase(
+            notifyUserUseCase(
                 resId = R.string.issue_sharing_doc,
                 type = NotificationType.Error
             )
@@ -380,13 +380,13 @@ class HomeViewModel(
     private suspend fun onDeleteDocument(documentUri: Uri) {
         try {
             deleteDocumentUseCase(documentUri)
-            showSimpleNotificationUseCase(
+            notifyUserUseCase(
                 resId = R.string.doc_deleted_successfully,
                 type = NotificationType.Success
             )
         } catch (e: Exception) {
             logError("Failed to delete Document: ${e.message}", e)
-            showSimpleNotificationUseCase(
+            notifyUserUseCase(
                 resId = R.string.doc_delete_error,
                 type = NotificationType.Error
             )
@@ -398,7 +398,7 @@ class HomeViewModel(
             onSuccess = { uri: Uri ->
                 if (uri != Uri.EMPTY) {
                     logInfo("Document saved successfully to: $uri")
-                    showSimpleNotificationUseCase(
+                    notifyUserUseCase(
                         R.string.doc_saved_successfully_to,
                         uri.path.toString(),
                         NotificationType.Success
@@ -407,7 +407,7 @@ class HomeViewModel(
             },
             onError = { error ->
                 logError("Failed to save document: ${error.message}", error)
-                showSimpleNotificationUseCase(
+                notifyUserUseCase(
                     R.string.doc_save_error_with_reason,
                     error.message ?: "Unknown error",
                     type = NotificationType.Error

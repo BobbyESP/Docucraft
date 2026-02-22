@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.core.data.local.preferences.theme
+package com.bobbyesp.docucraft.core.presentation.preferences.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable

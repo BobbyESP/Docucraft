@@ -5,11 +5,13 @@ import androidx.datastore.preferences.core.Preferences
 import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import com.bobbyesp.docucraft.core.presentation.notifications.AndroidStringProvider
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.data.local.preferences.datastore.dataStore
-import com.bobbyesp.docucraft.core.data.local.repository.InAppNotificationServiceImpl
+import com.bobbyesp.docucraft.core.domain.StringProvider
+import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
-import com.bobbyesp.docucraft.core.domain.usecase.ShowSimpleNotificationUseCase
+import com.bobbyesp.docucraft.core.domain.usecase.NotifyUserUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -41,14 +43,17 @@ val commonModule = module {
     }
 
     single<CoroutineScope>(qualifier = named("AppMainSupervisedScope")) {
-        CoroutineScope(SupervisorJob())
+        CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     }
 }
 
 val notificationsServiceModule = module {
     single<InAppNotificationsService> {
-        InAppNotificationServiceImpl()
+        SonnerNotificationServiceImpl(
+            coroutineScope = get(qualifier = named("AppMainSupervisedScope")),
+        )
     }
 
-    factory { ShowSimpleNotificationUseCase(context = androidContext(), inAppNotificationsService = get()) }
+    factory<StringProvider> { AndroidStringProvider(context = androidContext()) }
+    factory { NotifyUserUseCase(stringProvider = get(), inAppNotificationsService = get()) }
 }

@@ -15,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import coil.imageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
-import com.bobbyesp.docucraft.core.data.local.repository.InAppNotificationServiceImpl
+import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.mlkit.domain.repository.DocumentScannerService
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
@@ -48,7 +48,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
         enableEdgeToEdge()
 
         FileKit.init(this)
-        val sonnerManager = inAppNotificationsService as InAppNotificationServiceImpl
+        val sonnerManager = inAppNotificationsService as SonnerNotificationServiceImpl
 
         scannerLauncher =
             registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result
