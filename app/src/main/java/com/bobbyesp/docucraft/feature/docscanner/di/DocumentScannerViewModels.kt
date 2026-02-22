@@ -1,7 +1,15 @@
 package com.bobbyesp.docucraft.feature.docscanner.di
 
-import com.bobbyesp.docucraft.core.domain.usecase.NotifyUserUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.*
+import com.bobbyesp.docucraft.core.domain.StringProvider
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentByIdUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ScanDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -18,7 +26,7 @@ val documentScannerViewModels = module {
             openDocumentInViewerUseCase = get<OpenDocumentInViewerUseCase>(),
             shareDocumentUseCase = get<ShareDocumentUseCase>(),
             scanDocumentUseCase = get<ScanDocumentUseCase>(),
-            notifyUserUseCase = get<NotifyUserUseCase>(),
+            stringProvider = get<StringProvider>(),
         )
     }
 }

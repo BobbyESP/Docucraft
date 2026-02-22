@@ -34,7 +34,6 @@ class SonnerNotificationServiceImpl(
         sonnerState.show(
             id = notification.id,
             message = notification.message,
-            icon = notification.icon,
             action = notification.action,
             type = notification.type.toSonnerType(),
             duration = notification.duration,

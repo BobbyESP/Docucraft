@@ -15,13 +15,12 @@ import androidx.compose.ui.Alignment
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import coil.imageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
-import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
-import com.bobbyesp.docucraft.mlkit.domain.repository.DocumentScannerService
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.rememberTopLevelBackStack
+import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.util.DocumentScannerLauncher
@@ -36,7 +35,6 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
     private val appPreferences: AppPreferences by inject()
     private val homeViewModel by inject<HomeViewModel>()
-    private val documentScannerService by inject<DocumentScannerService>()
     private val inAppNotificationsService by inject<InAppNotificationsService>()
 
     private lateinit var scannerLauncher: ActivityResultLauncher<IntentSenderRequest>
@@ -68,7 +66,10 @@ class MainActivity : ComponentActivity(), KoinComponent {
                 appPreferences = appPreferences,
                 imageLoader = imageLoader,
             ) {
-                Navigator(rootBackStack = rootBackStack)
+                Navigator(
+                    rootBackStack = rootBackStack,
+                    notificationService = inAppNotificationsService
+                )
 
                 Toaster(
                     state = sonnerManager.sonnerState,

@@ -15,16 +15,18 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.bhuvaneshw.pdf.compose.PdfSource
+import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.HomeScreenWrapper
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.HomeScreen
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
 import kotlinx.collections.immutable.persistentListOf
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun Navigator(
-    rootBackStack: TopLevelBackStack<Route>
+    rootBackStack: TopLevelBackStack<Route>,
+    notificationService: InAppNotificationsService
 ) {
     val onBack: () -> Unit = { rootBackStack.pop() }
 
@@ -37,11 +39,14 @@ fun Navigator(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator()
         ),
-        onBack = onBack ,
+        onBack = onBack,
         entryProvider = entryProvider {
-            entry<Route.Home> { HomeScreenWrapper(
-                onNavigate = { rootBackStack.push(it) }
-            ) }
+            entry<Route.Home> {
+                HomeScreen(
+                    onNavigate = { rootBackStack.push(it) },
+                    notificationService = notificationService
+                )
+            }
             entry<Route.PdfViewer> { key ->
                 PdfViewerScreen(
                     source = PdfSource.ContentUri(key.documentUri.toUri()),

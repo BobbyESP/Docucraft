@@ -5,9 +5,10 @@ import android.os.Environment
 import androidx.core.net.toUri
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
-import com.bobbyesp.docucraft.core.domain.usecase.NotifyUserUseCase
 import com.bobbyesp.docucraft.core.presentation.common.Route
+import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.state.ResourceState
 import com.bobbyesp.docucraft.core.util.state.ScreenState
 import com.bobbyesp.docucraft.core.util.state.TemporalState
@@ -34,7 +35,9 @@ import io.github.vinceglb.filekit.dialogs.openFileSaver
 import io.github.vinceglb.filekit.path
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -61,14 +64,21 @@ class HomeViewModel(
     private val openDocumentInViewerUseCase: OpenDocumentInViewerUseCase,
     private val shareDocumentUseCase: ShareDocumentUseCase,
     private val scanDocumentUseCase: ScanDocumentUseCase,
-    private val notifyUserUseCase: NotifyUserUseCase,
+    private val stringProvider: StringProvider,
 ) : CoroutineBasedViewModel() {
 
     // State management
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    private val _events: MutableSharedFlow<UiEvent>
+    val events: SharedFlow<UiEvent>
+
     init {
+        val eventsPair = createEventFlow<UiEvent>()
+        _events = eventsPair.first
+        events = eventsPair.second
+
         observeDocuments()
     }
 
@@ -85,9 +95,9 @@ class HomeViewModel(
                 .catch { error ->
                     logError("Failed to retrieve documents: ${error.message}", error)
                     _uiState.updateValue {
-                        it.copy(fetchState = ScreenState.Error(error.message ?: "Unknown error"))
+                        it.copy(fetchState = ScreenState.Error(stringProvider.getError(error)))
                     }
-                    notifyUserUseCase(error)
+                    _events.emitEvent(UiEvent.ShowMessage(stringProvider.getError(error)))
                 }
                 .collect { (filteredList, isRepositoryEmpty) ->
                     _uiState.updateValue {
@@ -167,7 +177,11 @@ class HomeViewModel(
     val uiEffect = _uiEffect.receiveAsFlow()
 
     override fun onCoroutineException(throwable: Throwable) {
-        notifyUserUseCase(throwable)
+        viewModelScope.launch {
+            _events.emitEvent(UiEvent.ShowMessage(
+                stringProvider.getError(throwable)
+            ))
+        }
     }
 
     private fun sendEvent(effect: HomeUiEffect) {
@@ -293,15 +307,22 @@ class HomeViewModel(
                             try {
                                 val filename = "Scan_${System.currentTimeMillis()}"
                                 saveScannedDocumentUseCase(it, filename)
-                                notifyUserUseCase(
-                                    R.string.doc_saved_successfully,
-                                    type = NotificationType.Success
+                                _events.emitEvent(
+                                    UiEvent.ShowMessage(
+                                        stringProvider.get(
+                                            R.string.doc_saved_successfully,
+                                        ),
+                                        type = NotificationType.Success
+                                    )
                                 )
                             } catch (e: Exception) {
-                                notifyUserUseCase(
-                                    R.string.doc_scan_error,
-                                    e.message ?: "Unknown error",
-                                    type = NotificationType.Error
+                                _events.emitEvent(
+                                    UiEvent.ShowMessage(
+                                        message = stringProvider.get(
+                                            id = R.string.doc_scan_error,
+                                        ),
+                                        type = NotificationType.Error
+                                    )
                                 )
                             }
                         }
@@ -312,18 +333,12 @@ class HomeViewModel(
                             it.copy(isScanning = false, scanUserMessage = resource.message)
                         }
 
-                        if (resource.message != null) {
-                            notifyUserUseCase(
-                                R.string.doc_scan_error,
-                                resource.message,
+                        _events.emitEvent(
+                            UiEvent.ShowMessage(
+                                message = resource.message ?: stringProvider.get(R.string.unknown_error),
                                 type = NotificationType.Error
                             )
-                        } else {
-                            notifyUserUseCase(
-                                R.string.unknown_error,
-                                type = NotificationType.Error
-                            )
-                        }
+                        )
                     }
                 }
             }
@@ -334,15 +349,21 @@ class HomeViewModel(
         executeAsync(
             onSuccess = {
                 logInfo("Document metadata updated successfully")
-                notifyUserUseCase(
-                    resId = R.string.doc_updated_successfully,
-                    type = NotificationType.Success
-
+                _events.emitEvent(
+                    UiEvent.ShowMessage(
+                        message = stringProvider.get(R.string.doc_updated_successfully),
+                        type = NotificationType.Success
+                    )
                 )
             },
             onError = { error ->
                 logError("Failed to modify Document: ${error.message}", error)
-                notifyUserUseCase(error)
+                _events.emitEvent(
+                    UiEvent.ShowMessage(
+                        message = stringProvider.getError(error),
+                        type = NotificationType.Error
+                    )
+                )
             },
         ) {
             val scannedDocument = getDocumentByIdUseCase(documentId)
@@ -359,9 +380,11 @@ class HomeViewModel(
         try {
             openDocumentInViewerUseCase(documentUri)
         } catch (e: Exception) {
-            notifyUserUseCase(
-                resId = R.string.issue_opening_doc_viewer,
-                type = NotificationType.Error
+            _events.emitEvent(
+                UiEvent.ShowMessage(
+                    message = stringProvider.get(R.string.issue_opening_doc_viewer),
+                    type = NotificationType.Error
+                )
             )
         }
     }
@@ -370,9 +393,11 @@ class HomeViewModel(
         try {
             shareDocumentUseCase(documentUri)
         } catch (e: Exception) {
-            notifyUserUseCase(
-                resId = R.string.issue_sharing_doc,
-                type = NotificationType.Error
+            _events.emitEvent(
+                UiEvent.ShowMessage(
+                    message = stringProvider.get(R.string.issue_sharing_doc),
+                    type = NotificationType.Error
+                )
             )
         }
     }
@@ -380,15 +405,19 @@ class HomeViewModel(
     private suspend fun onDeleteDocument(documentUri: Uri) {
         try {
             deleteDocumentUseCase(documentUri)
-            notifyUserUseCase(
-                resId = R.string.doc_deleted_successfully,
-                type = NotificationType.Success
+            _events.emitEvent(
+                UiEvent.ShowMessage(
+                    message = stringProvider.get(R.string.doc_deleted_successfully),
+                    type = NotificationType.Success
+                )
             )
         } catch (e: Exception) {
             logError("Failed to delete Document: ${e.message}", e)
-            notifyUserUseCase(
-                resId = R.string.doc_delete_error,
-                type = NotificationType.Error
+            _events.emitEvent(
+                UiEvent.ShowMessage(
+                    message = stringProvider.get(R.string.doc_delete_error),
+                    type = NotificationType.Error
+                )
             )
         }
     }
@@ -398,19 +427,22 @@ class HomeViewModel(
             onSuccess = { uri: Uri ->
                 if (uri != Uri.EMPTY) {
                     logInfo("Document saved successfully to: $uri")
-                    notifyUserUseCase(
-                        R.string.doc_saved_successfully_to,
-                        uri.path.toString(),
-                        NotificationType.Success
+                    _events.emitEvent(
+                        UiEvent.ShowMessage(
+                            message = stringProvider.get(R.string.doc_saved_successfully_to, uri.path.toString()),
+                            type = NotificationType.Success
+                        )
                     )
                 }
             },
             onError = { error ->
                 logError("Failed to save document: ${error.message}", error)
-                notifyUserUseCase(
-                    R.string.doc_save_error_with_reason,
-                    error.message ?: "Unknown error",
-                    type = NotificationType.Error
+
+                _events.emitEvent(
+                    UiEvent.ShowMessage(
+                        message = stringProvider.getError(id = R.string.doc_save_error_with_reason, throwable = error),
+                        type = NotificationType.Error
+                    )
                 )
             },
         ) {
