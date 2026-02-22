@@ -26,6 +26,8 @@ import kotlinx.collections.immutable.persistentListOf
 fun Navigator(
     rootBackStack: TopLevelBackStack<Route>
 ) {
+    val onBack: () -> Unit = { rootBackStack.pop() }
+
     NavDisplay(
         modifier = Modifier
             .fillMaxSize()
@@ -35,14 +37,15 @@ fun Navigator(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator()
         ),
-        onBack = { rootBackStack.pop() },
+        onBack = onBack ,
         entryProvider = entryProvider {
             entry<Route.Home> { HomeScreenWrapper(
                 onNavigate = { rootBackStack.push(it) }
             ) }
             entry<Route.PdfViewer> { key ->
                 PdfViewerScreen(
-                    source = PdfSource.ContentUri(key.documentUri.toUri())
+                    source = PdfSource.ContentUri(key.documentUri.toUri()),
+                    onBack = onBack
                 )
             }
         },

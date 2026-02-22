@@ -12,6 +12,7 @@ import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import com.bhuvaneshw.pdf.compose.PdfSource
 import com.bhuvaneshw.pdf.compose.PdfViewer
 import com.bhuvaneshw.pdf.compose.rememberPdfState
@@ -19,10 +20,11 @@ import com.bhuvaneshw.pdf.compose.ui.PdfScrollBar
 import com.bhuvaneshw.pdf.compose.ui.PdfToolBar
 import com.bhuvaneshw.pdf.compose.ui.PdfViewer
 import com.bhuvaneshw.pdf.compose.ui.PdfViewerContainer
+import com.bobbyesp.docucraft.R
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun PdfViewerScreen(source: PdfSource, modifier: Modifier = Modifier) {
+fun PdfViewerScreen(source: PdfSource, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val pdfState = rememberPdfState(source = source)
 
     Scaffold(
@@ -31,15 +33,13 @@ fun PdfViewerScreen(source: PdfSource, modifier: Modifier = Modifier) {
         PdfViewerContainer(
             modifier = Modifier.padding(paddingValues),
             pdfState = pdfState,
-            loadingIndicator = {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularWavyProgressIndicator()
-                }
-            },
+            loadingIndicator = null,
             pdfToolBar = {
                 PdfToolBar(
-                    modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow),
-                    title = "Test",
+                    modifier = Modifier,
+                    title = "[PLACEHOLDER]",
+                    showEditor = true,
+                    onBack = onBack,
                     contentColor = MaterialTheme.colorScheme.contentColorFor(MaterialTheme.colorScheme.surfaceContainerLow)
                 )
             },
