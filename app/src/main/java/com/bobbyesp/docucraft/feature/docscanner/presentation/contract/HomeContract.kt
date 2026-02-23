@@ -59,7 +59,7 @@ sealed interface HomeUiAction {
     data object OnScanErrorDismissed : HomeUiAction
 
     // Document Operations (User Intents)
-    data class OpenDocument(val uri: Uri) : HomeUiAction
+    data class OpenDocument(val id: String) : HomeUiAction
 
     data class SaveDocument(val document: ScannedDocument) : HomeUiAction
 

@@ -1,6 +1,5 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.components.card
 
-import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -58,7 +57,7 @@ enum class ScannedDocumentCardPosition {
 @Composable
 fun ScannedDocumentListItem(
     pdf: ScannedDocument,
-    onItemClick: (Uri) -> Unit,
+    onItemClick: (String) -> Unit,
     onItemLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     position: ScannedDocumentCardPosition = ScannedDocumentCardPosition.SINGLE,
@@ -77,7 +76,7 @@ fun ScannedDocumentListItem(
                 .clip(shape)
                 .combinedClickable(
                     role = Role.Button,
-                    onClick = { onItemClick(pdf.path) },
+                    onClick = { onItemClick(pdf.id) },
                     onLongClick = onItemLongClick,
                 ),
         shape = shape,

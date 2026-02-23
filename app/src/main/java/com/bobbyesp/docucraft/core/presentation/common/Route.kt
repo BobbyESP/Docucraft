@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.BasicDocumentInfo
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -16,7 +17,7 @@ sealed interface Route: NavKey {
 
     @Serializable
     data class PdfViewer(
-        val documentUri: String
+        val documentInfo: BasicDocumentInfo
     ) : Route, NavKey
 
     //    @Serializable

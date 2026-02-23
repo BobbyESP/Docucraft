@@ -321,7 +321,7 @@ private fun ScannedDocumentsList(
                     .animateItem(),
                 pdf = scannedDocument,
                 position = position,
-                onItemClick = { uri -> onAction(HomeUiAction.OpenDocument(uri)) },
+                onItemClick = { id -> onAction(HomeUiAction.OpenDocument(id)) },
                 onItemLongClick = { onAction(HomeUiAction.ShowOptionsSheet(scannedDocument.id)) },
             )
         }

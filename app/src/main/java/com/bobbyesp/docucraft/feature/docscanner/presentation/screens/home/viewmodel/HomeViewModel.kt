@@ -15,6 +15,7 @@ import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.BasicDocumentInfo
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentByIdUseCase
@@ -90,16 +91,14 @@ class HomeViewModel(
                 _uiState.map { it.filterOptions }.distinctUntilChanged(),
             ) { documents, query, filterOptions ->
                 applyFiltersAndSort(documents, query, filterOptions)
-            }
-                .onStart { _uiState.updateValue { it.copy(fetchState = ScreenState.Loading()) } }
+            }.onStart { _uiState.updateValue { it.copy(fetchState = ScreenState.Loading()) } }
                 .catch { error ->
                     logError("Failed to retrieve documents: ${error.message}", error)
                     _uiState.updateValue {
                         it.copy(fetchState = ScreenState.Error(stringProvider.getError(error)))
                     }
                     _events.emitEvent(UiEvent.ShowMessage(stringProvider.getError(error)))
-                }
-                .collect { (filteredList, isRepositoryEmpty) ->
+                }.collect { (filteredList, isRepositoryEmpty) ->
                     _uiState.updateValue {
                         it.copy(
                             visibleDocuments = filteredList,
@@ -127,12 +126,15 @@ class HomeViewModel(
             } catch (e: Exception) {
                 logError("Search failed: ${e.message}", e)
                 // Fallback to in-memory filtering
-                result =
-                    result.filter { document ->
-                        document.title?.contains(query, ignoreCase = true) == true ||
-                                document.filename.contains(query, ignoreCase = true) ||
-                                document.description?.contains(query, ignoreCase = true) == true
-                    }
+                result = result.filter { document ->
+                    document.title?.contains(
+                        query,
+                        ignoreCase = true
+                    ) == true || document.filename.contains(
+                        query,
+                        ignoreCase = true
+                    ) || document.description?.contains(query, ignoreCase = true) == true
+                }
             }
         }
 
@@ -148,26 +150,24 @@ class HomeViewModel(
             result = result.filter { it.createdTimestamp in start..end }
         }
 
-        result =
-            when (filterOptions.sortBy.criteria) {
-                SortOption.Criteria.DATE -> {
-                    if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                        result.sortedByDescending { it.createdTimestamp }
-                    else result.sortedBy { it.createdTimestamp }
-                }
-
-                SortOption.Criteria.NAME -> {
-                    if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                        result.sortedByDescending { it.title ?: it.filename }
-                    else result.sortedBy { it.title ?: it.filename }
-                }
-
-                SortOption.Criteria.SIZE -> {
-                    if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                        result.sortedByDescending { it.fileSize }
-                    else result.sortedBy { it.fileSize }
-                }
+        result = when (filterOptions.sortBy.criteria) {
+            SortOption.Criteria.DATE -> {
+                if (filterOptions.sortBy.order == SortOption.Order.DESC) result.sortedByDescending { it.createdTimestamp }
+                else result.sortedBy { it.createdTimestamp }
             }
+
+            SortOption.Criteria.NAME -> {
+                if (filterOptions.sortBy.order == SortOption.Order.DESC) result.sortedByDescending {
+                    it.title ?: it.filename
+                }
+                else result.sortedBy { it.title ?: it.filename }
+            }
+
+            SortOption.Criteria.SIZE -> {
+                if (filterOptions.sortBy.order == SortOption.Order.DESC) result.sortedByDescending { it.fileSize }
+                else result.sortedBy { it.fileSize }
+            }
+        }
 
         return result to unfilteredDocuments.isEmpty()
     }
@@ -178,9 +178,11 @@ class HomeViewModel(
 
     override fun onCoroutineException(throwable: Throwable) {
         viewModelScope.launch {
-            _events.emitEvent(UiEvent.ShowMessage(
-                stringProvider.getError(throwable)
-            ))
+            _events.emitEvent(
+                UiEvent.ShowMessage(
+                    stringProvider.getError(throwable)
+                )
+            )
         }
     }
 
@@ -201,7 +203,21 @@ class HomeViewModel(
             }
 
             // Document Operations
-            is HomeUiAction.OpenDocument -> sendEvent(HomeUiEffect.Navigate(Route.PdfViewer(action.uri.toString())))
+            is HomeUiAction.OpenDocument -> {
+                launchIO {
+                    val basicInformation = getBasicInformationForId(action.id)
+
+                    sendEvent(
+                        HomeUiEffect.Navigate(
+                            Route.PdfViewer(
+                                documentInfo = basicInformation
+                            )
+                        )
+                    )
+                }
+
+            }
+
             is HomeUiAction.SaveDocument -> onExportDocument(action.document)
             is HomeUiAction.ShareDocument -> onShareDocument(action.uri)
             is HomeUiAction.DeleteDocument -> {
@@ -311,17 +327,16 @@ class HomeViewModel(
                                     UiEvent.ShowMessage(
                                         stringProvider.get(
                                             R.string.doc_saved_successfully,
-                                        ),
-                                        type = NotificationType.Success
+                                        ), type = NotificationType.Success
                                     )
                                 )
                             } catch (e: Exception) {
+                                logError("Failed to save document: ${e.message}", e)
                                 _events.emitEvent(
                                     UiEvent.ShowMessage(
                                         message = stringProvider.get(
                                             id = R.string.doc_scan_error,
-                                        ),
-                                        type = NotificationType.Error
+                                        ), type = NotificationType.Error
                                     )
                                 )
                             }
@@ -335,7 +350,8 @@ class HomeViewModel(
 
                         _events.emitEvent(
                             UiEvent.ShowMessage(
-                                message = resource.message ?: stringProvider.get(R.string.unknown_error),
+                                message = resource.message
+                                    ?: stringProvider.get(R.string.unknown_error),
                                 type = NotificationType.Error
                             )
                         )
@@ -360,8 +376,7 @@ class HomeViewModel(
                 logError("Failed to modify Document: ${error.message}", error)
                 _events.emitEvent(
                     UiEvent.ShowMessage(
-                        message = stringProvider.getError(error),
-                        type = NotificationType.Error
+                        message = stringProvider.getError(error), type = NotificationType.Error
                     )
                 )
             },
@@ -376,10 +391,24 @@ class HomeViewModel(
         }
     }
 
+    private suspend fun getBasicInformationForId(id: String): BasicDocumentInfo {
+        val document = getDocumentByIdUseCase(pdfId = id)
+
+        return BasicDocumentInfo(
+            id = document.id,
+            filename = document.filename,
+            uri = document.path.toString(),
+            title = document.title,
+            description = document.description
+        )
+    }
+
+
     private fun onViewDocument(documentUri: Uri) {
         try {
             openDocumentInViewerUseCase(documentUri)
         } catch (e: Exception) {
+            logError("Failed to see document: ${e.message}", e)
             _events.emitEvent(
                 UiEvent.ShowMessage(
                     message = stringProvider.get(R.string.issue_opening_doc_viewer),
@@ -393,6 +422,7 @@ class HomeViewModel(
         try {
             shareDocumentUseCase(documentUri)
         } catch (e: Exception) {
+            logError("Failed to share document: ${e.message}", e)
             _events.emitEvent(
                 UiEvent.ShowMessage(
                     message = stringProvider.get(R.string.issue_sharing_doc),
@@ -429,8 +459,9 @@ class HomeViewModel(
                     logInfo("Document saved successfully to: $uri")
                     _events.emitEvent(
                         UiEvent.ShowMessage(
-                            message = stringProvider.get(R.string.doc_saved_successfully_to, uri.path.toString()),
-                            type = NotificationType.Success
+                            message = stringProvider.get(
+                                R.string.doc_saved_successfully_to, uri.path.toString()
+                            ), type = NotificationType.Success
                         )
                     )
                 }
@@ -440,28 +471,26 @@ class HomeViewModel(
 
                 _events.emitEvent(
                     UiEvent.ShowMessage(
-                        message = stringProvider.getError(id = R.string.doc_save_error_with_reason, throwable = error),
-                        type = NotificationType.Error
+                        message = stringProvider.getError(
+                            id = R.string.doc_save_error_with_reason, throwable = error
+                        ), type = NotificationType.Error
                     )
                 )
             },
         ) {
-            val androidDocumentsDirectory =
-                PlatformFile(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-                )
+            val androidDocumentsDirectory = PlatformFile(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+            )
 
             val dir = PlatformFile(androidDocumentsDirectory, "Docucraft")
 
-            val file =
-                FileKit.openFileSaver(
-                    suggestedName = scannedDocument.title ?: scannedDocument.filename,
-                    extension = "pdf",
-                    directory = dir,
-                )
-                    ?: run {
-                        return@executeAsync Uri.EMPTY
-                    }
+            val file = FileKit.openFileSaver(
+                suggestedName = scannedDocument.title ?: scannedDocument.filename,
+                extension = "pdf",
+                directory = dir,
+            ) ?: run {
+                return@executeAsync Uri.EMPTY
+            }
 
             val internalDocument = PlatformFile(scannedDocument.path)
             internalDocument.copyTo(file)
