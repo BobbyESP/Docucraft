@@ -13,21 +13,22 @@ class CopyApkPlugin : Plugin<Project> {
             // variantName will be "Debug", "Release", etc.
             val variantName = variant.name.replaceFirstChar { it.uppercase() }
 
-            val copyTask = project.tasks.register<CopyApkTask>("copy${variantName}Apk") {
-                group = "build"
-                description = "Copies the ${variant.name} APK with a custom name"
+            val copyTask =
+                project.tasks.register<CopyApkTask>("copy${variantName}Apk") {
+                    group = "build"
+                    description = "Copies the ${variant.name} APK with a custom name"
 
-                apkFolder.set((variant as ApplicationVariant).artifacts.get(SingleArtifact.APK))
-                builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
-                outputDirectory.set(project.layout.buildDirectory.dir("outputs/apk/${variant.name}"))
-                appName.set("Docucraft")
-                versionNameStr.set(variant.outputs.first().versionName.getOrElse(""))
-            }
+                    apkFolder.set((variant as ApplicationVariant).artifacts.get(SingleArtifact.APK))
+                    builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
+                    outputDirectory.set(
+                        project.layout.buildDirectory.dir("outputs/apk/${variant.name}")
+                    )
+                    appName.set("Docucraft")
+                    versionNameStr.set(variant.outputs.first().versionName.getOrElse(""))
+                }
 
             project.afterEvaluate {
-                project.tasks.named("assemble${variantName}").configure {
-                    finalizedBy(copyTask)
-                }
+                project.tasks.named("assemble${variantName}").configure { finalizedBy(copyTask) }
             }
         }
     }
