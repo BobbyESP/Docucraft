@@ -39,8 +39,8 @@ import com.bhuvaneshw.pdf.compose.ui.PdfScrollBar
 import com.bhuvaneshw.pdf.compose.ui.PdfViewer
 import com.bhuvaneshw.pdf.compose.ui.PdfViewerContainer
 import com.bobbyesp.docucraft.R
-import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.DocumentToolbar
+import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalComposeUiApi::class)

@@ -45,43 +45,29 @@ data class HomeUiState(
 sealed interface HomeUiAction {
     // Scanning
     data object LaunchDocumentScanner : HomeUiAction
-
     data class ScanResultAction(val rawScanResult: RawScanResult) : HomeUiAction
 
     // Document Operations (User Intents)
     data class ViewDocument(val id: String) : HomeUiAction
-
     data class SaveDocument(val document: ScannedDocument) : HomeUiAction
-
     data class ShareDocument(val uri: Uri) : HomeUiAction
-
     data class DeleteDocument(val id: String?) : HomeUiAction // null id means cancel/dismiss
-
     data class UpdateDocumentFields(val id: String, val title: String, val description: String) :
         HomeUiAction
 
     // Dialog Triggers
     data class ShowDeleteConfirmation(val id: String) : HomeUiAction
-
     data class ShowEditDialog(val id: String) : HomeUiAction
-
     data class ShowActionsSheet(val id: String) : HomeUiAction
-
     data object DismissActionsSheet : HomeUiAction
-
     data object DismissDialogs : HomeUiAction
 
     // Search & Filter
     data class UpdateSearchQuery(val query: String) : HomeUiAction
-
     data object ClearSearch : HomeUiAction
-
     data class ToggleSearchBar(val isVisible: Boolean) : HomeUiAction
-
     data class ApplySort(val sortOption: SortOption) : HomeUiAction
-
     data class ApplyFilter(val filterOptions: FilterOptions) : HomeUiAction
-
     data object ClearFilters : HomeUiAction
 }
 

@@ -82,13 +82,12 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
             AppLocalSettingsProvider(
                 windowWidthSize = windowSizeClass.widthSizeClass,
-                sonner = sonnerManager.sonnerState,
+                inAppNotificationsService = inAppNotificationsService,
                 appPreferences = appPreferences,
                 imageLoader = imageLoader,
             ) {
                 Navigator(
                     rootBackStack = rootBackStack,
-                    notificationService = inAppNotificationsService
                 )
 
                 Toaster(

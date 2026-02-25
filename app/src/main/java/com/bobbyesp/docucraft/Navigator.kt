@@ -13,7 +13,6 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.HomeScreen
@@ -24,7 +23,6 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun Navigator(
     rootBackStack: TopLevelBackStack<Route>,
-    notificationService: InAppNotificationsService
 ) {
     val onBack: () -> Unit = { rootBackStack.pop() }
 
@@ -42,7 +40,6 @@ fun Navigator(
             entry<Route.Home> {
                 HomeScreen(
                     onNavigate = { rootBackStack.push(it) },
-                    notificationService = notificationService
                 )
             }
             entry<Route.PdfViewer> { key ->

@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.bobbyesp.docucraft.core.domain.preferences.AppPreferencesController
 import com.bobbyesp.docucraft.core.data.local.preferences.AppSettings
+import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.presentation.preferences.theme.DarkThemePreference
 import com.bobbyesp.docucraft.core.presentation.preferences.theme.DarkThemePreference.DarkThemeValue
 import com.bobbyesp.docucraft.core.presentation.theme.DEFAULT_SEED_COLOR
@@ -36,22 +37,24 @@ val LocalDarkTheme =
 val LocalSeedColor = compositionLocalOf { DEFAULT_SEED_COLOR }
 val LocalDynamicColoringSwitch = compositionLocalOf { false }
 val LocalOrientation = compositionLocalOf<Int> { error("No orientation provided") }
+val LocalWindowWidthState = staticCompositionLocalOf {
+    WindowWidthSizeClass.Compact
+}
 
 val LocalAppPreferencesController =
     staticCompositionLocalOf<AppPreferencesController> { error("No settings controller provided") }
 
-val LocalWindowWidthState = staticCompositionLocalOf {
-    WindowWidthSizeClass.Compact
-} // This value probably will never change, that's why it is static
+val LocalNotificationsService = compositionLocalOf<InAppNotificationsService> {
+    error("No notifications service provided")
+}
 
-val LocalSonner = compositionLocalOf<ToasterState> { error("No sonner toaster state provided") }
-
+@Suppress("ModifierRequired")
 @Composable
 fun AppLocalSettingsProvider(
     windowWidthSize: WindowWidthSizeClass,
     appPreferences: AppPreferencesController,
     imageLoader: ImageLoader,
-    sonner: ToasterState = rememberToasterState(),
+    inAppNotificationsService: InAppNotificationsService,
     content: @Composable () -> Unit
 ) {
     val seedColor by
@@ -136,7 +139,7 @@ fun AppLocalSettingsProvider(
         LocalAppPreferencesController provides appPreferences,
         LocalWindowWidthState provides windowWidthSize,
         LocalOrientation provides config.orientation,
-        LocalSonner provides sonner,
+        LocalNotificationsService provides inAppNotificationsService,
         LocalCoilImageLoader provides imageLoader,
     ) {
         DocucraftTheme(colorScheme = colorScheme) {

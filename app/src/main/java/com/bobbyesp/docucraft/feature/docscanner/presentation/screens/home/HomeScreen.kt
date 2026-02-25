@@ -1,6 +1,5 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home
 
-import android.annotation.SuppressLint
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -10,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
+import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsSheet
@@ -20,6 +20,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialo
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Suppress("EffectKeys")
@@ -27,27 +28,14 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeScreen(
     onNavigate: (Route) -> Unit,
-    notificationService: InAppNotificationsService,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is UiEvent.ShowMessage -> notificationService.show(
-                    InAppNotification(
-                        message = event.message,
-                        type = event.type
-                    )
-                )
-            }
-        }
-    }
-
     HandleHomeUiEffects(
-        effectFlow = viewModel.uiEffect,
+        uiEffectFlow = viewModel.uiEffect,
+        uiEventFlow = viewModel.events,
         onNavigate = onNavigate
     )
 
@@ -110,21 +98,35 @@ fun HomeScreen(
     )
 }
 
-@Suppress("EffectKeys")
-@SuppressLint("LocalContextResourcesRead")
 @Composable
 private fun HandleHomeUiEffects(
-    effectFlow: Flow<HomeUiEffect>,
+    uiEffectFlow: Flow<HomeUiEffect>,
+    uiEventFlow: Flow<UiEvent>,
     onNavigate: (Route) -> Unit
 ) {
     val currentOnNavigate by rememberUpdatedState(onNavigate)
 
-    LaunchedEffect(Unit) {
-        effectFlow.collect { effect ->
+    LaunchedEffect(uiEffectFlow) {
+        uiEffectFlow.collectLatest { effect ->
             when (effect) {
                 is HomeUiEffect.Navigate -> {
                     currentOnNavigate(effect.route)
                 }
+            }
+        }
+    }
+
+    val notificationsService = LocalNotificationsService.current
+
+    LaunchedEffect(uiEventFlow) {
+        uiEventFlow.collectLatest { event ->
+            when (event) {
+                is UiEvent.ShowMessage -> notificationsService.show(
+                    InAppNotification(
+                        message = event.message,
+                        type = event.type
+                    )
+                )
             }
         }
     }
