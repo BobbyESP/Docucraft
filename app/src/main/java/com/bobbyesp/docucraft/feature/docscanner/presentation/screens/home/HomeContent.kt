@@ -303,7 +303,7 @@ private fun ScannedDocumentsList(
                     .animateItem(),
                 pdf = scannedDocument,
                 position = position,
-                onItemClick = { id -> onAction(HomeUiAction.OpenDocument(id)) },
+                onItemClick = { id -> onAction(HomeUiAction.ViewDocument(id)) },
                 onItemLongClick = { onAction(HomeUiAction.ShowActionsSheet(scannedDocument.id)) },
             )
         }

@@ -1,11 +1,11 @@
 package com.bobbyesp.docucraft.feature.docscanner.domain.repository
 
 import android.net.Uri
-import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedDocumentEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import kotlinx.coroutines.flow.Flow
 
-interface ScannedDocumentsRepository {
+interface LocalDocumentsRepository {
 
     /**
      * Retrieves a reactive stream of all scanned documents currently available in the system.

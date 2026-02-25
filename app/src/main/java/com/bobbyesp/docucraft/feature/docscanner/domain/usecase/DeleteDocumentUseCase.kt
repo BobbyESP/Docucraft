@@ -3,7 +3,7 @@ package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 import android.net.Uri
 import android.util.Log
 import com.bobbyesp.docucraft.core.domain.repository.FileRepository
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannedDocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.delete
 import io.github.vinceglb.filekit.exists
@@ -12,7 +12,7 @@ import io.github.vinceglb.filekit.exists
  * Use case for deleting a scanned PDF. Handles both database removal and physical file deletion.
  */
 class DeleteDocumentUseCase(
-    private val repository: ScannedDocumentsRepository,
+    private val repository: LocalDocumentsRepository,
     private val fileRepository: FileRepository,
 ) {
     suspend operator fun invoke(documentUri: Uri) {

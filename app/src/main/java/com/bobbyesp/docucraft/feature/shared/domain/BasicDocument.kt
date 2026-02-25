@@ -1,11 +1,11 @@
-package com.bobbyesp.docucraft.feature.docscanner.domain.model
+package com.bobbyesp.docucraft.feature.shared.domain
 
 import androidx.compose.runtime.Stable
 import kotlinx.serialization.Serializable
 
 @Stable
 @Serializable
-data class BasicDocumentInfo(
+data class BasicDocument(
     val id: String,
     val filename: String,
     val uri: String,

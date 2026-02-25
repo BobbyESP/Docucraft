@@ -6,13 +6,15 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.ui.Alignment
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import coil.imageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
@@ -21,23 +23,41 @@ import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.rememberTopLevelBackStack
 import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
+import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannerRepository
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
-import com.bobbyesp.docucraft.feature.docscanner.presentation.util.DocumentScannerLauncher
 import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.ACTION_SCAN_DOCUMENT
 import com.dokar.sonner.Toaster
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 
 class MainActivity : ComponentActivity(), KoinComponent {
 
     private val appPreferences: AppPreferences by inject()
-    private val homeViewModel by inject<HomeViewModel>()
-    private val inAppNotificationsService by inject<InAppNotificationsService>()
+    private val homeViewModel: HomeViewModel by inject()
+    private val inAppNotificationsService: InAppNotificationsService by inject()
 
-    private lateinit var scannerLauncher: ActivityResultLauncher<IntentSenderRequest>
+    private val scannerManager: ScannerManager by inject()
+    private val scannerClient: GmsDocumentScanner by inject()
+    private val scannerRepository: ScannerRepository by inject()
+
+    private val scannerLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        lifecycleScope.launch {
+            scannerRepository.processResult(result).onSuccess { rawScanResult ->
+                scannerManager.onScanResult(
+                    Result.success(rawScanResult)
+                )
+            }.onFailure { error ->
+                scannerManager.onScanResult(Result.failure(error))
+            }
+        }
+    }
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,13 +68,15 @@ class MainActivity : ComponentActivity(), KoinComponent {
         FileKit.init(this)
         val sonnerManager = inAppNotificationsService as SonnerNotificationServiceImpl
 
-        scannerLauncher =
-            registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result
-                ->
-                homeViewModel.onAction(HomeUiAction.ScanResultAction(result))
-            }
-
         handleIntent(intent)
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                scannerManager.scanRequest.collect {
+                    launchScanner()
+                }
+            }
+        }
 
         setContent {
             val windowSizeClass = calculateWindowSizeClass(this)
@@ -109,9 +131,23 @@ class MainActivity : ComponentActivity(), KoinComponent {
         }
     }
 
+    private fun launchScanner() {
+        scannerClient.getStartScanIntent(this)
+            .addOnSuccessListener { intentSender ->
+                scannerLauncher.launch(
+                    IntentSenderRequest.Builder(intentSender).build()
+                )
+            }
+            .addOnFailureListener { e ->
+                lifecycleScope.launch {
+                    scannerManager.onScanResult(Result.failure(e))
+                }
+            }
+    }
+
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == ACTION_SCAN_DOCUMENT) {
-            DocumentScannerLauncher.launch(this, scannerLauncher)
+            lifecycleScope.launch { scannerManager.requestScan() }
             intent.action = null
         }
     }

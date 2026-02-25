@@ -1,10 +1,6 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home
 
 import android.annotation.SuppressLint
-import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -23,7 +19,6 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEff
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentConfirmationDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
-import com.bobbyesp.docucraft.feature.docscanner.presentation.util.DocumentScannerLauncher
 import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.koinViewModel
 
@@ -53,7 +48,6 @@ fun HomeScreen(
 
     HandleHomeUiEffects(
         effectFlow = viewModel.uiEffect,
-        onScanResult = { result -> viewModel.onAction(HomeUiAction.ScanResultAction(result)) },
         onNavigate = onNavigate
     )
 
@@ -112,28 +106,13 @@ fun HomeScreen(
 @Composable
 private fun HandleHomeUiEffects(
     effectFlow: Flow<HomeUiEffect>,
-    onScanResult: (ActivityResult) -> Unit,
     onNavigate: (Route) -> Unit
 ) {
-    val activity = LocalActivity.current
     val currentOnNavigate by rememberUpdatedState(onNavigate)
-
-    val scannerLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.StartIntentSenderForResult()
-        ) { result ->
-            onScanResult(result)
-        }
 
     LaunchedEffect(Unit) {
         effectFlow.collect { effect ->
             when (effect) {
-                HomeUiEffect.LaunchScanner -> {
-                    activity?.let { act ->
-                        DocumentScannerLauncher.launch(act, scannerLauncher)
-                    }
-                }
-
                 is HomeUiEffect.Navigate -> {
                     currentOnNavigate(effect.route)
                 }

@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.docscanner.data.local.service
+package com.bobbyesp.docucraft.feature.docscanner.data.service
 
 import android.content.ContentResolver
 import android.content.Context

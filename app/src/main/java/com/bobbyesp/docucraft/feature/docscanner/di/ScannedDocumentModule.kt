@@ -1,10 +1,10 @@
 package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.core.domain.repository.FileRepository
-import com.bobbyesp.docucraft.feature.docscanner.data.local.db.dao.ScannedDocumentDao
-import com.bobbyesp.docucraft.feature.docscanner.data.local.repository.ScannedDocumentsRepositoryImpl
-import com.bobbyesp.docucraft.feature.docscanner.data.local.service.DocumentOperationsServiceImpl
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannedDocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
+import com.bobbyesp.docucraft.feature.docscanner.data.repository.LocalDocumentsRepositoryImpl
+import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.service.DocumentOperationsService
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.*
 import org.koin.android.ext.koin.androidContext
@@ -19,8 +19,8 @@ val documentScannerDataModule = module {
     single<DocumentOperationsService> { DocumentOperationsServiceImpl(context = androidContext()) }
 
     // Repository layer
-    single<ScannedDocumentsRepository> {
-        ScannedDocumentsRepositoryImpl(scannedDocumentDao = get<ScannedDocumentDao>())
+    single<LocalDocumentsRepository> {
+        LocalDocumentsRepositoryImpl(scannedDocumentDao = get<ScannedDocumentDao>())
     }
 
     // Use cases
@@ -33,7 +33,6 @@ val documentScannerDataModule = module {
     factory { GenerateDocumentThumbnailUseCase(documentOperationsService = get()) }
     factory { OpenDocumentInViewerUseCase(context = androidContext()) }
     factory { ShareDocumentUseCase(context = androidContext()) }
-    factory { ProcessScanningResultUseCase(scannerRepository = get()) }
     factory { ExportDocumentUseCase() }
 
     factory {

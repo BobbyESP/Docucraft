@@ -1,10 +1,10 @@
-package com.bobbyesp.docucraft.feature.docscanner.data.local.db
+package com.bobbyesp.docucraft.feature.docscanner.data.db
 
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.bobbyesp.docucraft.feature.docscanner.data.local.db.dao.ScannedDocumentDao
-import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedDocumentEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
+import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
 
 // TODO: Add labels to the database. The user might want to categorize the scanned documents.
 

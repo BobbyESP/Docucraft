@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity
+package com.bobbyesp.docucraft.feature.docscanner.data.db.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

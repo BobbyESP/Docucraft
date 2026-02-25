@@ -1,10 +1,10 @@
-package com.bobbyesp.docucraft.feature.docscanner.data.local.db.dao
+package com.bobbyesp.docucraft.feature.docscanner.data.db.dao
 
 import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Query
 import com.bobbyesp.docucraft.core.data.local.db.BaseDao
-import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedDocumentEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

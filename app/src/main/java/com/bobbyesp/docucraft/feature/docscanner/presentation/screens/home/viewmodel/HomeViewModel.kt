@@ -1,19 +1,18 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel
 
 import android.net.Uri
-import android.os.Environment
-import androidx.core.net.toUri
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
-import com.bobbyesp.docucraft.core.util.state.ResourceState
 import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
+import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.BasicDocumentInfo
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
@@ -21,7 +20,6 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentByIdU
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessScanningResultUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
@@ -30,11 +28,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatu
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.copyTo
-import io.github.vinceglb.filekit.dialogs.openFileSaver
-import io.github.vinceglb.filekit.path
+import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -53,6 +47,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
+    private val scannerManager: ScannerManager,
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
     private val searchDocumentsUseCase: SearchDocumentsUseCase,
     private val getDocumentByIdUseCase: GetDocumentByIdUseCase,
@@ -61,7 +56,6 @@ class HomeViewModel(
     private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase,
     private val openDocumentInViewerUseCase: OpenDocumentInViewerUseCase,
     private val shareDocumentUseCase: ShareDocumentUseCase,
-    private val processScanningResultUseCase: ProcessScanningResultUseCase,
     private val exportDocumentUseCase: ExportDocumentUseCase,
     private val stringProvider: StringProvider,
 ) : CoroutineBasedViewModel() {
@@ -89,7 +83,6 @@ class HomeViewModel(
 
     // Events using Channel for one-time events
     private val _uiEffect = Channel<HomeUiEffect>(Channel.BUFFERED)
-
     val uiEffect = _uiEffect.receiveAsFlow()
 
 
@@ -99,19 +92,36 @@ class HomeViewModel(
         events = eventsPair.second
 
         observeDocuments()
+
+        viewModelScope.launch {
+            scannerManager.scanResult.collect { result ->
+                result.onSuccess { scanResult ->
+                    processScanResult(scanResult)
+                }.onFailure {
+                    _uiState.update { it.copy(isScanning = false) }
+                    Log.w(
+                        "HomeViewModel",
+                        "Failed to scan document: ${it.message}",
+                        it
+                    )
+                }
+            }
+        }
     }
 
     fun onAction(action: HomeUiAction) {
         when (action) {
             // Scanning
             HomeUiAction.LaunchDocumentScanner -> {
-                sendEvent(HomeUiEffect.LaunchScanner)
+                launchDefault {
+                    scannerManager.requestScan()
+                }
             }
 
-            is HomeUiAction.ScanResultAction -> processScanResult(action.result)
+            is HomeUiAction.ScanResultAction -> processScanResult(action.rawScanResult)
 
             // Document Operations
-            is HomeUiAction.OpenDocument -> {
+            is HomeUiAction.ViewDocument -> {
                 launchIO {
                     val basicInformation = getBasicInformationForId(action.id)
 
@@ -303,56 +313,31 @@ class HomeViewModel(
         return result to unfilteredDocuments.isEmpty()
     }
 
-    private fun processScanResult(result: Any) {
+    private fun processScanResult(rawScanResult: RawScanResult) {
         launchIO {
-            processScanningResultUseCase(result).collect { resource ->
-                when (resource) {
-                    is ResourceState.Loading -> {
-                        _uiState.update { it.copy(isScanning = true) }
-                    }
+            _uiState.update {
+                it.copy(isScanning = false)
+            }
 
-                    is ResourceState.Success -> {
-                        val document = resource.data
-                        _uiState.update {
-                            it.copy(isScanning = false)
-                        }
-                        // Auto-save logic
-                        document?.let { scannedDocument ->
-                            saveScannedDocumentUseCase(scannedDocument).onSuccess {
-                                _events.emitEvent(
-                                    UiEvent.ShowMessage(
-                                        stringProvider.get(
-                                            R.string.doc_saved_successfully,
-                                        ), type = NotificationType.Success
-                                    )
-                                )
-                            }.onFailure { error ->
-                                logError("Failed to save document: ${error.message}", error)
-                                _events.emitEvent(
-                                    UiEvent.ShowMessage(
-                                        message = stringProvider.get(
-                                            id = R.string.doc_scan_error,
-                                        ), type = NotificationType.Error
-                                    )
-                                )
-                            }
-                        }
-                    }
-
-                    is ResourceState.Error -> {
-                        _uiState.update {
-                            it.copy(isScanning = false)
-                        }
-
-                        _events.emitEvent(
-                            UiEvent.ShowMessage(
-                                message = resource.message
-                                    ?: stringProvider.get(R.string.unknown_error),
-                                type = NotificationType.Error
-                            )
-                        )
-                    }
-                }
+            // Auto-save logic
+            saveScannedDocumentUseCase(rawScanResult).onSuccess {
+                _events.emitEvent(
+                    UiEvent.ShowMessage(
+                        stringProvider.get(
+                            R.string.doc_saved_successfully,
+                        ), type = NotificationType.Success
+                    )
+                )
+            }.onFailure { error ->
+                logError("Failed to save document: ${error.message}", error)
+                _events.emitEvent(
+                    UiEvent.ShowMessage(
+                        message = stringProvider.get(
+                            id = R.string.doc_save_error_with_reason,
+                            error
+                        ), type = NotificationType.Error
+                    )
+                )
             }
         }
     }
@@ -389,10 +374,10 @@ class HomeViewModel(
         }
     }
 
-    private suspend fun getBasicInformationForId(id: String): BasicDocumentInfo {
+    private suspend fun getBasicInformationForId(id: String): BasicDocument {
         val document = getDocumentByIdUseCase(pdfId = id)
 
-        return BasicDocumentInfo(
+        return BasicDocument(
             id = document.id,
             filename = document.filename,
             uri = document.path.toString(),

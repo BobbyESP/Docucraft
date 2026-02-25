@@ -6,7 +6,7 @@ import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
-import com.bobbyesp.docucraft.mlkit.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 
 sealed interface HomeStatus {
     data object Idle : HomeStatus
@@ -29,7 +29,7 @@ data class HomeUiState(
     val isSearchBarVisible: Boolean = false,
     val filterOptions: FilterOptions = FilterOptions.default,
     val isScanning: Boolean = false,
-    val mostRecentScan: Document? = null,
+    val mostRecentScan: RawScanResult? = null,
 ) {
     val activeDialog: HomeDialog? = dialogs.active
     val errorMessage: String? = (status as? HomeStatus.Error)?.message
@@ -46,10 +46,10 @@ sealed interface HomeUiAction {
     // Scanning
     data object LaunchDocumentScanner : HomeUiAction
 
-    data class ScanResultAction(val result: Any) : HomeUiAction
+    data class ScanResultAction(val rawScanResult: RawScanResult) : HomeUiAction
 
     // Document Operations (User Intents)
-    data class OpenDocument(val id: String) : HomeUiAction
+    data class ViewDocument(val id: String) : HomeUiAction
 
     data class SaveDocument(val document: ScannedDocument) : HomeUiAction
 
@@ -88,6 +88,4 @@ sealed interface HomeUiAction {
 // --- EFFECTS (One-off Events for UI) ---
 sealed interface HomeUiEffect {
     data class Navigate(val route: Route) : HomeUiEffect
-
-    data object LaunchScanner : HomeUiEffect
 }

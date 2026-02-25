@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.docscanner.data.local.db
+package com.bobbyesp.docucraft.feature.docscanner.data.db
 
 import androidx.room.RenameTable
 import androidx.room.migration.AutoMigrationSpec

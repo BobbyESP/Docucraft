@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.compose.runtime.Immutable
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.core.util.UriSerializer
-import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedDocumentEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
 import kotlinx.serialization.Serializable
 
 /**

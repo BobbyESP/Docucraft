@@ -1,19 +1,19 @@
-package com.bobbyesp.docucraft.feature.docscanner.data.local.repository
+package com.bobbyesp.docucraft.feature.docscanner.data.repository
 
 import android.net.Uri
-import com.bobbyesp.docucraft.feature.docscanner.data.local.db.dao.ScannedDocumentDao
-import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedDocumentEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
+import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument.Companion.toModel
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannedDocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
-class ScannedDocumentsRepositoryImpl(
+class LocalDocumentsRepositoryImpl(
     private val scannedDocumentDao: ScannedDocumentDao,
-) : ScannedDocumentsRepository {
+) : LocalDocumentsRepository {
 
     override suspend fun observeDocuments(): Flow<List<ScannedDocument>> =
         scannedDocumentDao
