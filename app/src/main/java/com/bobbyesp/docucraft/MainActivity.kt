@@ -25,7 +25,6 @@ import com.bobbyesp.docucraft.core.presentation.navigation.rememberTopLevelBackS
 import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannerRepository
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.ACTION_SCAN_DOCUMENT
 import com.dokar.sonner.Toaster
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
@@ -38,7 +37,6 @@ import org.koin.core.component.KoinComponent
 class MainActivity : ComponentActivity(), KoinComponent {
 
     private val appPreferences: AppPreferences by inject()
-    private val homeViewModel: HomeViewModel by inject()
     private val inAppNotificationsService: InAppNotificationsService by inject()
 
     private val scannerManager: ScannerManager by inject()
