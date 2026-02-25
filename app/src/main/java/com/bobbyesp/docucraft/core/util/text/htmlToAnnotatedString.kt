@@ -31,6 +31,7 @@ fun htmlToAnnotatedString(html: String): AnnotatedString {
                             start,
                             end,
                         )
+
                     Typeface.ITALIC ->
                         annotatedString.addStyle(
                             SpanStyle(fontStyle = FontStyle.Italic),
@@ -39,18 +40,21 @@ fun htmlToAnnotatedString(html: String): AnnotatedString {
                         )
                 }
             }
+
             is UnderlineSpan ->
                 annotatedString.addStyle(
                     SpanStyle(textDecoration = TextDecoration.Underline),
                     start,
                     end,
                 )
+
             is StrikethroughSpan ->
                 annotatedString.addStyle(
                     SpanStyle(textDecoration = TextDecoration.LineThrough),
                     start,
                     end,
                 )
+
             is ForegroundColorSpan ->
                 annotatedString.addStyle(SpanStyle(color = Color(span.foregroundColor)), start, end)
         }

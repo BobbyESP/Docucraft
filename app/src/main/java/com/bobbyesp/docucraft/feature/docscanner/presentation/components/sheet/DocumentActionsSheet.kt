@@ -135,7 +135,8 @@ fun DocumentActionsSheet(
         ) {
             scannedDocument.thumbnail?.let {
                 val imageModifier =
-                    Modifier.widthIn(max = 120.dp)
+                    Modifier
+                        .widthIn(max = 120.dp)
                         .aspectRatio(0.707f)
                         .clip(MaterialShapes.Slanted.toShape())
                         .background(MaterialTheme.colorScheme.primaryContainer)
@@ -153,7 +154,9 @@ fun DocumentActionsSheet(
                     },
                     loading = {
                         Icon(
-                            modifier = Modifier.padding(12.dp).heightIn(min = 48.dp),
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .heightIn(min = 48.dp),
                             imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
                             contentDescription = stringResource(id = R.string.file_icon),
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -197,7 +200,8 @@ fun DocumentActionsSheet(
         // File Info Section
         HorizontalDivider(
             modifier =
-                Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                Modifier
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
                     .clip(MaterialTheme.shapes.medium),
             thickness = 3.dp,
         )

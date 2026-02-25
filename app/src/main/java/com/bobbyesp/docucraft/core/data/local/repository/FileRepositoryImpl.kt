@@ -31,6 +31,7 @@ class FileRepositoryImpl(private val context: Context) : FileRepository {
                     }
                     null
                 }
+
                 else -> throw IllegalArgumentException("Unsupported URI scheme: ${uri.scheme}")
             }
         } catch (e: Exception) {

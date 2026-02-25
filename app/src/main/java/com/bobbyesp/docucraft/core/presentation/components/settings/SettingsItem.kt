@@ -75,7 +75,8 @@ fun SettingsGroup(items: ImmutableList<SettingsItem>, modifier: Modifier = Modif
             SettingsItem(
                 item = item,
                 modifier =
-                    Modifier.fillMaxWidth()
+                    Modifier
+                        .fillMaxWidth()
                         .clip(
                             when {
                                 items.size == 1 -> {

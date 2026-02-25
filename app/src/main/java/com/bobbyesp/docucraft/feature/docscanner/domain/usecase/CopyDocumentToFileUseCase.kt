@@ -24,7 +24,8 @@ class CopyDocumentToFileUseCase(private val context: Context) {
                 while (inputStream.read(buffer).also { bytesRead = it } != -1) {
                     bufferedSink.write(buffer, 0, bytesRead)
                 }
-            } ?: throw IllegalStateException("No se pudo abrir el stream de entrada para la URI: $inputUri")
+            }
+                ?: throw IllegalStateException("No se pudo abrir el stream de entrada para la URI: $inputUri")
         }
     }
 

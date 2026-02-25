@@ -37,7 +37,9 @@ fun Placeholder(
         icon?.let {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(
-                    modifier = Modifier.fillMaxSize().padding(8.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp),
                     imageVector = icon,
                     contentDescription = contentDescription,
                     tint =
@@ -54,7 +56,9 @@ fun Placeholder(
 private fun PlaceholderPreview() {
     MaterialTheme {
         Placeholder(
-            modifier = Modifier.width(200.dp).aspectRatio(1f),
+            modifier = Modifier
+                .width(200.dp)
+                .aspectRatio(1f),
             icon = Icons.Rounded.Lyrics,
             colorful = true,
             contentDescription = "Song cover",
@@ -67,7 +71,9 @@ private fun PlaceholderPreview() {
 private fun PlaceholderPreviewNonColourful() {
     MaterialTheme {
         Placeholder(
-            modifier = Modifier.width(200.dp).aspectRatio(1f),
+            modifier = Modifier
+                .width(200.dp)
+                .aspectRatio(1f),
             icon = Icons.Rounded.Lyrics,
             colorful = false,
             contentDescription = "Song cover",

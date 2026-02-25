@@ -31,12 +31,14 @@ fun SettingSwitch(
 ) {
     Row(
         modifier =
-            modifier.clip(ShapeDefaults.Large).clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) {
-                onCheckedChange(!isChecked)
-            },
+            modifier
+                .clip(ShapeDefaults.Large)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) {
+                    onCheckedChange(!isChecked)
+                },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -45,7 +47,9 @@ fun SettingSwitch(
             contentDescription = null,
         )
 
-        Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
+        Column(modifier = Modifier
+            .weight(1f)
+            .padding(horizontal = 16.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,

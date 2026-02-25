@@ -17,7 +17,8 @@ import com.materialkolor.PaletteStyle
  * @property key The key used to store the preference.
  * @property defaultValue The default value of the preference.
  */
-@Immutable data class PreferencesKey<T>(val key: Preferences.Key<T>, val defaultValue: T)
+@Immutable
+data class PreferencesKey<T>(val key: Preferences.Key<T>, val defaultValue: T)
 
 object AppSettings {
     object Core {

@@ -38,7 +38,7 @@ class ExportDocumentUseCase() {
             return Result.failure(e)
         }
 
-        if(!file.exists()) {
+        if (!file.exists()) {
             return Result.failure(
                 DocumentExportFailure.Unknown()
             )

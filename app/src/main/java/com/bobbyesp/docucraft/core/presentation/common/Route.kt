@@ -8,7 +8,7 @@ import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed interface Route: NavKey {
+sealed interface Route : NavKey {
     @Serializable
     data object Home : Route, TopLevelRoute, NavKey {
         override val icon: ImageVector

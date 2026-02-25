@@ -68,7 +68,9 @@ fun LazyGridScope.GridMenuItem(
             onClick = onClick,
             shapes =
                 ButtonShapes(shape = ShapeDefaults.ExtraLarge, pressedShape = ShapeDefaults.Large),
-            modifier = modifier.fillMaxWidth().heightIn(min = 84.dp),
+            modifier = modifier
+                .fillMaxWidth()
+                .heightIn(min = 84.dp),
             enabled = enabled,
             colors =
                 ButtonDefaults.elevatedButtonColors(

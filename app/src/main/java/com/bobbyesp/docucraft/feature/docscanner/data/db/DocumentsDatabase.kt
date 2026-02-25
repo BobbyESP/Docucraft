@@ -16,7 +16,7 @@ const val CURRENT_VERSION = 2
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2, spec = DocumentsDatabaseMigrations.Migration1To2::class)
-                     ],
+    ],
 )
 abstract class DocumentsDatabase : RoomDatabase() {
     abstract fun scannedDocumentDao(): ScannedDocumentDao

@@ -34,6 +34,7 @@ class TopLevelBackStack<T : NavKey>(
 ) {
     // We use SnapshotStateMap so Compose detects when tabs are added/removed.
     private val topLevelStacks: SnapshotStateMap<T, MutableList<T>> = mutableStateMapOf()
+
     // We maintain a separate list to track the order (history) of tabs, since Map doesn't guarantee it.
     private val topLevelOrder: MutableList<T> = mutableStateListOf()
 

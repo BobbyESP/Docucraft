@@ -69,7 +69,7 @@ fun PdfViewerScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
-        contentWindowInsets = WindowInsets(0, 0, 0,0)
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -147,7 +147,8 @@ fun PdfViewerScreen(
                 DocumentToolbar(
                     pdfState = pdfState,
                     title = documentInfo.title ?: documentInfo.filename,
-                    description = documentInfo.description ?: stringResource(R.string.no_description),
+                    description = documentInfo.description
+                        ?: stringResource(R.string.no_description),
                     onBack = onBack,
                     modifier = Modifier
                         .background(

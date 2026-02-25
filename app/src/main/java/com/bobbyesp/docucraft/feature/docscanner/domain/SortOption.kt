@@ -26,7 +26,8 @@ data class SortOption(val criteria: Criteria, val order: Order) {
         }
 
         companion object {
-            @Composable fun toString(criteria: Criteria): String = criteria.getLocalizedName()
+            @Composable
+            fun toString(criteria: Criteria): String = criteria.getLocalizedName()
         }
     }
 

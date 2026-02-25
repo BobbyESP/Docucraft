@@ -51,7 +51,7 @@ fun HomeScreen(
         onNavigate = onNavigate
     )
 
-    when(uiState.dialogs.active) {
+    when (uiState.dialogs.active) {
         is HomeDialog.Delete -> {
             val scannedDocument = (uiState.dialogs.active as HomeDialog.Delete).doc
             DeleteDocumentConfirmationDialog(
@@ -61,6 +61,7 @@ fun HomeScreen(
                 modifier = Modifier,
             )
         }
+
         is HomeDialog.Edit -> {
             val scannedDocument = (uiState.dialogs.active as HomeDialog.Edit).doc
             EditDocumentDetailsDialog(
@@ -79,6 +80,7 @@ fun HomeScreen(
                 modifier = Modifier,
             )
         }
+
         is HomeDialog.Actions -> {
             val scannedDocument = (uiState.dialogs.active as HomeDialog.Actions).doc
 
@@ -87,11 +89,18 @@ fun HomeScreen(
                 onDismissRequest = { viewModel.onAction(HomeUiAction.DismissActionsSheet) },
                 onSavePdf = { viewModel.onAction(HomeUiAction.SaveDocument(scannedDocument)) },
                 onSharePdf = { viewModel.onAction(HomeUiAction.ShareDocument(scannedDocument.path)) },
-                onDeletePdf = { viewModel.onAction(HomeUiAction.ShowDeleteConfirmation(scannedDocument.id)) },
+                onDeletePdf = {
+                    viewModel.onAction(
+                        HomeUiAction.ShowDeleteConfirmation(
+                            scannedDocument.id
+                        )
+                    )
+                },
                 onModifyPdfFields = { viewModel.onAction(HomeUiAction.ShowEditDialog(scannedDocument.id)) },
             )
         }
-        null -> { }
+
+        null -> {}
     }
 
     HomeContent(

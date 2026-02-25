@@ -19,12 +19,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 val Context.dataStore: DataStore<Preferences> by
-    preferencesDataStore(
-        name = "docucraft_preferences",
-        corruptionHandler = ReplaceFileCorruptionHandler(produceNewData = { emptyPreferences() }),
-        // migrations = emptyList(),
-        scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
-    )
+preferencesDataStore(
+    name = "docucraft_preferences",
+    corruptionHandler = ReplaceFileCorruptionHandler(produceNewData = { emptyPreferences() }),
+    // migrations = emptyList(),
+    scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+)
 
 @Composable
 fun <T> rememberPreferenceState(

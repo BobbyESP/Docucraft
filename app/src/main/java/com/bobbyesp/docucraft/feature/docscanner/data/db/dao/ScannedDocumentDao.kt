@@ -27,14 +27,17 @@ interface ScannedDocumentDao : BaseDao<ScannedDocumentEntity> {
     @Query("SELECT * FROM scanned_documents WHERE description LIKE '%' || :searchQuery || '%'")
     suspend fun searchByDescription(searchQuery: String): List<ScannedDocumentEntity>
 
-    @Query("SELECT COUNT(*) FROM scanned_documents") suspend fun getScannedDocumentsCount(): Int
+    @Query("SELECT COUNT(*) FROM scanned_documents")
+    suspend fun getScannedDocumentsCount(): Int
 
     @Query("DELETE FROM scanned_documents WHERE path = :path")
     suspend fun deleteByPath(path: String): Int
 
-    @Query("DELETE FROM scanned_documents WHERE id = :id") suspend fun deleteById(id: String): Int
+    @Query("DELETE FROM scanned_documents WHERE id = :id")
+    suspend fun deleteById(id: String): Int
 
-    @Query("DELETE FROM scanned_documents") suspend fun clear(): Int
+    @Query("DELETE FROM scanned_documents")
+    suspend fun clear(): Int
 
     @Query(
         "SELECT * FROM scanned_documents WHERE createdTimestamp BETWEEN :startTime AND :endTime ORDER BY createdTimestamp DESC"

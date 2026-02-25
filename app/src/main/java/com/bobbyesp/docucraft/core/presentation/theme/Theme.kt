@@ -16,10 +16,10 @@ fun DocucraftTheme(colorScheme: ColorScheme? = null, content: @Composable () -> 
     val finalColorScheme =
         colorScheme
             ?: rememberDynamicMaterialThemeState(
-                    seedColor = Color.Blue,
-                    style = PaletteStyle.Expressive,
-                    isDark = isSystemInDarkTheme(),
-                )
+                seedColor = Color.Blue,
+                style = PaletteStyle.Expressive,
+                isDark = isSystemInDarkTheme(),
+            )
                 .colorScheme
 
     MaterialExpressiveTheme(

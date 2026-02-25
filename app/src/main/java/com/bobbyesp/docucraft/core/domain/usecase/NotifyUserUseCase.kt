@@ -10,7 +10,11 @@ class NotifyUserUseCase(
     private val stringProvider: StringProvider,
     private val inAppNotificationsService: InAppNotificationsService
 ) {
-    operator fun invoke(@StringRes resId: Int, vararg formatArgs: Any, type: NotificationType = NotificationType.Normal) {
+    operator fun invoke(
+        @StringRes resId: Int,
+        vararg formatArgs: Any,
+        type: NotificationType = NotificationType.Normal
+    ) {
         inAppNotificationsService.show(
             InAppNotification(
                 message = stringProvider.get(resId, *formatArgs),

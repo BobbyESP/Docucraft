@@ -13,7 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 
 class SonnerNotificationServiceImpl(
     private val coroutineScope: CoroutineScope,
-): InAppNotificationsService {
+) : InAppNotificationsService {
 
     val sonnerState = ToasterState(
         coroutineScope = coroutineScope,
