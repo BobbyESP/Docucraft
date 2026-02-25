@@ -20,7 +20,7 @@ val documentScannerDataModule = module {
 
     // Repository layer
     single<ScannedDocumentsRepository> {
-        ScannedDocumentsRepositoryImpl(context = androidContext(), scannedDocumentDao = get<ScannedDocumentDao>())
+        ScannedDocumentsRepositoryImpl(scannedDocumentDao = get<ScannedDocumentDao>())
     }
 
     // Use cases
@@ -33,11 +33,11 @@ val documentScannerDataModule = module {
     factory { GenerateDocumentThumbnailUseCase(documentOperationsService = get()) }
     factory { OpenDocumentInViewerUseCase(context = androidContext()) }
     factory { ShareDocumentUseCase(context = androidContext()) }
-    factory { ScanDocumentUseCase(scannerRepository = get()) }
+    factory { ProcessScanningResultUseCase(scannerRepository = get()) }
+    factory { ExportDocumentUseCase() }
 
     factory {
         DeleteDocumentUseCase(
-            context = androidContext(),
             repository = get(),
             fileRepository = get<FileRepository>(),
         )

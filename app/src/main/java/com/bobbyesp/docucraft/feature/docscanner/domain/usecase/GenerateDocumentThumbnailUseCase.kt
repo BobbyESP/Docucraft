@@ -17,6 +17,7 @@ class GenerateDocumentThumbnailUseCase(private val documentOperationsService: Do
     operator fun invoke(pdfUri: Uri, filename: String): String {
         val thumbnailDir = PlatformFile(FileKit.filesDir, "previews")
         thumbnailDir.ensure(mustCreate = true)
+
         val thumbnailFile = PlatformFile(thumbnailDir, "$filename.png")
 
         documentOperationsService.saveDocumentPageAsImage(

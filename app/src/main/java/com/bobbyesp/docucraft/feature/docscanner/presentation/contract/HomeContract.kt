@@ -1,62 +1,52 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.contract
 
 import android.net.Uri
+import com.bobbyesp.docucraft.core.presentation.common.DialogBackStack
 import com.bobbyesp.docucraft.core.presentation.common.Route
-import com.bobbyesp.docucraft.core.util.state.ScreenState
-import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.mlkit.domain.model.Document
 
-// --- STATE ---
-data class HomeUiState(
-    // Global Loading & Error
-    val fetchState: ScreenState<Unit> = ScreenState.Loading(),
+sealed interface HomeStatus {
+    data object Idle : HomeStatus
+    data object Loading : HomeStatus
+    data class Error(val message: String) : HomeStatus
+}
 
-    // Data
+sealed interface HomeDialog {
+    data class Delete(val doc: ScannedDocument) : HomeDialog
+    data class Edit(val doc: ScannedDocument) : HomeDialog
+    data class Actions(val doc: ScannedDocument) : HomeDialog
+}
+
+data class HomeUiState(
+    val status: HomeStatus = HomeStatus.Loading,
     val visibleDocuments: List<ScannedDocument> = emptyList(),
     val hasDocuments: Boolean = false,
-
-    // Dialogs & Temporal States
-    val documentForRemoval: TemporalState<ScannedDocument> = TemporalState.NotPresent,
-    val documentForModification: TemporalState<ScannedDocument> = TemporalState.NotPresent,
-    val documentInfoCandidate: TemporalState<ScannedDocument> = TemporalState.NotPresent,
-    val documentForActionMenu: TemporalState<ScannedDocument> = TemporalState.NotPresent,
-
-    // Search & Filter State
+    val dialogs: DialogBackStack<HomeDialog> = DialogBackStack(),
     val searchQuery: String = "",
     val isSearchBarVisible: Boolean = false,
     val filterOptions: FilterOptions = FilterOptions.default,
-
-    // Scanning State
     val isScanning: Boolean = false,
     val mostRecentScan: Document? = null,
-    val scanUserMessage: String? = null,
 ) {
+    val activeDialog: HomeDialog? = dialogs.active
+    val errorMessage: String? = (status as? HomeStatus.Error)?.message
 
-    val errorMessage: String?
-        get() = (fetchState as? ScreenState.Error)?.message
+    val hasActiveFilters: Boolean = filterOptions.run {
+        minPageCount != null || minFileSize != null || dateRange != null || sortBy != SortOption.DateDesc
+    }
 
-    val hasActiveFilters: Boolean
-        get() =
-            filterOptions.minPageCount != null ||
-                filterOptions.minFileSize != null ||
-                filterOptions.dateRange != null ||
-                filterOptions.sortBy != SortOption.DateDesc
-
-    val isEmptyResult: Boolean
-        get() = visibleDocuments.isEmpty() && hasDocuments
+    val isEmptyResult: Boolean = visibleDocuments.isEmpty() && hasDocuments
 }
 
 // --- ACTIONS (Inputs from UI) ---
 sealed interface HomeUiAction {
     // Scanning
-    data object OnScanButtonClicked : HomeUiAction
+    data object LaunchDocumentScanner : HomeUiAction
 
-    data class OnScanResultReceived(val result: Any) : HomeUiAction
-
-    data object OnScanErrorDismissed : HomeUiAction
+    data class ScanResultAction(val result: Any) : HomeUiAction
 
     // Document Operations (User Intents)
     data class OpenDocument(val id: String) : HomeUiAction
@@ -75,11 +65,11 @@ sealed interface HomeUiAction {
 
     data class ShowEditDialog(val id: String) : HomeUiAction
 
-    data class ShowOptionsSheet(val id: String) : HomeUiAction
+    data class ShowActionsSheet(val id: String) : HomeUiAction
+
+    data object DismissActionsSheet : HomeUiAction
 
     data object DismissDialogs : HomeUiAction
-
-    data object DismissOptionsSheet : HomeUiAction
 
     // Search & Filter
     data class UpdateSearchQuery(val query: String) : HomeUiAction

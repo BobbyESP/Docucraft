@@ -14,5 +14,5 @@ interface DocumentScannerService {
      * @param input The image source to be analyzed.
      * @return A Resource containing the ScannedDocument if successful.
      */
-    suspend fun scanDocument(input: Any): Result<Document>
+    suspend fun processResult(input: Any): Result<Document>
 }

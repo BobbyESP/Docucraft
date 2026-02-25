@@ -12,8 +12,7 @@ import kotlinx.io.buffered
  * operation.
  */
 class CopyDocumentToFileUseCase(private val context: Context) {
-    operator fun invoke(inputUri: Uri, outputFile: PlatformFile) {
-        // Ensure parent directory exists
+    operator fun invoke(inputUri: Uri, outputFile: PlatformFile): Result<Unit> = runCatching {
         outputFile.ensureParent(mustCreate = true)
 
         val sink = outputFile.sink(append = false).buffered()
@@ -25,7 +24,7 @@ class CopyDocumentToFileUseCase(private val context: Context) {
                 while (inputStream.read(buffer).also { bytesRead = it } != -1) {
                     bufferedSink.write(buffer, 0, bytesRead)
                 }
-            } ?: throw IllegalStateException("Could not open input stream for URI: $inputUri")
+            } ?: throw IllegalStateException("No se pudo abrir el stream de entrada para la URI: $inputUri")
         }
     }
 

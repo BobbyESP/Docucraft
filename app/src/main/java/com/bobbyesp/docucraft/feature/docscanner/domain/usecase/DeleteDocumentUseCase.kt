@@ -1,6 +1,5 @@
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
-import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.bobbyesp.docucraft.core.domain.repository.FileRepository
@@ -13,65 +12,40 @@ import io.github.vinceglb.filekit.exists
  * Use case for deleting a scanned PDF. Handles both database removal and physical file deletion.
  */
 class DeleteDocumentUseCase(
-    private val context: Context,
     private val repository: ScannedDocumentsRepository,
     private val fileRepository: FileRepository,
 ) {
-    suspend operator fun invoke(pdfPath: Uri) {
+    suspend operator fun invoke(documentUri: Uri) {
         // Remove from database first (maintains referential integrity)
-        repository.deleteDocument(pdfPath)
-
-        // Delete physical file
-        deletePhysicalFile(pdfPath)
+        repository.deleteDocument(documentUri)
+        deleteFile(documentUri)
     }
 
-    private suspend fun deletePhysicalFile(pdfPath: Uri) {
-        when (pdfPath.scheme) {
-            "content" -> {
-                val filePath = fileRepository.getFilePathFromUri(pdfPath)
-                if (filePath != null) {
-                    try {
-                        val file = PlatformFile(filePath)
-                        if (file.exists()) {
-                            file.delete()
-                            Log.d(TAG, "Successfully deleted file: $filePath")
-                        } else {
-                            Log.w(TAG, "File does not exist at path: $filePath")
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error deleting file: ${e.message}", e)
-                    }
-                } else {
-                    // Fallback: delete using ContentResolver
-                    try {
-                        val rowsDeleted = context.contentResolver.delete(pdfPath, null, null)
-                        Log.d(TAG, "ContentResolver deleted $rowsDeleted rows")
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error deleting via ContentResolver: ${e.message}", e)
-                    }
-                }
-            }
-            "file" -> {
-                val filePath = pdfPath.path
-                if (!filePath.isNullOrBlank()) {
-                    try {
-                        val file = PlatformFile(filePath)
-                        if (file.exists()) {
-                            file.delete()
-                            Log.d(TAG, "Successfully deleted file: $filePath")
-                        } else {
-                            Log.w(TAG, "File does not exist at path: $filePath")
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error deleting file: ${e.message}", e)
-                    }
-                } else {
-                    Log.w(TAG, "Invalid file path from URI: $pdfPath")
-                }
-            }
+    private suspend fun deleteFile(documentUri: Uri) {
+        val filePath = when (documentUri.scheme) {
+            "content" -> fileRepository.getFilePathFromUri(documentUri)
+            "file" -> documentUri.path
             else -> {
-                Log.w(TAG, "Unsupported URI scheme: ${pdfPath.scheme}")
+                Log.w(TAG, "Unsupported URI scheme: ${documentUri.scheme}")
+                return
             }
+        }
+
+        if (filePath.isNullOrBlank()) {
+            Log.w(TAG, "Invalid file path from URI: $documentUri")
+            return
+        }
+
+        try {
+            val file = PlatformFile(filePath)
+            if (file.exists()) {
+                file.delete()
+                Log.d(TAG, "Successfully deleted file: $filePath")
+            } else {
+                Log.w(TAG, "File does not exist at path: $filePath")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting file: ${e.message}", e)
         }
     }
 

@@ -15,7 +15,7 @@ import kotlinx.serialization.Serializable
  * deserialization, and as @Immutable to ensure immutability for Compose compatibility.
  *
  * @property id A unique identifier for the scanned document.
- * @property filename The name of the document file (e.g., "document.pdf").
+ * @property filename The name of the document file without extension (e.g., "internet_bill_january_2026").
  * @property title The title of the document. This field is optional and can be null.
  * @property description A brief description of the document. This field is optional and can be null.
  * @property path The Uri representing the location of the file on the device's storage.

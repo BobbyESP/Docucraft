@@ -6,41 +6,55 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Update
 import androidx.room.Upsert
 
+/**
+ * Base Data Access Object (DAO) interface for performing common database operations.
+ * This interface provides generic methods for inserting, updating, deleting, and upserting
+ * entities in a Room database.
+ *
+ * @param T The type of the entity that this DAO will manage.
+ */
 interface BaseDao<T> {
-    /**
-     * Insert an entity in the database. If there is a conflict, replace the entity
-     *
-     * @param entity
-     */
-    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insert(entity: T)
 
     /**
-     * Insert a list of entities in the database. If an entity already exists, replace it
+     * Inserts an entity into the database. If there is a conflict, the existing entity
+     * will be replaced.
      *
-     * @param entities
+     * @param entity The entity to be inserted.
+     */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(entity: T)
+
+    /**
+     * Inserts a list of entities into the database. If any entity already exists, it will
+     * be replaced.
+     *
+     * @param entities The list of entities to be inserted.
+     * @return A list of row IDs for the inserted entities.
      */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(entities: List<T>): List<Long>
 
     /**
-     * Update an entity.
+     * Updates an existing entity in the database.
      *
-     * @param entity
+     * @param entity The entity to be updated.
      */
-    @Update suspend fun update(entity: T)
+    @Update
+    suspend fun update(entity: T)
 
     /**
-     * Delete an entity.
+     * Deletes an entity from the database.
      *
-     * @param entity
+     * @param entity The entity to be deleted.
      */
-    @Delete suspend fun delete(entity: T)
+    @Delete
+    suspend fun delete(entity: T)
 
     /**
-     * Updates an existing row if a specified value already exists in a table, and insert a new row
-     * if the specified value doesn't already exist
+     * Inserts an entity if it does not exist, or updates it if it already exists.
      *
-     * @param entity
+     * @param entity The entity to be upserted.
      */
-    @Upsert suspend fun upsert(entity: T)
+    @Upsert
+    suspend fun upsert(entity: T)
 }

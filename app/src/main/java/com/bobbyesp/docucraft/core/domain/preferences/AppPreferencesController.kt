@@ -1,5 +1,6 @@
-package com.bobbyesp.docucraft.core.data.local.preferences
+package com.bobbyesp.docucraft.core.domain.preferences
 
+import com.bobbyesp.docucraft.core.data.local.preferences.PreferencesKey
 import kotlinx.coroutines.flow.Flow
 
 interface AppPreferencesController {

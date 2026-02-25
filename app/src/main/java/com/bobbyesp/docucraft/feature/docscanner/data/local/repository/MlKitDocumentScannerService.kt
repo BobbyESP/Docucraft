@@ -1,7 +1,7 @@
 package com.bobbyesp.docucraft.feature.docscanner.data.local.repository
 
 import androidx.activity.result.ActivityResult
-import com.bobbyesp.docucraft.mlkit.domain.error.OperationFailure
+import com.bobbyesp.docucraft.mlkit.domain.exception.OperationFailure
 import com.bobbyesp.docucraft.mlkit.domain.model.Document
 import com.bobbyesp.docucraft.mlkit.domain.datsource.MlKitDataSource
 import com.bobbyesp.docucraft.mlkit.domain.repository.DocumentScannerService
@@ -16,7 +16,7 @@ import kotlinx.coroutines.withContext
 class MlKitDocumentScannerService(private val dataSource: MlKitDataSource) :
     DocumentScannerService {
 
-    override suspend fun scanDocument(input: Any): Result<Document> {
+    override suspend fun processResult(input: Any): Result<Document> {
         return withContext(Dispatchers.IO) {
             try {
                 if (input !is ActivityResult) {

@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
         scannerLauncher =
             registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result
                 ->
-                homeViewModel.onAction(HomeUiAction.OnScanResultReceived(result))
+                homeViewModel.onAction(HomeUiAction.ScanResultAction(result))
             }
 
         handleIntent(intent)

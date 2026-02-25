@@ -71,7 +71,7 @@ private data class DocumentAction(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ScannedDocumentOptionsSheet(
+fun DocumentActionsSheet(
     scannedDocument: ScannedDocument,
     onDismissRequest: () -> Unit,
     onSavePdf: () -> Unit,

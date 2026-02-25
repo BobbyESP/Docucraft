@@ -1,6 +1,5 @@
 package com.bobbyesp.docucraft.feature.docscanner.data.local.repository
 
-import android.content.Context
 import android.net.Uri
 import com.bobbyesp.docucraft.feature.docscanner.data.local.db.dao.ScannedDocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.local.db.entity.ScannedDocumentEntity
@@ -13,7 +12,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 class ScannedDocumentsRepositoryImpl(
-    private val context: Context,
     private val scannedDocumentDao: ScannedDocumentDao,
 ) : ScannedDocumentsRepository {
 
@@ -61,7 +59,7 @@ class ScannedDocumentsRepositoryImpl(
         title: String?,
         description: String?,
     ) {
-        require(id.isNotEmpty()) { "document ID must not be empty" }
+        require(id.isNotEmpty()) { "Document ID must not be empty" }
 
         val updatedCount = scannedDocumentDao.updateDocumentDetails(id, title, description)
 

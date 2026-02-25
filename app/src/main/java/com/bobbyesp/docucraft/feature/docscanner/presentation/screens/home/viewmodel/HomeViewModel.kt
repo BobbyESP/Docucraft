@@ -10,22 +10,23 @@ import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.state.ResourceState
-import com.bobbyesp.docucraft.core.util.state.ScreenState
-import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.BasicDocumentInfo
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentByIdUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ScanDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessScanningResultUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeDialog
+import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
@@ -43,18 +44,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for the Home screen. Each use case has a single responsibility, following SOLID
- * principles.
- */
 class HomeViewModel(
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
     private val searchDocumentsUseCase: SearchDocumentsUseCase,
@@ -64,9 +61,20 @@ class HomeViewModel(
     private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase,
     private val openDocumentInViewerUseCase: OpenDocumentInViewerUseCase,
     private val shareDocumentUseCase: ShareDocumentUseCase,
-    private val scanDocumentUseCase: ScanDocumentUseCase,
+    private val processScanningResultUseCase: ProcessScanningResultUseCase,
+    private val exportDocumentUseCase: ExportDocumentUseCase,
     private val stringProvider: StringProvider,
 ) : CoroutineBasedViewModel() {
+
+    override fun onCoroutineException(throwable: Throwable) {
+        viewModelScope.launch {
+            _events.emitEvent(
+                UiEvent.ShowMessage(
+                    stringProvider.getError(throwable)
+                )
+            )
+        }
+    }
 
     // State management
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -74,6 +82,16 @@ class HomeViewModel(
 
     private val _events: MutableSharedFlow<UiEvent>
     val events: SharedFlow<UiEvent>
+
+    private fun sendEvent(effect: HomeUiEffect) {
+        viewModelScope.launch { _uiEffect.send(effect) }
+    }
+
+    // Events using Channel for one-time events
+    private val _uiEffect = Channel<HomeUiEffect>(Channel.BUFFERED)
+
+    val uiEffect = _uiEffect.receiveAsFlow()
+
 
     init {
         val eventsPair = createEventFlow<UiEvent>()
@@ -83,29 +101,142 @@ class HomeViewModel(
         observeDocuments()
     }
 
+    fun onAction(action: HomeUiAction) {
+        when (action) {
+            // Scanning
+            HomeUiAction.LaunchDocumentScanner -> {
+                sendEvent(HomeUiEffect.LaunchScanner)
+            }
+
+            is HomeUiAction.ScanResultAction -> processScanResult(action.result)
+
+            // Document Operations
+            is HomeUiAction.OpenDocument -> {
+                launchIO {
+                    val basicInformation = getBasicInformationForId(action.id)
+
+                    sendEvent(
+                        HomeUiEffect.Navigate(
+                            Route.PdfViewer(
+                                documentInfo = basicInformation
+                            )
+                        )
+                    )
+                }
+
+            }
+
+            is HomeUiAction.SaveDocument -> onExportDocument(action.document)
+            is HomeUiAction.ShareDocument -> onShareDocument(action.uri)
+            is HomeUiAction.DeleteDocument -> {
+                if (_uiState.value.activeDialog is HomeDialog.Delete) {
+                    _uiState.update { it.copy(dialogs = it.dialogs.pop()) }
+                }
+
+                action.id?.let { id ->
+                    launchIO {
+                        val scannedDocument = getDocumentByIdUseCase(id)
+                        onDeleteDocument(scannedDocument.path)
+                    }
+                }
+            }
+
+            is HomeUiAction.UpdateDocumentFields -> {
+                updateDocumentFields(action.id, action.title, action.description)
+            }
+
+            // Dialogs
+            is HomeUiAction.ShowDeleteConfirmation -> {
+                launchIO {
+                    val scannedDocument = getDocumentByIdUseCase(action.id)
+                    _uiState.update {
+                        it.copy(dialogs = it.dialogs.push(HomeDialog.Delete(scannedDocument)))
+                    }
+                }
+            }
+
+            is HomeUiAction.ShowEditDialog -> {
+                launchIO {
+                    val scannedDocument = getDocumentByIdUseCase(action.id)
+                    _uiState.update {
+                        it.copy(dialogs = it.dialogs.push(HomeDialog.Edit(scannedDocument)))
+                    }
+                }
+            }
+
+            is HomeUiAction.ShowActionsSheet -> {
+                launchIO {
+                    val scannedDocument = getDocumentByIdUseCase(action.id)
+                    _uiState.update {
+                        it.copy(dialogs = it.dialogs.push(HomeDialog.Actions(scannedDocument)))
+                    }
+                }
+            }
+
+            HomeUiAction.DismissDialogs -> {
+                _uiState.update {
+                    it.copy(
+                        dialogs = it.dialogs.clear(),
+                    )
+                }
+            }
+
+            is HomeUiAction.DismissActionsSheet -> {
+                if (_uiState.value.activeDialog is HomeDialog.Actions) {
+                    _uiState.update { it.copy(dialogs = it.dialogs.pop()) }
+                }
+            }
+
+            // Search & Filter
+            is HomeUiAction.UpdateSearchQuery -> {
+                _uiState.update { it.copy(searchQuery = action.query) }
+            }
+
+            HomeUiAction.ClearSearch -> {
+                _uiState.update { it.copy(searchQuery = "") }
+            }
+
+            is HomeUiAction.ToggleSearchBar -> {
+                _uiState.update { it.copy(isSearchBarVisible = action.isVisible) }
+            }
+
+            is HomeUiAction.ApplySort -> {
+                _uiState.update {
+                    it.copy(filterOptions = it.filterOptions.copy(sortBy = action.sortOption))
+                }
+            }
+
+            is HomeUiAction.ApplyFilter -> {
+                _uiState.update { it.copy(filterOptions = action.filterOptions) }
+            }
+
+            HomeUiAction.ClearFilters -> {
+                _uiState.update { it.copy(filterOptions = FilterOptions.default) }
+            }
+        }
+    }
+
     private fun observeDocuments() {
         viewModelScope.launch(Dispatchers.IO) {
             combine(
                 flow { emitAll(observeDocumentsUseCase()) },
-                _uiState.map { it.searchQuery }.distinctUntilChanged(),
-                _uiState.map { it.filterOptions }.distinctUntilChanged(),
+                _uiState.map { it.searchQuery },
+                _uiState.map { it.filterOptions },
             ) { documents, query, filterOptions ->
                 applyFiltersAndSort(documents, query, filterOptions)
-            }.onStart { _uiState.updateValue { it.copy(fetchState = ScreenState.Loading()) } }
+            }.onStart { _uiState.update { it.copy(status = HomeStatus.Loading) } }
                 .catch { error ->
                     logError("Failed to retrieve documents: ${error.message}", error)
-                    _uiState.updateValue {
-                        it.copy(fetchState = ScreenState.Error(stringProvider.getError(error)))
+                    _uiState.update {
+                        it.copy(status = HomeStatus.Error(stringProvider.getError(error)))
                     }
                     _events.emitEvent(UiEvent.ShowMessage(stringProvider.getError(error)))
                 }.collect { (filteredList, isRepositoryEmpty) ->
-                    _uiState.updateValue {
+                    _uiState.update {
                         it.copy(
                             visibleDocuments = filteredList,
                             hasDocuments = !isRepositoryEmpty,
-                            fetchState = if (isRepositoryEmpty) ScreenState.Idle() else ScreenState.Success(
-                                Unit
-                            ),
+                            status = HomeStatus.Idle,
                         )
                     }
                 }
@@ -172,157 +303,22 @@ class HomeViewModel(
         return result to unfilteredDocuments.isEmpty()
     }
 
-    // Events using Channel for one-time events
-    private val _uiEffect = Channel<HomeUiEffect>(Channel.BUFFERED)
-    val uiEffect = _uiEffect.receiveAsFlow()
-
-    override fun onCoroutineException(throwable: Throwable) {
-        viewModelScope.launch {
-            _events.emitEvent(
-                UiEvent.ShowMessage(
-                    stringProvider.getError(throwable)
-                )
-            )
-        }
-    }
-
-    private fun sendEvent(effect: HomeUiEffect) {
-        viewModelScope.launch { _uiEffect.send(effect) }
-    }
-
-    fun onAction(action: HomeUiAction) {
-        when (action) {
-            // Scanning
-            HomeUiAction.OnScanButtonClicked -> {
-                sendEvent(HomeUiEffect.LaunchScanner)
-            }
-
-            is HomeUiAction.OnScanResultReceived -> processScanResult(action.result)
-            is HomeUiAction.OnScanErrorDismissed -> {
-                _uiState.updateValue { it.copy(scanUserMessage = null) }
-            }
-
-            // Document Operations
-            is HomeUiAction.OpenDocument -> {
-                launchIO {
-                    val basicInformation = getBasicInformationForId(action.id)
-
-                    sendEvent(
-                        HomeUiEffect.Navigate(
-                            Route.PdfViewer(
-                                documentInfo = basicInformation
-                            )
-                        )
-                    )
-                }
-
-            }
-
-            is HomeUiAction.SaveDocument -> onExportDocument(action.document)
-            is HomeUiAction.ShareDocument -> onShareDocument(action.uri)
-            is HomeUiAction.DeleteDocument -> {
-                _uiState.updateValue { it.copy(documentForRemoval = TemporalState.NotPresent) }
-                action.id?.let { id ->
-                    launchIO {
-                        val scannedDocument = getDocumentByIdUseCase(id)
-                        onDeleteDocument(scannedDocument.path)
-                    }
-                }
-            }
-
-            is HomeUiAction.UpdateDocumentFields -> {
-                updateDocumentFields(action.id, action.title, action.description)
-            }
-
-            // Dialogs
-            is HomeUiAction.ShowDeleteConfirmation -> {
-                launchIO {
-                    val scannedDocument = getDocumentByIdUseCase(action.id)
-                    _uiState.updateValue {
-                        it.copy(documentForRemoval = TemporalState.Present(scannedDocument))
-                    }
-                }
-            }
-
-            is HomeUiAction.ShowEditDialog -> {
-                launchIO {
-                    val scannedDocument = getDocumentByIdUseCase(action.id)
-                    _uiState.updateValue {
-                        it.copy(documentForModification = TemporalState.Present(scannedDocument))
-                    }
-                }
-            }
-
-            is HomeUiAction.ShowOptionsSheet -> {
-                launchIO {
-                    val scannedDocument = getDocumentByIdUseCase(action.id)
-                    _uiState.updateValue {
-                        it.copy(documentForActionMenu = TemporalState.Present(scannedDocument))
-                    }
-                }
-            }
-
-            HomeUiAction.DismissDialogs -> {
-                _uiState.updateValue {
-                    it.copy(
-                        documentForRemoval = TemporalState.NotPresent,
-                        documentForModification = TemporalState.NotPresent,
-                        documentInfoCandidate = TemporalState.NotPresent,
-                    )
-                }
-            }
-
-            is HomeUiAction.DismissOptionsSheet -> {
-                _uiState.updateValue { it.copy(documentForActionMenu = TemporalState.NotPresent) }
-            }
-
-            // Search & Filter
-            is HomeUiAction.UpdateSearchQuery -> {
-                _uiState.updateValue { it.copy(searchQuery = action.query) }
-            }
-
-            HomeUiAction.ClearSearch -> {
-                _uiState.updateValue { it.copy(searchQuery = "") }
-            }
-
-            is HomeUiAction.ToggleSearchBar -> {
-                _uiState.updateValue { it.copy(isSearchBarVisible = action.isVisible) }
-            }
-
-            is HomeUiAction.ApplySort -> {
-                _uiState.updateValue {
-                    it.copy(filterOptions = it.filterOptions.copy(sortBy = action.sortOption))
-                }
-            }
-
-            is HomeUiAction.ApplyFilter -> {
-                _uiState.updateValue { it.copy(filterOptions = action.filterOptions) }
-            }
-
-            HomeUiAction.ClearFilters -> {
-                _uiState.updateValue { it.copy(filterOptions = FilterOptions.default) }
-            }
-        }
-    }
-
     private fun processScanResult(result: Any) {
         launchIO {
-            scanDocumentUseCase(result).collect { resource ->
+            processScanningResultUseCase(result).collect { resource ->
                 when (resource) {
                     is ResourceState.Loading -> {
-                        _uiState.updateValue { it.copy(isScanning = true) }
+                        _uiState.update { it.copy(isScanning = true) }
                     }
 
                     is ResourceState.Success -> {
                         val document = resource.data
-                        _uiState.updateValue {
-                            it.copy(isScanning = false, mostRecentScan = document)
+                        _uiState.update {
+                            it.copy(isScanning = false)
                         }
                         // Auto-save logic
-                        document?.let {
-                            try {
-                                val filename = "Scan_${System.currentTimeMillis()}"
-                                saveScannedDocumentUseCase(it, filename)
+                        document?.let { scannedDocument ->
+                            saveScannedDocumentUseCase(scannedDocument).onSuccess {
                                 _events.emitEvent(
                                     UiEvent.ShowMessage(
                                         stringProvider.get(
@@ -330,8 +326,8 @@ class HomeViewModel(
                                         ), type = NotificationType.Success
                                     )
                                 )
-                            } catch (e: Exception) {
-                                logError("Failed to save document: ${e.message}", e)
+                            }.onFailure { error ->
+                                logError("Failed to save document: ${error.message}", error)
                                 _events.emitEvent(
                                     UiEvent.ShowMessage(
                                         message = stringProvider.get(
@@ -344,8 +340,8 @@ class HomeViewModel(
                     }
 
                     is ResourceState.Error -> {
-                        _uiState.updateValue {
-                            it.copy(isScanning = false, scanUserMessage = resource.message)
+                        _uiState.update {
+                            it.copy(isScanning = false)
                         }
 
                         _events.emitEvent(
@@ -387,7 +383,9 @@ class HomeViewModel(
 
             updateDocumentFieldsUseCase(scannedDocument.id, newTitle, newDescription)
 
-            _uiState.updateValue { it.copy(documentForModification = TemporalState.NotPresent) }
+            if (_uiState.value.activeDialog is HomeDialog.Edit) {
+                _uiState.update { it.copy(dialogs = it.dialogs.pop()) }
+            }
         }
     }
 
@@ -453,49 +451,30 @@ class HomeViewModel(
     }
 
     private fun onExportDocument(scannedDocument: ScannedDocument) {
-        executeAsync(
-            onSuccess = { uri: Uri ->
-                if (uri != Uri.EMPTY) {
+        launchSafe(
+            context = Dispatchers.IO
+        ) {
+            exportDocumentUseCase(scannedDocument)
+                .onSuccess { uri ->
                     logInfo("Document saved successfully to: $uri")
                     _events.emitEvent(
                         UiEvent.ShowMessage(
                             message = stringProvider.get(
-                                R.string.doc_saved_successfully_to, uri.path.toString()
+                                R.string.doc_saved_successfully_to, uri
                             ), type = NotificationType.Success
                         )
                     )
-                }
-            },
-            onError = { error ->
-                logError("Failed to save document: ${error.message}", error)
+                }.onFailure { error ->
+                    logError("Failed to save document: ${error.message}", error)
 
-                _events.emitEvent(
-                    UiEvent.ShowMessage(
-                        message = stringProvider.getError(
-                            id = R.string.doc_save_error_with_reason, throwable = error
-                        ), type = NotificationType.Error
+                    _events.emitEvent(
+                        UiEvent.ShowMessage(
+                            message = stringProvider.getError(
+                                id = R.string.doc_save_error_with_reason, throwable = error
+                            ), type = NotificationType.Error
+                        )
                     )
-                )
-            },
-        ) {
-            val androidDocumentsDirectory = PlatformFile(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-            )
-
-            val dir = PlatformFile(androidDocumentsDirectory, "Docucraft")
-
-            val file = FileKit.openFileSaver(
-                suggestedName = scannedDocument.title ?: scannedDocument.filename,
-                extension = "pdf",
-                directory = dir,
-            ) ?: run {
-                return@executeAsync Uri.EMPTY
-            }
-
-            val internalDocument = PlatformFile(scannedDocument.path)
-            internalDocument.copyTo(file)
-
-            file.path.toUri()
+                }
         }
     }
 }

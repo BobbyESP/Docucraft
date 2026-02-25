@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
-import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferencesController
+import com.bobbyesp.docucraft.core.domain.preferences.AppPreferencesController
 import com.bobbyesp.docucraft.core.data.local.preferences.AppSettings
 import com.bobbyesp.docucraft.core.presentation.preferences.theme.DarkThemePreference
 import com.bobbyesp.docucraft.core.presentation.preferences.theme.DarkThemePreference.DarkThemeValue

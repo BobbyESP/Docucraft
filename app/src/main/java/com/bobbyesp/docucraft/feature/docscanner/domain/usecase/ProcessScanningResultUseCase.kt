@@ -1,7 +1,7 @@
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
 import com.bobbyesp.docucraft.core.util.state.ResourceState
-import com.bobbyesp.docucraft.mlkit.domain.error.OperationFailure
+import com.bobbyesp.docucraft.mlkit.domain.exception.OperationFailure
 import com.bobbyesp.docucraft.mlkit.domain.model.Document
 import com.bobbyesp.docucraft.mlkit.domain.repository.DocumentScannerService
 import kotlinx.coroutines.flow.Flow
@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.flow
  * Use case for scanning a document. It orchestrates the scanning process using the
  * DocumentScannerRepository.
  */
-class ScanDocumentUseCase(private val scannerRepository: DocumentScannerService) {
+class ProcessScanningResultUseCase(private val scannerRepository: DocumentScannerService) {
     /**
      * Executes the document scanning process.
      *
@@ -20,7 +20,7 @@ class ScanDocumentUseCase(private val scannerRepository: DocumentScannerService)
      */
     operator fun invoke(input: Any): Flow<ResourceState<Document>> = flow {
         emit(ResourceState.Loading())
-        val result = scannerRepository.scanDocument(input)
+        val result = scannerRepository.processResult(input)
         result.fold(
             onSuccess = { document -> emit(ResourceState.Success(document)) },
             onFailure = { error ->

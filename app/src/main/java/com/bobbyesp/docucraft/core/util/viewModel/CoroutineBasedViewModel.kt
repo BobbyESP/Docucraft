@@ -175,11 +175,6 @@ abstract class CoroutineBasedViewModel : ViewModel() {
         return mutable to mutable.asStateFlow()
     }
 
-    /** Update a MutableStateFlow value safely. */
-    protected fun <T> MutableStateFlow<T>.updateValue(transform: (T) -> T) {
-        this.value = transform(this.value)
-    }
-
     // ==================== SharedFlow Helpers (Events) ====================
 
     /**

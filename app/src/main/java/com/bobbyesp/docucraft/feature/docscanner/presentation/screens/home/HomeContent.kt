@@ -91,14 +91,12 @@ import com.bobbyesp.docucraft.core.presentation.components.selectiongroup.Select
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.dmSerifTextFont
 import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscroll
-import com.bobbyesp.docucraft.core.util.state.ScreenState
-import com.bobbyesp.docucraft.core.util.state.TemporalState
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentCardPosition
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.ScannedDocumentOptionsSheet
+import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
 import com.bobbyesp.docucraft.util.MockData
@@ -114,7 +112,6 @@ import kotlin.math.roundToInt
 fun HomeContent(
     uiState: HomeUiState,
     onAction: (HomeUiAction) -> Unit,
-    onScanClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val searchQuery = uiState.searchQuery
@@ -125,23 +122,10 @@ fun HomeContent(
     val focusManager = LocalFocusManager.current
     val usableMotionScheme = motionScheme
 
-    if (uiState.documentForActionMenu is TemporalState.Present) {
-        val document = uiState.documentForActionMenu.value
-        ScannedDocumentOptionsSheet(
-            scannedDocument = document,
-            onDismissRequest = { onAction(HomeUiAction.DismissOptionsSheet) },
-            onSavePdf = { onAction(HomeUiAction.SaveDocument(document)) },
-            onSharePdf = { onAction(HomeUiAction.ShareDocument(document.path)) },
-            onDeletePdf = { onAction(HomeUiAction.ShowDeleteConfirmation(document.id)) },
-            onModifyPdfFields = { onAction(HomeUiAction.ShowEditDialog(document.id)) },
-        )
-    }
-
     Scaffold(
-        modifier =
-            modifier.pointerInput(Unit) {
-                detectTapGestures(onTap = { focusManager.clearFocus() })
-            },
+        modifier = modifier.pointerInput(Unit) {
+            detectTapGestures(onTap = { focusManager.clearFocus() })
+        },
         topBar = {
             TopAppBar(
                 modifier = Modifier,
@@ -164,21 +148,19 @@ fun HomeContent(
             var isSearchFocused by remember { mutableStateOf(false) }
 
             AnimatedContent(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(start = 32.dp)
-                        .windowInsetsPadding(WindowInsets.ime),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 32.dp)
+                    .windowInsetsPadding(WindowInsets.ime),
                 targetState = uiState.hasDocuments,
                 transitionSpec = {
                     ContentTransform(
-                        targetContentEnter =
-                            slideInVertically(
-                                animationSpec = usableMotionScheme.defaultSpatialSpec()
-                            ) + fadeIn(tween(500)),
-                        initialContentExit =
-                            slideOutVertically(usableMotionScheme.defaultSpatialSpec()) +
-                                    fadeOut(tween(500)),
+                        targetContentEnter = slideInVertically(
+                            animationSpec = usableMotionScheme.defaultSpatialSpec()
+                        ) + fadeIn(tween(500)),
+                        initialContentExit = slideOutVertically(usableMotionScheme.defaultSpatialSpec()) + fadeOut(
+                            tween(500)
+                        ),
                     )
                 },
             ) { isFabAndSearchVisible ->
@@ -202,11 +184,10 @@ fun HomeContent(
                             icon = {
                                 Icon(
                                     imageVector = Icons.Rounded.DocumentScanner,
-                                    contentDescription =
-                                        stringResource(id = R.string.doc_scan_new),
+                                    contentDescription = stringResource(id = R.string.doc_scan_new),
                                 )
                             },
-                            onClick = onScanClick,
+                            onClick = { onAction(HomeUiAction.LaunchDocumentScanner) },
                         )
                     }
                 }
@@ -215,37 +196,43 @@ fun HomeContent(
     ) { padding ->
         AnimatedContent(
             modifier = Modifier.padding(padding),
-            targetState = uiState.fetchState,
+            targetState = uiState.status,
             transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(300)) },
             label = "PageContentTransition",
         ) { targetState ->
             when (targetState) {
-                is ScreenState.Loading<*> -> {
+                HomeStatus.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularWavyProgressIndicator()
                     }
                 }
 
-                is ScreenState.Error<*> -> {
+                is HomeStatus.Error -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        ErrorContent(errorMessage = uiState.errorMessage, onRetry = { /* TODO */ })
+                        ErrorContent(errorMessage = targetState.message, onRetry = { /* TODO */ })
                     }
                 }
 
-                // Idle is gonna represent an empty state
-                is ScreenState.Idle<*> -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        EmptyStateScreen(modifier = Modifier, onScanPdfClick = onScanClick)
+                HomeStatus.Idle -> {
+                    if (!uiState.hasDocuments) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+                        ) {
+                            EmptyStateScreen(
+                                modifier = Modifier,
+                                onScanDocument = {
+                                    onAction(HomeUiAction.LaunchDocumentScanner)
+                                }
+                            )
+                        }
+                    } else {
+                        ScannedDocumentsList(
+                            scannedDocuments = uiState.visibleDocuments,
+                            onAction = onAction,
+                            filterOptions = filterOptions,
+                            listState = listState,
+                        )
                     }
-                }
-
-                is ScreenState.Success<*> -> {
-                    ScannedDocumentsList(
-                        scannedDocuments = uiState.visibleDocuments,
-                        onAction = onAction,
-                        filterOptions = filterOptions,
-                        listState = listState,
-                    )
                 }
 
             }
@@ -265,14 +252,13 @@ private fun ScannedDocumentsList(
     var animatedOverscrollAmount by remember { mutableFloatStateOf(0f) }
 
     LazyColumn(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .customOverscroll(
-                    listState = listState,
-                    onNewOverscrollAmount = { animatedOverscrollAmount = it },
-                )
-                .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
+        modifier = Modifier
+            .fillMaxSize()
+            .customOverscroll(
+                listState = listState,
+                onNewOverscrollAmount = { animatedOverscrollAmount = it },
+            )
+            .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
         state = listState,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -283,21 +269,18 @@ private fun ScannedDocumentsList(
                     onAction(HomeUiAction.ApplySort(it))
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
                 },
-                modifier =
-                    Modifier
-                        .background(
-                            // fade to transparent from background
-                            brush =
-                                Brush.verticalGradient(
-                                    colors =
-                                        listOf(
-                                            MaterialTheme.colorScheme.background,
-                                            Color.Transparent,
-                                        ),
-                                    startY = 100f,
-                                )
+                modifier = Modifier
+                    .background(
+                        // fade to transparent from background
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.background,
+                                Color.Transparent,
+                            ),
+                            startY = 100f,
                         )
-                        .padding(8.dp),
+                    )
+                    .padding(8.dp),
             )
         }
 
@@ -306,13 +289,12 @@ private fun ScannedDocumentsList(
             key = { _, scannedDocument -> scannedDocument.id },
             contentType = { _, scannedDocument -> scannedDocument.javaClass.name },
         ) { index, scannedDocument ->
-            val position =
-                when {
-                    scannedDocuments.size == 1 -> ScannedDocumentCardPosition.SINGLE
-                    index == 0 -> ScannedDocumentCardPosition.TOP
-                    index == scannedDocuments.lastIndex -> ScannedDocumentCardPosition.BOTTOM
-                    else -> ScannedDocumentCardPosition.MIDDLE
-                }
+            val position = when {
+                scannedDocuments.size == 1 -> ScannedDocumentCardPosition.SINGLE
+                index == 0 -> ScannedDocumentCardPosition.TOP
+                index == scannedDocuments.lastIndex -> ScannedDocumentCardPosition.BOTTOM
+                else -> ScannedDocumentCardPosition.MIDDLE
+            }
 
             ScannedDocumentListItem(
                 modifier = Modifier
@@ -322,7 +304,7 @@ private fun ScannedDocumentsList(
                 pdf = scannedDocument,
                 position = position,
                 onItemClick = { id -> onAction(HomeUiAction.OpenDocument(id)) },
-                onItemLongClick = { onAction(HomeUiAction.ShowOptionsSheet(scannedDocument.id)) },
+                onItemLongClick = { onAction(HomeUiAction.ShowActionsSheet(scannedDocument.id)) },
             )
         }
 
@@ -363,24 +345,20 @@ fun SortOptionsRow(
         )
 
         IconButton(
-            modifier = Modifier,
-            colors = IconButtonDefaults.iconButtonColors(
+            modifier = Modifier, colors = IconButtonDefaults.iconButtonColors(
                 containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-            ),
-            onClick = {
+            ), onClick = {
                 onSortOptionChange(
                     SortOption(currentSortOption.criteria, currentSortOption.order.reverse())
                 )
-            }
-        ) {
+            }) {
             Icon(
                 imageVector = currentSortOption.getSortIcon(),
-                contentDescription =
-                    if (currentSortOption.order == SortOption.Order.ASC) {
-                        stringResource(R.string.sort_ascending)
-                    } else {
-                        stringResource(R.string.sort_descending)
-                    },
+                contentDescription = if (currentSortOption.order == SortOption.Order.ASC) {
+                    stringResource(R.string.sort_ascending)
+                } else {
+                    stringResource(R.string.sort_descending)
+                },
             )
         }
     }
@@ -406,15 +384,14 @@ private fun SearchBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { onFocusChange(it.isFocused) },
-            colors =
-                TextFieldDefaults.colors(
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    errorIndicatorColor = MaterialTheme.colorScheme.error,
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                ),
+            colors = TextFieldDefaults.colors(
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                errorIndicatorColor = MaterialTheme.colorScheme.error,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
             placeholder = {
                 Text(
                     modifier = Modifier.alpha(0.66f),
@@ -448,28 +425,24 @@ private fun SearchBar(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun EmptyStateScreen(onScanPdfClick: () -> Unit, modifier: Modifier = Modifier) {
+fun EmptyStateScreen(onScanDocument: () -> Unit, modifier: Modifier = Modifier) {
     Card(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .border(
-                    width = 2.dp,
-                    brush =
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = .8f),
-                                    MaterialTheme.colorScheme.primary.copy(alpha = .2f),
-                                )
-                        ),
-                    shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .border(
+                width = 2.dp,
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = .8f),
+                        MaterialTheme.colorScheme.primary.copy(alpha = .2f),
+                    )
                 ),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+                shape = RoundedCornerShape(16.dp),
             ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+        ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
@@ -503,13 +476,12 @@ fun EmptyStateScreen(onScanPdfClick: () -> Unit, modifier: Modifier = Modifier) 
             )
 
             Button(
-                onClick = onScanPdfClick,
+                onClick = onScanDocument,
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
                     .height(56.dp),
                 shape = MaterialTheme.shapes.medium,
-                colors =
-                    ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 8.dp),
             ) {
                 Icon(
@@ -532,29 +504,23 @@ fun EmptyStateScreen(onScanPdfClick: () -> Unit, modifier: Modifier = Modifier) 
 @Composable
 private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
     Card(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .border(
-                    width = 2.dp,
-                    brush =
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    MaterialTheme.colorScheme.error.copy(alpha = .8f),
-                                    MaterialTheme.colorScheme.error.copy(alpha = .2f),
-                                )
-                        ),
-                    shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .border(
+                width = 2.dp,
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.error.copy(alpha = .8f),
+                        MaterialTheme.colorScheme.error.copy(alpha = .2f),
+                    )
                 ),
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    MaterialTheme.colorScheme
-                        .surfaceColorAtElevation(6.dp)
-                        .harmonize(other = MaterialTheme.colorScheme.errorContainer)
+                shape = RoundedCornerShape(16.dp),
             ),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
+                .harmonize(other = MaterialTheme.colorScheme.errorContainer)
+        ),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
@@ -595,8 +561,7 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
                     .fillMaxWidth(0.8f)
                     .height(50.dp),
                 shape = MaterialTheme.shapes.medium,
-                colors =
-                    ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 8.dp),
             ) {
                 Icon(
@@ -622,7 +587,6 @@ private fun PreviewsHomeContent() {
         HomeContent(
             uiState = HomeUiState(visibleDocuments = MockData.Documents.documentsList),
             onAction = {},
-            onScanClick = {},
         )
     }
 }

@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.mlkit.domain.error
+package com.bobbyesp.docucraft.mlkit.domain.exception
 
 sealed class OperationFailure(override val message: String) : Exception(message) {
     class ScanCancelled(message: String = "Scan was cancelled by the user") : OperationFailure(message)

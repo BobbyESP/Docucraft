@@ -16,8 +16,8 @@ import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
-import com.bobbyesp.docucraft.core.util.state.TemporalState
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsSheet
+import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentConfirmationDialog
@@ -38,8 +38,6 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val onScanClick: () -> Unit = { viewModel.onAction(HomeUiAction.OnScanButtonClicked) }
-
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
@@ -55,46 +53,57 @@ fun HomeScreen(
 
     HandleHomeUiEffects(
         effectFlow = viewModel.uiEffect,
-        onScanResult = { result -> viewModel.onAction(HomeUiAction.OnScanResultReceived(result)) },
+        onScanResult = { result -> viewModel.onAction(HomeUiAction.ScanResultAction(result)) },
         onNavigate = onNavigate
     )
 
-    val pdfToBeRemoved = uiState.documentForRemoval
-    if (pdfToBeRemoved is TemporalState.Present<*>) {
-        val scannedDocument = pdfToBeRemoved.value as ScannedDocument
-        DeleteDocumentConfirmationDialog(
-            scannedDocument = scannedDocument,
-            onDismiss = { viewModel.onAction(HomeUiAction.DeleteDocument(null)) },
-            onConfirm = { viewModel.onAction(HomeUiAction.DeleteDocument(scannedDocument.id)) },
-            modifier = Modifier,
-        )
-    }
-
-    val pdfToBeModified = uiState.documentForModification
-    if (pdfToBeModified is TemporalState.Present<*>) {
-        val scannedDocument = pdfToBeModified.value as ScannedDocument
-        EditDocumentDetailsDialog(
-            onDismiss = { viewModel.onAction(HomeUiAction.DismissDialogs) },
-            onConfirm = { title, description ->
-                viewModel.onAction(
-                    HomeUiAction.UpdateDocumentFields(
-                        id = scannedDocument.id,
-                        title = title,
-                        description = description,
+    when(uiState.dialogs.active) {
+        is HomeDialog.Delete -> {
+            val scannedDocument = (uiState.dialogs.active as HomeDialog.Delete).doc
+            DeleteDocumentConfirmationDialog(
+                scannedDocument = scannedDocument,
+                onDismiss = { viewModel.onAction(HomeUiAction.DeleteDocument(null)) },
+                onConfirm = { viewModel.onAction(HomeUiAction.DeleteDocument(scannedDocument.id)) },
+                modifier = Modifier,
+            )
+        }
+        is HomeDialog.Edit -> {
+            val scannedDocument = (uiState.dialogs.active as HomeDialog.Edit).doc
+            EditDocumentDetailsDialog(
+                onDismiss = { viewModel.onAction(HomeUiAction.DismissDialogs) },
+                onConfirm = { title, description ->
+                    viewModel.onAction(
+                        HomeUiAction.UpdateDocumentFields(
+                            id = scannedDocument.id,
+                            title = title,
+                            description = description,
+                        )
                     )
-                )
-            },
-            title = scannedDocument.title,
-            description = scannedDocument.description,
-            modifier = Modifier,
-        )
+                },
+                title = scannedDocument.title,
+                description = scannedDocument.description,
+                modifier = Modifier,
+            )
+        }
+        is HomeDialog.Actions -> {
+            val scannedDocument = (uiState.dialogs.active as HomeDialog.Actions).doc
+
+            DocumentActionsSheet(
+                scannedDocument = scannedDocument,
+                onDismissRequest = { viewModel.onAction(HomeUiAction.DismissActionsSheet) },
+                onSavePdf = { viewModel.onAction(HomeUiAction.SaveDocument(scannedDocument)) },
+                onSharePdf = { viewModel.onAction(HomeUiAction.ShareDocument(scannedDocument.path)) },
+                onDeletePdf = { viewModel.onAction(HomeUiAction.ShowDeleteConfirmation(scannedDocument.id)) },
+                onModifyPdfFields = { viewModel.onAction(HomeUiAction.ShowEditDialog(scannedDocument.id)) },
+            )
+        }
+        null -> { }
     }
 
     HomeContent(
         modifier = modifier,
         uiState = uiState,
         onAction = viewModel::onAction,
-        onScanClick = onScanClick,
     )
 }
 

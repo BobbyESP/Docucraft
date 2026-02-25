@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import com.bobbyesp.docucraft.core.data.local.preferences.AppSettings.Theming.DARK_THEME_VALUE
 import com.bobbyesp.docucraft.core.data.local.preferences.AppSettings.Theming.HIGH_CONTRAST
 import com.bobbyesp.docucraft.core.data.local.preferences.AppSettings.Theming.USE_DYNAMIC_COLORING
+import com.bobbyesp.docucraft.core.domain.preferences.AppPreferencesController
 import com.bobbyesp.docucraft.core.presentation.preferences.theme.DarkThemePreference
 import com.bobbyesp.docucraft.core.presentation.theme.isDynamicColoringSupported
 import kotlinx.coroutines.flow.Flow
