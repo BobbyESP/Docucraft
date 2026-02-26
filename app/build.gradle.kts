@@ -50,15 +50,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-
-            manifestPlaceholders += mapOf("crashlyticsCollectionEnabled" to false)
         }
 
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
-
-            manifestPlaceholders += mapOf("crashlyticsCollectionEnabled" to false)
         }
     }
 
