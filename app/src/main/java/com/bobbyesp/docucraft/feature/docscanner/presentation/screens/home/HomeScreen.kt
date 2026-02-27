@@ -8,19 +8,12 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
-import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.domain.repository.logScreenView
 import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsSheet
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.HomeBottomSheet
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeDialog
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentConfirmationDialog
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -43,24 +36,9 @@ fun HomeScreen(
     )
 
     if (uiState.dialogs.isVisible) {
-        HomeBottomSheet(
+        HomeDocumentDialogWrapper(
             activeDialogs = uiState.dialogs.stack,
-            onDismissRequest = { viewModel.onAction(HomeUiAction.DismissDialogs) },
-            onPopDialog = { viewModel.onAction(HomeUiAction.PopDialog) },
-            onSavePdf = { viewModel.onAction(HomeUiAction.SaveDocument(it.doc)) },
-            onSharePdf = { viewModel.onAction(HomeUiAction.ShareDocument(it.doc.path)) },
-            onDeletePdf = { viewModel.onAction(HomeUiAction.ShowDeleteConfirmation(it.doc.id)) },
-            onModifyPdfFields = { viewModel.onAction(HomeUiAction.ShowEditDialog(it.doc.id)) },
-            onConfirmDelete = { viewModel.onAction(HomeUiAction.DeleteDocument(it.doc.id)) },
-            onConfirmEdit = { editAction, title, description ->
-                viewModel.onAction(
-                    HomeUiAction.UpdateDocumentFields(
-                        id = editAction.doc.id,
-                        title = title,
-                        description = description,
-                    )
-                )
-            }
+            onAction = viewModel::onAction,
         )
     }
 

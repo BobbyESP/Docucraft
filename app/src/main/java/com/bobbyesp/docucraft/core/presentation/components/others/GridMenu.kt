@@ -59,6 +59,7 @@ fun LazyGridScope.GridMenuItem(
     icon: ImageVector,
     @StringRes title: Int,
     enabled: Boolean = true,
+    maxLines: Int = 1,
     containerColor: @Composable () -> Color = { MaterialTheme.colorScheme.primaryContainer },
     span: (LazyGridItemSpanScope.() -> GridItemSpan)? = null,
     onClick: () -> Unit,
@@ -90,7 +91,7 @@ fun LazyGridScope.GridMenuItem(
                     text = stringResource(title),
                     style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center,
-                    maxLines = 2,
+                    maxLines = maxLines,
                     overflow = TextOverflow.Ellipsis,
                 )
             }

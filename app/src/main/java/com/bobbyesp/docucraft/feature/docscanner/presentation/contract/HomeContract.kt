@@ -14,24 +14,24 @@ sealed interface HomeStatus {
     data class Error(val message: String) : HomeStatus
 }
 
-sealed interface HomeDialog {
-    data class Delete(val doc: ScannedDocument) : HomeDialog
-    data class Edit(val doc: ScannedDocument) : HomeDialog
-    data class Actions(val doc: ScannedDocument) : HomeDialog
+sealed interface DocumentDialog {
+    data class Delete(val doc: ScannedDocument) : DocumentDialog
+    data class Edit(val doc: ScannedDocument) : DocumentDialog
+    data class Actions(val doc: ScannedDocument) : DocumentDialog
 }
 
 data class HomeUiState(
     val status: HomeStatus = HomeStatus.Loading,
     val visibleDocuments: List<ScannedDocument> = emptyList(),
     val hasDocuments: Boolean = false,
-    val dialogs: DialogBackStack<HomeDialog> = DialogBackStack(),
+    val dialogs: DialogBackStack<DocumentDialog> = DialogBackStack(),
     val searchQuery: String = "",
     val isSearchBarVisible: Boolean = false,
     val filterOptions: FilterOptions = FilterOptions.default,
     val isScanning: Boolean = false,
     val mostRecentScan: RawScanResult? = null,
 ) {
-    val activeDialog: HomeDialog? = dialogs.active
+    val activeDialog: DocumentDialog? = dialogs.active
     val errorMessage: String? = (status as? HomeStatus.Error)?.message
 
     val hasActiveFilters: Boolean = filterOptions.run {
@@ -61,6 +61,7 @@ sealed interface HomeUiAction {
     data class ShowActionsSheet(val id: String) : HomeUiAction
     data object DismissActionsSheet : HomeUiAction
     data object DismissDialogs : HomeUiAction
+    data object PopDialog : HomeUiAction
 
     // Search & Filter
     data class UpdateSearchQuery(val query: String) : HomeUiAction

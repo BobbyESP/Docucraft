@@ -19,21 +19,15 @@ import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material.icons.rounded.SaveAs
 import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +39,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.divider.AnimatedWavyDivider
+import com.bobbyesp.docucraft.core.presentation.components.divider.WavyDivider
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.components.others.GridMenu
 import com.bobbyesp.docucraft.core.presentation.components.others.GridMenuItem
@@ -52,48 +48,33 @@ import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.launch
 
 @Stable
-private enum class ActionImportance {
+internal enum class ActionImportance {
     PRIMARY,
     SECONDARY,
     DESTRUCTIVE,
 }
 
 @Immutable
-private data class DocumentAction(
+internal data class DocumentAction(
     val icon: ImageVector,
     val title: Int,
     val importance: ActionImportance,
     val action: () -> Unit,
 )
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun DocumentActionsSheet(
+fun DocumentActionsContent(
     scannedDocument: ScannedDocument,
-    onDismissRequest: () -> Unit,
     onSavePdf: () -> Unit,
     onSharePdf: () -> Unit,
     onDeletePdf: () -> Unit,
     onModifyPdfFields: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val sheetState = rememberModalBottomSheetState()
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
-
-    val hideAndExecute: (() -> Unit) -> Unit = { action ->
-        scope
-            .launch { sheetState.hide() }
-            .invokeOnCompletion {
-                if (!sheetState.isVisible) {
-                    action()
-                    onDismissRequest()
-                }
-            }
-    }
 
     val options =
         persistentListOf(
@@ -123,12 +104,7 @@ fun DocumentActionsSheet(
             ),
         )
 
-    ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
-        sheetState = sheetState,
-        modifier = modifier,
-        contentWindowInsets = { BottomSheetDefaults.windowInsets },
-    ) {
+    Column(modifier = modifier) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -178,19 +154,19 @@ fun DocumentActionsSheet(
 
                 Text(
                     text =
-                        buildAnnotatedString {
-                            append(stringResource(id = R.string.file_size))
-                            append(": ")
-                            pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                            append(formatFileSize(context, scannedDocument.fileSize))
-                            pop()
-                            append(" • ")
-                            append(stringResource(id = R.string.page_count))
-                            append(": ")
-                            pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                            append(scannedDocument.pageCount.toString())
-                            pop()
-                        },
+                    buildAnnotatedString {
+                        append(stringResource(id = R.string.file_size))
+                        append(": ")
+                        pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                        append(formatFileSize(context, scannedDocument.fileSize))
+                        pop()
+                        append(" • ")
+                        append(stringResource(id = R.string.page_count))
+                        append(": ")
+                        pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                        append(scannedDocument.pageCount.toString())
+                        pop()
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -198,18 +174,16 @@ fun DocumentActionsSheet(
         }
 
         // File Info Section
-        HorizontalDivider(
-            modifier =
-                Modifier
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-                    .clip(MaterialTheme.shapes.medium),
-            thickness = 3.dp,
+        AnimatedWavyDivider(
+            modifier = Modifier
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            strokeWidth = 3.dp,
         )
 
         Box(modifier = Modifier.heightIn(min = 120.dp)) {
             DocumentActionsRow(
                 options = options,
-                onOptionSelect = hideAndExecute,
+                onOptionSelect = { it() },
                 modifier = Modifier,
             )
         }

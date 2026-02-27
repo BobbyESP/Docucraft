@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.StringProvider
-import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.common.Route
@@ -14,6 +13,7 @@ import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
+import com.bobbyesp.docucraft.feature.docscanner.domain.exception.DocumentExportFailure
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
@@ -25,7 +25,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocum
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeDialog
+import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.DocumentDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
@@ -142,7 +142,7 @@ class HomeViewModel(
             is HomeUiAction.SaveDocument -> onExportDocument(action.document)
             is HomeUiAction.ShareDocument -> onShareDocument(action.uri)
             is HomeUiAction.DeleteDocument -> {
-                if (_uiState.value.activeDialog is HomeDialog.Delete) {
+                if (_uiState.value.activeDialog is DocumentDialog.Delete) {
                     _uiState.update { it.copy(dialogs = it.dialogs.pop()) }
                 }
 
@@ -163,7 +163,7 @@ class HomeViewModel(
                 launchIO {
                     val scannedDocument = getDocumentByIdUseCase(action.id)
                     _uiState.update {
-                        it.copy(dialogs = it.dialogs.push(HomeDialog.Delete(scannedDocument)))
+                        it.copy(dialogs = it.dialogs.push(DocumentDialog.Delete(scannedDocument)))
                     }
                 }
             }
@@ -172,7 +172,7 @@ class HomeViewModel(
                 launchIO {
                     val scannedDocument = getDocumentByIdUseCase(action.id)
                     _uiState.update {
-                        it.copy(dialogs = it.dialogs.push(HomeDialog.Edit(scannedDocument)))
+                        it.copy(dialogs = it.dialogs.push(DocumentDialog.Edit(scannedDocument)))
                     }
                 }
             }
@@ -181,7 +181,7 @@ class HomeViewModel(
                 launchIO {
                     val scannedDocument = getDocumentByIdUseCase(action.id)
                     _uiState.update {
-                        it.copy(dialogs = it.dialogs.push(HomeDialog.Actions(scannedDocument)))
+                        it.copy(dialogs = it.dialogs.push(DocumentDialog.Actions(scannedDocument)))
                     }
                 }
             }
@@ -195,7 +195,7 @@ class HomeViewModel(
             }
 
             is HomeUiAction.DismissActionsSheet -> {
-                if (_uiState.value.activeDialog is HomeDialog.Actions) {
+                if (_uiState.value.activeDialog is DocumentDialog.Actions) {
                     _uiState.update { it.copy(dialogs = it.dialogs.pop()) }
                 }
             }
@@ -375,7 +375,7 @@ class HomeViewModel(
 
             updateDocumentFieldsUseCase(scannedDocument.id, newTitle, newDescription)
 
-            if (_uiState.value.activeDialog is HomeDialog.Edit) {
+            if (_uiState.value.activeDialog is DocumentDialog.Edit) {
                 _uiState.update { it.copy(dialogs = it.dialogs.pop()) }
             }
         }
@@ -459,13 +459,15 @@ class HomeViewModel(
                 }.onFailure { error ->
                     logError("Failed to save document: ${error.message}", error)
 
-                    _events.emitEvent(
-                        UiEvent.ShowMessage(
-                            message = stringProvider.getError(
-                                id = R.string.doc_save_error_with_reason, throwable = error
-                            ), type = NotificationType.Error
+                    if(error !is DocumentExportFailure.Cancelled) {
+                        _events.emitEvent(
+                            UiEvent.ShowMessage(
+                                message = stringProvider.getError(
+                                    id = R.string.doc_save_error_with_reason, throwable = error
+                                ), type = NotificationType.Error
+                            )
                         )
-                    )
+                    }
                 }
         }
     }
