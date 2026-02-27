@@ -8,6 +8,7 @@ core-ktx = "1.17.0"
 lifecycle-runtime-ktx = "2.10.0"
 activity-compose = "1.12.4"
 ksp = "2.3.4"
+desugar_jdk_libs = "2.1.5"
 splashscreen = "1.2.0"
 leakcanary = "2.14"
 google-fonts = "1.10.3"
@@ -57,7 +58,7 @@ firebaseBom = "34.9.0"
 sonner = "0.3.9"
 
 # File management
-filekit = "0.12.0"
+filekit = "0.13.0"
 
 #MLKit
 mlkit-docscanner = "16.0.0"
@@ -84,6 +85,7 @@ compose-bom = { group = "androidx.compose", name = "compose-bom-alpha", version.
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
 lifecycle-compose-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle-runtime-ktx" }
 lifecycle-compose-viewModel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle-runtime-ktx" }
+desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "google-fonts" }
 
 #Compose UI

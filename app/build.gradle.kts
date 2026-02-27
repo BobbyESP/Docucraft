@@ -60,6 +60,7 @@ android {
 
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -98,6 +99,7 @@ ksp {
 dependencies {
     implementation(libs.bundles.core)
     implementation(libs.bundles.coroutines)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.google.fonts)
 
     // Core UI libraries

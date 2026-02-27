@@ -39,6 +39,10 @@
     <string name="description">Description</string>
     <string name="retry">Retry</string>
     <string name="doc_modify_details_description">Update the document title and description below to reflect its content and details.</string>
+    <string name="field_required">This field is required</string>
+    <string name="field_too_long">This field exceeds the maximum length</string>
+    <string name="chars_remaining">%1$d / %2$d</string>
+    <string name="clear_field">Clear field</string>
     <string name="no_scanned_documents">No scanned documents</string>
     <string name="doc_scan_to_see_document_list">Scan your documents to see them here listed.</string>
     <string name="scan_cancelled">Scan process cancelled</string>
@@ -58,4 +62,8 @@
     <string name="doc_updated_successfully">Document successfully updated</string>
     <string name="doc_delete_confirmation">Are you sure you want to delete the file \"%1$s\"?</string>
     <string name="doc_delete_warning">This action is permanent and cannot be undone. If you have already exported the document, those copies will not be affected.</string>
+    <plurals name="doc_n_pages">
+        <item quantity="one">%d page</item>
+        <item quantity="other">%d pages</item>
+    </plurals>
 </resources>

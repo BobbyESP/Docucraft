@@ -1,10 +1,7 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs
 
-import android.text.format.Formatter.formatFileSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -15,28 +12,28 @@ import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import androidx.glance.layout.Spacer
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionSheetSkeleton
+import com.bobbyesp.docucraft.util.MockData
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -77,17 +74,17 @@ fun DeleteDocumentSheet(
                         modifier = Modifier.size(ButtonDefaults.IconSize)
                     )
 
-                    Spacer(modifier = Modifier.padding(end = 8.dp))
-
                     Text(stringResource(R.string.delete))
                 }
 
                 OutlinedButton(
                     onClick = onDismiss,
                     shapes = ButtonDefaults.shapes(),
-                    modifier = Modifier.fillMaxWidth().sizeIn(
-                        minHeight = ButtonDefaults.MinHeight * 1.5f
-                    )
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .sizeIn(
+                            minHeight = ButtonDefaults.MinHeight * 1.5f
+                        )
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
@@ -179,5 +176,20 @@ private fun DeleteDocumentContent(
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun DeleteDocumentSheetPreview() {
+    DocucraftTheme {
+        Surface {
+            DeleteDocumentSheet(
+                modifier = Modifier,
+                document = MockData.Documents.documentsList.first(),
+                onDismiss = {},
+                onConfirm = {}
+            )
+        }
     }
 }

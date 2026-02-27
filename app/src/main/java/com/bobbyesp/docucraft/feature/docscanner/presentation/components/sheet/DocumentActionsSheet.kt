@@ -1,10 +1,12 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet
 
 import android.text.format.Formatter.formatFileSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,11 +16,14 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.EditNote
+import androidx.compose.material.icons.rounded.FileCopy
 import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material.icons.rounded.SaveAs
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
@@ -28,25 +33,29 @@ import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.divider.AnimatedWavyDivider
-import com.bobbyesp.docucraft.core.presentation.components.divider.WavyDivider
 import com.bobbyesp.docucraft.core.presentation.components.divider.defaults.AnimatedWavyDividerDefaults
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.components.others.GridMenu
 import com.bobbyesp.docucraft.core.presentation.components.others.GridMenuItem
 import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
+import com.bobbyesp.docucraft.core.presentation.components.others.RoundedTag
+import com.bobbyesp.docucraft.core.util.DateTime
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -69,115 +78,24 @@ internal data class DocumentAction(
 @Composable
 fun DocumentActionsContent(
     scannedDocument: ScannedDocument,
-    onSavePdf: () -> Unit,
-    onSharePdf: () -> Unit,
-    onDeletePdf: () -> Unit,
-    onModifyPdfFields: () -> Unit,
+    onSave: () -> Unit,
+    onShare: () -> Unit,
+    onDelete: () -> Unit,
+    onModifyFields: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-
-    val options =
-        persistentListOf(
-            DocumentAction(
-                icon = Icons.Rounded.SaveAs,
-                title = R.string.save,
-                importance = ActionImportance.PRIMARY,
-                action = onSavePdf,
-            ),
-            DocumentAction(
-                icon = Icons.Rounded.Share,
-                title = R.string.share,
-                importance = ActionImportance.PRIMARY,
-                action = onSharePdf,
-            ),
-            DocumentAction(
-                icon = Icons.Rounded.EditNote,
-                title = R.string.edit_fields,
-                importance = ActionImportance.SECONDARY,
-                action = onModifyPdfFields,
-            ),
-            DocumentAction(
-                icon = Icons.Rounded.DeleteForever,
-                title = R.string.delete,
-                importance = ActionImportance.DESTRUCTIVE,
-                action = onDeletePdf,
-            ),
-        )
+    val options = rememberDocumentActions(
+        onSave = onSave,
+        onShare = onShare,
+        onModifyFields = onModifyFields,
+        onDelete = onDelete,
+    )
 
     Column(modifier = modifier) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            scannedDocument.thumbnail?.let {
-                val imageModifier =
-                    Modifier
-                        .widthIn(max = 120.dp)
-                        .aspectRatio(0.707f)
-                        .clip(MaterialShapes.Slanted.toShape())
-                        .background(MaterialTheme.colorScheme.primaryContainer)
+        DocumentHeader(scannedDocument = scannedDocument)
 
-                AsyncImage(
-                    modifier = imageModifier,
-                    imageModel = scannedDocument.thumbnail,
-                    failure = {
-                        Placeholder(
-                            modifier = Modifier.heightIn(min = 48.dp),
-                            icon = Icons.Rounded.QuestionMark,
-                            contentDescription = stringResource(id = R.string.file_icon),
-                            colorful = true,
-                        )
-                    },
-                    loading = {
-                        Icon(
-                            modifier = Modifier
-                                .padding(12.dp)
-                                .heightIn(min = 48.dp),
-                            imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
-                            contentDescription = stringResource(id = R.string.file_icon),
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    },
-                )
-            }
-
-            Column(
-                modifier = Modifier,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = scannedDocument.title ?: scannedDocument.filename,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-
-                Text(
-                    text =
-                    buildAnnotatedString {
-                        append(stringResource(id = R.string.file_size))
-                        append(": ")
-                        pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                        append(formatFileSize(context, scannedDocument.fileSize))
-                        pop()
-                        append(" • ")
-                        append(stringResource(id = R.string.page_count))
-                        append(": ")
-                        pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                        append(scannedDocument.pageCount.toString())
-                        pop()
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-
-        // File Info Section
         AnimatedWavyDivider(
-            modifier = Modifier
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             strokeWidth = 4.dp,
             colors = AnimatedWavyDividerDefaults.colors(
                 color = MaterialTheme.colorScheme.outlineVariant
@@ -188,9 +106,169 @@ fun DocumentActionsContent(
             DocumentActionsRow(
                 options = options,
                 onOptionSelect = { it() },
-                modifier = Modifier,
             )
         }
+    }
+}
+
+@Composable
+private fun rememberDocumentActions(
+    onSave: () -> Unit,
+    onShare: () -> Unit,
+    onModifyFields: () -> Unit,
+    onDelete: () -> Unit,
+): ImmutableList<DocumentAction> = remember {
+    persistentListOf(
+        DocumentAction(
+            icon = Icons.Rounded.SaveAs,
+            title = R.string.save,
+            importance = ActionImportance.PRIMARY,
+            action = onSave,
+        ),
+        DocumentAction(
+            icon = Icons.Rounded.Share,
+            title = R.string.share,
+            importance = ActionImportance.PRIMARY,
+            action = onShare,
+        ),
+        DocumentAction(
+            icon = Icons.Rounded.EditNote,
+            title = R.string.edit_fields,
+            importance = ActionImportance.SECONDARY,
+            action = onModifyFields,
+        ),
+        DocumentAction(
+            icon = Icons.Rounded.DeleteForever,
+            title = R.string.delete,
+            importance = ActionImportance.DESTRUCTIVE,
+            action = onDelete,
+        ),
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun DocumentHeader(
+    scannedDocument: ScannedDocument,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        DocumentThumbnail(thumbnail = scannedDocument.thumbnail)
+        DocumentInfo(scannedDocument = scannedDocument)
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Suppress("COMPOSE_UNSTABLE_PARAMETER")
+@Composable
+private fun DocumentThumbnail(
+    thumbnail: Any?,
+    modifier: Modifier = Modifier,
+) {
+    AsyncImage(
+        modifier = modifier
+            .widthIn(max = 120.dp)
+            .aspectRatio(Measurements.A4_RATIO)
+            .clip(MaterialShapes.Slanted.toShape())
+            .background(MaterialTheme.colorScheme.primaryContainer),
+        imageModel = thumbnail,
+        failure = {
+            Placeholder(
+                modifier = Modifier.heightIn(min = 48.dp),
+                icon = Icons.Rounded.QuestionMark,
+                contentDescription = stringResource(id = R.string.file_icon),
+                colorful = true,
+            )
+        },
+        loading = {
+            Icon(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .heightIn(min = 48.dp),
+                imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
+                contentDescription = stringResource(id = R.string.file_icon),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        },
+    )
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun DocumentInfo(
+    scannedDocument: ScannedDocument,
+    modifier: Modifier = Modifier,
+) {
+    val formattedDate = rememberSaveable(scannedDocument.createdTimestamp) {
+        DateTime.formatTimestamp(
+            timestampMillis = scannedDocument.createdTimestamp,
+            format = DateTime.DateFormat.LOCALIZED_MEDIUM,
+        )
+    }
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = scannedDocument.title ?: scannedDocument.filename,
+            style = MaterialTheme.typography.titleLargeEmphasized,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Text(
+            modifier = Modifier.alpha(0.75f),
+            text = scannedDocument.description ?: stringResource(id = R.string.no_description),
+            style = MaterialTheme.typography.bodyMediumEmphasized,
+        )
+
+        DocumentTagsRow(
+            fileSize = scannedDocument.fileSize,
+            pageCount = scannedDocument.pageCount,
+            formattedDate = formattedDate,
+        )
+    }
+}
+
+@Composable
+private fun DocumentTagsRow(
+    fileSize: Long,
+    pageCount: Int,
+    formattedDate: String,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+
+    val pageCountLabel = pluralStringResource(
+        id = R.plurals.doc_n_pages,
+        count = pageCount,
+        pageCount,
+    )
+
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+    ) {
+        RoundedTag(
+            icon = Icons.Rounded.Storage,
+            text = formatFileSize(context, fileSize),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer),
+        )
+        RoundedTag(
+            icon = Icons.Rounded.FileCopy,
+            text = pageCountLabel,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer),
+        )
+        RoundedTag(
+            icon = Icons.Rounded.CalendarMonth,
+            text = formattedDate,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer),
+        )
     }
 }
 

@@ -1,8 +1,6 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -24,8 +22,8 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.DocumentD
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentSheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentDialog
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsSheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsDialog
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsSheet
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -54,10 +52,10 @@ fun HomeDocumentDialogWrapper(
                 entry<DocumentDialog.Actions> { key ->
                     DocumentActionsContent(
                         scannedDocument = key.doc,
-                        onSavePdf = { onAction(HomeUiAction.SaveDocument(key.doc)) },
-                        onSharePdf = { onAction(HomeUiAction.ShareDocument(key.doc.path)) },
-                        onDeletePdf = { onAction(HomeUiAction.ShowDeleteConfirmation(key.doc.id)) },
-                        onModifyPdfFields = { onAction(HomeUiAction.ShowEditDialog(key.doc.id)) },
+                        onSave = { onAction(HomeUiAction.SaveDocument(key.doc)) },
+                        onShare = { onAction(HomeUiAction.ShareDocument(key.doc.path)) },
+                        onDelete = { onAction(HomeUiAction.ShowDeleteConfirmation(key.doc.id)) },
+                        onModifyFields = { onAction(HomeUiAction.ShowEditDialog(key.doc.id)) },
                     )
                 }
                 entry<DocumentDialog.Edit> { key ->
@@ -109,7 +107,7 @@ fun HomeDocumentDialogWrapper(
             when (topDialog) {
                 is DocumentDialog.Edit -> EditDocumentDetailsDialog(
                     onDismiss = { onAction(HomeUiAction.PopDialog) },
-                    onConfirm = { title, description ->
+                    onConfirmEdit = { title, description ->
                         onAction(
                             HomeUiAction.UpdateDocumentFields(
                                 id = topDialog.doc.id,
@@ -118,8 +116,7 @@ fun HomeDocumentDialogWrapper(
                             )
                         )
                     },
-                    title = topDialog.doc.title,
-                    description = topDialog.doc.description,
+                    doc = topDialog.doc,
                     modifier = Modifier.widthIn(max = 560.dp),
                 )
 
