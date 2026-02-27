@@ -25,6 +25,7 @@ fun DocucraftTheme(colorScheme: ColorScheme? = null, content: @Composable () -> 
     MaterialExpressiveTheme(
         colorScheme = finalColorScheme,
         motionScheme = MotionScheme.expressive(),
+        typography = Typography,
         content = content,
     )
 }

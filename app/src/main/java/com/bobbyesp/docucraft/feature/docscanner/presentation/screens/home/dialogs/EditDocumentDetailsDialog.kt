@@ -1,16 +1,19 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -27,10 +30,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionSheetSkeleton
+import com.bobbyesp.docucraft.util.MockData
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EditDocumentDetailsSheet(
     doc: ScannedDocument,
@@ -45,58 +53,50 @@ fun EditDocumentDetailsSheet(
         mutableStateOf(doc.description.orEmpty())
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Edit,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
+    DocumentActionSheetSkeleton(
+        modifier = modifier,
+        icon = Icons.Rounded.Edit,
+        headingTitle = stringResource(R.string.doc_modify_details),
+        content = {
+            EditDocumentDetailsContent(
+                modifier = Modifier.padding(8.dp),
+                title = currentTitle,
+                description = currentDescription,
+                onTitleChange = { currentTitle = it },
+                onDescriptionChange = { currentDescription = it },
             )
-            Text(
-                text = stringResource(R.string.doc_modify_details),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-        EditDocumentDetailsContent(
-            title = currentTitle,
-            description = currentDescription,
-            onTitleChange = { currentTitle = it },
-            onDescriptionChange = { currentDescription = it },
-        )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedButton(
-                onClick = onPopDialog,
-                modifier = Modifier.weight(1f)
+        },
+        footer = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(stringResource(R.string.cancel))
-            }
+                OutlinedButton(
+                    onClick = onPopDialog,
+                    shapes = ButtonDefaults.shapes(),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
 
-            Button(
-                onClick = {
-                    onPopDialog()
-                    onConfirmEdit(currentTitle, currentDescription)
-                },
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(stringResource(R.string.confirm))
+                Spacer(modifier = Modifier.padding(16.dp))
+
+                Button(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        onPopDialog()
+                        onConfirmEdit(currentTitle, currentDescription)
+                    },
+                    shapes = ButtonDefaults.shapes(),
+                ) {
+                    Text(stringResource(R.string.confirm))
+                }
             }
         }
-    }
+    )
+
 }
 
 @Composable
@@ -183,4 +183,18 @@ private fun EditDocumentDetailsContent(
             modifier = Modifier.fillMaxWidth(),
         )
     }
+}
+
+@PreviewLightDark
+@Composable
+private fun EditDocumentDetailsSheetPreview() {
+    DocucraftTheme {
+        EditDocumentDetailsSheet(
+            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow),
+            doc = MockData.Documents.documentsList.first(),
+            onPopDialog = {},
+            onConfirmEdit = { _, _ -> },
+        )
+    }
+
 }

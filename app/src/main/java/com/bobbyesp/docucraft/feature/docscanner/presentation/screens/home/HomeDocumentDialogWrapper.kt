@@ -46,7 +46,7 @@ fun HomeDocumentDialogWrapper(
     ) {
         NavDisplay(
             modifier = Modifier.animateContentSize(
-                animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec()
+                animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
             ),
             backStack = if (isCompact) activeDialogs else activeDialogs.take(1),
             onBack = { onAction(HomeUiAction.PopDialog) },

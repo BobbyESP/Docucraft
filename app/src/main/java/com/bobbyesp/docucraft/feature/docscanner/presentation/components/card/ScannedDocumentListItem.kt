@@ -44,6 +44,7 @@ import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
 import java.util.UUID
 
 enum class ScannedDocumentCardPosition {
@@ -92,7 +93,7 @@ fun ScannedDocumentListItem(
             val imageModifier =
                 Modifier
                     .widthIn(max = 58.dp)
-                    .aspectRatio(0.707f)
+                    .aspectRatio(Measurements.A4_RATIO)
                     .clip(MaterialShapes.Slanted.toShape())
                     .background(MaterialTheme.colorScheme.primaryContainer)
 

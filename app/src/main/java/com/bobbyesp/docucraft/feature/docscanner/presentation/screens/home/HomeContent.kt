@@ -84,6 +84,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
@@ -136,7 +137,6 @@ fun HomeContent(
                     ) {
                         Text(
                             text = stringResource(id = R.string.app_name),
-                            fontFamily = dmSerifTextFont,
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.titleLarge,
                         )
@@ -579,10 +579,9 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
     }
 }
 
-@Preview
-@Preview(uiMode = UI_MODE_NIGHT_YES)
+@PreviewLightDark
 @Composable
-private fun PreviewsHomeContent() {
+private fun HomeContentPreview() {
     DocucraftTheme {
         HomeContent(
             uiState = HomeUiState(visibleDocuments = MockData.Documents.documentsList),

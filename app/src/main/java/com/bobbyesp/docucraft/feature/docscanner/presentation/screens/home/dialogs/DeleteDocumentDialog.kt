@@ -5,12 +5,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonShapes
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -25,7 +28,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionSheetSkeleton
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DeleteDocumentSheet(
     document: ScannedDocument,
@@ -33,56 +38,44 @@ fun DeleteDocumentSheet(
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-
-        // Header
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Rounded.DeleteForever,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(24.dp)
+    DocumentActionSheetSkeleton(
+        modifier = modifier,
+        headingTitle = stringResource(R.string.doc_delete),
+        icon = Icons.Rounded.DeleteForever,
+        iconTint = MaterialTheme.colorScheme.error,
+        content = {
+            DeleteDocumentContent(
+                modifier = Modifier.padding(8.dp),
+                scannedDocument = document
             )
-            Text(
-                text = stringResource(R.string.doc_delete),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-        // Body
-        DeleteDocumentContent(
-            scannedDocument = document
-        )
-
-        // Buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            OutlinedButton(
-                onClick = onDismiss,
-                modifier = Modifier.weight(1f)
+        },
+        footer = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(stringResource(R.string.cancel))
-            }
+                OutlinedButton(
+                    onClick = onDismiss,
+                    shapes = ButtonDefaults.shapes(),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
 
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
-                ),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(stringResource(R.string.delete))
+                Button(
+                    onClick = onConfirm,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    ),
+                    shapes = ButtonDefaults.shapes(),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.delete))
+                }
             }
         }
-    }
+    )
 }
 
 @Composable
