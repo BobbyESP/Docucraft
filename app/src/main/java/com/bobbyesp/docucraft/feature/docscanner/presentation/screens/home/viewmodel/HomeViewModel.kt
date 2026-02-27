@@ -20,14 +20,16 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUs
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentByIdUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentSheetUiState
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetPage
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -53,9 +55,9 @@ class HomeViewModel(
     private val getDocumentByIdUseCase: GetDocumentByIdUseCase,
     private val saveScannedDocumentUseCase: SaveScannedDocumentUseCase,
     private val deleteDocumentUseCase: DeleteDocumentUseCase,
-    private val openDocumentInViewerUseCase: OpenDocumentInViewerUseCase,
     private val shareDocumentUseCase: ShareDocumentUseCase,
     private val exportDocumentUseCase: ExportDocumentUseCase,
+    private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
 ) : CoroutineBasedViewModel() {
@@ -113,16 +115,6 @@ class HomeViewModel(
                 }
             }
 
-            is HomeUiAction.SaveDocument -> onExportDocument(action.document)
-            is HomeUiAction.ShareDocument -> onShareDocument(action.uri)
-
-            is HomeUiAction.DeleteDocument -> {
-                launchIO {
-                    val doc = getDocumentByIdUseCase(action.id)
-                    onDeleteDocument(doc.path)
-                }
-            }
-
             is HomeUiAction.UpdateSearchQuery ->
                 _uiState.update { it.copy(searchQuery = action.query) }
 
@@ -140,6 +132,50 @@ class HomeViewModel(
 
             HomeUiAction.ClearFilters ->
                 _uiState.update { it.copy(filterOptions = FilterOptions.default) }
+
+            // ---- Sheet actions ----
+            is HomeUiAction.OpenSheet -> openSheet(action.documentId)
+
+            HomeUiAction.DismissSheet -> dismissSheet()
+
+            HomeUiAction.SheetBack -> {
+                val stack = _uiState.value.sheetState?.pageStack ?: return
+                if (stack.size <= 1) dismissSheet()
+                else updateSheet { it.copy(pageStack = stack.dropLast(1)) }
+            }
+
+            HomeUiAction.SheetNavigateToEdit ->
+                updateSheet { it.copy(pageStack = it.pageStack + SheetPage.Edit) }
+
+            HomeUiAction.SheetNavigateToDelete ->
+                updateSheet { it.copy(pageStack = it.pageStack + SheetPage.Delete) }
+
+            is HomeUiAction.SheetUpdateTitle ->
+                updateSheet { it.copy(editTitle = action.value) }
+
+            is HomeUiAction.SheetUpdateDescription ->
+                updateSheet { it.copy(editDescription = action.value) }
+
+            HomeUiAction.SheetConfirmEdit -> confirmSheetEdit()
+
+            HomeUiAction.SheetConfirmDelete -> {
+                val id = _uiState.value.sheetState?.activeDocument?.id ?: return
+                dismissSheet()
+                launchIO {
+                    val doc = getDocumentByIdUseCase(id)
+                    onDeleteDocument(doc.path)
+                }
+            }
+
+            HomeUiAction.SheetRequestShare -> {
+                val doc = _uiState.value.sheetState?.activeDocument ?: return
+                onShareDocument(doc.path)
+            }
+
+            HomeUiAction.SheetRequestSave -> {
+                val doc = _uiState.value.sheetState?.activeDocument ?: return
+                onExportDocument(doc)
+            }
         }
     }
 
@@ -157,11 +193,18 @@ class HomeViewModel(
                     _uiState.update { it.copy(status = HomeStatus.Error(stringProvider.getError(error))) }
                     _events.emitEvent(UiEvent.ShowMessage(stringProvider.getError(error)))
                 }.collect { (filteredList, isRepositoryEmpty) ->
-                    _uiState.update {
-                        it.copy(
+                    _uiState.update { state ->
+                        // Keep the sheet's active document in sync with the latest DB data.
+                        val updatedSheet = state.sheetState?.let { sheet ->
+                            val refreshed = filteredList.firstOrNull { it.id == sheet.activeDocument?.id }
+                                ?: sheet.activeDocument
+                            sheet.copy(activeDocument = refreshed)
+                        }
+                        state.copy(
                             visibleDocuments = filteredList,
                             hasDocuments = !isRepositoryEmpty,
                             status = HomeStatus.Idle,
+                            sheetState = updatedSheet,
                         )
                     }
                 }
@@ -312,6 +355,75 @@ class HomeViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Sheet helpers
+    // -------------------------------------------------------------------------
+
+    private fun openSheet(documentId: String) {
+        launchIO {
+            val doc = getDocumentByIdUseCase(documentId)
+            _uiState.update {
+                it.copy(
+                    sheetState = DocumentSheetUiState(
+                        activeDocument = doc,
+                        pageStack = listOf(SheetPage.Actions),
+                        editTitle = doc.title.orEmpty(),
+                        editDescription = doc.description.orEmpty(),
+                    )
+                )
+            }
+        }
+    }
+
+    private fun dismissSheet() {
+        _uiState.update { it.copy(sheetState = null) }
+    }
+
+    /** Applies a transformation only when the sheet is currently open. */
+    private fun updateSheet(transform: (DocumentSheetUiState) -> DocumentSheetUiState) {
+        _uiState.update { state ->
+            state.copy(sheetState = state.sheetState?.let(transform))
+        }
+    }
+
+    private fun confirmSheetEdit() {
+        val sheet = _uiState.value.sheetState ?: return
+        val doc = sheet.activeDocument ?: return
+        if (!sheet.canConfirmEdit) return
+
+        executeAsync(
+            onSuccess = {
+                logInfo("Document fields updated successfully")
+                _events.emitEvent(
+                    UiEvent.ShowMessage(
+                        message = stringProvider.get(R.string.doc_updated_successfully),
+                        type = NotificationType.Success,
+                    )
+                )
+            },
+            onError = { error ->
+                logError("Failed to update document fields: ${error.message}", error)
+                _events.emitEvent(
+                    UiEvent.ShowMessage(
+                        message = stringProvider.getError(error),
+                        type = NotificationType.Error,
+                    )
+                )
+            },
+        ) {
+            val newTitle = sheet.editTitle.trim().ifBlank { null }
+            val newDescription = sheet.editDescription.trim().ifBlank { null }
+            updateDocumentFieldsUseCase(doc.id, newTitle, newDescription)
+            updateSheet { current ->
+                current.copy(
+                    pageStack = current.pageStack
+                        .dropLastWhile { it is SheetPage.Edit }
+                        .ifEmpty { listOf(SheetPage.Actions) }
+                )
+            }
         }
     }
 }

@@ -13,12 +13,8 @@ import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentSheetAction
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentSheetEffect
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentSheetViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -31,7 +27,6 @@ fun HomeScreen(
     onNavigate: (Route) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel(),
-    sheetViewModel: DocumentSheetViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -41,51 +36,20 @@ fun HomeScreen(
         onNavigate = onNavigate,
     )
 
-    // Bridge DocumentSheetViewModel one-shot effects to HomeViewModel use-cases.
-    HandleSheetEffects(
-        sheetEffectFlow = sheetViewModel.effects,
-        visibleDocuments = uiState.visibleDocuments,
-        onHomeAction = viewModel::onAction,
-    )
-
-    // The sheet manages its own visibility internally.
-    DocumentDialogWrapper(
-        onHomeAction = viewModel::onAction,
-        sheetViewModel = sheetViewModel,
-    )
+    // Show the sheet only when there is an active document.
+    uiState.sheetState?.let { sheetState ->
+        DocumentDialogWrapper(
+            sheetState = sheetState,
+            onAction = viewModel::onAction,
+        )
+    }
 
     HomeContent(
         modifier = modifier,
         uiState = uiState,
         onAction = viewModel::onAction,
-        onOpenSheet = { id -> sheetViewModel.onAction(DocumentSheetAction.Open(id)) },
+        onOpenSheet = { id -> viewModel.onAction(HomeUiAction.OpenSheet(id)) },
     )
-}
-
-@Composable
-private fun HandleSheetEffects(
-    sheetEffectFlow: Flow<DocumentSheetEffect>,
-    visibleDocuments: List<ScannedDocument>,
-    onHomeAction: (HomeUiAction) -> Unit,
-) {
-    LaunchedEffect(sheetEffectFlow) {
-        sheetEffectFlow.collectLatest { effect ->
-            when (effect) {
-                is DocumentSheetEffect.RequestDelete ->
-                    onHomeAction(HomeUiAction.DeleteDocument(effect.documentId))
-
-                is DocumentSheetEffect.RequestShare -> {
-                    val doc = visibleDocuments.firstOrNull { it.id == effect.documentId } ?: return@collectLatest
-                    onHomeAction(HomeUiAction.ShareDocument(doc.path))
-                }
-
-                is DocumentSheetEffect.RequestSave -> {
-                    val doc = visibleDocuments.firstOrNull { it.id == effect.documentId } ?: return@collectLatest
-                    onHomeAction(HomeUiAction.SaveDocument(doc))
-                }
-            }
-        }
-    }
 }
 
 @Composable
