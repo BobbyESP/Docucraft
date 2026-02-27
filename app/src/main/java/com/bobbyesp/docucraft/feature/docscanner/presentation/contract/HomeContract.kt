@@ -55,12 +55,16 @@ sealed interface HomeUiAction {
     data class OpenSheet(val documentId: String) : HomeUiAction
     data object DismissSheet : HomeUiAction
     data object SheetBack : HomeUiAction
+
     data object SheetNavigateToEdit : HomeUiAction
     data object SheetNavigateToDelete : HomeUiAction
+
     data class SheetUpdateTitle(val value: String) : HomeUiAction
     data class SheetUpdateDescription(val value: String) : HomeUiAction
     data object SheetConfirmEdit : HomeUiAction
+
     data object SheetConfirmDelete : HomeUiAction
+
     data object SheetRequestShare : HomeUiAction
     data object SheetRequestSave : HomeUiAction
 }

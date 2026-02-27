@@ -2,6 +2,7 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.view
 
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.StringProvider
@@ -49,6 +50,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
+    private val savedStateHandle: SavedStateHandle,
     private val scannerManager: ScannerManager,
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
     private val searchDocumentsUseCase: SearchDocumentsUseCase,
@@ -88,16 +90,24 @@ class HomeViewModel(
 
         observeDocuments()
 
+        savedStateHandle.get<String>(KEY_ACTIVE_SHEET_DOC_ID)?.let { id ->
+            openSheet(id)
+        }
+
         viewModelScope.launch {
             scannerManager.scanResult.collect { result ->
                 result.onSuccess { scanResult ->
                     processScanResult(scanResult)
-                }.onFailure {
+                }.onFailure { error ->
                     _uiState.update { it.copy(isScanning = false) }
-                    Log.w("HomeViewModel", "Failed to scan document: ${it.message}", it)
+                    Log.w("HomeViewModel", "Failed to scan document: ${error.message}", error)
                 }
             }
         }
+    }
+
+    companion object {
+        private const val KEY_ACTIVE_SHEET_DOC_ID = "active_sheet_doc_id"
     }
 
     fun onAction(action: HomeUiAction) {
@@ -363,6 +373,7 @@ class HomeViewModel(
     // -------------------------------------------------------------------------
 
     private fun openSheet(documentId: String) {
+        savedStateHandle[KEY_ACTIVE_SHEET_DOC_ID] = documentId
         launchIO {
             val doc = getDocumentByIdUseCase(documentId)
             _uiState.update {
@@ -379,6 +390,7 @@ class HomeViewModel(
     }
 
     private fun dismissSheet() {
+        savedStateHandle[KEY_ACTIVE_SHEET_DOC_ID] = null
         _uiState.update { it.copy(sheetState = null) }
     }
 
