@@ -56,4 +56,7 @@
     <string name="more_options">Plus d\'options</string>
     <string name="unknown_error">Erreur inconnue</string>
     <string name="doc_save_error_with_reason">Une erreur s\'est produite lors de l\'enregistrement du document : %1$s</string>
+	<string name="doc_delete_warning">Cette action est irréversible. Si vous avez déjà exporté le document, ces copies ne seront pas affectées.</string>
+	<string name="doc_updated_successfully">Document mis à jour avec succès</string>
+	<string name="doc_delete_confirmation">Êtes-vous sûr de vouloir supprimer le fichier « %1$s » ?</string>
 </resources>

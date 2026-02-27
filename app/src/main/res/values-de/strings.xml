@@ -56,4 +56,7 @@
     <string name="doc_delete_warning_message">Sie sind dabei, %1$s von Ihrem Gerät und der App-Datenbank zu löschen.\n\nEs hat %2$s Seiten und ist %3$s groß.\n\nSind Sie sicher, dass Sie es löschen möchten?</string>
     <string name="doc_share">Dokument teilen</string>
     <string name="follow_system">Systemeinstellung folgen</string>
+	<string name="doc_delete_confirmation">Sind Sie sicher, dass Sie die Datei \"%1$s\" löschen möchten?</string>
+	<string name="doc_delete_warning">Diese Aktion ist dauerhaft und kann nicht rückgängig gemacht werden. Wenn Sie das Dokument bereits exportiert haben, sind diese Kopien davon nicht betroffen.</string>
+	<string name="doc_updated_successfully">Dokument erfolgreich aktualisiert</string>
 </resources>

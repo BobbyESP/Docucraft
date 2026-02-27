@@ -57,4 +57,7 @@
     <string name="doc_scan_error">Ocorreu um erro durante a digitalização</string>
     <string name="follow_system">Seguir sistema</string>
     <string name="clear_search">Limpar pesquisa</string>
+	<string name="doc_delete_warning">Esta ação é permanente e não pode ser desfeita. Se você já exportou o documento, essas cópias não serão afetadas.</string>
+	<string name="doc_updated_successfully">Documento atualizado com sucesso</string>
+	<string name="doc_delete_confirmation">Tem certeza de que deseja excluir o arquivo \"%1$s\"?</string>
 </resources>
