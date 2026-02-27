@@ -1,5 +1,7 @@
 package com.bobbyesp.docucraft
 
+import android.app.LocaleConfig
+import android.app.LocaleManager
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log

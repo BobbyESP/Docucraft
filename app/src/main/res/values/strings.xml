@@ -56,4 +56,6 @@
     <string name="doc_name_or_description">Document name or description</string>
     <string name="results">Results</string>
     <string name="doc_updated_successfully">Document successfully updated</string>
+    <string name="doc_delete_confirmation">Are you sure you want to delete the file \"%1$s\"?</string>
+    <string name="doc_delete_warning">This action is permanent and cannot be undone. If you have already exported the document, those copies will not be affected.</string>
 </resources>

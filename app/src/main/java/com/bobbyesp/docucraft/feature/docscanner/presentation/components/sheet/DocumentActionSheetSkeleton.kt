@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -31,6 +32,8 @@ fun DocumentActionSheetSkeleton(
     footer: @Composable () -> Unit = {},
     content: @Composable () -> Unit
 ) {
+    val surfaceColor = MaterialTheme.colorScheme.surfaceColorAtElevation(8.dp)
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -41,6 +44,7 @@ fun DocumentActionSheetSkeleton(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(),
+            color = surfaceColor,
             shape = DocucraftShapeDefaults.topListItemShape
         ) {
             header.invoke()
@@ -49,6 +53,7 @@ fun DocumentActionSheetSkeleton(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(),
+            color = surfaceColor,
             shape = DocucraftShapeDefaults.bottomListItemShape
         ) {
             content.invoke()

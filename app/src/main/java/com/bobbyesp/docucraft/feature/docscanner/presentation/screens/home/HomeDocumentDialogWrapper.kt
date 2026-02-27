@@ -79,7 +79,10 @@ fun HomeDocumentDialogWrapper(
                     DeleteDocumentSheet(
                         document = key.doc,
                         onDismiss = { onAction(HomeUiAction.PopDialog) },
-                        onConfirm = { onAction(HomeUiAction.DeleteDocument(key.doc.id)) },
+                        onConfirm = {
+                            onAction(HomeUiAction.DismissDialogs)
+                            onAction(HomeUiAction.DeleteDocument(key.doc.id))
+                        },
                     )
                 }
             },

@@ -1,5 +1,6 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.components.card
 
+import android.app.LocaleConfig
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
