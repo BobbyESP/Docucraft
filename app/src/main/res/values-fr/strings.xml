@@ -59,4 +59,8 @@
 	<string name="doc_delete_warning">Cette action est irréversible. Si vous avez déjà exporté le document, ces copies ne seront pas affectées.</string>
 	<string name="doc_updated_successfully">Document mis à jour avec succès</string>
 	<string name="doc_delete_confirmation">Êtes-vous sûr de vouloir supprimer le fichier « %1$s » ?</string>
+	<string name="field_required">Ce champ est obligatoire</string>
+	<string name="field_too_long">Ce champ dépasse la longueur maximale</string>
+	<string name="clear_field">Effacer le champ</string>
+	<string name="chars_remaining">%1$d / %2$d</string>
 </resources>

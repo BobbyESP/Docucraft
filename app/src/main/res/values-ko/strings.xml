@@ -59,4 +59,8 @@
 	<string name="doc_delete_confirmation">파일 \"%1$s\"을(를) 삭제하시겠습니까?</string>
 	<string name="doc_updated_successfully">문서가 성공적으로 업데이트되었습니다.</string>
 	<string name="doc_delete_warning">이 작업은 영구적이며 되돌릴 수 없습니다. 문서를 이미 내보낸 경우 해당 복사본은 영향을 받지 않습니다.</string>
+	<string name="clear_field">필드 지우기</string>
+	<string name="chars_remaining">%1$d / %2$d</string>
+	<string name="field_required">필수 입력 항목입니다</string>
+	<string name="field_too_long">최대 길이를 초과했습니다</string>
 </resources>

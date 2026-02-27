@@ -59,4 +59,8 @@
 	<string name="doc_delete_warning">هذا الإجراء دائم ولا يمكن التراجع عنه. إذا قمت بتصدير المستند بالفعل، فلن تتأثر هذه النسخ.</string>
 	<string name="doc_updated_successfully">تم تحديث المستند بنجاح</string>
 	<string name="doc_delete_confirmation">هل أنت متأكد أنك تريد حذف الملف \"%1$s\"؟</string>
+	<string name="field_too_long">هذا الحقل يتجاوز الحد الأقصى للطول</string>
+	<string name="field_required">هذا الحقل مطلوب</string>
+	<string name="clear_field">مسح الحقل</string>
+	<string name="chars_remaining">%1$d / %2$d</string>
 </resources>

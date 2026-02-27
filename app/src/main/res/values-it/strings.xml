@@ -59,4 +59,8 @@
 	<string name="doc_updated_successfully">Documento aggiornato con successo</string>
 	<string name="doc_delete_warning">Questa azione è permanente e non può essere annullata. Se hai già esportato il documento, tali copie non saranno interessate.</string>
 	<string name="doc_delete_confirmation">Sei sicuro di voler eliminare il file \"%1$s\"?</string>
+	<string name="field_too_long">Questo campo supera la lunghezza massima</string>
+	<string name="field_required">Questo campo è obbligatorio</string>
+	<string name="chars_remaining">%1$d / %2$d</string>
+	<string name="clear_field">Cancella campo</string>
 </resources>

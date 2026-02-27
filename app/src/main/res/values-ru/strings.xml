@@ -59,4 +59,8 @@
 	<string name="doc_delete_confirmation">Вы уверены, что хотите удалить файл \"%1$s\"?</string>
 	<string name="doc_updated_successfully">Документ успешно обновлен</string>
 	<string name="doc_delete_warning">Это действие необратимо. Если вы уже экспортировали документ, это не повлияет на эти копии.</string>
+	<string name="field_required">Это поле обязательно для заполнения</string>
+	<string name="chars_remaining">%1$d / %2$d</string>
+	<string name="field_too_long">Длина этого поля превышает максимальную</string>
+	<string name="clear_field">Очистить поле</string>
 </resources>

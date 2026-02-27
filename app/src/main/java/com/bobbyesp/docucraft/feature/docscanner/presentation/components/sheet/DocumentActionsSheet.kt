@@ -257,17 +257,17 @@ private fun DocumentTagsRow(
         RoundedTag(
             icon = Icons.Rounded.Storage,
             text = formatFileSize(context, fileSize),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest),
         )
         RoundedTag(
             icon = Icons.Rounded.FileCopy,
             text = pageCountLabel,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest),
         )
         RoundedTag(
             icon = Icons.Rounded.CalendarMonth,
             text = formattedDate,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest),
         )
     }
 }

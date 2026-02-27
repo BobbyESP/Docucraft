@@ -59,4 +59,8 @@
 	<string name="doc_updated_successfully">ドキュメントを正常に更新しました</string>
 	<string name="doc_delete_warning">この操作は元に戻せません。ドキュメントを既にエクスポートしている場合、それらのコピーには影響しません。</string>
 	<string name="doc_delete_confirmation">ファイル \"%1$s\" を削除してもよろしいですか？</string>
+	<string name="field_required">このフィールドは必須です</string>
+	<string name="clear_field">フィールドをクリア</string>
+	<string name="field_too_long">このフィールドは最大長を超えています</string>
+	<string name="chars_remaining">%1$d / %2$d</string>
 </resources>

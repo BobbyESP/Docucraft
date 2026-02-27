@@ -59,4 +59,8 @@
 	<string name="doc_updated_successfully">दस्तावेज़ सफलतापूर्वक अपडेट किया गया</string>
 	<string name="doc_delete_warning">यह कार्रवाई स्थायी है और इसे पूर्ववत नहीं किया जा सकता. यदि आपने पहले ही दस्तावेज़ निर्यात कर लिया है, तो वे प्रतियां प्रभावित नहीं होंगी.</string>
 	<string name="doc_delete_confirmation">क्या आप वाकई फ़ाइल \"%1$s\" को हटाना चाहते हैं?</string>
+	<string name="clear_field">फ़ील्ड साफ़ करें</string>
+	<string name="field_too_long">यह फ़ील्ड अधिकतम लंबाई से ज़्यादा है</string>
+	<string name="chars_remaining">%1$d / %2$d</string>
+	<string name="field_required">यह फ़ील्ड ज़रूरी है</string>
 </resources>

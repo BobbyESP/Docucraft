@@ -59,4 +59,8 @@
 	<string name="doc_delete_confirmation">Sind Sie sicher, dass Sie die Datei \"%1$s\" löschen möchten?</string>
 	<string name="doc_delete_warning">Diese Aktion ist dauerhaft und kann nicht rückgängig gemacht werden. Wenn Sie das Dokument bereits exportiert haben, sind diese Kopien davon nicht betroffen.</string>
 	<string name="doc_updated_successfully">Dokument erfolgreich aktualisiert</string>
+	<string name="clear_field">Feld leeren</string>
+	<string name="field_too_long">Dieses Feld überschreitet die maximale Länge</string>
+	<string name="field_required">Dieses Feld ist erforderlich</string>
+	<string name="chars_remaining">%1$d / %2$d</string>
 </resources>
