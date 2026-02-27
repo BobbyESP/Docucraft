@@ -24,8 +24,6 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInVi
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.DocumentDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
@@ -55,25 +53,19 @@ class HomeViewModel(
     private val getDocumentByIdUseCase: GetDocumentByIdUseCase,
     private val saveScannedDocumentUseCase: SaveScannedDocumentUseCase,
     private val deleteDocumentUseCase: DeleteDocumentUseCase,
-    private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase,
     private val openDocumentInViewerUseCase: OpenDocumentInViewerUseCase,
     private val shareDocumentUseCase: ShareDocumentUseCase,
     private val exportDocumentUseCase: ExportDocumentUseCase,
     private val stringProvider: StringProvider,
-    private val analyticsHelper: AnalyticsHelper
+    private val analyticsHelper: AnalyticsHelper,
 ) : CoroutineBasedViewModel() {
 
     override fun onCoroutineException(throwable: Throwable) {
         viewModelScope.launch {
-            _events.emitEvent(
-                UiEvent.ShowMessage(
-                    stringProvider.getError(throwable)
-                )
-            )
+            _events.emitEvent(UiEvent.ShowMessage(stringProvider.getError(throwable)))
         }
     }
 
-    // State management
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -84,10 +76,8 @@ class HomeViewModel(
         viewModelScope.launch { _uiEffect.send(effect) }
     }
 
-    // Events using Channel for one-time events
     private val _uiEffect = Channel<HomeUiEffect>(Channel.BUFFERED)
     val uiEffect = _uiEffect.receiveAsFlow()
-
 
     init {
         val eventsPair = createEventFlow<UiEvent>()
@@ -102,11 +92,7 @@ class HomeViewModel(
                     processScanResult(scanResult)
                 }.onFailure {
                     _uiState.update { it.copy(isScanning = false) }
-                    Log.w(
-                        "HomeViewModel",
-                        "Failed to scan document: ${it.message}",
-                        it
-                    )
+                    Log.w("HomeViewModel", "Failed to scan document: ${it.message}", it)
                 }
             }
         }
@@ -114,122 +100,46 @@ class HomeViewModel(
 
     fun onAction(action: HomeUiAction) {
         when (action) {
-            // Scanning
             HomeUiAction.LaunchDocumentScanner -> {
-                launchDefault {
-                    scannerManager.requestScan()
-                }
+                launchDefault { scannerManager.requestScan() }
             }
 
             is HomeUiAction.ScanResultAction -> processScanResult(action.rawScanResult)
 
-            // Document Operations
             is HomeUiAction.ViewDocument -> {
                 launchIO {
                     val basicInformation = getBasicInformationForId(action.id)
-
-                    sendEvent(
-                        HomeUiEffect.Navigate(
-                            Route.PdfViewer(
-                                documentInfo = basicInformation
-                            )
-                        )
-                    )
+                    sendEvent(HomeUiEffect.Navigate(Route.PdfViewer(documentInfo = basicInformation)))
                 }
-
             }
 
             is HomeUiAction.SaveDocument -> onExportDocument(action.document)
             is HomeUiAction.ShareDocument -> onShareDocument(action.uri)
+
             is HomeUiAction.DeleteDocument -> {
-                if (_uiState.value.activeDialog is DocumentDialog.Delete) {
-                    _uiState.update { it.copy(dialogs = it.dialogs.pop()) }
-                }
-
-                action.id?.let { id ->
-                    launchIO {
-                        val scannedDocument = getDocumentByIdUseCase(id)
-                        onDeleteDocument(scannedDocument.path)
-                    }
-                }
-            }
-
-            is HomeUiAction.UpdateDocumentFields -> {
-                updateDocumentFields(action.id, action.title, action.description)
-            }
-
-            // Dialogs
-            is HomeUiAction.ShowDeleteConfirmation -> {
                 launchIO {
-                    val scannedDocument = getDocumentByIdUseCase(action.id)
-                    _uiState.update {
-                        it.copy(dialogs = it.dialogs.push(DocumentDialog.Delete(scannedDocument)))
-                    }
+                    val doc = getDocumentByIdUseCase(action.id)
+                    onDeleteDocument(doc.path)
                 }
             }
 
-            is HomeUiAction.ShowEditDialog -> {
-                launchIO {
-                    val scannedDocument = getDocumentByIdUseCase(action.id)
-                    _uiState.update {
-                        it.copy(dialogs = it.dialogs.push(DocumentDialog.Edit(scannedDocument)))
-                    }
-                }
-            }
-
-            is HomeUiAction.ShowActionsSheet -> {
-                launchIO {
-                    val scannedDocument = getDocumentByIdUseCase(action.id)
-                    _uiState.update {
-                        it.copy(dialogs = it.dialogs.push(DocumentDialog.Actions(scannedDocument)))
-                    }
-                }
-            }
-
-            HomeUiAction.DismissDialogs -> {
-                _uiState.update {
-                    it.copy(
-                        dialogs = it.dialogs.clear(),
-                    )
-                }
-            }
-
-            is HomeUiAction.DismissActionsSheet -> {
-                if (_uiState.value.activeDialog is DocumentDialog.Actions) {
-                    _uiState.update { it.copy(dialogs = it.dialogs.pop()) }
-                }
-            }
-
-            HomeUiAction.PopDialog -> {
-                _uiState.update { it.copy(dialogs = it.dialogs.pop()) }
-            }
-
-            // Search & Filter
-            is HomeUiAction.UpdateSearchQuery -> {
+            is HomeUiAction.UpdateSearchQuery ->
                 _uiState.update { it.copy(searchQuery = action.query) }
-            }
 
-            HomeUiAction.ClearSearch -> {
+            HomeUiAction.ClearSearch ->
                 _uiState.update { it.copy(searchQuery = "") }
-            }
 
-            is HomeUiAction.ToggleSearchBar -> {
+            is HomeUiAction.ToggleSearchBar ->
                 _uiState.update { it.copy(isSearchBarVisible = action.isVisible) }
-            }
 
-            is HomeUiAction.ApplySort -> {
-                _uiState.update {
-                    it.copy(filterOptions = it.filterOptions.copy(sortBy = action.sortOption))
-                }
-            }
+            is HomeUiAction.ApplySort ->
+                _uiState.update { it.copy(filterOptions = it.filterOptions.copy(sortBy = action.sortOption)) }
 
-            is HomeUiAction.ApplyFilter -> {
+            is HomeUiAction.ApplyFilter ->
                 _uiState.update { it.copy(filterOptions = action.filterOptions) }
-            }
 
-            HomeUiAction.ClearFilters -> {
+            HomeUiAction.ClearFilters ->
                 _uiState.update { it.copy(filterOptions = FilterOptions.default) }
-            }
         }
     }
 
@@ -244,9 +154,7 @@ class HomeViewModel(
             }.onStart { _uiState.update { it.copy(status = HomeStatus.Loading) } }
                 .catch { error ->
                     logError("Failed to retrieve documents: ${error.message}", error)
-                    _uiState.update {
-                        it.copy(status = HomeStatus.Error(stringProvider.getError(error)))
-                    }
+                    _uiState.update { it.copy(status = HomeStatus.Error(stringProvider.getError(error))) }
                     _events.emitEvent(UiEvent.ShowMessage(stringProvider.getError(error)))
                 }.collect { (filteredList, isRepositoryEmpty) ->
                     _uiState.update {
@@ -273,15 +181,10 @@ class HomeViewModel(
                 result = result.filter { document -> searchResults.any { it.id == document.id } }
             } catch (e: Exception) {
                 logError("Search failed: ${e.message}", e)
-                // Fallback to in-memory filtering
                 result = result.filter { document ->
-                    document.title?.contains(
-                        query,
-                        ignoreCase = true
-                    ) == true || document.filename.contains(
-                        query,
-                        ignoreCase = true
-                    ) || document.description?.contains(query, ignoreCase = true) == true
+                    document.title?.contains(query, ignoreCase = true) == true ||
+                            document.filename.contains(query, ignoreCase = true) ||
+                            document.description?.contains(query, ignoreCase = true) == true
                 }
             }
         }
@@ -289,32 +192,28 @@ class HomeViewModel(
         filterOptions.minPageCount?.let { minPages ->
             result = result.filter { it.pageCount >= minPages }
         }
-
         filterOptions.minFileSize?.let { minSize ->
             result = result.filter { it.fileSize >= minSize }
         }
-
         filterOptions.dateRange?.let { (start, end) ->
             result = result.filter { it.createdTimestamp in start..end }
         }
 
         result = when (filterOptions.sortBy.criteria) {
-            SortOption.Criteria.DATE -> {
-                if (filterOptions.sortBy.order == SortOption.Order.DESC) result.sortedByDescending { it.createdTimestamp }
+            SortOption.Criteria.DATE ->
+                if (filterOptions.sortBy.order == SortOption.Order.DESC)
+                    result.sortedByDescending { it.createdTimestamp }
                 else result.sortedBy { it.createdTimestamp }
-            }
 
-            SortOption.Criteria.NAME -> {
-                if (filterOptions.sortBy.order == SortOption.Order.DESC) result.sortedByDescending {
-                    it.title ?: it.filename
-                }
+            SortOption.Criteria.NAME ->
+                if (filterOptions.sortBy.order == SortOption.Order.DESC)
+                    result.sortedByDescending { it.title ?: it.filename }
                 else result.sortedBy { it.title ?: it.filename }
-            }
 
-            SortOption.Criteria.SIZE -> {
-                if (filterOptions.sortBy.order == SortOption.Order.DESC) result.sortedByDescending { it.fileSize }
+            SortOption.Criteria.SIZE ->
+                if (filterOptions.sortBy.order == SortOption.Order.DESC)
+                    result.sortedByDescending { it.fileSize }
                 else result.sortedBy { it.fileSize }
-            }
         }
 
         return result to unfilteredDocuments.isEmpty()
@@ -322,90 +221,36 @@ class HomeViewModel(
 
     private fun processScanResult(rawScanResult: RawScanResult) {
         launchIO {
-            _uiState.update {
-                it.copy(isScanning = false)
-            }
-
-            // Auto-save logic
-            saveScannedDocumentUseCase(rawScanResult).onSuccess {
-                _events.emitEvent(
-                    UiEvent.ShowMessage(
-                        stringProvider.get(
-                            R.string.doc_saved_successfully,
-                        ), type = NotificationType.Success
+            _uiState.update { it.copy(isScanning = false) }
+            saveScannedDocumentUseCase(rawScanResult)
+                .onSuccess {
+                    _events.emitEvent(
+                        UiEvent.ShowMessage(
+                            stringProvider.get(R.string.doc_saved_successfully),
+                            type = NotificationType.Success,
+                        )
                     )
-                )
-            }.onFailure { error ->
-                logError("Failed to save document: ${error.message}", error)
-                _events.emitEvent(
-                    UiEvent.ShowMessage(
-                        message = stringProvider.get(
-                            id = R.string.doc_save_error_with_reason,
-                            error
-                        ), type = NotificationType.Error
+                }.onFailure { error ->
+                    logError("Failed to save document: ${error.message}", error)
+                    _events.emitEvent(
+                        UiEvent.ShowMessage(
+                            message = stringProvider.get(R.string.doc_save_error_with_reason, error),
+                            type = NotificationType.Error,
+                        )
                     )
-                )
-            }
-        }
-    }
-
-    private fun updateDocumentFields(documentId: String, title: String, description: String) {
-        executeAsync(
-            onSuccess = {
-                logInfo("Document metadata updated successfully")
-                _events.emitEvent(
-                    UiEvent.ShowMessage(
-                        message = stringProvider.get(R.string.doc_updated_successfully),
-                        type = NotificationType.Success
-                    )
-                )
-            },
-            onError = { error ->
-                logError("Failed to modify Document: ${error.message}", error)
-                _events.emitEvent(
-                    UiEvent.ShowMessage(
-                        message = stringProvider.getError(error), type = NotificationType.Error
-                    )
-                )
-            },
-        ) {
-            val scannedDocument = getDocumentByIdUseCase(documentId)
-            val newTitle: String? = title.ifBlank { null }
-            val newDescription: String? = description.ifBlank { null }
-
-            updateDocumentFieldsUseCase(scannedDocument.id, newTitle, newDescription)
-
-            if (_uiState.value.activeDialog is DocumentDialog.Edit) {
-                _uiState.update { it.copy(dialogs = it.dialogs.pop()) }
-            }
+                }
         }
     }
 
     private suspend fun getBasicInformationForId(id: String): BasicDocument {
         val document = getDocumentByIdUseCase(pdfId = id)
-
         return BasicDocument(
             id = document.id,
             filename = document.filename,
             uri = document.path.toString(),
             title = document.title,
-            description = document.description
+            description = document.description,
         )
-    }
-
-
-    private fun onViewDocument(documentUri: Uri) {
-        try {
-            openDocumentInViewerUseCase(documentUri)
-        } catch (e: Exception) {
-            logError("Failed to see document: ${e.message}", e)
-            _events.emitEvent(
-                UiEvent.ShowMessage(
-                    message = stringProvider.get(R.string.issue_opening_doc_viewer),
-                    type = NotificationType.Error
-                )
-            )
-        }
     }
 
     private fun onShareDocument(documentUri: Uri) {
@@ -416,7 +261,7 @@ class HomeViewModel(
             _events.emitEvent(
                 UiEvent.ShowMessage(
                     message = stringProvider.get(R.string.issue_sharing_doc),
-                    type = NotificationType.Error
+                    type = NotificationType.Error,
                 )
             )
         }
@@ -428,7 +273,7 @@ class HomeViewModel(
             _events.emitEvent(
                 UiEvent.ShowMessage(
                     message = stringProvider.get(R.string.doc_deleted_successfully),
-                    type = NotificationType.Success
+                    type = NotificationType.Success,
                 )
             )
         } catch (e: Exception) {
@@ -436,35 +281,33 @@ class HomeViewModel(
             _events.emitEvent(
                 UiEvent.ShowMessage(
                     message = stringProvider.get(R.string.doc_delete_error),
-                    type = NotificationType.Error
+                    type = NotificationType.Error,
                 )
             )
         }
     }
 
     private fun onExportDocument(scannedDocument: ScannedDocument) {
-        launchSafe(
-            context = Dispatchers.IO
-        ) {
+        launchSafe(context = Dispatchers.IO) {
             exportDocumentUseCase(scannedDocument)
                 .onSuccess { uri ->
                     logInfo("Document saved successfully to: $uri")
                     _events.emitEvent(
                         UiEvent.ShowMessage(
-                            message = stringProvider.get(
-                                R.string.doc_saved_successfully_to, uri
-                            ), type = NotificationType.Success
+                            message = stringProvider.get(R.string.doc_saved_successfully_to, uri),
+                            type = NotificationType.Success,
                         )
                     )
                 }.onFailure { error ->
                     logError("Failed to save document: ${error.message}", error)
-
-                    if(error !is DocumentExportFailure.Cancelled) {
+                    if (error !is DocumentExportFailure.Cancelled) {
                         _events.emitEvent(
                             UiEvent.ShowMessage(
                                 message = stringProvider.getError(
-                                    id = R.string.doc_save_error_with_reason, throwable = error
-                                ), type = NotificationType.Error
+                                    id = R.string.doc_save_error_with_reason,
+                                    throwable = error,
+                                ),
+                                type = NotificationType.Error,
                             )
                         )
                     }

@@ -12,6 +12,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocum
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentSheetViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -25,12 +26,20 @@ val documentScannerViewModels = module {
             getDocumentByIdUseCase = get<GetDocumentByIdUseCase>(),
             saveScannedDocumentUseCase = get<SaveScannedDocumentUseCase>(),
             deleteDocumentUseCase = get<DeleteDocumentUseCase>(),
-            updateDocumentFieldsUseCase = get<UpdateDocumentFieldsUseCase>(),
             openDocumentInViewerUseCase = get<OpenDocumentInViewerUseCase>(),
             shareDocumentUseCase = get<ShareDocumentUseCase>(),
             exportDocumentUseCase = get<ExportDocumentUseCase>(),
             stringProvider = get<StringProvider>(),
-            analyticsHelper = get<AnalyticsHelper>()
+            analyticsHelper = get<AnalyticsHelper>(),
+        )
+    }
+
+    viewModel {
+        DocumentSheetViewModel(
+            observeDocumentsUseCase = get<ObserveDocumentsUseCase>(),
+            getDocumentByIdUseCase = get<GetDocumentByIdUseCase>(),
+            updateDocumentFieldsUseCase = get<UpdateDocumentFieldsUseCase>(),
+            stringProvider = get<StringProvider>(),
         )
     }
 }

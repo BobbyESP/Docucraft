@@ -34,15 +34,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.listSaver
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -56,45 +47,12 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionSheetSkeleton
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.EditDocumentUiState
 import com.bobbyesp.docucraft.util.MockData
 
 private const val TITLE_MAX_LENGTH = 60
 private const val DESCRIPTION_MAX_LENGTH = 200
-
-// ---------------------------------------------------------------------------
-// Shared state holder — survives recompositions, rotations and Sheet↔Dialog
-// transitions because it lives in the parent via rememberSaveable.
-// ---------------------------------------------------------------------------
-@Stable
-class EditDocumentState(
-    initialTitle: String,
-    initialDescription: String,
-) {
-    var title by mutableStateOf(initialTitle)
-    var description by mutableStateOf(initialDescription)
-
-    val isTitleError: Boolean get() = title.length > TITLE_MAX_LENGTH
-    val isDescriptionError: Boolean get() = description.length > DESCRIPTION_MAX_LENGTH
-    val canConfirm: Boolean get() = !isTitleError && !isDescriptionError
-
-    companion object {
-        fun saver(): Saver<EditDocumentState, *> = listSaver(
-            save = { listOf(it.title, it.description) },
-            restore = { EditDocumentState(it[0], it[1]) },
-        )
-    }
-}
-
-@Composable
-fun rememberEditDocumentState(doc: ScannedDocument): EditDocumentState =
-    rememberSaveable(doc.id, saver = EditDocumentState.saver()) {
-        EditDocumentState(
-            initialTitle = doc.title.orEmpty(),
-            initialDescription = doc.description.orEmpty(),
-        )
-    }
 
 // ---------------------------------------------------------------------------
 // Sheet variant
@@ -102,16 +60,14 @@ fun rememberEditDocumentState(doc: ScannedDocument): EditDocumentState =
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EditDocumentDetailsSheet(
-    doc: ScannedDocument,
+    state: EditDocumentUiState,
+    onTitleChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
     onPopDialog: () -> Unit,
-    onConfirmEdit: (String, String) -> Unit,
+    onConfirmEdit: () -> Unit,
     modifier: Modifier = Modifier,
-    state: EditDocumentState = rememberEditDocumentState(doc),
 ) {
     val focusManager = LocalFocusManager.current
-
-    // Wrap derivedStateOf so reads inside the lambda are tracked correctly
-    val canConfirm by remember { derivedStateOf { state.canConfirm } }
 
     DocumentActionSheetSkeleton(
         modifier = modifier.pointerInput(Unit) {
@@ -123,8 +79,8 @@ fun EditDocumentDetailsSheet(
             EditDocumentDetailsContent(
                 modifier = Modifier.padding(12.dp),
                 state = state,
-                onTitleChange = { state.title = it },
-                onDescriptionChange = { state.description = it },
+                onTitleChange = onTitleChange,
+                onDescriptionChange = onDescriptionChange,
             )
         },
         footer = {
@@ -143,12 +99,9 @@ fun EditDocumentDetailsSheet(
 
                 Button(
                     modifier = Modifier.weight(1f),
-                    onClick = {
-                        onPopDialog()
-                        onConfirmEdit(state.title.trim(), state.description.trim())
-                    },
+                    onClick = onConfirmEdit,
                     shapes = ButtonDefaults.shapes(),
-                    enabled = canConfirm,
+                    enabled = state.canConfirm,
                 ) {
                     Text(stringResource(R.string.confirm))
                 }
@@ -163,14 +116,14 @@ fun EditDocumentDetailsSheet(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EditDocumentDetailsDialog(
-    doc: ScannedDocument,
+    state: EditDocumentUiState,
+    onTitleChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
     onDismiss: () -> Unit,
-    onConfirmEdit: (String, String) -> Unit,
+    onConfirmEdit: () -> Unit,
     modifier: Modifier = Modifier,
-    state: EditDocumentState = rememberEditDocumentState(doc),
 ) {
     val focusManager = LocalFocusManager.current
-    val canConfirm by remember { derivedStateOf { state.canConfirm } }
 
     AlertDialog(
         modifier = modifier.pointerInput(Unit) {
@@ -190,26 +143,18 @@ fun EditDocumentDetailsDialog(
             )
         },
         text = {
-            LazyColumn(
-                modifier = Modifier,
-            ) {
+            LazyColumn {
                 item {
                     EditDocumentDetailsContent(
                         state = state,
-                        onTitleChange = { state.title = it },
-                        onDescriptionChange = { state.description = it },
+                        onTitleChange = onTitleChange,
+                        onDescriptionChange = onDescriptionChange,
                     )
                 }
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = {
-                    onDismiss()
-                    onConfirmEdit(state.title.trim(), state.description.trim())
-                },
-                enabled = canConfirm,
-            ) {
+            TextButton(onClick = onConfirmEdit, enabled = state.canConfirm) {
                 Text(stringResource(R.string.confirm))
             }
         },
@@ -227,7 +172,7 @@ fun EditDocumentDetailsDialog(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EditDocumentDetailsContent(
-    state: EditDocumentState,
+    state: EditDocumentUiState,
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -267,9 +212,8 @@ private fun EditDocumentDetailsContent(
 }
 
 // ---------------------------------------------------------------------------
-// LimitedTextField & CharacterCounter — unchanged
+// LimitedTextField & CharacterCounter
 // ---------------------------------------------------------------------------
-
 @Composable
 private fun LimitedTextField(
     value: String,
@@ -402,15 +346,20 @@ private fun CharacterCounter(
 // ---------------------------------------------------------------------------
 // Previews
 // ---------------------------------------------------------------------------
-
 @PreviewLightDark
 @Composable
 private fun EditDocumentDetailsDialogPreview() {
+    val doc = MockData.Documents.documentsList.first()
     DocucraftTheme {
         EditDocumentDetailsDialog(
-            doc = MockData.Documents.documentsList.first(),
+            state = EditDocumentUiState(
+                title = doc.title.orEmpty(),
+                description = doc.description.orEmpty(),
+            ),
+            onTitleChange = {},
+            onDescriptionChange = {},
             onDismiss = {},
-            onConfirmEdit = { _, _ -> },
+            onConfirmEdit = {},
         )
     }
 }
@@ -418,13 +367,18 @@ private fun EditDocumentDetailsDialogPreview() {
 @PreviewLightDark
 @Composable
 private fun EditDocumentDetailsSheetPreview() {
+    val doc = MockData.Documents.documentsList.first()
     DocucraftTheme {
         EditDocumentDetailsSheet(
             modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow),
-            doc = MockData.Documents.documentsList.first(),
+            state = EditDocumentUiState(
+                title = doc.title.orEmpty(),
+                description = doc.description.orEmpty(),
+            ),
+            onTitleChange = {},
+            onDescriptionChange = {},
             onPopDialog = {},
-            onConfirmEdit = { _, _ -> },
+            onConfirmEdit = {},
         )
     }
-
 }

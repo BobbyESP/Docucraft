@@ -113,6 +113,7 @@ import kotlin.math.roundToInt
 fun HomeContent(
     uiState: HomeUiState,
     onAction: (HomeUiAction) -> Unit,
+    onOpenSheet: (documentId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val searchQuery = uiState.searchQuery
@@ -229,6 +230,7 @@ fun HomeContent(
                         ScannedDocumentsList(
                             scannedDocuments = uiState.visibleDocuments,
                             onAction = onAction,
+                            onOpenSheet = onOpenSheet,
                             filterOptions = filterOptions,
                             listState = listState,
                         )
@@ -245,6 +247,7 @@ private fun ScannedDocumentsList(
     scannedDocuments: List<ScannedDocument>,
     filterOptions: FilterOptions,
     onAction: (HomeUiAction) -> Unit,
+    onOpenSheet: (documentId: String) -> Unit,
     listState: LazyListState,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
@@ -304,7 +307,7 @@ private fun ScannedDocumentsList(
                 pdf = scannedDocument,
                 position = position,
                 onItemClick = { id -> onAction(HomeUiAction.ViewDocument(id)) },
-                onItemLongClick = { onAction(HomeUiAction.ShowActionsSheet(scannedDocument.id)) },
+                onItemLongClick = { onOpenSheet(scannedDocument.id) },
             )
         }
 
@@ -586,6 +589,7 @@ private fun HomeContentPreview() {
         HomeContent(
             uiState = HomeUiState(visibleDocuments = MockData.Documents.documentsList),
             onAction = {},
+            onOpenSheet = {},
         )
     }
 }
