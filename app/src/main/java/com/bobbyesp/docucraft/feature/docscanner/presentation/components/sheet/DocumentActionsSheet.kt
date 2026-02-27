@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.divider.AnimatedWavyDivider
 import com.bobbyesp.docucraft.core.presentation.components.divider.WavyDivider
+import com.bobbyesp.docucraft.core.presentation.components.divider.defaults.AnimatedWavyDividerDefaults
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.components.others.GridMenu
 import com.bobbyesp.docucraft.core.presentation.components.others.GridMenuItem
@@ -177,7 +178,10 @@ fun DocumentActionsContent(
         AnimatedWavyDivider(
             modifier = Modifier
                 .padding(horizontal = 12.dp, vertical = 8.dp),
-            strokeWidth = 3.dp,
+            strokeWidth = 4.dp,
+            colors = AnimatedWavyDividerDefaults.colors(
+                color = MaterialTheme.colorScheme.outlineVariant
+            )
         )
 
         Box(modifier = Modifier.heightIn(min = 120.dp)) {
