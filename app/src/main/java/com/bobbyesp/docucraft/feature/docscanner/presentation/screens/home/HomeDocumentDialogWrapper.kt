@@ -24,6 +24,8 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialo
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsSheet
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.rememberEditDocumentState
+import androidx.compose.runtime.remember
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -36,6 +38,15 @@ fun HomeDocumentDialogWrapper(
     val isCompact = windowSizeClass == WindowWidthSizeClass.Compact
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Single source of truth for the edit state — shared between Sheet (compact)
+    // and AlertDialog (expanded). Survives rotation thanks to rememberSaveable
+    // inside rememberEditDocumentState, and survives Sheet <-> Dialog switches
+    // because it lives here in the common parent.
+    val editDialog = remember(activeDialogs) {
+        activeDialogs.filterIsInstance<DocumentDialog.Edit>().firstOrNull()
+    }
+    val editState = editDialog?.let { rememberEditDocumentState(it.doc) }
 
     ModalBottomSheet(
         onDismissRequest = { onAction(HomeUiAction.DismissDialogs) },
@@ -71,6 +82,7 @@ fun HomeDocumentDialogWrapper(
                                 )
                             )
                         },
+                        state = editState ?: rememberEditDocumentState(key.doc),
                     )
                 }
                 entry<DocumentDialog.Delete> { key ->
@@ -117,6 +129,7 @@ fun HomeDocumentDialogWrapper(
                         )
                     },
                     doc = topDialog.doc,
+                    state = editState ?: rememberEditDocumentState(topDialog.doc),
                     modifier = Modifier.widthIn(max = 560.dp),
                 )
 

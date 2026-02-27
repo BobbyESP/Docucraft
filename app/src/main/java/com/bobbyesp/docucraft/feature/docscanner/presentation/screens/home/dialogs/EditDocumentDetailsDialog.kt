@@ -34,10 +34,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,6 +63,42 @@ import com.bobbyesp.docucraft.util.MockData
 private const val TITLE_MAX_LENGTH = 60
 private const val DESCRIPTION_MAX_LENGTH = 200
 
+// ---------------------------------------------------------------------------
+// Shared state holder — survives recompositions, rotations and Sheet↔Dialog
+// transitions because it lives in the parent via rememberSaveable.
+// ---------------------------------------------------------------------------
+@Stable
+class EditDocumentState(
+    initialTitle: String,
+    initialDescription: String,
+) {
+    var title by mutableStateOf(initialTitle)
+    var description by mutableStateOf(initialDescription)
+
+    val isTitleError: Boolean get() = title.length > TITLE_MAX_LENGTH
+    val isDescriptionError: Boolean get() = description.length > DESCRIPTION_MAX_LENGTH
+    val canConfirm: Boolean get() = !isTitleError && !isDescriptionError
+
+    companion object {
+        fun saver(): Saver<EditDocumentState, *> = listSaver(
+            save = { listOf(it.title, it.description) },
+            restore = { EditDocumentState(it[0], it[1]) },
+        )
+    }
+}
+
+@Composable
+fun rememberEditDocumentState(doc: ScannedDocument): EditDocumentState =
+    rememberSaveable(doc.id, saver = EditDocumentState.saver()) {
+        EditDocumentState(
+            initialTitle = doc.title.orEmpty(),
+            initialDescription = doc.description.orEmpty(),
+        )
+    }
+
+// ---------------------------------------------------------------------------
+// Sheet variant
+// ---------------------------------------------------------------------------
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EditDocumentDetailsSheet(
@@ -67,25 +106,12 @@ fun EditDocumentDetailsSheet(
     onPopDialog: () -> Unit,
     onConfirmEdit: (String, String) -> Unit,
     modifier: Modifier = Modifier,
+    state: EditDocumentState = rememberEditDocumentState(doc),
 ) {
     val focusManager = LocalFocusManager.current
 
-    var currentTitle by rememberSaveable(doc.id) {
-        mutableStateOf(doc.title.orEmpty())
-    }
-    var currentDescription by rememberSaveable(doc.id) {
-        mutableStateOf(doc.description.orEmpty())
-    }
-
-    val isTitleError by remember(currentTitle) {
-        derivedStateOf { currentTitle.length > TITLE_MAX_LENGTH }
-    }
-    val isDescriptionError by remember(currentDescription) {
-        derivedStateOf { currentDescription.length > DESCRIPTION_MAX_LENGTH }
-    }
-    val canConfirm by remember(isTitleError, isDescriptionError) {
-        derivedStateOf { !isTitleError && !isDescriptionError }
-    }
+    // Wrap derivedStateOf so reads inside the lambda are tracked correctly
+    val canConfirm by remember { derivedStateOf { state.canConfirm } }
 
     DocumentActionSheetSkeleton(
         modifier = modifier.pointerInput(Unit) {
@@ -96,12 +122,9 @@ fun EditDocumentDetailsSheet(
         content = {
             EditDocumentDetailsContent(
                 modifier = Modifier.padding(12.dp),
-                title = currentTitle,
-                description = currentDescription,
-                isTitleError = isTitleError,
-                isDescriptionError = isDescriptionError,
-                onTitleChange = { currentTitle = it },
-                onDescriptionChange = { currentDescription = it },
+                state = state,
+                onTitleChange = { state.title = it },
+                onDescriptionChange = { state.description = it },
             )
         },
         footer = {
@@ -122,7 +145,7 @@ fun EditDocumentDetailsSheet(
                     modifier = Modifier.weight(1f),
                     onClick = {
                         onPopDialog()
-                        onConfirmEdit(currentTitle.trim(), currentDescription.trim())
+                        onConfirmEdit(state.title.trim(), state.description.trim())
                     },
                     shapes = ButtonDefaults.shapes(),
                     enabled = canConfirm,
@@ -134,6 +157,9 @@ fun EditDocumentDetailsSheet(
     )
 }
 
+// ---------------------------------------------------------------------------
+// AlertDialog variant
+// ---------------------------------------------------------------------------
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EditDocumentDetailsDialog(
@@ -141,25 +167,10 @@ fun EditDocumentDetailsDialog(
     onDismiss: () -> Unit,
     onConfirmEdit: (String, String) -> Unit,
     modifier: Modifier = Modifier,
+    state: EditDocumentState = rememberEditDocumentState(doc),
 ) {
     val focusManager = LocalFocusManager.current
-
-    var currentTitle by rememberSaveable(doc.id) {
-        mutableStateOf(doc.title.orEmpty())
-    }
-    var currentDescription by rememberSaveable(doc.id) {
-        mutableStateOf(doc.description.orEmpty())
-    }
-
-    val isTitleError by remember(currentTitle) {
-        derivedStateOf { currentTitle.length > TITLE_MAX_LENGTH }
-    }
-    val isDescriptionError by remember(currentDescription) {
-        derivedStateOf { currentDescription.length > DESCRIPTION_MAX_LENGTH }
-    }
-    val canConfirm by remember(isTitleError, isDescriptionError) {
-        derivedStateOf { !isTitleError && !isDescriptionError }
-    }
+    val canConfirm by remember { derivedStateOf { state.canConfirm } }
 
     AlertDialog(
         modifier = modifier.pointerInput(Unit) {
@@ -184,12 +195,9 @@ fun EditDocumentDetailsDialog(
             ) {
                 item {
                     EditDocumentDetailsContent(
-                        title = currentTitle,
-                        description = currentDescription,
-                        isTitleError = isTitleError,
-                        isDescriptionError = isDescriptionError,
-                        onTitleChange = { currentTitle = it },
-                        onDescriptionChange = { currentDescription = it },
+                        state = state,
+                        onTitleChange = { state.title = it },
+                        onDescriptionChange = { state.description = it },
                     )
                 }
             }
@@ -198,7 +206,7 @@ fun EditDocumentDetailsDialog(
             TextButton(
                 onClick = {
                     onDismiss()
-                    onConfirmEdit(currentTitle.trim(), currentDescription.trim())
+                    onConfirmEdit(state.title.trim(), state.description.trim())
                 },
                 enabled = canConfirm,
             ) {
@@ -213,13 +221,13 @@ fun EditDocumentDetailsDialog(
     )
 }
 
+// ---------------------------------------------------------------------------
+// Shared content
+// ---------------------------------------------------------------------------
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EditDocumentDetailsContent(
-    title: String,
-    description: String,
-    isTitleError: Boolean,
-    isDescriptionError: Boolean,
+    state: EditDocumentState,
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -234,31 +242,33 @@ private fun EditDocumentDetailsContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        // Title field
         LimitedTextField(
-            value = title,
+            value = state.title,
             onValueChange = onTitleChange,
             label = stringResource(R.string.title),
             maxLength = TITLE_MAX_LENGTH,
-            isError = isTitleError,
-            supportingText = if (isTitleError) stringResource(R.string.field_too_long) else null,
+            isError = state.isTitleError,
+            supportingText = if (state.isTitleError) stringResource(R.string.field_too_long) else null,
             imeAction = ImeAction.Next,
         )
 
-        // Description field
         LimitedTextField(
-            value = description,
+            value = state.description,
             onValueChange = onDescriptionChange,
             label = stringResource(R.string.description),
             maxLength = DESCRIPTION_MAX_LENGTH,
-            isError = isDescriptionError,
-            supportingText = if (isDescriptionError) stringResource(R.string.field_too_long) else null,
+            isError = state.isDescriptionError,
+            supportingText = if (state.isDescriptionError) stringResource(R.string.field_too_long) else null,
             imeAction = ImeAction.Done,
             singleLine = false,
             minLines = 2,
         )
     }
 }
+
+// ---------------------------------------------------------------------------
+// LimitedTextField & CharacterCounter — unchanged
+// ---------------------------------------------------------------------------
 
 @Composable
 private fun LimitedTextField(
@@ -320,7 +330,6 @@ private fun LimitedTextField(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Error / hint text
             AnimatedContent(
                 targetState = supportingText,
                 transitionSpec = {
@@ -341,7 +350,6 @@ private fun LimitedTextField(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Animated character counter
             CharacterCounter(
                 current = value.length,
                 max = maxLength,
@@ -364,7 +372,6 @@ private fun CharacterCounter(
         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
 
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        // Animated digit-by-digit counter for the current count
         val currentStr = current.toString()
         currentStr.forEach { char ->
             AnimatedContent(
@@ -391,6 +398,10 @@ private fun CharacterCounter(
         )
     }
 }
+
+// ---------------------------------------------------------------------------
+// Previews
+// ---------------------------------------------------------------------------
 
 @PreviewLightDark
 @Composable
