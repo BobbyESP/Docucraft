@@ -1,6 +1,7 @@
 package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.core.domain.StringProvider
+import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
@@ -29,6 +30,7 @@ val documentScannerViewModels = module {
             shareDocumentUseCase = get<ShareDocumentUseCase>(),
             exportDocumentUseCase = get<ExportDocumentUseCase>(),
             stringProvider = get<StringProvider>(),
+            analyticsHelper = get<AnalyticsHelper>()
         )
     }
 }

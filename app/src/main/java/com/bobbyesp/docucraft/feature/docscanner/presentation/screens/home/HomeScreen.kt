@@ -9,10 +9,13 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
+import com.bobbyesp.docucraft.core.domain.repository.logScreenView
+import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsSheet
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.HomeBottomSheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
@@ -39,56 +42,26 @@ fun HomeScreen(
         onNavigate = onNavigate
     )
 
-    when (uiState.dialogs.active) {
-        is HomeDialog.Delete -> {
-            val scannedDocument = (uiState.dialogs.active as HomeDialog.Delete).doc
-            DeleteDocumentConfirmationDialog(
-                scannedDocument = scannedDocument,
-                onDismiss = { viewModel.onAction(HomeUiAction.DeleteDocument(null)) },
-                onConfirm = { viewModel.onAction(HomeUiAction.DeleteDocument(scannedDocument.id)) },
-                modifier = Modifier,
-            )
-        }
-
-        is HomeDialog.Edit -> {
-            val scannedDocument = (uiState.dialogs.active as HomeDialog.Edit).doc
-            EditDocumentDetailsDialog(
-                onDismiss = { viewModel.onAction(HomeUiAction.DismissDialogs) },
-                onConfirm = { title, description ->
-                    viewModel.onAction(
-                        HomeUiAction.UpdateDocumentFields(
-                            id = scannedDocument.id,
-                            title = title,
-                            description = description,
-                        )
+    if (uiState.dialogs.isVisible) {
+        HomeBottomSheet(
+            activeDialogs = uiState.dialogs.stack,
+            onDismissRequest = { viewModel.onAction(HomeUiAction.DismissDialogs) },
+            onPopDialog = { viewModel.onAction(HomeUiAction.PopDialog) },
+            onSavePdf = { viewModel.onAction(HomeUiAction.SaveDocument(it.doc)) },
+            onSharePdf = { viewModel.onAction(HomeUiAction.ShareDocument(it.doc.path)) },
+            onDeletePdf = { viewModel.onAction(HomeUiAction.ShowDeleteConfirmation(it.doc.id)) },
+            onModifyPdfFields = { viewModel.onAction(HomeUiAction.ShowEditDialog(it.doc.id)) },
+            onConfirmDelete = { viewModel.onAction(HomeUiAction.DeleteDocument(it.doc.id)) },
+            onConfirmEdit = { editAction, title, description ->
+                viewModel.onAction(
+                    HomeUiAction.UpdateDocumentFields(
+                        id = editAction.doc.id,
+                        title = title,
+                        description = description,
                     )
-                },
-                title = scannedDocument.title,
-                description = scannedDocument.description,
-                modifier = Modifier,
-            )
-        }
-
-        is HomeDialog.Actions -> {
-            val scannedDocument = (uiState.dialogs.active as HomeDialog.Actions).doc
-
-            DocumentActionsSheet(
-                scannedDocument = scannedDocument,
-                onDismissRequest = { viewModel.onAction(HomeUiAction.DismissActionsSheet) },
-                onSavePdf = { viewModel.onAction(HomeUiAction.SaveDocument(scannedDocument)) },
-                onSharePdf = { viewModel.onAction(HomeUiAction.ShareDocument(scannedDocument.path)) },
-                onDeletePdf = {
-                    viewModel.onAction(
-                        HomeUiAction.ShowDeleteConfirmation(
-                            scannedDocument.id
-                        )
-                    )
-                },
-                onModifyPdfFields = { viewModel.onAction(HomeUiAction.ShowEditDialog(scannedDocument.id)) },
-            )
-        }
-
-        null -> {}
+                )
+            }
+        )
     }
 
     HomeContent(
@@ -105,12 +78,14 @@ private fun HandleHomeUiEffects(
     onNavigate: (Route) -> Unit
 ) {
     val currentOnNavigate by rememberUpdatedState(onNavigate)
+    val analyticsHelper = LocalAnalyticsHelper.current
 
     LaunchedEffect(uiEffectFlow) {
         uiEffectFlow.collectLatest { effect ->
             when (effect) {
                 is HomeUiEffect.Navigate -> {
                     currentOnNavigate(effect.route)
+                    analyticsHelper.logScreenView(effect.route::class.simpleName.toString())
                 }
             }
         }

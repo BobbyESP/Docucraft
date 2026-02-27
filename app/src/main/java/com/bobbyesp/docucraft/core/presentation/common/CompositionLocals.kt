@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
 import com.bobbyesp.docucraft.core.domain.preferences.AppPreferencesController
 import com.bobbyesp.docucraft.core.data.local.preferences.AppSettings
+import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.presentation.preferences.theme.DarkThemePreference
 import com.bobbyesp.docucraft.core.presentation.preferences.theme.DarkThemePreference.DarkThemeValue
@@ -48,6 +49,10 @@ val LocalNotificationsService = compositionLocalOf<InAppNotificationsService> {
     error("No notifications service provided")
 }
 
+val LocalAnalyticsHelper = staticCompositionLocalOf<AnalyticsHelper> {
+    error("No analytics helper provided")
+}
+
 @Suppress("ModifierRequired")
 @Composable
 fun AppLocalSettingsProvider(
@@ -55,6 +60,7 @@ fun AppLocalSettingsProvider(
     appPreferences: AppPreferencesController,
     imageLoader: ImageLoader,
     inAppNotificationsService: InAppNotificationsService,
+    analyticsHelper: AnalyticsHelper,
     content: @Composable () -> Unit
 ) {
     val seedColor by
@@ -140,6 +146,7 @@ fun AppLocalSettingsProvider(
         LocalWindowWidthState provides windowWidthSize,
         LocalOrientation provides config.orientation,
         LocalNotificationsService provides inAppNotificationsService,
+        LocalAnalyticsHelper provides analyticsHelper,
         LocalCoilImageLoader provides imageLoader,
     ) {
         DocucraftTheme(colorScheme = colorScheme) {

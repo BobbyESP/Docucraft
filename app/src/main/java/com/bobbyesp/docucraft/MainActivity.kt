@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import coil.imageLoader
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
+import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
@@ -38,6 +39,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
     private val appPreferences: AppPreferences by inject()
     private val inAppNotificationsService: InAppNotificationsService by inject()
+    private val analyticsHelper: AnalyticsHelper by inject()
 
     private val scannerManager: ScannerManager by inject()
     private val scannerClient: GmsDocumentScanner by inject()
@@ -85,6 +87,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
                 inAppNotificationsService = inAppNotificationsService,
                 appPreferences = appPreferences,
                 imageLoader = imageLoader,
+                analyticsHelper = analyticsHelper
             ) {
                 Navigator(
                     rootBackStack = rootBackStack,

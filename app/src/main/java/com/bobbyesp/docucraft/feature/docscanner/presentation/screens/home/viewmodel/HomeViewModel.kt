@@ -5,7 +5,9 @@ import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.StringProvider
+import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
+import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
@@ -58,6 +60,7 @@ class HomeViewModel(
     private val shareDocumentUseCase: ShareDocumentUseCase,
     private val exportDocumentUseCase: ExportDocumentUseCase,
     private val stringProvider: StringProvider,
+    private val analyticsHelper: AnalyticsHelper
 ) : CoroutineBasedViewModel() {
 
     override fun onCoroutineException(throwable: Throwable) {
@@ -195,6 +198,10 @@ class HomeViewModel(
                 if (_uiState.value.activeDialog is HomeDialog.Actions) {
                     _uiState.update { it.copy(dialogs = it.dialogs.pop()) }
                 }
+            }
+
+            HomeUiAction.PopDialog -> {
+                _uiState.update { it.copy(dialogs = it.dialogs.pop()) }
             }
 
             // Search & Filter
