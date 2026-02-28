@@ -34,9 +34,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -73,9 +71,6 @@ class HomeViewModel(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    private val _events: MutableSharedFlow<UiEvent>
-    val events: SharedFlow<UiEvent>
-
     private fun sendEvent(effect: HomeUiEffect) {
         viewModelScope.launch { _uiEffect.send(effect) }
     }
@@ -84,10 +79,6 @@ class HomeViewModel(
     val uiEffect = _uiEffect.receiveAsFlow()
 
     init {
-        val eventsPair = createEventFlow<UiEvent>()
-        _events = eventsPair.first
-        events = eventsPair.second
-
         observeDocuments()
 
         savedStateHandle.get<String>(KEY_ACTIVE_SHEET_DOC_ID)?.let { id ->

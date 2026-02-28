@@ -44,6 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.divider.AnimatedWavyDivider
@@ -92,7 +93,10 @@ fun DocumentActionsContent(
     )
 
     Column(modifier = modifier) {
-        DocumentHeader(scannedDocument = scannedDocument)
+        DocumentHeader(
+            scannedDocument = scannedDocument,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
 
         AnimatedWavyDivider(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -203,7 +207,7 @@ private fun DocumentInfo(
     modifier: Modifier = Modifier,
 ) {
     val formattedDate = rememberSaveable(scannedDocument.createdTimestamp) {
-        DateTime.formatTimestamp(
+        DateTime.formatDate(
             timestampMillis = scannedDocument.createdTimestamp,
             format = DateTime.DateFormat.LOCALIZED_MEDIUM,
         )
@@ -217,6 +221,7 @@ private fun DocumentInfo(
         Text(
             text = scannedDocument.title ?: scannedDocument.filename,
             style = MaterialTheme.typography.titleLargeEmphasized,
+            textAlign = TextAlign.Center,
             fontWeight = FontWeight.Bold,
         )
 

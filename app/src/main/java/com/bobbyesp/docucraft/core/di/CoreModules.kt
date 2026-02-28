@@ -35,7 +35,6 @@ val commonModule = module {
             }
             .respectCacheHeaders(false)
             .allowHardware(true)
-            .crossfade(true)
             .crossfade(300)
             .bitmapFactoryMaxParallelism(12)
             .dispatcher(Dispatchers.IO)

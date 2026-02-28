@@ -22,12 +22,12 @@ import kotlinx.collections.immutable.persistentListOf
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun Navigator(
-    rootBackStack: TopLevelBackStack<Route>,
+    rootBackStack: TopLevelBackStack<Route>, modifier: Modifier = Modifier,
 ) {
     val onBack: () -> Unit = { rootBackStack.pop() }
 
     NavDisplay(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         backStack = rootBackStack.backStack,

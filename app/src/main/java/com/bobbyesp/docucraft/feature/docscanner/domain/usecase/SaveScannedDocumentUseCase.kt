@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.App
+import com.bobbyesp.docucraft.core.util.DateTime
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.core.util.ensure
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
@@ -28,13 +29,20 @@ class SaveScannedDocumentUseCase(
     private val copyDocumentToFileUseCase: CopyDocumentToFileUseCase,
     private val generateDocumentThumbnailUseCase: GenerateDocumentThumbnailUseCase,
 ) {
-    suspend operator fun invoke(rawScanResult: RawScanResult): Result<Uri> =
-        saveDocument(
+    suspend operator fun invoke(rawScanResult: RawScanResult): Result<Uri> {
+        val formattedTimestamp = DateTime.formatDateTime(
+            timestampMillis = rawScanResult.timestamp,
+            pattern = "yyyyMMdd_HHmmss"
+        )
+
+        return saveDocument(
             sourceUri = rawScanResult.uri.toUri(),
-            filename = "Scan_${System.currentTimeMillis()}",
+            filename = "Scan_${formattedTimestamp}",
             pageCount = rawScanResult.pageCount,
             timestamp = rawScanResult.timestamp
         )
+    }
+
 
     suspend operator fun invoke(rawScanResult: RawScanResult, filename: String): Result<Uri> =
         saveDocument(

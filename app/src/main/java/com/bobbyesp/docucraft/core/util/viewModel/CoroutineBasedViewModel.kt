@@ -3,6 +3,7 @@ package com.bobbyesp.docucraft.core.util.viewModel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bobbyesp.docucraft.core.util.events.UiEvent
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -66,6 +67,15 @@ abstract class CoroutineBasedViewModel : ViewModel() {
     /** Called when a coroutine exception occurs. Override to handle globally. */
     protected open fun onCoroutineException(throwable: Throwable) {
         // Override in subclasses if needed
+    }
+
+    protected val _events: MutableSharedFlow<UiEvent>
+    val events: SharedFlow<UiEvent>
+
+    init {
+        val eventsPair = createEventFlow<UiEvent>()
+        _events = eventsPair.first
+        events = eventsPair.second
     }
 
     // ==================== Coroutine Launchers ====================
