@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.rounded.Lyrics
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,10 +21,10 @@ import androidx.compose.ui.unit.dp
 @Stable
 @Composable
 fun Placeholder(
-    modifier: Modifier = Modifier,
     icon: ImageVector?,
     colorful: Boolean,
-    contentDescription: String? = null,
+    modifier: Modifier = Modifier,
+    contentDescription: String? = null
 ) {
     Surface(
         tonalElevation = if (colorful) 0.dp else 8.dp,

@@ -118,6 +118,7 @@ dependencies {
     // PDF Viewer
     implementation(libs.pdfviewer)
     implementation(libs.pdfviewer.ui)
+    implementation(project(":composepdf"))
 
 
     // Dependency injection
