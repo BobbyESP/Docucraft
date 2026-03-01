@@ -2,6 +2,7 @@ package com.composepdf.state
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.util.Size
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.cache.BitmapCache
 import com.composepdf.cache.BitmapPool
@@ -240,6 +241,17 @@ class PdfViewerController(
         }
     }
     
+    /**
+     * Returns the real size of each page in the document by querying [PdfDocumentManager].
+     * This avoids assuming all pages are A4.
+     *
+     * Uses [PdfDocumentManager.getAllPageSizes] to read all sizes in a single
+     * mutex acquisition on [Dispatchers.IO], instead of N separate lock/unlock cycles.
+     *
+     * @return List of [Size] objects (one per page), in document order.
+     */
+    suspend fun getPageSizes(): List<Size> = documentManager.getAllPageSizes()
+
     /**
      * Requests rendering of currently visible pages and those in the prefetch window.
      */

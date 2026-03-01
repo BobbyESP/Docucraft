@@ -95,6 +95,26 @@ class PdfDocumentManager(private val context: Context) : Closeable {
     }
     
     /**
+     * Returns the sizes of all pages in a single mutex acquisition.
+     *
+     * Prefer this over calling [getPageSize] in a loop, which would acquire
+     * and release the mutex once per page (N round-trips on Dispatchers.IO).
+     *
+     * @return List of [Size] objects in document order
+     * @throws IllegalStateException If no document is loaded
+     */
+    suspend fun getAllPageSizes(): List<Size> = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            val pdfRenderer = renderer ?: throw IllegalStateException("No document is open")
+            (0 until pdfRenderer.pageCount).map { index ->
+                pdfRenderer.openPage(index).use { page ->
+                    Size(page.width, page.height)
+                }
+            }
+        }
+    }
+
+    /**
      * Opens a page for rendering and executes the given action.
      * 
      * The page is automatically closed after the action completes.

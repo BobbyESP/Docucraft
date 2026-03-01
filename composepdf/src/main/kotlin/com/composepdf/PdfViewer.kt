@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -101,7 +102,13 @@ fun PdfViewer(
     
     // Collect rendered pages
     val renderedPages by controller.renderedPages.collectAsStateWithLifecycle()
-    
+
+    // Wrap callbacks in rememberUpdatedState so LaunchedEffect always sees
+    // the latest lambda without needing to restart when it changes.
+    val currentOnPageChange by rememberUpdatedState(onPageChange)
+    val currentOnError by rememberUpdatedState(onError)
+    val currentOnDocumentLoad by rememberUpdatedState(onDocumentLoad)
+
     // Load document when source changes
     LaunchedEffect(source) {
         controller.loadDocument(source)
@@ -109,25 +116,23 @@ fun PdfViewer(
     
     // Notify callbacks
     LaunchedEffect(state.currentPage) {
-        onPageChange?.invoke(state.currentPage)
+        currentOnPageChange?.invoke(state.currentPage)
     }
     
     LaunchedEffect(state.error) {
         state.error?.let { error ->
-            onError?.invoke(error)
+            currentOnError?.invoke(error)
         }
     }
     
     LaunchedEffect(state.pageCount) {
         if (state.pageCount > 0) {
-            onDocumentLoad?.invoke(state.pageCount)
-            
-            // Initialize page sizes with default aspect ratio
-            // In a full implementation, we'd fetch actual page sizes
+            currentOnDocumentLoad?.invoke(state.pageCount)
+
+            // Load real page sizes from the document instead of assuming A4 for all pages
+            val sizes = controller.getPageSizes()
             pageSizes.clear()
-            repeat(state.pageCount) {
-                pageSizes.add(Size(595, 842)) // A4 default
-            }
+            pageSizes.addAll(sizes)
         }
     }
     
