@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.composepdf.rememberPdfViewerState
+import com.composepdf.state.FitMode
 import com.composepdf.state.ViewerConfig
 import kotlinx.coroutines.delay
 
@@ -62,7 +63,9 @@ fun PdfViewerScreen(
         com.composepdf.PdfViewer(
             source = com.composepdf.source.PdfSource.Uri(documentInfo.uri.toUri()),
             state = pdfViewerState,
-            config = ViewerConfig(),
+            config = ViewerConfig(
+                fitMode = FitMode.PROPORTIONAL
+            ),
             modifier = Modifier
         )
 

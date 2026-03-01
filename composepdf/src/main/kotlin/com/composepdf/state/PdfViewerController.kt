@@ -4,8 +4,11 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.Size
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.isSpecified
 import com.composepdf.cache.BitmapCache
 import com.composepdf.cache.BitmapPool
+import com.composepdf.remote.RemotePdfLoader
+import com.composepdf.remote.RemotePdfState
 import com.composepdf.renderer.PageRenderer
 import com.composepdf.renderer.PdfDocumentManager
 import com.composepdf.renderer.RenderScheduler
@@ -106,13 +109,13 @@ class PdfViewerController(
      * Loads a remote PDF document with progress tracking.
      */
     private suspend fun loadRemoteDocument(source: PdfSource.Remote) {
-        val loader = com.composepdf.remote.RemotePdfLoader(context)
+        val loader = RemotePdfLoader(context)
         
         loader.load(source).collect { remoteState ->
             state.remoteState = remoteState
             
             when (remoteState) {
-                is com.composepdf.remote.RemotePdfState.Cached -> {
+                is RemotePdfState.Cached -> {
                     // File is ready, open it
                     documentManager.open(PdfSource.File(remoteState.file))
                     state.pageCount = documentManager.pageCount
@@ -121,7 +124,7 @@ class PdfViewerController(
                     // Initial render
                     requestRenderForVisiblePages()
                 }
-                is com.composepdf.remote.RemotePdfState.Error -> {
+                is RemotePdfState.Error -> {
                     state.error = com.composepdf.remote.RemotePdfException(
                         remoteState.type,
                         remoteState.message,
@@ -170,53 +173,76 @@ class PdfViewerController(
 
     /**
      * Zooms to a specific level, optionally centered on a pivot point.
-     * 
-     * @param zoom The target zoom level
-     * @param pivot The point to zoom around (screen coordinates)
-     * @param animate Whether to animate the zoom change
+     *
+     * Uses the same center-origin math as [onGestureUpdate].
+     *
+     * @param zoom  Target zoom level
+     * @param pivot Pivot in local composable coordinates (top-left origin).
+     *              Pass [Offset.Unspecified] to zoom around the viewport center.
      */
-    fun zoomTo(zoom: Float, pivot: Offset = Offset.Zero, animate: Boolean = true) {
+    fun zoomTo(zoom: Float, pivot: Offset = Offset.Unspecified, animate: Boolean = true) {
+        val oldZoom = state.zoom
         val clampedZoom = zoom.coerceIn(config.minZoom, config.maxZoom)
-        
-        if (pivot != Offset.Zero) {
-            // Adjust offset to zoom around the pivot point
-            val scaleFactor = clampedZoom / state.zoom
-            val pivotOffset = pivot - state.offset
-            state.offset = pivot - (pivotOffset * scaleFactor)
+
+        if (pivot.isSpecified && viewportWidth > 0f) {
+            val scaleFactor = clampedZoom / oldZoom
+            val center = Offset(viewportWidth / 2f, viewportHeight / 2f)
+            val pivotFromCenter = pivot - center
+            state.offset = state.offset * scaleFactor + pivotFromCenter * (1f - scaleFactor)
         }
-        
+
         state.zoom = clampedZoom
         clampOffset()
-
-        // Check if we need to invalidate renders due to significant zoom change
         checkZoomInvalidation()
     }
     
     /**
      * Updates the zoom and offset from a gesture.
      *
-     * Pan is only applied on the axes where the content is actually larger than the
-     * viewport after zooming. If zoom == 1x the content fits exactly, so no pan is
-     * ever needed and the offset stays at Zero.
+     * ## Coordinate system
      *
-     * @param zoomChange Multiplicative zoom change
-     * @param panChange Additive pan change
-     * @param pivot The center point of the gesture
+     * `graphicsLayer` always scales around the **geometric center** of the composable,
+     * not around (0,0). This means:
+     *
+     *   - A pixel at screen position `p` (local coords, origin = top-left) corresponds
+     *     to content position `(p - center - offset) / zoom`, where
+     *     `center = Offset(viewportWidth/2, viewportHeight/2)`.
+     *
+     * To keep the content point under `pivot` visually fixed when zoom changes from
+     * `oldZoom` to `newZoom`, the new offset must satisfy:
+     *
+     *   (pivot - center - newOffset) / newZoom == (pivot - center - oldOffset) / oldZoom
+     *
+     * Solving for `newOffset`:
+     *
+     *   newOffset = (pivot - center) * (1 - newZoom/oldZoom) + oldOffset * (newZoom/oldZoom)
+     *
+     * Which simplifies to:
+     *
+     *   newOffset = oldOffset * scaleFactor + (pivot - center) * (1 - scaleFactor)
+     *
+     * where `scaleFactor = newZoom / oldZoom`.
+     *
+     * @param zoomChange Multiplicative zoom change for this frame (1f = no change)
+     * @param panChange  Additive translation in screen pixels
+     * @param pivot      Touch centroid in local composable coordinates (top-left origin)
      */
     fun onGestureUpdate(zoomChange: Float, panChange: Offset, pivot: Offset) {
-        val newZoom = (state.zoom * zoomChange).coerceIn(config.minZoom, config.maxZoom)
-        
-        if (newZoom != state.zoom) {
-            // Adjust offset so the content under the pivot stays fixed on screen
-            val scaleFactor = newZoom / state.zoom
-            val pivotOffset = pivot - state.offset
-            state.offset = pivot - (pivotOffset * scaleFactor)
+        val oldZoom = state.zoom
+        val newZoom = (oldZoom * zoomChange).coerceIn(config.minZoom, config.maxZoom)
+
+        if (newZoom != oldZoom) {
+            val scaleFactor = newZoom / oldZoom
+            // Convert pivot from top-left coords to center-origin coords
+            val center = Offset(viewportWidth / 2f, viewportHeight / 2f)
+            val pivotFromCenter = pivot - center
+
+            // Apply the formula derived above
+            state.offset = state.offset * scaleFactor + pivotFromCenter * (1f - scaleFactor)
             state.zoom = newZoom
         }
-        
-        state.offset += panChange
 
-        // Clamp immediately so the user never sees content outside bounds
+        state.offset += panChange
         clampOffset()
     }
     

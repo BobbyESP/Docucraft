@@ -19,6 +19,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -147,13 +149,25 @@ fun PdfViewer(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF424242)) // PDF viewer background
+            .background(Color(0xFF424242))
+            .onSizeChanged { size ->
+                // Must be on the same node as pdfGestures so that pivot coordinates
+                // from pointer events and the graphicsLayer transformation share the
+                // exact same coordinate space.
+                controller.onLayoutSizeChanged(size.width.toFloat(), size.height.toFloat())
+            }
             .pdfGestures(
                 state = state,
                 controller = controller,
                 config = config,
                 enabled = state.isLoaded
-            ),
+            )
+            .graphicsLayer {
+                scaleX = state.zoom
+                scaleY = state.zoom
+                translationX = state.offset.x
+                translationY = state.offset.y
+            },
         contentAlignment = Alignment.Center
     ) {
         when {

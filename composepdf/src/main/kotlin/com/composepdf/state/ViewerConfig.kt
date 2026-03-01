@@ -106,7 +106,8 @@ enum class ScrollDirection {
 enum class FitMode {
     /**
      * Scale page to fit the viewport width.
-     * Page height may extend beyond the viewport.
+     * All pages fill the full width regardless of their actual dimensions.
+     * This is the standard "reader" mode.
      */
     WIDTH,
     
@@ -120,5 +121,12 @@ enum class FitMode {
      * Scale page to fit entirely within the viewport.
      * Letterboxing may occur.
      */
-    BOTH
+    BOTH,
+
+    /**
+     * Preserve each page's width relative to the widest page in the document.
+     * A page that is half as wide as the widest page will occupy half the viewport width.
+     * This makes mixed-size documents (e.g. A4 + A5 + landscape) look correct.
+     */
+    PROPORTIONAL
 }

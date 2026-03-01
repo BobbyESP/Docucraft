@@ -11,11 +11,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
+import com.composepdf.state.FitMode
 import com.composepdf.state.PdfViewerController
 import com.composepdf.state.PdfViewerState
 import com.composepdf.state.ScrollDirection
@@ -48,9 +47,13 @@ internal fun PdfLayout(
     config: ViewerConfig,
     modifier: Modifier = Modifier
 ) {
-    val density = LocalDensity.current
-    val pageSpacingPx = with(density) { config.pageSpacing.roundToPx() }
-    
+    // With FitMode.PROPORTIONAL we need to know the widest page so every other
+    // page can be expressed as a fraction of that width.
+    // For all other modes this value is unused.
+    val maxPageWidth: Int = remember(pageSizes) {
+        pageSizes.maxOfOrNull { it.width } ?: 1
+    }
+
     // Calculate snap fling behavior if enabled
     val flingBehavior = if (config.isPageSnappingEnabled) {
         rememberSnapFlingBehavior(lazyListState = state.lazyListState)
@@ -77,18 +80,7 @@ internal fun PdfLayout(
     
     val contentModifier = modifier
         .fillMaxSize()
-        .onSizeChanged { size ->
-            // Tell the controller the real viewport dimensions so it can
-            // compute accurate pan limits in clampOffset().
-            controller.onLayoutSizeChanged(size.width.toFloat(), size.height.toFloat())
-        }
-        .graphicsLayer {
-            scaleX = state.zoom
-            scaleY = state.zoom
-            translationX = state.offset.x
-            translationY = state.offset.y
-        }
-    
+
     when (config.scrollDirection) {
         ScrollDirection.VERTICAL -> {
             LazyColumn(
@@ -104,14 +96,17 @@ internal fun PdfLayout(
                 ) { index ->
                     val pageSize = pageSizes.getOrNull(index) ?: Size(1, 1)
                     val aspectRatio = pageSize.width.toFloat() / pageSize.height.toFloat()
+                    val widthFraction = pageSize.width.toFloat() / maxPageWidth.toFloat()
                     val bitmap = renderedPages[index]
-                    
+
                     PdfPage(
                         bitmap = bitmap,
                         pageIndex = index,
                         aspectRatio = aspectRatio,
                         isLoading = bitmap == null,
-                        showLoadingIndicator = config.isLoadingIndicatorVisible
+                        showLoadingIndicator = config.isLoadingIndicatorVisible,
+                        fitMode = config.fitMode,
+                        widthFraction = widthFraction
                     )
                 }
             }
@@ -131,14 +126,17 @@ internal fun PdfLayout(
                 ) { index ->
                     val pageSize = pageSizes.getOrNull(index) ?: Size(1, 1)
                     val aspectRatio = pageSize.width.toFloat() / pageSize.height.toFloat()
+                    val widthFraction = pageSize.width.toFloat() / maxPageWidth.toFloat()
                     val bitmap = renderedPages[index]
-                    
+
                     PdfPage(
                         bitmap = bitmap,
                         pageIndex = index,
                         aspectRatio = aspectRatio,
                         isLoading = bitmap == null,
-                        showLoadingIndicator = config.isLoadingIndicatorVisible
+                        showLoadingIndicator = config.isLoadingIndicatorVisible,
+                        fitMode = config.fitMode,
+                        widthFraction = widthFraction
                     )
                 }
             }
