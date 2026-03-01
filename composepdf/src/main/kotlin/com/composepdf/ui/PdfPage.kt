@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -32,6 +34,7 @@ import androidx.compose.ui.unit.dp
  * @param showLoadingIndicator Whether to show a loading spinner
  * @param modifier Modifier for the page container
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun PdfPage(
     bitmap: Bitmap?,
@@ -60,10 +63,9 @@ internal fun PdfPage(
             )
         } else if (isLoading && showLoadingIndicator) {
             // Show loading indicator
-            CircularProgressIndicator(
+            CircularWavyProgressIndicator(
                 modifier = Modifier.size(48.dp),
                 color = MaterialTheme.colorScheme.primary,
-                strokeWidth = 4.dp
             )
         }
     }

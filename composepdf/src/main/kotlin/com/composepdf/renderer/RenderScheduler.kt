@@ -152,12 +152,12 @@ class RenderScheduler(
         pendingJobs[pageIndex]?.cancel()
         pendingJobs.remove(pageIndex)
         cache.clearPage(pageIndex)
-        
-        _renderedPages.value = _renderedPages.value - pageIndex
+
+        _renderedPages.value -= pageIndex
     }
     
     private fun updateRenderedPages(pageIndex: Int, bitmap: Bitmap) {
-        _renderedPages.value = _renderedPages.value + (pageIndex to bitmap)
+        _renderedPages.value += (pageIndex to bitmap)
     }
     
     /**

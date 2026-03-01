@@ -9,7 +9,6 @@ import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
-import kotlin.coroutines.coroutineContext
 
 /**
  * Default HTTP client implementation using [HttpURLConnection].
@@ -19,9 +18,7 @@ import kotlin.coroutines.coroutineContext
  * - Streams directly to disk without memory buffering
  * - Supports cancellation via coroutine cancellation
  * - Enforces HTTPS-only connections
- * 
- * For production apps requiring advanced features (connection pooling, 
- * interceptors, etc.), use [OkHttpClientProvider] instead.
+ *
  */
 class DefaultHttpClientProvider : HttpClientProvider {
     

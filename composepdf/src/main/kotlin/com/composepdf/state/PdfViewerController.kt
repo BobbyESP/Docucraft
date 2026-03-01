@@ -113,7 +113,7 @@ class PdfViewerController(
             when (remoteState) {
                 is com.composepdf.remote.RemotePdfState.Cached -> {
                     // File is ready, open it
-                    documentManager.open(PdfSource.FromFile(remoteState.file))
+                    documentManager.open(PdfSource.File(remoteState.file))
                     state.pageCount = documentManager.pageCount
                     state.isLoading = false
                     

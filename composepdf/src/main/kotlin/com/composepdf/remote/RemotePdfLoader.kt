@@ -2,7 +2,6 @@ package com.composepdf.remote
 
 import android.content.Context
 import com.composepdf.source.PdfSource
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.io.File

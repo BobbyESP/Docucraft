@@ -10,13 +10,14 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import com.composepdf.remote.RemotePdfState
 
 /**
  * Hoistable state holder for the PDF viewer.
  * 
  * This class holds all observable state for a PDF viewer instance, including
  * current page, zoom level, scroll position, and loading state. It is designed
- * to be used with [rememberPdfViewerState] and supports state restoration across
+ * to be used with [com.composepdf.rememberPdfViewerState] and supports state restoration across
  * configuration changes.
  * 
  * The state is [Stable], meaning changes to individual properties will trigger
@@ -98,8 +99,8 @@ class PdfViewerState(
      * 
      * Observe this to show download progress or handle remote loading errors.
      */
-    var remoteState: com.composepdf.remote.RemotePdfState by mutableStateOf(
-        com.composepdf.remote.RemotePdfState.Idle
+    var remoteState: RemotePdfState by mutableStateOf(
+        RemotePdfState.Idle
     )
         internal set
     

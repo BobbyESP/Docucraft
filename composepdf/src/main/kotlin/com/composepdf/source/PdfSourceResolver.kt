@@ -34,11 +34,11 @@ class PdfSourceResolver(private val context: Context) : Closeable {
      */
     suspend fun resolve(source: PdfSource): ParcelFileDescriptor = withContext(Dispatchers.IO) {
         when (source) {
-            is PdfSource.FromFile -> {
+            is PdfSource.File -> {
                 ParcelFileDescriptor.open(source.file, ParcelFileDescriptor.MODE_READ_ONLY)
             }
             
-            is PdfSource.FromAsset -> {
+            is PdfSource.Asset -> {
                 val file = createTempFile()
                 context.assets.open(source.assetName).use { input ->
                     FileOutputStream(file).use { output ->
@@ -48,7 +48,7 @@ class PdfSourceResolver(private val context: Context) : Closeable {
                 ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
             }
             
-            is PdfSource.FromBytes -> {
+            is PdfSource.Bytes -> {
                 val file = createTempFile()
                 FileOutputStream(file).use { output ->
                     output.write(source.bytes)
@@ -56,7 +56,7 @@ class PdfSourceResolver(private val context: Context) : Closeable {
                 ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
             }
             
-            is PdfSource.FromStream -> {
+            is PdfSource.Stream -> {
                 val file = createTempFile()
                 source.streamProvider().use { input ->
                     FileOutputStream(file).use { output ->
@@ -66,7 +66,7 @@ class PdfSourceResolver(private val context: Context) : Closeable {
                 ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
             }
             
-            is PdfSource.FromUri -> {
+            is PdfSource.Uri -> {
                 context.contentResolver.openFileDescriptor(source.uri, "r")
                     ?: throw IllegalArgumentException("Cannot open URI: ${source.uri}")
             }

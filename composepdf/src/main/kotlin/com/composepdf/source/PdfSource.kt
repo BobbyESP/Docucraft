@@ -1,7 +1,6 @@
 package com.composepdf.source
 
-import android.net.Uri
-import java.io.File
+import com.composepdf.remote.CachePolicy
 import java.io.InputStream
 
 /**
@@ -29,14 +28,14 @@ sealed interface PdfSource {
      * 
      * @property file The PDF file to load
      */
-    data class FromFile(val file: File) : PdfSource
+    data class File(val file: java.io.File) : PdfSource
     
     /**
      * Load PDF from application assets.
      * 
      * @property assetName The asset path relative to the assets folder (e.g., "documents/sample.pdf")
      */
-    data class FromAsset(val assetName: String) : PdfSource
+    data class Asset(val assetName: String) : PdfSource
     
     /**
      * Load PDF from a byte array.
@@ -46,11 +45,11 @@ sealed interface PdfSource {
      * 
      * @property bytes The PDF content as a byte array
      */
-    data class FromBytes(val bytes: ByteArray) : PdfSource {
+    data class Bytes(val bytes: ByteArray) : PdfSource {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
-            other as FromBytes
+            other as Bytes
             return bytes.contentEquals(other.bytes)
         }
 
@@ -67,7 +66,7 @@ sealed interface PdfSource {
      * 
      * @property streamProvider A factory function that provides a new [InputStream] when called
      */
-    data class FromStream(val streamProvider: () -> InputStream) : PdfSource
+    data class Stream(val streamProvider: () -> InputStream) : PdfSource
     
     /**
      * Load PDF from a content [Uri].
@@ -76,7 +75,7 @@ sealed interface PdfSource {
      * 
      * @property uri The content URI pointing to the PDF document
      */
-    data class FromUri(val uri: Uri) : PdfSource
+    data class Uri(val uri: android.net.Uri) : PdfSource
     
     /**
      * Load PDF from a remote URL.
@@ -106,6 +105,6 @@ sealed interface PdfSource {
         val url: String,
         val headers: Map<String, String> = emptyMap(),
         val cacheKey: String? = null,
-        val cachePolicy: com.composepdf.remote.CachePolicy = com.composepdf.remote.CachePolicy.Default
+        val cachePolicy: CachePolicy = CachePolicy.Default
     ) : PdfSource
 }
