@@ -155,6 +155,19 @@ class PdfViewerController(
         }
     }
     
+    // Size of the composable viewport, updated from the layout via onLayoutSizeChanged()
+    private var viewportWidth: Float = 0f
+    private var viewportHeight: Float = 0f
+
+    /**
+     * Must be called whenever the viewer layout is measured so the controller
+     * knows the available space and can clamp the pan offset correctly.
+     */
+    fun onLayoutSizeChanged(width: Float, height: Float) {
+        viewportWidth = width
+        viewportHeight = height
+    }
+
     /**
      * Zooms to a specific level, optionally centered on a pivot point.
      * 
@@ -173,14 +186,19 @@ class PdfViewerController(
         }
         
         state.zoom = clampedZoom
-        
+        clampOffset()
+
         // Check if we need to invalidate renders due to significant zoom change
         checkZoomInvalidation()
     }
     
     /**
      * Updates the zoom and offset from a gesture.
-     * 
+     *
+     * Pan is only applied on the axes where the content is actually larger than the
+     * viewport after zooming. If zoom == 1x the content fits exactly, so no pan is
+     * ever needed and the offset stays at Zero.
+     *
      * @param zoomChange Multiplicative zoom change
      * @param panChange Additive pan change
      * @param pivot The center point of the gesture
@@ -189,7 +207,7 @@ class PdfViewerController(
         val newZoom = (state.zoom * zoomChange).coerceIn(config.minZoom, config.maxZoom)
         
         if (newZoom != state.zoom) {
-            // Calculate new offset to maintain pivot position
+            // Adjust offset so the content under the pivot stays fixed on screen
             val scaleFactor = newZoom / state.zoom
             val pivotOffset = pivot - state.offset
             state.offset = pivot - (pivotOffset * scaleFactor)
@@ -197,6 +215,9 @@ class PdfViewerController(
         }
         
         state.offset += panChange
+
+        // Clamp immediately so the user never sees content outside bounds
+        clampOffset()
     }
     
     /**
@@ -278,13 +299,37 @@ class PdfViewerController(
         }
     }
     
+    /**
+     * Clamps [PdfViewerState.offset] so the zoomed content never moves outside the
+     * visible viewport.
+     *
+     * ## How the math works
+     *
+     * `graphicsLayer` scales the content around its **center** by default.
+     * After scaling by [zoom], the content is [viewportWidth * zoom] pixels wide
+     * but it is still centered, so it overflows equally on both sides:
+     *
+     *   overflow = (viewportWidth * zoom - viewportWidth) / 2
+     *            = viewportWidth * (zoom - 1) / 2
+     *
+     * That overflow is the maximum distance we can pan in either direction before
+     * the edge of the content would become visible. When zoom == 1 the overflow is
+     * 0, so the offset is forced to Zero — no sideways sliding at 1x zoom.
+     */
     private fun clampOffset() {
-        // Clamp offset to prevent panning beyond content bounds
-        // This would need content size information in a full implementation
-        // For now, just ensure offset doesn't go too far
-        if (state.zoom <= 1f) {
-            state.offset = Offset.Zero
+        if (viewportWidth == 0f && viewportHeight == 0f) {
+            // Viewport not measured yet; at least prevent free-floating at 1x zoom.
+            if (state.zoom <= 1f) state.offset = Offset.Zero
+            return
         }
+
+        val maxX = (viewportWidth  * (state.zoom - 1f) / 2f).coerceAtLeast(0f)
+        val maxY = (viewportHeight * (state.zoom - 1f) / 2f).coerceAtLeast(0f)
+
+        state.offset = Offset(
+            x = state.offset.x.coerceIn(-maxX, maxX),
+            y = state.offset.y.coerceIn(-maxY, maxY)
+        )
     }
     
     private fun checkZoomInvalidation() {

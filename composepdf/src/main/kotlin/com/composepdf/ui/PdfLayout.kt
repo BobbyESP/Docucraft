@@ -14,6 +14,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import com.composepdf.state.PdfViewerController
 import com.composepdf.state.PdfViewerState
@@ -76,6 +77,11 @@ internal fun PdfLayout(
     
     val contentModifier = modifier
         .fillMaxSize()
+        .onSizeChanged { size ->
+            // Tell the controller the real viewport dimensions so it can
+            // compute accurate pan limits in clampOffset().
+            controller.onLayoutSizeChanged(size.width.toFloat(), size.height.toFloat())
+        }
         .graphicsLayer {
             scaleX = state.zoom
             scaleY = state.zoom
