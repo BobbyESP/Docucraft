@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -19,6 +20,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import kotlinx.coroutines.delay
 
 @Composable
 fun AnimatedCounter(
@@ -32,35 +35,83 @@ fun AnimatedCounter(
 ) {
     var oldCount by remember { mutableIntStateOf(count) }
     SideEffect { oldCount = count }
+
+    val countString = count.toString()
+    val oldCountString = oldCount.toString()
+
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        val countString = count.toString()
-        val oldCountString = oldCount.toString()
-        countString.indices.forEach { i ->
-            val oldChar = oldCountString.getOrNull(i)
-            val newChar = countString[i]
-            val char =
-                if (oldChar == newChar) {
-                    oldCountString[i]
-                } else {
-                    countString[i]
-                }
+        if (countString.startsWith('-') || oldCountString.startsWith('-')) {
             AnimatedContent(
-                targetState = char,
+                targetState = countString.startsWith('-'),
                 transitionSpec = {
                     slideInVertically { it } togetherWith slideOutVertically { -it }
                 },
-                label = "AnimatedCounter",
-            ) { character ->
-                Text(
-                    text = character.toString(),
-                    style = style,
-                    fontFamily = fontFamily,
-                    fontStyle = fontStyle,
-                    fontWeight = fontWeight,
-                    softWrap = false,
-                )
+                label = "AnimatedCounter_sign",
+            ) { isNegative ->
+                if (isNegative) {
+                    Text(
+                        text = "-",
+                        style = style,
+                        fontFamily = fontFamily,
+                        fontStyle = fontStyle,
+                        fontWeight = fontWeight,
+                        softWrap = false,
+                    )
+                }
             }
         }
-        trailingContent?.let { it() }
+
+        val absCountString = countString.trimStart('-')
+        val absOldCountString = oldCountString.trimStart('-')
+
+        val maxLen = maxOf(absCountString.length, absOldCountString.length)
+        val paddedNew = absCountString.padStart(maxLen, ' ')
+        val paddedOld = absOldCountString.padStart(maxLen, ' ')
+
+        paddedNew.forEachIndexed { i, newChar ->
+            val oldChar = paddedOld[i]
+
+            if (newChar == ' ' && oldChar == ' ') return@forEachIndexed
+
+            AnimatedContent(
+                targetState = newChar,
+                transitionSpec = {
+                    val direction = if (count > oldCount) 1 else -1
+                    slideInVertically { it * direction } togetherWith
+                            slideOutVertically { -it * direction }
+                },
+                label = "AnimatedCounter_digit_$i",
+            ) { character ->
+                if (character != ' ') {
+                    Text(
+                        text = character.toString(),
+                        style = style,
+                        fontFamily = fontFamily,
+                        fontStyle = fontStyle,
+                        fontWeight = fontWeight,
+                        softWrap = false,
+                    )
+                }
+            }
+        }
+
+        trailingContent?.invoke()
     }
+}
+
+@PreviewLightDark
+@Composable
+private fun AnimatedCounterPreview() {
+    var counter by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        counter++
+        delay(800)
+    }
+
+    AnimatedCounter(
+        count = counter,
+        modifier = Modifier,
+        style = MaterialTheme.typography.bodySmall,
+    )
 }

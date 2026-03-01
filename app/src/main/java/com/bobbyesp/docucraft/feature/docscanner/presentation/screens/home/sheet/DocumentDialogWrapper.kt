@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home
+package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.slideInHorizontally
@@ -18,19 +18,16 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.bobbyesp.docucraft.core.presentation.common.LocalWindowWidthState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsContent
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentSheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsSheet
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentSheetUiState
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetPage
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocumentDialogWrapper(
     sheetState: DocumentSheetUiState,
-    onAction: (HomeUiAction) -> Unit,
+    onAction: (SheetAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val windowSizeClass = LocalWindowWidthState.current
@@ -38,7 +35,7 @@ fun DocumentDialogWrapper(
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
-        onDismissRequest = { onAction(HomeUiAction.DismissSheet) },
+        onDismissRequest = { onAction(SheetAction.Dismiss) },
         sheetState = bottomSheetState,
         modifier = modifier,
     ) {
@@ -47,33 +44,33 @@ fun DocumentDialogWrapper(
                 animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
             ),
             backStack = if (isCompact) sheetState.pageStack else sheetState.pageStack.take(1),
-            onBack = { onAction(HomeUiAction.SheetBack) },
+            onBack = { onAction(SheetAction.Back) },
             entryProvider = entryProvider {
                 entry<SheetPage.Actions> {
                     val doc = sheetState.activeDocument ?: return@entry
                     DocumentActionsContent(
                         scannedDocument = doc,
-                        onSave = { onAction(HomeUiAction.SheetRequestSave) },
-                        onShare = { onAction(HomeUiAction.SheetRequestShare) },
-                        onDelete = { onAction(HomeUiAction.SheetNavigateToDelete) },
-                        onModifyFields = { onAction(HomeUiAction.SheetNavigateToEdit) },
+                        onSave = { onAction(SheetAction.RequestSave) },
+                        onShare = { onAction(SheetAction.RequestShare) },
+                        onDelete = { onAction(SheetAction.Navigate(SheetPage.Delete)) },
+                        onModifyFields = { onAction(SheetAction.Navigate(SheetPage.Edit)) },
                     )
                 }
                 entry<SheetPage.Edit> {
                     EditDocumentDetailsSheet(
                         state = sheetState.editUiState,
-                        onTitleChange = { onAction(HomeUiAction.SheetUpdateTitle(it)) },
-                        onDescriptionChange = { onAction(HomeUiAction.SheetUpdateDescription(it)) },
-                        onPopDialog = { onAction(HomeUiAction.SheetBack) },
-                        onConfirmEdit = { onAction(HomeUiAction.SheetConfirmEdit) },
+                        onTitleChange = { onAction(SheetAction.UpdateTitle(it)) },
+                        onDescriptionChange = { onAction(SheetAction.UpdateDescription(it)) },
+                        onPopDialog = { onAction(SheetAction.Back) },
+                        onConfirmEdit = { onAction(SheetAction.ConfirmEdit) },
                     )
                 }
                 entry<SheetPage.Delete> {
                     val doc = sheetState.activeDocument ?: return@entry
                     DeleteDocumentSheet(
                         document = doc,
-                        onDismiss = { onAction(HomeUiAction.SheetBack) },
-                        onConfirm = { onAction(HomeUiAction.SheetConfirmDelete) },
+                        onDismiss = { onAction(SheetAction.Back) },
+                        onConfirm = { onAction(SheetAction.ConfirmDelete) },
                     )
                 }
             },
@@ -97,10 +94,10 @@ fun DocumentDialogWrapper(
             is SheetPage.Edit -> {
                 EditDocumentDetailsDialog(
                     state = sheetState.editUiState,
-                    onTitleChange = { onAction(HomeUiAction.SheetUpdateTitle(it)) },
-                    onDescriptionChange = { onAction(HomeUiAction.SheetUpdateDescription(it)) },
-                    onDismiss = { onAction(HomeUiAction.SheetBack) },
-                    onConfirmEdit = { onAction(HomeUiAction.SheetConfirmEdit) },
+                    onTitleChange = { onAction(SheetAction.UpdateTitle(it)) },
+                    onDescriptionChange = { onAction(SheetAction.UpdateDescription(it)) },
+                    onDismiss = { onAction(SheetAction.Back) },
+                    onConfirmEdit = { onAction(SheetAction.ConfirmEdit) },
                     modifier = Modifier.widthIn(max = 560.dp),
                 )
             }
@@ -108,8 +105,8 @@ fun DocumentDialogWrapper(
                 val doc = sheetState.activeDocument ?: return
                 DeleteDocumentDialog(
                     scannedDocument = doc,
-                    onDismiss = { onAction(HomeUiAction.SheetBack) },
-                    onConfirm = { onAction(HomeUiAction.SheetConfirmDelete) },
+                    onDismiss = { onAction(SheetAction.Back) },
+                    onConfirm = { onAction(SheetAction.ConfirmDelete) },
                     modifier = Modifier.widthIn(max = 560.dp),
                 )
             }

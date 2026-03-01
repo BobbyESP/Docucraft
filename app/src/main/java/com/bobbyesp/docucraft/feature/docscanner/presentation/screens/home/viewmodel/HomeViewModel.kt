@@ -30,6 +30,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAct
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentSheetUiState
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetPage
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import kotlinx.coroutines.Dispatchers
@@ -101,6 +102,43 @@ class HomeViewModel(
         private const val KEY_ACTIVE_SHEET_DOC_ID = "active_sheet_doc_id"
     }
 
+    fun onSheetAction(action: SheetAction) {
+        when(action) {
+            SheetAction.Dismiss -> dismissSheet()
+            SheetAction.Back -> {
+                val stack = _uiState.value.sheetState?.pageStack ?: return
+                if (stack.size <= 1) dismissSheet()
+                else updateSheet { it.copy(pageStack = stack.dropLast(1)) }
+            }
+            SheetAction.ConfirmDelete -> {
+                val id = _uiState.value.sheetState?.activeDocument?.id ?: return
+                dismissSheet()
+                launchIO {
+                    val doc = getDocumentByIdUseCase(id)
+                    onDeleteDocument(doc.path)
+                }
+            }
+            SheetAction.ConfirmEdit -> confirmSheetEdit()
+            is SheetAction.Navigate -> {
+                updateSheet { it.copy(pageStack = it.pageStack + action.page) }
+            }
+            SheetAction.RequestSave -> {
+                val doc = _uiState.value.sheetState?.activeDocument ?: return
+                onExportDocument(doc)
+            }
+            SheetAction.RequestShare -> {
+                val doc = _uiState.value.sheetState?.activeDocument ?: return
+                onShareDocument(doc.path)
+            }
+            is SheetAction.UpdateDescription -> {
+                updateSheet { it.copy(editDescription = action.value) }
+            }
+            is SheetAction.UpdateTitle -> {
+                updateSheet { it.copy(editTitle = action.value) }
+            }
+        }
+    }
+
     fun onAction(action: HomeUiAction) {
         when (action) {
             HomeUiAction.LaunchDocumentScanner -> {
@@ -134,49 +172,7 @@ class HomeViewModel(
             HomeUiAction.ClearFilters ->
                 _uiState.update { it.copy(filterOptions = FilterOptions.default) }
 
-            // ---- Sheet actions ----
             is HomeUiAction.OpenSheet -> openSheet(action.documentId)
-
-            HomeUiAction.DismissSheet -> dismissSheet()
-
-            HomeUiAction.SheetBack -> {
-                val stack = _uiState.value.sheetState?.pageStack ?: return
-                if (stack.size <= 1) dismissSheet()
-                else updateSheet { it.copy(pageStack = stack.dropLast(1)) }
-            }
-
-            HomeUiAction.SheetNavigateToEdit ->
-                updateSheet { it.copy(pageStack = it.pageStack + SheetPage.Edit) }
-
-            HomeUiAction.SheetNavigateToDelete ->
-                updateSheet { it.copy(pageStack = it.pageStack + SheetPage.Delete) }
-
-            is HomeUiAction.SheetUpdateTitle ->
-                updateSheet { it.copy(editTitle = action.value) }
-
-            is HomeUiAction.SheetUpdateDescription ->
-                updateSheet { it.copy(editDescription = action.value) }
-
-            HomeUiAction.SheetConfirmEdit -> confirmSheetEdit()
-
-            HomeUiAction.SheetConfirmDelete -> {
-                val id = _uiState.value.sheetState?.activeDocument?.id ?: return
-                dismissSheet()
-                launchIO {
-                    val doc = getDocumentByIdUseCase(id)
-                    onDeleteDocument(doc.path)
-                }
-            }
-
-            HomeUiAction.SheetRequestShare -> {
-                val doc = _uiState.value.sheetState?.activeDocument ?: return
-                onShareDocument(doc.path)
-            }
-
-            HomeUiAction.SheetRequestSave -> {
-                val doc = _uiState.value.sheetState?.activeDocument ?: return
-                onExportDocument(doc)
-            }
         }
     }
 

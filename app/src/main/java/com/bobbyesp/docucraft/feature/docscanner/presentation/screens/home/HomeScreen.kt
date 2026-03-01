@@ -15,6 +15,7 @@ import com.bobbyesp.docucraft.core.presentation.common.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentDialogWrapper
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -36,11 +37,10 @@ fun HomeScreen(
         onNavigate = onNavigate,
     )
 
-    // Show the sheet only when there is an active document.
     uiState.sheetState?.let { sheetState ->
         DocumentDialogWrapper(
             sheetState = sheetState,
-            onAction = viewModel::onAction,
+            onAction = viewModel::onSheetAction,
         )
     }
 
