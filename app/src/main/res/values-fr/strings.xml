@@ -63,4 +63,6 @@
 	<string name="field_too_long">Ce champ dépasse la longueur maximale</string>
 	<string name="clear_field">Effacer le champ</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
+	<string name="widget_scan_subtitle">Appuyez pour commencer à numériser</string>
+	<string name="widget_scan_title">Scanner un document</string>
 </resources>

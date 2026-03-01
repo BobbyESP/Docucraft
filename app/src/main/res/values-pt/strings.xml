@@ -64,4 +64,6 @@
 	<string name="field_too_long">Este campo excede o comprimento máximo</string>
 	<string name="field_required">Este campo é obrigatório</string>
 	<string name="clear_field">Limpar campo</string>
+	<string name="widget_scan_title">Digitalizar documento</string>
+	<string name="widget_scan_subtitle">Toque para começar a digitalizar</string>
 </resources>

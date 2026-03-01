@@ -63,4 +63,6 @@
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="field_too_long">Длина этого поля превышает максимальную</string>
 	<string name="clear_field">Очистить поле</string>
+	<string name="widget_scan_subtitle">Нажмите, чтобы начать сканирование</string>
+	<string name="widget_scan_title">Сканировать документ</string>
 </resources>

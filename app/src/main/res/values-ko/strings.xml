@@ -63,4 +63,6 @@
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="field_required">필수 입력 항목입니다</string>
 	<string name="field_too_long">최대 길이를 초과했습니다</string>
+	<string name="widget_scan_title">문서 스캔</string>
+	<string name="widget_scan_subtitle">스캔을 시작하려면 누르세요</string>
 </resources>

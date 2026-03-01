@@ -63,4 +63,6 @@
 	<string name="field_required">هذا الحقل مطلوب</string>
 	<string name="clear_field">مسح الحقل</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
+	<string name="widget_scan_title">مسح المستند ضوئيًا</string>
+	<string name="widget_scan_subtitle">انقر لبدء المسح الضوئي</string>
 </resources>

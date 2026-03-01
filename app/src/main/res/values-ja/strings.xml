@@ -63,4 +63,6 @@
 	<string name="clear_field">フィールドをクリア</string>
 	<string name="field_too_long">このフィールドは最大長を超えています</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
+	<string name="widget_scan_subtitle">タップしてスキャンを開始</string>
+	<string name="widget_scan_title">ドキュメントをスキャン</string>
 </resources>

@@ -63,4 +63,6 @@
 	<string name="field_too_long">Dieses Feld überschreitet die maximale Länge</string>
 	<string name="field_required">Dieses Feld ist erforderlich</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
+	<string name="widget_scan_title">Dokument scannen</string>
+	<string name="widget_scan_subtitle">Zum Scannen tippen</string>
 </resources>

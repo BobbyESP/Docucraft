@@ -62,4 +62,6 @@
 	<string name="field_too_long">Este campo excede la longitud máxima</string>
 	<string name="clear_field">Borrar campo</string>
 	<string name="field_required">Este campo es obligatorio</string>
+	<string name="widget_scan_subtitle">Toca para empezar a escanear</string>
+	<string name="widget_scan_title">Escanear documento</string>
 </resources>

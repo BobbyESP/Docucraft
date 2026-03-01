@@ -63,4 +63,6 @@
 	<string name="field_required">Questo campo è obbligatorio</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="clear_field">Cancella campo</string>
+	<string name="widget_scan_title">Scansiona documento</string>
+	<string name="widget_scan_subtitle">Tocca per iniziare la scansione</string>
 </resources>

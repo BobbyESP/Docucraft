@@ -1,65 +1,111 @@
 <resources>
+    <!-- ════════════════════════════════════════════════
+         APP
+         ════════════════════════════════════════════════ -->
     <string name="app_name" translatable="false">Docucraft</string>
+    <string name="app_tagline">Effortlessly scan your documents with AI</string>
+
+    <!-- ════════════════════════════════════════════════
+         GENERAL / COMMON
+         ════════════════════════════════════════════════ -->
+    <string name="home">Home</string>
     <string name="follow_system">Follow system</string>
     <string name="on">On</string>
     <string name="off">Off</string>
-    <string name="home">Home</string>
-    <string name="file_icon">File icon</string>
-    <string name="no_description">No description</string>
-    <string name="size">Size</string>
-    <string name="more_options">More options</string>
-    <string name="scan">Scan</string>
-    <string name="doc_scan_new">Scan new document</string>
-    <string name="doc_saved_successfully">The document has been saved successfully</string>
-    <string name="doc_scan_error">An error has occurred during the scan</string>
-    <string name="doc_open_in_viewer">Open document in viewer</string>
-    <string name="issue_opening_doc_viewer">An issue occurred while trying to open the document viewer</string>
-    <string name="doc_share">Share document</string>
-    <string name="issue_sharing_doc">An issue occurred while trying to share the document</string>
-    <string name="error_loading_docs">Error loading documents</string>
-    <string name="file_size">File size</string>
-    <string name="page_count">Page count</string>
-    <string name="share">Share</string>
     <string name="save">Save</string>
-    <string name="doc_save">Save document</string>
-    <string name="doc_delete">Delete document</string>
+    <string name="share">Share</string>
     <string name="delete">Delete</string>
-    <string name="unknown_error">Unknown error</string>
-    <string name="doc_save_error_with_reason">An error occurred while saving the document: %1$s</string>
-    <string name="doc_saved_successfully_to">Document saved successfully to %1$s</string>
-    <string name="doc_deleted_successfully">The document has been deleted successfully</string>
-    <string name="doc_delete_error">An error occurred while deleting the document</string>
-    <string name="doc_delete_warning_message">You are about to delete %1$s from your device and app database.\n\nIt has %2$s pages and is %3$s in size.\n\nAre you sure you want to delete it?</string>
     <string name="cancel">Cancel</string>
-    <string name="doc_saving_cancelled">The saving process has been cancelled</string>
-    <string name="doc_modify_details">Modify document details</string>
     <string name="confirm">Confirm</string>
-    <string name="edit_fields">Edit fields</string>
+    <string name="retry">Retry</string>
+    <string name="search">Search</string>
+    <string name="filter">Filter</string>
+    <string name="date">Date</string>
+    <string name="name">Name</string>
     <string name="title">Title</string>
     <string name="description">Description</string>
-    <string name="retry">Retry</string>
+    <string name="results">Results</string>
+    <string name="unknown_error">Unknown error</string>
+
+    <!-- ════════════════════════════════════════════════
+         DOCUMENT — General
+         ════════════════════════════════════════════════ -->
+    <string name="file_icon">File icon</string>
+    <string name="file_size">File size</string>
+    <string name="page_count">Page count</string>
+    <string name="size">Size</string>
+    <string name="no_description">No description</string>
+    <string name="more_options">More options</string>
+    <string name="no_scanned_documents">No scanned documents</string>
+    <string name="error_loading_docs">Error loading documents</string>
+
+    <!-- ════════════════════════════════════════════════
+         DOCUMENT — Scan
+         ════════════════════════════════════════════════ -->
+    <string name="scan">Scan</string>
+    <string name="doc_scan_new">Scan new document</string>
+    <string name="doc_scan_error">An error has occurred during the scan</string>
+    <string name="doc_scan_to_see_document_list">Scan your documents to see them here listed.</string>
+    <string name="scan_cancelled">Scan process cancelled</string>
+
+    <!-- ════════════════════════════════════════════════
+         DOCUMENT — Save / Export
+         ════════════════════════════════════════════════ -->
+    <string name="doc_save">Save document</string>
+    <string name="doc_saved_successfully">The document has been saved successfully</string>
+    <string name="doc_saved_successfully_to">Document saved successfully to %1$s</string>
+    <string name="doc_save_error_with_reason">An error occurred while saving the document: %1$s</string>
+    <string name="doc_saving_cancelled">The saving process has been cancelled</string>
+
+    <!-- ════════════════════════════════════════════════
+         DOCUMENT — Share
+         ════════════════════════════════════════════════ -->
+    <string name="doc_share">Share document</string>
+    <string name="issue_sharing_doc">An issue occurred while trying to share the document</string>
+
+    <!-- ════════════════════════════════════════════════
+         DOCUMENT — View
+         ════════════════════════════════════════════════ -->
+    <string name="doc_open_in_viewer">Open document in viewer</string>
+    <string name="issue_opening_doc_viewer">An issue occurred while trying to open the document viewer</string>
+
+    <!-- ════════════════════════════════════════════════
+         DOCUMENT — Edit metadata
+         ════════════════════════════════════════════════ -->
+    <string name="doc_modify_details">Modify document details</string>
     <string name="doc_modify_details_description">Update the document title and description below to reflect its content and details.</string>
+    <string name="doc_updated_successfully">Document successfully updated</string>
+    <string name="edit_fields">Edit fields</string>
     <string name="field_required">This field is required</string>
     <string name="field_too_long">This field exceeds the maximum length</string>
     <string name="chars_remaining">%1$d / %2$d</string>
     <string name="clear_field">Clear field</string>
-    <string name="no_scanned_documents">No scanned documents</string>
-    <string name="doc_scan_to_see_document_list">Scan your documents to see them here listed.</string>
-    <string name="scan_cancelled">Scan process cancelled</string>
-    <string name="date">Date</string>
-    <string name="name">Name</string>
-    <string name="filter">Filter</string>
-    <string name="clear_filters">Clean filters</string>
-    <string name="search_documents">Search documents</string>
-    <string name="search">Search</string>
-    <string name="clear_search">Clear search</string>
-    <string name="sort_ascending">Sort ascending</string>
-    <string name="sort_descending">Sort descending</string>
-    <string name="app_tagline">Effortlessly scan your documents with AI</string>
-    <string name="exit_search">Exit search</string>
-    <string name="doc_name_or_description">Document name or description</string>
-    <string name="results">Results</string>
-    <string name="doc_updated_successfully">Document successfully updated</string>
+
+    <!-- ════════════════════════════════════════════════
+         DOCUMENT — Delete
+         ════════════════════════════════════════════════ -->
+    <string name="doc_delete">Delete document</string>
     <string name="doc_delete_confirmation">Are you sure you want to delete the file \"%1$s\"?</string>
     <string name="doc_delete_warning">This action is permanent and cannot be undone. If you have already exported the document, those copies will not be affected.</string>
+    <string name="doc_delete_warning_message">You are about to delete %1$s from your device and app database.\n\nIt has %2$s pages and is %3$s in size.\n\nAre you sure you want to delete it?</string>
+    <string name="doc_deleted_successfully">The document has been deleted successfully</string>
+    <string name="doc_delete_error">An error occurred while deleting the document</string>
+
+    <!-- ════════════════════════════════════════════════
+         SEARCH & FILTER
+         ════════════════════════════════════════════════ -->
+    <string name="search_documents">Search documents</string>
+    <string name="doc_name_or_description">Document name or description</string>
+    <string name="clear_search">Clear search</string>
+    <string name="exit_search">Exit search</string>
+    <string name="clear_filters">Clean filters</string>
+    <string name="sort_ascending">Sort ascending</string>
+    <string name="sort_descending">Sort descending</string>
+
+    <!-- ════════════════════════════════════════════════
+         WIDGET — Scan
+         ════════════════════════════════════════════════ -->
+    <string name="widget_app_name" translatable="false">Docucraft</string>
+    <string name="widget_scan_title">Scan document</string>
+    <string name="widget_scan_subtitle">Tap to start scanning</string>
 </resources>

@@ -63,4 +63,6 @@
 	<string name="field_too_long">यह फ़ील्ड अधिकतम लंबाई से ज़्यादा है</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="field_required">यह फ़ील्ड ज़रूरी है</string>
+	<string name="widget_scan_title">दस्तावेज़ स्कैन करें</string>
+	<string name="widget_scan_subtitle">स्कैन करना शुरू करने के लिए टैप करें</string>
 </resources>
