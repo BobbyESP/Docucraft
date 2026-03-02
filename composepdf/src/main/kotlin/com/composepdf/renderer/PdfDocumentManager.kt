@@ -142,6 +142,14 @@ class PdfDocumentManager(private val context: Context) : Closeable {
         closeInternal()
     }
     
+    /**
+     * Releases all resources held by the current document in dependency order:
+     * renderer → file descriptor → source resolver.
+     *
+     * Each resource is closed in its own try/catch so that a failure on one
+     * (e.g. the renderer is already closed) does not prevent the others from
+     * being released, avoiding resource leaks.
+     */
     private fun closeInternal() {
         try {
             renderer?.close()

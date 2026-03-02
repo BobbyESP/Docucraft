@@ -4,15 +4,15 @@ import android.graphics.Bitmap
 import android.util.LruCache
 
 /**
- * Key for caching rendered PDF page bitmaps.
- * 
- * The key includes page index, zoom level, and render dimensions to ensure
- * bitmaps are correctly invalidated when the render parameters change.
- * 
- * @property pageIndex The zero-based page index
- * @property zoomLevel The zoom level at which the page was rendered
- * @property width The rendered bitmap width in pixels
- * @property height The rendered bitmap height in pixels
+ * Composite key that uniquely identifies a rendered bitmap in [BitmapCache].
+ *
+ * All four fields are required for correct cache invalidation:
+ * - [pageIndex]  — different pages must never share a bitmap.
+ * - [zoomLevel]  — rounded to 2 decimal places by [RenderScheduler] to avoid float-drift
+ *                  misses between frames rendered at the same logical zoom step.
+ * - [width]/[height] — the render dimensions in pixels. Two identical zoom levels
+ *                      on different viewport widths (e.g. split-screen resize) must
+ *                      produce separate cache entries.
  */
 data class PageCacheKey(
     val pageIndex: Int,
@@ -22,48 +22,46 @@ data class PageCacheKey(
 )
 
 /**
- * LRU cache for rendered PDF page bitmaps.
- * 
- * This cache automatically evicts least recently used bitmaps when the memory limit is reached.
- * Evicted bitmaps are returned to a [BitmapPool] for reuse, minimizing memory allocations.
- * 
- * The cache size is calculated based on available heap memory, typically using 25% of the
- * maximum heap size to leave room for other application memory needs.
- * 
- * @property maxSizeBytes Maximum cache size in bytes
- * @property bitmapPool Optional pool for recycling evicted bitmaps
+ * In-memory LRU cache for rendered PDF page bitmaps, keyed by [PageCacheKey].
+ *
+ * ## Eviction strategy
+ *
+ * Uses [LruCache] with byte-count sizing (via [Bitmap.allocationByteCount]).
+ * The default maximum is ~20 % of the JVM heap to leave room for the UI and other
+ * components. Entries are evicted in least-recently-used order when the limit is hit.
+ *
+ * ## Why bitmaps are never recycled on eviction
+ *
+ * Calling [Bitmap.recycle] in `entryRemoved` caused `Canvas: trying to use a recycled
+ * bitmap` crashes. When [LruCache] evicts a bitmap, Compose may still hold a reference
+ * to it via [androidx.compose.ui.graphics.ImageBitmap] and draw it on the GPU render thread.
+ * Recycling it at that moment invalidates the underlying pixel buffer mid-draw.
+ *
+ * The safe approach: drop the reference and let the GC collect it once Compose has
+ * released its own reference. Android's bitmap allocator recycles the native memory
+ * automatically at that point.
+ *
+ * @param maxSizeBytes LRU capacity in bytes. Defaults to [calculateDefaultCacheSize].
  */
 class BitmapCache(
     maxSizeBytes: Int = calculateDefaultCacheSize(),
-    private val bitmapPool: BitmapPool? = null
+    @Suppress("UNUSED_PARAMETER") bitmapPool: BitmapPool? = null
 ) {
-    
-    private val cache: LruCache<PageCacheKey, Bitmap> = object : LruCache<PageCacheKey, Bitmap>(maxSizeBytes) {
-        override fun sizeOf(key: PageCacheKey, value: Bitmap): Int {
-            return value.allocationByteCount
-        }
-        
-        override fun entryRemoved(
-            evicted: Boolean,
-            key: PageCacheKey,
-            oldValue: Bitmap,
-            newValue: Bitmap?
-        ) {
-            if (evicted && newValue == null) {
-                // Bitmap was evicted, return to pool for reuse
-                bitmapPool?.put(oldValue)
-            }
-        }
+
+    private val cache = object : LruCache<PageCacheKey, Bitmap>(maxSizeBytes) {
+        override fun sizeOf(key: PageCacheKey, value: Bitmap) = value.allocationByteCount
+
+        // entryRemoved intentionally does NOT recycle — let GC handle it.
     }
-    
+
     /**
      * Retrieves a cached bitmap for the given key.
      * 
      * @param key The cache key
      * @return The cached bitmap, or null if not found
      */
-    fun get(key: PageCacheKey): Bitmap? = cache.get(key)
-    
+    fun get(key: PageCacheKey): Bitmap? = cache.get(key)?.takeIf { !it.isRecycled }
+
     /**
      * Stores a bitmap in the cache.
      * 
@@ -71,7 +69,7 @@ class BitmapCache(
      * @param bitmap The bitmap to cache
      */
     fun put(key: PageCacheKey, bitmap: Bitmap) {
-        cache.put(key, bitmap)
+        if (!bitmap.isRecycled) cache.put(key, bitmap)
     }
     
     /**
@@ -96,19 +94,12 @@ class BitmapCache(
     /**
      * Clears all cached bitmaps.
      */
-    fun clear() {
-        cache.evictAll()
-    }
-    
+    fun clear() = cache.evictAll()
+
     /**
      * Returns the current size of the cache in bytes.
      */
     fun size(): Int = cache.size()
-    
-    /**
-     * Returns the maximum size of the cache in bytes.
-     */
-    fun maxSize(): Int = cache.maxSize()
     
     companion object {
         /**
@@ -117,7 +108,7 @@ class BitmapCache(
          */
         fun calculateDefaultCacheSize(): Int {
             val maxMemory = Runtime.getRuntime().maxMemory()
-            return (maxMemory / 4).toInt()
+            return (maxMemory / 5).toInt()   // 20 % of heap
         }
     }
 }

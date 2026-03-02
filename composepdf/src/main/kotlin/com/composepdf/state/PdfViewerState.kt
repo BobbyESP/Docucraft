@@ -1,6 +1,5 @@
 package com.composepdf.state
 
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -13,148 +12,111 @@ import androidx.compose.ui.geometry.Offset
 import com.composepdf.remote.RemotePdfState
 
 /**
- * Hoistable state holder for the PDF viewer.
- * 
- * This class holds all observable state for a PDF viewer instance, including
- * current page, zoom level, scroll position, and loading state. It is designed
- * to be used with [com.composepdf.rememberPdfViewerState] and supports state restoration across
- * configuration changes.
- * 
- * The state is [Stable], meaning changes to individual properties will trigger
- * minimal recomposition in Compose.
- * 
- * Example usage:
- * ```kotlin
- * @Composable
- * fun MyScreen() {
- *     val state = rememberPdfViewerState()
- *     
- *     PdfViewer(
- *         source = PdfSource.FromAsset("document.pdf"),
- *         state = state
- *     )
- *     
- *     // Access state
- *     Text("Page ${state.currentPage + 1} of ${state.pageCount}")
- * }
- * ```
- * 
- * @param initialPage The initial page to display (zero-based)
- * @param initialZoom The initial zoom level (1.0 = 100%)
+ * Hoistable state for the PDF viewer.
+ *
+ * ## Coordinate model
+ *
+ * The viewer uses a single 2-D transformation to map document positions to screen positions:
+ *
+ *   screenPos = docPos × zoom + Offset(panX, panY)
+ *
+ * All pages live in "document space" (zoom = 1, pan = 0). At zoom = 1 the first page
+ * fills the viewport width exactly. [panY] scrolls the document vertically; [panX]
+ * is only non-zero when zoomed in enough that the page is wider than the viewport.
+ *
+ * This single-transform model eliminates the dual-state problem that arises from
+ * combining a [LazyListState] for scrolling with a separate [graphicsLayer] for zoom.
+ *
+ * ## State hoisting
+ *
+ * Create an instance with [rememberPdfViewerState] and pass it to [PdfViewer].
+ * Reading [zoom], [panX], [panY], [currentPage] etc. from your own composables
+ * is safe — all fields are Compose `State` objects that trigger recomposition.
+ *
+ * ## Persistence
+ *
+ * [Saver] saves [currentPage], [zoom], [panX], and [panY] across configuration
+ * changes (rotation, font-size change, etc.) via [rememberSaveable].
  */
 @Stable
 class PdfViewerState(
     initialPage: Int = 0,
     initialZoom: Float = 1f
 ) {
-    /**
-     * The currently visible page index (zero-based).
-     */
+    /** Zero-based index of the page most visible in the viewport. */
     var currentPage: Int by mutableIntStateOf(initialPage)
         internal set
-    
-    /**
-     * The total number of pages in the document.
-     */
+
+    /** Total number of pages in the loaded document. */
     var pageCount: Int by mutableIntStateOf(0)
         internal set
-    
+
     /**
-     * The current zoom level (1.0 = 100%).
-     * Constrained by [ViewerConfig.minZoom] and [ViewerConfig.maxZoom].
+     * Current zoom level (1f = fit-width).
+     * Constrained to [ViewerConfig.minZoom]..[ViewerConfig.maxZoom].
      */
     var zoom: Float by mutableFloatStateOf(initialZoom)
         internal set
-    
+
     /**
-     * The current pan offset when zoomed in.
-     * This offset is relative to the top-left corner of the content.
+     * Horizontal translation of the document origin relative to the viewport
+     * top-left, in screen pixels. Negative = document shifted left.
      */
-    var offset: Offset by mutableStateOf(Offset.Zero)
+    var panX: Float by mutableFloatStateOf(0f)
         internal set
-    
+
     /**
-     * Whether the document is currently being loaded.
+     * Vertical translation of the document origin relative to the viewport
+     * top-left, in screen pixels. Negative = document shifted up (scrolled down).
      */
+    var panY: Float by mutableFloatStateOf(0f)
+        internal set
+
+    /** Whether the document is being loaded or rendered. */
     var isLoading: Boolean by mutableStateOf(true)
         internal set
-    
-    /**
-     * The last error that occurred, or null if no error.
-     */
+
+    /** Last error that occurred, or null. */
     var error: Throwable? by mutableStateOf(null)
         internal set
-    
-    /**
-     * Whether a gesture (pinch/pan) is currently in progress.
-     */
+
+    /** Whether a gesture is currently active (used to suppress re-renders mid-gesture). */
     var isGestureActive: Boolean by mutableStateOf(false)
         internal set
-    
-    /**
-     * State of remote PDF loading (for URL sources).
-     * 
-     * This property is only relevant when loading from [com.composepdf.source.PdfSource.Remote].
-     * For local sources, this will remain [com.composepdf.remote.RemotePdfState.Idle].
-     * 
-     * Observe this to show download progress or handle remote loading errors.
-     */
-    var remoteState: RemotePdfState by mutableStateOf(
-        RemotePdfState.Idle
-    )
+
+    /** Download/cache state for remote PDF sources. */
+    var remoteState: RemotePdfState by mutableStateOf(RemotePdfState.Idle)
         internal set
-    
-    /**
-     * Internal scroll state for the lazy list.
-     */
-    internal val lazyListState: LazyListState = LazyListState(
-        firstVisibleItemIndex = initialPage
-    )
-    
-    /**
-     * The first visible page index based on scroll position.
-     * This may differ from [currentPage] during rapid scrolling.
-     */
-    val firstVisiblePage: Int
-        get() = lazyListState.firstVisibleItemIndex
-    
-    /**
-     * Whether the document has been loaded successfully.
-     */
+
+    /** True when a document has been loaded successfully. */
     val isLoaded: Boolean
         get() = !isLoading && error == null && pageCount > 0
-    
+
     /**
-     * Resets the state to initial values.
+     * Convenience alias kept for callsites that used the old [offset] property.
+     * Maps to [Offset(panX, panY)].
      */
+    val offset: Offset get() = Offset(panX, panY)
+
     internal fun reset() {
         currentPage = 0
         pageCount = 0
         zoom = 1f
-        offset = Offset.Zero
+        panX = 0f
+        panY = 0f
         isLoading = true
         error = null
+        isGestureActive = false
     }
-    
+
     companion object {
-        /**
-         * Saver for persisting [PdfViewerState] across configuration changes.
-         * 
-         * Note: Only page and zoom are persisted. Loading state and errors
-         * are not persisted as they are transient.
-         */
         val Saver: Saver<PdfViewerState, *> = listSaver(
-            save = { state ->
-                listOf(
-                    state.currentPage,
-                    state.zoom
-                )
-            },
-            restore = { saved ->
-                PdfViewerState(
-                    initialPage = saved[0] as Int,
-                    initialZoom = saved[1] as Float
-                )
+            save  = { listOf(it.currentPage, it.zoom, it.panX, it.panY) },
+            restore = {
+                PdfViewerState(initialPage = it[0] as Int, initialZoom = it[1] as Float).also { s ->
+                    s.panX = it[2] as Float
+                    s.panY = it[3] as Float
+                }
             }
         )
     }

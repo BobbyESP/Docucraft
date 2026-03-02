@@ -1,102 +1,43 @@
 package com.composepdf.cache
 
 import android.graphics.Bitmap
-import java.util.LinkedList
+import androidx.core.graphics.createBitmap
 
 /**
- * A pool for recycling [Bitmap] objects to reduce memory allocations.
- * 
- * Bitmaps are expensive to allocate and can cause GC pressure when creating many
- * during scrolling. This pool maintains a collection of recycled bitmaps organized
- * by size buckets for efficient reuse.
- * 
- * When a bitmap is needed, the pool attempts to find a recycled bitmap of the same
- * size. If one is available, it's returned for reuse (after being erased). Otherwise,
- * a new bitmap is created.
- * 
- * @property maxPoolSize Maximum number of bitmaps to keep in the pool
+ * Allocates bitmaps for PDF page rendering.
+ *
+ * ## Why no recycling?
+ *
+ * The previous implementation recycled bitmaps via an LruCache eviction callback.
+ * That caused `Canvas: trying to use a recycled bitmap` crashes because Compose
+ * may still be drawing a bitmap on the GPU after the LruCache evicts it and the
+ * pool calls `bitmap.recycle()`.
+ *
+ * The safe approach: **never call `bitmap.recycle()` manually**. Bitmaps handed
+ * to Compose become referenced by `ImageBitmap` / `BitmapPainter` and will be
+ * GC'd normally once no longer referenced. The GC + Android's bitmap allocator
+ * handles memory far better than manual pooling with Compose.
+ *
+ * This class is kept as a thin factory so call-sites don't need to change.
  */
-class BitmapPool(
-    private val maxPoolSize: Int = DEFAULT_POOL_SIZE
-) {
-    
-    private data class BitmapSpec(val width: Int, val height: Int, val config: Bitmap.Config)
-    
-    private val pool = LinkedHashMap<BitmapSpec, LinkedList<Bitmap>>()
-    private var currentSize = 0
-    
+class BitmapPool {
+
     /**
-     * Gets a bitmap from the pool or creates a new one.
-     * 
-     * @param width The desired bitmap width
-     * @param height The desired bitmap height
-     * @param config The desired bitmap configuration
-     * @return A bitmap of the specified dimensions (may be recycled or new)
+     * Allocates a new [Bitmap] of the given dimensions and config.
+     * Always returns a fresh bitmap — no pooling is performed.
      */
-    @Synchronized
     fun get(width: Int, height: Int, config: Bitmap.Config = Bitmap.Config.ARGB_8888): Bitmap {
-        val spec = BitmapSpec(width, height, config)
-        val bitmaps = pool[spec]
-        
-        return if (!bitmaps.isNullOrEmpty()) {
-            currentSize--
-            bitmaps.removeFirst().apply {
-                // Clear the bitmap for reuse
-                eraseColor(android.graphics.Color.TRANSPARENT)
-            }
-        } else {
-            Bitmap.createBitmap(width, height, config)
-        }
+        return createBitmap(width.coerceAtLeast(1), height.coerceAtLeast(1), config)
     }
-    
+
     /**
-     * Returns a bitmap to the pool for reuse.
-     * 
-     * Bitmaps that are already recycled or that would cause the pool to exceed
-     * its maximum size are discarded.
-     * 
-     * @param bitmap The bitmap to return to the pool
+     * No-op. Kept for API compatibility; bitmaps are not manually recycled.
      */
-    @Synchronized
-    fun put(bitmap: Bitmap) {
-        if (bitmap.isRecycled) return
-        
-        // If pool is full, recycle the bitmap instead of pooling
-        if (currentSize >= maxPoolSize) {
-            bitmap.recycle()
-            return
-        }
-        
-        val bitmapConfig = bitmap.config ?: Bitmap.Config.ARGB_8888
-        val spec = BitmapSpec(bitmap.width, bitmap.height, bitmapConfig)
-        val bitmaps = pool.getOrPut(spec) { LinkedList() }
-        bitmaps.addLast(bitmap)
-        currentSize++
-    }
-    
+    @Suppress("UNUSED_PARAMETER")
+    fun put(bitmap: Bitmap) = Unit
+
     /**
-     * Clears all pooled bitmaps and releases their memory.
+     * No-op. Kept for API compatibility.
      */
-    @Synchronized
-    fun clear() {
-        pool.values.forEach { bitmaps ->
-            bitmaps.forEach { bitmap ->
-                if (!bitmap.isRecycled) {
-                    bitmap.recycle()
-                }
-            }
-        }
-        pool.clear()
-        currentSize = 0
-    }
-    
-    /**
-     * Returns the current number of bitmaps in the pool.
-     */
-    @Synchronized
-    fun size(): Int = currentSize
-    
-    companion object {
-        private const val DEFAULT_POOL_SIZE = 10
-    }
+    fun clear() = Unit
 }

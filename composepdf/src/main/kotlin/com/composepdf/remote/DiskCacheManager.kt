@@ -147,6 +147,13 @@ class DiskCacheManager(
         }
     }
     
+    /**
+     * Evicts the oldest cached files (by last-modified time) until the total cache size
+     * is at or below [maxSizeBytes]. This implements the LRU eviction policy.
+     *
+     * Called after every successful download ([put]) to keep the cache within bounds
+     * without requiring a separate background cleanup job.
+     */
     private fun enforceSizeLimit(maxSizeBytes: Long) {
         val files = actualCacheDir.listFiles()?.toMutableList() ?: return
         
@@ -167,6 +174,11 @@ class DiskCacheManager(
         }
     }
     
+    /**
+     * Converts an arbitrary cache key string (URL, custom key) into a 32-character
+     * hex string safe for use as a filename. SHA-256 is used for uniform distribution
+     * and to avoid filesystem-unsafe characters in the original key.
+     */
     private fun hashKey(key: String): String {
         val bytes = MessageDigest.getInstance("SHA-256")
             .digest(key.toByteArray())

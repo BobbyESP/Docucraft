@@ -28,10 +28,16 @@ object PdfViewerDefaults {
     val PageSpacing: Dp = 8.dp
     
     /**
-     * Default DPI multiplier for render quality.
+     * Base oversampling factor for rendering.
+     *
+     * At zoom = 1 the bitmap will be `viewportWidth × RenderQuality` pixels wide.
+     * At high zoom levels the bitmap is capped at [com.composepdf.renderer.PageRenderer.MAX_BITMAP_PX] so
+     * this factor is effectively reduced automatically — no OOM risk.
+     *
+     * 1.5 = 50 % oversampling → sharp on FullHD / QHD screens at zoom = 1.
      */
     const val RenderQuality: Float = 1.5f
-    
+
     /**
      * Default minimum zoom level.
      */
