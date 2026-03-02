@@ -8,20 +8,20 @@ import java.io.File
 
 /**
  * Orchestrates remote PDF loading with caching and progress reporting.
- * 
+ *
  * This class coordinates between the HTTP client and disk cache to:
  * 1. Check if a valid cached copy exists
  * 2. If not, download from URL with progress updates
  * 3. Cache the downloaded file
  * 4. Return the local file for rendering
- * 
+ *
  * The loader emits [RemotePdfState] updates as a Flow, allowing the UI
  * to observe download progress and handle errors.
- * 
+ *
  * Example usage:
  * ```kotlin
  * val loader = RemotePdfLoader(context)
- * 
+ *
  * loader.load(PdfSource.Remote(url = "https://example.com/doc.pdf"))
  *     .collect { state ->
  *         when (state) {
@@ -31,7 +31,7 @@ import java.io.File
  *         }
  *     }
  * ```
- * 
+ *
  * @property context Android context
  * @property httpClient HTTP client for downloads (default: DefaultHttpClientProvider)
  * @property cacheManager Disk cache manager
@@ -41,26 +41,26 @@ class RemotePdfLoader(
     private val httpClient: HttpClientProvider = DefaultHttpClientProvider(),
     private val cacheManager: DiskCacheManager = DiskCacheManager(context)
 ) {
-    
+
     /**
      * Loads a remote PDF, returning a Flow of state updates.
-     * 
+     *
      * The flow will emit:
      * 1. [RemotePdfState.Downloading] with progress (0.0 to 1.0)
      * 2. [RemotePdfState.Cached] when ready
      * 3. [RemotePdfState.Error] if something goes wrong
-     * 
+     *
      * If a valid cached copy exists, it will be returned immediately
      * without downloading.
-     * 
+     *
      * @param source The remote PDF source configuration
      * @return Flow of [RemotePdfState] updates
      */
     fun load(source: PdfSource.Remote): Flow<RemotePdfState> = flow {
         emit(RemotePdfState.Downloading(progress = null))
-        
+
         val cacheKey = source.cacheKey ?: source.url
-        
+
         // Check cache first
         val cachedFile = cacheManager.get(cacheKey, source.cachePolicy)
         if (cachedFile != null && cachedFile.exists() && cachedFile.length() > 0) {
@@ -73,10 +73,10 @@ class RemotePdfLoader(
                 cacheManager.remove(cacheKey)
             }
         }
-        
+
         // Download the file
         val outputFile = cacheManager.getCacheFile(cacheKey)
-        
+
         val result = httpClient.download(
             url = source.url,
             headers = source.headers,
@@ -91,7 +91,7 @@ class RemotePdfLoader(
                 // In a real implementation, we'd use a channel or shared flow
             }
         )
-        
+
         when (result) {
             is DownloadResult.Success -> {
                 // Verify the downloaded file is a valid PDF
@@ -102,29 +102,33 @@ class RemotePdfLoader(
                 } else {
                     // Downloaded file is not a valid PDF
                     result.file.delete()
-                    emit(RemotePdfState.Error(
-                        type = ErrorType.CORRUPTED,
-                        message = "Downloaded file is not a valid PDF"
-                    ))
+                    emit(
+                        RemotePdfState.Error(
+                            type = ErrorType.CORRUPTED,
+                            message = "Downloaded file is not a valid PDF"
+                        )
+                    )
                 }
             }
-            
+
             is DownloadResult.Failure -> {
-                emit(RemotePdfState.Error(
-                    type = result.error.type,
-                    message = result.error.message,
-                    cause = result.error.cause
-                ))
+                emit(
+                    RemotePdfState.Error(
+                        type = result.error.type,
+                        message = result.error.message,
+                        cause = result.error.cause
+                    )
+                )
             }
         }
     }
-    
+
     /**
      * Loads a remote PDF and returns the cached file directly.
-     * 
+     *
      * This is a suspend function that blocks until the file is ready.
      * For progress updates, use [load] instead.
-     * 
+     *
      * @param source The remote PDF source configuration
      * @return The cached PDF file
      * @throws RemotePdfException if download fails
@@ -132,28 +136,29 @@ class RemotePdfLoader(
     suspend fun loadBlocking(source: PdfSource.Remote): File {
         var resultFile: File? = null
         var error: RemotePdfState.Error? = null
-        
+
         load(source).collect { state ->
             when (state) {
                 is RemotePdfState.Cached -> resultFile = state.file
                 is RemotePdfState.Error -> error = state
-                else -> { /* Ignore progress states */ }
+                else -> { /* Ignore progress states */
+                }
             }
         }
-        
+
         return resultFile ?: throw RemotePdfException(
             error?.type ?: ErrorType.NETWORK,
             error?.message ?: "Unknown error"
         )
     }
-    
+
     /**
      * Clears all cached PDF files.
      */
     suspend fun clearCache() {
         cacheManager.clear()
     }
-    
+
     /**
      * Checks if a file is a valid PDF by examining its magic bytes.
      */

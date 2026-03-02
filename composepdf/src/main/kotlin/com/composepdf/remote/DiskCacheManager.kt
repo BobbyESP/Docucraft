@@ -10,13 +10,13 @@ import java.security.MessageDigest
 
 /**
  * Manages disk caching of downloaded PDF files.
- * 
+ *
  * Features:
  * - LRU eviction when cache size exceeded
  * - Automatic cleanup of expired files
  * - Thread-safe cache operations
  * - SHA-256 hashing for cache keys
- * 
+ *
  * @property context Android context for cache directory access
  * @property cacheDir Custom cache directory, or null to use default
  */
@@ -24,18 +24,18 @@ class DiskCacheManager(
     private val context: Context,
     private val cacheDir: File? = null
 ) {
-    
+
     private val mutex = Mutex()
-    
+
     private val actualCacheDir: File by lazy {
         cacheDir ?: File(context.cacheDir, CACHE_SUBDIRECTORY).also {
             it.mkdirs()
         }
     }
-    
+
     /**
      * Gets a cached file for the given key, or null if not cached or expired.
-     * 
+     *
      * @param cacheKey The cache key (will be hashed)
      * @param policy The cache policy to apply
      * @return The cached file if valid, or null
@@ -44,11 +44,11 @@ class DiskCacheManager(
         withContext(Dispatchers.IO) {
             val hashedKey = hashKey(cacheKey)
             val cacheFile = File(actualCacheDir, "$hashedKey.pdf")
-            
+
             if (!cacheFile.exists()) {
                 return@withContext null
             }
-            
+
             // Check expiration
             if (policy.validateOnAccess) {
                 val age = System.currentTimeMillis() - cacheFile.lastModified()
@@ -60,17 +60,17 @@ class DiskCacheManager(
                     }
                 }
             }
-            
+
             // Update access time for LRU
             cacheFile.setLastModified(System.currentTimeMillis())
-            
+
             cacheFile
         }
     }
-    
+
     /**
      * Gets the file path for a cache entry (for writing).
-     * 
+     *
      * @param cacheKey The cache key (will be hashed)
      * @return The file path where the cached file should be written
      */
@@ -83,10 +83,10 @@ class DiskCacheManager(
             }
         }
     }
-    
+
     /**
      * Marks a cache entry as complete (after successful download).
-     * 
+     *
      * @param cacheKey The cache key
      * @param file The downloaded file
      * @param policy The cache policy for cleanup
@@ -95,15 +95,15 @@ class DiskCacheManager(
         withContext(Dispatchers.IO) {
             // Update modification time
             file.setLastModified(System.currentTimeMillis())
-            
+
             // Enforce cache size limit
             enforceSizeLimit(policy.maxSizeBytes)
         }
     }
-    
+
     /**
      * Removes a specific cache entry.
-     * 
+     *
      * @param cacheKey The cache key to remove
      */
     suspend fun remove(cacheKey: String) = mutex.withLock {
@@ -112,7 +112,7 @@ class DiskCacheManager(
             File(actualCacheDir, "$hashedKey.pdf").delete()
         }
     }
-    
+
     /**
      * Clears all cached files.
      */
@@ -121,7 +121,7 @@ class DiskCacheManager(
             actualCacheDir.listFiles()?.forEach { it.delete() }
         }
     }
-    
+
     /**
      * Gets the current cache size in bytes.
      */
@@ -130,10 +130,10 @@ class DiskCacheManager(
             actualCacheDir.listFiles()?.sumOf { it.length() } ?: 0L
         }
     }
-    
+
     /**
      * Cleans up expired cache entries.
-     * 
+     *
      * @param maxAge Maximum age in milliseconds
      */
     suspend fun cleanExpired(maxAge: Long) = mutex.withLock {
@@ -146,7 +146,7 @@ class DiskCacheManager(
             }
         }
     }
-    
+
     /**
      * Evicts the oldest cached files (by last-modified time) until the total cache size
      * is at or below [maxSizeBytes]. This implements the LRU eviction policy.
@@ -156,24 +156,24 @@ class DiskCacheManager(
      */
     private fun enforceSizeLimit(maxSizeBytes: Long) {
         val files = actualCacheDir.listFiles()?.toMutableList() ?: return
-        
+
         var totalSize = files.sumOf { it.length() }
-        
+
         if (totalSize <= maxSizeBytes) return
-        
+
         // Sort by last modified (oldest first) for LRU eviction
         files.sortBy { it.lastModified() }
-        
+
         for (file in files) {
             if (totalSize <= maxSizeBytes) break
-            
+
             val fileSize = file.length()
             if (file.delete()) {
                 totalSize -= fileSize
             }
         }
     }
-    
+
     /**
      * Converts an arbitrary cache key string (URL, custom key) into a 32-character
      * hex string safe for use as a filename. SHA-256 is used for uniform distribution
@@ -184,7 +184,7 @@ class DiskCacheManager(
             .digest(key.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }.take(32)
     }
-    
+
     companion object {
         private const val CACHE_SUBDIRECTORY = "pdf_cache"
     }

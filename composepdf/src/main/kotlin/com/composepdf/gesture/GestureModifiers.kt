@@ -46,7 +46,7 @@ internal class GestureState(private val scope: CoroutineScope) {
 
     val velocityTracker = VelocityTracker()
     private var flingJob: Job? = null
-    private var animJob: Job?  = null
+    private var animJob: Job? = null
 
     /** Resets velocity tracking at the start of each new gesture. */
     fun reset() = velocityTracker.resetTracking()
@@ -157,43 +157,45 @@ fun Modifier.pdfGestures(
         if (!enabled) return@pointerInput
 
         val doubleTapTimeout = viewConfiguration.doubleTapTimeoutMillis
-        val touchSlop        = viewConfiguration.touchSlop
-        val doubleTapRadius  = touchSlop * 8f                 // generous for the second tap
+        val touchSlop = viewConfiguration.touchSlop
+        val doubleTapRadius = touchSlop * 8f                 // generous for the second tap
 
         awaitEachGesture {
 
             // ── 1. Wait for first finger down ─────────────────────────────
-            val firstDown     = awaitFirstDown(requireUnconsumed = false)
+            val firstDown = awaitFirstDown(requireUnconsumed = false)
             val firstDownTime = System.currentTimeMillis()
-            val firstDownPos  = firstDown.position
+            val firstDownPos = firstDown.position
 
             gs.cancelAll()
             gs.reset()
             controller.onGestureStart()
 
-            var zooming    = false
-            var pastSlop   = false
+            var zooming = false
+            var pastSlop = false
             var multiTouch = false
-            var accPan     = Offset.Zero
-            var accZoom    = 1f
+            var accPan = Offset.Zero
+            var accZoom = 1f
 
             // ── 2. Main gesture loop ──────────────────────────────────────
             var event: PointerEvent
             do {
                 event = awaitPointerEvent()
                 val nPressed = event.changes.count { it.pressed }
-                if (nPressed > 1) { multiTouch = true; zooming = true }
+                if (nPressed > 1) {
+                    multiTouch = true; zooming = true
+                }
 
                 if (!event.changes.any { it.isConsumed }) {
                     val zoomDelta = event.calculateZoom()
-                    val panDelta  = event.calculatePan()
-                    val centroid  = event.calculateCentroid(useCurrent = false)
+                    val panDelta = event.calculatePan()
+                    val centroid = event.calculateCentroid(useCurrent = false)
 
                     // Accumulate for slop detection
                     if (!pastSlop) {
                         accZoom *= zoomDelta
-                        accPan  += panDelta
-                        val panSq  = accPan.x * accPan.x + accPan.y * accPan.y
+                        accPan += panDelta
+                        val panSq = accPan.x * accPan.x + accPan.y * accPan.y
                         val zoomPx = kotlin.math.abs(1f - accZoom) * size.width
                         if (panSq > touchSlop * touchSlop || zoomPx > touchSlop) pastSlop = true
                     }
@@ -214,17 +216,17 @@ fun Modifier.pdfGestures(
 
             // ── 3. Finger(s) lifted ───────────────────────────────────────
             if (pastSlop) {
-                val vel       = gs.velocityTracker.calculateVelocity()
-                val speedSq   = vel.x * vel.x + vel.y * vel.y
+                val vel = gs.velocityTracker.calculateVelocity()
+                val speedSq = vel.x * vel.x + vel.y * vel.y
                 val threshold = 1000f * 1000f     // 1000 px/s
 
                 if (speedSq > threshold) {
                     gs.fling(
                         velocity = vel,
-                        onDelta  = { delta ->
+                        onDelta = { delta ->
                             controller.onGestureUpdate(1f, delta, Offset.Zero)
                         },
-                        onEnd    = { controller.onGestureEnd() }
+                        onEnd = { controller.onGestureEnd() }
                     )
                 } else {
                     controller.onGestureEnd()
@@ -238,7 +240,7 @@ fun Modifier.pdfGestures(
                 return@awaitEachGesture
             }
 
-            val elapsed   = System.currentTimeMillis() - firstDownTime
+            val elapsed = System.currentTimeMillis() - firstDownTime
             val remaining = (doubleTapTimeout - elapsed).coerceAtLeast(0L)
 
             // awaitFirstDown correctly waits for the PRESS event of the second tap.
@@ -276,11 +278,11 @@ fun Modifier.pdfGestures(
             }
 
             gs.animateZoom(
-                from    = state.zoom,
-                to      = targetZoom,
-                pivot   = pivot,
+                from = state.zoom,
+                to = targetZoom,
+                pivot = pivot,
                 onFrame = { z, p -> controller.onAnimatedZoomFrame(z, p) },
-                onEnd   = { controller.onGestureEnd() }
+                onEnd = { controller.onGestureEnd() }
             )
         }
     }

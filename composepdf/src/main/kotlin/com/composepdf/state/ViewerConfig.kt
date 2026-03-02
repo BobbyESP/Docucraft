@@ -34,7 +34,7 @@ enum class ScrollDirection {
      * Pages are arranged vertically, scroll up/down to navigate.
      */
     VERTICAL,
-    
+
     /**
      * Pages are arranged horizontally, scroll left/right to navigate.
      */
@@ -51,13 +51,13 @@ enum class FitMode {
      * This is the standard "reader" mode.
      */
     WIDTH,
-    
+
     /**
      * Scale page to fit the viewport height.
      * Page width may extend beyond the viewport.
      */
     HEIGHT,
-    
+
     /**
      * Scale page to fit entirely within the viewport.
      * Letterboxing may occur.

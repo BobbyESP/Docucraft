@@ -12,7 +12,7 @@ import javax.net.ssl.HttpsURLConnection
 
 /**
  * Default HTTP client implementation using [HttpURLConnection].
- * 
+ *
  * This implementation:
  * - Uses only standard Android APIs (no external dependencies)
  * - Streams directly to disk without memory buffering
@@ -21,14 +21,14 @@ import javax.net.ssl.HttpsURLConnection
  *
  */
 class DefaultHttpClientProvider : HttpClientProvider {
-    
+
     override suspend fun download(
         url: String,
         headers: Map<String, String>,
         outputFile: File,
         onProgress: (bytesRead: Long, totalBytes: Long?) -> Unit
     ): DownloadResult = withContext(Dispatchers.IO) {
-        
+
         // Validate URL is HTTPS
         if (!url.startsWith("https://", ignoreCase = true)) {
             return@withContext DownloadResult.Failure(
@@ -38,36 +38,38 @@ class DefaultHttpClientProvider : HttpClientProvider {
                 )
             )
         }
-        
+
         var connection: HttpURLConnection? = null
-        
+
         try {
             val urlObj = URL(url)
             connection = urlObj.openConnection() as HttpsURLConnection
-            
+
             // Configure connection
             connection.apply {
                 requestMethod = "GET"
                 connectTimeout = CONNECT_TIMEOUT_MS
                 readTimeout = READ_TIMEOUT_MS
                 doInput = true
-                
+
                 // Add headers (without logging sensitive values)
                 headers.forEach { (key, value) ->
                     setRequestProperty(key, value)
                 }
             }
-            
+
             // Check cancellation before connecting
             coroutineContext.ensureActive()
-            
+
             connection.connect()
-            
+
             val responseCode = connection.responseCode
-            
+
             // Handle HTTP errors
             when (responseCode) {
-                HttpURLConnection.HTTP_OK -> { /* Success, continue */ }
+                HttpURLConnection.HTTP_OK -> { /* Success, continue */
+                }
+
                 HttpURLConnection.HTTP_UNAUTHORIZED -> {
                     return@withContext DownloadResult.Failure(
                         DownloadError(
@@ -77,6 +79,7 @@ class DefaultHttpClientProvider : HttpClientProvider {
                         )
                     )
                 }
+
                 HttpURLConnection.HTTP_FORBIDDEN -> {
                     return@withContext DownloadResult.Failure(
                         DownloadError(
@@ -86,6 +89,7 @@ class DefaultHttpClientProvider : HttpClientProvider {
                         )
                     )
                 }
+
                 HttpURLConnection.HTTP_NOT_FOUND -> {
                     return@withContext DownloadResult.Failure(
                         DownloadError(
@@ -95,6 +99,7 @@ class DefaultHttpClientProvider : HttpClientProvider {
                         )
                     )
                 }
+
                 else -> {
                     if (responseCode >= 400) {
                         return@withContext DownloadResult.Failure(
@@ -107,33 +112,33 @@ class DefaultHttpClientProvider : HttpClientProvider {
                     }
                 }
             }
-            
+
             val contentLength = connection.contentLengthLong.takeIf { it > 0 }
-            
+
             // Stream to disk
             val tempFile = File(outputFile.parent, "${outputFile.name}.tmp")
-            
+
             try {
                 BufferedInputStream(connection.inputStream, BUFFER_SIZE).use { input ->
                     FileOutputStream(tempFile).use { output ->
                         val buffer = ByteArray(BUFFER_SIZE)
                         var bytesRead: Long = 0
                         var count: Int
-                        
+
                         while (input.read(buffer).also { count = it } != -1) {
                             // Check cancellation during download
                             coroutineContext.ensureActive()
-                            
+
                             output.write(buffer, 0, count)
                             bytesRead += count
-                            
+
                             onProgress(bytesRead, contentLength)
                         }
-                        
+
                         output.flush()
                     }
                 }
-                
+
                 // Verify file was written
                 if (tempFile.length() == 0L) {
                     tempFile.delete()
@@ -144,20 +149,20 @@ class DefaultHttpClientProvider : HttpClientProvider {
                         )
                     )
                 }
-                
+
                 // Move temp file to final location
                 tempFile.renameTo(outputFile)
-                
+
                 DownloadResult.Success(
                     file = outputFile,
                     contentLength = outputFile.length()
                 )
-                
+
             } catch (e: Exception) {
                 tempFile.delete()
                 throw e
             }
-            
+
         } catch (e: kotlinx.coroutines.CancellationException) {
             DownloadResult.Failure(
                 DownloadError(
@@ -194,7 +199,7 @@ class DefaultHttpClientProvider : HttpClientProvider {
             connection?.disconnect()
         }
     }
-    
+
     companion object {
         private const val CONNECT_TIMEOUT_MS = 30_000
         private const val READ_TIMEOUT_MS = 60_000

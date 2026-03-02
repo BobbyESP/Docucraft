@@ -48,16 +48,18 @@ class RenderScheduler(
     private val cache: BitmapCache
 ) : Closeable {
 
-    private val scope      = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val jobsMutex  = Mutex()
-    private val activeJobs  = HashMap<Int, Job>()
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val jobsMutex = Mutex()
+    private val activeJobs = HashMap<Int, Job>()
     private val inFlightZoom = HashMap<Int, Float>()
 
     private val _renderedPages = MutableStateFlow<Map<Int, Bitmap>>(emptyMap())
     val renderedPages: StateFlow<Map<Int, Bitmap>> = _renderedPages.asStateFlow()
 
     var prefetchWindow: Int = 2
-        set(value) { field = value.coerceAtLeast(0) }
+        set(value) {
+            field = value.coerceAtLeast(0)
+        }
 
     // ── Public API ────────────────────────────────────────────────────────────
 
@@ -79,12 +81,15 @@ class RenderScheduler(
         }
 
         val roundedZoom = roundZoom(config.zoomLevel)
-        Log.d(TAG, "━━ requestRender pages=$visiblePages zoom=$roundedZoom quality=${config.renderQuality} vpW=${config.viewportWidthPx}")
+        Log.d(
+            TAG,
+            "━━ requestRender pages=$visiblePages zoom=$roundedZoom quality=${config.renderQuality} vpW=${config.viewportWidthPx}"
+        )
 
-        val total    = documentManager.pageCount
+        val total = documentManager.pageCount
         val winStart = (visiblePages.first - prefetchWindow).coerceAtLeast(0)
-        val winEnd   = (visiblePages.last  + prefetchWindow).coerceAtMost(total - 1)
-        val window   = winStart..winEnd
+        val winEnd = (visiblePages.last + prefetchWindow).coerceAtMost(total - 1)
+        val window = winStart..winEnd
 
         // Cancel jobs outside the current window.
         val iter = activeJobs.iterator()
@@ -104,13 +109,16 @@ class RenderScheduler(
             if (pageIndex !in 0 until total) continue
 
             val pageSize = documentManager.getPageSize(pageIndex)
-            val (w, h)   = pageRenderer.calculateRenderSize(pageSize.width, pageSize.height, config)
+            val (w, h) = pageRenderer.calculateRenderSize(pageSize.width, pageSize.height, config)
             val cacheKey = PageCacheKey(pageIndex, roundedZoom, w, h)
 
             // 1. Exact cache hit → publish and skip.
             val cached = cache.get(cacheKey)
             if (cached != null) {
-                Log.d(TAG, "  page $pageIndex CACHE HIT zoom=$roundedZoom ${cached.width}×${cached.height}px")
+                Log.d(
+                    TAG,
+                    "  page $pageIndex CACHE HIT zoom=$roundedZoom ${cached.width}×${cached.height}px"
+                )
                 publish(pageIndex, cached)
                 activeJobs[pageIndex]?.cancel()
                 inFlightZoom.remove(pageIndex)
@@ -126,7 +134,10 @@ class RenderScheduler(
 
             // 3. Cancel stale job (wrong zoom) and launch new one.
             activeJobs[pageIndex]?.let {
-                Log.d(TAG, "  page $pageIndex cancelling stale job (was zoom=${inFlightZoom[pageIndex]}, now $roundedZoom)")
+                Log.d(
+                    TAG,
+                    "  page $pageIndex cancelling stale job (was zoom=${inFlightZoom[pageIndex]}, now $roundedZoom)"
+                )
                 it.cancel()
             }
             inFlightZoom[pageIndex] = roundedZoom
@@ -139,7 +150,10 @@ class RenderScheduler(
                         pageRenderer.render(page, config)
                     }
                     val mbSize = bitmap.width * bitmap.height * 4 / 1_048_576
-                    Log.d(TAG, "  page $pageIndex DONE zoom=$roundedZoom actual=${bitmap.width}×${bitmap.height}px (${mbSize}MB)")
+                    Log.d(
+                        TAG,
+                        "  page $pageIndex DONE zoom=$roundedZoom actual=${bitmap.width}×${bitmap.height}px (${mbSize}MB)"
+                    )
 
                     cache.put(cacheKey, bitmap)
                     jobsMutex.withLock {

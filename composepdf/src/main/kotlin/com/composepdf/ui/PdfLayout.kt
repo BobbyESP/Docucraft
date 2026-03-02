@@ -75,10 +75,10 @@ internal fun PdfLayout(
                 controller.onViewportSizeChanged(size.width.toFloat(), size.height.toFloat())
             }
             .pdfGestures(
-                state      = state,
+                state = state,
                 controller = controller,
-                config     = config,
-                enabled    = state.isLoaded
+                config = config,
+                enabled = state.isLoaded
             ),
         content = {
             val vpWidth = controller.viewportWidth
@@ -86,12 +86,12 @@ internal fun PdfLayout(
                 for (index in visibleIndices) {
                     val s = pageSizes[index]
                     PdfPage(
-                        bitmap               = renderedPages[index],
-                        pageIndex            = index,
-                        aspectRatio          = s.width.toFloat() / s.height.toFloat(),
-                        isLoading            = renderedPages[index] == null,
+                        bitmap = renderedPages[index],
+                        pageIndex = index,
+                        aspectRatio = s.width.toFloat() / s.height.toFloat(),
+                        isLoading = renderedPages[index] == null,
                         showLoadingIndicator = config.isLoadingIndicatorVisible,
-                        modifier             = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
             }
@@ -112,9 +112,9 @@ internal fun PdfLayout(
             val pageIndex = visibleIndices.getOrElse(localIdx) { return@Layout layout(vpW, vpH) {} }
 
             val docHeight = controller.pageHeightPx(pageIndex)
-            val docTopY   = controller.pageTopDocY(pageIndex)
+            val docTopY = controller.pageTopDocY(pageIndex)
 
-            val screenW = (vpWidth  * state.zoom).roundToInt().coerceAtLeast(1)
+            val screenW = (vpWidth * state.zoom).roundToInt().coerceAtLeast(1)
             val screenH = (docHeight * state.zoom).roundToInt().coerceAtLeast(1)
 
             // panX is the left-edge offset of the page in screen pixels.

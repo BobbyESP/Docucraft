@@ -83,8 +83,8 @@ fun PdfViewer(
 
     // Use rememberUpdatedState so these lambdas are always current without
     // restarting the LaunchedEffects that reference them.
-    val latestOnPageChange   by rememberUpdatedState(onPageChange)
-    val latestOnError        by rememberUpdatedState(onError)
+    val latestOnPageChange by rememberUpdatedState(onPageChange)
+    val latestOnError by rememberUpdatedState(onError)
     val latestOnDocumentLoad by rememberUpdatedState(onDocumentLoad)
 
     // Reload whenever the source changes; also re-runs if the controller
@@ -94,8 +94,8 @@ fun PdfViewer(
     }
 
     LaunchedEffect(state.currentPage) { latestOnPageChange?.invoke(state.currentPage) }
-    LaunchedEffect(state.error)       { state.error?.let { latestOnError?.invoke(it) } }
-    LaunchedEffect(state.pageCount)   {
+    LaunchedEffect(state.error) { state.error?.let { latestOnError?.invoke(it) } }
+    LaunchedEffect(state.pageCount) {
         if (state.pageCount > 0) latestOnDocumentLoad?.invoke(state.pageCount)
     }
 
@@ -108,23 +108,23 @@ fun PdfViewer(
     ) {
         when {
             state.isLoading -> CircularProgressIndicator(
-                modifier    = Modifier.size(64.dp),
-                color       = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(64.dp),
+                color = MaterialTheme.colorScheme.primary,
                 strokeWidth = 6.dp
             )
 
             state.error != null -> Text(
-                text  = "Error loading PDF: ${state.error?.message}",
+                text = "Error loading PDF: ${state.error?.message}",
                 color = Color.White,
                 style = MaterialTheme.typography.bodyLarge
             )
 
             state.isLoaded -> PdfLayout(
-                pageSizes     = controller.pageSizes,
+                pageSizes = controller.pageSizes,
                 renderedPages = renderedPages,
-                state         = state,
-                controller    = controller,
-                config        = resolvedConfig
+                state = state,
+                controller = controller,
+                config = resolvedConfig
             )
         }
     }

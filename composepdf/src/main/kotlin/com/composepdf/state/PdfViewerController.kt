@@ -18,6 +18,7 @@ import com.composepdf.renderer.PageRenderer
 import com.composepdf.renderer.PdfDocumentManager
 import com.composepdf.renderer.RenderScheduler
 import com.composepdf.source.PdfSource
+import com.composepdf.state.PdfViewerController.Companion.RENDER_DEBOUNCE_MS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -70,10 +71,10 @@ class PdfViewerController(
 
     private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
-    private val bitmapPool      = BitmapPool()
-    private val bitmapCache     = BitmapCache(bitmapPool = bitmapPool)
+    private val bitmapPool = BitmapPool()
+    private val bitmapCache = BitmapCache(bitmapPool = bitmapPool)
     private val documentManager = PdfDocumentManager(context)
-    private val pageRenderer    = PageRenderer(bitmapPool)
+    private val pageRenderer = PageRenderer(bitmapPool)
     private val renderScheduler = RenderScheduler(documentManager, pageRenderer, bitmapCache)
 
     val renderedPages: StateFlow<Map<Int, Bitmap>> = renderScheduler.renderedPages
@@ -86,7 +87,10 @@ class PdfViewerController(
 
     init {
         renderScheduler.prefetchWindow = config.prefetchDistance
-        Log.d(TAG, "init prefetchWindow=${config.prefetchDistance} renderQuality=${config.renderQuality} min=${config.minZoom} max=${config.maxZoom}")
+        Log.d(
+            TAG,
+            "init prefetchWindow=${config.prefetchDistance} renderQuality=${config.renderQuality} min=${config.minZoom} max=${config.maxZoom}"
+        )
 
         // After a zoom gesture ends, wait briefly then request a fresh render at the new zoom.
         // CONFLATED channel: rapid onGestureEnd calls collapse to one pending signal.
@@ -125,7 +129,7 @@ class PdfViewerController(
      */
     fun onViewportSizeChanged(width: Float, height: Float) {
         if (width == viewportWidth && height == viewportHeight) return
-        viewportWidth  = width
+        viewportWidth = width
         viewportHeight = height
         clampPan()
         requestRenderForVisiblePages()
@@ -147,10 +151,10 @@ class PdfViewerController(
             try {
                 when (source) {
                     is PdfSource.Remote -> loadRemoteDocument(source)
-                    else                -> openDocument(source)
+                    else -> openDocument(source)
                 }
             } catch (e: Exception) {
-                state.error     = e
+                state.error = e
                 state.isLoading = false
             }
         }
@@ -158,7 +162,7 @@ class PdfViewerController(
 
     private suspend fun openDocument(source: PdfSource) {
         documentManager.open(source)
-        pageSizes       = documentManager.getAllPageSizes()
+        pageSizes = documentManager.getAllPageSizes()
         state.pageCount = documentManager.pageCount
         state.isLoading = false
         clampPan()
@@ -170,12 +174,13 @@ class PdfViewerController(
             state.remoteState = remoteState
             when (remoteState) {
                 is RemotePdfState.Cached -> openDocument(PdfSource.File(remoteState.file))
-                is RemotePdfState.Error  -> {
+                is RemotePdfState.Error -> {
                     state.error = com.composepdf.remote.RemotePdfException(
                         remoteState.type, remoteState.message, remoteState.cause
                     )
                     state.isLoading = false
                 }
+
                 else -> Unit
             }
         }
@@ -237,22 +242,22 @@ class PdfViewerController(
 
         val spacingPx = config.pageSpacingPx
         // Half-spacing margin: pages begin rendering just before they enter the viewport.
-        val margin    = spacingPx * 0.5f
+        val margin = spacingPx * 0.5f
         // Convert viewport top/bottom edges from screen to document space.
-        val docTop    = (-state.panY / state.zoom) - margin
+        val docTop = (-state.panY / state.zoom) - margin
         val docBottom = ((viewportHeight - state.panY) / state.zoom) + margin
 
         var first = pageSizes.lastIndex
-        var last  = 0
-        var y     = 0f
+        var last = 0
+        var y = 0f
 
         for (i in pageSizes.indices) {
-            val h          = pageHeightPx(i)
-            val pageTop    = y
+            val h = pageHeightPx(i)
+            val pageTop = y
             val pageBottom = y + h
             if (pageBottom >= docTop && pageTop <= docBottom) {
                 if (i < first) first = i
-                if (i > last)  last  = i
+                if (i > last) last = i
             }
             y += h + spacingPx
         }
@@ -320,7 +325,7 @@ class PdfViewerController(
         val newZoom = (oldZoom * zoomChange).coerceIn(config.minZoom, config.maxZoom)
 
         if (newZoom != oldZoom) {
-            val ratio  = newZoom / oldZoom
+            val ratio = newZoom / oldZoom
             state.panX = pivot.x * (1f - ratio) + state.panX * ratio
             state.panY = pivot.y * (1f - ratio) + state.panY * ratio
             state.zoom = newZoom
@@ -344,7 +349,7 @@ class PdfViewerController(
         val newZoom = targetZoom.coerceIn(config.minZoom, config.maxZoom)
         if (newZoom == oldZoom) return
 
-        val ratio  = newZoom / oldZoom
+        val ratio = newZoom / oldZoom
         state.panX = pivot.x * (1f - ratio) + state.panX * ratio
         state.panY = pivot.y * (1f - ratio) + state.panY * ratio
         state.zoom = newZoom
@@ -361,14 +366,14 @@ class PdfViewerController(
     fun isPointOverPage(screenPoint: Offset): Boolean {
         if (pageSizes.isEmpty()) return false
         val scaledW = viewportWidth * state.zoom
-        val left    = state.panX
-        val right   = left + scaledW
+        val left = state.panX
+        val right = left + scaledW
         if (screenPoint.x < left || screenPoint.x > right) return false
 
         var docY = 0f
         for (i in pageSizes.indices) {
-            val h      = pageHeightPx(i)
-            val top    = docY * state.zoom + state.panY
+            val h = pageHeightPx(i)
+            val top = docY * state.zoom + state.panY
             val bottom = top + h * state.zoom
             if (screenPoint.y in top..bottom) return true
             docY += h + config.pageSpacingPx
@@ -384,7 +389,7 @@ class PdfViewerController(
     fun goToPage(index: Int) {
         if (pageSizes.isEmpty()) return
         val i = index.coerceIn(0, pageSizes.lastIndex)
-        state.panY        = -(pageTopDocY(i) * state.zoom)
+        state.panY = -(pageTopDocY(i) * state.zoom)
         state.currentPage = i
         clampPan()
         requestRenderForVisiblePages()
@@ -405,17 +410,17 @@ class PdfViewerController(
     fun requestRenderForVisiblePages() {
         if (!documentManager.isOpen || pageSizes.isEmpty() || viewportWidth == 0f) return
         val visible = visiblePageIndices()
-        val zoom    = state.zoom
+        val zoom = state.zoom
         val vpWidth = viewportWidth
         Log.d(TAG, "requestRender zoom=$zoom vpW=$vpWidth visible=$visible")
         scope.launch(Dispatchers.IO) {
             renderScheduler.requestRender(
                 visiblePages = visible,
                 config = PageRenderer.RenderConfig(
-                    zoomLevel       = zoom,
-                    renderQuality   = config.renderQuality,
+                    zoomLevel = zoom,
+                    renderQuality = config.renderQuality,
                     viewportWidthPx = vpWidth,
-                    nightMode       = config.isNightModeEnabled
+                    nightMode = config.isNightModeEnabled
                 )
             )
         }

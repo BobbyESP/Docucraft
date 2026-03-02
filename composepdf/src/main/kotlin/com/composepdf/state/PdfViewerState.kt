@@ -10,6 +10,7 @@ import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.remote.RemotePdfState
+import com.composepdf.state.PdfViewerState.Companion.Saver
 
 /**
  * Hoistable state for the PDF viewer.
@@ -111,7 +112,7 @@ class PdfViewerState(
 
     companion object {
         val Saver: Saver<PdfViewerState, *> = listSaver(
-            save  = { listOf(it.currentPage, it.zoom, it.panX, it.panY) },
+            save = { listOf(it.currentPage, it.zoom, it.panX, it.panY) },
             restore = {
                 PdfViewerState(initialPage = it[0] as Int, initialZoom = it[1] as Float).also { s ->
                     s.panX = it[2] as Float

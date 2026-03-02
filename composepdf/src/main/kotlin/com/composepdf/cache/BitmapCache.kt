@@ -2,6 +2,7 @@ package com.composepdf.cache
 
 import android.graphics.Bitmap
 import android.util.LruCache
+import com.composepdf.cache.BitmapCache.Companion.calculateDefaultCacheSize
 
 /**
  * Composite key that uniquely identifies a rendered bitmap in [BitmapCache].
@@ -56,7 +57,7 @@ class BitmapCache(
 
     /**
      * Retrieves a cached bitmap for the given key.
-     * 
+     *
      * @param key The cache key
      * @return The cached bitmap, or null if not found
      */
@@ -64,25 +65,25 @@ class BitmapCache(
 
     /**
      * Stores a bitmap in the cache.
-     * 
+     *
      * @param key The cache key
      * @param bitmap The bitmap to cache
      */
     fun put(key: PageCacheKey, bitmap: Bitmap) {
         if (!bitmap.isRecycled) cache.put(key, bitmap)
     }
-    
+
     /**
      * Removes a specific entry from the cache.
-     * 
+     *
      * @param key The cache key to remove
      * @return The removed bitmap, or null if not found
      */
     fun remove(key: PageCacheKey): Bitmap? = cache.remove(key)
-    
+
     /**
      * Removes all entries for a specific page index, regardless of zoom level.
-     * 
+     *
      * @param pageIndex The page index to clear
      */
     fun clearPage(pageIndex: Int) {
@@ -90,7 +91,7 @@ class BitmapCache(
             .filter { it.pageIndex == pageIndex }
             .forEach { cache.remove(it) }
     }
-    
+
     /**
      * Clears all cached bitmaps.
      */
@@ -100,7 +101,7 @@ class BitmapCache(
      * Returns the current size of the cache in bytes.
      */
     fun size(): Int = cache.size()
-    
+
     companion object {
         /**
          * Calculates a reasonable default cache size based on available memory.

@@ -4,15 +4,15 @@ import java.io.File
 
 /**
  * Abstraction for HTTP clients to enable pluggable network implementations.
- * 
+ *
  * This interface allows the library to work with different HTTP clients
  * (OkHttp, Ktor, HttpURLConnection, etc.) without hard dependencies.
- * 
+ *
  * Security requirements:
  * - MUST stream response directly to disk (no memory buffering)
  * - MUST NOT log headers or tokens
  * - MUST support cancellation via coroutine cancellation
- * 
+ *
  * Example implementation:
  * ```kotlin
  * class MyHttpClient : HttpClientProvider {
@@ -28,10 +28,10 @@ import java.io.File
  * ```
  */
 interface HttpClientProvider {
-    
+
     /**
      * Downloads a file from the given URL to the specified output file.
-     * 
+     *
      * @param url The URL to download from (must be HTTPS)
      * @param headers HTTP headers to include in the request
      * @param outputFile The file to write the downloaded content to
@@ -51,10 +51,10 @@ interface HttpClientProvider {
  * Result of a download operation.
  */
 sealed class DownloadResult {
-    
+
     /**
      * Download completed successfully.
-     * 
+     *
      * @property file The downloaded file
      * @property contentLength The size of the downloaded file in bytes
      */
@@ -62,10 +62,10 @@ sealed class DownloadResult {
         val file: File,
         val contentLength: Long
     ) : DownloadResult()
-    
+
     /**
      * Download failed.
-     * 
+     *
      * @property error The error details
      */
     data class Failure(

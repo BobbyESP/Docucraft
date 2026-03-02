@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.pdf.PdfRenderer
 import android.util.Log
 import com.composepdf.cache.BitmapPool
+import com.composepdf.renderer.PageRenderer.Companion.MAX_BITMAP_PX
 import kotlin.math.min
 
 private const val TAG = "PdfPageRenderer"
@@ -36,10 +37,10 @@ class PageRenderer(
         colorFilter = ColorMatrixColorFilter(
             ColorMatrix(
                 floatArrayOf(
-                    -1f,  0f,  0f, 0f, 255f,
-                     0f, -1f,  0f, 0f, 255f,
-                     0f,  0f, -1f, 0f, 255f,
-                     0f,  0f,  0f, 1f,   0f
+                    -1f, 0f, 0f, 0f, 255f,
+                    0f, -1f, 0f, 0f, 255f,
+                    0f, 0f, -1f, 0f, 255f,
+                    0f, 0f, 0f, 1f, 0f
                 )
             )
         )
@@ -65,12 +66,14 @@ class PageRenderer(
     fun render(page: PdfRenderer.Page, config: RenderConfig): Bitmap {
         val (width, height) = targetSize(page.width, page.height, config)
 
-        Log.d(TAG, "render  page=${page.index}  " +
-                "pdf=${page.width}×${page.height}pt  " +
-                "viewport=${config.viewportWidthPx}px  " +
-                "zoom=${config.zoomLevel}  quality=${config.renderQuality}  " +
-                "→ bitmap=${width}×${height}px  " +
-                "(${width * height * 4 / 1_048_576} MB)")
+        Log.d(
+            TAG, "render  page=${page.index}  " +
+                    "pdf=${page.width}×${page.height}pt  " +
+                    "viewport=${config.viewportWidthPx}px  " +
+                    "zoom=${config.zoomLevel}  quality=${config.renderQuality}  " +
+                    "→ bitmap=${width}×${height}px  " +
+                    "(${width * height * 4 / 1_048_576} MB)"
+        )
 
         val bitmap = bitmapPool.get(width, height, Bitmap.Config.ARGB_8888)
         bitmap.eraseColor(config.backgroundColor)
@@ -102,7 +105,7 @@ class PageRenderer(
     }
 
     private fun applyNightMode(source: Bitmap): Bitmap {
-        val cfg    = source.config ?: Bitmap.Config.ARGB_8888
+        val cfg = source.config ?: Bitmap.Config.ARGB_8888
         val result = bitmapPool.get(source.width, source.height, cfg)
         Canvas(result).drawBitmap(source, 0f, 0f, nightModePaint)
         bitmapPool.put(source)

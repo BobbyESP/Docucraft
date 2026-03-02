@@ -5,10 +5,10 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Contains default values for [PdfViewer] configuration.
- * 
+ *
  * Per Compose Component API Guidelines, all component default expressions
  * should live in a top-level object named `ComponentDefaults`.
- * 
+ *
  * Example usage:
  * ```kotlin
  * PdfViewer(
@@ -21,12 +21,12 @@ import androidx.compose.ui.unit.dp
  * ```
  */
 object PdfViewerDefaults {
-    
+
     /**
      * Default spacing between pages.
      */
     val PageSpacing: Dp = 8.dp
-    
+
     /**
      * Base oversampling factor for rendering.
      *
@@ -42,17 +42,17 @@ object PdfViewerDefaults {
      * Default minimum zoom level.
      */
     const val MinZoom: Float = 1f
-    
+
     /**
      * Default maximum zoom level.
      */
     const val MaxZoom: Float = 5f
-    
+
     /**
      * Default zoom level applied on double-tap.
      */
     const val DoubleTapZoom: Float = 2.5f
-    
+
     /**
      * Default number of pages to prefetch on each side.
      */
