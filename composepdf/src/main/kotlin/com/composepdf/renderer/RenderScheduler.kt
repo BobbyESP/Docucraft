@@ -7,11 +7,16 @@ import android.util.Size
 import com.composepdf.cache.BitmapCache
 import com.composepdf.cache.PageCacheKey
 import com.composepdf.state.PdfViewerState
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -21,8 +26,8 @@ private const val TAG = "PdfRenderScheduler"
 
 /**
  * Orchestrates background rendering tasks for both full pages and high-resolution tiles.
- * 
- * It uses a dedicated thread pool to ensure rendering operations don't block the 
+ *
+ * Uses a dedicated thread pool to ensure rendering operations don't block the
  * main thread or standard IO dispatchers.
  */
 class RenderScheduler(
@@ -35,30 +40,38 @@ class RenderScheduler(
     /** Dedicated dispatcher for CPU-intensive PDF rasterization. */
     private val renderDispatcher = Executors.newFixedThreadPool(4).asCoroutineDispatcher()
     private val scope = CoroutineScope(renderDispatcher + SupervisorJob())
-    
+
     /** Tracking of active page-level rendering jobs. */
     private val activeJobs = ConcurrentHashMap<Int, Job>()
     private val inFlightZoom = ConcurrentHashMap<Int, Float>()
-    
+
     /** Tracking of active high-res tile rendering jobs. */
     private val tileJobs = ConcurrentHashMap<String, Job>()
 
     /** Number of pages to pre-render outside the visible range. */
     var prefetchWindow: Int = 2
-        set(value) { field = value.coerceAtLeast(0) }
+        set(value) {
+            field = value.coerceAtLeast(0)
+        }
 
     private val _renderedPages = MutableStateFlow<Map<Int, Bitmap>>(emptyMap())
+
     /** Observed by the UI to display base page bitmaps. */
     val renderedPages: StateFlow<Map<Int, Bitmap>> = _renderedPages.asStateFlow()
 
     /**
      * Schedules rendering for the given range of visible pages.
-     * Manages prefetching and cancels out-of-window jobs.
+     *
+     * @param visiblePages Range of indices currently visible in the viewport.
+     * @param config Quality settings for the render.
+     * @param pageSizes Original PDF dimensions for all pages.
+     * @param getBaseWidth A function to retrieve the base width (at zoom 1.0) for a specific page index.
      */
     fun requestRender(
         visiblePages: IntRange,
         config: PageRenderer.RenderConfig,
-        pageSizes: List<Size>
+        pageSizes: List<Size>,
+        getBaseWidth: (Int) -> Float
     ) {
         if (!documentManager.isOpen || pageSizes.isEmpty()) return
 
@@ -66,8 +79,8 @@ class RenderScheduler(
         val total = pageSizes.size
 
         val winStart = (visiblePages.first - prefetchWindow).coerceAtLeast(0)
-        val winEnd   = (visiblePages.last  + prefetchWindow).coerceAtMost(total - 1)
-        val window   = winStart..winEnd
+        val winEnd = (visiblePages.last + prefetchWindow).coerceAtMost(total - 1)
+        val window = winStart..winEnd
 
         // Evict jobs for pages that are no longer in the prefetch window
         activeJobs.keys.forEach { idx ->
@@ -78,16 +91,20 @@ class RenderScheduler(
         }
 
         // Prioritize visible pages, then prefetched ones
-        val ordered = visiblePages.toList() + 
-                     (winStart until visiblePages.first).toList() + 
-                     ((visiblePages.last + 1)..winEnd).toList()
+        val ordered = visiblePages.toList() +
+                (winStart until visiblePages.first).toList() +
+                ((visiblePages.last + 1)..winEnd).toList()
 
         for (pageIndex in ordered) {
             if (pageIndex !in 0 until total) continue
 
             val pageSize = pageSizes[pageIndex]
+            val baseWidth = getBaseWidth(pageIndex)
             val (targetW, targetH) = pageRenderer.calculateRenderSize(
-                pageSize.width, pageSize.height, config
+                pageSize.width,
+                pageSize.height,
+                baseWidth,
+                config
             )
             val cacheKey = PageCacheKey(pageIndex, roundedZoom, targetW, targetH)
 
@@ -100,9 +117,7 @@ class RenderScheduler(
                 continue
             }
 
-            if (activeJobs[pageIndex]?.isActive == true && inFlightZoom[pageIndex] == roundedZoom) {
-                continue
-            }
+            if (activeJobs[pageIndex]?.isActive == true && inFlightZoom[pageIndex] == roundedZoom) continue
 
             activeJobs[pageIndex]?.cancel()
             inFlightZoom[pageIndex] = roundedZoom
@@ -110,9 +125,8 @@ class RenderScheduler(
             activeJobs[pageIndex] = scope.launch {
                 try {
                     val bitmap = documentManager.withPage(pageIndex) { page ->
-                        pageRenderer.render(page, config)
+                        pageRenderer.render(page, baseWidth, config)
                     }
-                    
                     cache.put(cacheKey, bitmap)
                     if (inFlightZoom[pageIndex] == roundedZoom) {
                         inFlightZoom.remove(pageIndex)
@@ -120,7 +134,10 @@ class RenderScheduler(
                         publishBitmap(pageIndex, bitmap)
                     }
                 } catch (e: Exception) {
-                    if (e !is CancellationException) Log.e(TAG, "Render error for page $pageIndex: ${e.message}")
+                    if (e !is CancellationException) Log.e(
+                        TAG,
+                        "Render error for page $pageIndex: ${e.message}"
+                    )
                     inFlightZoom.remove(pageIndex)
                     activeJobs.remove(pageIndex)
                 }
@@ -129,23 +146,29 @@ class RenderScheduler(
     }
 
     /**
-     * Schedules a single tile render.
+     * Schedules a single tile render task.
+     *
+     * @param pageIndex The index of the page containing the tile.
+     * @param tileRect The coordinates of the tile within the page (scaled coordinates).
+     * @param zoom The current zoom level.
+     * @param baseWidth The width the page should have at zoom 1.0.
      */
     fun requestTile(
         pageIndex: Int,
         tileRect: Rect,
         zoom: Float,
-        viewportWidth: Float
+        baseWidth: Float
     ) {
         val zoomKey = (zoom * 100f).roundToInt() / 100f
-        val tileKey = "${pageIndex}_${tileRect.left}_${tileRect.top}_${tileRect.right}_${tileRect.bottom}_$zoomKey"
-        
+        val tileKey =
+            "${pageIndex}_${tileRect.left}_${tileRect.top}_${tileRect.right}_${tileRect.bottom}_$zoomKey"
+
         if (tileJobs.containsKey(tileKey)) return
 
         tileJobs[tileKey] = scope.launch {
             try {
                 val bitmap = documentManager.withPage(pageIndex) { page ->
-                    pageRenderer.renderTile(page, tileRect, zoom, viewportWidth)
+                    pageRenderer.renderTile(page, tileRect, zoom, baseWidth)
                 }
                 viewerState.putTile(tileKey, bitmap)
             } catch (e: Exception) {
@@ -191,8 +214,7 @@ class RenderScheduler(
     }
 
     override fun close() {
-        activeJobs.values.forEach { it.cancel() }
-        tileJobs.values.forEach { it.cancel() }
+        invalidateAll()
         renderDispatcher.close()
     }
 }

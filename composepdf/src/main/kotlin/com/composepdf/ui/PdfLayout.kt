@@ -3,7 +3,13 @@ package com.composepdf.ui
 import android.graphics.Bitmap
 import android.util.Size
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.ColorFilter
@@ -50,7 +56,7 @@ internal fun PdfLayout(
     LaunchedEffect(controller) {
         snapshotFlow {
             Triple(controller.visiblePageIndices(), state.isGestureActive, state.zoom)
-        }.collectLatest { 
+        }.collectLatest {
             controller.requestRenderForVisiblePages()
         }
     }
@@ -93,11 +99,9 @@ internal fun PdfLayout(
                             state = state,
                             bitmap = renderedPages[index],
                             pageIndex = index,
-                            aspectRatio = size.width.toFloat() / size.height.toFloat(),
                             showLoadingIndicator = config.isLoadingIndicatorVisible,
-                            fitMode = config.fitMode,
                             colorFilter = colorFilter,
-                            modifier = Modifier.layoutId(index).fillMaxSize()
+                            modifier = Modifier.layoutId(index)
                         )
                     }
                 }
@@ -110,16 +114,24 @@ internal fun PdfLayout(
         }
 
         layout(constraints.maxWidth, constraints.maxHeight) {
+            // maxPageWidth is the width of the document "container".
+            // PdfViewerController.clampPan already centers state.panX if the container is narrower than viewport.
+            val maxPageWidth =
+                controller.pageSizes.indices.maxOfOrNull { controller.pageWidthPx(it) } ?: vpWidth
+
             measurables.forEach { measurable ->
                 val pageIndex = measurable.layoutId as? Int ?: return@forEach
-                
+
                 val docTopY = controller.pageTopDocY(pageIndex)
-                val docHeight = controller.pageHeightPx(pageIndex)
+                val pageWidth = controller.pageWidthPx(pageIndex)
+                val pageHeight = controller.pageHeightPx(pageIndex)
 
-                val screenW = (vpWidth * state.zoom).roundToInt().coerceAtLeast(1)
-                val screenH = (docHeight * state.zoom).roundToInt().coerceAtLeast(1)
+                val screenW = (pageWidth * state.zoom).roundToInt().coerceAtLeast(1)
+                val screenH = (pageHeight * state.zoom).roundToInt().coerceAtLeast(1)
 
-                val x = state.panX.roundToInt()
+                // Each page is horizontally centered within the maxPageWidth bounding box corridor.
+                // state.panX points to the left edge of that corridor in screen space.
+                val x = (state.panX + (maxPageWidth - pageWidth) * state.zoom / 2f).roundToInt()
                 val y = (docTopY * state.zoom + state.panY).roundToInt()
 
                 measurable.measure(Constraints.fixed(screenW, screenH)).place(x, y)

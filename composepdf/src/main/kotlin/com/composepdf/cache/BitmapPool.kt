@@ -5,6 +5,7 @@ import android.util.Log
 import java.util.ArrayDeque
 import java.util.NavigableMap
 import java.util.TreeMap
+import androidx.core.graphics.createBitmap
 
 private const val TAG = "BitmapPool"
 
@@ -57,7 +58,10 @@ class BitmapPool(
                     bitmap.eraseColor(0) // Clear old content
                     return bitmap
                 } catch (e: IllegalArgumentException) {
-                    Log.w(TAG, "Failed to reconfigure bitmap: ${e.message}. Recycling and creating new.")
+                    Log.w(
+                        TAG,
+                        "Failed to reconfigure bitmap: ${e.message}. Recycling and creating new."
+                    )
                     bitmap.recycle()
                     // Fallthrough to create new
                 }
@@ -65,7 +69,7 @@ class BitmapPool(
         }
 
         // Fallback: create a fresh bitmap
-        return Bitmap.createBitmap(width, height, config)
+        return createBitmap(width, height, config)
     }
 
     /**

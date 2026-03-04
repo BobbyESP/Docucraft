@@ -2,9 +2,14 @@ package com.composepdf.state
 
 import android.graphics.Bitmap
 import android.util.LruCache
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.remote.RemotePdfState
 
@@ -76,7 +81,7 @@ class PdfViewerState(
 
     /** Retrieves a tile from the cache. */
     fun getTile(key: String): Bitmap? = tileCache.get(key)
-    
+
     /** Stores a rendered tile and triggers UI update. */
     fun putTile(key: String, bitmap: Bitmap) {
         tileCache.put(key, bitmap)

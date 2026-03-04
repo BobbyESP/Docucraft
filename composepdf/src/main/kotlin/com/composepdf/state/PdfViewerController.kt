@@ -4,7 +4,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.util.Size
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.cache.BitmapCache
 import com.composepdf.cache.BitmapPool
@@ -14,10 +19,23 @@ import com.composepdf.renderer.PageRenderer
 import com.composepdf.renderer.PdfDocumentManager
 import com.composepdf.renderer.RenderScheduler
 import com.composepdf.source.PdfSource
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.Closeable
-import kotlin.math.*
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.ln
+import kotlin.math.min
+import kotlin.math.pow
+import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 /**
  * Central engine for PDF document management, geometry calculations, and render orchestration.
@@ -66,7 +84,7 @@ class PdfViewerController(
     }
 
     private val documentManager = PdfDocumentManager(context)
-    private val pageRenderer  = PageRenderer(bitmapPool)
+    private val pageRenderer = PageRenderer(bitmapPool)
     private val renderScheduler = RenderScheduler(documentManager, pageRenderer, bitmapCache, state)
 
     /** Map of page indices to rendered low-resolution base bitmaps. */
@@ -82,8 +100,15 @@ class PdfViewerController(
     /** Updates viewer configuration and refreshes renders if necessary. */
     fun updateConfig(newConfig: ViewerConfig) {
         if (config == newConfig) return
+        val oldFitMode = config.fitMode
         config = newConfig
         renderScheduler.prefetchWindow = newConfig.prefetchDistance
+
+        if (oldFitMode != newConfig.fitMode) {
+            rebuildPageLayoutCache()
+            clampPan()
+        }
+
         requestRenderForVisiblePages()
     }
 
@@ -97,7 +122,7 @@ class PdfViewerController(
     /** Updates viewport size and recalculates page positions. */
     fun onViewportSizeChanged(width: Float, height: Float) {
         if (width == viewportWidth && height == viewportHeight) return
-        viewportWidth  = width
+        viewportWidth = width
         viewportHeight = height
         rebuildPageLayoutCache()
         clampPan()
@@ -109,28 +134,58 @@ class PdfViewerController(
     /** Cached sizes of all pages in PDF points. */
     var pageSizes: List<Size> by mutableStateOf(emptyList())
         private set
-    private var pageTops    = FloatArray(0)
+    private var pageTops = FloatArray(0)
     private var pageHeights = FloatArray(0)
+    private var pageWidths = FloatArray(0)
     private var totalDocHeight = 0f
     private var layoutVersion by mutableIntStateOf(0)
 
-    /** Pre-calculates the vertical position of every page at zoom 1.0. */
+    /** Pre-calculates the dimensions and vertical position of every page at zoom 1.0. */
     private fun rebuildPageLayoutCache() {
-        if (pageSizes.isEmpty() || viewportWidth == 0f) {
-            pageTops = FloatArray(0); pageHeights = FloatArray(0); totalDocHeight = 0f
+        if (pageSizes.isEmpty() || viewportWidth == 0f || viewportHeight == 0f) {
+            pageTops = FloatArray(0); pageHeights = FloatArray(0); pageWidths = FloatArray(0)
+            totalDocHeight = 0f
             layoutVersion++
             return
         }
         val count = pageSizes.size
         val spacing = config.pageSpacingPx
-        pageTops = FloatArray(count); pageHeights = FloatArray(count)
+        pageTops = FloatArray(count); pageHeights = FloatArray(count); pageWidths =
+            FloatArray(count)
+
+        val maxPdfWidth = pageSizes.maxOfOrNull { it.width }?.toFloat() ?: 1f
         var y = 0f
+
         for (i in 0 until count) {
             val s = pageSizes[i]
-            // Aspect-ratio based height scaling to match viewport width
-            val h = viewportWidth * s.height.toFloat() / s.width.toFloat()
-            pageTops[i] = y; pageHeights[i] = h
-            y += h + spacing
+            val pdfW = s.width.toFloat()
+            val pdfH = s.height.toFloat()
+            val aspectRatio = pdfW / pdfH
+
+            val (baseW, baseH) = when (config.fitMode) {
+                FitMode.WIDTH -> {
+                    viewportWidth to (viewportWidth / aspectRatio)
+                }
+
+                FitMode.HEIGHT -> {
+                    (viewportHeight * aspectRatio) to viewportHeight
+                }
+
+                FitMode.BOTH -> {
+                    val scale = min(viewportWidth / pdfW, viewportHeight / pdfH)
+                    (pdfW * scale) to (pdfH * scale)
+                }
+
+                FitMode.PROPORTIONAL -> {
+                    val scale = viewportWidth / maxPdfWidth
+                    (pdfW * scale) to (pdfH * scale)
+                }
+            }
+
+            pageWidths[i] = baseW
+            pageHeights[i] = baseH
+            pageTops[i] = y
+            y += baseH + spacing
         }
         totalDocHeight = (y - spacing).coerceAtLeast(0f)
         layoutVersion++
@@ -162,65 +217,93 @@ class PdfViewerController(
         RemotePdfLoader(context).load(source).collect { remote ->
             state.remoteState = remote
             if (remote is RemotePdfState.Cached) open(PdfSource.File(remote.file))
-            else if (remote is RemotePdfState.Error) { state.error = Exception(remote.message); state.isLoading = false }
+            else if (remote is RemotePdfState.Error) {
+                state.error = Exception(remote.message); state.isLoading = false
+            }
         }
     }
 
     // --- Geometry Helpers ---
 
-    fun pageHeightPx(index: Int): Float = pageHeights.getOrNull(index) ?: viewportWidth
+    fun pageHeightPx(index: Int): Float = pageHeights.getOrNull(index) ?: viewportHeight
+    fun pageWidthPx(index: Int): Float = pageWidths.getOrNull(index) ?: viewportWidth
     fun pageTopDocY(index: Int): Float = pageTops.getOrNull(index) ?: 0f
 
     /** Binary search to find which pages are currently visible in the viewport. */
     fun visiblePageIndices(): IntRange {
-        val version = layoutVersion // Observe layout version for invalidation
+        layoutVersion // Observe layout version for invalidation
         if (pageTops.isEmpty() || viewportHeight <= 0f) return IntRange.EMPTY
         val margin = config.pageSpacingPx * 0.5f
         val docTop = (-state.panY / state.zoom) - margin
         val docBottom = ((viewportHeight - state.panY) / state.zoom) + margin
-        
-        var low = 0; var high = pageTops.lastIndex; var first = -1
+
+        var low = 0
+        var high = pageTops.lastIndex
+        var first = -1
         while (low <= high) {
             val mid = (low + high) ushr 1
-            if (pageTops[mid] + pageHeights[mid] >= docTop) { first = mid; high = mid - 1 } else low = mid + 1
+            if (pageTops[mid] + pageHeights[mid] >= docTop) {
+                first = mid; high = mid - 1
+            } else low = mid + 1
         }
-        
-        low = 0; high = pageTops.lastIndex; var last = -1
+
+        low = 0; high = pageTops.lastIndex
+        var last = -1
         while (low <= high) {
             val mid = (low + high) ushr 1
-            if (pageTops[mid] <= docBottom) { last = mid; low = mid + 1 } else high = mid - 1
+            if (pageTops[mid] <= docBottom) {
+                last = mid; low = mid + 1
+            } else high = mid - 1
         }
-        
+
         return if (first == -1 || last == -1 || first > last) IntRange.EMPTY else first..last
     }
 
     fun isPointOverPage(point: Offset): Boolean {
         if (pageTops.isEmpty()) return false
-        val scaledW = viewportWidth * state.zoom
-        if (point.x !in state.panX..(state.panX + scaledW)) return false
+        val maxPageW = pageWidths.maxOrNull() ?: viewportWidth
+
         // Search which page contains this Y
         val docY = (point.y - state.panY) / state.zoom
-        var low = 0; var high = pageTops.lastIndex; var idx = -1
+        var low = 0
+        var high = pageTops.lastIndex
+        var idx = -1
         while (low <= high) {
             val mid = (low + high) ushr 1
-            if (pageTops[mid] <= docY) { idx = mid; low = mid + 1 } else high = mid - 1
+            if (pageTops[mid] <= docY) {
+                idx = mid; low = mid + 1
+            } else high = mid - 1
         }
         if (idx == -1) return false
-        return docY in pageTops[idx]..(pageTops[idx] + pageHeights[idx])
+
+        // Check if Y is within the page bounds
+        if (docY > pageTops[idx] + pageHeights[idx]) return false
+
+        // Check if X is within the page width (centered relative to state.panX)
+        val pageW = pageWidthPx(idx)
+        val pageX = state.panX + (maxPageW - pageW) * state.zoom / 2f
+        return point.x in pageX..(pageX + pageW * state.zoom)
     }
 
     // --- Gesture Logic ---
 
-    fun onGestureStart() { state.isGestureActive = true }
+    fun onGestureStart() {
+        state.isGestureActive = true
+    }
+
     fun onGestureEnd() {
         state.isGestureActive = false
         clampPan()
         // Update current page indicator based on vertical center
-        state.currentPage = ( (viewportHeight / 2f - state.panY) / state.zoom ).let { centerDoc ->
-            var low = 0; var high = pageTops.lastIndex; var idx = 0
+        state.currentPage = ((viewportHeight / 2f - state.panY) / state.zoom).let { centerDoc ->
+            var low = 0
+            var high = pageTops.lastIndex
+            var idx = 0
             while (low <= high) {
                 val mid = (low + high) ushr 1
-                if (pageTops[mid] <= centerDoc) { idx = mid; low = mid + 1 } else high = mid - 1
+                if (pageTops[mid] <= centerDoc) {
+                    idx = mid; low = mid + 1
+                } else high = mid - 1
             }
             idx
         }.coerceAtLeast(0)
@@ -234,7 +317,7 @@ class PdfViewerController(
         if (viewportWidth == 0f) return
         val oldZoom = state.zoom
         val newZoom = (oldZoom * zoomChange).coerceIn(config.minZoom, config.maxZoom)
-        
+
         if (newZoom != oldZoom) {
             val ratio = newZoom / oldZoom
             state.panX = pivot.x + (state.panX - pivot.x) * ratio
@@ -243,7 +326,7 @@ class PdfViewerController(
         }
         state.panX += panDelta.x; state.panY += panDelta.y
         clampPan()
-        
+
         gestureJob?.cancel()
         gestureJob = scope.launch {
             delay(120)
@@ -258,13 +341,13 @@ class PdfViewerController(
         val oldZoom = state.zoom
         val newZoom = targetZoom.coerceIn(config.minZoom, config.maxZoom)
         if (newZoom == oldZoom) return
-        
+
         val ratio = newZoom / oldZoom
         state.panX = pivot.x + (state.panX - pivot.x) * ratio
         state.panY = pivot.y + (state.panY - pivot.y) * ratio
         state.zoom = newZoom
         clampPan()
-        
+
         // We trigger render update for each frame of animation to keep quality as high as possible
         requestRenderForVisiblePages()
     }
@@ -296,68 +379,100 @@ class PdfViewerController(
             visiblePages = visible,
             config = PageRenderer.RenderConfig(
                 zoomLevel = currentZoom,
-                renderQuality = if (currentZoom > 1.1f) 1.0f else config.renderQuality,
-                viewportWidthPx = viewportWidth
+                renderQuality = if (currentZoom > 1.1f) 1.0f else config.renderQuality
             ),
-            pageSizes = pageSizes
+            pageSizes = pageSizes,
+            getBaseWidth = { idx -> pageWidthPx(idx) }
         )
 
         if (currentZoom > 1.1f) requestTilesForVisibleArea()
     }
 
-    /** 
-     * Calculates and requests high-res tiles for the visible area. 
+    /**
+     * Calculates and requests high-res tiles for the visible area.
      * Uses sqrt(2) stepping for zoom to optimize cache hits.
      */
     private fun requestTilesForVisibleArea() {
         val visible = visiblePageIndices(); if (visible.isEmpty()) return
         val zoom = state.zoom
-        
+
         // Use sqrt(2) based stepping (approx 1.41x) for stable tile rendering
-        val base = 1.25f; val ratio = sqrt(2.0)
+        val base = 1.25f
+        val ratio = sqrt(2.0)
         val step = floor(ln(zoom.toDouble() / base) / ln(ratio)).toInt().coerceAtLeast(0)
-        val steppedZoom = (base * ratio.pow(step.toDouble())).toFloat().let { (it * 100).roundToInt() / 100f }
+        val steppedZoom =
+            (base * ratio.pow(step.toDouble())).toFloat().let { (it * 100).roundToInt() / 100f }
 
         val tileSize = PageRenderer.TILE_SIZE
         val currentKeys = mutableSetOf<String>()
-        val requests = mutableListOf<Triple<Int, Rect, Float>>() // pageIndex, rect, distanceToCenter
+        val requests =
+            mutableListOf<Triple<Int, Rect, Float>>() // pageIndex, rect, distanceToCenter
 
-        val vpCenterX = viewportWidth / 2f; val vpCenterY = viewportHeight / 2f
+        val vpCenterX = viewportWidth / 2f
+        val vpCenterY = viewportHeight / 2f
+        val maxPageW = pageWidths.maxOrNull() ?: viewportWidth
 
         for (pageIndex in visible) {
+            val pageW = pageWidthPx(pageIndex)
             val pageTop = pageTops[pageIndex] * zoom + state.panY
             val vTop = maxOf(0f, pageTop).coerceIn(0f, viewportHeight)
-            val vBottom = minOf(viewportHeight, pageTop + pageHeights[pageIndex] * zoom).coerceIn(0f, viewportHeight)
+            val vBottom = minOf(viewportHeight, pageTop + pageHeights[pageIndex] * zoom).coerceIn(
+                0f,
+                viewportHeight
+            )
             if (vBottom <= vTop) continue
 
+            // Each page is horizontally centered relative to state.panX (the corridor left edge)
+            val pageLeft = state.panX + (maxPageW - pageW) * zoom / 2f
+
             val s = steppedZoom / zoom
-            val sY = (vTop - pageTop) * s; val eY = (vBottom - pageTop) * s
-            val sX = (maxOf(0f, -state.panX)) * s; val eX = (minOf(viewportWidth * zoom, viewportWidth - state.panX)) * s
+            val sY = (vTop - pageTop) * s
+            val eY = (vBottom - pageTop) * s
+            val sX = (maxOf(pageLeft, 0f) - pageLeft) * s
+            val eX = (minOf(pageLeft + pageW * zoom, viewportWidth) - pageLeft) * s
 
             for (ty in floor(sY / tileSize).toInt()..<ceil(eY / tileSize).toInt()) {
                 for (tx in floor(sX / tileSize).toInt()..<ceil(eX / tileSize).toInt()) {
-                    val rect = Rect(tx * tileSize, ty * tileSize, (tx + 1) * tileSize, (ty + 1) * tileSize)
-                    val key = "${pageIndex}_${rect.left}_${rect.top}_${rect.right}_${rect.bottom}_$steppedZoom"
+                    val rect =
+                        Rect(tx * tileSize, ty * tileSize, (tx + 1) * tileSize, (ty + 1) * tileSize)
+                    val key =
+                        "${pageIndex}_${rect.left}_${rect.top}_${rect.right}_${rect.bottom}_$steppedZoom"
                     currentKeys.add(key)
                     if (state.getTile(key) == null) {
-                        val d = ( (rect.centerX() / s + state.panX) - vpCenterX ).pow(2) + 
-                                ( (rect.centerY() / s + pageTop) - vpCenterY ).pow(2)
-                        requests.add(Triple(pageIndex, rect, d.toFloat()))
+                        val d = ((rect.centerX() / s + pageLeft) - vpCenterX).pow(2) +
+                                ((rect.centerY() / s + pageTop) - vpCenterY).pow(2)
+                        requests.add(Triple(pageIndex, rect, d))
                     }
                 }
             }
         }
-        
+
         renderScheduler.pruneTileJobs(currentKeys)
         requests.sortBy { it.third } // Global prioritization: center tiles first
-        requests.forEach { renderScheduler.requestTile(it.first, it.second, steppedZoom, viewportWidth) }
+        requests.forEach {
+            renderScheduler.requestTile(
+                it.first,
+                it.second,
+                steppedZoom,
+                pageWidthPx(it.first)
+            )
+        }
     }
 
     private fun clampPan() {
         if (viewportWidth == 0f || viewportHeight == 0f) return
-        val sW = viewportWidth * state.zoom; val sH = totalDocHeight * state.zoom
-        state.panX = if (sW <= viewportWidth) (viewportWidth - sW) / 2f else state.panX.coerceIn(-(sW - viewportWidth), 0f)
-        state.panY = if (sH <= viewportHeight) (viewportHeight - sH) / 2f else state.panY.coerceIn(viewportHeight - sH, 0f)
+        val maxPageW = pageWidths.maxOrNull() ?: viewportWidth
+        val sW = maxPageW * state.zoom
+        val sH = totalDocHeight * state.zoom
+
+        state.panX = if (sW <= viewportWidth) (viewportWidth - sW) / 2f else state.panX.coerceIn(
+            -(sW - viewportWidth),
+            0f
+        )
+        state.panY = if (sH <= viewportHeight) (viewportHeight - sH) / 2f else state.panY.coerceIn(
+            viewportHeight - sH,
+            0f
+        )
     }
 
     override fun close() {

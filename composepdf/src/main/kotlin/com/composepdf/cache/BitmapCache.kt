@@ -17,7 +17,7 @@ data class PageCacheKey(
  * In-memory LRU cache for rendered PDF page bitmaps.
  *
  * This cache notifies [onEvicted] when a bitmap is removed from its tracking.
- * It DOES NOT return bitmaps to the pool directly to avoid "trash" drawing, 
+ * It DOES NOT return bitmaps to the pool directly to avoid "trash" drawing,
  * as they might still be currently displayed on screen.
  */
 class BitmapCache(
