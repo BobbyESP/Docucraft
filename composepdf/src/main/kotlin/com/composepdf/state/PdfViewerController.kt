@@ -4,11 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
 import android.util.Size
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.cache.BitmapCache
 import com.composepdf.cache.BitmapPool
@@ -18,49 +14,37 @@ import com.composepdf.renderer.PageRenderer
 import com.composepdf.renderer.PdfDocumentManager
 import com.composepdf.renderer.RenderScheduler
 import com.composepdf.source.PdfSource
-import com.composepdf.state.PdfViewerController.Companion.RENDER_DEBOUNCE_MS
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import java.io.Closeable
 
 private const val TAG = "PdfViewerController"
 
 /**
- * Brain of the PDF viewer — bridges [PdfViewerState] with the rendering pipeline.
+ * Central logic engine for the PDF viewer.
  *
  * ## Responsibilities
  *
- * - **Document lifecycle**: opens/closes [PdfDocumentManager], loads page sizes.
- * - **Geometry**: converts between document space (zoom = 1) and screen pixels.
- * - **Gesture handling**: applies pinch-zoom, pan, and double-tap maths to [PdfViewerState].
- * - **Pan clamping**: keeps the document within scroll bounds after every transformation.
- * - **Render scheduling**: decides which pages need rendering and at what quality,
- *   then delegates to [RenderScheduler].
- * - **Re-render debounce**: after a zoom gesture ends, waits [RENDER_DEBOUNCE_MS] before
- *   requesting a fresh high-quality render so we don't saturate the renderer mid-pinch.
+ * - **Document lifecycle**: opens/closes the PDF via [PdfDocumentManager].
+ * - **Layout geometry**: pre-computes page tops and heights at zoom = 1 so that
+ *   all coordinate conversions are O(1) look-ups instead of O(n) sums.
+ * - **Viewport management**: tracks the physical screen size and recalculates
+ *   geometry whenever it changes (e.g. rotation, multi-window resize).
+ * - **Gesture handling**: applies zoom and pan deltas, clamps them to valid ranges,
+ *   and delegates to [RenderScheduler] for re-renders.
+ * - **Render orchestration**: decides which pages are visible and calls
+ *   [RenderScheduler.requestRender] with the correct [PageRenderer.RenderConfig].
  *
- * ## Coordinate system
+ * ## Threading model
  *
- * ```
- * screenX = panX                       // panX = left edge of every page
- * screenY = pageTopDocY(i) × zoom + panY
- * ```
+ * The controller's [scope] runs on [Dispatchers.Main.immediate]. All state mutations
+ * (zoom, pan, page sizes…) and scheduler calls happen on the main thread. Heavy work
+ * (PDF I/O, bitmap rendering) is dispatched to [Dispatchers.IO] inside [PdfDocumentManager]
+ * and [RenderScheduler].
  *
- * At zoom = 1, [clampPan] sets `panX = (vpW − scaledW) / 2` to horizontally centre
- * the page. When zoomed in, `panX ∈ [−(scaledW − vpW), 0]` gives the full scroll range.
- *
- * ## Lifecycle
- *
- * The controller is created inside [com.composepdf.PdfViewer] via `remember` and released via
- * [androidx.compose.runtime.DisposableEffect] → [close]. Do not share a controller across multiple [PdfViewer]
- * instances; each viewer owns its own controller.
+ * @param context  Android [Context] needed for file/asset resolution.
+ * @param state    Hoisted UI state — every write triggers Compose recomposition.
+ * @param config   Immutable viewer configuration (zoom limits, quality, spacing…).
  */
 @Stable
 class PdfViewerController(
@@ -69,254 +53,325 @@ class PdfViewerController(
     private val config: ViewerConfig
 ) : Closeable {
 
+    /**
+     * All coroutines run on Main.immediate so that:
+     * 1. State writes are always on the main thread → no Compose thread-safety issues.
+     * 2. [RenderScheduler]'s job-map is accessed from a single thread → no mutex needed.
+     */
     private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
-    private val bitmapPool = BitmapPool()
-    private val bitmapCache = BitmapCache(bitmapPool = bitmapPool)
+    private val bitmapPool    = BitmapPool()
+    private val bitmapCache   = BitmapCache(bitmapPool = bitmapPool)
     private val documentManager = PdfDocumentManager(context)
-    private val pageRenderer = PageRenderer(bitmapPool)
+    private val pageRenderer  = PageRenderer(bitmapPool)
     private val renderScheduler = RenderScheduler(documentManager, pageRenderer, bitmapCache)
 
+    /** Rendered bitmaps keyed by page index. Observed by [com.composepdf.PdfViewer]. */
     val renderedPages: StateFlow<Map<Int, Bitmap>> = renderScheduler.renderedPages
-
-    /**
-     * Signals that zoom changed and a quality re-render should be triggered.
-     * CONFLATED so rapid pinch frames collapse to a single pending signal.
-     */
-    private val reRenderSignal = Channel<Unit>(capacity = Channel.CONFLATED)
 
     init {
         renderScheduler.prefetchWindow = config.prefetchDistance
-        Log.d(
-            TAG,
-            "init prefetchWindow=${config.prefetchDistance} renderQuality=${config.renderQuality} min=${config.minZoom} max=${config.maxZoom}"
-        )
-
-        // After a zoom gesture ends, wait briefly then request a fresh render at the new zoom.
-        // CONFLATED channel: rapid onGestureEnd calls collapse to one pending signal.
-        scope.launch(Dispatchers.Main.immediate) {
-            reRenderSignal.consumeEach {
-                delay(RENDER_DEBOUNCE_MS)
-                Log.d(TAG, "debounce elapsed — requesting re-render at zoom=${state.zoom}")
-                requestRenderForVisiblePages()
-            }
-        }
     }
 
-    // ── Viewport ──────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    // Viewport
+    // ─────────────────────────────────────────────────────────────
 
-    /** Current viewport width in physical screen pixels. Updated by [onViewportSizeChanged]. */
-    var viewportWidth: Float by mutableFloatStateOf(0f)
+    /** Physical viewport width in pixels. Observed by [com.composepdf.ui.PdfLayout]. */
+    var viewportWidth by mutableFloatStateOf(0f)
         private set
 
-    /** Current viewport height in physical screen pixels. Updated by [onViewportSizeChanged]. */
-    var viewportHeight: Float by mutableFloatStateOf(0f)
+    /** Physical viewport height in pixels. */
+    var viewportHeight by mutableFloatStateOf(0f)
         private set
 
     /**
-     * Original page sizes reported by [android.graphics.pdf.PdfRenderer] in PDF points
-     * (1 pt = 1/72 inch). These never change after the document is opened; they define
-     * the aspect ratio of each page. Actual on-screen pixel dimensions are derived by
-     * scaling these against [viewportWidth] and [state.zoom].
+     * Called by [com.composepdf.ui.PdfLayout] via [androidx.compose.ui.layout.onSizeChanged]
+     * whenever the viewport dimensions change. Rebuilds layout geometry and re-renders.
+     */
+    fun onViewportSizeChanged(width: Float, height: Float) {
+        if (width == viewportWidth && height == viewportHeight) return
+        Log.d(TAG, "onViewportSizeChanged: ${width}×${height}  pageSizes=${pageSizes.size}")
+        viewportWidth  = width
+        viewportHeight = height
+        rebuildPageLayoutCache()
+        Log.d(TAG, "onViewportSizeChanged: pageTops.size=${pageTops.size} totalDocHeight=$totalDocHeight")
+        clampPan()
+        requestRenderForVisiblePages()
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Document
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Cached page dimensions in PDF points (1 pt = 1/72 inch).
+     * Populated once after the document opens; never changes for the same document.
      */
     var pageSizes: List<Size> by mutableStateOf(emptyList())
         private set
 
     /**
-     * Called by [PdfLayout] via [Modifier.onSizeChanged] whenever the composable is
-     * first measured or the device is rotated. Re-clamps pan (so the document stays
-     * in-bounds after the viewport resizes) and triggers a fresh render.
+     * Pre-computed Y coordinate (in document space, zoom = 1) of the top of each page.
+     * Index i → top of page i in pixels at zoom = 1.
      */
-    fun onViewportSizeChanged(width: Float, height: Float) {
-        if (width == viewportWidth && height == viewportHeight) return
-        viewportWidth = width
-        viewportHeight = height
-        clampPan()
-        requestRenderForVisiblePages()
-    }
-
-    // ── Document loading ──────────────────────────────────────────────────────
+    private var pageTops    = FloatArray(0)
 
     /**
-     * Begins loading [source] asynchronously.
+     * Pre-computed height (in document space, zoom = 1) of each page in pixels.
+     * Height is derived from the page's aspect ratio scaled to [viewportWidth].
+     */
+    private var pageHeights = FloatArray(0)
+
+    /**
+     * Total height of all pages + spacing at zoom = 1, in pixels.
+     * Used by [clampPan] to compute the vertical scroll limit.
+     */
+    private var totalDocHeight = 0f
+
+    /**
+     * Rebuilds [pageTops], [pageHeights], and [totalDocHeight] from the current
+     * [pageSizes] and [viewportWidth].
      *
-     * Resets [PdfViewerState] to the loading state before opening so that the
-     * UI shows a progress indicator immediately even if a previous document was shown.
-     * For remote sources, delegates to [RemotePdfLoader] which emits download progress
-     * via [PdfViewerState.remoteState].
+     * Must be called whenever [pageSizes] or [viewportWidth] changes.
+     * O(n) in page count; typically a few microseconds.
+     */
+    private fun rebuildPageLayoutCache() {
+        if (pageSizes.isEmpty() || viewportWidth == 0f) {
+            pageTops    = FloatArray(0)
+            pageHeights = FloatArray(0)
+            totalDocHeight = 0f
+            return
+        }
+
+        val count   = pageSizes.size
+        val spacing = config.pageSpacingPx
+
+        pageTops    = FloatArray(count)
+        pageHeights = FloatArray(count)
+
+        var y = 0f
+        for (i in 0 until count) {
+            val s = pageSizes[i]
+            // Scale the PDF page (in points) to fill [viewportWidth] horizontally.
+            val h = viewportWidth * s.height.toFloat() / s.width.toFloat()
+            pageTops[i]    = y
+            pageHeights[i] = h
+            y += h + spacing
+        }
+
+        totalDocHeight = (y - spacing).coerceAtLeast(0f)
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Document loading
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Opens [source] and initialises the viewer. Handles remote sources by
+     * downloading/caching the file first via [RemotePdfLoader].
      */
     fun loadDocument(source: PdfSource) {
         scope.launch {
             state.reset()
             try {
                 when (source) {
-                    is PdfSource.Remote -> loadRemoteDocument(source)
-                    else -> openDocument(source)
+                    is PdfSource.Remote -> loadRemote(source)
+                    else                -> open(source)
                 }
             } catch (e: Exception) {
-                state.error = e
+                Log.e(TAG, "loadDocument failed: ${e.message}", e)
+                state.error     = e
                 state.isLoading = false
             }
         }
     }
 
-    private suspend fun openDocument(source: PdfSource) {
+    /**
+     * Opens a local (or asset/uri/stream) PDF source, populates [pageSizes], and
+     * triggers the first render.
+     *
+     * Note: [documentManager.open] and [documentManager.getAllPageSizes] are already
+     * suspend functions that dispatch to [Dispatchers.IO] internally via their own
+     * mutex. Wrapping them in an extra [withContext] is redundant and can cause
+     * nested-dispatcher issues — we call them directly here.
+     */
+    private suspend fun open(source: PdfSource) {
+        Log.d(TAG, "open: opening source=$source")
         documentManager.open(source)
-        pageSizes = documentManager.getAllPageSizes()
+        val sizes = documentManager.getAllPageSizes()
+        Log.d(TAG, "open: pageCount=${sizes.size} viewportWidth=$viewportWidth viewportHeight=$viewportHeight")
+        pageSizes       = sizes
         state.pageCount = documentManager.pageCount
         state.isLoading = false
+        rebuildPageLayoutCache()
+        Log.d(TAG, "open: pageTops.size=${pageTops.size} totalDocHeight=$totalDocHeight")
         clampPan()
         requestRenderForVisiblePages()
+
+        // The viewport may not have been measured yet when open() completes
+        // (Compose measures layout after the first composition frame).
+        // If viewportWidth is still 0, we cannot compute visible pages.
+        // onViewportSizeChanged() will fire shortly and trigger a render once the
+        // viewport is known — but we also schedule a one-shot retry here to be safe.
+        if (viewportWidth == 0f) {
+            Log.d(TAG, "open: viewportWidth=0, scheduling retry after first frame")
+            scope.launch {
+                // Wait two frames for Compose to measure and call onViewportSizeChanged.
+                kotlinx.coroutines.delay(32)
+                Log.d(TAG, "open retry: viewportWidth=$viewportWidth pageTops.size=${pageTops.size}")
+                if (pageTops.isNotEmpty()) requestRenderForVisiblePages()
+            }
+        }
     }
 
-    private suspend fun loadRemoteDocument(source: PdfSource.Remote) {
-        RemotePdfLoader(context).load(source).collect { remoteState ->
-            state.remoteState = remoteState
-            when (remoteState) {
-                is RemotePdfState.Cached -> openDocument(PdfSource.File(remoteState.file))
-                is RemotePdfState.Error -> {
-                    state.error = com.composepdf.remote.RemotePdfException(
-                        remoteState.type, remoteState.message, remoteState.cause
-                    )
+    /**
+     * Downloads / retrieves a remote PDF, then delegates to [open] once cached locally.
+     */
+    private suspend fun loadRemote(source: PdfSource.Remote) {
+        RemotePdfLoader(context).load(source).collect { remote ->
+            state.remoteState = remote
+            when (remote) {
+                is RemotePdfState.Cached -> open(PdfSource.File(remote.file))
+                is RemotePdfState.Error  -> {
+                    state.error     = Exception(remote.message)
                     state.isLoading = false
                 }
-
                 else -> Unit
             }
         }
     }
 
-    // ── Geometry helpers ──────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    // Geometry helpers (O(1))
+    // ─────────────────────────────────────────────────────────────
+
+    /** Returns the height (in document space, zoom = 1) of page at [index]. */
+    fun pageHeightPx(index: Int): Float =
+        pageHeights.getOrNull(index) ?: viewportWidth
+
+    /** Returns the Y offset (in document space, zoom = 1) of the top of page [index]. */
+    fun pageTopDocY(index: Int): Float =
+        pageTops.getOrNull(index) ?: 0f
+
+    // ─────────────────────────────────────────────────────────────
+    // Visibility (O(log n) binary search)
+    // ─────────────────────────────────────────────────────────────
 
     /**
-     * Returns the height of page [index] in **document space** (unzoomed screen pixels).
+     * Returns the range of page indices currently visible in the viewport.
      *
-     * The width of every page in document space is always [viewportWidth] (fit-width layout).
-     * Height is computed by preserving the page's aspect ratio from the PDF point dimensions.
-     */
-    fun pageHeightPx(index: Int): Float {
-        val s = pageSizes.getOrNull(index) ?: return viewportWidth
-        return viewportWidth * s.height.toFloat() / s.width.toFloat()
-    }
-
-    /**
-     * Returns the Y coordinate of the **top edge** of page [index] in document space
-     * (unzoomed, before pan). This is the sum of heights and spacings of all preceding pages.
-     *
-     * To convert to a screen Y: `screenY = pageTopDocY(index) × zoom + panY`.
-     */
-    fun pageTopDocY(index: Int): Float {
-        var y = 0f
-        repeat(index) { i -> y += pageHeightPx(i) + config.pageSpacingPx }
-        return y
-    }
-
-    /**
-     * Total height of all pages plus inter-page spacing in document space.
-     * The trailing spacing after the last page is excluded so the document
-     * does not have extra blank space at the bottom.
-     */
-    private val totalDocumentHeight: Float
-        get() {
-            if (pageSizes.isEmpty()) return 0f
-            var h = 0f
-            pageSizes.indices.forEach { i -> h += pageHeightPx(i) + config.pageSpacingPx }
-            return (h - config.pageSpacingPx).coerceAtLeast(0f)
-        }
-
-    // ── Visibility ────────────────────────────────────────────────────────────
-
-    /**
-     * Returns the range of page indices that are at least partially visible in the viewport.
-     *
-     * Converts the current viewport edges to document space, then iterates through all pages
-     * checking intersection. A small [margin] (half the page spacing) is added on each side
-     * so pages start rendering slightly before they scroll into view, preventing pop-in.
-     *
-     * Called on every recomposition frame from [PdfLayout] via [derivedStateOf], so it must
-     * be fast (O(n) loop with no allocations beyond the IntRange return value).
+     * Converts screen-space viewport bounds to document space, adds a small margin
+     * equal to half the page spacing to avoid a page disappearing one pixel early,
+     * then binary-searches [pageTops] for the first and last intersecting pages.
      */
     fun visiblePageIndices(): IntRange {
-        if (pageSizes.isEmpty()) return 0..0
-        if (viewportHeight == 0f) return pageSizes.indices
+        if (pageTops.isEmpty() || viewportHeight <= 0f) return IntRange.EMPTY
 
-        val spacingPx = config.pageSpacingPx
-        // Half-spacing margin: pages begin rendering just before they enter the viewport.
-        val margin = spacingPx * 0.5f
-        // Convert viewport top/bottom edges from screen to document space.
-        val docTop = (-state.panY / state.zoom) - margin
+        val margin    = config.pageSpacingPx * 0.5f
+        val docTop    = (-state.panY / state.zoom) - margin
         val docBottom = ((viewportHeight - state.panY) / state.zoom) + margin
 
-        var first = pageSizes.lastIndex
-        var last = 0
-        var y = 0f
+        val first = findFirst(docTop)
+        val last  = findLast(docBottom)
 
-        for (i in pageSizes.indices) {
-            val h = pageHeightPx(i)
-            val pageTop = y
-            val pageBottom = y + h
-            if (pageBottom >= docTop && pageTop <= docBottom) {
-                if (i < first) first = i
-                if (i > last) last = i
-            }
-            y += h + spacingPx
-        }
-
-        if (first > last) return pageSizes.indices
-        return first..last
+        return if (first == -1 || last == -1 || first > last) IntRange.EMPTY
+        else first..last
     }
 
     /**
-     * Returns the index of the page whose centre is closest to the vertical centre of
-     * the viewport. Used to update [PdfViewerState.currentPage] after a scroll ends.
+     * Binary search: returns the lowest page index whose **bottom** edge is >= [docTop].
+     * Returns -1 if no such page exists (all pages are above the viewport).
      */
-    fun currentPageFromPan(): Int {
-        if (pageSizes.isEmpty()) return 0
-        val vpCenterDoc = (viewportHeight / 2f - state.panY) / state.zoom
-        var y = 0f
-        for (i in pageSizes.indices) {
-            val h = pageHeightPx(i)
-            if (vpCenterDoc <= y + h) return i
-            y += h + config.pageSpacingPx
+    private fun findFirst(docTop: Float): Int {
+        var low    = 0
+        var high   = pageTops.lastIndex
+        var result = -1
+        while (low <= high) {
+            val mid    = (low + high) ushr 1
+            val bottom = pageTops[mid] + pageHeights[mid]
+            if (bottom >= docTop) { result = mid; high = mid - 1 } else low = mid + 1
         }
-        return pageSizes.lastIndex
+        return result
     }
 
-    // ── Gesture callbacks ─────────────────────────────────────────────────────
+    /**
+     * Binary search: returns the highest page index whose **top** edge is <= [docBottom].
+     * Returns -1 if no such page exists (all pages are below the viewport).
+     */
+    private fun findLast(docBottom: Float): Int {
+        var low    = 0
+        var high   = pageTops.lastIndex
+        var result = -1
+        while (low <= high) {
+            val mid = (low + high) ushr 1
+            if (pageTops[mid] <= docBottom) { result = mid; low = mid + 1 } else high = mid - 1
+        }
+        return result
+    }
 
+    /**
+     * Returns the page index most visible at the vertical centre of the viewport.
+     * Used to update [PdfViewerState.currentPage] after a scroll/fling ends.
+     */
+    fun currentPageFromPan(): Int {
+        if (pageTops.isEmpty()) return 0
+        val centerDoc = (viewportHeight / 2f - state.panY) / state.zoom
+        return findLast(centerDoc).coerceAtLeast(0)
+    }
+
+    /**
+     * Returns true if [point] (in screen pixels) is over a rendered page area.
+     * Used by the gesture handler to suppress double-tap zoom on the grey background.
+     */
+    fun isPointOverPage(point: Offset): Boolean {
+        if (pageTops.isEmpty()) return false
+
+        val scaledW = viewportWidth * state.zoom
+        val left    = state.panX
+        val right   = left + scaledW
+        if (point.x !in left..right) return false
+
+        val docY  = (point.y - state.panY) / state.zoom
+        val index = findLast(docY)
+        if (index == -1) return false
+
+        return docY in pageTops[index]..(pageTops[index] + pageHeights[index])
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Gestures
+    // ─────────────────────────────────────────────────────────────
+
+    /** Called at the start of every new gesture to mark the state as active. */
     fun onGestureStart() {
-        Log.d(TAG, "onGestureStart — zoom=${state.zoom}")
         state.isGestureActive = true
     }
 
     /**
-     * Called when all fingers are lifted (end of pan, pinch, or fling animation).
-     * Re-clamps pan to valid bounds, updates [PdfViewerState.currentPage], and sends
-     * a signal to the debounce channel so a quality re-render is scheduled after
-     * [RENDER_DEBOUNCE_MS] of inactivity.
+     * Called when all fingers are lifted or a fling animation ends.
+     *
+     * Clamps pan to valid bounds, updates [PdfViewerState.currentPage], and
+     * schedules a re-render at the final zoom level.
      */
     fun onGestureEnd() {
         state.isGestureActive = false
         clampPan()
         state.currentPage = currentPageFromPan()
-        Log.d(TAG, "onGestureEnd — zoom=${state.zoom}  sending reRenderSignal")
-        reRenderSignal.trySend(Unit)
+        // Invalidate cache and re-render at the new zoom.
+        renderScheduler.invalidateAll()
+        requestRenderForVisiblePages()
     }
 
     /**
-     * Applies one incremental frame of a pinch-zoom + pan gesture.
+     * Applies an incremental zoom + pan delta from the gesture detector.
      *
-     * The pivot point (centroid of the two fingers) must stay fixed in document space,
-     * so when zoom changes, pan is adjusted by the affine formula:
-     * ```
-     * newPan = pivot × (1 − ratio) + oldPan × ratio
-     * ```
-     * This is equivalent to:
-     * ```
-     * docPoint  = (pivot − oldPan) / oldZoom        // point under pivot, doc space
-     * newPan    = pivot − docPoint × newZoom         // keep it fixed at pivot
-     * ```
-     * After zoom, [panDelta] (finger translation) is applied and [clampPan] enforces bounds.
+     * [zoomChange] is a multiplicative factor (e.g. 1.05 = 5 % zoom-in).
+     * [panDelta] is an additive screen-pixel offset.
+     * [pivot] is the focal point in screen pixels (centroid of the pinch, or tap position).
+     *
+     * The zoom is applied around [pivot] so that the content under the user's fingers
+     * stays fixed on screen: `newPan = pivot + (oldPan - pivot) * (newZoom / oldZoom)`.
      */
     fun onGestureUpdate(zoomChange: Float, panDelta: Offset, pivot: Offset) {
         if (viewportWidth == 0f) return
@@ -325,10 +380,10 @@ class PdfViewerController(
         val newZoom = (oldZoom * zoomChange).coerceIn(config.minZoom, config.maxZoom)
 
         if (newZoom != oldZoom) {
-            val ratio = newZoom / oldZoom
-            state.panX = pivot.x * (1f - ratio) + state.panX * ratio
-            state.panY = pivot.y * (1f - ratio) + state.panY * ratio
-            state.zoom = newZoom
+            val ratio    = newZoom / oldZoom
+            state.panX   = pivot.x + (state.panX - pivot.x) * ratio
+            state.panY   = pivot.y + (state.panY - pivot.y) * ratio
+            state.zoom   = newZoom
         }
 
         state.panX += panDelta.x
@@ -337,151 +392,127 @@ class PdfViewerController(
     }
 
     /**
-     * Applies one frame of the double-tap zoom animation.
+     * Called on every frame of the double-tap zoom spring animation.
      *
-     * Unlike [onGestureUpdate] which receives incremental zoom *changes*, this receives
-     * the **absolute** target zoom for the current animation frame. Using absolute values
-     * avoids floating-point drift that accumulates when chaining many small multiplications.
+     * Uses absolute zoom values (not incremental) to avoid floating-point drift that
+     * accumulates across hundreds of animation frames.
      */
     fun onAnimatedZoomFrame(targetZoom: Float, pivot: Offset) {
-        if (viewportWidth == 0f) return
         val oldZoom = state.zoom
         val newZoom = targetZoom.coerceIn(config.minZoom, config.maxZoom)
         if (newZoom == oldZoom) return
 
-        val ratio = newZoom / oldZoom
-        state.panX = pivot.x * (1f - ratio) + state.panX * ratio
-        state.panY = pivot.y * (1f - ratio) + state.panY * ratio
+        val ratio  = newZoom / oldZoom
+        state.panX = pivot.x + (state.panX - pivot.x) * ratio
+        state.panY = pivot.y + (state.panY - pivot.y) * ratio
         state.zoom = newZoom
         clampPan()
     }
 
     /**
-     * Returns `true` if [screenPoint] falls within the bounds of any page.
-     *
-     * All pages share the same X bounds (same width). Only the Y range differs
-     * per page. Used by the gesture handler to reject double-taps on the grey
-     * background between or around pages.
-     */
-    fun isPointOverPage(screenPoint: Offset): Boolean {
-        if (pageSizes.isEmpty()) return false
-        val scaledW = viewportWidth * state.zoom
-        val left = state.panX
-        val right = left + scaledW
-        if (screenPoint.x < left || screenPoint.x > right) return false
-
-        var docY = 0f
-        for (i in pageSizes.indices) {
-            val h = pageHeightPx(i)
-            val top = docY * state.zoom + state.panY
-            val bottom = top + h * state.zoom
-            if (screenPoint.y in top..bottom) return true
-            docY += h + config.pageSpacingPx
-        }
-        return false
-    }
-
-    /**
-     * Programmatically scrolls to page [index], positioning its top edge at the
-     * top of the viewport. Clamps [index] to valid bounds and re-clamps pan
-     * so the document stays within scroll limits.
+     * Scrolls the viewport so that page [index] is at the top of the screen.
      */
     fun goToPage(index: Int) {
-        if (pageSizes.isEmpty()) return
-        val i = index.coerceIn(0, pageSizes.lastIndex)
-        state.panY = -(pageTopDocY(i) * state.zoom)
+        if (pageTops.isEmpty()) return
+        val i      = index.coerceIn(0, pageTops.lastIndex)
+        state.panY = -(pageTops[i] * state.zoom)
         state.currentPage = i
         clampPan()
         requestRenderForVisiblePages()
     }
 
-    // ── Rendering ─────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    // Rendering
+    // ─────────────────────────────────────────────────────────────
 
     /**
-     * Requests renders for all currently visible pages at the current zoom.
+     * Asks [RenderScheduler] to render every page currently in the viewport
+     * (plus [ViewerConfig.prefetchDistance] pages on each side).
      *
-     * The [RenderScheduler] deduplicates:
-     * - Same zoom + in-flight job → skip (already coming).
-     * - Same zoom + cache hit    → publish immediately, skip job.
-     * - Different zoom           → cancel stale job, launch new one.
-     *
-     * So this method is safe to call frequently (scroll, zoom change, layout change).
+     * This is a non-blocking call — the scheduler launches coroutines internally.
+     * Safe to call frequently; the scheduler deduplicates in-flight requests.
      */
     fun requestRenderForVisiblePages() {
-        if (!documentManager.isOpen || pageSizes.isEmpty() || viewportWidth == 0f) return
-        val visible = visiblePageIndices()
-        val zoom = state.zoom
-        val vpWidth = viewportWidth
-        Log.d(TAG, "requestRender zoom=$zoom vpW=$vpWidth visible=$visible")
-        scope.launch(Dispatchers.IO) {
-            renderScheduler.requestRender(
-                visiblePages = visible,
-                config = PageRenderer.RenderConfig(
-                    zoomLevel = zoom,
-                    renderQuality = config.renderQuality,
-                    viewportWidthPx = vpWidth,
-                    nightMode = config.isNightModeEnabled
-                )
+        if (!documentManager.isOpen || pageTops.isEmpty() || pageSizes.isEmpty()) {
+            Log.w(
+                TAG,
+                "requestRenderForVisiblePages: skipping — " +
+                        "isOpen=${documentManager.isOpen} " +
+                        "pageTops=${pageTops.size} pageSizes=${pageSizes.size}"
             )
+            return
         }
+
+        val visible = visiblePageIndices()
+        if (visible.isEmpty()) {
+            Log.w(TAG, "requestRenderForVisiblePages: visiblePageIndices is EMPTY — " +
+                    "panY=${state.panY} zoom=${state.zoom} vpH=$viewportHeight")
+            return
+        }
+
+        Log.d(TAG, "requestRenderForVisiblePages: visible=$visible zoom=${state.zoom}")
+
+        renderScheduler.requestRender(
+            visiblePages = visible,
+            config = PageRenderer.RenderConfig(
+                zoomLevel        = state.zoom,
+                renderQuality    = config.renderQuality,
+                viewportWidthPx  = viewportWidth,
+                nightMode        = config.isNightModeEnabled
+            ),
+            pageSizes = pageSizes
+        )
     }
 
-    // ── Pan clamping ──────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    // Pan clamping
+    // ─────────────────────────────────────────────────────────────
 
     /**
-     * Constrains [PdfViewerState.panX] and [PdfViewerState.panY] so the document
-     * always stays within reachable scroll bounds.
+     * Constrains [PdfViewerState.panX] and [PdfViewerState.panY] to the valid scroll range.
      *
-     * ### X axis
-     * `panX` is the screen X of the **left edge** of every page (all pages share the same width).
-     * ```
-     * zoom = 1  →  scaledW == vpW  →  panX = 0  (page exactly fills viewport)
-     * zoom > 1  →  panX ∈ [−(scaledW − vpW), 0]
-     *               panX = 0           : left edge of page at viewport left
-     *               panX = −(scaledW−vpW) : right edge of page at viewport right
-     * ```
-     * When the page is narrower than the viewport (possible with mixed-size PDFs at zoom < 1),
-     * the page is centred: `panX = (vpW − scaledW) / 2`.
+     * ## Horizontal
+     * - Zoom ≤ 1 (page fits within viewport): centre the page horizontally, panX = (vpW - scaledW) / 2.
+     * - Zoom > 1 (page wider than viewport):  clamp panX to [-(scaledW - vpW), 0].
      *
-     * ### Y axis
-     * `panY = 0` means the top of the document is at the top of the viewport.
-     * Valid range: `[vpH − scaledDocH, 0]` (scroll until the last page bottom reaches vpH).
-     * Short documents (shorter than the viewport) are centred vertically.
+     * ## Vertical
+     * - Document shorter than viewport: centre vertically, panY = (vpH - scaledH) / 2.
+     * - Document taller than viewport:  clamp panY to [vpH - scaledH, 0].
      */
     private fun clampPan() {
         if (viewportWidth == 0f || viewportHeight == 0f) return
 
-        val scaledW = viewportWidth * state.zoom
+        val scaledW = viewportWidth   * state.zoom
+        val scaledH = totalDocHeight  * state.zoom
+
         state.panX = if (scaledW <= viewportWidth) {
-            // Content narrower than viewport — centre horizontally.
             (viewportWidth - scaledW) / 2f
         } else {
             state.panX.coerceIn(-(scaledW - viewportWidth), 0f)
         }
 
-        val docH = totalDocumentHeight
-        if (docH == 0f) return
-        val scaledH = docH * state.zoom
         state.panY = if (scaledH <= viewportHeight) {
-            // Content shorter than viewport — centre vertically.
             (viewportHeight - scaledH) / 2f
         } else {
             state.panY.coerceIn(viewportHeight - scaledH, 0f)
         }
     }
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────
+    // Lifecycle
+    // ─────────────────────────────────────────────────────────────
 
+    /**
+     * Releases all resources: cancels the coroutine scope, closes the scheduler,
+     * document manager, and evicts the bitmap cache.
+     *
+     * Called by [com.composepdf.PdfViewer] via [androidx.compose.runtime.DisposableEffect].
+     */
     override fun close() {
         scope.cancel()
-        reRenderSignal.close()
         renderScheduler.close()
         documentManager.close()
         bitmapCache.clear()
     }
-
-    companion object {
-        /** Milliseconds to wait after the last zoom change before re-rendering. */
-        private const val RENDER_DEBOUNCE_MS = 150L
-    }
 }
+

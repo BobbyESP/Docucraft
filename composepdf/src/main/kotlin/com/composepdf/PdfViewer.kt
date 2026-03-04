@@ -1,5 +1,6 @@
 package com.composepdf
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -97,6 +98,15 @@ fun PdfViewer(
     LaunchedEffect(state.error) { state.error?.let { latestOnError?.invoke(it) } }
     LaunchedEffect(state.pageCount) {
         if (state.pageCount > 0) latestOnDocumentLoad?.invoke(state.pageCount)
+    }
+
+    // Diagnostic: log state transitions to help trace initialisation issues.
+    LaunchedEffect(state.isLoading, state.isLoaded, state.error) {
+        Log.d(
+            "PdfViewer",
+            "state: isLoading=${state.isLoading} isLoaded=${state.isLoaded} " +
+                    "pageCount=${state.pageCount} error=${state.error}"
+        )
     }
 
     // ── UI ────────────────────────────────────────────────────────────────────

@@ -2,6 +2,7 @@ package com.composepdf.renderer
 
 import android.graphics.Bitmap
 import android.util.Log
+import android.util.Size
 import com.composepdf.cache.BitmapCache
 import com.composepdf.cache.PageCacheKey
 import kotlinx.coroutines.CancellationException
@@ -14,33 +15,33 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.Closeable
 import kotlin.math.roundToInt
 
 private const val TAG = "PdfRenderScheduler"
 
 /**
- * Manages background rendering of PDF pages.
+ * Orchestrates background rendering of PDF pages.
  *
- * ## Two-tier bitmap model
+ * ## Design principles
  *
- * [renderedPages] always holds the LATEST completed bitmap for each page index,
- * regardless of zoom. This means:
+ * - **No shared mutex between jobs**: active-job tracking uses only main-thread access
+ *   via [CoroutineScope] on [Dispatchers.Main.immediate]. This eliminates the deadlock that
+ *   occurred when the old [jobsMutex] was acquired both from the scheduler entry-point AND
+ *   from within individual render jobs (nested lock on the same dispatcher → coroutine suspend).
  *
- * - When zoom changes, [invalidateAll] cancels jobs + clears cache but keeps
- *   the old bitmaps in [renderedPages] as low-quality placeholders.
- * - New renders at the new zoom complete and OVERWRITE those entries.
- * - The UI sees a continuous stream of updates: old bitmap → new bitmap.
- *   No flash, no blank frames.
+ * - **Page sizes are passed in** from the controller (which already has them cached in
+ *   [com.composepdf.state.PdfViewerController.pageSizes]), so this class never calls back
+ *   into [PdfDocumentManager] for metadata — only for actual pixel rendering via [withPage].
  *
- * ## In-flight deduplication
+ * - **Stale-bitmap placeholder strategy**: [_renderedPages] is never cleared on zoom change.
+ *   Old bitmaps stay visible while new ones render at the updated zoom, then are atomically
+ *   swapped. This eliminates blank-page flashes during pinch-zoom.
  *
- * [inFlightZoom] tracks what zoom each active job is rendering at.
- * If a new request arrives for the same page at the same zoom, the in-flight
- * job is left alone (it will arrive soon). If the zoom changed, the old job
- * is cancelled and a new one launched.
+ * - **Thread safety without mutex**: [activeJobs] and [inFlightZoom] are mutated exclusively
+ *   on [Dispatchers.Main.immediate] (both at the call-site and in post-render cleanup via
+ *   [withContext]). Only the actual [PdfRenderer.Page.render] call runs on [Dispatchers.IO].
  */
 class RenderScheduler(
     private val documentManager: PdfDocumentManager,
@@ -48,59 +49,90 @@ class RenderScheduler(
     private val cache: BitmapCache
 ) : Closeable {
 
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val jobsMutex = Mutex()
+    /**
+     * Scope for job lifecycle management. Bound to [Dispatchers.Main.immediate] so that
+     * mutations to [activeJobs] and [inFlightZoom] are always on the main thread —
+     * no mutex required. Render work is dispatched to [Dispatchers.IO] inside each job.
+     */
+    private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
+    /**
+     * One active render [Job] per page index.
+     * **Accessed only from the main thread.**
+     */
     private val activeJobs = HashMap<Int, Job>()
+
+    /**
+     * The zoom level at which each page is currently being rendered.
+     * **Accessed only from the main thread** (same as [activeJobs]).
+     */
     private val inFlightZoom = HashMap<Int, Float>()
 
+    /** Number of pages to pre-render beyond the visible range on each side. */
+    var prefetchWindow: Int = 2
+        set(value) { field = value.coerceAtLeast(0) }
+
+    /**
+     * Published bitmaps keyed by page index. Compose collects this [StateFlow] and
+     * triggers recomposition only when a specific page bitmap changes.
+     */
     private val _renderedPages = MutableStateFlow<Map<Int, Bitmap>>(emptyMap())
     val renderedPages: StateFlow<Map<Int, Bitmap>> = _renderedPages.asStateFlow()
-
-    var prefetchWindow: Int = 2
-        set(value) {
-            field = value.coerceAtLeast(0)
-        }
 
     // ── Public API ────────────────────────────────────────────────────────────
 
     /**
-     * Requests rendering for [visiblePages] ± [prefetchWindow] at the given [config].
+     * Schedules renders for [visiblePages] ± [prefetchWindow].
      *
-     * Decision per page:
-     *  • Exact cache hit at current zoom → publish immediately, no job needed.
-     *  • In-flight job at same zoom     → already coming, skip.
-     *  • Anything else                  → cancel stale job, launch new one.
+     * **Must be called from the Main thread** — [PdfViewerController] always satisfies
+     * this because its scope runs on [Dispatchers.Main.immediate].
+     *
+     * Decision tree per page:
+     *  1. Exact cache hit at current zoom → publish immediately, cancel any stale job.
+     *  2. In-flight job at same zoom      → already in progress, skip.
+     *  3. Otherwise                       → cancel stale job, launch new render on IO.
+     *
+     * @param visiblePages Inclusive range of page indices currently visible on screen.
+     * @param config       Render parameters: zoom, quality, viewport width, night mode…
+     * @param pageSizes    Pre-fetched page sizes from the controller's local cache.
+     *                     Passing these in avoids re-acquiring the document mutex.
      */
-    suspend fun requestRender(
+    fun requestRender(
         visiblePages: IntRange,
-        config: PageRenderer.RenderConfig
-    ) = jobsMutex.withLock {
-        if (!documentManager.isOpen) {
-            Log.w(TAG, "requestRender: document not open, skipping")
-            return@withLock
+        config: PageRenderer.RenderConfig,
+        pageSizes: List<Size>
+    ) {
+        if (!documentManager.isOpen || pageSizes.isEmpty()) {
+            Log.w(TAG, "requestRender: document not open or no page sizes, skipping")
+            return
         }
 
         val roundedZoom = roundZoom(config.zoomLevel)
+        val total = pageSizes.size
+
         Log.d(
             TAG,
-            "━━ requestRender pages=$visiblePages zoom=$roundedZoom quality=${config.renderQuality} vpW=${config.viewportWidthPx}"
+            "━━ requestRender pages=$visiblePages zoom=$roundedZoom " +
+                    "quality=${config.renderQuality} vpW=${config.viewportWidthPx}"
         )
 
-        val total = documentManager.pageCount
         val winStart = (visiblePages.first - prefetchWindow).coerceAtLeast(0)
-        val winEnd = (visiblePages.last + prefetchWindow).coerceAtMost(total - 1)
-        val window = winStart..winEnd
+        val winEnd   = (visiblePages.last  + prefetchWindow).coerceAtMost(total - 1)
+        val window   = winStart..winEnd
 
-        // Cancel jobs outside the current window.
+        // Cancel and remove jobs that fell outside the prefetch window.
         val iter = activeJobs.iterator()
         while (iter.hasNext()) {
             val (idx, job) = iter.next()
             if (idx !in window) {
-                job.cancel(); inFlightZoom.remove(idx); iter.remove()
+                Log.d(TAG, "  page $idx evicted from window, cancelling")
+                job.cancel()
+                inFlightZoom.remove(idx)
+                iter.remove()
             }
         }
 
-        // Visible pages first, then prefetch neighbours.
+        // Visible-first ordering so the user sees results before prefetch neighbours.
         val ordered = visiblePages.toList() +
                 (winStart until visiblePages.first).toList() +
                 ((visiblePages.last + 1)..winEnd).toList()
@@ -108,103 +140,150 @@ class RenderScheduler(
         for (pageIndex in ordered) {
             if (pageIndex !in 0 until total) continue
 
-            val pageSize = documentManager.getPageSize(pageIndex)
-            val (w, h) = pageRenderer.calculateRenderSize(pageSize.width, pageSize.height, config)
-            val cacheKey = PageCacheKey(pageIndex, roundedZoom, w, h)
+            val pageSize = pageSizes[pageIndex]
+            val (targetW, targetH) = pageRenderer.calculateRenderSize(
+                pageSize.width, pageSize.height, config
+            )
+            val cacheKey = PageCacheKey(pageIndex, roundedZoom, targetW, targetH)
 
-            // 1. Exact cache hit → publish and skip.
+            // 1. Exact cache hit → publish immediately, no render needed.
             val cached = cache.get(cacheKey)
             if (cached != null) {
                 Log.d(
                     TAG,
-                    "  page $pageIndex CACHE HIT zoom=$roundedZoom ${cached.width}×${cached.height}px"
+                    "  page $pageIndex CACHE HIT zoom=$roundedZoom " +
+                            "${cached.width}×${cached.height}px"
                 )
-                publish(pageIndex, cached)
-                activeJobs[pageIndex]?.cancel()
+                publishBitmap(pageIndex, cached)
+                activeJobs.remove(pageIndex)?.cancel()
                 inFlightZoom.remove(pageIndex)
-                activeJobs.remove(pageIndex)
                 continue
             }
 
-            // 2. Already rendering at this exact zoom → let it finish.
+            // 2. Already rendering at this exact zoom → let the in-flight job finish.
             if (activeJobs[pageIndex]?.isActive == true && inFlightZoom[pageIndex] == roundedZoom) {
-                Log.d(TAG, "  page $pageIndex IN-FLIGHT at zoom=$roundedZoom, skipping")
+                Log.d(TAG, "  page $pageIndex IN-FLIGHT zoom=$roundedZoom, skipping")
                 continue
             }
 
-            // 3. Cancel stale job (wrong zoom) and launch new one.
-            activeJobs[pageIndex]?.let {
+            // 3. Cancel stale job (different zoom) and launch a new render.
+            activeJobs[pageIndex]?.let { stale ->
                 Log.d(
                     TAG,
-                    "  page $pageIndex cancelling stale job (was zoom=${inFlightZoom[pageIndex]}, now $roundedZoom)"
+                    "  page $pageIndex cancelling stale job " +
+                            "(was zoom=${inFlightZoom[pageIndex]}, now $roundedZoom)"
                 )
-                it.cancel()
+                stale.cancel()
             }
-            inFlightZoom[pageIndex] = roundedZoom
 
-            Log.d(TAG, "  page $pageIndex LAUNCH zoom=$roundedZoom target=${w}×${h}px")
+            inFlightZoom[pageIndex] = roundedZoom
+            Log.d(TAG, "  page $pageIndex LAUNCH zoom=$roundedZoom target=${targetW}×${targetH}px")
+
+            // Capture immutable references for the coroutine closure.
+            val capturedIndex   = pageIndex
+            val capturedKey     = cacheKey
+            val capturedConfig  = config
 
             activeJobs[pageIndex] = scope.launch {
+                // Heavy work (PdfRenderer.Page.render) runs on IO.
                 try {
-                    val bitmap = documentManager.withPage(pageIndex) { page ->
-                        pageRenderer.render(page, config)
+                    val bitmap = withContext(Dispatchers.IO) {
+                        documentManager.withPage(capturedIndex) { page ->
+                            pageRenderer.render(page, capturedConfig)
+                        }
                     }
-                    val mbSize = bitmap.width * bitmap.height * 4 / 1_048_576
+
+                    val mb = bitmap.width * bitmap.height * 4 / 1_048_576
                     Log.d(
                         TAG,
-                        "  page $pageIndex DONE zoom=$roundedZoom actual=${bitmap.width}×${bitmap.height}px (${mbSize}MB)"
+                        "  page $capturedIndex DONE zoom=$roundedZoom " +
+                                "actual=${bitmap.width}×${bitmap.height}px (${mb}MB)"
                     )
 
-                    cache.put(cacheKey, bitmap)
-                    jobsMutex.withLock {
-                        inFlightZoom.remove(pageIndex)
-                        activeJobs.remove(pageIndex)
-                    }
-                    // Always publish — even if stale, the UI keeps the old bitmap
-                    // until this new one arrives, then swaps atomically.
-                    publish(pageIndex, bitmap)
+                    cache.put(capturedKey, bitmap)
+
+                    // Back on Main.immediate — safe to mutate job maps without a lock.
+                    inFlightZoom.remove(capturedIndex)
+                    activeJobs.remove(capturedIndex)
+
+                    publishBitmap(capturedIndex, bitmap)
 
                 } catch (_: CancellationException) {
-                    Log.d(TAG, "  page $pageIndex CANCELLED zoom=$roundedZoom")
-                    jobsMutex.withLock { inFlightZoom.remove(pageIndex) }
+                    Log.d(TAG, "  page $capturedIndex CANCELLED zoom=$roundedZoom")
+                    // Mutations on Main.immediate (parent scope).
+                    inFlightZoom.remove(capturedIndex)
+                    activeJobs.remove(capturedIndex)
                 } catch (e: Exception) {
-                    Log.e(TAG, "  page $pageIndex ERROR: ${e.message}", e)
-                    jobsMutex.withLock { inFlightZoom.remove(pageIndex) }
+                    Log.e(TAG, "  page $capturedIndex ERROR: ${e.message}", e)
+                    inFlightZoom.remove(capturedIndex)
+                    activeJobs.remove(capturedIndex)
                 }
             }
         }
     }
 
     /**
-     * Cancels all jobs and clears the bitmap cache.
-     * Does NOT clear [_renderedPages] — stale bitmaps remain visible as placeholders.
+     * Cancels all in-flight render jobs and evicts the bitmap cache.
+     *
+     * Deliberately does **not** clear [_renderedPages] — old bitmaps act as placeholders
+     * while new renders arrive at the updated zoom level, preventing blank-page flashes.
+     *
+     * **Must be called from the Main thread.**
      */
-    suspend fun invalidateAll() = jobsMutex.withLock {
+    fun invalidateAll() {
         Log.d(TAG, "invalidateAll: cancelling ${activeJobs.size} jobs, clearing cache")
         activeJobs.values.forEach { it.cancel() }
         activeJobs.clear()
         inFlightZoom.clear()
         cache.clear()
-        // _renderedPages deliberately NOT cleared.
+        // _renderedPages intentionally NOT cleared.
     }
 
-    suspend fun invalidatePage(pageIndex: Int) = jobsMutex.withLock {
-        activeJobs[pageIndex]?.cancel()
-        activeJobs.remove(pageIndex)
+    /**
+     * Invalidates a single page: cancels its render job, removes cache entries for that
+     * page across all zoom levels, and removes its entry from [_renderedPages].
+     *
+     * Useful for selective re-renders (e.g. toggling night mode on one page).
+     *
+     * **Must be called from the Main thread.**
+     */
+    fun invalidatePage(pageIndex: Int) {
+        activeJobs.remove(pageIndex)?.cancel()
         inFlightZoom.remove(pageIndex)
         cache.clearPage(pageIndex)
         _renderedPages.update { it - pageIndex }
     }
 
+    /** Cancels all jobs and releases scope resources. Called from [PdfViewerController.close]. */
     override fun close() {
         activeJobs.values.forEach { it.cancel() }
         activeJobs.clear()
         inFlightZoom.clear()
     }
 
-    private fun publish(pageIndex: Int, bitmap: Bitmap) {
-        _renderedPages.update { it + (pageIndex to bitmap) }
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    /**
+     * Atomically inserts or replaces [bitmap] for [pageIndex] in [_renderedPages].
+     *
+     * [StateFlow.update] uses CAS semantics internally — safe to call from any thread,
+     * though in practice we call it from Main after render completion.
+     *
+     * Skips the update (no-op) when the bitmap reference hasn't changed to avoid
+     * triggering unnecessary recompositions.
+     */
+    private fun publishBitmap(pageIndex: Int, bitmap: Bitmap) {
+        _renderedPages.update { current ->
+            if (current[pageIndex] === bitmap) current
+            else current + (pageIndex to bitmap)
+        }
     }
 
+    /**
+     * Rounds [zoom] to 2 decimal places to prevent floating-point drift from causing
+     * spurious cache misses between consecutive frames at the same logical zoom step.
+     *
+     * Example: 2.4999998 and 2.5000001 both round to 2.50 → same [PageCacheKey].
+     */
     private fun roundZoom(zoom: Float): Float = (zoom * 100f).roundToInt() / 100f
 }

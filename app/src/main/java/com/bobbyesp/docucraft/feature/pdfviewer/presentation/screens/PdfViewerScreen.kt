@@ -64,7 +64,8 @@ fun PdfViewerScreen(
             source = com.composepdf.source.PdfSource.Uri(documentInfo.uri.toUri()),
             state = pdfViewerState,
             config = ViewerConfig(
-                fitMode = FitMode.PROPORTIONAL
+                fitMode = FitMode.PROPORTIONAL,
+                maxZoom = 10f
             ),
             modifier = Modifier
         )
