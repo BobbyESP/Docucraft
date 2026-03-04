@@ -3,185 +3,106 @@ package com.composepdf.renderer
 import android.content.Context
 import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
+import android.util.Log
 import android.util.Size
 import com.composepdf.source.PdfSource
 import com.composepdf.source.PdfSourceResolver
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import java.io.Closeable
+import java.util.concurrent.ConcurrentLinkedQueue
+
+private const val TAG = "PdfDocumentManager"
+private const val MAX_PARALLEL_RENDERERS = 4
 
 /**
- * Thread-safe wrapper around [PdfRenderer] for loading and managing PDF documents.
- *
- * This class handles the lifecycle of the [PdfRenderer], providing thread-safe access
- * to page metadata and rendering operations. It uses a mutex to ensure only one thread
- * accesses the renderer at a time, as [PdfRenderer] is not thread-safe.
- *
- * Example usage:
- * ```kotlin
- * val manager = PdfDocumentManager(context)
- * manager.open(PdfSource.FromAsset("document.pdf"))
- *
- * val pageCount = manager.pageCount
- * val pageSize = manager.getPageSize(0)
- *
- * manager.close()
- * ```
+ * High-performance PDF manager that supports parallel rendering using a pool of [PdfRenderer] instances.
  */
 class PdfDocumentManager(private val context: Context) : Closeable {
 
-    private var renderer: PdfRenderer? = null
-    private var fileDescriptor: ParcelFileDescriptor? = null
+    private var masterFd: ParcelFileDescriptor? = null
     private var sourceResolver: PdfSourceResolver? = null
+    
+    // Pool of renderers to allow true parallel processing
+    private val rendererPool = ConcurrentLinkedQueue<PdfRenderer>()
+    
+    // Limits the number of concurrent render operations to prevent OOM and CPU saturation
+    private val semaphore = Semaphore(MAX_PARALLEL_RENDERERS)
 
-    private val mutex = Mutex()
+    private var _pageCount = 0
+    val pageCount: Int get() = _pageCount
 
-    /**
-     * The number of pages in the currently loaded document.
-     * Returns 0 if no document is loaded.
-     */
-    val pageCount: Int
-        get() = renderer?.pageCount ?: 0
+    val isOpen: Boolean get() = masterFd != null
 
-    /**
-     * Whether a document is currently loaded.
-     */
-    val isOpen: Boolean
-        get() = renderer != null
-
-    /**
-     * Opens a PDF document from the given source.
-     *
-     * This operation is performed on [Dispatchers.IO] and is safe to call
-     * from the main thread.
-     *
-     * @param source The PDF source to open
-     * @throws java.io.IOException If the document cannot be opened
-     */
-    suspend fun open(source: PdfSource) = mutex.withLock {
-        withContext(Dispatchers.IO) {
-            // Close any previously opened document to free resources
-            closeInternal()
-
-            // Resolve the source to a file descriptor
-            val resolver = PdfSourceResolver(context)
-            // Assign resolver immediately so it can be closed if open fails
-            sourceResolver = resolver
-
-            try {
-                val fd = resolver.resolve(source)
-                // Assign fd immediately so it can be closed if renderer creation fails
-                fileDescriptor = fd
-
-                renderer = PdfRenderer(fd)
-            } catch (t: Throwable) {
-                // If opening fails or is cancelled, ensure we clean up partial state
-                // (e.g. temporary files created by resolver, or open FD)
-                closeInternal()
-                throw t
-            }
-        }
-    }
-
-    /**
-     * Gets the size of a specific page in points.
-     *
-     * @param pageIndex Zero-based page index
-     * @return The page size in points (1/72 inch)
-     * @throws IllegalStateException If no document is loaded
-     * @throws IndexOutOfBoundsException If the page index is invalid
-     */
-    suspend fun getPageSize(pageIndex: Int): Size = mutex.withLock {
-        withContext(Dispatchers.IO) {
-            val pdfRenderer = renderer ?: throw IllegalStateException("No document is open")
-
-            pdfRenderer.openPage(pageIndex).use { page ->
-                Size(page.width, page.height)
-            }
-        }
-    }
-
-    /**
-     * Returns the sizes of all pages in a single mutex acquisition.
-     *
-     * Prefer this over calling [getPageSize] in a loop, which would acquire
-     * and release the mutex once per page (N round-trips on Dispatchers.IO).
-     *
-     * @return List of [Size] objects in document order
-     * @throws IllegalStateException If no document is loaded
-     */
-    suspend fun getAllPageSizes(): List<Size> = mutex.withLock {
-        withContext(Dispatchers.IO) {
-            val pdfRenderer = renderer ?: throw IllegalStateException("No document is open")
-            (0 until pdfRenderer.pageCount).map { index ->
-                pdfRenderer.openPage(index).use { page ->
-                    Size(page.width, page.height)
+    suspend fun open(source: PdfSource) = withContext(Dispatchers.IO) {
+        closeInternal()
+        val resolver = PdfSourceResolver(context)
+        sourceResolver = resolver
+        try {
+            val fd = resolver.resolve(source)
+            masterFd = fd
+            
+            // Create the first renderer to get page count
+            val firstRenderer = PdfRenderer(fd)
+            _pageCount = firstRenderer.pageCount
+            rendererPool.offer(firstRenderer)
+            
+            // Pre-warm additional renderers by duplicating the file descriptor
+            // This allows parallel access to the same file
+            repeat(MAX_PARALLEL_RENDERERS - 1) {
+                try {
+                    val dupFd = ParcelFileDescriptor.dup(fd.fileDescriptor)
+                    rendererPool.offer(PdfRenderer(dupFd))
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to dup FD for parallel rendering", e)
                 }
             }
+        } catch (t: Throwable) {
+            closeInternal()
+            throw t
         }
     }
 
     /**
-     * Opens a page for rendering and executes the given action.
-     *
-     * The page is automatically closed after the action completes.
-     * This method is thread-safe due to the internal mutex.
-     *
-     * @param pageIndex Zero-based page index
-     * @param action The action to perform with the opened page
-     * @return The result of the action
-     * @throws IllegalStateException If no document is loaded
+     * Executes a render action using an available renderer from the pool.
+     * This allows multiple tiles/pages to render in parallel.
      */
-    suspend fun <T> withPage(pageIndex: Int, action: (PdfRenderer.Page) -> T): T = mutex.withLock {
-        withContext(Dispatchers.IO) {
-            val pdfRenderer = renderer ?: throw IllegalStateException("No document is open")
-
-            pdfRenderer.openPage(pageIndex).use { page ->
-                action(page)
+    suspend fun <T> withPage(pageIndex: Int, action: (PdfRenderer.Page) -> T): T {
+        return semaphore.withPermit {
+            val renderer = rendererPool.poll() ?: throw IllegalStateException("Renderer pool exhausted")
+            try {
+                withContext(Dispatchers.Default) { // Use Default for CPU-bound rendering
+                    renderer.openPage(pageIndex).use { page ->
+                        action(page)
+                    }
+                }
+            } finally {
+                rendererPool.offer(renderer)
             }
         }
     }
 
-    /**
-     * Closes the current document and releases all resources.
-     */
-    override fun close() {
-        closeInternal()
+    suspend fun getAllPageSizes(): List<Size> = withPage(0) { _ ->
+        // We use one renderer from the pool to iterate sizes. 
+        // This is metadata-heavy, so it's fast.
+        val renderer = rendererPool.peek() ?: throw IllegalStateException("No renderer available")
+        (0 until _pageCount).map { index ->
+            renderer.openPage(index).use { Size(it.width, it.height) }
+        }
     }
 
-    /**
-     * Releases all resources held by the current document in dependency order:
-     * renderer → file descriptor → source resolver.
-     *
-     * Each resource is closed in its own try/catch so that a failure on one
-     * (e.g. the renderer is already closed) does not prevent the others from
-     * being released, avoiding resource leaks.
-     */
+    override fun close() = closeInternal()
+
     private fun closeInternal() {
-        // 1. Close renderer first (depends on FD)
-        try {
-            renderer?.close()
-        } catch (e: Exception) {
-            // Ignore close errors, usually strict mode or already closed
+        while (rendererPool.isNotEmpty()) {
+            try { rendererPool.poll()?.close() } catch (e: Exception) {}
         }
-        renderer = null
-
-        // 2. Close file descriptor (depends on file/stream)
-        try {
-            fileDescriptor?.close()
-        } catch (e: Exception) {
-            // Ignore close errors
-        }
-        fileDescriptor = null
-
-        // 3. Close resolver (deletes temp files)
-        try {
-            sourceResolver?.close()
-        } catch (e: Exception) {
-            // Ignore close errors
-        }
+        try { masterFd?.close() } catch (e: Exception) {}
+        masterFd = null
+        try { sourceResolver?.close() } catch (e: Exception) {}
         sourceResolver = null
+        _pageCount = 0
     }
 }

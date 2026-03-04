@@ -1,6 +1,7 @@
 package com.composepdf.renderer
 
 import android.graphics.Bitmap
+import android.graphics.Rect
 import android.util.Log
 import android.util.Size
 import com.composepdf.cache.BitmapCache
@@ -10,7 +11,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,13 +18,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.Closeable
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.roundToInt
 
 private const val TAG = "PdfRenderScheduler"
 
-/**
- * Orchestrates background rendering of PDF pages with safe bitmap management.
- */
 class RenderScheduler(
     private val documentManager: PdfDocumentManager,
     private val pageRenderer: PageRenderer,
@@ -32,20 +30,19 @@ class RenderScheduler(
 ) : Closeable {
 
     private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
-    private val activeJobs = HashMap<Int, Job>()
-    private val inFlightZoom = HashMap<Int, Float>()
+    
+    // Concurrent map for active page jobs
+    private val activeJobs = ConcurrentHashMap<Int, Job>()
+    private val inFlightZoom = ConcurrentHashMap<Int, Float>()
+
+    // Tile jobs: Key is the unique tile identifier
+    private val tileJobs = ConcurrentHashMap<String, Job>()
 
     var prefetchWindow: Int = 2
         set(value) { field = value.coerceAtLeast(0) }
 
     private val _renderedPages = MutableStateFlow<Map<Int, Bitmap>>(emptyMap())
     val renderedPages: StateFlow<Map<Int, Bitmap>> = _renderedPages.asStateFlow()
-
-    /**
-     * Set of bitmaps that were once published but are now replaced.
-     * We keep track of them to return them to the pool only when safe.
-     */
-    private val retiredBitmaps = mutableSetOf<Bitmap>()
 
     fun requestRender(
         visiblePages: IntRange,
@@ -61,14 +58,11 @@ class RenderScheduler(
         val winEnd   = (visiblePages.last  + prefetchWindow).coerceAtMost(total - 1)
         val window   = winStart..winEnd
 
-        // Cancel jobs for pages that moved out of the window
-        val iter = activeJobs.iterator()
-        while (iter.hasNext()) {
-            val (idx, job) = iter.next()
+        // Cancel jobs for pages out of window
+        activeJobs.keys.forEach { idx ->
             if (idx !in window) {
-                job.cancel()
+                activeJobs.remove(idx)?.cancel()
                 inFlightZoom.remove(idx)
-                iter.remove()
             }
         }
 
@@ -102,30 +96,18 @@ class RenderScheduler(
 
             activeJobs[pageIndex] = scope.launch {
                 try {
-                    val bitmap = withContext(Dispatchers.IO) {
-                        documentManager.withPage(pageIndex) { page ->
-                            pageRenderer.render(page, config)
-                        }
+                    val bitmap = documentManager.withPage(pageIndex) { page ->
+                        pageRenderer.render(page, config)
                     }
-
-                    // On Main thread:
-                    cache.put(cacheKey, bitmap)
                     
-                    // Only remove from tracking if this job is still the current one
+                    cache.put(cacheKey, bitmap)
                     if (inFlightZoom[pageIndex] == roundedZoom) {
                         inFlightZoom.remove(pageIndex)
                         activeJobs.remove(pageIndex)
                         publishBitmap(pageIndex, bitmap)
-                    } else {
-                        // This render is stale (zoom changed again), return to cache/pool logic
-                        // will be handled by the next job or cache eviction
                     }
-
-                } catch (_: CancellationException) {
-                    inFlightZoom.remove(pageIndex)
-                    activeJobs.remove(pageIndex)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Render error for page $pageIndex: ${e.message}")
+                    if (e !is CancellationException) Log.e(TAG, "Render error: ${e.message}")
                     inFlightZoom.remove(pageIndex)
                     activeJobs.remove(pageIndex)
                 }
@@ -133,15 +115,41 @@ class RenderScheduler(
         }
     }
 
+    fun requestTile(
+        pageIndex: Int,
+        tileRect: Rect,
+        zoom: Float,
+        viewportWidth: Float,
+        onTileDone: (Bitmap) -> Unit
+    ) {
+        val tileKey = "${pageIndex}_${tileRect.left}_${tileRect.top}_${tileRect.right}_${tileRect.bottom}_$zoom"
+        
+        if (tileJobs.containsKey(tileKey)) return
+
+        // Launch tile render in parallel
+        tileJobs[tileKey] = scope.launch {
+            try {
+                val bitmap = documentManager.withPage(pageIndex) { page ->
+                    pageRenderer.renderTile(page, tileRect, zoom, viewportWidth)
+                }
+                onTileDone(bitmap)
+                tileJobs.remove(tileKey)
+            } catch (e: Exception) {
+                if (e !is CancellationException) Log.e(TAG, "Tile error: ${e.message}")
+                tileJobs.remove(tileKey)
+            }
+        }
+    }
+
+    fun cancelAllTiles() {
+        tileJobs.values.forEach { it.cancel() }
+        tileJobs.clear()
+    }
+
     private fun publishBitmap(pageIndex: Int, bitmap: Bitmap) {
         _renderedPages.update { current ->
-            val old = current[pageIndex]
-            if (old === bitmap) return@update current
-            
-            // If we are replacing a bitmap, it's a candidate for the pool.
-            // But we can only pool it if it's NOT in the LRU cache either.
-            // We'll let the Cache decide when it's truly evicted from memory.
-            current + (pageIndex to bitmap)
+            if (current[pageIndex] === bitmap) current
+            else current + (pageIndex to bitmap)
         }
     }
 
@@ -149,16 +157,16 @@ class RenderScheduler(
         activeJobs.values.forEach { it.cancel() }
         activeJobs.clear()
         inFlightZoom.clear()
-        // We clear the cache, which will trigger BitmapCache.entryRemoved.
-        // We MUST ensure entryRemoved only pools bitmaps not in _renderedPages.
+        cancelAllTiles()
         cache.clear()
     }
 
     override fun close() {
-        scope.cancel()
+        activeJobs.values.forEach { it.cancel() }
         activeJobs.clear()
-        inFlightZoom.clear()
-        cache.clear()
+        tileJobs.values.forEach { it.cancel() }
+        tileJobs.clear()
+        scope.launch { cache.clear() }
     }
 
     private fun roundZoom(zoom: Float): Float = (zoom * 100f).roundToInt() / 100f
