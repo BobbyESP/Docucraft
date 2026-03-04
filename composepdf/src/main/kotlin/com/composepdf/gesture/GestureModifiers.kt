@@ -116,8 +116,6 @@ internal fun rememberGestureState(): GestureState {
     return remember { GestureState(scope) }
 }
 
-// ── pdfGestures modifier ──────────────────────────────────────────────────────
-
 /**
  * Unified PDF gesture [Modifier] handling pinch-zoom, pan, fling, and double-tap.
  *
@@ -135,10 +133,10 @@ internal fun rememberGestureState(): GestureState {
  * ## Touch-slop handling
  *
  * Events are not forwarded to the controller until the accumulated pan (in pixels)
- * or zoom (converted to pixels via viewport width) exceeds [ViewConfiguration.touchSlop].
+ * or zoom (converted to pixels via viewport width) exceeds [androidx.compose.ui.platform.ViewConfiguration.touchSlop].
  * This prevents micro-jitter from triggering scrolls during taps.
  *
- * ## Why [awaitEachGesture] instead of [detectTransformGestures]?
+ * ## Why [awaitEachGesture] instead of [androidx.compose.foundation.gestures.detectTransformGestures]?
  *
  * `detectTransformGestures` does not expose the raw pointer stream needed for
  * double-tap detection and velocity tracking. [awaitEachGesture] gives us full
@@ -256,14 +254,12 @@ fun Modifier.pdfGestures(
                     // Zoom end - check if we need to snap or just stop
                     controller.onGestureEnd()
                 } else {
-                    // Fling?
                     val velocity = gs.velocityTracker.calculateVelocity()
-                    val maxVelocity = viewConfiguration.maximumFlingVelocity.toFloat()
-                    val minVelocity = viewConfiguration.minimumFlingVelocity.toFloat() // 50dp/s approx
+                    val maxVelocity = viewConfiguration.maximumFlingVelocity
+                    val minVelocity = viewConfiguration.minimumFlingVelocity
 
                     val velocityX = velocity.x.coerceIn(-maxVelocity, maxVelocity)
                     val velocityY = velocity.y.coerceIn(-maxVelocity, maxVelocity)
-                    // Velocity no tiene .getDistance(), calculamos la magnitud manualmente
                     val speed = kotlin.math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y)
 
                     if (speed > minVelocity) {

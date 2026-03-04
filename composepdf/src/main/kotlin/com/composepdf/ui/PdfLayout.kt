@@ -4,10 +4,10 @@ import android.graphics.Bitmap
 import android.util.Size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.onSizeChanged
@@ -19,6 +19,19 @@ import com.composepdf.state.ViewerConfig
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.roundToInt
 
+/**
+ * Core layout for the PDF viewer.
+ *
+ * It uses a custom [Layout] to position pages absolutely based on the [PdfViewerController]'s geometry model.
+ * This ensures pixel-perfect positioning and efficient culling of non-visible pages.
+ *
+ * @param pageSizes List of pre-calculated page dimensions at zoom 1.0.
+ * @param renderedPages State flow of the base low-resolution bitmaps for each page.
+ * @param state The current UI state (zoom, pan, tiles).
+ * @param controller The logic engine for coordinate conversion and render requests.
+ * @param config Viewer configuration (night mode, indicators, etc.).
+ * @param modifier Layout modifier.
+ */
 @Composable
 internal fun PdfLayout(
     pageSizes: List<Size>,
@@ -28,28 +41,33 @@ internal fun PdfLayout(
     config: ViewerConfig,
     modifier: Modifier = Modifier
 ) {
+    // 1. Determine visible pages. This only triggers recomposition when the set of visible indices changes.
     val visiblePages by remember(controller) {
         derivedStateOf { controller.visiblePageIndices() }
     }
 
+    // 2. Orchestrate rendering requests. Triggers when visibility, gestures, or zoom change.
     LaunchedEffect(controller) {
         snapshotFlow {
             Triple(controller.visiblePageIndices(), state.isGestureActive, state.zoom)
-        }.collectLatest { (visible, gestureActive, zoom) ->
+        }.collectLatest { 
             controller.requestRenderForVisiblePages()
         }
     }
 
+    // 3. Prepare expensive objects.
     val colorFilter = remember(config.isNightModeEnabled) {
         if (config.isNightModeEnabled) {
-            ColorFilter.colorMatrix(androidx.compose.ui.graphics.ColorMatrix(
-                floatArrayOf(
-                    -1f, 0f, 0f, 0f, 255f,
-                    0f, -1f, 0f, 0f, 255f,
-                    0f, 0f, -1f, 0f, 255f,
-                    0f, 0f, 0f, 1f, 0f
+            ColorFilter.colorMatrix(
+                ColorMatrix(
+                    floatArrayOf(
+                        -1f, 0f, 0f, 0f, 255f,
+                        0f, -1f, 0f, 0f, 255f,
+                        0f, 0f, -1f, 0f, 255f,
+                        0f, 0f, 0f, 1f, 0f
+                    )
                 )
-            ))
+            )
         } else null
     }
 
@@ -72,15 +90,13 @@ internal fun PdfLayout(
                     val size = pageSizes.getOrNull(index)
                     if (size != null) {
                         PdfPage(
+                            state = state,
                             bitmap = renderedPages[index],
                             pageIndex = index,
                             aspectRatio = size.width.toFloat() / size.height.toFloat(),
-                            isLoading = renderedPages[index] == null,
                             showLoadingIndicator = config.isLoadingIndicatorVisible,
-                            currentZoom = state.zoom, // Pass current zoom for tile scaling
                             fitMode = config.fitMode,
                             colorFilter = colorFilter,
-                            tiles = state.renderedTiles,
                             modifier = Modifier.layoutId(index).fillMaxSize()
                         )
                     }
@@ -89,31 +105,24 @@ internal fun PdfLayout(
         }
     ) { measurables, constraints ->
         val vpWidth = controller.viewportWidth
-        val layoutWidth = if (vpWidth > 0f) vpWidth.roundToInt() else constraints.maxWidth
-        val layoutHeight = constraints.maxHeight
-
         if (measurables.isEmpty() || vpWidth <= 0f) {
-            return@Layout layout(layoutWidth, layoutHeight) {}
+            return@Layout layout(constraints.maxWidth, constraints.maxHeight) {}
         }
 
-        val currentZoom = state.zoom
-        val panX = state.panX
-        val panY = state.panY
-
-        layout(layoutWidth, layoutHeight) {
+        layout(constraints.maxWidth, constraints.maxHeight) {
             measurables.forEach { measurable ->
                 val pageIndex = measurable.layoutId as? Int ?: return@forEach
+                
                 val docTopY = controller.pageTopDocY(pageIndex)
                 val docHeight = controller.pageHeightPx(pageIndex)
 
-                val screenW = (vpWidth * currentZoom).roundToInt().coerceAtLeast(1)
-                val screenH = (docHeight * currentZoom).roundToInt().coerceAtLeast(1)
+                val screenW = (vpWidth * state.zoom).roundToInt().coerceAtLeast(1)
+                val screenH = (docHeight * state.zoom).roundToInt().coerceAtLeast(1)
 
-                val x = panX.roundToInt()
-                val y = (docTopY * currentZoom + panY).roundToInt()
+                val x = state.panX.roundToInt()
+                val y = (docTopY * state.zoom + state.panY).roundToInt()
 
-                val placeable = measurable.measure(Constraints.fixed(screenW, screenH))
-                placeable.place(x, y)
+                measurable.measure(Constraints.fixed(screenW, screenH)).place(x, y)
             }
         }
     }

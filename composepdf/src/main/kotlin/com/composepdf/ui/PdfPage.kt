@@ -23,22 +23,27 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.composepdf.state.FitMode
+import com.composepdf.state.PdfViewerState
 import kotlin.math.roundToInt
 
+/**
+ * Composable for rendering a single PDF page with its high-resolution tiles.
+ * 
+ * Optimized to avoid recomposition: it takes the [state] object and reads 
+ * dynamic values (zoom, tiles) only during the Draw phase of the [Canvas].
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun PdfPage(
+    state: PdfViewerState,
     bitmap: Bitmap?,
     pageIndex: Int,
     aspectRatio: Float,
-    isLoading: Boolean,
     showLoadingIndicator: Boolean,
-    currentZoom: Float, // Necesitamos el zoom actual para escalar tiles viejos
     fitMode: FitMode = FitMode.WIDTH,
     widthFraction: Float = 1f,
     colorFilter: ColorFilter? = null,
-    modifier: Modifier = Modifier,
-    tiles: Map<String, Bitmap> = emptyMap()
+    modifier: Modifier = Modifier
 ) {
     val sizeModifier: Modifier = when (fitMode) {
         FitMode.WIDTH -> Modifier.fillMaxWidth().aspectRatio(aspectRatio.coerceAtLeast(0.1f))
@@ -53,14 +58,20 @@ internal fun PdfPage(
     ) {
         if (bitmap != null) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                // 1. Dibujar base siempre (fondo)
+                // Read current state values. Since this is inside DrawScope, 
+                // changes to state.zoom or state.tileRevision only trigger a Redraw, NOT a Recomposition.
+                val zoom = state.zoom
+                val revision = state.tileRevision // Observe revision to trigger redraw when tiles arrive
+                val tiles = state.getAllTiles()
+
+                // 1. Draw base low-resolution bitmap
                 drawImage(
                     image = bitmap.asImageBitmap(),
                     dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
                     colorFilter = colorFilter
                 )
 
-                // 2. Dibujar tiles con re-escalado dinámico
+                // 2. Draw high-resolution tiles on top with dynamic scaling
                 tiles.forEach { (key, tileBitmap) ->
                     if (key.startsWith("${pageIndex}_")) {
                         val parts = key.split("_")
@@ -71,8 +82,8 @@ internal fun PdfPage(
                             val tileB = parts[4].toInt()
                             val tileZoom = parts[5].toFloat()
 
-                            // Factor de escala entre el momento en que se renderizó el tile y el ahora
-                            val scale = currentZoom / tileZoom
+                            // Scale factor between the tile's native zoom and current viewport zoom
+                            val scale = zoom / tileZoom
                             
                             val drawL = (tileL * scale).roundToInt()
                             val drawT = (tileT * scale).roundToInt()
@@ -95,5 +106,23 @@ internal fun PdfPage(
                 color = MaterialTheme.colorScheme.primary,
             )
         }
+    }
+}
+
+/** Placeholder shown when the base page is not yet available. */
+@Composable
+internal fun PagePlaceholder(
+    aspectRatio: Float,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxWidth().aspectRatio(aspectRatio.coerceAtLeast(0.1f)).background(Color(0xFFF5F5F5)),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(48.dp),
+            color = MaterialTheme.colorScheme.primary,
+            strokeWidth = 4.dp
+        )
     }
 }

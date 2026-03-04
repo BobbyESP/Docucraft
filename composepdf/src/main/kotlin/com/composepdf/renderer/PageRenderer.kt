@@ -1,44 +1,33 @@
 package com.composepdf.renderer
 
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.ColorMatrix
-import android.graphics.ColorMatrixColorFilter
 import android.graphics.Matrix
-import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.pdf.PdfRenderer
-import android.util.Log
 import com.composepdf.cache.BitmapPool
-import kotlin.math.min
 
-private const val TAG = "PdfPageRenderer"
-
+/**
+ * Handles the low-level rasterization of PDF pages and tiles into Bitmaps.
+ * This class focuses strictly on rendering; visual filters like Night Mode 
+ * are handled at the UI layer for performance.
+ */
 class PageRenderer(
     private val bitmapPool: BitmapPool
 ) {
 
-    private val nightModePaint = Paint().apply {
-        colorFilter = ColorMatrixColorFilter(
-            ColorMatrix(
-                floatArrayOf(
-                    -1f, 0f, 0f, 0f, 255f,
-                    0f, -1f, 0f, 0f, 255f,
-                    0f, 0f, -1f, 0f, 255f,
-                    0f, 0f, 0f, 1f, 0f
-                )
-            )
-        )
-    }
-
+    /**
+     * Configuration for a full-page render.
+     */
     data class RenderConfig(
         val zoomLevel: Float = 1f,
         val renderQuality: Float = 1.0f,
         val viewportWidthPx: Float = 0f,
-        val nightMode: Boolean = false,
         val backgroundColor: Int = android.graphics.Color.WHITE
     )
 
+    /**
+     * Renders a full PDF page into a Bitmap.
+     */
     fun render(page: PdfRenderer.Page, config: RenderConfig): Bitmap {
         val (width, height) = targetSize(page.width, page.height, config)
         val bitmap = bitmapPool.get(width, height, Bitmap.Config.ARGB_8888)
@@ -51,6 +40,9 @@ class PageRenderer(
         return bitmap
     }
 
+    /**
+     * Renders a specific rectangular tile of a page at high resolution.
+     */
     fun renderTile(
         page: PdfRenderer.Page,
         tileRect: Rect,
@@ -58,19 +50,22 @@ class PageRenderer(
         viewportWidth: Float,
         backgroundColor: Int = android.graphics.Color.WHITE
     ): Bitmap {
-        // Usar un tamaño de bitmap que coincida exactamente con el Rect solicitado
         val bitmap = bitmapPool.get(tileRect.width(), tileRect.height(), Bitmap.Config.ARGB_8888)
         bitmap.eraseColor(backgroundColor)
 
         val scaleFactor = (viewportWidth / page.width.toFloat()) * zoom
-        val matrix = Matrix()
-        matrix.postScale(scaleFactor, scaleFactor)
-        matrix.postTranslate(-tileRect.left.toFloat(), -tileRect.top.toFloat())
+        val matrix = Matrix().apply {
+            postScale(scaleFactor, scaleFactor)
+            postTranslate(-tileRect.left.toFloat(), -tileRect.top.toFloat())
+        }
 
         page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
         return bitmap
     }
 
+    /**
+     * Calculates the pixel dimensions for a page based on the viewport and zoom.
+     */
     fun calculateRenderSize(
         pageWidth: Int,
         pageHeight: Int,
@@ -85,9 +80,8 @@ class PageRenderer(
             pdfW * config.zoomLevel * config.renderQuality
         }
 
-        val desiredH = desiredW * aspectRatio
         var finalW = desiredW
-        var finalH = desiredH
+        var finalH = finalW * aspectRatio
 
         if (finalW > MAX_BITMAP_PX) {
             finalW = MAX_BITMAP_PX.toFloat()
@@ -102,8 +96,9 @@ class PageRenderer(
     }
 
     companion object {
+        /** Cap to prevent OOM on extremely large pages. */
         const val MAX_BITMAP_PX = 2048 
-        // Reducimos a 512 para que cada trozo se procese mucho más rápido
-        const val TILE_SIZE = 512
+        /** Standard size for high-res tiles. Small tiles render faster. */
+        const val TILE_SIZE = 256
     }
 }

@@ -6,44 +6,55 @@ import android.util.Log
 import android.util.Size
 import com.composepdf.cache.BitmapCache
 import com.composepdf.cache.PageCacheKey
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
+import com.composepdf.state.PdfViewerState
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
 private const val TAG = "PdfRenderScheduler"
 
+/**
+ * Orchestrates background rendering tasks for both full pages and high-resolution tiles.
+ * 
+ * It uses a dedicated thread pool to ensure rendering operations don't block the 
+ * main thread or standard IO dispatchers.
+ */
 class RenderScheduler(
     private val documentManager: PdfDocumentManager,
     private val pageRenderer: PageRenderer,
-    private val cache: BitmapCache
+    private val cache: BitmapCache,
+    private val viewerState: PdfViewerState
 ) : Closeable {
 
-    private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+    /** Dedicated dispatcher for CPU-intensive PDF rasterization. */
+    private val renderDispatcher = Executors.newFixedThreadPool(4).asCoroutineDispatcher()
+    private val scope = CoroutineScope(renderDispatcher + SupervisorJob())
     
-    // Concurrent map for active page jobs
+    /** Tracking of active page-level rendering jobs. */
     private val activeJobs = ConcurrentHashMap<Int, Job>()
     private val inFlightZoom = ConcurrentHashMap<Int, Float>()
-
-    // Tile jobs: Key is the unique tile identifier
+    
+    /** Tracking of active high-res tile rendering jobs. */
     private val tileJobs = ConcurrentHashMap<String, Job>()
 
+    /** Number of pages to pre-render outside the visible range. */
     var prefetchWindow: Int = 2
         set(value) { field = value.coerceAtLeast(0) }
 
     private val _renderedPages = MutableStateFlow<Map<Int, Bitmap>>(emptyMap())
+    /** Observed by the UI to display base page bitmaps. */
     val renderedPages: StateFlow<Map<Int, Bitmap>> = _renderedPages.asStateFlow()
 
+    /**
+     * Schedules rendering for the given range of visible pages.
+     * Manages prefetching and cancels out-of-window jobs.
+     */
     fun requestRender(
         visiblePages: IntRange,
         config: PageRenderer.RenderConfig,
@@ -51,14 +62,14 @@ class RenderScheduler(
     ) {
         if (!documentManager.isOpen || pageSizes.isEmpty()) return
 
-        val roundedZoom = roundZoom(config.zoomLevel)
+        val roundedZoom = (config.zoomLevel * 100f).roundToInt() / 100f
         val total = pageSizes.size
 
         val winStart = (visiblePages.first - prefetchWindow).coerceAtLeast(0)
         val winEnd   = (visiblePages.last  + prefetchWindow).coerceAtMost(total - 1)
         val window   = winStart..winEnd
 
-        // Cancel jobs for pages out of window
+        // Evict jobs for pages that are no longer in the prefetch window
         activeJobs.keys.forEach { idx ->
             if (idx !in window) {
                 activeJobs.remove(idx)?.cancel()
@@ -66,6 +77,7 @@ class RenderScheduler(
             }
         }
 
+        // Prioritize visible pages, then prefetched ones
         val ordered = visiblePages.toList() + 
                      (winStart until visiblePages.first).toList() + 
                      ((visiblePages.last + 1)..winEnd).toList()
@@ -79,6 +91,7 @@ class RenderScheduler(
             )
             val cacheKey = PageCacheKey(pageIndex, roundedZoom, targetW, targetH)
 
+            // Skip if already in memory or already being rendered at this zoom
             val cached = cache.get(cacheKey)
             if (cached != null) {
                 publishBitmap(pageIndex, cached)
@@ -107,7 +120,7 @@ class RenderScheduler(
                         publishBitmap(pageIndex, bitmap)
                     }
                 } catch (e: Exception) {
-                    if (e !is CancellationException) Log.e(TAG, "Render error: ${e.message}")
+                    if (e !is CancellationException) Log.e(TAG, "Render error for page $pageIndex: ${e.message}")
                     inFlightZoom.remove(pageIndex)
                     activeJobs.remove(pageIndex)
                 }
@@ -115,35 +128,51 @@ class RenderScheduler(
         }
     }
 
+    /**
+     * Schedules a single tile render.
+     */
     fun requestTile(
         pageIndex: Int,
         tileRect: Rect,
         zoom: Float,
-        viewportWidth: Float,
-        onTileDone: (Bitmap) -> Unit
+        viewportWidth: Float
     ) {
-        val tileKey = "${pageIndex}_${tileRect.left}_${tileRect.top}_${tileRect.right}_${tileRect.bottom}_$zoom"
+        val zoomKey = (zoom * 100f).roundToInt() / 100f
+        val tileKey = "${pageIndex}_${tileRect.left}_${tileRect.top}_${tileRect.right}_${tileRect.bottom}_$zoomKey"
         
         if (tileJobs.containsKey(tileKey)) return
 
-        // Launch tile render in parallel
         tileJobs[tileKey] = scope.launch {
             try {
                 val bitmap = documentManager.withPage(pageIndex) { page ->
                     pageRenderer.renderTile(page, tileRect, zoom, viewportWidth)
                 }
-                onTileDone(bitmap)
-                tileJobs.remove(tileKey)
+                viewerState.putTile(tileKey, bitmap)
             } catch (e: Exception) {
-                if (e !is CancellationException) Log.e(TAG, "Tile error: ${e.message}")
+                if (e !is CancellationException) Log.e(TAG, "Tile error for $tileKey: ${e.message}")
+            } finally {
                 tileJobs.remove(tileKey)
             }
         }
     }
 
+    /**
+     * Cancels all tile rendering jobs that are not present in the [keepKeys] set.
+     * Essential for maintaining performance during fast scrolls.
+     */
+    fun pruneTileJobs(keepKeys: Set<String>) {
+        tileJobs.keys.forEach { key ->
+            if (key !in keepKeys) {
+                tileJobs.remove(key)?.cancel()
+            }
+        }
+    }
+
+    /** Cancels all currently active tile rendering tasks. */
     fun cancelAllTiles() {
-        tileJobs.values.forEach { it.cancel() }
-        tileJobs.clear()
+        tileJobs.keys.forEach { key ->
+            tileJobs.remove(key)?.cancel()
+        }
     }
 
     private fun publishBitmap(pageIndex: Int, bitmap: Bitmap) {
@@ -153,9 +182,9 @@ class RenderScheduler(
         }
     }
 
+    /** Cancels everything and wipes the page cache. */
     fun invalidateAll() {
-        activeJobs.values.forEach { it.cancel() }
-        activeJobs.clear()
+        activeJobs.keys.forEach { idx -> activeJobs.remove(idx)?.cancel() }
         inFlightZoom.clear()
         cancelAllTiles()
         cache.clear()
@@ -163,11 +192,7 @@ class RenderScheduler(
 
     override fun close() {
         activeJobs.values.forEach { it.cancel() }
-        activeJobs.clear()
         tileJobs.values.forEach { it.cancel() }
-        tileJobs.clear()
-        scope.launch { cache.clear() }
+        renderDispatcher.close()
     }
-
-    private fun roundZoom(zoom: Float): Float = (zoom * 100f).roundToInt() / 100f
 }

@@ -15,25 +15,19 @@ import java.io.Closeable
 import java.util.concurrent.ConcurrentLinkedQueue
 
 private const val TAG = "PdfDocumentManager"
-private const val MAX_PARALLEL_RENDERERS = 4
 
-/**
- * High-performance PDF manager that supports parallel rendering using a pool of [PdfRenderer] instances.
- */
 class PdfDocumentManager(private val context: Context) : Closeable {
 
     private var masterFd: ParcelFileDescriptor? = null
     private var sourceResolver: PdfSourceResolver? = null
-    
-    // Pool of renderers to allow true parallel processing
     private val rendererPool = ConcurrentLinkedQueue<PdfRenderer>()
     
-    // Limits the number of concurrent render operations to prevent OOM and CPU saturation
-    private val semaphore = Semaphore(MAX_PARALLEL_RENDERERS)
+    // Detectamos núcleos reales. Reservamos 1 para el sistema.
+    private val maxParallel = (Runtime.getRuntime().availableProcessors() - 1).coerceIn(4, 8)
+    private val semaphore = Semaphore(maxParallel)
 
     private var _pageCount = 0
     val pageCount: Int get() = _pageCount
-
     val isOpen: Boolean get() = masterFd != null
 
     suspend fun open(source: PdfSource) = withContext(Dispatchers.IO) {
@@ -44,19 +38,17 @@ class PdfDocumentManager(private val context: Context) : Closeable {
             val fd = resolver.resolve(source)
             masterFd = fd
             
-            // Create the first renderer to get page count
             val firstRenderer = PdfRenderer(fd)
             _pageCount = firstRenderer.pageCount
             rendererPool.offer(firstRenderer)
             
-            // Pre-warm additional renderers by duplicating the file descriptor
-            // This allows parallel access to the same file
-            repeat(MAX_PARALLEL_RENDERERS - 1) {
+            // Abrir el documento múltiples veces para permitir acceso multihilo real
+            repeat(maxParallel - 1) {
                 try {
                     val dupFd = ParcelFileDescriptor.dup(fd.fileDescriptor)
                     rendererPool.offer(PdfRenderer(dupFd))
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to dup FD for parallel rendering", e)
+                    Log.e(TAG, "Failed to dup FD for parallel rendering")
                 }
             }
         } catch (t: Throwable) {
@@ -65,18 +57,13 @@ class PdfDocumentManager(private val context: Context) : Closeable {
         }
     }
 
-    /**
-     * Executes a render action using an available renderer from the pool.
-     * This allows multiple tiles/pages to render in parallel.
-     */
     suspend fun <T> withPage(pageIndex: Int, action: (PdfRenderer.Page) -> T): T {
         return semaphore.withPermit {
-            val renderer = rendererPool.poll() ?: throw IllegalStateException("Renderer pool exhausted")
+            val renderer = rendererPool.poll() ?: throw IllegalStateException("No renderer")
             try {
-                withContext(Dispatchers.Default) { // Use Default for CPU-bound rendering
-                    renderer.openPage(pageIndex).use { page ->
-                        action(page)
-                    }
+                // Ejecutar en el pool de despacho nativo
+                renderer.openPage(pageIndex).use { page ->
+                    action(page)
                 }
             } finally {
                 rendererPool.offer(renderer)
@@ -85,9 +72,7 @@ class PdfDocumentManager(private val context: Context) : Closeable {
     }
 
     suspend fun getAllPageSizes(): List<Size> = withPage(0) { _ ->
-        // We use one renderer from the pool to iterate sizes. 
-        // This is metadata-heavy, so it's fast.
-        val renderer = rendererPool.peek() ?: throw IllegalStateException("No renderer available")
+        val renderer = rendererPool.peek() ?: throw IllegalStateException("No renderer")
         (0 until _pageCount).map { index ->
             renderer.openPage(index).use { Size(it.width, it.height) }
         }
