@@ -147,6 +147,7 @@ fun Modifier.pdfGestures(
     state: PdfViewerState,
     controller: PdfViewerController,
     config: ViewerConfig,
+    zoomAnimationSpec: AnimationSpec<Float> = spring(dampingRatio = 0.72f, stiffness = 420f),
     enabled: Boolean = true
 ): Modifier {
     val gs = rememberGestureState()
@@ -322,7 +323,8 @@ fun Modifier.pdfGestures(
                                     to = targetZoom,
                                     pivot = secondDown.position,
                                     onFrame = { z, p -> controller.onAnimatedZoomFrame(z, p) },
-                                    onEnd = { controller.onGestureEnd() }
+                                    onEnd = { controller.onGestureEnd() },
+                                    spec = zoomAnimationSpec
                                 )
 
                                 secondDown.consume() // Consume to prevent re-trigger

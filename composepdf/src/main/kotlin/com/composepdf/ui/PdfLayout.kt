@@ -3,6 +3,8 @@ package com.composepdf.ui
 import android.graphics.Bitmap
 import android.util.Size
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -38,6 +40,7 @@ import kotlin.math.roundToInt
  * @param config Viewer configuration (night mode, indicators, etc.).
  * @param modifier Layout modifier.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun PdfLayout(
     pageSizes: List<Size>,
@@ -88,6 +91,7 @@ internal fun PdfLayout(
                 state = state,
                 controller = controller,
                 config = config,
+                zoomAnimationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
                 enabled = state.isLoaded
             ),
         content = {
