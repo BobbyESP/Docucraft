@@ -3,15 +3,6 @@
     android:width="200dp"
     android:viewportHeight="1400"
     android:viewportWidth="1400">
-
-    <!--
-       He aumentado el viewport de 1000x1000 a 1400x1400.
-       Esto actúa como un "zoom out".
-
-       He añadido un grupo con translateX y translateY de 200
-       para recentrar el dibujo original en el nuevo lienzo más grande.
-       (1400 - 1000) / 2 = 200
-    -->
     <group
         android:translateX="200"
         android:translateY="200">
