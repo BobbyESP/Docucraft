@@ -167,7 +167,7 @@ internal fun ScanDocumentWidgetContent(
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
-                    provider = ImageProvider(R.drawable.docucraft_logo_clean),
+                    provider = ImageProvider(R.drawable.ic_foreground_splashscreen),
                     contentDescription = null,
                     modifier = GlanceModifier.size(48.dp),
                     colorFilter = ColorFilter.tint(GlanceTheme.colors.onPrimary),

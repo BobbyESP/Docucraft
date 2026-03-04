@@ -2,7 +2,9 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="app_background">#FFFDF0</color>
+
+    <color name="ic_foreground">#333333</color>
     <color name="ic_background">#FFFDF0</color>
-    <color name="app_logo">#333333</color>
+
+    <color name="widget_preview_background">#FFFDF0</color>
 </resources>
