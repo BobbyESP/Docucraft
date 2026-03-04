@@ -66,13 +66,18 @@ fun PdfViewer(
         config.copy(density = density.density)
     }
 
-    // Controller lifecycle: create once per (context, state, resolvedConfig).
-    // Use mutableStateOf so the value is observable but wrap it in remember so
-    // the reference is stable across recompositions with the same keys.
-    val controllerHolder = remember(context, state, resolvedConfig) {
-        mutableStateOf(PdfViewerController(context, state, resolvedConfig))
+    // Controller lifecycle: create once.
+    // We use 'context' and 'state' as keys. If they change, we get a new controller.
+    // Crucially, we do NOT include 'resolvedConfig' in the keys to avoid recreating
+    // the controller (and reloading the PDF) just because a config parameter changed.
+    val controller = remember(context, state) {
+        PdfViewerController(context, state, resolvedConfig)
     }
-    val controller = controllerHolder.value
+
+    // Update the controller's config whenever it changes.
+    LaunchedEffect(controller, resolvedConfig) {
+        controller.updateConfig(resolvedConfig)
+    }
 
     // Close the controller when the keys change (new instance was created above)
     // or when this composable leaves the composition entirely.
@@ -88,8 +93,7 @@ fun PdfViewer(
     val latestOnError by rememberUpdatedState(onError)
     val latestOnDocumentLoad by rememberUpdatedState(onDocumentLoad)
 
-    // Reload whenever the source changes; also re-runs if the controller
-    // is recreated (e.g. config change).
+    // Reload source when changed
     LaunchedEffect(source, controller) {
         controller.loadDocument(source)
     }
@@ -100,16 +104,6 @@ fun PdfViewer(
         if (state.pageCount > 0) latestOnDocumentLoad?.invoke(state.pageCount)
     }
 
-    // Diagnostic: log state transitions to help trace initialisation issues.
-    LaunchedEffect(state.isLoading, state.isLoaded, state.error) {
-        Log.d(
-            "PdfViewer",
-            "state: isLoading=${state.isLoading} isLoaded=${state.isLoaded} " +
-                    "pageCount=${state.pageCount} error=${state.error}"
-        )
-    }
-
-    // ── UI ────────────────────────────────────────────────────────────────────
     Box(
         modifier = modifier
             .fillMaxSize()

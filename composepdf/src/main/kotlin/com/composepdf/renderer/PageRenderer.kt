@@ -8,7 +8,6 @@ import android.graphics.Paint
 import android.graphics.pdf.PdfRenderer
 import android.util.Log
 import com.composepdf.cache.BitmapPool
-import com.composepdf.renderer.PageRenderer.Companion.MAX_BITMAP_PX
 import kotlin.math.min
 
 private const val TAG = "PdfPageRenderer"
@@ -21,13 +20,8 @@ private const val TAG = "PdfPageRenderer"
  *   bitmapWidth = clamp(viewportPx × zoom × quality, minPx, MAX_BITMAP_PX)
  *
  * The cap [MAX_BITMAP_PX] prevents OOM / "bitmap too large" crashes at high zoom.
- * Android's Canvas refuses to draw bitmaps larger than ~100 MP; we stay well below
- * that by capping width at 4096 px (≈ 4K horizontal resolution).
- *
- * At zoom = 1 the bitmap is `viewport × quality` pixels (e.g. 1080 × 1.5 = 1620 px
- * for a crisp rendering on a 1080 p screen).
- * At high zoom the bitmap grows proportionally but never exceeds the cap, so the
- * render is still sharp for the visible area while memory stays bounded.
+ * Android's Canvas refuses to draw bitmaps larger than a certain threshold (often 100MB or texture limits).
+ * We cap both dimensions to ensure the bitmap stays within safe limits while maintaining aspect ratio.
  */
 class PageRenderer(
     private val bitmapPool: BitmapPool
@@ -50,7 +44,7 @@ class PageRenderer(
      * @property zoomLevel        Current viewer zoom (1.0 = fit-width).
      * @property renderQuality    Base oversampling at zoom = 1 (1.5 = 50 % more pixels).
      *                            At higher zooms this is scaled down automatically so the
-     *                            bitmap never exceeds [MAX_BITMAP_PX] wide.
+     *                            bitmap never exceeds [MAX_BITMAP_PX].
      * @property viewportWidthPx  Viewport width in physical screen pixels.
      * @property nightMode        Invert colours for dark mode.
      * @property backgroundColor  Page background colour.
@@ -79,7 +73,7 @@ class PageRenderer(
         bitmap.eraseColor(config.backgroundColor)
         page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
 
-        return if (config.nightMode) applyNightMode(bitmap) else bitmap
+        return bitmap
     }
 
     fun calculateRenderSize(
@@ -91,17 +85,34 @@ class PageRenderer(
     // ── Private ───────────────────────────────────────────────────────────────
 
     private fun targetSize(pdfW: Int, pdfH: Int, config: RenderConfig): Pair<Int, Int> {
-        val baseW = if (config.viewportWidthPx > 0f) {
-            // Desired width = viewport × zoom × quality, capped at MAX_BITMAP_PX.
-            val desired = config.viewportWidthPx * config.zoomLevel * config.renderQuality
-            min(desired, MAX_BITMAP_PX.toFloat()).toInt().coerceAtLeast(1)
+        val aspectRatio = pdfH.toFloat() / pdfW.toFloat()
+
+        // 1. Determine desired width based on viewport and zoom
+        val desiredW = if (config.viewportWidthPx > 0f) {
+            config.viewportWidthPx * config.zoomLevel * config.renderQuality
         } else {
-            // Fallback for unit tests / zero viewport.
-            val desired = pdfW * config.zoomLevel * config.renderQuality
-            min(desired, MAX_BITMAP_PX.toFloat()).toInt().coerceAtLeast(1)
+            pdfW * config.zoomLevel * config.renderQuality
         }
-        val h = (baseW * pdfH.toFloat() / pdfW.toFloat()).toInt().coerceAtLeast(1)
-        return baseW to h
+
+        val desiredH = desiredW * aspectRatio
+
+        var finalW = desiredW
+        var finalH = desiredH
+
+        // 2. Cap dimensions while preserving aspect ratio.
+        // Capping both ensures we don't exceed Hardware Canvas limits (typically 4096 or 8192)
+        // or total byte size limits (e.g. 100MB).
+        if (finalW > MAX_BITMAP_PX) {
+            finalW = MAX_BITMAP_PX.toFloat()
+            finalH = finalW * aspectRatio
+        }
+
+        if (finalH > MAX_BITMAP_PX) {
+            finalH = MAX_BITMAP_PX.toFloat()
+            finalW = finalH / aspectRatio
+        }
+
+        return finalW.toInt().coerceAtLeast(1) to finalH.toInt().coerceAtLeast(1)
     }
 
     private fun applyNightMode(source: Bitmap): Bitmap {
@@ -114,17 +125,13 @@ class PageRenderer(
 
     companion object {
         /**
-         * Maximum bitmap width in pixels.
+         * Maximum bitmap dimension in pixels.
          *
-         * Android's Canvas hard-limit is ~100 MP total pixels. For a typical A4
-         * aspect ratio (1:√2) a 4096-px wide bitmap is ~23 MP — well within budget
-         * and sharp enough for any consumer display at any zoom level.
-         *
-         * Memory per bitmap at this size: 4096 × 5792 × 4 bytes ≈ 95 MB.
-         * In practice most pages are narrower than landscape A4 so memory is lower.
-         *
-         * Adjust down (e.g. 2048) if the target devices are memory-constrained.
+         * Android's Canvas has limits on bitmap size. A 4096x4096px ARGB_8888 bitmap
+         * takes 64MB, which is safe for most devices. Some devices/Android versions
+         * crash if a single draw operation exceeds 100MB or if a dimension exceeds
+         * the OpenGL texture limit (often 4096 or 8192).
          */
-        const val MAX_BITMAP_PX = 2048
+        const val MAX_BITMAP_PX = 4096
     }
 }

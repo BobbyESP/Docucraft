@@ -152,138 +152,191 @@ fun Modifier.pdfGestures(
     enabled: Boolean = true
 ): Modifier {
     val gs = rememberGestureState()
+    val viewConfiguration = androidx.compose.ui.platform.LocalViewConfiguration.current
 
     return this.pointerInput(enabled) {
         if (!enabled) return@pointerInput
 
         val doubleTapTimeout = viewConfiguration.doubleTapTimeoutMillis
         val touchSlop = viewConfiguration.touchSlop
-        val doubleTapRadius = touchSlop * 8f                 // generous for the second tap
+        val doubleTapRadius = 100f // Explicit radius for reliable detection
 
         awaitEachGesture {
-
             // ── 1. Wait for first finger down ─────────────────────────────
             val firstDown = awaitFirstDown(requireUnconsumed = false)
             val firstDownTime = System.currentTimeMillis()
             val firstDownPos = firstDown.position
 
+            // Stop any ongoing animation immediately
             gs.cancelAll()
             gs.reset()
             controller.onGestureStart()
 
             var zooming = false
             var pastSlop = false
-            var multiTouch = false
             var accPan = Offset.Zero
             var accZoom = 1f
 
+            // Track the primary pointer for velocity (scrolling)
+            var velocityTrackerId = firstDown.id
+            gs.velocityTracker.addPointerInputChange(firstDown)
+
             // ── 2. Main gesture loop ──────────────────────────────────────
             var event: PointerEvent
+            var canceled = false
+
             do {
                 event = awaitPointerEvent()
-                val nPressed = event.changes.count { it.pressed }
-                if (nPressed > 1) {
-                    multiTouch = true; zooming = true
+                val changes = event.changes
+                val changeCount = changes.size
+
+                // If the tracked pointer is lifted, pick another one
+                if (changes.none { it.id == velocityTrackerId && it.pressed }) {
+                     val newPrimary = changes.firstOrNull { it.pressed }
+                     if (newPrimary != null) {
+                         velocityTrackerId = newPrimary.id
+                         gs.velocityTracker.resetTracking() // Reset velocity on pointer switch
+                     }
                 }
 
-                if (!event.changes.any { it.isConsumed }) {
-                    val zoomDelta = event.calculateZoom()
-                    val panDelta = event.calculatePan()
-                    val centroid = event.calculateCentroid(useCurrent = false)
-
-                    // Accumulate for slop detection
-                    if (!pastSlop) {
-                        accZoom *= zoomDelta
-                        accPan += panDelta
-                        val panSq = accPan.x * accPan.x + accPan.y * accPan.y
-                        val zoomPx = kotlin.math.abs(1f - accZoom) * size.width
-                        if (panSq > touchSlop * touchSlop || zoomPx > touchSlop) pastSlop = true
-                    }
-
-                    if (pastSlop) {
-                        if (zoomDelta != 1f || panDelta != Offset.Zero) {
-                            controller.onGestureUpdate(zoomDelta, panDelta, centroid)
-                        }
-                        // Track velocity for the primary pointer
-                        event.changes.firstOrNull { it.pressed }?.let { ch ->
-                            if (ch.positionChanged()) gs.velocityTracker.addPointerInputChange(ch)
-                        }
-                        event.changes.forEach { it.consume() }
-                    }
+                // Check for multi-touch (zooming)
+                val pressedCount = changes.count { it.pressed }
+                if (pressedCount > 1) {
+                    zooming = true
                 }
 
-            } while (event.changes.any { it.pressed })
+                val zoomDelta = event.calculateZoom()
+                val panDelta = event.calculatePan()
+                val centroid = event.calculateCentroid(useCurrent = false)
 
-            // ── 3. Finger(s) lifted ───────────────────────────────────────
-            if (pastSlop) {
-                val vel = gs.velocityTracker.calculateVelocity()
-                val speedSq = vel.x * vel.x + vel.y * vel.y
-                val threshold = 1000f * 1000f     // 1000 px/s
+                if (!pastSlop) {
+                    accZoom *= zoomDelta
+                    accPan += panDelta
 
-                if (speedSq > threshold) {
-                    gs.fling(
-                        velocity = vel,
-                        onDelta = { delta ->
-                            controller.onGestureUpdate(1f, delta, Offset.Zero)
-                        },
-                        onEnd = { controller.onGestureEnd() }
-                    )
+                    val panDistSq = accPan.getDistanceSquared()
+                    val zoomDist = kotlin.math.abs(1f - accZoom)
+
+                    // Check if we exceeded slop
+                    if (panDistSq > touchSlop * touchSlop || zoomDist > 0.05f) {
+                        pastSlop = true
+                        // Apply the accumulated delta immediately so it doesn't jump
+                        controller.onGestureUpdate(accZoom, accPan, centroid)
+                    }
                 } else {
-                    controller.onGestureEnd()
+                    // Apply changes directly
+                    if (zoomDelta != 1f || panDelta != Offset.Zero) {
+                         controller.onGestureUpdate(zoomDelta, panDelta, centroid)
+                    }
                 }
-                return@awaitEachGesture
-            }
 
-            // ── 4. Not a drag — check for double-tap ──────────────────────
-            if (multiTouch) {
-                controller.onGestureEnd()
-                return@awaitEachGesture
-            }
+                // Track velocity
+                val trackedChange = changes.firstOrNull { it.id == velocityTrackerId }
+                if (trackedChange != null && trackedChange.positionChanged()) {
+                    gs.velocityTracker.addPointerInputChange(trackedChange)
+                }
 
-            val elapsed = System.currentTimeMillis() - firstDownTime
-            val remaining = (doubleTapTimeout - elapsed).coerceAtLeast(0L)
+                // Consume events if we are dragging/zooming to prevent other components from stealing
+                if (pastSlop) {
+                    changes.forEach {
+                        if (it.positionChanged()) it.consume()
+                    }
+                }
 
-            // awaitFirstDown correctly waits for the PRESS event of the second tap.
-            // The previous manual loop broke because it saw the RELEASE of the first
-            // tap and interpreted it as "no second tap found".
-            val secondDown = withTimeoutOrNull(remaining) {
-                awaitFirstDown(requireUnconsumed = false)
-            }
+                if (changes.all { !it.pressed }) {
+                    canceled = true
+                }
 
-            if (secondDown == null) {
-                controller.onGestureEnd()
-                return@awaitEachGesture
-            }
+            } while (!canceled && event.changes.any { it.pressed })
 
-            // Verify the second tap is close enough to count as a double-tap
-            if ((secondDown.position - firstDownPos).getDistance() > doubleTapRadius) {
-                controller.onGestureEnd()
-                return@awaitEachGesture
-            }
+            // ── 3. Gesture Finished ───────────────────────────────────────
 
-            val pivot = secondDown.position
+            if (pastSlop) {
+                // It was a drag/zoom
+                if (zooming) {
+                    // Zoom end - check if we need to snap or just stop
+                    controller.onGestureEnd()
+                } else {
+                    // Fling?
+                    val velocity = gs.velocityTracker.calculateVelocity()
+                    val maxVelocity = viewConfiguration.maximumFlingVelocity.toFloat()
+                    val minVelocity = viewConfiguration.minimumFlingVelocity.toFloat() // 50dp/s approx
 
-            // Double-tap on grey background — no zoom
-            if (!controller.isPointOverPage(pivot)) {
-                controller.onGestureEnd()
-                return@awaitEachGesture
-            }
+                    val velocityX = velocity.x.coerceIn(-maxVelocity, maxVelocity)
+                    val velocityY = velocity.y.coerceIn(-maxVelocity, maxVelocity)
+                    // Velocity no tiene .getDistance(), calculamos la magnitud manualmente
+                    val speed = kotlin.math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y)
 
-            secondDown.consume()
-
-            val targetZoom = if (state.zoom < config.doubleTapZoom * 0.9f) {
-                config.doubleTapZoom
+                    if (speed > minVelocity) {
+                         gs.fling(
+                            velocity = Velocity(velocityX, velocityY),
+                            onDelta = { delta -> controller.onGestureUpdate(1f, delta, Offset.Zero) },
+                            onEnd = { controller.onGestureEnd() }
+                        )
+                    } else {
+                        controller.onGestureEnd()
+                    }
+                }
             } else {
-                config.minZoom
-            }
+                // It was a tap (no movement > slop)
+                // Check for double tap
 
-            gs.animateZoom(
-                from = state.zoom,
-                to = targetZoom,
-                pivot = pivot,
-                onFrame = { z, p -> controller.onAnimatedZoomFrame(z, p) },
-                onEnd = { controller.onGestureEnd() }
-            )
+                val now = System.currentTimeMillis()
+                val elapsed = now - firstDownTime
+
+                // If tap was too long, it's not a double-tap candidate (it was a long press or hold)
+                if (elapsed > 300) {
+                     controller.onGestureEnd()
+                } else {
+                     // Wait for second tap
+                     val remainingTime = doubleTapTimeout - elapsed
+
+                     // Try to catch the second down event
+                     var secondDown: androidx.compose.ui.input.pointer.PointerInputChange? = null
+
+                     try {
+                         secondDown = withTimeoutOrNull(remainingTime) {
+                             awaitFirstDown(requireUnconsumed = false)
+                         }
+                     } catch (e: Exception) {
+                         // Ignore
+                     }
+
+                     if (secondDown != null) {
+                         // Second tap detected!
+                         val dist = (secondDown.position - firstDownPos).getDistance()
+
+                         if (dist <= doubleTapRadius) {
+                             // Valid double tap
+                             // Check if over page
+                              if (controller.isPointOverPage(secondDown.position)) {
+                                  val targetZoom = if (state.zoom < config.doubleTapZoom * 0.9f) {
+                                      config.doubleTapZoom
+                                  } else {
+                                      config.minZoom
+                                  }
+
+                                  gs.animateZoom(
+                                      from = state.zoom,
+                                      to = targetZoom,
+                                      pivot = secondDown.position,
+                                      onFrame = { z, p -> controller.onAnimatedZoomFrame(z, p) },
+                                      onEnd = { controller.onGestureEnd() }
+                                  )
+
+                                  secondDown.consume() // Consume to prevent re-trigger
+                              } else {
+                                  controller.onGestureEnd()
+                              }
+                         } else {
+                             // Too far away, treat as new gesture or ignore
+                             controller.onGestureEnd()
+                         }
+                     } else {
+                         // Timeout - Single tap confirmed
+                         controller.onGestureEnd()
+                     }
+                }
+            }
         }
     }
 }

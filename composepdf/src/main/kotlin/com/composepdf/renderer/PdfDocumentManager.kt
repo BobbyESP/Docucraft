@@ -62,17 +62,26 @@ class PdfDocumentManager(private val context: Context) : Closeable {
      */
     suspend fun open(source: PdfSource) = mutex.withLock {
         withContext(Dispatchers.IO) {
-            // Close any previously opened document
+            // Close any previously opened document to free resources
             closeInternal()
 
             // Resolve the source to a file descriptor
             val resolver = PdfSourceResolver(context)
+            // Assign resolver immediately so it can be closed if open fails
             sourceResolver = resolver
 
-            val fd = resolver.resolve(source)
-            fileDescriptor = fd
+            try {
+                val fd = resolver.resolve(source)
+                // Assign fd immediately so it can be closed if renderer creation fails
+                fileDescriptor = fd
 
-            renderer = PdfRenderer(fd)
+                renderer = PdfRenderer(fd)
+            } catch (t: Throwable) {
+                // If opening fails or is cancelled, ensure we clean up partial state
+                // (e.g. temporary files created by resolver, or open FD)
+                closeInternal()
+                throw t
+            }
         }
     }
 
@@ -151,13 +160,15 @@ class PdfDocumentManager(private val context: Context) : Closeable {
      * being released, avoiding resource leaks.
      */
     private fun closeInternal() {
+        // 1. Close renderer first (depends on FD)
         try {
             renderer?.close()
         } catch (e: Exception) {
-            // Ignore close errors
+            // Ignore close errors, usually strict mode or already closed
         }
         renderer = null
 
+        // 2. Close file descriptor (depends on file/stream)
         try {
             fileDescriptor?.close()
         } catch (e: Exception) {
@@ -165,6 +176,7 @@ class PdfDocumentManager(private val context: Context) : Closeable {
         }
         fileDescriptor = null
 
+        // 3. Close resolver (deletes temp files)
         try {
             sourceResolver?.close()
         } catch (e: Exception) {

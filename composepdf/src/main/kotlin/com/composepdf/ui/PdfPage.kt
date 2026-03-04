@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -53,6 +54,7 @@ internal fun PdfPage(
     showLoadingIndicator: Boolean,
     fitMode: FitMode = FitMode.WIDTH,
     widthFraction: Float = 1f,
+    colorFilter: ColorFilter? = null, // Add colorFilter parameter
     modifier: Modifier = Modifier
 ) {
     // Build the sizing modifier based on the active FitMode.
@@ -87,16 +89,15 @@ internal fun PdfPage(
             .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
-        if (bitmap != null && !bitmap.isRecycled) {
-            val imageBitmap = remember(bitmap) { bitmap.asImageBitmap() }
-
+        if (bitmap != null) {
             Image(
-                bitmap = imageBitmap,
-                contentDescription = "PDF page ${pageIndex + 1}",
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = null, // Page content is decorative or handled by specialized readers
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit
+                contentScale = ContentScale.Fit,
+                colorFilter = colorFilter // Apply the color filter here
             )
-        } else if (isLoading && showLoadingIndicator) {
+        } else if (showLoadingIndicator) {
             CircularWavyProgressIndicator(
                 modifier = Modifier.size(48.dp),
                 color = MaterialTheme.colorScheme.primary,
@@ -130,7 +131,3 @@ internal fun PagePlaceholder(
         )
     }
 }
-
-
-
-

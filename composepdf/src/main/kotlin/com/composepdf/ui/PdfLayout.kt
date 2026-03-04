@@ -3,15 +3,13 @@ package com.composepdf.ui
 import android.graphics.Bitmap
 import android.util.Size
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Constraints
 import com.composepdf.gesture.pdfGestures
@@ -19,26 +17,20 @@ import com.composepdf.state.PdfViewerController
 import com.composepdf.state.PdfViewerState
 import com.composepdf.state.ViewerConfig
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.roundToInt
 
 /**
  * Core layout for the PDF viewer.
  *
- * ## Positioning strategy
+ * ## Architecture
+ * Uses a custom [Layout] to position pages absolutely based on the [PdfViewerController]'s geometry model.
+ * This ensures pixel-perfect positioning without accumulation errors and efficient culling.
  *
- * A single [Layout] composable contains ALL visible pages as children.
- * The Layout:
- *   1. Measures every child at its exact pixel size (screenW × screenH).
- *   2. Places each child at its exact screen position (screenX, screenY).
- *   3. Reports its own size as the viewport size so the parent Box knows
- *      how much space is used.
- *
- * This is the only correct way to position children at absolute pixel positions
- * inside a Compose layout tree:
- *   - No Dp/pixel conversion errors (unlike absoluteOffset + width/height in Dp).
- *   - Placement affects BOTH drawing AND hit-testing (unlike graphicsLayer translation).
- *   - A single Layout means no inter-child rounding accumulation (unlike one Layout per page).
+ * ## Performance Optimizations
+ * 1. **Virtual Rendering**: Only composed pages are measured and placed.
+ * 2. **Stable Keys**: Uses `key(pageIndex)` to ensure Compose recycles nodes efficiently.
+ * 3. **Smart Re-render**: Triggers high-quality renders only when gestures settle.
+ * 4. **No Recomposition on Zoom**: Layout phase handles zoom scaling; composition phase only runs when visible pages change.
  */
 @Composable
 internal fun PdfLayout(
@@ -49,24 +41,41 @@ internal fun PdfLayout(
     config: ViewerConfig,
     modifier: Modifier = Modifier
 ) {
-    val visibleRange by remember(state, controller) {
+    // 1. Observe visible pages derived from controller state
+    // Using derivedStateOf ensures we only recompose when the SET of visible pages changes
+    val visiblePages by remember(controller) {
         derivedStateOf { controller.visiblePageIndices() }
     }
 
-    // Request renders whenever the visible page range changes.
-    // No debounce, no gesture-active guard — the controller and scheduler
-    // handle deduplication internally (in-flight jobs are not relaunched).
+    // 2. Trigger Rendering
     LaunchedEffect(controller) {
-        snapshotFlow { controller.visiblePageIndices() }
-            .distinctUntilChanged()
-            .collectLatest { controller.requestRenderForVisiblePages() }
+        snapshotFlow {
+            // Re-evaluate render needs when:
+            // - Visible pages change (scroll)
+            // - Gesture ends (zoom/pan finished -> high quality render)
+            Triple(controller.visiblePageIndices(), state.isGestureActive, state.zoom)
+        }.collectLatest { (visible, gestureActive, _) ->
+            // Always request render updates for visibility changes.
+            // When gesture ends (!gestureActive), this ensures we get a final sharp render.
+            controller.requestRenderForVisiblePages()
+        }
     }
 
-    // Pre-compute the indices list outside the Layout lambda so it's stable.
-    val visibleIndices = remember(visibleRange, pageSizes) {
-        visibleRange.filter { it in pageSizes.indices }
+    // 3. Prepare expensive objects (ColorFilter) once
+    val colorFilter = remember(config.isNightModeEnabled) {
+        if (config.isNightModeEnabled) {
+            ColorFilter.colorMatrix(androidx.compose.ui.graphics.ColorMatrix(
+                floatArrayOf(
+                    -1f, 0f, 0f, 0f, 255f,
+                    0f, -1f, 0f, 0f, 255f,
+                    0f, 0f, -1f, 0f, 255f,
+                    0f, 0f, 0f, 1f, 0f
+                )
+            ))
+        } else null
     }
 
+    // 4. Custom Layout
     Layout(
         modifier = modifier
             .fillMaxSize()
@@ -81,60 +90,69 @@ internal fun PdfLayout(
                 enabled = state.isLoaded
             ),
         content = {
-            val vpWidth = controller.viewportWidth
-            if (vpWidth > 0f && pageSizes.isNotEmpty()) {
-                for (index in visibleIndices) {
-                    val s = pageSizes[index]
-                    PdfPage(
-                        bitmap = renderedPages[index],
-                        pageIndex = index,
-                        aspectRatio = s.width.toFloat() / s.height.toFloat(),
-                        isLoading = renderedPages[index] == null,
-                        showLoadingIndicator = config.isLoadingIndicatorVisible,
-                        modifier = Modifier.fillMaxSize()
-                    )
+            // Emit only visible pages
+            for (index in visiblePages) {
+                // Key is crucial for efficient recycling of Composable nodes
+                key(index) {
+                    val size = pageSizes.getOrNull(index)
+                    if (size != null) {
+                        PdfPage(
+                            bitmap = renderedPages[index],
+                            pageIndex = index,
+                            aspectRatio = size.width.toFloat() / size.height.toFloat(),
+                            isLoading = renderedPages[index] == null,
+                            showLoadingIndicator = config.isLoadingIndicatorVisible,
+                            fitMode = config.fitMode,
+                            colorFilter = colorFilter,
+                            // Identify this child by its page index for the MeasurePolicy
+                            modifier = Modifier.layoutId(index).fillMaxSize()
+                        )
+                    }
                 }
             }
         }
     ) { measurables, constraints ->
+        // MEASURE PHASE
+        // This runs on every frame during gestures (zoom/pan) because state.zoom/pan are read here.
+        // It's highly optimized: no recomposition, just measurement and placement.
+
         val vpWidth = controller.viewportWidth
 
-        // Viewport dimensions in px — use constraints as fallback before first onSizeChanged
-        val vpW = if (vpWidth > 0f) vpWidth.roundToInt() else constraints.maxWidth
-        val vpH = constraints.maxHeight
+        // Fallback if viewport not yet measured (first frame)
+        val layoutWidth = if (vpWidth > 0f) vpWidth.roundToInt() else constraints.maxWidth
+        val layoutHeight = constraints.maxHeight
 
-        if (vpW == 0 || pageSizes.isEmpty() || measurables.isEmpty()) {
-            return@Layout layout(vpW.coerceAtLeast(1), vpH.coerceAtLeast(1)) {}
+        if (measurables.isEmpty() || vpWidth <= 0f) {
+            return@Layout layout(layoutWidth, layoutHeight) {}
         }
 
-        // Measure and position each page
-        val placeables = measurables.mapIndexed { localIdx, measurable ->
-            val pageIndex = visibleIndices.getOrElse(localIdx) { return@Layout layout(vpW, vpH) {} }
+        val currentZoom = state.zoom
+        val panX = state.panX
+        val panY = state.panY
 
-            val docHeight = controller.pageHeightPx(pageIndex)
-            val docTopY = controller.pageTopDocY(pageIndex)
+        layout(layoutWidth, layoutHeight) {
+            measurables.forEach { measurable ->
+                // Identify which page this measurable belongs to
+                val pageIndex = measurable.layoutId as? Int ?: return@forEach
 
-            val screenW = (vpWidth * state.zoom).roundToInt().coerceAtLeast(1)
-            val screenH = (docHeight * state.zoom).roundToInt().coerceAtLeast(1)
+                // Determine precise layout geometry using controller's cached calculations
+                val docTopY = controller.pageTopDocY(pageIndex)
+                val docHeight = controller.pageHeightPx(pageIndex)
 
-            // panX is the left-edge offset of the page in screen pixels.
-            // clampPan() ensures it is always within valid bounds:
-            //   zoom = 1: panX = (vpW - scaledW) / 2  → page centred
-            //   zoom > 1: panX ∈ [-(scaledW - vpW), 0] → full horizontal scroll range
-            val screenX = state.panX.roundToInt()
-            val screenY = (docTopY * state.zoom + state.panY).roundToInt()
+                // Convert document coordinates to screen pixels
+                // screenY = (docY * zoom) + panY
+                val screenW = (vpWidth * currentZoom).roundToInt().coerceAtLeast(1)
+                val screenH = (docHeight * currentZoom).roundToInt().coerceAtLeast(1)
 
-            Triple(
-                measurable.measure(Constraints.fixed(screenW, screenH)),
-                screenX,
-                screenY
-            )
-        }
+                val x = panX.roundToInt()
+                val y = (docTopY * currentZoom + panY).roundToInt()
 
-        layout(vpW, vpH) {
-            for ((placeable, x, y) in placeables) {
+                // Measure and Place
+                // We dictate the exact size (Constraint.fixed) so child fills it
+                val placeable = measurable.measure(Constraints.fixed(screenW, screenH))
                 placeable.place(x, y)
             }
         }
     }
 }
+

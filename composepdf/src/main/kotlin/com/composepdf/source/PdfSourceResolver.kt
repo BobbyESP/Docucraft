@@ -20,7 +20,7 @@ import java.io.FileOutputStream
  */
 class PdfSourceResolver(private val context: Context) : Closeable {
 
-    private var tempFile: File? = null
+    private var createdTempFile: File? = null
 
     /**
      * Resolves the given [PdfSource] to a [ParcelFileDescriptor].
@@ -99,17 +99,19 @@ class PdfSourceResolver(private val context: Context) : Closeable {
         onStateChange: (com.composepdf.remote.RemotePdfState) -> Unit = {}
     ): ParcelFileDescriptor = withContext(Dispatchers.IO) {
         val loader = com.composepdf.remote.RemotePdfLoader(context)
+        var targetFile: File? = null
 
         loader.load(source).collect { state ->
             onStateChange(state)
 
             if (state is com.composepdf.remote.RemotePdfState.Cached) {
-                // Cache the file reference for cleanup
-                tempFile = state.file
+                targetFile = state.file
+                // Do NOT assign to createdTempFile, as that would cause it to be deleted on close().
+                // Cached files are managed by DiskCacheManager.
             }
         }
 
-        val cachedFile = tempFile
+        val cachedFile = targetFile
             ?: throw IllegalStateException("Remote PDF loading did not produce a cached file")
 
         ParcelFileDescriptor.open(cachedFile, ParcelFileDescriptor.MODE_READ_ONLY)
@@ -117,15 +119,16 @@ class PdfSourceResolver(private val context: Context) : Closeable {
 
     private fun createTempFile(): File {
         return File.createTempFile("pdf_", ".pdf", context.cacheDir).also {
-            tempFile = it
+            createdTempFile = it
         }
     }
 
     /**
-     * Cleans up any temporary files created during resolution.
+     * Cleans up any *temporary* files created during resolution (e.g. from streams/assets).
+     * Does NOT delete files from the persistent remote cache.
      */
     override fun close() {
-        tempFile?.delete()
-        tempFile = null
+        createdTempFile?.delete()
+        createdTempFile = null
     }
 }

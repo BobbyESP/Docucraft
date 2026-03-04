@@ -44,24 +44,27 @@ private const val TAG = "PdfViewerController"
  *
  * @param context  Android [Context] needed for file/asset resolution.
  * @param state    Hoisted UI state — every write triggers Compose recomposition.
- * @param config   Immutable viewer configuration (zoom limits, quality, spacing…).
+ * @param initialConfig   Immutable viewer configuration (zoom limits, quality, spacing…).
  */
 @Stable
 class PdfViewerController(
-    private val context: Context,
-    private val state: PdfViewerState,
-    private val config: ViewerConfig
+    val context: Context,
+    val state: PdfViewerState,
+    initialConfig: ViewerConfig = ViewerConfig(),
+    val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob()),
+    private val bitmapPool: BitmapPool = BitmapPool(),
+    private val bitmapCache: BitmapCache = BitmapCache()
 ) : Closeable {
 
     /**
-     * All coroutines run on Main.immediate so that:
-     * 1. State writes are always on the main thread → no Compose thread-safety issues.
-     * 2. [RenderScheduler]'s job-map is accessed from a single thread → no mutex needed.
+     * Helper constructor for Java or simple usage where creating pool/scope externally isn't needed.
      */
-    private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+    constructor(context: Context, state: PdfViewerState, config: ViewerConfig) : this(
+        context = context,
+        state = state,
+        initialConfig = config
+    )
 
-    private val bitmapPool    = BitmapPool()
-    private val bitmapCache   = BitmapCache(bitmapPool = bitmapPool)
     private val documentManager = PdfDocumentManager(context)
     private val pageRenderer  = PageRenderer(bitmapPool)
     private val renderScheduler = RenderScheduler(documentManager, pageRenderer, bitmapCache)
@@ -69,8 +72,34 @@ class PdfViewerController(
     /** Rendered bitmaps keyed by page index. Observed by [com.composepdf.PdfViewer]. */
     val renderedPages: StateFlow<Map<Int, Bitmap>> = renderScheduler.renderedPages
 
+    var config by mutableStateOf(initialConfig)
+        private set
+
     init {
         renderScheduler.prefetchWindow = config.prefetchDistance
+    }
+
+    /**
+     * Updates the viewer configuration dynamically.
+     * Triggers re-renders if necessary properties change.
+     */
+    fun updateConfig(newConfig: ViewerConfig) {
+        if (config == newConfig) return
+
+        val oldConfig = config
+        config = newConfig
+
+        // Update scheduler if prefetch changed
+        if (oldConfig.prefetchDistance != newConfig.prefetchDistance) {
+            renderScheduler.prefetchWindow = newConfig.prefetchDistance
+        }
+
+        // If render quality or other visual props changed, re-render
+        if (oldConfig.renderQuality != newConfig.renderQuality ||
+            oldConfig.isNightModeEnabled != newConfig.isNightModeEnabled) { // Night mode affects UI but might trigger invalidation logic? No, just UI filter.
+            // But if quality changes we MUST re-render
+            requestRenderForVisiblePages()
+        }
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -130,17 +159,20 @@ class PdfViewerController(
     private var totalDocHeight = 0f
 
     /**
-     * Rebuilds [pageTops], [pageHeights], and [totalDocHeight] from the current
-     * [pageSizes] and [viewportWidth].
-     *
-     * Must be called whenever [pageSizes] or [viewportWidth] changes.
-     * O(n) in page count; typically a few microseconds.
+     * Version counter for layout geometry. Incremented whenever [pageTops] is rebuilt.
+     * Used to force [derivedStateOf] invalidation in observers.
+     */
+    private var layoutVersion by mutableIntStateOf(0)
+
+    /**
+     * Rebuilds geometry cache from current page sizes and viewport width.
      */
     private fun rebuildPageLayoutCache() {
         if (pageSizes.isEmpty() || viewportWidth == 0f) {
             pageTops    = FloatArray(0)
             pageHeights = FloatArray(0)
             totalDocHeight = 0f
+            layoutVersion++
             return
         }
 
@@ -161,6 +193,7 @@ class PdfViewerController(
         }
 
         totalDocHeight = (y - spacing).coerceAtLeast(0f)
+        layoutVersion++
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -266,6 +299,8 @@ class PdfViewerController(
      * then binary-searches [pageTops] for the first and last intersecting pages.
      */
     fun visiblePageIndices(): IntRange {
+        // Read layoutVersion to ensure dependency on geometry updates
+        val version = layoutVersion
         if (pageTops.isEmpty() || viewportHeight <= 0f) return IntRange.EMPTY
 
         val margin    = config.pageSpacingPx * 0.5f
@@ -434,23 +469,13 @@ class PdfViewerController(
      */
     fun requestRenderForVisiblePages() {
         if (!documentManager.isOpen || pageTops.isEmpty() || pageSizes.isEmpty()) {
-            Log.w(
-                TAG,
-                "requestRenderForVisiblePages: skipping — " +
-                        "isOpen=${documentManager.isOpen} " +
-                        "pageTops=${pageTops.size} pageSizes=${pageSizes.size}"
-            )
             return
         }
 
         val visible = visiblePageIndices()
         if (visible.isEmpty()) {
-            Log.w(TAG, "requestRenderForVisiblePages: visiblePageIndices is EMPTY — " +
-                    "panY=${state.panY} zoom=${state.zoom} vpH=$viewportHeight")
             return
         }
-
-        Log.d(TAG, "requestRenderForVisiblePages: visible=$visible zoom=${state.zoom}")
 
         renderScheduler.requestRender(
             visiblePages = visible,
@@ -458,7 +483,8 @@ class PdfViewerController(
                 zoomLevel        = state.zoom,
                 renderQuality    = config.renderQuality,
                 viewportWidthPx  = viewportWidth,
-                nightMode        = config.isNightModeEnabled
+                // Night mode is applied at Composable level via ColorFilter, so we always render normal (white bg)
+                backgroundColor  = android.graphics.Color.WHITE
             ),
             pageSizes = pageSizes
         )
@@ -515,4 +541,3 @@ class PdfViewerController(
         bitmapCache.clear()
     }
 }
-
