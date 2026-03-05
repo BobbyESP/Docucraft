@@ -303,6 +303,7 @@ class PdfViewerController(
     }
 
     private var gestureJob: Job? = null
+    private var animatedZoomJob: Job? = null
 
     /** Handles zoom and pan updates, with a small debounce to optimize rendering. */
     fun onGestureUpdate(zoomChange: Float, panDelta: Offset, pivot: Offset) {
@@ -329,6 +330,16 @@ class PdfViewerController(
 
     /**
      * Updates zoom and pan absolute values during an animation frame.
+     *
+     * Unlike [onGestureUpdate], this method intentionally avoids calling the full
+     * [requestRenderForVisiblePages] on every frame. A double-tap zoom animation can span
+     * 60+ frames; triggering tile pruning (string splitting over every cached key),
+     * tile requesting, and [RenderScheduler.requestRender] on each frame defeats the purpose
+     * of debouncing and creates significant overhead.
+     *
+     * Instead, the full render (including high-res tiles) is debounced and fires once the
+     * animation settles. Base-page renders are deliberately skipped per-frame as well —
+     * the existing bitmaps remain visible and avoid flickering during the transition.
      */
     fun onAnimatedZoomFrame(targetZoom: Float, pivot: Offset) {
         val oldZoom = state.zoom
@@ -342,8 +353,13 @@ class PdfViewerController(
         clampPan()
         updateCurrentPageFromViewport()
 
-        // We trigger render update for each frame of animation to keep quality as high as possible
-        requestRenderForVisiblePages()
+        // Debounce the expensive full render (tile pruning + tile requesting) so it only
+        // fires once the animation has settled, not on every individual frame.
+        animatedZoomJob?.cancel()
+        animatedZoomJob = scope.launch {
+            delay(120)
+            requestRenderForVisiblePages()
+        }
     }
 
     // --- Rendering Orchestration ---
@@ -384,17 +400,28 @@ class PdfViewerController(
     }
 
     /**
-     * Calculates and requests high-res tiles for the visible area.
-     * Uses sqrt(2) stepping for zoom to optimize cache hits.
+     * Calculates and requests high-resolution tiles for the portion of the document currently
+     * visible in the viewport.
+     *
+     * This method implements several optimizations to ensure smooth performance:
+     * 1. **Zoom Stepping**: Uses a `sqrt(2)` base (approx. 1.41x increments) for the internal
+     *    rendering zoom. This rounds the actual zoom level to stable "steps," significantly
+     *    increasing cache hits and preventing redundant rendering when performing minor zooms.
+     * 2. **View-Port Clipping**: Only generates tile requests for the intersection of the
+     *    current viewport and the physical page boundaries.
+     * 3. **Prioritization**: Requests are sorted by their distance to the viewport center,
+     *    ensuring the tiles directly in front of the user's eyes are rendered first.
+     * 4. **Job Pruning**: Cancels any pending tile render tasks that are no longer within
+     *    the current visible bounds.
      */
     private fun requestTilesForVisibleArea() {
         val visible = visiblePageIndices(); if (visible.isEmpty()) return
         val zoom = state.zoom
 
-        // Use sqrt(2) based stepping (approx 1.41x) for stable tile rendering
         val base = 1.25f
         val ratio = sqrt(2.0)
         val step = floor(ln(zoom.toDouble() / base) / ln(ratio)).toInt().coerceAtLeast(0)
+
         val steppedZoom =
             (base * ratio.pow(step.toDouble())).toFloat().let { (it * 100).roundToInt() / 100f }
 

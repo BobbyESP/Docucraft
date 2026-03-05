@@ -16,6 +16,7 @@ import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import java.io.Closeable
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicInteger
 
 private const val TAG = "PdfDocumentManager"
 
@@ -31,17 +32,22 @@ class PdfDocumentManager(private val context: Context) : Closeable {
     private var masterFd: ParcelFileDescriptor? = null
     private var sourceResolver: PdfSourceResolver? = null
     private val rendererPool = ConcurrentLinkedQueue<PdfRenderer>()
-    @Volatile private var isClosing = false
 
-    // Limits the number of parallel renderers based on CPU cores.
     private val maxParallelRenderers = (Runtime.getRuntime().availableProcessors() - 1).coerceIn(2, 8)
-    private var semaphore = Semaphore(1) // Default to 1, updated after opening document
+    private var semaphore = Semaphore(1)
+    private var currentPermits = 1
+
+    /**
+     * Incremented on every close cycle. [withPage] captures the generation before acquiring
+     * the permit and discards the renderer on return if the generation changed, preventing
+     * zombie renderers from leaking into a new session.
+     */
+    private val generation = AtomicInteger(0)
 
     private var _pageCount = 0
     val pageCount: Int get() = _pageCount
     val isOpen: Boolean get() = masterFd != null
 
-    /** Opens the PDF document and initializes the renderer pool. */
     suspend fun open(source: PdfSource) = withContext(Dispatchers.IO) {
         closeInternal()
         val resolver = PdfSourceResolver(context)
@@ -49,14 +55,12 @@ class PdfDocumentManager(private val context: Context) : Closeable {
         try {
             val fd = resolver.resolve(source)
             masterFd = fd
-            isClosing = false
 
             val firstRenderer = PdfRenderer(fd)
             _pageCount = firstRenderer.pageCount
             rendererPool.offer(firstRenderer)
 
             var actualRenderers = 1
-            // Duplicate FD to allow real multi-threaded access
             repeat(maxParallelRenderers - 1) {
                 try {
                     val dupFd = ParcelFileDescriptor.dup(fd.fileDescriptor)
@@ -66,67 +70,89 @@ class PdfDocumentManager(private val context: Context) : Closeable {
                     Log.e(TAG, "Failed to dup FD for parallel rendering: ${e.message}")
                 }
             }
-            // Update semaphore to match the number of successfully created renderers
             semaphore = Semaphore(actualRenderers)
+            currentPermits = actualRenderers
         } catch (t: Throwable) {
             closeInternal()
             throw t
         }
     }
 
-    /** Executes an action on a specific page using an available renderer from the pool. */
     suspend fun <T> withPage(pageIndex: Int, action: (PdfRenderer.Page) -> T): T {
-        if (isClosing) throw IllegalStateException("PdfDocumentManager is closing")
+        val capturedGeneration = generation.get()
         return semaphore.withPermit {
             val renderer =
                 rendererPool.poll() ?: throw IllegalStateException("PDF Renderer pool exhausted")
             try {
-                renderer.openPage(pageIndex).use { page ->
-                    action(page)
-                }
+                renderer.openPage(pageIndex).use { page -> action(page) }
             } finally {
-                rendererPool.offer(renderer)
+                if (generation.get() == capturedGeneration) {
+                    rendererPool.offer(renderer)
+                } else {
+                    try { renderer.close() } catch (e: Exception) {
+                        Log.e(TAG, "Failed to close stale renderer: ${e.message}")
+                    }
+                }
             }
         }
     }
 
-    /** Retrieves the dimensions of all pages in the document. */
     suspend fun getAllPageSizes(): List<Size> = coroutineScope {
         (0 until _pageCount).map { index ->
             async(Dispatchers.IO) {
-                withPage(index) { page ->
-                    Size(page.width, page.height)
-                }
+                withPage(index) { page -> Size(page.width, page.height) }
             }
         }.awaitAll()
     }
 
-    override fun close() = closeInternal()
+    /**
+     * Synchronous close (Closeable). Bumps the generation so in-flight [withPage] calls
+     * discard their renderer instead of returning it to the pool.
+     */
+    override fun close() {
+        generation.incrementAndGet()
+        drainAndClosePool()
+        closeFdAndResolver()
+        _pageCount = 0
+        currentPermits = 1
+        semaphore = Semaphore(1)
+    }
 
-    private fun closeInternal() {
-        isClosing = true
+    /**
+     * Suspend-safe close. Acquires all semaphore permits first — suspending, not blocking —
+     * so every in-flight [withPage] has finished and returned its renderer to the pool
+     * before we drain it. Generation is bumped after acquiring to ensure the pool is full.
+     */
+    private suspend fun closeInternal() {
+        val permitsToAcquire = currentPermits
+        repeat(permitsToAcquire) { semaphore.acquire() }
+        generation.incrementAndGet()
+        drainAndClosePool()
+        closeFdAndResolver()
+        _pageCount = 0
+        currentPermits = 1
+        semaphore = Semaphore(1)
+    }
+
+    private fun drainAndClosePool() {
         while (true) {
             val renderer = rendererPool.poll() ?: break
-            try {
-                renderer.close()
-            } catch (e: Exception) {
+            try { renderer.close() } catch (e: Exception) {
                 Log.e(TAG, "Failed to close renderer: ${e.message}")
             }
         }
+    }
 
-        try {
-            masterFd?.close()
-        } catch (e: Exception) {
+    private fun closeFdAndResolver() {
+        try { masterFd?.close() } catch (e: Exception) {
             Log.e(TAG, "Failed to close master FD: ${e.message}")
         }
         masterFd = null
-        try {
-            sourceResolver?.close()
-        } catch (e: Exception) {
+        try { sourceResolver?.close() } catch (e: Exception) {
             Log.e(TAG, "Failed to close source resolver: ${e.message}")
         }
         sourceResolver = null
-        _pageCount = 0
-        semaphore = Semaphore(1)
     }
 }
+
+

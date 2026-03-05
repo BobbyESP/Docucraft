@@ -2,10 +2,10 @@ package com.composepdf.cache
 
 import android.graphics.Bitmap
 import android.util.Log
+import androidx.core.graphics.createBitmap
 import java.util.ArrayDeque
 import java.util.NavigableMap
 import java.util.TreeMap
-import androidx.core.graphics.createBitmap
 
 private const val TAG = "BitmapPool"
 
@@ -33,8 +33,17 @@ class BitmapPool(
      */
     @Synchronized
     fun get(width: Int, height: Int, config: Bitmap.Config = Bitmap.Config.ARGB_8888): Bitmap {
-        // Calculate required size. For ARGB_8888, it's w * h * 4.
-        val targetSizeBytes = width * height * 4
+        // Calculate required size based on the requested bitmap configuration.
+        val bytesPerPixel = when (config) {
+            Bitmap.Config.ALPHA_8 -> 1
+
+            Bitmap.Config.RGB_565,
+            Bitmap.Config.ARGB_4444 -> 2
+
+            Bitmap.Config.ARGB_8888 -> 4
+            else -> throw UnsupportedOperationException("Unsupported config: $config")
+        }
+        val targetSizeBytes = width * height * bytesPerPixel
 
         // Find a bitmap that is at least as large as we need.
         // ceilingEntry returns the mapping with the least key greater than or equal to current.

@@ -11,6 +11,7 @@ import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -46,34 +47,42 @@ internal fun PdfPage(
         contentAlignment = Alignment.Center
     ) {
         if (bitmap != null) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                // Read state within DrawScope to avoid unnecessary recompositions
-                val zoom = state.zoom
-                val tiles = state.getAllTiles()
-                val revision = state.tileRevision // Triggers redraw when new tiles arrive
+            val baseImageBitmap = remember(bitmap) { bitmap.asImageBitmap() }
 
-                // 1. Draw base low-res layer
+            // Read tileRevision so Compose schedules a redraw
+            // when new tiles arrive.
+            val tiles = state.run {
+                tileRevision
+                getAllImageBitmapTiles()
+            }
+
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val zoom = state.zoom
+
                 drawImage(
-                    image = bitmap.asImageBitmap(),
+                    image = baseImageBitmap,
                     dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
                     colorFilter = colorFilter
                 )
 
-                // 2. Draw high-res tiles with dynamic scaling
-                tiles.forEach { (key, tileBitmap) ->
+                tiles.forEach { (key, tileImageBitmap) ->
                     if (key.startsWith("${pageIndex}_")) {
                         val parts = key.split("_")
                         if (parts.size >= 6) {
-                            val tileL = parts[1].toInt()
-                            val tileT = parts[2].toInt()
-                            val tileR = parts[3].toInt()
-                            val tileB = parts[4].toInt()
-                            val tileZoom = parts[5].toFloat()
+                            val tileL = parts[1].toIntOrNull()
+                            val tileT = parts[2].toIntOrNull()
+                            val tileR = parts[3].toIntOrNull()
+                            val tileB = parts[4].toIntOrNull()
+                            val tileZoom = parts[5].toFloatOrNull()
+
+                            if (tileL == null || tileT == null || tileR == null || tileB == null || tileZoom == null) {
+                                return@forEach
+                            }
 
                             val scale = zoom / tileZoom
 
                             drawImage(
-                                image = tileBitmap.asImageBitmap(),
+                                image = tileImageBitmap,
                                 dstOffset = IntOffset(
                                     (tileL * scale).roundToInt(),
                                     (tileT * scale).roundToInt()
