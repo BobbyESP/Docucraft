@@ -92,17 +92,24 @@ class PdfViewerState(
     var tileRevision by mutableIntStateOf(0)
         private set
 
+    /**
+     * Cached snapshot of all tiles. Rebuilt only when the cache is mutated,
+     * avoiding a full [LruCache.snapshot] copy on every draw frame.
+     */
+    private var _tilesSnapshot: Map<String, Bitmap> = emptyMap()
+
     /** Retrieves a tile from the cache. */
     fun getTile(key: String): Bitmap? = tileCache.get(key)
 
     /** Stores a rendered tile and triggers UI update. */
     fun putTile(key: String, bitmap: Bitmap) {
         tileCache.put(key, bitmap)
+        _tilesSnapshot = tileCache.snapshot()
         tileRevision++
     }
 
-    /** Returns a snapshot of all currently cached tiles. */
-    fun getAllTiles(): Map<String, Bitmap> = tileCache.snapshot()
+    /** Returns the cached snapshot of all currently cached tiles. */
+    fun getAllTiles(): Map<String, Bitmap> = _tilesSnapshot
 
     /**
      * Removes tiles that match the given predicate.
@@ -117,12 +124,16 @@ class PdfViewerState(
                 changed = true
             }
         }
-        if (changed) tileRevision++
+        if (changed) {
+            _tilesSnapshot = tileCache.snapshot()
+            tileRevision++
+        }
     }
 
     /** Clears all high-resolution tiles. */
     fun clearTiles() {
         tileCache.evictAll()
+        _tilesSnapshot = emptyMap()
         tileRevision++
     }
 
@@ -271,7 +282,8 @@ class PdfViewerState(
      */
     @Suppress("unused")
     fun setFitMode(fitMode: FitMode) {
-        controller?.updateConfig(controller!!.config.copy(fitMode = fitMode))
+        val ctrl = controller ?: return
+        ctrl.updateConfig(ctrl.config.copy(fitMode = fitMode))
     }
 
     /**
@@ -283,7 +295,8 @@ class PdfViewerState(
      */
     @Suppress("unused")
     fun setScrollDirection(direction: ScrollDirection) {
-        controller?.updateConfig(controller!!.config.copy(scrollDirection = direction))
+        val ctrl = controller ?: return
+        ctrl.updateConfig(ctrl.config.copy(scrollDirection = direction))
     }
 
     /**
@@ -291,7 +304,8 @@ class PdfViewerState(
      */
     @Suppress("unused")
     fun setNightMode(enabled: Boolean) {
-        controller?.updateConfig(controller!!.config.copy(isNightModeEnabled = enabled))
+        val ctrl = controller ?: return
+        ctrl.updateConfig(ctrl.config.copy(isNightModeEnabled = enabled))
     }
 
     /**
@@ -299,7 +313,8 @@ class PdfViewerState(
      */
     @Suppress("unused")
     fun setPageSnapping(enabled: Boolean) {
-        controller?.updateConfig(controller!!.config.copy(isPageSnappingEnabled = enabled))
+        val ctrl = controller ?: return
+        ctrl.updateConfig(ctrl.config.copy(isPageSnappingEnabled = enabled))
     }
 
     // -------------------------------------------------------------------------

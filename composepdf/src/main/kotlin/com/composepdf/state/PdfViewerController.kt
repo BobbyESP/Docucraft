@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.cache.BitmapCache
 import com.composepdf.cache.BitmapPool
+import com.composepdf.remote.RemotePdfException
 import com.composepdf.remote.RemotePdfLoader
 import com.composepdf.remote.RemotePdfState
 import com.composepdf.renderer.PageRenderer
@@ -220,7 +221,8 @@ class PdfViewerController(
             state.remoteState = remote
             if (remote is RemotePdfState.Cached) open(PdfSource.File(remote.file))
             else if (remote is RemotePdfState.Error) {
-                state.error = Exception(remote.message); state.isLoading = false
+                state.error = RemotePdfException(remote.type, remote.message, remote.cause)
+                state.isLoading = false
             }
         }
     }
@@ -471,7 +473,7 @@ class PdfViewerController(
     /** Same as [clampPan] but accessible from [PdfViewerState] for its public API. */
     internal fun clampPanPublic() = clampPan()
 
-    /** Recalcula la página actual usando el centro visible del viewport. */
+    /** Recalculates the current page using the visible center of the viewport. */
     private fun updateCurrentPageFromViewport() {
         if (pageTops.isEmpty() || state.pageCount <= 0 || state.zoom <= 0f) return
 
