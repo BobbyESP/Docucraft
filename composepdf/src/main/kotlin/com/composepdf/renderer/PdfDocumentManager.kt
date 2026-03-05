@@ -30,7 +30,7 @@ class PdfDocumentManager(private val context: Context) : Closeable {
     private val rendererPool = ConcurrentLinkedQueue<PdfRenderer>()
 
     // Limits the number of parallel renderers based on CPU cores.
-    private val maxParallelConfig = (Runtime.getRuntime().availableProcessors() - 1).coerceIn(2, 8)
+    private val maxParallelRenderers = (Runtime.getRuntime().availableProcessors() - 1).coerceIn(2, 8)
     private var semaphore = Semaphore(1) // Default to 1, updated after opening document
 
     private var _pageCount = 0
@@ -52,7 +52,7 @@ class PdfDocumentManager(private val context: Context) : Closeable {
 
             var actualRenderers = 1
             // Duplicate FD to allow real multi-threaded access
-            repeat(maxParallelConfig - 1) {
+            repeat(maxParallelRenderers - 1) {
                 try {
                     val dupFd = ParcelFileDescriptor.dup(fd.fileDescriptor)
                     rendererPool.offer(PdfRenderer(dupFd))

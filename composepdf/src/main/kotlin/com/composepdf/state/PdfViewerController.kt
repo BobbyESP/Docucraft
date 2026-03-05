@@ -454,7 +454,7 @@ class PdfViewerController(
         }
     }
 
-    private fun clampPan() {
+    internal fun clampPan() {
         if (viewportWidth == 0f || viewportHeight == 0f) return
         val maxPageW = pageWidths.maxOrNull() ?: viewportWidth
         val sW = maxPageW * state.zoom
@@ -470,8 +470,94 @@ class PdfViewerController(
         )
     }
 
-    /** Same as [clampPan] but accessible from [PdfViewerState] for its public API. */
-    internal fun clampPanPublic() = clampPan()
+    /**
+     * Returns the (panX, panY) pair that centers [pageIndex] in the viewport at the
+     * current zoom level, before clamping.
+     *
+     * Horizontal centering accounts for the per-page offset inside the "corridor"
+     * (the column whose width equals the widest page), matching the same formula used
+     * by the renderer: `panX + (maxPageW - pageW) * zoom / 2`.
+     */
+    fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> {
+        val idx = pageIndex.coerceIn(0, (pageSizes.size - 1).coerceAtLeast(0))
+        val pageW = pageWidths.getOrNull(idx) ?: viewportWidth
+        val pageH = pageHeights.getOrNull(idx) ?: viewportHeight
+        val pageTop = pageTops.getOrNull(idx) ?: 0f
+        val maxPageW = pageWidths.maxOrNull() ?: viewportWidth
+        val zoom = state.zoom
+
+        // panY: page vertical center aligned to viewport vertical center
+        val centeredPanY = (viewportHeight / 2f) - (pageTop + pageH / 2f) * zoom
+
+        // panX: corridor left edge so that the page center lands on viewport center.
+        // The renderer draws page at: panX + (maxPageW - pageW)*zoom/2
+        // We want that left edge + pageW*zoom/2 == viewportWidth/2
+        // => panX = viewportWidth/2 - (maxPageW - pageW)*zoom/2 - pageW*zoom/2
+        //         = viewportWidth/2 - maxPageW*zoom/2
+        val centeredPanX = (viewportWidth / 2f) - (maxPageW * zoom / 2f)
+
+        return centeredPanX to centeredPanY
+    }
+
+    /**
+     * Computes the zoom level that makes the **entire document** (all pages stacked) fit
+     * within the current viewport, respecting the active [FitMode].
+     *
+     * - [FitMode.WIDTH] / [FitMode.PROPORTIONAL]: fits the widest page to the viewport width.
+     * - [FitMode.HEIGHT]: fits the total document height to the viewport height.
+     * - [FitMode.BOTH]: fits both dimensions simultaneously so the whole document is visible
+     *   without any scrolling (letterbox / pillarbox).
+     *
+     * Returns [ViewerConfig.minZoom] if the document has not been laid out yet.
+     */
+    fun computeFitDocumentZoom(): Float {
+        if (viewportWidth == 0f || viewportHeight == 0f || pageSizes.isEmpty()) {
+            return config.minZoom
+        }
+        val maxPageW = pageWidths.maxOrNull() ?: return config.minZoom
+        val docH = totalDocHeight.takeIf { it > 0f } ?: return config.minZoom
+
+        val zoom = when (config.fitMode) {
+            FitMode.WIDTH, FitMode.PROPORTIONAL -> viewportWidth / maxPageW
+            FitMode.HEIGHT -> viewportHeight / docH
+            FitMode.BOTH -> minOf(viewportWidth / maxPageW, viewportHeight / docH)
+        }
+        return zoom.coerceIn(config.minZoom, config.maxZoom)
+    }
+
+    /**
+     * Computes the zoom level that makes the **current page** fit within the viewport,
+     * respecting the active [FitMode].
+     *
+     * Unlike [computeFitDocumentZoom] (which considers all pages stacked), this function
+     * only looks at the single page that is most visible right now. This is the natural
+     * "reset zoom" action from a user's perspective: bring the current page to fill
+     * the screen according to the configured fit mode.
+     *
+     * - [FitMode.WIDTH] / [FitMode.PROPORTIONAL]: fits the page width to the viewport width.
+     * - [FitMode.HEIGHT]: fits the page height to the viewport height.
+     * - [FitMode.BOTH]: fits both dimensions simultaneously (letterbox / pillarbox).
+     *
+     * @param pageIndex Zero-based page index. Defaults to [PdfViewerState.currentPage].
+     * Returns [ViewerConfig.minZoom] if the document has not been laid out yet.
+     */
+    fun computeFitPageZoom(pageIndex: Int = state.currentPage): Float {
+        if (viewportWidth == 0f || viewportHeight == 0f || pageSizes.isEmpty()) {
+            return config.minZoom
+        }
+        val idx = pageIndex.coerceIn(0, pageSizes.lastIndex)
+        // pageWidths/pageHeights are computed at zoom=1, so the fit zoom is simply the
+        // ratio needed to scale that base size up/down to fill the viewport dimension.
+        val baseW = pageWidths.getOrNull(idx)?.takeIf { it > 0f } ?: return config.minZoom
+        val baseH = pageHeights.getOrNull(idx)?.takeIf { it > 0f } ?: return config.minZoom
+
+        val zoom = when (config.fitMode) {
+            FitMode.WIDTH, FitMode.PROPORTIONAL -> viewportWidth / baseW
+            FitMode.HEIGHT -> viewportHeight / baseH
+            FitMode.BOTH -> minOf(viewportWidth / baseW, viewportHeight / baseH)
+        }
+        return zoom.coerceIn(config.minZoom, config.maxZoom)
+    }
 
     /** Recalculates the current page using the visible center of the viewport. */
     private fun updateCurrentPageFromViewport() {

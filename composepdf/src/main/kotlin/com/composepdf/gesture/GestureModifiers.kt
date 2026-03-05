@@ -312,10 +312,23 @@ fun Modifier.pdfGestures(
                             // Valid double tap
                             // Check if over page
                             if (controller.isPointOverPage(secondDown.position)) {
-                                val targetZoom = if (state.zoom < config.doubleTapZoom * 0.9f) {
-                                    config.doubleTapZoom
-                                } else {
-                                    config.minZoom
+                                // Three-level zoom cycle:
+                                //  1. Near fit-page zoom  → zoom to doubleTapZoom
+                                //  2. Near doubleTapZoom  → zoom to maxZoom
+                                //  3. Near maxZoom        → back to fit-page zoom
+                                val fitZoom = controller.computeFitPageZoom(state.currentPage)
+                                val tapZoom = config.doubleTapZoom
+                                val maxZoom = config.maxZoom
+                                val currentZoom = state.zoom
+
+                                // Thresholds with 10% tolerance so the cycle feels snappy
+                                val atFit = currentZoom < tapZoom * 0.85f
+                                val atTap = currentZoom in (tapZoom * 0.85f)..(maxZoom * 0.85f)
+
+                                val targetZoom = when {
+                                    atFit -> tapZoom
+                                    atTap -> maxZoom
+                                    else -> fitZoom
                                 }
 
                                 gs.animateZoom(

@@ -172,7 +172,7 @@ fun PdfViewerBottomToolbar(
                     minWidth = metrics.zoomResetMinWidth,
                     height = metrics.zoomResetHeight,
                     horizontalPadding = metrics.zoomResetHorizontalPadding,
-                    onClick = { scope.launch { state.animateZoomTo(1f) } },
+                    onClick = { scope.launch { state.animateResetZoom() } },
                     onSlideLeft = { state.zoomOut(0.08f) },
                     onSlideRight = { state.zoomIn(0.08f) },
                 )
@@ -273,8 +273,8 @@ private fun PageInputField(
                     .clip(MaterialTheme.shapes.small)
                     .background(MaterialTheme.colorScheme.onPrimaryFixed.copy(alpha = 0.45f))
                     .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f),
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.65f),
                         shape = MaterialTheme.shapes.small
                     )
                     .padding(horizontal = 8.dp)

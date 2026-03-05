@@ -15,6 +15,7 @@ import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.remote.RemotePdfState
+import kotlin.math.abs
 
 /**
  * A hoistable state object that manages the UI state and navigation for a PDF viewer.
@@ -161,6 +162,20 @@ class PdfViewerState(
     /** The configured maximum zoom level. Returns 5f if no document is loaded yet. */
     val maxZoom: Float get() = controller?.config?.maxZoom ?: 5f
 
+    /**
+     * The zoom level needed to fit the entire document within the viewport, computed
+     * from the active [FitMode]. Changes whenever the viewport size or fit mode changes.
+     * Falls back to [minZoom] if the document has not been loaded yet.
+     */
+    val fitDocumentZoom: Float get() = controller?.computeFitDocumentZoom() ?: minZoom
+
+    /**
+     * The zoom level needed to fit the **current page** within the viewport, computed
+     * from the active [FitMode]. This is the value used by [animateResetZoom].
+     * Falls back to [minZoom] if the document has not been loaded yet.
+     */
+    val fitPageZoom: Float get() = controller?.computeFitPageZoom(currentPage) ?: minZoom
+
     // -------------------------------------------------------------------------
     // Public programmatic API
     // -------------------------------------------------------------------------
@@ -175,9 +190,12 @@ class PdfViewerState(
         val ctrl = controller ?: return
         val target = pageIndex.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
         val pageTop = ctrl.pageTopDocY(target)
-        panY = -(pageTop * zoom)
+        val pageHeight = ctrl.pageHeightPx(target)
+        // Center the target page in the viewport so navigation always produces
+        // a visible scroll regardless of the current zoom level.
+        panY = (ctrl.viewportHeight / 2f) - (pageTop + pageHeight / 2f) * zoom
         currentPage = target
-        ctrl.clampPanPublic()
+        ctrl.clampPan()
         ctrl.requestRenderForVisiblePages()
     }
 
@@ -198,7 +216,9 @@ class PdfViewerState(
         val ctrl = controller ?: return
         val target = pageIndex.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
         val pageTop = ctrl.pageTopDocY(target)
-        val targetPanY = -(pageTop * zoom)
+        val pageHeight = ctrl.pageHeightPx(target)
+        // Center the target page in the viewport.
+        val targetPanY = (ctrl.viewportHeight / 2f) - (pageTop + pageHeight / 2f) * zoom
 
         currentPage = target
         Animatable(panY).animateTo(
@@ -206,7 +226,7 @@ class PdfViewerState(
             animationSpec = animationSpec
         ) {
             panY = value
-            ctrl.clampPanPublic()
+            ctrl.clampPan()
             ctrl.requestRenderForVisiblePages()
         }
         currentPage = target
@@ -265,12 +285,45 @@ class PdfViewerState(
     }
 
     /**
-     * Resets the zoom to the fit-to-viewport level (the configured minimum zoom) with animation.
+     * Resets the zoom to the level that fits the **current page** within the viewport
+     * according to the active [FitMode], with animation.
+     *
+     * - If the zoom is already at the fit level (within 2% tolerance), skips the zoom
+     *   animation and instead animates a scroll to center the current page in the viewport.
+     * - Otherwise, animates the zoom to the fit level and then centers the page.
+     *
+     * - [FitMode.WIDTH] / [FitMode.PROPORTIONAL]: page fills the viewport width.
+     * - [FitMode.HEIGHT]: page fills the viewport height.
+     * - [FitMode.BOTH]: page fits entirely within the viewport (letterbox / pillarbox).
      */
     @Suppress("unused")
     suspend fun animateResetZoom(animationSpec: AnimationSpec<Float> = spring()) {
         val ctrl = controller ?: return
-        animateZoomTo(ctrl.config.minZoom, animationSpec)
+        val targetZoom = ctrl.computeFitPageZoom(currentPage)
+        val alreadyFit = abs(zoom - targetZoom) / targetZoom < 0.02f
+
+        if (alreadyFit) {
+            // Zoom is already correct — center the current page in the viewport (both axes)
+            val (targetPanX, targetPanY) = ctrl.computeCenteredPanForPage(currentPage)
+
+            val needsX = abs(panX - targetPanX) > 1f
+            val needsY = abs(panY - targetPanY) > 1f
+            if (!needsX && !needsY) return
+
+            // Capture start values before animation begins so the lerp stays correct
+            val startPanX = panX
+            val startPanY = panY
+
+            Animatable(0f).animateTo(1f, animationSpec) {
+                if (needsX) panX = startPanX + (targetPanX - startPanX) * value
+                if (needsY) panY = startPanY + (targetPanY - startPanY) * value
+                ctrl.clampPan()
+                ctrl.requestRenderForVisiblePages()
+            }
+        } else {
+            // Zoom is off — just restore it, no centering
+            animateZoomTo(targetZoom, animationSpec)
+        }
     }
 
     /**
