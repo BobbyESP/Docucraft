@@ -8,6 +8,9 @@ import android.util.Size
 import com.composepdf.source.PdfSource
 import com.composepdf.source.PdfSourceResolver
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
@@ -28,6 +31,7 @@ class PdfDocumentManager(private val context: Context) : Closeable {
     private var masterFd: ParcelFileDescriptor? = null
     private var sourceResolver: PdfSourceResolver? = null
     private val rendererPool = ConcurrentLinkedQueue<PdfRenderer>()
+    @Volatile private var isClosing = false
 
     // Limits the number of parallel renderers based on CPU cores.
     private val maxParallelRenderers = (Runtime.getRuntime().availableProcessors() - 1).coerceIn(2, 8)
@@ -45,6 +49,7 @@ class PdfDocumentManager(private val context: Context) : Closeable {
         try {
             val fd = resolver.resolve(source)
             masterFd = fd
+            isClosing = false
 
             val firstRenderer = PdfRenderer(fd)
             _pageCount = firstRenderer.pageCount
@@ -71,6 +76,7 @@ class PdfDocumentManager(private val context: Context) : Closeable {
 
     /** Executes an action on a specific page using an available renderer from the pool. */
     suspend fun <T> withPage(pageIndex: Int, action: (PdfRenderer.Page) -> T): T {
+        if (isClosing) throw IllegalStateException("PdfDocumentManager is closing")
         return semaphore.withPermit {
             val renderer =
                 rendererPool.poll() ?: throw IllegalStateException("PDF Renderer pool exhausted")
@@ -85,38 +91,39 @@ class PdfDocumentManager(private val context: Context) : Closeable {
     }
 
     /** Retrieves the dimensions of all pages in the document. */
-    suspend fun getAllPageSizes(): List<Size> = withContext(Dispatchers.IO) {
-        if (!isOpen) return@withContext emptyList()
-        semaphore.withPermit {
-            val renderer =
-                rendererPool.poll() ?: throw IllegalStateException("PDF Renderer pool exhausted")
-            try {
-                (0 until _pageCount).map { index ->
-                    renderer.openPage(index).use { Size(it.width, it.height) }
+    suspend fun getAllPageSizes(): List<Size> = coroutineScope {
+        (0 until _pageCount).map { index ->
+            async(Dispatchers.IO) {
+                withPage(index) { page ->
+                    Size(page.width, page.height)
                 }
-            } finally {
-                rendererPool.offer(renderer)
             }
-        }
+        }.awaitAll()
     }
 
     override fun close() = closeInternal()
 
     private fun closeInternal() {
-        while (rendererPool.isNotEmpty()) {
+        isClosing = true
+        while (true) {
+            val renderer = rendererPool.poll() ?: break
             try {
-                rendererPool.poll()?.close()
+                renderer.close()
             } catch (e: Exception) {
+                Log.e(TAG, "Failed to close renderer: ${e.message}")
             }
         }
+
         try {
             masterFd?.close()
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to close master FD: ${e.message}")
         }
         masterFd = null
         try {
             sourceResolver?.close()
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to close source resolver: ${e.message}")
         }
         sourceResolver = null
         _pageCount = 0
