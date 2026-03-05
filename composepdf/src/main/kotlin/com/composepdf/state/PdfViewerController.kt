@@ -126,6 +126,7 @@ class PdfViewerController(
         viewportHeight = height
         rebuildPageLayoutCache()
         clampPan()
+        updateCurrentPageFromViewport()
         requestRenderForVisiblePages()
     }
 
@@ -210,6 +211,7 @@ class PdfViewerController(
         state.isLoading = false
         rebuildPageLayoutCache()
         clampPan()
+        updateCurrentPageFromViewport()
         requestRenderForVisiblePages()
     }
 
@@ -294,19 +296,7 @@ class PdfViewerController(
     fun onGestureEnd() {
         state.isGestureActive = false
         clampPan()
-        // Update current page indicator based on vertical center
-        state.currentPage = ((viewportHeight / 2f - state.panY) / state.zoom).let { centerDoc ->
-            var low = 0
-            var high = pageTops.lastIndex
-            var idx = 0
-            while (low <= high) {
-                val mid = (low + high) ushr 1
-                if (pageTops[mid] <= centerDoc) {
-                    idx = mid; low = mid + 1
-                } else high = mid - 1
-            }
-            idx
-        }.coerceAtLeast(0)
+        updateCurrentPageFromViewport()
         requestRenderForVisiblePages()
     }
 
@@ -326,6 +316,7 @@ class PdfViewerController(
         }
         state.panX += panDelta.x; state.panY += panDelta.y
         clampPan()
+        updateCurrentPageFromViewport()
 
         gestureJob?.cancel()
         gestureJob = scope.launch {
@@ -347,6 +338,7 @@ class PdfViewerController(
         state.panY = pivot.y + (state.panY - pivot.y) * ratio
         state.zoom = newZoom
         clampPan()
+        updateCurrentPageFromViewport()
 
         // We trigger render update for each frame of animation to keep quality as high as possible
         requestRenderForVisiblePages()
@@ -357,6 +349,7 @@ class PdfViewerController(
     /** Triggers rendering for base pages and high-res tiles for the current viewport. */
     fun requestRenderForVisiblePages() {
         if (!documentManager.isOpen || pageTops.isEmpty()) return
+        updateCurrentPageFromViewport()
         val visible = visiblePageIndices()
         if (visible.isEmpty()) return
 
@@ -473,6 +466,31 @@ class PdfViewerController(
             viewportHeight - sH,
             0f
         )
+    }
+
+    /** Same as [clampPan] but accessible from [PdfViewerState] for its public API. */
+    internal fun clampPanPublic() = clampPan()
+
+    /** Recalcula la página actual usando el centro visible del viewport. */
+    private fun updateCurrentPageFromViewport() {
+        if (pageTops.isEmpty() || state.pageCount <= 0 || state.zoom <= 0f) return
+
+        val centerDoc = (viewportHeight / 2f - state.panY) / state.zoom
+        var low = 0
+        var high = pageTops.lastIndex
+        var idx = 0
+
+        while (low <= high) {
+            val mid = (low + high) ushr 1
+            if (pageTops[mid] <= centerDoc) {
+                idx = mid
+                low = mid + 1
+            } else {
+                high = mid - 1
+            }
+        }
+
+        state.currentPage = idx.coerceIn(0, pageTops.lastIndex)
     }
 
     override fun close() {

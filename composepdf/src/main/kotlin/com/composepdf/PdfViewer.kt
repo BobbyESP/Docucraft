@@ -80,7 +80,11 @@ fun PdfViewer(
     // Close the controller when the keys change (new instance was created above)
     // or when this composable leaves the composition entirely.
     DisposableEffect(controller) {
-        onDispose { controller.close() }
+        state.controller = controller
+        onDispose {
+            state.controller = null
+            controller.close()
+        }
     }
 
     val renderedPages by controller.renderedPages.collectAsStateWithLifecycle()
