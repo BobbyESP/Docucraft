@@ -1,14 +1,20 @@
 package com.composepdf.cache
 
 import android.graphics.Bitmap
-import androidx.collection.LruCache
+import android.util.LruCache
 
-object LruTileCaching: LruCache<String, Bitmap>(
-    // Use ~25% of the app's max heap size (in KB) for tile memory.
-    ((Runtime.getRuntime().maxMemory() / 1024L) / 4L).toInt()
-) {
-    override fun sizeOf(key: String, value: Bitmap): Int {
-        // Measure each bitmap in kilobytes so the cache size reflects actual memory usage.
-        return value.allocationByteCount / 1024
+class LruTileCache(
+    maxSizeKb: Int = defaultSizeKb(),
+    private val onEvicted: (key: String) -> Unit = {}
+) : LruCache<String, Bitmap>(maxSizeKb) {
+
+    override fun sizeOf(key: String, value: Bitmap): Int = value.allocationByteCount / 1024
+
+    override fun entryRemoved(evicted: Boolean, key: String, oldValue: Bitmap, newValue: Bitmap?) {
+        if (evicted) onEvicted(key)
+    }
+
+    companion object {
+        fun defaultSizeKb(): Int = ((Runtime.getRuntime().maxMemory() / 1024L) / 3L).toInt()
     }
 }

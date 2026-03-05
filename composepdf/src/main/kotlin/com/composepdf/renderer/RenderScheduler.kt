@@ -6,6 +6,7 @@ import android.util.Log
 import android.util.Size
 import com.composepdf.cache.BitmapCache
 import com.composepdf.cache.PageCacheKey
+import com.composepdf.cache.TileDiskCache
 import com.composepdf.state.PdfViewerState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -35,7 +36,8 @@ class RenderScheduler(
     private val documentManager: PdfDocumentManager,
     private val pageRenderer: PageRenderer,
     private val cache: BitmapCache,
-    private val viewerState: PdfViewerState
+    private val viewerState: PdfViewerState,
+    private val tileDiskCache: TileDiskCache? = null
 ) : Closeable {
 
     /** Dedicated dispatcher for CPU-intensive PDF rasterization. */
@@ -51,9 +53,10 @@ class RenderScheduler(
 
     /** Number of pages to pre-render outside the visible range. */
     var prefetchWindow: Int = 2
-        set(value) {
-            field = value.coerceAtLeast(0)
-        }
+        set(value) { field = value.coerceAtLeast(0) }
+
+    /** Current document identifier, set by [com.composepdf.state.PdfViewerController] on each open(). */
+    var docKey: String = ""
 
     private val _renderedPages = MutableStateFlow<Map<Int, Bitmap>>(emptyMap())
 
@@ -161,16 +164,28 @@ class RenderScheduler(
         baseWidth: Float
     ) {
         val zoomKey = (zoom * 100f).roundToInt() / 100f
-        val tileKey =
-            "${pageIndex}_${tileRect.left}_${tileRect.top}_${tileRect.right}_${tileRect.bottom}_$zoomKey"
+        // Memory key: original format, used by PdfViewerState and PdfPage for drawing.
+        val tileKey = "${pageIndex}_${tileRect.left}_${tileRect.top}_${tileRect.right}_${tileRect.bottom}_$zoomKey"
+        // Disk key: prefixed with docKey to avoid collisions between different PDFs on disk.
+        val diskKey = if (docKey.isNotEmpty()) "${docKey}_$tileKey" else tileKey
 
+        // Already in memory cache
+        if (viewerState.getTile(tileKey) != null) return
+        // Already being rendered
         if (tileJobs.containsKey(tileKey)) return
 
         tileJobs[tileKey] = scope.launch {
             try {
+                val diskBitmap = tileDiskCache?.get(diskKey)
+                if (diskBitmap != null) {
+                    viewerState.putTile(tileKey, diskBitmap)
+                    return@launch
+                }
+
                 val bitmap = documentManager.withPage(pageIndex) { page ->
                     pageRenderer.renderTile(page, tileRect, zoom, baseWidth)
                 }
+                tileDiskCache?.put(diskKey, bitmap)
                 viewerState.putTile(tileKey, bitmap)
             } catch (e: Exception) {
                 if (e !is CancellationException) Log.e(TAG, "Tile error for $tileKey: ${e.message}")

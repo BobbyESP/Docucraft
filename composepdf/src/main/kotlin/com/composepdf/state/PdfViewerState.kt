@@ -2,8 +2,6 @@ package com.composepdf.state
 
 import android.graphics.Bitmap
 import android.util.LruCache
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.spring
@@ -16,8 +14,12 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
-import com.composepdf.cache.LruTileCaching
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import com.composepdf.cache.LruTileCache
 import com.composepdf.remote.RemotePdfState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
 /**
@@ -88,7 +90,9 @@ class PdfViewerState(
      * Internal cache for high-resolution tiles.
      * Persists through gestures to provide "Double Buffering" visual stability.
      */
-    private val tileCache = LruTileCaching
+    private val tileCache = LruTileCache(onEvicted = { key ->
+        _imageBitmapSnapshot.remove(key)
+    })
 
     /**
      * Revision counter to notify Compose when the tile cache is updated.
@@ -101,55 +105,41 @@ class PdfViewerState(
      * avoiding a full [LruCache.snapshot] copy on every draw frame.
      */
     private var _tilesSnapshot: Map<String, Bitmap> = emptyMap()
+    private var _imageBitmapSnapshot: MutableMap<String, ImageBitmap> = mutableMapOf()
 
-    /**
-     * Mirrors [_tilesSnapshot] but stores [ImageBitmap] wrappers so [PdfPage] never
-     * calls [Bitmap.asImageBitmap] inside the draw loop. Rebuilt alongside [_tilesSnapshot].
-     */
-    private var _imageBitmapSnapshot: Map<String, ImageBitmap> = emptyMap()
-
-    /** Retrieves a tile from the cache. */
     internal fun getTile(key: String): Bitmap? = tileCache[key]
 
-    /** Stores a rendered tile and triggers UI update. */
-    internal fun putTile(key: String, bitmap: Bitmap) {
+    internal suspend fun putTile(key: String, bitmap: Bitmap) = withContext(Dispatchers.Main.immediate) {
         tileCache.put(key, bitmap)
+        _imageBitmapSnapshot[key] = bitmap.asImageBitmap()
         _tilesSnapshot = tileCache.snapshot()
-        _imageBitmapSnapshot = _tilesSnapshot.mapValues { it.value.asImageBitmap() }
         tileRevision++
     }
 
-    /** Returns the cached snapshot of all currently cached tiles. */
     internal fun getAllTiles(): Map<String, Bitmap> = _tilesSnapshot
 
-    /** Returns pre-wrapped [ImageBitmap] tiles, avoiding per-frame allocations in the draw loop. */
     internal fun getAllImageBitmapTiles(): Map<String, ImageBitmap> = _imageBitmapSnapshot
 
-    /**
-     * Removes tiles that match the given predicate.
-     * Used for selective invalidation (e.g., zoom level pruning).
-     */
-    internal fun pruneTiles(predicate: (String) -> Boolean) {
+    internal suspend fun pruneTiles(predicate: (String) -> Boolean) = withContext(Dispatchers.Main.immediate) {
         val snapshot = tileCache.snapshot()
         var changed = false
         snapshot.keys.forEach { key ->
             if (predicate(key)) {
                 tileCache.remove(key)
+                _imageBitmapSnapshot.remove(key)
                 changed = true
             }
         }
         if (changed) {
             _tilesSnapshot = tileCache.snapshot()
-            _imageBitmapSnapshot = _tilesSnapshot.mapValues { it.value.asImageBitmap() }
             tileRevision++
         }
     }
 
-    /** Clears all high-resolution tiles. */
-    internal fun clearTiles() {
+    internal suspend fun clearTiles() = withContext(Dispatchers.Main.immediate) {
         tileCache.evictAll()
         _tilesSnapshot = emptyMap()
-        _imageBitmapSnapshot = emptyMap()
+        _imageBitmapSnapshot = mutableMapOf()
         tileRevision++
     }
 
@@ -390,7 +380,7 @@ class PdfViewerState(
     // -------------------------------------------------------------------------
 
     /** Resets the state to initial values. */
-    internal fun reset() {
+    internal suspend fun reset() {
         currentPage = 0; pageCount = 0; zoom = 1f; panX = 0f; panY = 0f
         isLoading = true; error = null; isGestureActive = false
         clearTiles()

@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.cache.BitmapCache
 import com.composepdf.cache.BitmapPool
+import com.composepdf.cache.TileDiskCache
 import com.composepdf.remote.RemotePdfException
 import com.composepdf.remote.RemotePdfLoader
 import com.composepdf.remote.RemotePdfState
@@ -84,9 +85,17 @@ class PdfViewerController(
         }
     }
 
+    private val tileDiskCache = TileDiskCache(
+        directory = context.cacheDir.resolve("pdf_tiles")
+    )
+
     private val documentManager = PdfDocumentManager(context)
     private val pageRenderer = PageRenderer(bitmapPool)
-    private val renderScheduler = RenderScheduler(documentManager, pageRenderer, bitmapCache, state)
+    private val renderScheduler = RenderScheduler(documentManager, pageRenderer, bitmapCache, state, tileDiskCache)
+
+    // Identifies the current document for tile key prefixing — prevents tiles from a
+    // previous PDF leaking into a new session when page indices collide.
+    private var docKey: String = ""
 
     /** Map of page indices to rendered low-resolution base bitmaps. */
     val renderedPages: StateFlow<Map<Int, Bitmap>> = renderScheduler.renderedPages
@@ -206,6 +215,15 @@ class PdfViewerController(
     }
 
     private suspend fun open(source: PdfSource) {
+        // Derive a stable key from the source to namespace tile disk cache entries.
+        // This prevents tiles from a previous PDF bleeding into the new session.
+        val newDocKey = source.hashCode().toString(16)
+        if (newDocKey != docKey && docKey.isNotEmpty()) {
+            tileDiskCache.clearForDocument(docKey)
+        }
+        docKey = newDocKey
+        renderScheduler.docKey = docKey
+
         documentManager.open(source)
         pageSizes = documentManager.getAllPageSizes()
         state.pageCount = documentManager.pageCount
@@ -304,6 +322,8 @@ class PdfViewerController(
 
     private var gestureJob: Job? = null
     private var animatedZoomJob: Job? = null
+    // +1 = scrolling down (content moves up), -1 = up, 0 = unknown
+    private var scrollDirection: Int = 0
 
     /** Handles zoom and pan updates, with a small debounce to optimize rendering. */
     fun onGestureUpdate(zoomChange: Float, panDelta: Offset, pivot: Offset) {
@@ -317,6 +337,7 @@ class PdfViewerController(
             state.panY = pivot.y + (state.panY - pivot.y) * ratio
             state.zoom = newZoom
         }
+        if (panDelta.y != 0f) scrollDirection = if (panDelta.y < 0) 1 else -1
         state.panX += panDelta.x; state.panY += panDelta.y
         clampPan()
         updateCurrentPageFromViewport()
@@ -370,33 +391,33 @@ class PdfViewerController(
         updateCurrentPageFromViewport()
         val visible = visiblePageIndices()
         if (visible.isEmpty()) return
-
         val currentZoom = state.zoom
+        val pageSizesSnapshot = pageSizes
 
-        // Cleanup: remove high-res tiles when zoomed out
-        if (currentZoom < 1.1f) {
-            state.clearTiles()
-            renderScheduler.cancelAllTiles()
-        } else {
-            // Prune tiles with extreme scale difference (prevents "patch" artifacts)
-            state.pruneTiles { key ->
-                val tileZoom = key.split("_").lastOrNull()?.toFloatOrNull() ?: 1f
-                val scale = currentZoom / tileZoom
-                scale !in 0.4f..2.5f
+        scope.launch {
+            if (currentZoom < 1.1f) {
+                state.clearTiles()
+                renderScheduler.cancelAllTiles()
+            } else {
+                state.pruneTiles { key ->
+                    val tileZoom = key.split("_").lastOrNull()?.toFloatOrNull() ?: 1f
+                    val scale = currentZoom / tileZoom
+                    scale !in 0.4f..2.5f
+                }
             }
+
+            renderScheduler.requestRender(
+                visiblePages = visible,
+                config = PageRenderer.RenderConfig(
+                    zoomLevel = currentZoom,
+                    renderQuality = if (currentZoom > 1.1f) 1.0f else config.renderQuality
+                ),
+                pageSizes = pageSizesSnapshot,
+                getBaseWidth = { idx -> pageWidthPx(idx) }
+            )
+
+            if (currentZoom > 1.1f) requestTilesForVisibleArea()
         }
-
-        renderScheduler.requestRender(
-            visiblePages = visible,
-            config = PageRenderer.RenderConfig(
-                zoomLevel = currentZoom,
-                renderQuality = if (currentZoom > 1.1f) 1.0f else config.renderQuality
-            ),
-            pageSizes = pageSizes,
-            getBaseWidth = { idx -> pageWidthPx(idx) }
-        )
-
-        if (currentZoom > 1.1f) requestTilesForVisibleArea()
     }
 
     /**
@@ -417,6 +438,7 @@ class PdfViewerController(
     private fun requestTilesForVisibleArea() {
         val visible = visiblePageIndices(); if (visible.isEmpty()) return
         val zoom = state.zoom
+        val totalPages = pageSizes.size
 
         val base = 1.25f
         val ratio = sqrt(2.0)
@@ -427,24 +449,37 @@ class PdfViewerController(
 
         val tileSize = PageRenderer.TILE_SIZE
         val currentKeys = mutableSetOf<String>()
-        val requests =
-            mutableListOf<Triple<Int, Rect, Float>>() // pageIndex, rect, distanceToCenter
+        val requests = mutableListOf<Triple<Int, Rect, Float>>() // pageIndex, rect, distanceToCenter
 
         val vpCenterX = viewportWidth / 2f
         val vpCenterY = viewportHeight / 2f
         val maxPageW = pageWidths.maxOrNull() ?: viewportWidth
 
-        for (pageIndex in visible) {
+        // Extend range by 1 page in the scroll direction for predictive prefetch.
+        // Priority is still given to visible tiles (lower distance value); prefetched
+        // tiles use a large distance so they render last if capacity is constrained.
+        val prefetchPage = when {
+            scrollDirection > 0 -> (visible.last + 1).coerceAtMost(totalPages - 1)
+            scrollDirection < 0 -> (visible.first - 1).coerceAtLeast(0)
+            else -> -1
+        }
+        val scanRange = if (prefetchPage != -1 && prefetchPage !in visible) {
+            visible + prefetchPage
+        } else {
+            visible.toList()
+        }
+
+        for (pageIndex in scanRange) {
+            val isPrefetch = pageIndex !in visible
             val pageW = pageWidthPx(pageIndex)
             val pageTop = pageTops[pageIndex] * zoom + state.panY
-            val vTop = maxOf(0f, pageTop).coerceIn(0f, viewportHeight)
-            val vBottom = minOf(viewportHeight, pageTop + pageHeights[pageIndex] * zoom).coerceIn(
-                0f,
-                viewportHeight
-            )
+            val pageBottom = pageTop + pageHeights[pageIndex] * zoom
+
+            // For prefetch pages use the full page extent; for visible pages clip to viewport.
+            val vTop = if (isPrefetch) pageTop else maxOf(0f, pageTop).coerceIn(0f, viewportHeight)
+            val vBottom = if (isPrefetch) pageBottom else minOf(viewportHeight, pageBottom).coerceIn(0f, viewportHeight)
             if (vBottom <= vTop) continue
 
-            // Each page is horizontally centered relative to state.panX (the corridor left edge)
             val pageLeft = state.panX + (maxPageW - pageW) * zoom / 2f
 
             val s = steppedZoom / zoom
@@ -455,14 +490,17 @@ class PdfViewerController(
 
             for (ty in floor(sY / tileSize).toInt()..<ceil(eY / tileSize).toInt()) {
                 for (tx in floor(sX / tileSize).toInt()..<ceil(eX / tileSize).toInt()) {
-                    val rect =
-                        Rect(tx * tileSize, ty * tileSize, (tx + 1) * tileSize, (ty + 1) * tileSize)
-                    val key =
-                        "${pageIndex}_${rect.left}_${rect.top}_${rect.right}_${rect.bottom}_$steppedZoom"
+                    val rect = Rect(tx * tileSize, ty * tileSize, (tx + 1) * tileSize, (ty + 1) * tileSize)
+                    // Memory key — matches the format used by RenderScheduler and PdfPage.
+                    val key = "${pageIndex}_${rect.left}_${rect.top}_${rect.right}_${rect.bottom}_$steppedZoom"
                     currentKeys.add(key)
                     if (state.getTile(key) == null) {
-                        val d = ((rect.centerX() / s + pageLeft) - vpCenterX).pow(2) +
-                                ((rect.centerY() / s + pageTop) - vpCenterY).pow(2)
+                        val d = if (isPrefetch) {
+                            Float.MAX_VALUE // always after visible tiles
+                        } else {
+                            ((rect.centerX() / s + pageLeft) - vpCenterX).pow(2) +
+                                    ((rect.centerY() / s + pageTop) - vpCenterY).pow(2)
+                        }
                         requests.add(Triple(pageIndex, rect, d))
                     }
                 }
@@ -470,14 +508,9 @@ class PdfViewerController(
         }
 
         renderScheduler.pruneTileJobs(currentKeys)
-        requests.sortBy { it.third } // Global prioritization: center tiles first
+        requests.sortBy { it.third }
         requests.forEach {
-            renderScheduler.requestTile(
-                it.first,
-                it.second,
-                steppedZoom,
-                pageWidthPx(it.first)
-            )
+            renderScheduler.requestTile(it.first, it.second, steppedZoom, pageWidthPx(it.first))
         }
     }
 
@@ -507,7 +540,6 @@ class PdfViewerController(
      */
     fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> {
         val idx = pageIndex.coerceIn(0, (pageSizes.size - 1).coerceAtLeast(0))
-        val pageW = pageWidths.getOrNull(idx) ?: viewportWidth
         val pageH = pageHeights.getOrNull(idx) ?: viewportHeight
         val pageTop = pageTops.getOrNull(idx) ?: 0f
         val maxPageW = pageWidths.maxOrNull() ?: viewportWidth
