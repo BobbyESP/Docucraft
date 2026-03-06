@@ -108,4 +108,19 @@
     <string name="widget_app_name" translatable="false">Docucraft</string>
     <string name="widget_scan_title">Scan document</string>
     <string name="widget_scan_subtitle">Tap to start scanning</string>
+    <string name="zoom_out">Zoom out</string>
+    <string name="zoom_in">Zoom in</string>
+    <string name="zoom_reset">Reset zoom</string>
+    <string name="fit_mode">Fit mode</string>
+    <string name="fit_width">Fit width</string>
+    <string name="fit_height">Fit height</string>
+    <string name="fit_page">Fit page</string>
+    <string name="fit_proportional">Proportional</string>
+    <string name="page_navigation">Page navigation</string>
+    <string name="go_to_page">Go to page</string>
+    <string name="previous_page">Previous page</string>
+    <string name="next_page">Next page</string>
+    <string name="night_mode">Night mode</string>
+    <string name="page_input_label">Page</string>
+    <string name="page_of">%1$s of %2$s</string>
 </resources>

@@ -116,10 +116,7 @@ dependencies {
     implementation(libs.bundles.nav3)
 
     // PDF Viewer
-    implementation(libs.pdfviewer)
-    implementation(libs.pdfviewer.ui)
     implementation(project(":composepdf"))
-
 
     // Dependency injection
     implementation(libs.bundles.koin)
