@@ -41,4 +41,6 @@ dependencies {
     api(platform(libs.compose.bom))
 
     implementation(libs.bundles.coroutines)
+
+    testImplementation(libs.junit)
 }

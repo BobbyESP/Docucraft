@@ -1,40 +1,55 @@
 package com.composepdf.ui
 
-import android.graphics.Bitmap
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.composepdf.renderer.tiles.TileKey
 import com.composepdf.state.PdfViewerState
 import kotlin.math.roundToInt
 
 /**
  * Composable responsible for rendering a single PDF page.
  *
- * It layers a low-resolution base bitmap with multiple high-resolution tiles.
- * Clipping is applied to prevent tiles from bleeding into page margins.
+ * Layers two levels of detail on a [Canvas]:
+ * 1. **Base bitmap** — a low-resolution full-page render, always visible as a fallback.
+ * 2. **Tiles** — high-resolution 256×256 px sub-regions, composited on top at the correct
+ *    scale derived from the ratio `currentZoom / tileZoom`.
+ *
+ * Clipping ([clipToBounds]) prevents tiles from bleeding into the gap between pages.
+ *
+ * Night-mode color inversion is handled here via [colorFilter], keeping the renderer
+ * (CPU-intensive) free from any color-space concerns.
+ *
+ * Receives [ImageBitmap] (a stable Compose type) rather than [android.graphics.Bitmap]
+ * so that this composable is skippable by the Compose compiler when neither the bitmap
+ * nor any other parameter has changed.
+ *
+ * @param state Viewer state — read-only access to zoom level and tile map.
+ * @param bitmap The low-resolution base page bitmap as [ImageBitmap], or `null` while rendering.
+ * @param pageIndex Zero-based page index used to filter tiles that belong to this page.
+ * @param showLoadingIndicator Show a spinner when [bitmap] is null.
+ * @param colorFilter Optional [ColorFilter] applied to both base and tile draws (e.g. night mode).
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun PdfPage(
     state: PdfViewerState,
-    bitmap: Bitmap?,
+    bitmap: ImageBitmap?,
     pageIndex: Int,
     showLoadingIndicator: Boolean,
     modifier: Modifier = Modifier,
@@ -42,15 +57,13 @@ internal fun PdfPage(
 ) {
     Box(
         modifier = modifier
-            .clipToBounds() // prevents tiles from bleeding into gaps between pages
+            .clipToBounds()
             .background(Color.White),
         contentAlignment = Alignment.Center
     ) {
         if (bitmap != null) {
-            val baseImageBitmap = remember(bitmap) { bitmap.asImageBitmap() }
-
-            // Read tileRevision so Compose schedules a redraw
-            // when new tiles arrive.
+            // Reading tileRevision ensures Compose schedules a redraw whenever
+            // new tiles arrive, even if the map reference itself hasn't changed.
             val tiles = state.run {
                 tileRevision
                 getAllImageBitmapTiles()
@@ -59,42 +72,32 @@ internal fun PdfPage(
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val zoom = state.zoom
 
+                // 1. Draw low-resolution base page stretched to fill the measured size.
                 drawImage(
-                    image = baseImageBitmap,
+                    image = bitmap,
                     dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
                     colorFilter = colorFilter
                 )
 
+                // 2. Composite high-resolution tiles that belong to this page.
                 tiles.forEach { (key, tileImageBitmap) ->
-                    if (key.startsWith("${pageIndex}_")) {
-                        val parts = key.split("_")
-                        if (parts.size >= 6) {
-                            val tileL = parts[1].toIntOrNull()
-                            val tileT = parts[2].toIntOrNull()
-                            val tileR = parts[3].toIntOrNull()
-                            val tileB = parts[4].toIntOrNull()
-                            val tileZoom = parts[5].toFloatOrNull()
+                    val tileKey = TileKey.fromCacheKey(key)
+                        ?.takeIf { it.pageIndex == pageIndex }
+                        ?: return@forEach
+                    val scale = zoom / tileKey.zoom
 
-                            if (tileL == null || tileT == null || tileR == null || tileB == null || tileZoom == null) {
-                                return@forEach
-                            }
-
-                            val scale = zoom / tileZoom
-
-                            drawImage(
-                                image = tileImageBitmap,
-                                dstOffset = IntOffset(
-                                    (tileL * scale).roundToInt(),
-                                    (tileT * scale).roundToInt()
-                                ),
-                                dstSize = IntSize(
-                                    ((tileR - tileL) * scale).roundToInt(),
-                                    ((tileB - tileT) * scale).roundToInt()
-                                ),
-                                colorFilter = colorFilter
-                            )
-                        }
-                    }
+                    drawImage(
+                        image = tileImageBitmap,
+                        dstOffset = IntOffset(
+                            (tileKey.rect.left * scale).roundToInt(),
+                            (tileKey.rect.top * scale).roundToInt()
+                        ),
+                        dstSize = IntSize(
+                            (tileKey.rect.width() * scale).roundToInt(),
+                            (tileKey.rect.height() * scale).roundToInt()
+                        ),
+                        colorFilter = colorFilter
+                    )
                 }
             }
         } else if (showLoadingIndicator) {
@@ -103,21 +106,5 @@ internal fun PdfPage(
                 color = MaterialTheme.colorScheme.primary,
             )
         }
-    }
-}
-
-@Composable
-internal fun PagePlaceholder(
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier.background(Color(0xFFF5F5F5)),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(48.dp),
-            color = MaterialTheme.colorScheme.primary,
-            strokeWidth = 4.dp
-        )
     }
 }

@@ -50,6 +50,13 @@ class BitmapCache(
 
     fun clear() = cache.evictAll()
 
+    /**
+     * Removes all cached bitmaps that belong to [pageIndex].
+     *
+     * Useful when a page is no longer needed (e.g. after a document close) and its
+     * memory should be reclaimed before the LRU eviction cycle runs naturally.
+     */
+    @Suppress("unused")
     fun clearPage(pageIndex: Int) {
         cache.snapshot().keys
             .filter { it.pageIndex == pageIndex }

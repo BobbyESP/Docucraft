@@ -44,6 +44,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.changedToUp
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -71,23 +72,30 @@ fun PdfViewerScreen(
 ) {
     val pdfViewerState = rememberPdfViewerState()
 
+    // ── Overlay visibility ────────────────────────────────────────────────────
+    // Controls follow a two-state machine:
+    //   • Initially both top bar and bottom toolbar are visible.
+    //   • First real scroll (gesture active + document loaded) hides the top bar only.
+    //   • Subsequent taps toggle visibility of both overlays together.
     var areControlsVisible by remember { mutableStateOf(true) }
     var isTopBarVisible by remember { mutableStateOf(true) }
     var hasScrolled by remember { mutableStateOf(false) }
 
-    // Viewer adjustable settings — owned here so toolbar can mutate them
+    // ── Viewer settings (owned here so toolbar can mutate them) ───────────────
     var fitMode by remember { mutableStateOf(FitMode.BOTH) }
     var isNightModeEnabled by remember { mutableStateOf(false) }
 
-    var startX by remember { mutableFloatStateOf(0f) }
-    var startY by remember { mutableFloatStateOf(0f) }
-    val touchSlop = 20f
+    // ── Tap detection for overlay toggling ────────────────────────────────────
+    // Tracks the pointer position at finger-down so we can distinguish a tap
+    // (no significant movement) from a scroll or zoom gesture.
+    var touchStartX by remember { mutableFloatStateOf(0f) }
+    var touchStartY by remember { mutableFloatStateOf(0f) }
+    val touchSlop = LocalViewConfiguration.current.touchSlop
 
+    // Auto-hide top bar when the user starts actively scrolling the document.
+    // We observe panY + isGestureActive together to ignore automatic repositioning
+    // (e.g. vertical centering of a short document on load or after zoom reset).
     LaunchedEffect(pdfViewerState) {
-        // Observe both panY and isGestureActive together as a pair.
-        // We only consider it a real user scroll when the gesture is active AND panY has
-        // moved enough — this filters out automatic repositioning by the viewer itself
-        // (e.g. centering a short document vertically on load or after zoom).
         snapshotFlow { pdfViewerState.panY to pdfViewerState.isGestureActive }
             .distinctUntilChanged()
             .collect { (_, gestureActive) ->
@@ -106,16 +114,14 @@ fun PdfViewerScreen(
         .calculateTopPadding()
     val topAppBarHeight = TopAppBarDefaults.TopAppBarExpandedHeight + topInsetDp
 
+    // Animate the PDF top padding so the page doesn't jump when the top bar appears/disappears.
     val pdfTopPadding by animateDpAsState(
         targetValue = if (isTopBarVisible && !hasScrolled) topAppBarHeight else 0.dp,
         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
         label = "pdfTopPadding"
     )
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
         PdfViewer(
             source = PdfSource.Uri(documentInfo.uri.toUri()),
             state = pdfViewerState,
@@ -134,27 +140,33 @@ fun PdfViewerScreen(
                             val event = awaitPointerEvent(PointerEventPass.Initial)
                             val change = event.changes.firstOrNull() ?: continue
 
-                            if (change.changedToDown()) {
-                                startX = change.position.x
-                                startY = change.position.y
-                            } else if (change.changedToUp()) {
-                                val dx = kotlin.math.abs(change.position.x - startX)
-                                val dy = kotlin.math.abs(change.position.y - startY)
+                            when {
+                                change.changedToDown() -> {
+                                    touchStartX = change.position.x
+                                    touchStartY = change.position.y
+                                }
 
-                                if (dx < touchSlop && dy < touchSlop) {
-                                    when {
-                                        isTopBarVisible && areControlsVisible -> {
-                                            isTopBarVisible = false
-                                            areControlsVisible = false
-                                        }
+                                change.changedToUp() -> {
+                                    val dx = kotlin.math.abs(change.position.x - touchStartX)
+                                    val dy = kotlin.math.abs(change.position.y - touchStartY)
 
-                                        !isTopBarVisible && areControlsVisible -> {
-                                            areControlsVisible = false
-                                        }
-
-                                        else -> {
-                                            isTopBarVisible = true
-                                            areControlsVisible = true
+                                    // Only react to taps — ignore scrolls and zooms.
+                                    if (dx < touchSlop && dy < touchSlop) {
+                                        when {
+                                            // Top bar + controls both visible → hide both
+                                            isTopBarVisible && areControlsVisible -> {
+                                                isTopBarVisible = false
+                                                areControlsVisible = false
+                                            }
+                                            // Only controls visible → hide controls
+                                            !isTopBarVisible && areControlsVisible -> {
+                                                areControlsVisible = false
+                                            }
+                                            // Everything hidden → show both
+                                            else -> {
+                                                isTopBarVisible = true
+                                                areControlsVisible = true
+                                            }
                                         }
                                     }
                                 }
@@ -164,6 +176,7 @@ fun PdfViewerScreen(
                 }
         )
 
+        // ── Top bar ───────────────────────────────────────────────────────────
         AnimatedVisibility(
             modifier = Modifier.align(Alignment.TopCenter),
             visible = isTopBarVisible,
@@ -216,6 +229,7 @@ fun PdfViewerScreen(
             )
         }
 
+        // ── Bottom toolbar ────────────────────────────────────────────────────
         AnimatedVisibility(
             modifier = Modifier
                 .align(Alignment.BottomCenter)

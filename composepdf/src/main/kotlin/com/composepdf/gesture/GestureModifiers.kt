@@ -21,19 +21,20 @@ import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.unit.Velocity
-import com.composepdf.state.PdfViewerController
 import com.composepdf.state.PdfViewerState
 import com.composepdf.state.ViewerConfig
+import com.composepdf.state.ViewerGestureController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 // ── GestureState ─────────────────────────────────────────────────────────────
 
 /**
  * Holds coroutine-based animation jobs for fling and zoom animations.
  *
- * Kept separate from [PdfViewerController] so the gesture modifier can cancel
+ * Kept separate from the viewer controller contract so the gesture modifier can cancel
  * in-progress animations immediately when a new finger touches down, without
  * needing direct access to the controller's coroutine scope.
  *
@@ -123,9 +124,9 @@ internal fun rememberGestureState(): GestureState {
  *
  * 1. **Finger down** — cancels any in-progress fling/animation, resets velocity tracker.
  * 2. **Move loop** — accumulates pan/zoom until touch-slop threshold is exceeded, then
- *    forwards every frame to [PdfViewerController.onGestureUpdate].
+ *    forwards every frame to the gesture controller.
  * 3. **Finger up** — if velocity exceeds 1000 px/s a fling animation is started;
- *    otherwise [PdfViewerController.onGestureEnd] is called immediately.
+ *    otherwise `onGestureEnd()` is called immediately.
  * 4. **Double-tap** — detected only when no slop was exceeded (i.e. the gesture was
  *    a tap, not a drag). A second touch must arrive within [doubleTapTimeout] and
  *    within [doubleTapRadius] of the first. Triggers a spring-animated zoom toggle.
@@ -143,9 +144,9 @@ internal fun rememberGestureState(): GestureState {
  * control over the pointer event loop.
  */
 @Composable
-fun Modifier.pdfGestures(
+internal fun Modifier.pdfGestures(
     state: PdfViewerState,
-    controller: PdfViewerController,
+    controller: ViewerGestureController,
     config: ViewerConfig,
     zoomAnimationSpec: AnimationSpec<Float> = spring(dampingRatio = 0.72f, stiffness = 420f),
     enabled: Boolean = true
@@ -300,7 +301,7 @@ fun Modifier.pdfGestures(
                         secondDown = withTimeoutOrNull(remainingTime) {
                             awaitFirstDown(requireUnconsumed = false)
                         }
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         // Ignore
                     }
 
@@ -357,4 +358,3 @@ fun Modifier.pdfGestures(
         }
     }
 }
-

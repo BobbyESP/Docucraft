@@ -6,65 +6,68 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Constraints
 import com.composepdf.gesture.pdfGestures
-import com.composepdf.state.PdfViewerController
 import com.composepdf.state.PdfViewerState
 import com.composepdf.state.ViewerConfig
-import kotlinx.coroutines.flow.collectLatest
+import com.composepdf.state.ViewerGestureController
+import com.composepdf.state.ViewerLayoutController
 import kotlin.math.roundToInt
 
 /**
  * Core layout for the PDF viewer.
  *
- * It uses a custom [Layout] to position pages absolutely based on the [PdfViewerController]'s geometry model.
- * This ensures pixel-perfect positioning and efficient culling of non-visible pages.
+ * Uses a custom [Layout] to position pages absolutely based on the current viewport/layout
+ * contract. This ensures pixel-perfect positioning and efficient culling of non-visible pages.
+ *
+ * Each visible page is rendered by a [PdfPage] composable that layers:
+ * 1. A low-resolution base [ImageBitmap] (always present as a fallback).
+ * 2. High-resolution tiles composited on top at the correct scale.
+ *
+ * ## Render dispatch responsibility
+ *
+ * This composable does NOT dispatch render requests on its own. Rendering remains centralized in
+ * the controller contracts passed in from the viewer host, so gesture-driven and programmatic
+ * renders share the same pipeline.
  *
  * @param pageSizes List of pre-calculated page dimensions at zoom 1.0.
- * @param renderedPages State flow of the base low-resolution bitmaps for each page.
+ * @param renderedPages Map of page indices to their low-resolution base bitmaps.
  * @param state The current UI state (zoom, pan, tiles).
- * @param controller The logic engine for coordinate conversion and render requests.
+ * @param layoutController Layout-facing contract with viewport reads and layout-triggered mutations.
+ * @param gestureController Gesture-oriented contract used by the modifier.
  * @param config Viewer configuration (night mode, indicators, etc.).
  * @param modifier Layout modifier.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Suppress("UnstableCollections")
 @Composable
 internal fun PdfLayout(
     pageSizes: List<Size>,
     renderedPages: Map<Int, Bitmap>,
     state: PdfViewerState,
-    controller: PdfViewerController,
+    layoutController: ViewerLayoutController,
+    gestureController: ViewerGestureController,
     config: ViewerConfig,
     modifier: Modifier = Modifier
 ) {
-    // 1. Determine visible pages. This only triggers recomposition when the set of visible indices changes.
-    val visiblePages by remember(controller) {
-        derivedStateOf { controller.visiblePageIndices() }
+    // Recompose only when the set of visible page indices actually changes.
+    val visiblePages by remember(layoutController) {
+        derivedStateOf { layoutController.visiblePageIndices() }
     }
 
-    // 2. Orchestrate rendering requests. Triggers when visibility, gestures, or zoom change.
-    LaunchedEffect(controller) {
-        snapshotFlow {
-            Triple(controller.visiblePageIndices(), state.isGestureActive, state.zoom)
-        }.collectLatest {
-            controller.requestRenderForVisiblePages()
-        }
-    }
-
-    // 3. Prepare expensive objects.
     val colorFilter = remember(config.isNightModeEnabled) {
         if (config.isNightModeEnabled) {
             ColorFilter.colorMatrix(
@@ -85,11 +88,11 @@ internal fun PdfLayout(
             .fillMaxSize()
             .clipToBounds()
             .onSizeChanged { size ->
-                controller.onViewportSizeChanged(size.width.toFloat(), size.height.toFloat())
+                layoutController.onViewportSizeChanged(size.width.toFloat(), size.height.toFloat())
             }
             .pdfGestures(
                 state = state,
-                controller = controller,
+                controller = gestureController,
                 config = config,
                 zoomAnimationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
                 enabled = state.isLoaded
@@ -99,9 +102,13 @@ internal fun PdfLayout(
                 key(index) {
                     val size = pageSizes.getOrNull(index)
                     if (size != null) {
+                        // Convert Bitmap → ImageBitmap here (stable Compose type) so PdfPage
+                        // receives a skippable parameter and avoids unnecessary recomposition.
+                        val rawBitmap = renderedPages[index]
+                        val imageBitmap = remember(rawBitmap) { rawBitmap?.asImageBitmap() }
                         PdfPage(
                             state = state,
-                            bitmap = renderedPages[index],
+                            bitmap = imageBitmap,
                             pageIndex = index,
                             showLoadingIndicator = config.isLoadingIndicatorVisible,
                             colorFilter = colorFilter,
@@ -112,29 +119,29 @@ internal fun PdfLayout(
             }
         }
     ) { measurables, constraints ->
-        val vpWidth = controller.viewportWidth
+        val vpWidth = layoutController.viewportWidth
         if (measurables.isEmpty() || vpWidth <= 0f) {
             return@Layout layout(constraints.maxWidth, constraints.maxHeight) {}
         }
 
         layout(constraints.maxWidth, constraints.maxHeight) {
-            // maxPageWidth is the width of the document "container".
-            // PdfViewerController.clampPan already centers state.panX if the container is narrower than viewport.
-            val maxPageWidth =
-                controller.pageSizes.indices.maxOfOrNull { controller.pageWidthPx(it) } ?: vpWidth
+            // maxPageWidth is the width of the document corridor.
+            val maxPageWidth = layoutController.pageSizes.indices
+                .maxOfOrNull(layoutController::pageWidthPx)
+                ?: vpWidth
 
             measurables.forEach { measurable ->
                 val pageIndex = measurable.layoutId as? Int ?: return@forEach
 
-                val docTopY = controller.pageTopDocY(pageIndex)
-                val pageWidth = controller.pageWidthPx(pageIndex)
-                val pageHeight = controller.pageHeightPx(pageIndex)
+                val docTopY = layoutController.pageTopDocY(pageIndex)
+                val pageWidth = layoutController.pageWidthPx(pageIndex)
+                val pageHeight = layoutController.pageHeightPx(pageIndex)
 
                 val screenW = (pageWidth * state.zoom).roundToInt().coerceAtLeast(1)
                 val screenH = (pageHeight * state.zoom).roundToInt().coerceAtLeast(1)
 
-                // Each page is horizontally centered within the maxPageWidth bounding box corridor.
-                // state.panX points to the left edge of that corridor in screen space.
+                // Each page is horizontally centered within the maxPageWidth corridor.
+                // panX points to the left edge of that corridor in screen space.
                 val x = (state.panX + (maxPageWidth - pageWidth) * state.zoom / 2f).roundToInt()
                 val y = (docTopY * state.zoom + state.panY).roundToInt()
 

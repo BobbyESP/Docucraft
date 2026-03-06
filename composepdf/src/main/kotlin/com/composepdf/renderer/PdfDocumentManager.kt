@@ -97,6 +97,15 @@ class PdfDocumentManager(private val context: Context) : Closeable {
         }
     }
 
+    /**
+     * Reads the width and height (in PDF points) for every page in the document.
+     *
+     * Pages are fetched concurrently using all available renderer slots in the pool,
+     * so this is significantly faster than sequential reads on large documents.
+     * Must be called after a successful [open].
+     *
+     * @return List of [Size] objects in page-index order.
+     */
     suspend fun getAllPageSizes(): List<Size> = coroutineScope {
         (0 until _pageCount).map { index ->
             async(Dispatchers.IO) {

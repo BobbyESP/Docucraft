@@ -1,12 +1,12 @@
 package com.composepdf.renderer
 
 import android.graphics.Bitmap
-import android.graphics.Rect
 import android.util.Log
 import android.util.Size
 import com.composepdf.cache.BitmapCache
 import com.composepdf.cache.PageCacheKey
 import com.composepdf.cache.TileDiskCache
+import com.composepdf.renderer.tiles.TileKey
 import com.composepdf.state.PdfViewerState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.roundToInt
 
 private const val TAG = "PdfRenderScheduler"
@@ -29,15 +30,16 @@ private const val TAG = "PdfRenderScheduler"
 /**
  * Orchestrates background rendering tasks for both full pages and high-resolution tiles.
  *
- * Uses a dedicated thread pool to ensure rendering operations don't block the
- * main thread or standard IO dispatchers.
+ * This class executes work; it does not decide *which* tiles should exist. That planning now
+ * happens in [com.composepdf.renderer.tiles.TilePlanner], keeping responsibilities separate.
  */
-class RenderScheduler(
+internal class RenderScheduler internal constructor(
     private val documentManager: PdfDocumentManager,
     private val pageRenderer: PageRenderer,
     private val cache: BitmapCache,
     private val viewerState: PdfViewerState,
-    private val tileDiskCache: TileDiskCache? = null
+    private val tileDiskCache: TileDiskCache? = null,
+    private val telemetry: RenderTelemetry? = null
 ) : Closeable {
 
     /** Dedicated dispatcher for CPU-intensive PDF rasterization. */
@@ -51,17 +53,26 @@ class RenderScheduler(
     /** Tracking of active high-res tile rendering jobs. */
     private val tileJobs = ConcurrentHashMap<String, Job>()
 
-    /** Number of pages to pre-render outside the visible range. */
+    /** Number of pages to pre-render outside the visible range in each direction. */
     var prefetchWindow: Int = 2
         set(value) { field = value.coerceAtLeast(0) }
 
-    /** Current document identifier, set by [com.composepdf.state.PdfViewerController] on each open(). */
+    /**
+     * Stable identifier for the currently open document.
+     *
+     * Used to prefix tile disk-cache keys so tiles from one PDF do not collide with
+     * tiles from a different PDF that happens to share page indices. Set by
+     * [com.composepdf.state.PdfViewerController] on each [open][PdfDocumentManager.open] call.
+     */
     var docKey: String = ""
 
     private val _renderedPages = MutableStateFlow<Map<Int, Bitmap>>(emptyMap())
 
     /** Observed by the UI to display base page bitmaps. */
     val renderedPages: StateFlow<Map<Int, Bitmap>> = _renderedPages.asStateFlow()
+
+    /** Id de la última pasada de renderizado, usado para descartar publicaciones obsoletas. */
+    private val latestRenderPassId = AtomicInteger(0)
 
     /**
      * Schedules rendering for the given range of visible pages.
@@ -75,10 +86,12 @@ class RenderScheduler(
         visiblePages: IntRange,
         config: PageRenderer.RenderConfig,
         pageSizes: List<Size>,
-        getBaseWidth: (Int) -> Float
+        getBaseWidth: (Int) -> Float,
+        renderPassId: Int
     ) {
         if (!documentManager.isOpen || pageSizes.isEmpty()) return
 
+        latestRenderPassId.updateAndGet { current -> maxOf(current, renderPassId) }
         val roundedZoom = (config.zoomLevel * 100f).roundToInt() / 100f
         val total = pageSizes.size
 
@@ -91,6 +104,7 @@ class RenderScheduler(
             if (idx !in window) {
                 activeJobs.remove(idx)?.cancel()
                 inFlightZoom.remove(idx)
+                telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
             }
         }
 
@@ -115,9 +129,16 @@ class RenderScheduler(
             // Skip if already in memory or already being rendered at this zoom
             val cached = cache.get(cacheKey)
             if (cached != null) {
-                publishBitmap(pageIndex, cached)
+                telemetry?.recordPageMemoryHit(renderPassId, pageIndex, roundedZoom)
+                if (renderPassId == latestRenderPassId.get()) {
+                    publishBitmap(pageIndex, cached)
+                    telemetry?.recordPagePublished(renderPassId, pageIndex, stale = false)
+                } else {
+                    telemetry?.recordPagePublished(renderPassId, pageIndex, stale = true)
+                }
                 activeJobs.remove(pageIndex)?.cancel()
                 inFlightZoom.remove(pageIndex)
+                telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
                 continue
             }
 
@@ -127,15 +148,22 @@ class RenderScheduler(
             inFlightZoom[pageIndex] = roundedZoom
 
             activeJobs[pageIndex] = scope.launch {
+                telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
                 try {
                     val bitmap = documentManager.withPage(pageIndex) { page ->
                         pageRenderer.render(page, baseWidth, config)
                     }
+                    telemetry?.recordPageRendered(renderPassId, pageIndex, roundedZoom)
                     cache.put(cacheKey, bitmap)
                     if (inFlightZoom[pageIndex] == roundedZoom) {
                         inFlightZoom.remove(pageIndex)
                         activeJobs.remove(pageIndex)
-                        publishBitmap(pageIndex, bitmap)
+                        if (renderPassId == latestRenderPassId.get()) {
+                            publishBitmap(pageIndex, bitmap)
+                            telemetry?.recordPagePublished(renderPassId, pageIndex, stale = false)
+                        } else {
+                            telemetry?.recordPagePublished(renderPassId, pageIndex, stale = true)
+                        }
                     }
                 } catch (e: Exception) {
                     if (e !is CancellationException) Log.e(
@@ -144,6 +172,8 @@ class RenderScheduler(
                     )
                     inFlightZoom.remove(pageIndex)
                     activeJobs.remove(pageIndex)
+                } finally {
+                    telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
                 }
             }
         }
@@ -152,45 +182,51 @@ class RenderScheduler(
     /**
      * Schedules a single tile render task.
      *
-     * @param pageIndex The index of the page containing the tile.
-     * @param tileRect The coordinates of the tile within the page (scaled coordinates).
-     * @param zoom The current zoom level.
+     * @param tileKey The key identifying the tile to render, including page index and coordinates.
      * @param baseWidth The width the page should have at zoom 1.0.
      */
-    fun requestTile(
-        pageIndex: Int,
-        tileRect: Rect,
-        zoom: Float,
-        baseWidth: Float
-    ) {
-        val zoomKey = (zoom * 100f).roundToInt() / 100f
-        // Memory key: original format, used by PdfViewerState and PdfPage for drawing.
-        val tileKey = "${pageIndex}_${tileRect.left}_${tileRect.top}_${tileRect.right}_${tileRect.bottom}_$zoomKey"
-        // Disk key: prefixed with docKey to avoid collisions between different PDFs on disk.
-        val diskKey = if (docKey.isNotEmpty()) "${docKey}_$tileKey" else tileKey
+    internal fun requestTile(tileKey: TileKey, baseWidth: Float, renderPassId: Int) {
+        latestRenderPassId.updateAndGet { current -> maxOf(current, renderPassId) }
+        val memoryKey = tileKey.toCacheKey()
+        val diskKey = tileKey.toDiskCacheKey(docKey)
 
-        // Already in memory cache
-        if (viewerState.getTile(tileKey) != null) return
-        // Already being rendered
-        if (tileJobs.containsKey(tileKey)) return
+        if (viewerState.getTile(memoryKey) != null) {
+            telemetry?.recordTileMemoryHit(renderPassId, memoryKey)
+            return
+        }
+        if (tileJobs.containsKey(memoryKey)) return
 
-        tileJobs[tileKey] = scope.launch {
+        tileJobs[memoryKey] = scope.launch {
+            telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
             try {
                 val diskBitmap = tileDiskCache?.get(diskKey)
                 if (diskBitmap != null) {
-                    viewerState.putTile(tileKey, diskBitmap)
+                    telemetry?.recordTileDiskHit(renderPassId, memoryKey)
+                    if (renderPassId == latestRenderPassId.get()) {
+                        viewerState.putTile(memoryKey, diskBitmap)
+                        telemetry?.recordTilePublished(renderPassId, memoryKey, stale = false)
+                    } else {
+                        telemetry?.recordTilePublished(renderPassId, memoryKey, stale = true)
+                    }
                     return@launch
                 }
 
-                val bitmap = documentManager.withPage(pageIndex) { page ->
-                    pageRenderer.renderTile(page, tileRect, zoom, baseWidth)
+                val bitmap = documentManager.withPage(tileKey.pageIndex) { page ->
+                    pageRenderer.renderTile(page, tileKey.rect, tileKey.zoom, baseWidth)
                 }
+                telemetry?.recordTileRendered(renderPassId, memoryKey)
                 tileDiskCache?.put(diskKey, bitmap)
-                viewerState.putTile(tileKey, bitmap)
+                if (renderPassId == latestRenderPassId.get()) {
+                    viewerState.putTile(memoryKey, bitmap)
+                    telemetry?.recordTilePublished(renderPassId, memoryKey, stale = false)
+                } else {
+                    telemetry?.recordTilePublished(renderPassId, memoryKey, stale = true)
+                }
             } catch (e: Exception) {
-                if (e !is CancellationException) Log.e(TAG, "Tile error for $tileKey: ${e.message}")
+                if (e !is CancellationException) Log.e(TAG, "Tile error for $memoryKey: ${e.message}")
             } finally {
-                tileJobs.remove(tileKey)
+                tileJobs.remove(memoryKey)
+                telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
             }
         }
     }
@@ -203,15 +239,19 @@ class RenderScheduler(
         tileJobs.keys.forEach { key ->
             if (key !in keepKeys) {
                 tileJobs.remove(key)?.cancel()
+                telemetry?.recordTileJobCancelled(key)
             }
         }
+        telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
     }
 
     /** Cancels all currently active tile rendering tasks. */
     fun cancelAllTiles() {
         tileJobs.keys.forEach { key ->
             tileJobs.remove(key)?.cancel()
+            telemetry?.recordTileJobCancelled(key)
         }
+        telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
     }
 
     private fun publishBitmap(pageIndex: Int, bitmap: Bitmap) {
@@ -226,6 +266,7 @@ class RenderScheduler(
         activeJobs.keys.forEach { idx -> activeJobs.remove(idx)?.cancel() }
         inFlightZoom.clear()
         cancelAllTiles()
+        _renderedPages.value = emptyMap()
         cache.clear()
     }
 
