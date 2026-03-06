@@ -84,7 +84,16 @@ class PdfDocumentManager(private val context: Context) : Closeable {
         val capturedGeneration = generation.get()
         return semaphore.withPermit {
             val renderer =
-                rendererPool.poll() ?: throw IllegalStateException("PDF Renderer pool exhausted")
+                rendererPool.poll() ?: run {
+                    Log.e(
+                        TAG,
+                        "Inconsistent PdfDocumentManager state: acquired semaphore permit but no PdfRenderer available. " +
+                            "Renderer pool size=${rendererPool.size}."
+                    )
+                    throw IllegalStateException(
+                        "Inconsistent PdfDocumentManager state: acquired permit but no PdfRenderer available"
+                    )
+                }
             try {
                 renderer.openPage(pageIndex).use { page -> action(page) }
             } finally {
@@ -109,6 +118,7 @@ class PdfDocumentManager(private val context: Context) : Closeable {
      * @return List of [Size] objects in page-index order.
      */
     suspend fun getAllPageSizes(): List<Size> = coroutineScope {
+        if(!isOpen) throw IllegalStateException("Document not open")
         (0 until _pageCount).map { index ->
             async(Dispatchers.IO) {
                 withPage(index) { page -> Size(page.width, page.height) }
@@ -136,12 +146,17 @@ class PdfDocumentManager(private val context: Context) : Closeable {
      */
     private suspend fun closeInternal() {
         val permitsToAcquire = currentPermits
-        repeat(permitsToAcquire) { semaphore.acquire() }
-        generation.incrementAndGet()
-        drainAndClosePool()
-        closeFdAndResolver()
-        _pageCount = 0
-        currentPermits = 1
+        val previousSemaphore = semaphore
+        repeat(permitsToAcquire) { previousSemaphore.acquire() }
+        try {
+            generation.incrementAndGet()
+            drainAndClosePool()
+            closeFdAndResolver()
+            _pageCount = 0
+            currentPermits = 1
+        } finally {
+            repeat(permitsToAcquire) { previousSemaphore.release() }
+        }
         semaphore = Semaphore(1)
     }
 

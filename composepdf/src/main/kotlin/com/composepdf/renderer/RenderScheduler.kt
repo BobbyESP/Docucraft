@@ -88,7 +88,7 @@ internal class RenderScheduler internal constructor(
      */
     fun updateTileWindow(keepKeys: Set<String>) {
         renderWindowTracker.updateDesiredTiles(keepKeys)
-        tileJobs.keys.forEach { key ->
+        tileJobs.keys.forEach { key -> //Consider creating an iterator with proper removal pattern (using toList may be heavy)
             if (key !in keepKeys) {
                 tileJobs.remove(key)?.cancel()
                 telemetry?.recordTileJobCancelled(key)

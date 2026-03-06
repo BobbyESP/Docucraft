@@ -43,7 +43,18 @@ class BitmapPool(
             Bitmap.Config.ARGB_8888 -> 4
             else -> throw UnsupportedOperationException("Unsupported config: $config")
         }
-        val targetSizeBytes = width * height * bytesPerPixel
+        val targetSizeBytesLong =
+            width.toLong() * height.toLong() * bytesPerPixel.toLong()
+        if (targetSizeBytesLong > Int.MAX_VALUE) {
+            Log.w(
+                TAG,
+                "Requested bitmap is too large for pooling: " +
+                    "width=$width, height=$height, config=$config"
+            )
+            // Avoid integer overflow and pooling for extremely large bitmaps.
+            return createBitmap(width, height, config)
+        }
+        val targetSizeBytes = targetSizeBytesLong.toInt()
 
         // Find a bitmap that is at least as large as we need.
         // ceilingEntry returns the mapping with the least key greater than or equal to current.
@@ -61,13 +72,13 @@ class BitmapPool(
             }
 
             if (bitmap != null) {
-                currentSizeBytes -= size
                 if (bitmap.isRecycled) {
                     // Already recycled — skip and fall through to create new.
                 } else {
                     try {
                         bitmap.reconfigure(width, height, config)
                         bitmap.eraseColor(0)
+                        currentSizeBytes -= size
                         return bitmap
                     } catch (e: IllegalArgumentException) {
                         Log.w(
