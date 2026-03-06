@@ -55,7 +55,9 @@ internal class ViewerInteractionCoordinator(
         viewportCoordinator.clampPan()
         viewportCoordinator.updateCurrentPageFromViewport()
 
-        debounceGestureRender(if (isZooming) ZOOM_GESTURE_DEBOUNCE_MS else PAN_GESTURE_DEBOUNCE_MS)
+        // Increased debounce slightly during active gestures to avoid queueing too many
+        // concurrent render passes while the user is still moving the viewport.
+        debounceGestureRender(if (isZooming) 200L else 120L)
     }
 
     fun onAnimatedZoomFrame(targetZoom: Float, pivot: Offset) {
@@ -69,7 +71,8 @@ internal class ViewerInteractionCoordinator(
 
         animatedZoomRenderJob?.cancel()
         animatedZoomRenderJob = scope.launch {
-            debounceDelay(ANIMATED_ZOOM_DEBOUNCE_MS)
+            // Animating is very high-churn, increase debounce.
+            debounceDelay(150L)
             requestRender(RenderTrigger.ANIMATED_ZOOM_SETTLED)
         }
     }

@@ -22,7 +22,8 @@ import java.io.IOException
  */
 class TileDiskCache(
     private val directory: File,
-    private val maxSizeBytes: Long = 300L * 1024 * 1024
+    private val maxSizeBytes: Long = 300L * 1024 * 1024,
+    private val bitmapPool: BitmapPool? = null
 ) {
     init {
         directory.mkdirs()
@@ -33,11 +34,32 @@ class TileDiskCache(
         return File(directory, "$safe.webp")
     }
 
+    /**
+     * Reads a tile bitmap from disk.
+     *
+     * A fresh [BitmapFactory.Options] is created per call to avoid race conditions between
+     * the render threads that call this concurrently. Pool reuse via `inBitmap` is intentionally
+     * **not** used because:
+     * - WebP decoding has strict size-matching requirements for `inBitmap`
+     * - The pool's `recycle()` on eviction can invalidate a bitmap between `get()` and decode
+     * - The SIGSEGV crash was caused by exactly this race
+     *
+     * The returned bitmap is mutable so it can later be returned to [bitmapPool] by the caller.
+     */
     fun get(tileKey: String): Bitmap? {
         val file = fileFor(tileKey)
         if (!file.exists()) return null
         file.setLastModified(System.currentTimeMillis())
-        return BitmapFactory.decodeFile(file.absolutePath)
+
+        val options = BitmapFactory.Options().apply {
+            inMutable = true
+            inPreferredConfig = Bitmap.Config.ARGB_8888
+        }
+        return try {
+            BitmapFactory.decodeFile(file.absolutePath, options)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     suspend fun put(tileKey: String, bitmap: Bitmap) = withContext(Dispatchers.IO) {

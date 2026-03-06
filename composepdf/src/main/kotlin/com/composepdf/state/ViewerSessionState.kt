@@ -9,8 +9,18 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.composepdf.cache.LruTileCache
 import com.composepdf.remote.RemotePdfState
+import com.composepdf.renderer.tiles.TileKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+/**
+ * Immutable UI-ready representation of a published high-resolution tile.
+ */
+internal data class PublishedTile(
+    val cacheKey: String,
+    val tileKey: TileKey,
+    val imageBitmap: ImageBitmap
+)
 
 /**
  * Internal document-session store for the viewer.
@@ -48,18 +58,18 @@ internal class ViewerSessionState {
      * visible while the next tile set is produced.
      */
     private val tileCache = LruTileCache(onEvicted = { key ->
-        imageBitmapSnapshot.remove(key)
+        removePublishedTile(key)
     })
 
     /** Revision counter observed by Compose to redraw pages when tile contents change. */
     var tileRevision by mutableIntStateOf(0)
         private set
 
-    /** Snapshot of raw bitmap tiles, rebuilt only after cache mutations. */
+    /** Snapshot of raw bitmap tiles, rebuilt incrementally after cache mutations. */
     private var tilesSnapshot: Map<String, Bitmap> = emptyMap()
 
-    /** Compose-friendly snapshot mirroring [tilesSnapshot]. */
-    private var imageBitmapSnapshot: MutableMap<String, ImageBitmap> = mutableMapOf()
+    /** Compose-friendly snapshot mirroring [tilesSnapshot], already grouped by page for fast draws. */
+    private var publishedTilesByPage: Map<Int, List<PublishedTile>> = emptyMap()
 
     fun beginDocumentLoad() {
         pageCount = 0
@@ -87,39 +97,66 @@ internal class ViewerSessionState {
 
     fun getAllTiles(): Map<String, Bitmap> = tilesSnapshot
 
-    fun getAllImageBitmapTiles(): Map<String, ImageBitmap> = imageBitmapSnapshot
+    fun getImageBitmapTilesForPage(pageIndex: Int): List<PublishedTile> = publishedTilesByPage[pageIndex].orEmpty()
 
     suspend fun putTile(key: String, bitmap: Bitmap) = withContext(Dispatchers.Main.immediate) {
+        val tileKey = TileKey.fromCacheKey(key) ?: return@withContext
         tileCache.put(key, bitmap)
-        imageBitmapSnapshot[key] = bitmap.asImageBitmap()
-        imageBitmapSnapshot.keys.retainAll(tileCache.snapshot().keys)
-        tilesSnapshot = tileCache.snapshot()
+
+        val publishedTile = PublishedTile(
+            cacheKey = key,
+            tileKey = tileKey,
+            imageBitmap = bitmap.asImageBitmap()
+        )
+
+        val updatedTiles = tilesSnapshot.toMutableMap().apply {
+            put(key, bitmap)
+        }
+        tilesSnapshot = updatedTiles
+
+        val updatedPageTiles = publishedTilesByPage.toMutableMap()
+        val pageTiles = updatedPageTiles[tileKey.pageIndex].orEmpty()
+            .filterNot { it.cacheKey == key }
+            .toMutableList()
+        pageTiles += publishedTile
+        updatedPageTiles[tileKey.pageIndex] = pageTiles.sortedWith(compareBy({ it.tileKey.rect.top }, { it.tileKey.rect.left }))
+        publishedTilesByPage = updatedPageTiles
         tileRevision++
     }
 
     suspend fun pruneTiles(predicate: (String) -> Boolean) = withContext(Dispatchers.Main.immediate) {
-        val snapshot = tileCache.snapshot()
-        var changed = false
-        snapshot.keys.forEach { key ->
-            if (predicate(key)) {
-                tileCache.remove(key)
-                changed = true
-            }
+        val keysToRemove = tilesSnapshot.keys.filter(predicate)
+        if (keysToRemove.isEmpty()) return@withContext
+
+        keysToRemove.forEach { key ->
+            tileCache.remove(key)
+            removePublishedTile(key, incrementRevision = false)
         }
-        if (changed) {
-            val remaining = tileCache.snapshot()
-            tilesSnapshot = remaining
-            imageBitmapSnapshot = remaining.mapValuesTo(mutableMapOf()) { (_, bmp) ->
-                bmp.asImageBitmap()
-            }
-            tileRevision++
-        }
+        tileRevision++
     }
 
     suspend fun clearTiles() = withContext(Dispatchers.Main.immediate) {
         tileCache.evictAll()
         tilesSnapshot = emptyMap()
-        imageBitmapSnapshot = mutableMapOf()
+        publishedTilesByPage = emptyMap()
         tileRevision++
+    }
+
+    private fun removePublishedTile(key: String, incrementRevision: Boolean = false) {
+        val removedBitmap = tilesSnapshot[key]
+        if (removedBitmap == null) return
+
+        tilesSnapshot = tilesSnapshot.toMutableMap().apply { remove(key) }
+        val tileKey = TileKey.fromCacheKey(key)
+        if (tileKey != null) {
+            val updatedByPage = publishedTilesByPage.toMutableMap()
+            val remainingForPage = updatedByPage[tileKey.pageIndex].orEmpty()
+                .filterNot { it.cacheKey == key }
+            if (remainingForPage.isEmpty()) updatedByPage.remove(tileKey.pageIndex)
+            else updatedByPage[tileKey.pageIndex] = remainingForPage
+            publishedTilesByPage = updatedByPage
+        }
+
+        if (incrementRevision) tileRevision++
     }
 }

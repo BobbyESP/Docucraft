@@ -110,6 +110,7 @@ internal fun PdfLayout(
                             state = state,
                             bitmap = imageBitmap,
                             pageIndex = index,
+                            pageWidthPx = layoutController.pageWidthPx(index),
                             showLoadingIndicator = config.isLoadingIndicatorVisible,
                             colorFilter = colorFilter,
                             modifier = Modifier.layoutId(index)

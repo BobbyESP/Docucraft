@@ -51,6 +51,7 @@ internal fun PdfPage(
     state: PdfViewerState,
     bitmap: ImageBitmap?,
     pageIndex: Int,
+    pageWidthPx: Float,
     showLoadingIndicator: Boolean,
     modifier: Modifier = Modifier,
     colorFilter: ColorFilter? = null
@@ -62,15 +63,14 @@ internal fun PdfPage(
         contentAlignment = Alignment.Center
     ) {
         if (bitmap != null) {
-            // Reading tileRevision ensures Compose schedules a redraw whenever
-            // new tiles arrive, even if the map reference itself hasn't changed.
             val tiles = state.run {
                 tileRevision
-                getAllImageBitmapTiles()
+                getImageBitmapTilesForPage(pageIndex)
             }
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val zoom = state.zoom
+                val expectedBaseWidthKey = TileKey.normalizedBaseWidthKey(pageWidthPx)
 
                 // 1. Draw low-resolution base page stretched to fill the measured size.
                 drawImage(
@@ -79,15 +79,16 @@ internal fun PdfPage(
                     colorFilter = colorFilter
                 )
 
-                // 2. Composite high-resolution tiles that belong to this page.
-                tiles.forEach { (key, tileImageBitmap) ->
-                    val tileKey = TileKey.fromCacheKey(key)
-                        ?.takeIf { it.pageIndex == pageIndex }
-                        ?: return@forEach
+                // 2. Composite only this page's tiles that still match the current geometry.
+                tiles.forEach { publishedTile ->
+                    val tileKey = publishedTile.tileKey
+                    if (tileKey.baseWidthKey != expectedBaseWidthKey && tileKey.baseWidthKey >= 0) {
+                        return@forEach
+                    }
                     val scale = zoom / tileKey.zoom
 
                     drawImage(
-                        image = tileImageBitmap,
+                        image = publishedTile.imageBitmap,
                         dstOffset = IntOffset(
                             (tileKey.rect.left * scale).roundToInt(),
                             (tileKey.rect.top * scale).roundToInt()

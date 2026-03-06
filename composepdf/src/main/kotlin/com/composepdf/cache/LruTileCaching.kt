@@ -30,7 +30,7 @@ class LruTileCache(
     }
 
     companion object {
-        // 25% of the app's max heap for the on-memory tile caching
-        fun defaultSizeBytes(): Int = (Runtime.getRuntime().maxMemory() / 4L).toInt()
+        // Reduced to 20% of the app's max heap for the on-memory tile caching.
+        fun defaultSizeBytes(): Int = (Runtime.getRuntime().maxMemory() * 0.20).toInt()
     }
 }

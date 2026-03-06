@@ -13,7 +13,6 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.ImageBitmap
 import com.composepdf.remote.RemotePdfState
 import kotlin.math.abs
 
@@ -107,7 +106,8 @@ class PdfViewerState(
 
     internal suspend fun putTile(key: String, bitmap: Bitmap) = session.putTile(key, bitmap)
 
-    internal fun getAllImageBitmapTiles(): Map<String, ImageBitmap> = session.getAllImageBitmapTiles()
+    internal fun getImageBitmapTilesForPage(pageIndex: Int): List<PublishedTile> =
+        session.getImageBitmapTilesForPage(pageIndex)
 
     internal suspend fun pruneTiles(predicate: (String) -> Boolean) = session.pruneTiles(predicate)
 

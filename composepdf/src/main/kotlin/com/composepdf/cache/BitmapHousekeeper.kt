@@ -25,6 +25,7 @@ internal class BitmapHousekeeper(
         scope.launch {
             delay(BITMAP_RETURN_DELAY_MS)
             withContext(Dispatchers.Main.immediate) {
+                if (evictedBitmap.isRecycled) return@withContext
                 val stillUsedByPages = renderedPagesProvider().values.any { it === evictedBitmap }
                 val stillUsedByTiles = state.getAllTiles().values.any { it === evictedBitmap }
                 if (!stillUsedByPages && !stillUsedByTiles) {
@@ -39,6 +40,6 @@ internal class BitmapHousekeeper(
     }
 
     private companion object {
-        const val BITMAP_RETURN_DELAY_MS = 800L
+        const val BITMAP_RETURN_DELAY_MS = 400L
     }
 }

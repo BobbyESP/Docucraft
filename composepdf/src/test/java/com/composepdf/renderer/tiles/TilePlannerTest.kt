@@ -101,10 +101,11 @@ class TilePlannerTest {
             pageSpacingPx = 0f
         )
 
-        val cachedKey = TileKey(
+        val cachedKey = TileKey.fromLayout(
             pageIndex = 0,
             rect = Rect(0, 0, 256, 256),
-            zoom = 1.25f
+            zoom = 1.25f,
+            baseWidth = 250f
         ).toCacheKey()
 
         val plan = planner.computeTilePlan(
@@ -123,6 +124,53 @@ class TilePlannerTest {
 
         assertTrue(plan.keepKeys.contains(cachedKey))
         assertTrue(plan.requests.none { it.tileKey.toCacheKey() == cachedKey })
+    }
+
+    @Test
+    fun computeTilePlan_includesBasePageWidthInKeepKeys() {
+        val layoutNarrow = layoutSnapshot(
+            pageCount = 1,
+            pageTops = floatArrayOf(0f),
+            pageHeights = floatArrayOf(250f),
+            pageWidths = floatArrayOf(250f),
+            totalDocumentHeight = 250f,
+            maxPageWidth = 250f,
+            viewportWidth = 500f,
+            viewportHeight = 500f,
+            pageSpacingPx = 0f
+        )
+        val layoutWide = layoutSnapshot(
+            pageCount = 1,
+            pageTops = floatArrayOf(0f),
+            pageHeights = floatArrayOf(250f),
+            pageWidths = floatArrayOf(300f),
+            totalDocumentHeight = 250f,
+            maxPageWidth = 300f,
+            viewportWidth = 500f,
+            viewportHeight = 500f,
+            pageSpacingPx = 0f
+        )
+
+        val narrowPlan = planner.computeTilePlan(
+            viewport = ViewportState(500f, 500f, 0f, 0f),
+            layout = layoutNarrow,
+            zoom = 1.3f,
+            visiblePages = 0..0,
+            scrollDirectionHint = 0,
+            isTileCached = { false }
+        )
+        val widePlan = planner.computeTilePlan(
+            viewport = ViewportState(500f, 500f, 0f, 0f),
+            layout = layoutWide,
+            zoom = 1.3f,
+            visiblePages = 0..0,
+            scrollDirectionHint = 0,
+            isTileCached = { false }
+        )
+
+        assertTrue(narrowPlan.keepKeys.isNotEmpty())
+        assertTrue(widePlan.keepKeys.isNotEmpty())
+        assertTrue(narrowPlan.keepKeys.intersect(widePlan.keepKeys).isEmpty())
     }
 
     private fun layoutSnapshot(

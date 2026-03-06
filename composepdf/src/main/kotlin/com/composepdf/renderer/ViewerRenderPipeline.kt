@@ -30,6 +30,7 @@ internal class ViewerRenderPipeline(
 ) {
     private var lastScrollDirectionHint: Int = 0
     private var nextRenderPassId: Int = 0
+    private var activeTileZoomBucket: Float? = null
 
     fun recordPanDelta(panDeltaY: Float) {
         if (panDeltaY != 0f) {
@@ -37,8 +38,27 @@ internal class ViewerRenderPipeline(
         }
     }
 
+    /**
+     * Starts a fresh document render session.
+     *
+     * This resets the scheduler's publication token so late results from a previous document can no
+     * longer reach the UI, even if background rasterization finishes after cancellation.
+     */
     fun onDocumentLoaded(documentKey: String) {
-        renderScheduler.docKey = documentKey
+        activeTileZoomBucket = null
+        renderScheduler.onDocumentLoaded(documentKey)
+    }
+
+    /**
+     * Clears all currently published/high-res tile work.
+     *
+     * Used when the page geometry changes (viewport resize, fit mode change, spacing change) so the
+     * viewer never composites tiles that were rendered against an older base layout.
+     */
+    suspend fun invalidateTiles() {
+        activeTileZoomBucket = null
+        renderScheduler.updateTileWindow(emptySet())
+        state.clearTiles()
     }
 
     fun requestRenderForVisiblePages(trigger: RenderTrigger = RenderTrigger.PROGRAMMATIC) {
@@ -50,6 +70,7 @@ internal class ViewerRenderPipeline(
 
         val currentZoom = state.zoom
         val steppedZoom = tilePlanner.computeSteppedZoom(currentZoom)
+        val basePageRenderZoom = selectBasePageRenderZoom(currentZoom, steppedZoom)
         val pageSizesSnapshot = viewportCoordinator.pageSizes
         val config = configProvider()
         val renderPassId = ++nextRenderPassId
@@ -63,19 +84,22 @@ internal class ViewerRenderPipeline(
 
         scope.launch {
             if (currentZoom < TILE_ZOOM_THRESHOLD) {
+                activeTileZoomBucket = null
+                renderScheduler.updateTileWindow(emptySet())
                 state.clearTiles()
-                renderScheduler.cancelAllTiles()
-            } else {
-                state.pruneTiles { cacheKey ->
-                    val tileZoom = TileKey.fromCacheKey(cacheKey)?.zoom ?: return@pruneTiles true
-                    tileZoom != steppedZoom
-                }
+            } else if (activeTileZoomBucket != steppedZoom) {
+                // We no longer prune tiles immediately here.
+                // The UI (PdfPage) already filters tiles by baseWidthKey and zoom level.
+                // Keeping old tiles visible during transitions prevents "flashing" or
+                // tiles disappearing before new ones are ready.
+                // The LruTileCache will naturally evict them when memory is needed.
+                activeTileZoomBucket = steppedZoom
             }
 
             renderScheduler.requestRender(
                 visiblePages = visiblePages,
                 config = PageRenderer.RenderConfig(
-                    zoomLevel = currentZoom,
+                    zoomLevel = basePageRenderZoom,
                     renderQuality = if (currentZoom > TILE_ZOOM_THRESHOLD) 1.0f else config.renderQuality
                 ),
                 pageSizes = pageSizesSnapshot,
@@ -126,7 +150,7 @@ internal class ViewerRenderPipeline(
             prefetchPages = tilePlan.prefetchPages
         )
 
-        renderScheduler.pruneTileJobs(tilePlan.keepKeys)
+        renderScheduler.updateTileWindow(tilePlan.keepKeys)
         tilePlan.requests.forEach { request ->
             renderScheduler.requestTile(
                 tileKey = request.tileKey,
@@ -139,3 +163,6 @@ internal class ViewerRenderPipeline(
 
 /** Minimum zoom level at which high-resolution tile rendering becomes worthwhile. */
 private const val TILE_ZOOM_THRESHOLD = 1.1f
+
+internal fun selectBasePageRenderZoom(currentZoom: Float, steppedZoom: Float): Float =
+    if (currentZoom > TILE_ZOOM_THRESHOLD) steppedZoom else currentZoom

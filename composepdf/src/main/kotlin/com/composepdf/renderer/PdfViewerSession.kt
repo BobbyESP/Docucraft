@@ -34,7 +34,7 @@ internal class PdfViewerSession(
     viewportCoordinator: ViewerViewportCoordinator,
     configProvider: () -> ViewerConfig
 ) : Closeable {
-    private val tileDiskCache = TileDiskCache(context.cacheDir.resolve("pdf_tiles"))
+    private val tileDiskCache = TileDiskCache(context.cacheDir.resolve("pdf_tiles"), bitmapPool = bitmapPool)
     private val documentManager = PdfDocumentManager(context)
     private val documentSession = PdfDocumentSession(context, documentManager, tileDiskCache)
     private val pageRenderer = PageRenderer(bitmapPool)
@@ -51,6 +51,7 @@ internal class PdfViewerSession(
         pageRenderer = pageRenderer,
         cache = bitmapHousekeeper.bitmapCache,
         viewerState = state,
+        bitmapPool = bitmapPool,
         tileDiskCache = tileDiskCache,
         telemetry = telemetry
     )
@@ -85,6 +86,10 @@ internal class PdfViewerSession(
         val loadedDocument = documentSession.open(source, onRemoteState)
         renderPipeline.onDocumentLoaded(loadedDocument.documentKey)
         return loadedDocument
+    }
+
+    suspend fun invalidateTiles() {
+        renderPipeline.invalidateTiles()
     }
 
     fun recordPanDelta(panDeltaY: Float) {

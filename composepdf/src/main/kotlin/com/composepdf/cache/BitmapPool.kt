@@ -21,7 +21,7 @@ private const val TAG = "BitmapPool"
  *                        or several smaller ones.
  */
 class BitmapPool(
-    private val maxSizeBytes: Int = 64 * 1024 * 1024
+    private val maxSizeBytes: Int = DEFAULT_POOL_SIZE_BYTES
 ) {
     // Map: ByteCount -> Stack of Bitmaps (LIFO for better cache locality)
     private val groupedBitmaps: NavigableMap<Int, ArrayDeque<Bitmap>> = TreeMap()
@@ -62,17 +62,20 @@ class BitmapPool(
 
             if (bitmap != null) {
                 currentSizeBytes -= size
-                try {
-                    bitmap.reconfigure(width, height, config)
-                    bitmap.eraseColor(0) // Clear old content
-                    return bitmap
-                } catch (e: IllegalArgumentException) {
-                    Log.w(
-                        TAG,
-                        "Failed to reconfigure bitmap: ${e.message}. Recycling and creating new."
-                    )
-                    bitmap.recycle()
-                    // Fallthrough to create new
+                if (bitmap.isRecycled) {
+                    // Already recycled — skip and fall through to create new.
+                } else {
+                    try {
+                        bitmap.reconfigure(width, height, config)
+                        bitmap.eraseColor(0)
+                        return bitmap
+                    } catch (e: IllegalArgumentException) {
+                        Log.w(
+                            TAG,
+                            "Failed to reconfigure bitmap: ${e.message}. Recycling and creating new."
+                        )
+                        bitmap.recycle()
+                    }
                 }
             }
         }
@@ -83,19 +86,21 @@ class BitmapPool(
 
     /**
      * Returns a bitmap to the pool for future reuse.
-     * If the pool is full, the bitmap might be recycled immediately or older bitmaps evicted.
+     *
+     * If the pool is full, old entries are dropped (but **not** recycled — they may still be
+     * referenced by a Compose draw scope for one or two frames). The GC will collect them
+     * once all references are gone. Only bitmaps that cannot fit at all are recycled
+     * immediately, because they were never handed out and thus have no external references.
      */
     @Synchronized
     fun put(bitmap: Bitmap) {
         if (bitmap.isRecycled || !bitmap.isMutable) {
-            // Cannot pool recycled or immutable bitmaps
             return
         }
 
         val size = bitmap.allocationByteCount
 
         // Clean up pool if adding this bitmap would exceed capacity.
-        // We evict the smallest bitmaps first to try to accommodate larger ones (usually more scarce).
         while (currentSizeBytes + size > maxSizeBytes && groupedBitmaps.isNotEmpty()) {
             val smallestKey = groupedBitmaps.firstKey()
             val deque = groupedBitmaps[smallestKey]
@@ -103,8 +108,8 @@ class BitmapPool(
 
             if (evicted != null) {
                 currentSizeBytes -= smallestKey
-                // Do not call evicted.recycle() here to avoid Use-After-Free if something 
-                // still holds a reference for a frame.
+                // Do NOT recycle here — the bitmap may still be drawn by Compose.
+                // Let the GC collect it once all references are released.
             }
 
             if (deque == null || deque.isEmpty()) {
@@ -112,20 +117,33 @@ class BitmapPool(
             }
         }
 
-        // Add to pool if there is space
+        // Add to pool if there is space.
         if (currentSizeBytes + size <= maxSizeBytes) {
             val deque = groupedBitmaps.getOrPut(size) { ArrayDeque() }
             deque.offerLast(bitmap)
             currentSizeBytes += size
         }
+        // If it doesn't fit even after eviction, just let GC handle it.
     }
 
     /**
      * Clears all bitmaps from the pool.
+     *
+     * Bitmaps are NOT recycled because they may still be referenced by in-flight Compose
+     * draw scopes. The GC will collect them once all references are released.
      */
     @Synchronized
     fun clear() {
         groupedBitmaps.clear()
         currentSizeBytes = 0
+    }
+
+    companion object {
+        /**
+         * 32 MB default pool — enough for ~8 full-size 2048x2048 ARGB_8888 tiles or ~128 small
+         * 256x256 tiles. Keep this well under a third of the typical 256 MB app heap to leave
+         * headroom for the LRU caches and the GC.
+         */
+        const val DEFAULT_POOL_SIZE_BYTES = 32 * 1024 * 1024
     }
 }

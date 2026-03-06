@@ -33,7 +33,9 @@ class PdfDocumentManager(private val context: Context) : Closeable {
     private var sourceResolver: PdfSourceResolver? = null
     private val rendererPool = ConcurrentLinkedQueue<PdfRenderer>()
 
-    private val maxParallelRenderers = (Runtime.getRuntime().availableProcessors() - 1).coerceIn(2, 8)
+    // Set to 2 to match the scheduler's thread count.
+    // Having more renderers than threads causes contention on the native side without speed gain.
+    private val maxParallelRenderers = 2
     private var semaphore = Semaphore(1)
     private var currentPermits = 1
 
@@ -163,5 +165,3 @@ class PdfDocumentManager(private val context: Context) : Closeable {
         sourceResolver = null
     }
 }
-
-

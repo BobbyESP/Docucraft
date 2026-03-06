@@ -68,6 +68,16 @@ class PdfViewerController(
         recordPanDelta = viewerSession::recordPanDelta,
         requestRender = viewerSession::requestRenderForVisiblePages
     )
+    private val sessionCoordinator = ViewerSessionCoordinator(
+        scope = scope,
+        state = state,
+        viewportCoordinator = viewportCoordinator,
+        updatePrefetchWindow = viewerSession::updatePrefetchWindow,
+        invalidateAll = viewerSession::invalidateAll,
+        invalidateTiles = viewerSession::invalidateTiles,
+        loadDocument = viewerSession::loadDocument,
+        requestRender = viewerSession::requestRenderForVisiblePages
+    )
 
     /** Map of page indices to rendered low-resolution base bitmaps. */
     val renderedPages: StateFlow<Map<Int, Bitmap>> = viewerSession.renderedPages
@@ -159,40 +169,17 @@ class PdfViewerController(
 
         val previousConfig = config
         config = newConfig
-        viewerSession.updatePrefetchWindow(newConfig.prefetchDistance)
-
-        val requiresLayoutRefresh = previousConfig.fitMode != newConfig.fitMode ||
-            previousConfig.pageSpacingPx != newConfig.pageSpacingPx
-        if (requiresLayoutRefresh) {
-            viewportCoordinator.onLayoutInputsChanged()
-        }
-
-        requestRenderForVisiblePages(RenderTrigger.CONFIG_CHANGED)
+        sessionCoordinator.onConfigChanged(previousConfig, newConfig)
     }
 
     /** Updates viewport size and rebuilds the document layout snapshot. */
     internal fun onViewportSizeChanged(width: Float, height: Float) {
-        if (viewportCoordinator.updateViewport(width, height)) {
-            requestRenderForVisiblePages(RenderTrigger.VIEWPORT_CHANGED)
-        }
+        sessionCoordinator.onViewportSizeChanged(width, height)
     }
 
     /** Loads a PDF from a [PdfSource] while keeping document-session mutations grouped in [PdfViewerState]. */
     fun loadDocument(source: PdfSource) {
-        scope.launch {
-            state.reset()
-            viewerSession.invalidateAll()
-            state.beginDocumentLoad()
-
-            try {
-                val loadedDocument = viewerSession.loadDocument(source, state::updateRemoteDocumentState)
-                viewportCoordinator.updatePageSizes(loadedDocument.pageSizes)
-                state.completeDocumentLoad(loadedDocument.pageCount)
-                requestRenderForVisiblePages(RenderTrigger.DOCUMENT_LOADED)
-            } catch (error: Exception) {
-                state.failDocumentLoad(error)
-            }
-        }
+        sessionCoordinator.loadDocument(source)
     }
 
     /** Recent render events in chronological order, useful for local diagnostics. */

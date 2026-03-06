@@ -66,8 +66,9 @@ class BitmapCache(
     companion object {
         fun calculateDefaultCacheSize(): Int {
             val maxMemory = Runtime.getRuntime().maxMemory()
-            // Using 25% of the available heap for the bitmap cache.
-            return (maxMemory / 4).toInt()
+            // Reduced to 15% of the available heap for the bitmap cache (base pages).
+            // Combined with tile cache (20%) and pool, this leaves more breathing room for the GC.
+            return (maxMemory * 0.15).toInt()
         }
     }
 }

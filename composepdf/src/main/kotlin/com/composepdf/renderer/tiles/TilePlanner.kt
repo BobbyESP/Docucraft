@@ -91,7 +91,12 @@ internal class TilePlanner(
                         (tileX + 1) * tileSize,
                         (tileY + 1) * tileSize
                     )
-                    val tileKey = TileKey(pageIndex, tileRect, steppedZoom)
+                    val tileKey = TileKey.fromLayout(
+                        pageIndex = pageIndex,
+                        rect = tileRect,
+                        zoom = steppedZoom,
+                        baseWidth = pageWidth
+                    )
                     val cacheKey = tileKey.toCacheKey()
                     keepKeys += cacheKey
 
