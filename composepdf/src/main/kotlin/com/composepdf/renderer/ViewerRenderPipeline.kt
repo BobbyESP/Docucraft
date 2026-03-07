@@ -9,13 +9,6 @@ import kotlinx.coroutines.launch
 
 /**
  * High-level render pipeline for the viewer.
- *
- * Responsibilities:
- * - decide when base-page rendering is needed
- * - prune outdated tiles as zoom changes
- * - ask [TilePlanner] for visible/prefetch tile work
- * - dispatch actual work to [RenderScheduler]
- * - emit internal telemetry so render bugs can be diagnosed from pass metadata and cache behavior
  */
 internal class ViewerRenderPipeline(
     private val scope: CoroutineScope,
@@ -29,7 +22,6 @@ internal class ViewerRenderPipeline(
 ) {
     private var lastScrollDirectionHint: Int = 0
     private var nextRenderPassId: Int = 0
-    private var activeTileZoomBucket: Float? = null
 
     fun recordPanDelta(panDeltaY: Float) {
         if (panDeltaY != 0f) {
@@ -37,25 +29,11 @@ internal class ViewerRenderPipeline(
         }
     }
 
-    /**
-     * Starts a fresh document render session.
-     *
-     * This resets the scheduler's publication token so late results from a previous document can no
-     * longer reach the UI, even if background rasterization finishes after cancellation.
-     */
     fun onDocumentLoaded(documentKey: String) {
-        activeTileZoomBucket = null
         renderScheduler.onDocumentLoaded(documentKey)
     }
 
-    /**
-     * Clears all currently published/high-res tile work.
-     *
-     * Used when the page geometry changes (viewport resize, fit mode change, spacing change) so the
-     * viewer never composites tiles that were rendered against an older base layout.
-     */
     suspend fun invalidateTiles() {
-        activeTileZoomBucket = null
         renderScheduler.updateTileWindow(emptySet())
         state.clearTiles()
     }
@@ -74,6 +52,9 @@ internal class ViewerRenderPipeline(
         val config = configProvider()
         val renderPassId = ++nextRenderPassId
 
+        // Update active stepped zoom in state to prevent "Tile Soup" in the UI
+        state.activeSteppedZoom = steppedZoom
+
         telemetry.recordPassStarted(
             passId = renderPassId,
             trigger = trigger,
@@ -83,16 +64,8 @@ internal class ViewerRenderPipeline(
 
         scope.launch {
             if (currentZoom < TILE_ZOOM_THRESHOLD) {
-                activeTileZoomBucket = null
                 renderScheduler.updateTileWindow(emptySet())
                 state.clearTiles()
-            } else if (activeTileZoomBucket != steppedZoom) {
-                // We no longer prune tiles immediately here.
-                // The UI (PdfPage) already filters tiles by baseWidthKey and zoom level.
-                // Keeping old tiles visible during transitions prevents "flashing" or
-                // tiles disappearing before new ones are ready.
-                // The LruTileCache will naturally evict them when memory is needed.
-                activeTileZoomBucket = steppedZoom
             }
 
             renderScheduler.requestRender(
@@ -151,9 +124,12 @@ internal class ViewerRenderPipeline(
 
         renderScheduler.updateTileWindow(tilePlan.keepKeys)
         tilePlan.requests.forEach { request ->
+            val isPrefetch = request.tileKey.pageIndex !in visiblePages
             renderScheduler.requestTile(
                 tileKey = request.tileKey,
                 baseWidth = viewportCoordinator.pageWidthPx(request.tileKey.pageIndex),
+                distanceSq = request.distanceSq,
+                isPrefetch = isPrefetch,
                 renderPassId = renderPassId
             )
         }

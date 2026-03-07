@@ -9,7 +9,6 @@ import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -35,16 +34,6 @@ import kotlin.math.roundToInt
  *
  * Night-mode color inversion is handled here via [colorFilter], keeping the renderer
  * (CPU-intensive) free from any color-space concerns.
- *
- * Receives [ImageBitmap] (a stable Compose type) rather than [android.graphics.Bitmap]
- * so that this composable is skippable by the Compose compiler when neither the bitmap
- * nor any other parameter has changed.
- *
- * @param state Viewer state — read-only access to zoom level and tile map.
- * @param bitmap The low-resolution base page bitmap as [ImageBitmap], or `null` while rendering.
- * @param pageIndex Zero-based page index used to filter tiles that belong to this page.
- * @param showLoadingIndicator Show a spinner when [bitmap] is null.
- * @param colorFilter Optional [ColorFilter] applied to both base and tile draws (e.g. night mode).
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -71,6 +60,7 @@ internal fun PdfPage(
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val zoom = state.zoom
+                val activeSteppedZoom = state.activeSteppedZoom
                 val expectedBaseWidthKey = TileKey.normalizedBaseWidthKey(pageWidthPx)
 
                 // 1. Draw low-resolution base page stretched to fill the measured size.
@@ -80,12 +70,21 @@ internal fun PdfPage(
                     colorFilter = colorFilter
                 )
 
-                // 2. Composite only this page's tiles that still match the current geometry.
+                // 2. Composite only this page's tiles that match the active stepped zoom.
+                // Strict filtering prevents "Tile Soup" (mixing tiles from different zoom levels).
                 tiles.forEach { publishedTile ->
                     val tileKey = publishedTile.tileKey
+                    
+                    // Filter by zoom level
+                    if (tileKey.zoom != activeSteppedZoom) {
+                        return@forEach
+                    }
+                    
+                    // Filter by base width to avoid tiles from previous layouts
                     if (tileKey.baseWidthKey != expectedBaseWidthKey && tileKey.baseWidthKey >= 0) {
                         return@forEach
                     }
+
                     val scale = zoom / tileKey.zoom
 
                     drawImage(

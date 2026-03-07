@@ -62,6 +62,13 @@ class PdfViewerState(
     var zoom: Float by mutableFloatStateOf(initialZoom)
         internal set
 
+    /**
+     * The stepped zoom level currently being rendered and displayed for high-res tiles.
+     * Filtering tiles by this value prevents "Tile Soup" (mixing tiles from different zoom levels).
+     */
+    var activeSteppedZoom: Float by mutableFloatStateOf(1f)
+        internal set
+
     /** Horizontal translation offset in screen pixels. */
     var panX: Float by mutableFloatStateOf(0f)
         internal set
@@ -367,6 +374,7 @@ class PdfViewerState(
     internal suspend fun reset() {
         currentPage = 0
         zoom = 1f
+        activeSteppedZoom = 1f
         panX = 0f
         panY = 0f
         isGestureActive = false
