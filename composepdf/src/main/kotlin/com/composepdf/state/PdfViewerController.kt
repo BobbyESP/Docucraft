@@ -12,6 +12,7 @@ import com.composepdf.renderer.PdfViewerSession
 import com.composepdf.renderer.RenderTelemetryEvent
 import com.composepdf.renderer.RenderTrigger
 import com.composepdf.source.PdfSource
+import com.composepdf.util.longLivedContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,11 +28,13 @@ import java.io.Closeable
  */
 @Stable
 class PdfViewerController(
-    val context: Context,
+    sourceContext: Context,
     val state: PdfViewerState,
     initialConfig: ViewerConfig = ViewerConfig(),
     val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 ) : Closeable {
+
+    val context: Context = sourceContext.longLivedContext()
 
     private val viewportCoordinator = ViewerViewportCoordinator(
         state = state,
@@ -39,7 +42,7 @@ class PdfViewerController(
     )
     
     private val viewerSession = PdfViewerSession(
-        context = context,
+        context = this.context,
         scope = scope,
         state = state,
         bitmapPool = state.bitmapPool, // Use the pool from the state
@@ -173,7 +176,7 @@ class PdfViewerController(
     }
 
     override fun close() {
-        scope.cancel()
         viewerSession.close()
+        scope.cancel()
     }
 }

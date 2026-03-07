@@ -2,6 +2,7 @@ package com.composepdf.remote
 
 import android.content.Context
 import com.composepdf.source.PdfSource
+import com.composepdf.util.longLivedContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.io.File
@@ -37,11 +38,10 @@ import java.io.File
  * @property cacheManager Disk cache manager
  */
 class RemotePdfLoader(
-    private val context: Context,
+    context: Context,
     private val httpClient: HttpClientProvider = DefaultHttpClientProvider(),
-    private val cacheManager: DiskCacheManager = DiskCacheManager(context)
+    private val cacheManager: DiskCacheManager = DiskCacheManager(context.longLivedContext())
 ) {
-
     /**
      * Loads a remote PDF, returning a Flow of state updates.
      *

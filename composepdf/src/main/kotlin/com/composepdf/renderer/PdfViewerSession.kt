@@ -9,6 +9,7 @@ import com.composepdf.source.PdfSource
 import com.composepdf.state.PdfViewerState
 import com.composepdf.state.ViewerConfig
 import com.composepdf.state.ViewerViewportCoordinator
+import com.composepdf.util.longLivedContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import java.io.Closeable
@@ -34,9 +35,10 @@ internal class PdfViewerSession(
     viewportCoordinator: ViewerViewportCoordinator,
     configProvider: () -> ViewerConfig
 ) : Closeable {
-    private val tileDiskCache = TileDiskCache(context.cacheDir.resolve("pdf_tiles"), bitmapPool = bitmapPool)
-    private val documentManager = PdfDocumentManager(context)
-    private val documentSession = PdfDocumentSession(context, documentManager, tileDiskCache)
+    private val appContext = context.longLivedContext()
+    private val tileDiskCache = TileDiskCache(appContext.cacheDir.resolve("pdf_tiles"), bitmapPool = bitmapPool)
+    private val documentManager = PdfDocumentManager(appContext)
+    private val documentSession = PdfDocumentSession(appContext, documentManager, tileDiskCache)
     private val pageRenderer = PageRenderer(bitmapPool)
     private var renderedPagesProvider: () -> Map<Int, Bitmap> = { emptyMap() }
     private val telemetry = RenderTelemetry()

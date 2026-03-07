@@ -111,16 +111,17 @@ class ViewerInteractionCoordinatorTest {
     private fun viewportCoordinator(state: PdfViewerState) = ViewerViewportCoordinator(
         state = state,
         configProvider = { ViewerConfig() },
-        snapshotFactory = { pageSizes, viewportWidth, viewportHeight, _, pageSpacingPx ->
+        snapshotFactory = { pageSizes, viewportWidth, viewportHeight, _, pageSpacingPx, scrollDirection ->
             PageLayoutSnapshot(
                 pageSizes = List(pageSizes.size) { Size(1, 1) },
-                pageTops = FloatArray(pageSizes.size) { index -> index * 520f },
+                pageOffsets = FloatArray(pageSizes.size) { index -> index * 520f },
                 pageHeights = FloatArray(pageSizes.size) { 500f },
                 pageWidths = FloatArray(pageSizes.size) { 500f },
-                totalDocumentHeight = if (pageSizes.isEmpty()) 0f else (pageSizes.size * 500f) + ((pageSizes.size - 1) * 20f),
-                maxPageWidth = 500f,
+                totalDocumentSize = if (pageSizes.isEmpty()) 0f else (pageSizes.size * 500f) + ((pageSizes.size - 1) * 20f),
+                corridorBreadth = 500f,
                 viewport = ViewportMetrics(viewportWidth, viewportHeight),
-                pageSpacingPx = pageSpacingPx
+                pageSpacingPx = pageSpacingPx,
+                scrollDirection = scrollDirection
             )
         }
     )

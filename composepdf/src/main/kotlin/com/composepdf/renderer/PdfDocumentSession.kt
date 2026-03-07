@@ -6,6 +6,7 @@ import com.composepdf.remote.RemotePdfException
 import com.composepdf.remote.RemotePdfLoader
 import com.composepdf.remote.RemotePdfState
 import com.composepdf.source.PdfSource
+import com.composepdf.util.longLivedContext
 
 /**
  * Manages the lifecycle and initialization of a PDF document session.
@@ -22,11 +23,12 @@ import com.composepdf.source.PdfSource
  *   and produces a [DocumentResult] containing essential metadata like page dimensions.
  */
 internal class PdfDocumentSession(
-    private val context: Context,
+    context: Context,
     private val documentManager: PdfDocumentManager,
     private val tileDiskCache: TileDiskCache,
     private val remoteLoaderFactory: (Context) -> RemotePdfLoader = ::RemotePdfLoader
 ) {
+    private val appContext = context.longLivedContext()
     private var currentDocumentKey: String = ""
 
     suspend fun open(
@@ -43,7 +45,7 @@ internal class PdfDocumentSession(
     ): DocumentResult {
         var loadedDocument: DocumentResult? = null
 
-        remoteLoaderFactory(context).load(source).collect { remoteState ->
+        remoteLoaderFactory(appContext).load(source).collect { remoteState ->
             onRemoteState(remoteState)
             when (remoteState) {
                 is RemotePdfState.Cached -> loadedDocument = openResolved(PdfSource.File(remoteState.file))
@@ -85,4 +87,3 @@ internal class PdfDocumentSession(
         )
     }
 }
-

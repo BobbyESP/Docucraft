@@ -7,6 +7,7 @@ import android.util.Log
 import android.util.Size
 import com.composepdf.source.PdfSource
 import com.composepdf.source.PdfSourceResolver
+import com.composepdf.util.longLivedContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -31,7 +32,9 @@ private const val TAG = "PdfDocumentManager"
  * Access to the renderer pool is managed via a semaphore to prevent resource exhaustion and
  * native-level contention.
  */
-class PdfDocumentManager(private val context: Context) : Closeable {
+class PdfDocumentManager(context: Context) : Closeable {
+
+    private val appContext = context.longLivedContext()
 
     private var masterFd: ParcelFileDescriptor? = null
     private var sourceResolver: PdfSourceResolver? = null
@@ -69,7 +72,7 @@ class PdfDocumentManager(private val context: Context) : Closeable {
      */
     suspend fun open(source: PdfSource) = withContext(Dispatchers.IO) {
         closeInternal()
-        val resolver = PdfSourceResolver(context)
+        val resolver = PdfSourceResolver(appContext)
         sourceResolver = resolver
         try {
             val fd = resolver.resolve(source)

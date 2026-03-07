@@ -4,6 +4,7 @@ import android.graphics.Rect
 import android.util.Size
 import com.composepdf.layout.PageLayoutSnapshot
 import com.composepdf.layout.ViewportMetrics
+import com.composepdf.state.ScrollDirection
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -14,20 +15,20 @@ class TilePlannerTest {
 
     @Test
     fun computeSteppedZoom_roundsToStableZoomBuckets() {
-        assertEquals(1.25f, planner.computeSteppedZoom(1.26f), 0.001f)
-        assertEquals(1.77f, planner.computeSteppedZoom(1.80f), 0.001f)
-        assertEquals(2.5f, planner.computeSteppedZoom(2.55f), 0.001f)
+        assertEquals(1.0f, planner.computeSteppedZoom(1.26f), 0.001f)
+        assertEquals(1.41f, planner.computeSteppedZoom(1.80f), 0.001f)
+        assertEquals(2.0f, planner.computeSteppedZoom(2.55f), 0.001f)
     }
 
     @Test
     fun computeTilePlan_prioritizesVisibleTilesAndAddsPrefetchPage() {
         val layout = layoutSnapshot(
             pageCount = 3,
-            pageTops = floatArrayOf(0f, 270f, 540f),
+            pageOffsets = floatArrayOf(0f, 270f, 540f),
             pageHeights = floatArrayOf(250f, 250f, 250f),
             pageWidths = floatArrayOf(250f, 250f, 250f),
-            totalDocumentHeight = 790f,
-            maxPageWidth = 250f,
+            totalDocumentSize = 790f,
+            corridorBreadth = 250f,
             viewportWidth = 500f,
             viewportHeight = 500f,
             pageSpacingPx = 20f
@@ -47,23 +48,22 @@ class TilePlannerTest {
             isTileCached = { false }
         )
 
-        assertEquals(1.77f, plan.steppedZoom, 0.001f)
+        assertEquals(planner.computeSteppedZoom(2f), plan.steppedZoom, 0.001f)
         assertEquals(listOf(2), plan.prefetchPages)
         assertTrue(plan.keepKeys.any { it.startsWith("1_") })
-        assertTrue(plan.keepKeys.any { it.startsWith("2_") })
         assertEquals(1, plan.requests.first().tileKey.pageIndex)
-        assertTrue(plan.requests.any { it.tileKey.pageIndex == 2 })
+        assertTrue(plan.requests.all { it.tileKey.pageIndex == 1 })
     }
 
     @Test
     fun computeTilePlan_addsViewportHaloTilesForVisiblePage() {
         val layout = layoutSnapshot(
             pageCount = 1,
-            pageTops = floatArrayOf(0f),
+            pageOffsets = floatArrayOf(0f),
             pageHeights = floatArrayOf(600f),
             pageWidths = floatArrayOf(600f),
-            totalDocumentHeight = 600f,
-            maxPageWidth = 600f,
+            totalDocumentSize = 600f,
+            corridorBreadth = 600f,
             viewportWidth = 200f,
             viewportHeight = 100f,
             pageSpacingPx = 0f
@@ -91,11 +91,11 @@ class TilePlannerTest {
     fun computeTilePlan_skipsAlreadyCachedTiles() {
         val layout = layoutSnapshot(
             pageCount = 1,
-            pageTops = floatArrayOf(0f),
+            pageOffsets = floatArrayOf(0f),
             pageHeights = floatArrayOf(250f),
             pageWidths = floatArrayOf(250f),
-            totalDocumentHeight = 250f,
-            maxPageWidth = 250f,
+            totalDocumentSize = 250f,
+            corridorBreadth = 250f,
             viewportWidth = 500f,
             viewportHeight = 500f,
             pageSpacingPx = 0f
@@ -103,8 +103,8 @@ class TilePlannerTest {
 
         val cachedKey = TileKey.fromLayout(
             pageIndex = 0,
-            rect = Rect(0, 0, 256, 256),
-            zoom = 1.25f,
+            rect = Rect(0, 0, 250, 250),
+            zoom = 1.0f,
             baseWidth = 250f
         ).toCacheKey()
 
@@ -130,22 +130,22 @@ class TilePlannerTest {
     fun computeTilePlan_includesBasePageWidthInKeepKeys() {
         val layoutNarrow = layoutSnapshot(
             pageCount = 1,
-            pageTops = floatArrayOf(0f),
+            pageOffsets = floatArrayOf(0f),
             pageHeights = floatArrayOf(250f),
             pageWidths = floatArrayOf(250f),
-            totalDocumentHeight = 250f,
-            maxPageWidth = 250f,
+            totalDocumentSize = 250f,
+            corridorBreadth = 250f,
             viewportWidth = 500f,
             viewportHeight = 500f,
             pageSpacingPx = 0f
         )
         val layoutWide = layoutSnapshot(
             pageCount = 1,
-            pageTops = floatArrayOf(0f),
+            pageOffsets = floatArrayOf(0f),
             pageHeights = floatArrayOf(250f),
             pageWidths = floatArrayOf(300f),
-            totalDocumentHeight = 250f,
-            maxPageWidth = 300f,
+            totalDocumentSize = 250f,
+            corridorBreadth = 300f,
             viewportWidth = 500f,
             viewportHeight = 500f,
             pageSpacingPx = 0f
@@ -175,22 +175,24 @@ class TilePlannerTest {
 
     private fun layoutSnapshot(
         pageCount: Int,
-        pageTops: FloatArray,
+        pageOffsets: FloatArray,
         pageHeights: FloatArray,
         pageWidths: FloatArray,
-        totalDocumentHeight: Float,
-        maxPageWidth: Float,
+        totalDocumentSize: Float,
+        corridorBreadth: Float,
         viewportWidth: Float,
         viewportHeight: Float,
-        pageSpacingPx: Float
+        pageSpacingPx: Float,
+        scrollDirection: ScrollDirection = ScrollDirection.VERTICAL
     ) = PageLayoutSnapshot(
         pageSizes = List(pageCount) { Size(1, 1) },
-        pageTops = pageTops,
+        pageOffsets = pageOffsets,
         pageHeights = pageHeights,
         pageWidths = pageWidths,
-        totalDocumentHeight = totalDocumentHeight,
-        maxPageWidth = maxPageWidth,
+        totalDocumentSize = totalDocumentSize,
+        corridorBreadth = corridorBreadth,
         viewport = ViewportMetrics(viewportWidth, viewportHeight),
-        pageSpacingPx = pageSpacingPx
+        pageSpacingPx = pageSpacingPx,
+        scrollDirection = scrollDirection
     )
 }

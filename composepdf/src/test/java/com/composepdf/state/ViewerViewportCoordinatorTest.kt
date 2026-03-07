@@ -20,12 +20,13 @@ class ViewerViewportCoordinatorTest {
         val coordinator = ViewerViewportCoordinator(
             state = state,
             configProvider = { ViewerConfig() },
-            snapshotFactory = { pageSizes, viewportWidth, viewportHeight, _, pageSpacingPx ->
+            snapshotFactory = { pageSizes, viewportWidth, viewportHeight, _, pageSpacingPx, scrollDirection ->
                 fakeSnapshot(
                     pageCount = pageSizes.size,
                     viewportWidth = viewportWidth,
                     viewportHeight = viewportHeight,
-                    pageSpacingPx = pageSpacingPx
+                    pageSpacingPx = pageSpacingPx,
+                    scrollDirection = scrollDirection
                 )
             }
         )
@@ -51,16 +52,17 @@ class ViewerViewportCoordinatorTest {
         val coordinator = ViewerViewportCoordinator(
             state = state,
             configProvider = { ViewerConfig() },
-            snapshotFactory = { _, viewportWidth, viewportHeight, _, _ ->
+            snapshotFactory = { _, viewportWidth, viewportHeight, _, _, scrollDirection ->
                 PageLayoutSnapshot(
                     pageSizes = listOf(Size(1, 1), Size(1, 1)),
-                    pageTops = floatArrayOf(0f, 520f),
+                    pageOffsets = floatArrayOf(0f, 520f),
                     pageHeights = floatArrayOf(500f, 500f),
                     pageWidths = floatArrayOf(500f, 500f),
-                    totalDocumentHeight = 1020f,
-                    maxPageWidth = 500f,
+                    totalDocumentSize = 1020f,
+                    corridorBreadth = 500f,
                     viewport = ViewportMetrics(viewportWidth, viewportHeight),
-                    pageSpacingPx = 20f
+                    pageSpacingPx = 20f,
+                    scrollDirection = scrollDirection
                 )
             }
         )
@@ -81,16 +83,17 @@ class ViewerViewportCoordinatorTest {
         val coordinator = ViewerViewportCoordinator(
             state = state,
             configProvider = { config },
-            snapshotFactory = { _, viewportWidth, viewportHeight, _, _ ->
+            snapshotFactory = { _, viewportWidth, viewportHeight, _, _, scrollDirection ->
                 PageLayoutSnapshot(
                     pageSizes = listOf(Size(1, 1)),
-                    pageTops = floatArrayOf(0f),
+                    pageOffsets = floatArrayOf(0f),
                     pageHeights = floatArrayOf(500f),
                     pageWidths = floatArrayOf(250f),
-                    totalDocumentHeight = 500f,
-                    maxPageWidth = 250f,
+                    totalDocumentSize = 500f,
+                    corridorBreadth = 250f,
                     viewport = ViewportMetrics(viewportWidth, viewportHeight),
-                    pageSpacingPx = 0f
+                    pageSpacingPx = 0f,
+                    scrollDirection = scrollDirection
                 )
             }
         )
@@ -106,16 +109,17 @@ class ViewerViewportCoordinatorTest {
         pageCount: Int,
         viewportWidth: Float,
         viewportHeight: Float,
-        pageSpacingPx: Float
+        pageSpacingPx: Float,
+        scrollDirection: ScrollDirection = ScrollDirection.VERTICAL
     ) = PageLayoutSnapshot(
         pageSizes = List(pageCount) { Size(1, 1) },
-        pageTops = floatArrayOf(0f, 520f, 1040f),
+        pageOffsets = floatArrayOf(0f, 520f, 1040f),
         pageHeights = floatArrayOf(500f, 500f, 500f),
         pageWidths = floatArrayOf(500f, 500f, 500f),
-        totalDocumentHeight = 1540f,
-        maxPageWidth = 500f,
+        totalDocumentSize = 1540f,
+        corridorBreadth = 500f,
         viewport = ViewportMetrics(viewportWidth, viewportHeight),
-        pageSpacingPx = pageSpacingPx
+        pageSpacingPx = pageSpacingPx,
+        scrollDirection = scrollDirection
     )
 }
-
