@@ -31,6 +31,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 // ── GestureState ─────────────────────────────────────────────────────────────
 
+/**
+ * Holds coroutine-based animation jobs for fling and zoom animations.
+ */
 @Stable
 internal class GestureState(private val scope: CoroutineScope) {
 
@@ -38,13 +41,19 @@ internal class GestureState(private val scope: CoroutineScope) {
     private var flingJob: Job? = null
     private var animJob: Job? = null
 
+    /** Resets velocity tracking at the start of each new gesture. */
     fun reset() = velocityTracker.resetTracking()
 
+    /** Cancels any in-progress fling or zoom animation. */
     fun cancelAll() {
         flingJob?.cancel()
         animJob?.cancel()
     }
 
+    /**
+     * Runs an exponential-decay fling animation.
+     * Updates [PdfViewerState.scrollVelocity] so the render pipeline can optimize tile rendering.
+     */
     fun fling(
         velocity: Velocity,
         onDelta: (Offset) -> Unit,
@@ -58,7 +67,8 @@ internal class GestureState(private val scope: CoroutineScope) {
                 var last = 0f
                 Animatable(0f).animateDecay(velocity.x, decay) {
                     onDelta(Offset(value - last, 0f))
-                    onVelocityUpdate(Offset(velocity.x, velocity.y)) // Simplified velocity update
+                    // Approximation of current velocity for the render pipeline
+                    onVelocityUpdate(Offset(velocity.x, velocity.y))
                     last = value
                 }
             }
@@ -75,6 +85,7 @@ internal class GestureState(private val scope: CoroutineScope) {
         }
     }
 
+    /** Runs a spring-interpolated zoom animation. */
     fun animateZoom(
         from: Float, to: Float, pivot: Offset,
         onFrame: (zoom: Float, pivot: Offset) -> Unit,
@@ -95,6 +106,9 @@ internal fun rememberGestureState(): GestureState {
     return remember { GestureState(scope) }
 }
 
+/**
+ * Unified PDF gesture [Modifier] handling pinch-zoom, pan, fling, and double-tap.
+ */
 @Composable
 internal fun Modifier.pdfGestures(
     state: PdfViewerState,
@@ -114,6 +128,7 @@ internal fun Modifier.pdfGestures(
         val doubleTapRadius = 100f
 
         awaitEachGesture {
+            // Finger down - reset state and stop animations
             val firstDown = awaitFirstDown(requireUnconsumed = false)
             val firstDownTime = System.currentTimeMillis()
             val firstDownPos = firstDown.position
@@ -138,6 +153,7 @@ internal fun Modifier.pdfGestures(
                 event = awaitPointerEvent()
                 val changes = event.changes
 
+                // Pointer switch handling
                 if (changes.none { it.id == velocityTrackerId && it.pressed }) {
                     val newPrimary = changes.firstOrNull { it.pressed }
                     if (newPrimary != null) {
@@ -153,6 +169,7 @@ internal fun Modifier.pdfGestures(
                 val panDelta = event.calculatePan()
                 val centroid = event.calculateCentroid(useCurrent = false)
 
+                // Accumulate movement until it exceeds touch slop
                 if (!pastSlop) {
                     accZoom *= zoomDelta
                     accPan += panDelta
@@ -170,6 +187,7 @@ internal fun Modifier.pdfGestures(
                     }
                 }
 
+                // Continuous velocity tracking during drag
                 val trackedChange = changes.firstOrNull { it.id == velocityTrackerId }
                 if (trackedChange != null && trackedChange.positionChanged()) {
                     gs.velocityTracker.addPointerInputChange(trackedChange)
@@ -185,6 +203,7 @@ internal fun Modifier.pdfGestures(
 
             } while (!canceled && event.changes.any { it.pressed })
 
+            // Handle end of gesture
             if (pastSlop) {
                 if (zooming) {
                     state.scrollVelocity = Offset.Zero
@@ -201,9 +220,7 @@ internal fun Modifier.pdfGestures(
                     if (speed > minVelocity) {
                         gs.fling(
                             velocity = Velocity(velocityX, velocityY),
-                            onDelta = { delta ->
-                                controller.onGestureUpdate(1f, delta, Offset.Zero)
-                            },
+                            onDelta = { delta -> controller.onGestureUpdate(1f, delta, Offset.Zero) },
                             onVelocityUpdate = { state.scrollVelocity = it },
                             onEnd = { 
                                 state.scrollVelocity = Offset.Zero
@@ -216,6 +233,7 @@ internal fun Modifier.pdfGestures(
                     }
                 }
             } else {
+                // Tap/Double-tap detection
                 state.scrollVelocity = Offset.Zero
                 val now = System.currentTimeMillis()
                 val elapsed = now - firstDownTime

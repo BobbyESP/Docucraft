@@ -27,6 +27,10 @@ import kotlin.math.roundToInt
 
 private const val TAG = "PdfRenderScheduler"
 
+/**
+ * Priority levels for rendering tasks.
+ * Order matters: VISIBLE_TILE is 0 (highest priority).
+ */
 internal enum class RenderPriority {
     VISIBLE_TILE,
     VISIBLE_LOW_RES,
@@ -34,6 +38,10 @@ internal enum class RenderPriority {
     PREFETCH_TILE
 }
 
+/**
+ * Represents a single atomic rendering unit (a page or a tile).
+ * Implements [Comparable] to be used in a [PriorityBlockingQueue].
+ */
 internal data class RenderTask(
     val priority: RenderPriority,
     val distanceSq: Float,
@@ -46,6 +54,7 @@ internal data class RenderTask(
     override fun compareTo(other: RenderTask): Int {
         val priorityCompare = this.priority.ordinal.compareTo(other.priority.ordinal)
         if (priorityCompare != 0) return priorityCompare
+        // Within same priority, sort by distance to viewport center (Euclidean distance squared)
         return this.distanceSq.compareTo(other.distanceSq)
     }
 }
@@ -53,7 +62,11 @@ internal data class RenderTask(
 /**
  * Orchestrates background rendering tasks for both full pages and high-resolution tiles.
  *
- * This version uses a unified priority queue and a fixed set of workers to prevent thread starvation.
+ * This scheduler uses a unified [PriorityBlockingQueue] and a fixed pool of 3 worker threads
+ * to prevent thread starvation during heavy scroll/zoom operations.
+ *
+ * Everything is treated as a "tile" (base pages are just low-res tiles), allowing for
+ * consistent priority management and memory pressure control.
  */
 internal class RenderScheduler internal constructor(
     private val documentManager: PdfDocumentManager,
@@ -84,11 +97,12 @@ internal class RenderScheduler internal constructor(
     val renderedPages: StateFlow<Map<Int, Bitmap>> = _renderedPages.asStateFlow()
 
     init {
-        // Launch 3 workers to consume tasks from the priority queue.
+        // Launch 3 workers to consume tasks from the priority queue infinitely.
         repeat(3) {
             scope.launch {
                 while (isActive) {
                     try {
+                        // Blocking take() - suspends worker until a task is available
                         val task = taskQueue.take()
                         executeTaskIfValid(task)
                     } catch (e: InterruptedException) {
@@ -103,14 +117,19 @@ internal class RenderScheduler internal constructor(
         }
     }
 
+    /**
+     * Verifies if a task is still relevant before executing it.
+     * Checks the session token and the "keep-set" (viewport window).
+     */
     private suspend fun executeTaskIfValid(task: RenderTask) {
         val currentSession = renderWindowTracker.currentSessionToken()
         if (task.sessionToken != currentSession) return
 
-        // Validate if task is still relevant
         if (task.priority == RenderPriority.VISIBLE_TILE || task.priority == RenderPriority.PREFETCH_TILE) {
+            // High-res tiles must still be in the current desired tile set
             if (!renderWindowTracker.shouldPublishTile(currentSession, task.cacheKey)) return
         } else {
+            // Base pages must match the latest layout specification for that page
             val pck = task.pageCacheKey
             if (pck != null && !renderWindowTracker.shouldPublishPage(currentSession, task.pageIndex, pck)) return
         }
@@ -118,9 +137,11 @@ internal class RenderScheduler internal constructor(
         task.action()
     }
 
+    /**
+     * Prevents the task queue from growing indefinitely during rapid user interaction.
+     */
     private fun pruneObsoleteTasks() {
         val currentSession = renderWindowTracker.currentSessionToken()
-        // If queue is getting large, remove tasks from old sessions
         if (taskQueue.size > 50) {
             taskQueue.removeIf { it.sessionToken < currentSession }
         }
@@ -141,6 +162,7 @@ internal class RenderScheduler internal constructor(
 
     /**
      * Schedules rendering for the given range of visible pages.
+     * Pages outside [visiblePages] but within [prefetchWindow] are treated as PREFETCH_LOW_RES.
      */
     fun requestRender(
         visiblePages: IntRange,
@@ -159,6 +181,8 @@ internal class RenderScheduler internal constructor(
         val winStart = (visiblePages.first - prefetchWindow).coerceAtLeast(0)
         val winEnd = (visiblePages.last + prefetchWindow).coerceAtMost(total - 1)
         val window = winStart..winEnd
+        
+        // Clean up the published map - remove bitmaps for pages no longer in the active window
         retainRenderedPages(window.toSet())
 
         val desiredPages = linkedMapOf<Int, PageCacheKey>()
@@ -176,11 +200,10 @@ internal class RenderScheduler internal constructor(
         }
         renderWindowTracker.updateDesiredPages(desiredPages)
 
-        // Add page render tasks to the queue
         for (pageIndex in window) {
             val cacheKey = desiredPages[pageIndex] ?: continue
             
-            // Skip if already in memory
+            // Fast-path: if already in RAM cache, publish immediately
             val cached = cache.get(cacheKey)
             if (cached != null) {
                 if (renderWindowTracker.shouldPublishPage(sessionToken, pageIndex, cacheKey)) {
@@ -205,6 +228,7 @@ internal class RenderScheduler internal constructor(
                             pageRenderer.render(page, getBaseWidth(pageIndex), config)
                         }
                         cache.put(cacheKey, bitmap)
+                        
                         val stale = !renderWindowTracker.shouldPublishPage(sessionToken, pageIndex, cacheKey)
                         if (!stale) {
                             publishBitmap(pageIndex, bitmap)
@@ -217,12 +241,11 @@ internal class RenderScheduler internal constructor(
             )
             taskQueue.offer(task)
         }
-        
-        telemetry?.recordPassStarted(renderPassId, RenderTrigger.PROGRAMMATIC, config.zoomLevel, visiblePages)
     }
 
     /**
-     * Schedules a single tile render task.
+     * Schedules a single high-resolution tile render task.
+     * Tiles are checked against [tileDiskCache] before rasterization.
      */
     internal fun requestTile(
         tileKey: TileKey,
@@ -235,6 +258,7 @@ internal class RenderScheduler internal constructor(
         val memoryKey = tileKey.toCacheKey()
         val diskKey = tileKey.toDiskCacheKey(docKey)
 
+        // Skip if already in memory
         if (viewerState.getTile(memoryKey) != null) return
 
         val priority = if (isPrefetch) RenderPriority.PREFETCH_TILE else RenderPriority.VISIBLE_TILE
@@ -247,6 +271,7 @@ internal class RenderScheduler internal constructor(
             sessionToken = sessionToken,
             action = {
                 try {
+                    // Try Disk Cache first
                     val diskBitmap = tileDiskCache?.get(diskKey)
                     if (diskBitmap != null) {
                         telemetry?.recordTileDiskHit(renderPassId, memoryKey)
@@ -256,11 +281,13 @@ internal class RenderScheduler internal constructor(
                             bitmapPool.put(diskBitmap)
                         }
                     } else {
+                        // Rasterize from PDF
                         val bitmap = documentManager.withPage(tileKey.pageIndex) { page ->
                             pageRenderer.renderTile(page, tileKey.rect, tileKey.zoom, baseWidth)
                         }
                         telemetry?.recordTileRendered(renderPassId, memoryKey)
                         tileDiskCache?.put(diskKey, bitmap)
+
                         val stale = !renderWindowTracker.shouldPublishTile(sessionToken, memoryKey)
                         if (!stale) {
                             viewerState.putTile(memoryKey, bitmap)
