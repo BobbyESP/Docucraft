@@ -11,17 +11,18 @@ import com.composepdf.layout.PageLayoutSnapshot
 import com.composepdf.renderer.tiles.ViewportState
 
 /**
- * Owns viewport and page-layout state for the viewer.
+ * Manages the spatial and geometric state of the PDF viewer, acting as the bridge between
+ * the viewport dimensions, page layouts, and the document's physical scroll position.
  *
- * This class keeps geometry concerns together:
- * - viewport dimensions
- * - current page layout snapshot
- * - page visibility lookup
- * - pan clamping
- * - fit zoom calculations
+ * This coordinator is responsible for:
+ * - Tracking viewport dimensions and maintaining the [PageLayoutSnapshot].
+ * - Computing pan constraints (clamping) to keep the view within document boundaries.
+ * - Mapping screen coordinates to page-relative positions.
+ * - Calculating optimal zoom levels for "fit-to-width" or "fit-to-page" modes.
+ * - Determining the current active page based on the viewport's center point.
  *
- * `PdfViewerController` uses it as a collaborator so the controller can stay focused on
- * sequencing document loading, gestures and render triggers.
+ * It serves as a specialized collaborator for the controller, isolating geometric calculations
+ * from document loading and rendering logic.
  */
 internal class ViewerViewportCoordinator(
     private val state: PdfViewerState,

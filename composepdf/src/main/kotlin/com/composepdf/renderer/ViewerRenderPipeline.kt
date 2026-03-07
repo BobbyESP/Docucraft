@@ -9,7 +9,14 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 /**
- * High-level render pipeline for the viewer.
+ * High-level orchestration component that manages the rendering lifecycle of the PDF viewer.
+ *
+ * The [ViewerRenderPipeline] is responsible for:
+ * - Coordinating between the viewport state, the tile planner, and the render scheduler.
+ * - Deciding when to render low-resolution base pages versus high-resolution tiles based on the zoom level.
+ * - Managing "render passes" to ensure UI consistency and performance during scroll and zoom operations.
+ * - Implementing optimizations such as scroll direction hints and velocity-based tile skipping to maintain high frame rates.
+ * - Reporting telemetry data for performance monitoring and debugging.
  */
 internal class ViewerRenderPipeline(
     private val scope: CoroutineScope,
@@ -39,6 +46,16 @@ internal class ViewerRenderPipeline(
         state.clearTiles()
     }
 
+    /**
+     * Triggers a new render pass for the currently visible pages in the viewport.
+     *
+     * This function calculates the necessary zoom levels, identifies visible pages, and coordinates
+     * with the [RenderScheduler] to update both the base page textures and high-resolution tiles.
+     * It accounts for current scroll velocity to skip tile rendering during high-speed flings
+     * to maintain UI performance.
+     *
+     * @param trigger The reason for the render request (e.g., programmatic, user interaction, or layout change).
+     */
     fun requestRenderForVisiblePages(trigger: RenderTrigger = RenderTrigger.PROGRAMMATIC) {
         if (!isDocumentOpen() || !viewportCoordinator.hasLayout) return
 
@@ -102,6 +119,19 @@ internal class ViewerRenderPipeline(
         }
     }
 
+    /**
+     * Calculates and schedules the rendering of high-resolution tiles for the currently visible
+     * area of the document.
+     *
+     * This method determines which tiles are already in memory, which should be kept, and which
+     * new tiles need to be requested from the [renderScheduler]. It also handles prefetching
+     * tiles for pages adjacent to the visible range based on the scroll direction.
+     *
+     * @param visiblePages The range of page indices currently visible in the viewport.
+     * @param currentZoom The exact current zoom level of the viewer.
+     * @param steppedZoom The discretized zoom level used for tile generation to maintain cache consistency.
+     * @param renderPassId A unique identifier for the current render pass, used for telemetry and task prioritization.
+     */
     private fun requestTilesForVisibleArea(
         visiblePages: IntRange,
         currentZoom: Float,

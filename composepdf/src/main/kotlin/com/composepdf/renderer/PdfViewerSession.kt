@@ -82,7 +82,7 @@ internal class PdfViewerSession(
     suspend fun loadDocument(
         source: PdfSource,
         onRemoteState: (com.composepdf.remote.RemotePdfState) -> Unit = {}
-    ): LoadedPdfDocument {
+    ): DocumentResult {
         val loadedDocument = documentSession.open(source, onRemoteState)
         renderPipeline.onDocumentLoaded(loadedDocument.documentKey)
         return loadedDocument

@@ -23,42 +23,31 @@ import java.io.Closeable
 /**
  * Main façade that orchestrates the viewer lifecycle.
  *
- * The controller no longer acts as the direct dependency of every UI concern. Instead it wires and
- * sequences specialized collaborators, then exposes narrow internal contracts for:
- * - public imperative state APIs ([stateBridge])
- * - layout/viewport integration ([layoutController])
- * - gesture handling ([gestureController])
- *
- * This keeps document loading, viewport math, gesture processing and render execution easier to
- * isolate when debugging or extending the viewer.
+ * Refined to use the [BitmapPool] provided by [PdfViewerState] to ensure
+ * a single source of truth for memory management.
  */
 @Stable
 class PdfViewerController(
     val context: Context,
     val state: PdfViewerState,
     initialConfig: ViewerConfig = ViewerConfig(),
-    val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob()),
-    private val bitmapPool: BitmapPool = BitmapPool()
+    val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 ) : Closeable {
-
-    constructor(context: Context, state: PdfViewerState, config: ViewerConfig) : this(
-        context = context,
-        state = state,
-        initialConfig = config
-    )
 
     private val viewportCoordinator = ViewerViewportCoordinator(
         state = state,
         configProvider = { config }
     )
+    
     private val viewerSession = PdfViewerSession(
         context = context,
         scope = scope,
         state = state,
-        bitmapPool = bitmapPool,
+        bitmapPool = state.bitmapPool, // Use the pool from the state
         viewportCoordinator = viewportCoordinator,
         configProvider = { config }
     )
+    
     private val interactionCoordinator = ViewerInteractionCoordinator(
         scope = scope,
         state = state,
@@ -67,6 +56,7 @@ class PdfViewerController(
         recordPanDelta = viewerSession::recordPanDelta,
         requestRender = viewerSession::requestRenderForVisiblePages
     )
+    
     private val sessionCoordinator = ViewerSessionCoordinator(
         scope = scope,
         state = state,
@@ -78,17 +68,11 @@ class PdfViewerController(
         requestRender = viewerSession::requestRenderForVisiblePages
     )
 
-    /** Map of page indices to rendered low-resolution base bitmaps. */
     val renderedPages: StateFlow<Map<Int, Bitmap>> = viewerSession.renderedPages
-
-    /** Read-only snapshot of the internal render telemetry for diagnostics. */
-    @Suppress("unused")
-    val renderTelemetry: StateFlow<RenderTelemetrySnapshot> = viewerSession.renderTelemetry
 
     var config by mutableStateOf(initialConfig)
         private set
 
-    /** Facade consumed by [PdfViewerState] so programmatic APIs do not depend on the controller implementation. */
     internal val stateBridge: PdfViewerStateControllerBridge = object : PdfViewerStateControllerBridge {
         override val viewerConfig: ViewerConfig get() = config
         override val viewportWidth: Float get() = viewportCoordinator.viewportWidth
@@ -116,7 +100,6 @@ class PdfViewerController(
         override fun updateConfig(newConfig: ViewerConfig) = this@PdfViewerController.updateConfig(newConfig)
     }
 
-    /** Layout-facing contract used by the core layout instead of the full controller. */
     internal val layoutController: ViewerLayoutController = object : ViewerLayoutController {
         override val viewportWidth: Float get() = viewportCoordinator.viewportWidth
         override val viewportHeight: Float get() = viewportCoordinator.viewportHeight
@@ -136,7 +119,6 @@ class PdfViewerController(
         override fun clampPan() = viewportCoordinator.clampPan()
     }
 
-    /** Gesture-facing contract so the pointer modifier only sees interaction-specific capabilities. */
     internal val gestureController: ViewerGestureController = object : ViewerGestureController {
         override val viewportWidth: Float get() = viewportCoordinator.viewportWidth
         override val viewportHeight: Float get() = viewportCoordinator.viewportHeight
@@ -162,37 +144,27 @@ class PdfViewerController(
         viewerSession.updatePrefetchWindow(config.prefetchDistance)
     }
 
-    /** Updates viewer configuration and refreshes renders if necessary. */
     fun updateConfig(newConfig: ViewerConfig) {
         if (config == newConfig) return
-
         val previousConfig = config
         config = newConfig
         sessionCoordinator.onConfigChanged(previousConfig, newConfig)
     }
 
-    /** Updates viewport size and rebuilds the document layout snapshot. */
     internal fun onViewportSizeChanged(width: Float, height: Float) {
         sessionCoordinator.onViewportSizeChanged(width, height)
     }
 
-    /** Loads a PDF from a [PdfSource] while keeping document-session mutations grouped in [PdfViewerState]. */
     fun loadDocument(source: PdfSource) {
         sessionCoordinator.loadDocument(source)
     }
 
-    /** Recent render events in chronological order, useful for local diagnostics. */
     @Suppress("unused")
     fun recentRenderEvents(limit: Int = 50): List<RenderTelemetryEvent> =
         viewerSession.recentRenderEvents(limit)
 
-    /** Triggers rendering for base pages and high-res tiles for the current viewport. */
     internal fun requestRenderForVisiblePages() {
-        requestRenderForVisiblePages(RenderTrigger.PROGRAMMATIC)
-    }
-
-    private fun requestRenderForVisiblePages(trigger: RenderTrigger) {
-        viewerSession.requestRenderForVisiblePages(trigger)
+        viewerSession.requestRenderForVisiblePages(RenderTrigger.PROGRAMMATIC)
     }
 
     override fun close() {

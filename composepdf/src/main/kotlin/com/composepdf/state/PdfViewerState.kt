@@ -13,24 +13,23 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import com.composepdf.cache.BitmapPool
 import com.composepdf.remote.RemotePdfState
 import kotlin.math.abs
 
 /**
  * A hoistable state object that manages the UI state and navigation for a PDF viewer.
  *
- * Tracks interactive viewer state (page position, zoom and pan) while delegating document-session
- * metadata and tile caching to [ViewerSessionState].
- *
- * @param initialPage The index of the page to be displayed initially. Defaults to 0.
- * @param initialZoom The initial magnification level. Defaults to 1.0f (fit-to-width).
+ * This version enforces strict memory management by requiring a [BitmapPool].
+ * Mantiene la API pública completa para control programático.
  */
 @Stable
 class PdfViewerState(
     initialPage: Int = 0,
-    initialZoom: Float = 1f
+    initialZoom: Float = 1f,
+    internal val bitmapPool: BitmapPool = BitmapPool()
 ) {
-    private val session = ViewerSessionState()
+    private val session = ViewerSessionState(bitmapPool)
 
     /** The index of the current page most visible in the viewport. */
     var currentPage: Int by mutableIntStateOf(initialPage)
@@ -49,7 +48,6 @@ class PdfViewerState(
 
     /**
      * The stepped zoom level currently being rendered and displayed for high-res tiles.
-     * Filtering tiles by this value prevents "Tile Soup" (mixing tiles from different zoom levels).
      */
     var activeSteppedZoom: Float by mutableFloatStateOf(1f)
         internal set
@@ -62,10 +60,7 @@ class PdfViewerState(
     var panY: Float by mutableFloatStateOf(0f)
         internal set
 
-    /**
-     * Current scroll velocity in pixels per second.
-     * Used by the render pipeline to skip high-res tile rendering during fast flings.
-     */
+    /** Current scroll velocity in pixels per second. */
     var scrollVelocity: Offset by mutableStateOf(Offset.Zero)
         internal set
 
@@ -94,9 +89,7 @@ class PdfViewerState(
             session.remoteState = value
         }
 
-    /**
-     * Revision counter to notify Compose when the tile cache is updated.
-     */
+    /** Revision counter to notify Compose when the tile cache is updated. */
     val tileRevision: Int get() = session.tileRevision
 
     internal fun getTile(key: String): Bitmap? = session.getTile(key)
@@ -131,38 +124,16 @@ class PdfViewerState(
     /** True if a document is loaded and ready for interaction. */
     val isLoaded: Boolean get() = session.isLoaded
 
-    // -------------------------------------------------------------------------
-    // Internal controller bridge
-    // -------------------------------------------------------------------------
-
-    /**
-     * Reference to the active controller bridge. Set by the PdfViewer composable when the
-     * controller is created and cleared when it is disposed.
-     */
     internal var controller: PdfViewerStateControllerBridge? = null
 
-    /** The configured minimum zoom level. */
     val minZoom: Float get() = controller?.viewerConfig?.minZoom ?: 1f
-
-    /** The configured maximum zoom level. */
     val maxZoom: Float get() = controller?.viewerConfig?.maxZoom ?: 5f
 
-    /** The zoom level needed to fit the entire document within the viewport. */
-    @Suppress("unused")
-    val fitDocumentZoom: Float get() = controller?.computeFitDocumentZoom() ?: minZoom
-
-    /** The zoom level needed to fit the **current page** within the viewport. */
-    @Suppress("unused")
-    val fitPageZoom: Float get() = controller?.computeFitPageZoom(currentPage) ?: minZoom
-
     // -------------------------------------------------------------------------
-    // Public programmatic API
+    // Public Programmatic API
     // -------------------------------------------------------------------------
 
-    /**
-     * Instantly jumps to [pageIndex] without animation.
-     */
-    @Suppress("unused")
+    /** Instantly jumps to [pageIndex] without animation. */
     fun scrollToPage(pageIndex: Int) {
         val ctrl = controller ?: return
         val target = pageIndex.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
@@ -174,10 +145,7 @@ class PdfViewerState(
         ctrl.requestRenderForVisiblePages()
     }
 
-    /**
-     * Smoothly animates the scroll to [pageIndex].
-     */
-    @Suppress("unused")
+    /** Smoothly animates the scroll to [pageIndex]. */
     suspend fun animateScrollToPage(
         pageIndex: Int,
         animationSpec: AnimationSpec<Float> = spring()
@@ -200,19 +168,14 @@ class PdfViewerState(
         currentPage = target
     }
 
-    /**
-     * Instantly sets the zoom level centered on the viewport center.
-     */
+    /** Instantly sets the zoom level centered on the viewport center. */
     fun setZoom(zoomLevel: Float) {
         val ctrl = controller ?: return
         val pivot = Offset(ctrl.viewportWidth / 2f, ctrl.viewportHeight / 2f)
         ctrl.onAnimatedZoomFrame(zoomLevel, pivot)
     }
 
-    /**
-     * Smoothly animates to the given absolute zoom level, centered on the viewport.
-     */
-    @Suppress("unused")
+    /** Smoothly animates to the given absolute zoom level, centered on the viewport. */
     suspend fun animateZoomTo(
         zoomLevel: Float,
         animationSpec: AnimationSpec<Float> = spring()
@@ -229,24 +192,17 @@ class PdfViewerState(
         }
     }
 
-    /**
-     * Zooms in by [factor] relative to the current zoom, centered on the viewport.
-     */
+    /** Zooms in by [factor] relative to the current zoom, centered on the viewport. */
     fun zoomIn(factor: Float = 0.25f) {
         setZoom(zoom * (1f + factor))
     }
 
-    /**
-     * Zooms out by [factor] relative to the current zoom, centered on the viewport.
-     */
+    /** Zooms out by [factor] relative to the current zoom, centered on the viewport. */
     fun zoomOut(factor: Float = 0.25f) {
         setZoom(zoom * (1f - factor))
     }
 
-    /**
-     * Resets the zoom to fit the current page in the viewport.
-     */
-    @Suppress("unused")
+    /** Resets the zoom to fit the current page in the viewport. */
     suspend fun animateResetZoom(animationSpec: AnimationSpec<Float> = spring()) {
         val ctrl = controller ?: return
         val targetZoom = ctrl.computeFitPageZoom(currentPage)
@@ -272,47 +228,30 @@ class PdfViewerState(
         }
     }
 
-    /**
-     * Changes the [FitMode] of the viewer at runtime.
-     */
-    @Suppress("unused")
+    /** Changes the [FitMode] of the viewer at runtime. */
     fun setFitMode(fitMode: FitMode) {
         val ctrl = controller ?: return
         ctrl.updateConfig(ctrl.viewerConfig.copy(fitMode = fitMode))
     }
 
-    /**
-     * Changes the [ScrollDirection] of the viewer at runtime.
-     */
-    @Suppress("unused")
+    /** Changes the [ScrollDirection] of the viewer at runtime. */
     fun setScrollDirection(direction: ScrollDirection) {
         val ctrl = controller ?: return
         ctrl.updateConfig(ctrl.viewerConfig.copy(scrollDirection = direction))
     }
 
-    /**
-     * Enables or disables night mode (color inversion) at runtime.
-     */
-    @Suppress("unused")
+    /** Enables or disables night mode (color inversion) at runtime. */
     fun setNightMode(enabled: Boolean) {
         val ctrl = controller ?: return
         ctrl.updateConfig(ctrl.viewerConfig.copy(isNightModeEnabled = enabled))
     }
 
-    /**
-     * Enables or disables page snapping at runtime.
-     */
-    @Suppress("unused")
+    /** Enables or disables page snapping at runtime. */
     fun setPageSnapping(enabled: Boolean) {
         val ctrl = controller ?: return
         ctrl.updateConfig(ctrl.viewerConfig.copy(isPageSnappingEnabled = enabled))
     }
 
-    // -------------------------------------------------------------------------
-    // Internal lifecycle
-    // -------------------------------------------------------------------------
-
-    /** Resets the state to initial values. */
     internal suspend fun reset() {
         currentPage = 0
         zoom = 1f
@@ -326,14 +265,19 @@ class PdfViewerState(
     }
 
     companion object {
-        /** Saver for persisting state across configuration changes. */
-        val Saver: Saver<PdfViewerState, *> = listSaver(
+        fun saver(bitmapPool: BitmapPool): Saver<PdfViewerState, *> = listSaver(
             save = { listOf(it.currentPage, it.zoom, it.panX, it.panY) },
             restore = {
-                PdfViewerState(initialPage = it[0] as Int, initialZoom = it[1] as Float).also { s ->
+                PdfViewerState(
+                    initialPage = it[0] as Int,
+                    initialZoom = it[1] as Float,
+                    bitmapPool = bitmapPool
+                ).also { s ->
                     s.panX = it[2] as Float; s.panY = it[3] as Float
                 }
             }
         )
+
+        val Saver: Saver<PdfViewerState, *> = saver(BitmapPool())
     }
 }

@@ -8,15 +8,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * Coordinates interaction state transitions for the viewer.
+ * Coordinates interaction state transitions and gesture logic for the PDF viewer.
  *
- * It owns the mutable gesture/animation flow that used to live in `PdfViewerController`:
- * - gesture start/end lifecycle
- * - zooming around a pivot
- * - pan accumulation
- * - render debouncing during drag and animated zoom
+ * This class manages the mutable state flow associated with user input, including:
+ * - Tracking the gesture lifecycle (start/end/update).
+ * - Calculating zoom levels relative to a specific pivot point.
+ * - Accumulating and clamping pan offsets within the viewport bounds.
+ * - Managing render debouncing to ensure performance during high-churn operations like
+ *   active dragging or animated transitions.
  *
- * This keeps `PdfViewerController` as a façade while preserving the same public methods.
+ * It acts as the internal logic engine for [PdfViewerController], abstracting viewport
+ * manipulation and rendering triggers away from the public API.
  */
 internal class ViewerInteractionCoordinator(
     private val scope: CoroutineScope,

@@ -7,16 +7,27 @@ import android.graphics.pdf.PdfRenderer
 import com.composepdf.cache.BitmapPool
 
 /**
- * Handles the low-level rasterization of PDF pages and tiles into Bitmaps.
- * This class focuses strictly on rendering; visual filters like Night Mode
- * are handled at the UI layer for performance.
+ * Handles the low-level rasterization of PDF pages and individual tiles into [Bitmap] instances.
+ *
+ * This class serves as a wrapper around [PdfRenderer.Page], utilizing a [BitmapPool] to
+ * minimize memory allocations during high-frequency rendering tasks. It focuses strictly
+ * on pixel production; visual transformations (such as Night Mode filters) are expected
+ * to be applied at the UI or Shader layer to maintain high performance.
+ *
+ * @property bitmapPool The pool used to acquire and recycle bitmaps for rendering.
  */
 class PageRenderer(
     private val bitmapPool: BitmapPool
 ) {
 
     /**
-     * Configuration for a full-page render.
+     * Configuration parameters for rendering a PDF page.
+     *
+     * @property zoomLevel The magnification factor to apply to the page.
+     * @property renderQuality A multiplier for the render resolution. Higher values result in
+     * sharper images but consume more memory and processing power.
+     * @property backgroundColor The [android.graphics.Color] used to fill the bitmap background
+     * before the PDF content is drawn.
      */
     data class RenderConfig(
         val zoomLevel: Float = 1f,
@@ -25,11 +36,16 @@ class PageRenderer(
     )
 
     /**
-     * Renders a full PDF page into a Bitmap.
+     * Renders a full PDF page into a [Bitmap] using the provided [RenderConfig].
      *
-     * @param page The PDF page to render.
-     * @param baseWidth The width the page should have at zoom 1.0.
-     * @param config Rendering parameters like zoom and quality.
+     * This method calculates the target dimensions based on the page's aspect ratio,
+     * requested base width, and zoom levels, then retrieves a bitmap from the pool
+     * to perform the rasterization.
+     *
+     * @param page The [PdfRenderer.Page] to be rasterized.
+     * @param baseWidth The reference width of the page at 1.0x zoom.
+     * @param config Parameters for rendering, including zoom level, quality, and background color.
+     * @return A [Bitmap] containing the rendered page content.
      */
     fun render(page: PdfRenderer.Page, baseWidth: Float, config: RenderConfig): Bitmap {
         val (width, height) = targetSize(page.width, page.height, baseWidth, config)
@@ -47,9 +63,11 @@ class PageRenderer(
      * Renders a specific rectangular tile of a page at high resolution.
      *
      * @param page The PDF page to render.
-     * @param tileRect The coordinates of the tile within the page (scaled coordinates).
+     * @param tileRect The coordinates and dimensions of the tile to render (in scaled pixels).
      * @param zoom The current zoom level.
      * @param baseWidth The width the page should have at zoom 1.0.
+     * @param backgroundColor The color used to clear the bitmap before rendering.
+     * @return A [Bitmap] from the pool containing the rendered tile content.
      */
     fun renderTile(
         page: PdfRenderer.Page,

@@ -1,7 +1,6 @@
 package com.composepdf.renderer
 
 import android.content.Context
-import android.util.Size
 import com.composepdf.cache.TileDiskCache
 import com.composepdf.remote.RemotePdfException
 import com.composepdf.remote.RemotePdfLoader
@@ -9,15 +8,18 @@ import com.composepdf.remote.RemotePdfState
 import com.composepdf.source.PdfSource
 
 /**
- * Coordinates document loading concerns that do not belong in the viewer controller itself.
+ * Manages the lifecycle and initialization of a PDF document session.
  *
- * Responsibilities:
- * - resolve local and remote [PdfSource] variants
- * - derive a stable document cache key
- * - clear disk tiles from the previous document when the source changes
- * - open the [PdfDocumentManager] and expose a compact immutable result
+ * This class serves as a coordinator for document loading concerns, decoupling the
+ * viewer's gesture and viewport logic from the complexities of resource resolution.
  *
- * This isolates document/session lifecycle from gesture and viewport logic.
+ * Key responsibilities:
+ * - **Source Resolution:** Handles both local and remote [PdfSource] variants, orchestrating
+ *   downloads via [RemotePdfLoader] when necessary.
+ * - **Cache Management:** Derives unique document keys and triggers [TileDiskCache]
+ *   cleanup when switching between different documents to reclaim storage.
+ * - **State Initialization:** Interfaces with [PdfDocumentManager] to prepare the document
+ *   and produces a [DocumentResult] containing essential metadata like page dimensions.
  */
 internal class PdfDocumentSession(
     private val context: Context,
@@ -30,7 +32,7 @@ internal class PdfDocumentSession(
     suspend fun open(
         source: PdfSource,
         onRemoteState: (RemotePdfState) -> Unit = {}
-    ): LoadedPdfDocument = when (source) {
+    ): DocumentResult = when (source) {
         is PdfSource.Remote -> openRemote(source, onRemoteState)
         else -> openResolved(source)
     }
@@ -38,8 +40,8 @@ internal class PdfDocumentSession(
     private suspend fun openRemote(
         source: PdfSource.Remote,
         onRemoteState: (RemotePdfState) -> Unit
-    ): LoadedPdfDocument {
-        var loadedDocument: LoadedPdfDocument? = null
+    ): DocumentResult {
+        var loadedDocument: DocumentResult? = null
 
         remoteLoaderFactory(context).load(source).collect { remoteState ->
             onRemoteState(remoteState)
@@ -58,7 +60,16 @@ internal class PdfDocumentSession(
             ?: error("Remote PDF loading finished without a cached file or an error state.")
     }
 
-    private suspend fun openResolved(source: PdfSource): LoadedPdfDocument {
+    /**
+     * Opens a resolved [PdfSource], managing document-specific cache lifecycle.
+     *
+     * This function generates a unique cache key for the document, clears any existing disk
+     * tile cache if the source has changed, and initializes the [PdfDocumentManager].
+     *
+     * @param source The resolved local PDF source (e.g., file, asset, or URI).
+     * @return A [DocumentResult] containing the stable cache key and page metadata.
+     */
+    private suspend fun openResolved(source: PdfSource): DocumentResult {
         val nextDocumentKey = source.hashCode().toString(16)
         if (nextDocumentKey != currentDocumentKey && currentDocumentKey.isNotEmpty()) {
             tileDiskCache.clearForDocument(currentDocumentKey)
@@ -67,7 +78,7 @@ internal class PdfDocumentSession(
 
         documentManager.open(source)
         val pageSizes = documentManager.getAllPageSizes()
-        return LoadedPdfDocument(
+        return DocumentResult(
             documentKey = currentDocumentKey,
             pageSizes = pageSizes,
             pageCount = documentManager.pageCount
@@ -75,9 +86,3 @@ internal class PdfDocumentSession(
     }
 }
 
-/** Immutable result of opening a document session. */
-internal data class LoadedPdfDocument(
-    val documentKey: String,
-    val pageSizes: List<Size>,
-    val pageCount: Int
-)

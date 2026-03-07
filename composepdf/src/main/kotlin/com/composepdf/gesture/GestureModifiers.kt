@@ -27,12 +27,15 @@ import com.composepdf.state.ViewerGestureController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
-
-// ── GestureState ─────────────────────────────────────────────────────────────
 
 /**
- * Holds coroutine-based animation jobs for fling and zoom animations.
+ * Manages the state and execution of coroutine-based animations for document interaction.
+ *
+ * This class handles the lifecycle of fling (inertia) and zoom animations, ensuring that
+ * concurrent animations are properly cancelled to prevent race conditions. It also maintains
+ * a [VelocityTracker] to provide smooth transitions between manual gestures and automated flings.
+ *
+ * @property scope The [CoroutineScope] in which animation jobs are launched.
  */
 @Stable
 internal class GestureState(private val scope: CoroutineScope) {
@@ -51,8 +54,16 @@ internal class GestureState(private val scope: CoroutineScope) {
     }
 
     /**
-     * Runs an exponential-decay fling animation.
-     * Updates [PdfViewerState.scrollVelocity] so the render pipeline can optimize tile rendering.
+     * Runs an exponential-decay fling animation on both the X and Y axes.
+     *
+     * As the animation progresses, it invokes [onDelta] to apply scroll offsets and
+     * [onVelocityUpdate] to provide an approximation of the current velocity to the
+     * render pipeline for tile optimization.
+     *
+     * @param velocity The initial velocity of the fling.
+     * @param onDelta Callback invoked with the incremental offset change for each frame.
+     * @param onVelocityUpdate Callback invoked to update the current scroll velocity.
+     * @param onEnd Callback invoked when the fling animation finishes or is canceled.
      */
     fun fling(
         velocity: Velocity,
@@ -85,7 +96,16 @@ internal class GestureState(private val scope: CoroutineScope) {
         }
     }
 
-    /** Runs a spring-interpolated zoom animation. */
+    /**
+     * Runs a spring-interpolated zoom animation.
+     *
+     * @param from The starting zoom level.
+     * @param to The target zoom level to animate towards.
+     * @param pivot The screen coordinate around which the zoom should be centered.
+     * @param onFrame Callback invoked on every animation frame with the current zoom and pivot.
+     * @param onEnd Callback invoked when the animation completes or is fully applied.
+     * @param spec The [AnimationSpec] defining the spring dynamics of the transition.
+     */
     fun animateZoom(
         from: Float, to: Float, pivot: Offset,
         onFrame: (zoom: Float, pivot: Offset) -> Unit,
@@ -100,6 +120,15 @@ internal class GestureState(private val scope: CoroutineScope) {
     }
 }
 
+/**
+ * Creates and remembers a [GestureState] instance across recompositions.
+ *
+ * This function provides a [GestureState] tied to the composition's [CoroutineScope],
+ * allowing for gesture-driven animations (like flings and zooms) to be managed and
+ * automatically cancelled when the composable leaves the composition.
+ *
+ * @return A remembered [GestureState] instance.
+ */
 @Composable
 internal fun rememberGestureState(): GestureState {
     val scope = rememberCoroutineScope()
@@ -107,10 +136,27 @@ internal fun rememberGestureState(): GestureState {
 }
 
 /**
- * Unified PDF gesture [Modifier] handling pinch-zoom, pan, fling, and double-tap.
+ * A unified gesture [Modifier] for PDF interaction that handles pinch-to-zoom, panning,
+ * momentum-based flinging, and multi-stage double-tap zooming.
+ *
+ * This modifier coordinates touch events with the [ViewerGestureController] to update
+ * the [PdfViewerState]. It includes built-in touch slop detection to prevent accidental
+ * jitter and provides continuous velocity tracking to the state to assist in rendering
+ * optimizations (e.g., low-resolution tiling during fast movement).
+ *
+ * Double-tap logic cycles through zoom levels:
+ * 1. From fit-to-screen to [ViewerConfig.doubleTapZoom].
+ * 2. From [ViewerConfig.doubleTapZoom] to [ViewerConfig.maxZoom].
+ * 3. From [ViewerConfig.maxZoom] back to fit-to-screen.
+ *
+ * @param state The current state of the PDF viewer, updated during pan, zoom, and fling.
+ * @param controller The gesture controller that translates raw deltas into coordinate transforms.
+ * @param config Configuration for zoom limits and double-tap behavior.
+ * @param zoomAnimationSpec The animation curve used for animated double-tap zoom transitions.
+ * @param enabled Whether gesture processing is active.
  */
 @Composable
-internal fun Modifier.pdfGestures(
+internal fun Modifier.viewerGestures(
     state: PdfViewerState,
     controller: ViewerGestureController,
     config: ViewerConfig,

@@ -5,16 +5,23 @@ import com.composepdf.state.FitMode
 import kotlin.math.min
 
 /**
- * Immutable snapshot of the document layout at zoom `1f` for the current viewport.
+ * An immutable snapshot of the document layout calculated at a base zoom level of `1f`.
  *
- * It is intentionally side-effect free: the controller rebuilds a new snapshot whenever the
- * viewport, spacing, fit mode, or page list changes, then delegates geometry queries here.
+ * This class serves as a pure, side-effect-free representation of the document geometry.
+ * It is responsible for translating document coordinates to screen coordinates and performing
+ * spatial queries such as visibility detection, hit testing, and pan clamping.
  *
- * Keeping layout math isolated makes it easier to reason about:
- * - page positions
- * - visible-page lookup
- * - viewport clamping
- * - fit zoom calculations
+ * The layout is recalculated and a new snapshot is emitted whenever the viewport dimensions,
+ * page list, spacing, or [FitMode] change.
+ *
+ * @property pageSizes The original dimensions of the PDF pages.
+ * @property pageTops The vertical offsets (Y) of each page in document space.
+ * @property pageHeights The calculated heights of each page after applying [FitMode].
+ * @property pageWidths The calculated widths of each page after applying [FitMode].
+ * @property totalDocumentHeight The total height of the scrollable area, including spacing.
+ * @property maxPageWidth The width of the widest page in the layout, used for horizontal centering.
+ * @property viewport The dimensions of the visible component area.
+ * @property pageSpacingPx The vertical gap between pages in pixels.
  */
 internal class PageLayoutSnapshot(
     val pageSizes: List<Size>,

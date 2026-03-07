@@ -1,7 +1,7 @@
 package com.composepdf.state
 
 import com.composepdf.remote.RemotePdfState
-import com.composepdf.renderer.LoadedPdfDocument
+import com.composepdf.renderer.DocumentResult
 import com.composepdf.renderer.RenderTrigger
 import com.composepdf.source.PdfSource
 import kotlinx.coroutines.CoroutineScope
@@ -23,7 +23,7 @@ internal class ViewerSessionCoordinator(
     private val updatePrefetchWindow: (Int) -> Unit,
     private val invalidateAll: () -> Unit,
     private val invalidateTiles: suspend () -> Unit,
-    private val loadDocument: suspend (PdfSource, (RemotePdfState) -> Unit) -> LoadedPdfDocument,
+    private val loadDocument: suspend (PdfSource, (RemotePdfState) -> Unit) -> DocumentResult,
     private val requestRender: (RenderTrigger) -> Unit,
     private val resetState: suspend () -> Unit = { state.reset() }
 ) {

@@ -1,46 +1,83 @@
 package com.composepdf.renderer
 
 import com.composepdf.cache.PageCacheKey
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Tracks the currently desired render outputs for the active viewer session.
+ * Immutable snapshot of the current rendering window.
+ */
+internal data class RenderWindowSnapshot(
+    val sessionToken: Int,
+    val desiredPages: Map<Int, PageCacheKey>,
+    val desiredTiles: Set<String>
+)
+
+/**
+ * Manages the state of the active rendering window and coordinates work across threads.
  *
- * The scheduler reuses in-flight work aggressively. A page or tile job started by an older render
- * pass can still be correct for the newest viewport if its key remains part of the current desired
- * window. This tracker is the single source of truth for that rule:
- * - page publication is allowed only when the same [PageCacheKey] is still wanted for that page
- * - tile publication is allowed only when the tile key is still inside the latest keep window
- * - a session token invalidates all pending work across document changes/reset
+ * This tracker maintains a thread-safe, atomic snapshot of the pages and tiles currently
+ * visible or required by the UI. It serves as the source of truth for background workers
+ * to determine which rendering tasks are still relevant and prevents the publication of
+ * stale results from previous sessions or scrolled-away regions.
  */
 internal class RenderWindowTracker {
-    private val sessionToken = AtomicInteger(0)
-    private val desiredPages = ConcurrentHashMap<Int, PageCacheKey>()
-    private val desiredTiles = ConcurrentHashMap.newKeySet<String>()
+    private val snapshot = AtomicReference(
+        RenderWindowSnapshot(
+            sessionToken = 0,
+            desiredPages = emptyMap(),
+            desiredTiles = emptySet()
+        )
+    )
 
-    fun currentSessionToken(): Int = sessionToken.get()
+    fun getSnapshot(): RenderWindowSnapshot = snapshot.get()
+
+    fun currentSessionToken(): Int = snapshot.get().sessionToken
 
     fun beginNewSession(): Int {
-        desiredPages.clear()
-        desiredTiles.clear()
-        return sessionToken.incrementAndGet()
+        var old: RenderWindowSnapshot
+        var next: RenderWindowSnapshot
+        do {
+            old = snapshot.get()
+            next = RenderWindowSnapshot(
+                sessionToken = old.sessionToken + 1,
+                desiredPages = emptyMap(),
+                desiredTiles = emptySet()
+            )
+        } while (!snapshot.compareAndSet(old, next))
+        return next.sessionToken
     }
 
     fun updateDesiredPages(specs: Map<Int, PageCacheKey>) {
-        desiredPages.clear()
-        desiredPages.putAll(specs)
+        var old: RenderWindowSnapshot
+        var next: RenderWindowSnapshot
+        do {
+            old = snapshot.get()
+            next = old.copy(desiredPages = specs.toMap())
+        } while (!snapshot.compareAndSet(old, next))
     }
 
     fun updateDesiredTiles(tileKeys: Set<String>) {
-        desiredTiles.clear()
-        desiredTiles.addAll(tileKeys)
+        var old: RenderWindowSnapshot
+        var next: RenderWindowSnapshot
+        do {
+            old = snapshot.get()
+            next = old.copy(desiredTiles = tileKeys.toSet())
+        } while (!snapshot.compareAndSet(old, next))
     }
 
-    fun shouldPublishPage(session: Int, pageIndex: Int, cacheKey: PageCacheKey): Boolean =
-        session == sessionToken.get() && desiredPages[pageIndex] == cacheKey
+    /**
+     * Final publication check. Returns true if the session and key are still current.
+     */
+    fun shouldPublishPage(session: Int, pageIndex: Int, cacheKey: PageCacheKey): Boolean {
+        val current = snapshot.get()
+        return session == current.sessionToken && current.desiredPages[pageIndex] == cacheKey
+    }
 
-    fun shouldPublishTile(session: Int, tileKey: String): Boolean =
-        session == sessionToken.get() && tileKey in desiredTiles
+    /**
+     * Final publication check for high-res tiles.
+     */
+    fun shouldPublishTile(session: Int, tileKey: String): Boolean {
+        val current = snapshot.get()
+        return session == current.sessionToken && tileKey in current.desiredTiles
+    }
 }
-

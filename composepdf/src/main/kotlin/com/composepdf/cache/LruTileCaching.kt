@@ -4,33 +4,31 @@ import android.graphics.Bitmap
 import android.util.LruCache
 
 /**
- * In-memory LRU cache for high-resolution PDF tiles.
+ * An in-memory Least Recently Used (LRU) cache for high-resolution PDF page tiles.
  *
- * Measures capacity in **bytes** (same unit as [BitmapCache]) so both caches
- * can be reasoned about with a single mental model.
+ * This implementation tracks capacity in **bytes** rather than the number of entries,
+ * ensuring predictable memory usage based on the actual size of the cached [Bitmap]s.
  *
- * The [onEvicted] callback is called **only** when the LRU algorithm removes an
- * entry automatically (i.e. `evicted == true`). Manual `remove()` calls do NOT
- * trigger the callback, which prevents double-eviction when tiles are pruned
- * manually before the LRU would remove them automatically.
- *
- * @param maxSizeBytes Maximum memory in bytes. Defaults to 1/3 of the app heap.
- * @param onEvicted Invoked with the tile key when an entry is auto-evicted by LRU pressure.
+ * @param maxSizeBytes The maximum memory capacity in bytes before entries are evicted.
+ * Defaults to 20% of the available heap.
+ * @param onEvicted A callback invoked when a bitmap is removed from the cache,
+ * allowing for manual resource cleanup (e.g., recycling).
  */
 class LruTileCache(
     maxSizeBytes: Int = defaultSizeBytes(),
-    private val onEvicted: (key: String) -> Unit = {}
+    private val onEvicted: (key: String, bitmap: Bitmap) -> Unit = { _, _ -> }
 ) : LruCache<String, Bitmap>(maxSizeBytes) {
 
     override fun sizeOf(key: String, value: Bitmap): Int = value.allocationByteCount
 
     override fun entryRemoved(evicted: Boolean, key: String, oldValue: Bitmap, newValue: Bitmap?) {
-        // Only notify on automatic LRU eviction, not on explicit remove() calls.
-        if (evicted) onEvicted(key)
+        // Notify whenever a bitmap is displaced (evicted by LRU or replaced)
+        if (oldValue !== newValue) {
+            onEvicted(key, oldValue)
+        }
     }
 
     companion object {
-        // Reduced to 20% of the app's max heap for the on-memory tile caching.
         fun defaultSizeBytes(): Int = (Runtime.getRuntime().maxMemory() * 0.20).toInt()
     }
 }

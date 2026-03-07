@@ -9,11 +9,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Encapsulates bitmap eviction policy and delayed return-to-pool housekeeping.
+ * Manages the bitmap eviction policy and handles the delayed return of bitmaps to the pool.
  *
- * The viewer keeps rendered bitmaps alive for a short grace period because Compose may still draw
- * them for one or two frames after they leave the scheduler/cache maps. This class centralizes
- * that policy so the controller does not own bitmap lifecycle details.
+ * This class ensures that bitmaps are kept alive for a short grace period after being evicted from the
+ * cache. This prevents issues where Compose might still attempt to draw a bitmap for a few frames after
+ * it has been removed from the active cache maps.
  */
 internal class BitmapHousekeeper(
     private val scope: CoroutineScope,

@@ -20,7 +20,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Constraints
-import com.composepdf.gesture.pdfGestures
+import com.composepdf.gesture.viewerGestures
 import com.composepdf.state.PdfViewerState
 import com.composepdf.state.ViewerConfig
 import com.composepdf.state.ViewerGestureController
@@ -90,7 +90,7 @@ internal fun PdfLayout(
             .onSizeChanged { size ->
                 layoutController.onViewportSizeChanged(size.width.toFloat(), size.height.toFloat())
             }
-            .pdfGestures(
+            .viewerGestures(
                 state = state,
                 controller = gestureController,
                 config = config,
