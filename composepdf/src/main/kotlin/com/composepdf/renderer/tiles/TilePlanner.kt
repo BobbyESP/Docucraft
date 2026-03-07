@@ -63,23 +63,15 @@ internal class TilePlanner(
             val pageBottom = pageTop + pageHeight * zoom
             val pageLeft = layout.pageScreenLeft(pageIndex, viewport.panX, zoom)
 
-            val visibleTop =
-                if (isPrefetchPage) pageTop else maxOf(0f, pageTop).coerceIn(0f, viewport.height)
-            val visibleBottom =
-                if (isPrefetchPage) pageBottom else minOf(viewport.height, pageBottom).coerceIn(
-                    0f,
-                    viewport.height
-                )
+            val visibleTop = if (isPrefetchPage) pageTop else maxOf(0f, pageTop).coerceIn(0f, viewport.height)
+            val visibleBottom = if (isPrefetchPage) pageBottom else minOf(viewport.height, pageBottom).coerceIn(0f, viewport.height)
             if (visibleBottom <= visibleTop) continue
 
             val steppedToCurrentScale = steppedZoom / zoom
             val startY = (visibleTop - pageTop) * steppedToCurrentScale
             val endY = (visibleBottom - pageTop) * steppedToCurrentScale
             val startX = (maxOf(pageLeft, 0f) - pageLeft) * steppedToCurrentScale
-            val endX = (minOf(
-                pageLeft + pageWidth * zoom,
-                viewport.width
-            ) - pageLeft) * steppedToCurrentScale
+            val endX = (minOf(pageLeft + pageWidth * zoom, viewport.width) - pageLeft) * steppedToCurrentScale
             val pageWidthAtStep = pageWidth * steppedZoom
             val pageHeightAtStep = pageHeight * steppedZoom
             val maxTileColumns = ceil(pageWidthAtStep / tileSize).toInt().coerceAtLeast(1)
@@ -116,9 +108,7 @@ internal class TilePlanner(
                         val tileCenterX = (tileRect.left + tileRect.right) / 2f
                         val tileCenterY = (tileRect.top + tileRect.bottom) / 2f
                         ((tileCenterX / steppedToCurrentScale + pageLeft) - viewportCenterX).pow(2) +
-                                ((tileCenterY / steppedToCurrentScale + pageTop) - viewportCenterY).pow(
-                                    2
-                                )
+                            ((tileCenterY / steppedToCurrentScale + pageTop) - viewportCenterY).pow(2)
                     }
                     requests += TileRequest(tileKey, distanceSq)
                 }

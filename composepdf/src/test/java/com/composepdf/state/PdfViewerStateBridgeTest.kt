@@ -54,8 +54,7 @@ class PdfViewerStateBridgeTest {
     @Test
     fun sessionHelpers_updatePublicLifecycleFlags() {
         val state = PdfViewerState()
-        val remote =
-            RemotePdfState.Downloading(progress = 0.5f, bytesDownloaded = 5, totalBytes = 10)
+        val remote = RemotePdfState.Downloading(progress = 0.5f, bytesDownloaded = 5, totalBytes = 10)
         val failure = IllegalStateException("broken")
 
         state.beginDocumentLoad()
@@ -92,20 +91,16 @@ class PdfViewerStateBridgeTest {
         override fun pageTopDocY(index: Int): Float = index * 520f
         override fun visiblePageIndices(): IntRange = 0..0
         override fun isPointOverPage(point: Offset): Boolean = true
-        override fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> =
-            0f to (pageIndex * -520f)
-
+        override fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> = 0f to (pageIndex * -520f)
         override fun computeFitDocumentZoom(): Float = 1f
         override fun computeFitPageZoom(pageIndex: Int): Float = 1f
         override fun onViewportSizeChanged(width: Float, height: Float) = Unit
         override fun requestRenderForVisiblePages() {
             renderRequested = true
         }
-
         override fun clampPan() {
             clampPanCalled = true
         }
-
         override fun onGestureStart() = Unit
         override fun onGestureEnd() = Unit
         override fun onGestureUpdate(zoomChange: Float, panDelta: Offset, pivot: Offset) = Unit
@@ -113,7 +108,6 @@ class PdfViewerStateBridgeTest {
             lastAnimatedZoom = targetZoom
             lastPivot = pivot
         }
-
         override fun updateConfig(newConfig: ViewerConfig) {
             viewerConfig = newConfig
         }

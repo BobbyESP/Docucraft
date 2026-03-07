@@ -27,6 +27,7 @@ import com.composepdf.state.ViewerGestureController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 // ── GestureState ─────────────────────────────────────────────────────────────
 

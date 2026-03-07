@@ -31,7 +31,7 @@ internal class ViewerSessionCoordinator(
         updatePrefetchWindow(newConfig.prefetchDistance)
 
         val requiresLayoutRefresh = previousConfig.fitMode != newConfig.fitMode ||
-                previousConfig.pageSpacingPx != newConfig.pageSpacingPx
+            previousConfig.pageSpacingPx != newConfig.pageSpacingPx
 
         if (!requiresLayoutRefresh) {
             requestRender(RenderTrigger.CONFIG_CHANGED)

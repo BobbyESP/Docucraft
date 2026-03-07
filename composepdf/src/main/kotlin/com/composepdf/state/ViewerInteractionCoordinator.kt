@@ -46,8 +46,7 @@ internal class ViewerInteractionCoordinator(
 
         val currentConfig = configProvider()
         val previousZoom = state.zoom
-        val nextZoom =
-            (previousZoom * zoomChange).coerceIn(currentConfig.minZoom, currentConfig.maxZoom)
+        val nextZoom = (previousZoom * zoomChange).coerceIn(currentConfig.minZoom, currentConfig.maxZoom)
         val isZooming = applyZoomAroundPivot(nextZoom, pivot)
 
         recordPanDelta(panDelta.y)

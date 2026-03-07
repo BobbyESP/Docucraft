@@ -22,11 +22,7 @@ internal data class TileKey(
 ) {
     fun toCacheKey(): String {
         val normalizedZoom = normalizedZoom(zoom)
-        return "${pageIndex}_${rect.left}_${rect.top}_${rect.right}_${rect.bottom}_${normalizedZoom}_${
-            normalizedBaseWidthKey(
-                baseWidthKey
-            )
-        }"
+        return "${pageIndex}_${rect.left}_${rect.top}_${rect.right}_${rect.bottom}_${normalizedZoom}_${normalizedBaseWidthKey(baseWidthKey)}"
     }
 
     fun toDiskCacheKey(documentKey: String): String =

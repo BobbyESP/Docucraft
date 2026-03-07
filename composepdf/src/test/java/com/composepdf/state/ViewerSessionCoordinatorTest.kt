@@ -78,13 +78,7 @@ class ViewerSessionCoordinatorTest {
             invalidateAll = { invalidatedAll++ },
             invalidateTiles = {},
             loadDocument = { _, remoteState ->
-                remoteState(
-                    com.composepdf.remote.RemotePdfState.Downloading(
-                        progress = 0f,
-                        bytesDownloaded = 0,
-                        totalBytes = 100
-                    )
-                )
+                remoteState(com.composepdf.remote.RemotePdfState.Downloading(progress = 0f, bytesDownloaded = 0, totalBytes = 100))
                 LoadedPdfDocument(
                     documentKey = "doc",
                     pageSizes = listOf(Size(600, 800), Size(600, 800)),

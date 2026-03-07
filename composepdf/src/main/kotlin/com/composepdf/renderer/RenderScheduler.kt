@@ -58,9 +58,7 @@ internal class RenderScheduler internal constructor(
 
     /** Number of pages to pre-render outside the visible range in each direction. */
     var prefetchWindow: Int = 2
-        set(value) {
-            field = value.coerceAtLeast(0)
-        }
+        set(value) { field = value.coerceAtLeast(0) }
 
     /**
      * Stable identifier for the currently open document.
@@ -199,12 +197,7 @@ internal class RenderScheduler internal constructor(
                     if (inFlightPageKeys[pageIndex] == cacheKey) {
                         inFlightPageKeys.remove(pageIndex)
                         activeJobs.remove(pageIndex)
-                        if (renderWindowTracker.shouldPublishPage(
-                                sessionToken,
-                                pageIndex,
-                                cacheKey
-                            )
-                        ) {
+                        if (renderWindowTracker.shouldPublishPage(sessionToken, pageIndex, cacheKey)) {
                             publishBitmap(pageIndex, bitmap)
                             telemetry?.recordPagePublished(renderPassId, pageIndex, stale = false)
                         } else {
@@ -271,10 +264,7 @@ internal class RenderScheduler internal constructor(
                     telemetry?.recordTilePublished(renderPassId, memoryKey, stale = true)
                 }
             } catch (e: Exception) {
-                if (e !is CancellationException) Log.e(
-                    TAG,
-                    "Tile error for $memoryKey: ${e.message}"
-                )
+                if (e !is CancellationException) Log.e(TAG, "Tile error for $memoryKey: ${e.message}")
             } finally {
                 tileJobs.remove(memoryKey)
                 telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)

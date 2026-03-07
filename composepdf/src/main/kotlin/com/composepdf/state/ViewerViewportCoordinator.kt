@@ -108,8 +108,7 @@ internal class ViewerViewportCoordinator(
     }
 
     fun updateCurrentPageFromViewport() {
-        val currentPage =
-            layoutSnapshot.currentPageAtViewportCenter(state.panY, state.zoom) ?: return
+        val currentPage = layoutSnapshot.currentPageAtViewportCenter(state.panY, state.zoom) ?: return
         state.currentPage = currentPage.coerceIn(0, (state.pageCount - 1).coerceAtLeast(0))
     }
 

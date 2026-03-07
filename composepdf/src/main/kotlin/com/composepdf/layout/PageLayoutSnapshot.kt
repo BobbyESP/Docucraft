@@ -46,13 +46,7 @@ internal class PageLayoutSnapshot(
         return if (first == -1 || last == -1 || first > last) IntRange.EMPTY else first..last
     }
 
-    fun isPointOverPage(
-        screenX: Float,
-        screenY: Float,
-        panX: Float,
-        panY: Float,
-        zoom: Float
-    ): Boolean {
+    fun isPointOverPage(screenX: Float, screenY: Float, panX: Float, panY: Float, zoom: Float): Boolean {
         if (isEmpty || zoom <= 0f) return false
 
         val docY = (screenY - panY) / zoom
@@ -106,10 +100,7 @@ internal class PageLayoutSnapshot(
         val zoom = when (fitMode) {
             FitMode.WIDTH, FitMode.PROPORTIONAL -> viewport.width / maxPageWidth
             FitMode.HEIGHT -> viewport.height / totalDocumentHeight
-            FitMode.BOTH -> min(
-                viewport.width / maxPageWidth,
-                viewport.height / totalDocumentHeight
-            )
+            FitMode.BOTH -> min(viewport.width / maxPageWidth, viewport.height / totalDocumentHeight)
         }
         return zoom.coerceIn(minZoom, maxZoom)
     }
@@ -189,17 +180,16 @@ internal class PageLayoutSnapshot(
     }
 
     companion object {
-        fun empty(viewport: ViewportMetrics = ViewportMetrics()): PageLayoutSnapshot =
-            PageLayoutSnapshot(
-                pageSizes = emptyList(),
-                pageTops = FloatArray(0),
-                pageHeights = FloatArray(0),
-                pageWidths = FloatArray(0),
-                totalDocumentHeight = 0f,
-                maxPageWidth = viewport.width,
-                viewport = viewport,
-                pageSpacingPx = 0f
-            )
+        fun empty(viewport: ViewportMetrics = ViewportMetrics()): PageLayoutSnapshot = PageLayoutSnapshot(
+            pageSizes = emptyList(),
+            pageTops = FloatArray(0),
+            pageHeights = FloatArray(0),
+            pageWidths = FloatArray(0),
+            totalDocumentHeight = 0f,
+            maxPageWidth = viewport.width,
+            viewport = viewport,
+            pageSpacingPx = 0f
+        )
 
         fun build(
             pageSizes: List<Size>,
@@ -232,7 +222,6 @@ internal class PageLayoutSnapshot(
                         val scale = min(viewport.width / pdfWidth, viewport.height / pdfHeight)
                         (pdfWidth * scale) to (pdfHeight * scale)
                     }
-
                     FitMode.PROPORTIONAL -> {
                         val scale = viewport.width / maxPdfWidth
                         (pdfWidth * scale) to (pdfHeight * scale)
