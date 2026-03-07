@@ -11,7 +11,6 @@ import com.composepdf.renderer.tiles.TileKey
 import com.composepdf.state.PdfViewerState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
@@ -19,19 +18,55 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.Closeable
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.concurrent.PriorityBlockingQueue
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 private const val TAG = "PdfRenderScheduler"
 
 /**
+ * Priority levels for rendering tasks.
+ * Order matters: VISIBLE_TILE is 0 (highest priority).
+ */
+internal enum class RenderPriority {
+    VISIBLE_TILE,
+    VISIBLE_LOW_RES,
+    PREFETCH_LOW_RES,
+    PREFETCH_TILE
+}
+
+/**
+ * Represents a single atomic rendering unit (a page or a tile).
+ * Implements [Comparable] to be used in a [PriorityBlockingQueue].
+ */
+internal data class RenderTask(
+    val priority: RenderPriority,
+    val distanceSq: Float,
+    val cacheKey: String,
+    val pageIndex: Int,
+    val sessionToken: Int,
+    val pageCacheKey: PageCacheKey? = null,
+    val action: suspend (snapshot: RenderWindowSnapshot) -> Unit
+) : Comparable<RenderTask> {
+    override fun compareTo(other: RenderTask): Int {
+        val priorityCompare = this.priority.ordinal.compareTo(other.priority.ordinal)
+        if (priorityCompare != 0) return priorityCompare
+        // Within same priority, sort by distance to viewport center
+        return this.distanceSq.compareTo(other.distanceSq)
+    }
+}
+
+/**
  * Orchestrates background rendering tasks for both full pages and high-resolution tiles.
  *
- * This class executes work; it does not decide *which* tiles should exist. That planning now
- * happens in [com.composepdf.renderer.tiles.TilePlanner], keeping responsibilities separate.
+ * This implementation focuses on:
+ * 1. **Proactive Memory Management**: Force-evicts far-away pages from RAM cache.
+ * 2. **Atomic Publication**: Uses [RenderWindowSnapshot] to prevent race conditions.
+ * 3. **Strict Ownership**: Ensures every bitmap is either published or returned to [BitmapPool].
  */
 internal class RenderScheduler internal constructor(
     private val documentManager: PdfDocumentManager,
@@ -43,30 +78,17 @@ internal class RenderScheduler internal constructor(
     private val telemetry: RenderTelemetry? = null
 ) : Closeable {
 
-    /** Dedicated dispatcher for CPU-intensive PDF rasterization.
-     * Reduced to 2 threads to minimize native lock contention and concurrent memory pressure. */
-    private val renderDispatcher = Executors.newFixedThreadPool(2).asCoroutineDispatcher()
+    private val renderDispatcher = Executors.newFixedThreadPool(3).asCoroutineDispatcher()
     private val scope = CoroutineScope(renderDispatcher + SupervisorJob())
     private val renderWindowTracker = RenderWindowTracker()
 
-    /** Tracking of active page-level rendering jobs. */
-    private val activeJobs = ConcurrentHashMap<Int, Job>()
-    private val inFlightPageKeys = ConcurrentHashMap<Int, PageCacheKey>()
+    private val taskQueue = PriorityBlockingQueue<RenderTask>()
 
-    /** Tracking of active high-res tile rendering jobs. */
-    private val tileJobs = ConcurrentHashMap<String, Job>()
-
-    /** Number of pages to pre-render outside the visible range in each direction. */
+    /** Number of pages to pre-render outside the visible range. */
     var prefetchWindow: Int = 2
         set(value) { field = value.coerceAtLeast(0) }
 
-    /**
-     * Stable identifier for the currently open document.
-     *
-     * Used to prefix tile disk-cache keys so tiles from one PDF do not collide with
-     * tiles from a different PDF that happens to share page indices. Set by
-     * [com.composepdf.state.PdfViewerController] on each [open][PdfDocumentManager.open] call.
-     */
+    /** Stable identifier for the currently open document. */
     var docKey: String = ""
 
     private val _renderedPages = MutableStateFlow<Map<Int, Bitmap>>(emptyMap())
@@ -74,36 +96,91 @@ internal class RenderScheduler internal constructor(
     /** Observed by the UI to display base page bitmaps. */
     val renderedPages: StateFlow<Map<Int, Bitmap>> = _renderedPages.asStateFlow()
 
+    init {
+        // Fixed pool of 3 workers for high-concurrency PDF rasterization.
+        repeat(3) {
+            scope.launch {
+                while (isActive) {
+                    try {
+                        val task = taskQueue.take()
+                        val currentSnapshot = renderWindowTracker.getSnapshot()
+                        
+                        // 1. Session check: Instant drop if document changed.
+                        if (task.sessionToken != currentSnapshot.sessionToken) continue
+
+                        // 2. Relevancy check: Is this specific key still wanted?
+                        val isStillWanted = if (task.pageCacheKey != null) {
+                            currentSnapshot.desiredPages[task.pageIndex] == task.pageCacheKey
+                        } else {
+                            task.cacheKey in currentSnapshot.desiredTiles
+                        }
+
+                        if (isStillWanted) {
+                            task.action(currentSnapshot)
+                        }
+                    } catch (e: InterruptedException) {
+                        break
+                    } catch (e: Exception) {
+                        if (e !is CancellationException) {
+                            Log.e(TAG, "Worker error: ${e.message}", e)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Reclaims memory from pages that are significantly far from the current viewport.
+     * This prevents OOM during rapid navigation across large documents.
+     */
+    private fun proactivelyEvictFarPages(visiblePages: IntRange, totalPages: Int) {
+        val keepRadius = prefetchWindow + 5 // Margin to avoid immediate re-rendering
+        val minKeep = (visiblePages.first - keepRadius).coerceAtLeast(0)
+        val maxKeep = (visiblePages.last + keepRadius).coerceAtMost(totalPages - 1)
+        cache.clearPagesOutside(minKeep..maxKeep)
+    }
+
+    /**
+     * Removes tasks from the queue that belong to a previous document session.
+     *
+     * To maintain performance, this cleanup only triggers if the queue exceeds
+     * a threshold (50 tasks), preventing unnecessary iterations on small workloads
+     * while ensuring memory is not wasted on outdated rendering requests after
+     * rapid document changes or resets.
+     */
+    private fun pruneObsoleteTasks() {
+        val currentSession = renderWindowTracker.currentSessionToken()
+        if (taskQueue.size > 50) {
+            taskQueue.removeIf { it.sessionToken < currentSession }
+        }
+    }
+
     fun onDocumentLoaded(documentKey: String) {
         docKey = documentKey
         renderWindowTracker.beginNewSession()
+        taskQueue.clear()
+        _renderedPages.value = emptyMap()
     }
 
-    /**
-     * Replaces the current desired high-resolution tile window.
-     *
-     * Tile publication is allowed only for keys that remain inside this keep-set. That lets a tile
-     * started by an older render pass still publish when it is still relevant, while late results
-     * for tiles that left the viewport are dropped deterministically.
-     */
     fun updateTileWindow(keepKeys: Set<String>) {
         renderWindowTracker.updateDesiredTiles(keepKeys)
-        tileJobs.keys.forEach { key -> //Consider creating an iterator with proper removal pattern (using toList may be heavy)
-            if (key !in keepKeys) {
-                tileJobs.remove(key)?.cancel()
-                telemetry?.recordTileJobCancelled(key)
-            }
-        }
-        telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
     }
 
     /**
-     * Schedules rendering for the given range of visible pages.
+     * Schedules rendering for base pages within and surrounding the active viewport.
      *
-     * @param visiblePages Range of indices currently visible in the viewport.
-     * @param config Quality settings for the render.
-     * @param pageSizes Original PDF dimensions for all pages.
-     * @param getBaseWidth A function to retrieve the base width (at zoom 1.0) for a specific page index.
+     * This method manages the lifecycle of low-resolution page bitmaps by:
+     * 1. Pruning obsolete tasks and proactively evicting far-away pages from memory.
+     * 2. Calculating the active window (visible pages plus [prefetchWindow]).
+     * 3. Syncing the [RenderWindowTracker] with current [PageCacheKey] requirements.
+     * 4. Dispatching prioritized [RenderTask]s for missing pages while publishing cached ones.
+     *
+     * @param visiblePages The range of page indices currently visible to the user.
+     * @param config The rendering configuration including zoom level and quality settings.
+     * @param pageSizes A list of intrinsic sizes for all pages in the document.
+     * @param getBaseWidth A provider for the reference width of a specific page.
+     * @param renderPassId A unique identifier used for telemetry and tracking this specific update.
      */
     fun requestRender(
         visiblePages: IntRange,
@@ -114,167 +191,133 @@ internal class RenderScheduler internal constructor(
     ) {
         if (!documentManager.isOpen || pageSizes.isEmpty()) return
 
+        pruneObsoleteTasks()
+        proactivelyEvictFarPages(visiblePages, pageSizes.size)
+
         val sessionToken = renderWindowTracker.currentSessionToken()
         val roundedZoom = (config.zoomLevel * 100f).roundToInt() / 100f
-        val total = pageSizes.size
-
+        
         val winStart = (visiblePages.first - prefetchWindow).coerceAtLeast(0)
-        val winEnd = (visiblePages.last + prefetchWindow).coerceAtMost(total - 1)
-        val window = winStart..winEnd
-        retainRenderedPages(window.toSet())
+        val winEnd = (visiblePages.last + prefetchWindow).coerceAtMost(pageSizes.size - 1)
+        val activeWindow = winStart..winEnd
+        
+        // Remove base bitmaps for pages that left the prefetch window.
+        _renderedPages.update { current -> current.filterKeys { it in activeWindow } }
 
-        val desiredPages = linkedMapOf<Int, PageCacheKey>()
-        window.forEach { pageIndex ->
-            if (pageIndex !in 0 until total) return@forEach
-            val pageSize = pageSizes[pageIndex]
-            val baseWidth = getBaseWidth(pageIndex)
+        val desiredPages = activeWindow.associateWith { pageIndex ->
+            val size = pageSizes[pageIndex]
             val (targetW, targetH) = pageRenderer.calculateRenderSize(
-                pageSize.width,
-                pageSize.height,
-                baseWidth,
-                config
+                size.width, size.height, getBaseWidth(pageIndex), config
             )
-            desiredPages[pageIndex] = PageCacheKey(pageIndex, roundedZoom, targetW, targetH)
+            PageCacheKey(pageIndex, roundedZoom, targetW, targetH)
         }
         renderWindowTracker.updateDesiredPages(desiredPages)
 
-        // Evict jobs for pages that are no longer in the prefetch window
-        activeJobs.keys.forEach { idx ->
-            if (idx !in window) {
-                activeJobs.remove(idx)?.cancel()
-                inFlightPageKeys.remove(idx)
-                telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
-            }
-        }
-
-        // Prioritize visible pages, then prefetched ones
-        val ordered = visiblePages.toList() +
-                (winStart until visiblePages.first).toList() +
-                ((visiblePages.last + 1)..winEnd).toList()
-
-        for (pageIndex in ordered) {
-            if (pageIndex !in 0 until total) continue
-
-            val pageSize = pageSizes[pageIndex]
-            val baseWidth = getBaseWidth(pageIndex)
-            val (targetW, targetH) = pageRenderer.calculateRenderSize(
-                pageSize.width,
-                pageSize.height,
-                baseWidth,
-                config
-            )
-            val cacheKey = PageCacheKey(pageIndex, roundedZoom, targetW, targetH)
-
-            // Skip if already in memory or already being rendered for the same desired output.
+        for (pageIndex in activeWindow) {
+            val cacheKey = desiredPages[pageIndex] ?: continue
             val cached = cache.get(cacheKey)
+            
             if (cached != null) {
-                telemetry?.recordPageMemoryHit(renderPassId, pageIndex, roundedZoom)
-                if (renderWindowTracker.shouldPublishPage(sessionToken, pageIndex, cacheKey)) {
-                    publishBitmap(pageIndex, cached)
-                    telemetry?.recordPagePublished(renderPassId, pageIndex, stale = false)
-                } else {
-                    telemetry?.recordPagePublished(renderPassId, pageIndex, stale = true)
-                }
-                activeJobs.remove(pageIndex)?.cancel()
-                inFlightPageKeys.remove(pageIndex)
-                telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
+                publishBitmap(pageIndex, cached)
+                telemetry?.recordPageMemoryHit(renderPassId, pageIndex, config.zoomLevel)
                 continue
             }
 
-            if (activeJobs[pageIndex]?.isActive == true && inFlightPageKeys[pageIndex] == cacheKey) continue
-
-            activeJobs.remove(pageIndex)?.cancel()
-            inFlightPageKeys[pageIndex] = cacheKey
-
-            activeJobs[pageIndex] = scope.launch {
-                telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
-                try {
-                    val bitmap = documentManager.withPage(pageIndex) { page ->
-                        pageRenderer.render(page, baseWidth, config)
-                    }
-                    telemetry?.recordPageRendered(renderPassId, pageIndex, roundedZoom)
-                    cache.put(cacheKey, bitmap)
-                    if (inFlightPageKeys[pageIndex] == cacheKey) {
-                        inFlightPageKeys.remove(pageIndex)
-                        activeJobs.remove(pageIndex)
-                        if (renderWindowTracker.shouldPublishPage(sessionToken, pageIndex, cacheKey)) {
-                            publishBitmap(pageIndex, bitmap)
-                            telemetry?.recordPagePublished(renderPassId, pageIndex, stale = false)
-                        } else {
-                            telemetry?.recordPagePublished(renderPassId, pageIndex, stale = true)
+            val priority = if (pageIndex in visiblePages) RenderPriority.VISIBLE_LOW_RES else RenderPriority.PREFETCH_LOW_RES
+            
+            taskQueue.offer(RenderTask(
+                priority = priority,
+                distanceSq = abs(pageIndex - (visiblePages.first + visiblePages.last) / 2).toFloat(),
+                cacheKey = cacheKey.toString(),
+                pageIndex = pageIndex,
+                sessionToken = sessionToken,
+                pageCacheKey = cacheKey,
+                action = { latestSnapshot ->
+                    try {
+                        val bitmap = documentManager.withPage(pageIndex) { page ->
+                            pageRenderer.render(page, getBaseWidth(pageIndex), config)
                         }
+                        cache.put(cacheKey, bitmap)
+                        
+                        // Double check relevancy before updating UI flow
+                        if (latestSnapshot.sessionToken == sessionToken && latestSnapshot.desiredPages[pageIndex] == cacheKey) {
+                            publishBitmap(pageIndex, bitmap)
+                        }
+                        telemetry?.recordPagePublished(renderPassId, pageIndex, false)
+                    } catch (e: Exception) {
+                        if (e !is CancellationException) Log.e(TAG, "Page render failed: $pageIndex")
                     }
-                } catch (e: Exception) {
-                    if (e !is CancellationException) Log.e(
-                        TAG,
-                        "Render error for page $pageIndex: ${e.message}"
-                    )
-                    inFlightPageKeys.remove(pageIndex)
-                    activeJobs.remove(pageIndex)
-                } finally {
-                    telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
                 }
-            }
+            ))
         }
     }
 
     /**
-     * Schedules a single tile render task.
+     * Schedules the rendering of a high-resolution tile for a specific section of a page.
      *
-     * @param tileKey The key identifying the tile to render, including page index and coordinates.
-     * @param baseWidth The width the page should have at zoom 1.0.
+     * The task is added to a priority queue where visible tiles take precedence over prefetch tiles.
+     * The rendering process first attempts to retrieve the tile from [tileDiskCache] before
+     * falling back to rasterizing the PDF page.
+     *
+     * To ensure memory efficiency, the resulting bitmap is only published to the [viewerState]
+     * if the tile is still within the active render window snapshot; otherwise, it is
+     * immediately returned to the [bitmapPool].
+     *
+     * @param tileKey The unique identifier for the tile, containing page index, zoom, and coordinates.
+     * @param baseWidth The reference width of the page used for scaling calculations.
+     * @param distanceSq The squared distance from the viewport center, used for intra-priority sorting.
+     * @param isPrefetch If true, assigns a lower priority ([RenderPriority.PREFETCH_TILE]) to the task.
+     * @param renderPassId An identifier for telemetry tracking and performance profiling.
      */
-    internal fun requestTile(tileKey: TileKey, baseWidth: Float, renderPassId: Int) {
+    internal fun requestTile(
+        tileKey: TileKey,
+        baseWidth: Float,
+        distanceSq: Float,
+        isPrefetch: Boolean,
+        renderPassId: Int
+    ) {
         val sessionToken = renderWindowTracker.currentSessionToken()
         val memoryKey = tileKey.toCacheKey()
-        val diskKey = tileKey.toDiskCacheKey(docKey)
 
-        if (viewerState.getTile(memoryKey) != null) {
-            telemetry?.recordTileMemoryHit(renderPassId, memoryKey)
-            return
-        }
-        if (tileJobs.containsKey(memoryKey)) return
+        if (viewerState.getTile(memoryKey) != null) return
 
-        tileJobs[memoryKey] = scope.launch {
-            telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
-            try {
-                val diskBitmap = tileDiskCache?.get(diskKey)
-                if (diskBitmap != null) {
-                    telemetry?.recordTileDiskHit(renderPassId, memoryKey)
-                    if (renderWindowTracker.shouldPublishTile(sessionToken, memoryKey)) {
-                        viewerState.putTile(memoryKey, diskBitmap)
-                        telemetry?.recordTilePublished(renderPassId, memoryKey, stale = false)
+        val priority = if (isPrefetch) RenderPriority.PREFETCH_TILE else RenderPriority.VISIBLE_TILE
+
+        taskQueue.offer(RenderTask(
+            priority = priority,
+            distanceSq = distanceSq,
+            cacheKey = memoryKey,
+            pageIndex = tileKey.pageIndex,
+            sessionToken = sessionToken,
+            action = { latestSnapshot ->
+                try {
+                    val diskKey = tileKey.toDiskCacheKey(docKey)
+                    val diskBitmap = tileDiskCache?.get(diskKey)
+                    
+                    val bitmap = if (diskBitmap != null) {
+                        telemetry?.recordTileDiskHit(renderPassId, memoryKey)
+                        diskBitmap
                     } else {
-                        bitmapPool.put(diskBitmap)
-                        telemetry?.recordTilePublished(renderPassId, memoryKey, stale = true)
+                        val rendered = documentManager.withPage(tileKey.pageIndex) { page ->
+                            pageRenderer.renderTile(page, tileKey.rect, tileKey.zoom, baseWidth)
+                        }
+                        tileDiskCache?.put(diskKey, rendered)
+                        telemetry?.recordTileRendered(renderPassId, memoryKey)
+                        rendered
                     }
-                    return@launch
-                }
 
-                val bitmap = documentManager.withPage(tileKey.pageIndex) { page ->
-                    pageRenderer.renderTile(page, tileKey.rect, tileKey.zoom, baseWidth)
+                    // Strict Publication: Only put in State if still in the keep window.
+                    // Otherwise, return to pool immediately to prevent memory leaks.
+                    if (latestSnapshot.sessionToken == sessionToken && memoryKey in latestSnapshot.desiredTiles) {
+                        viewerState.putTile(memoryKey, bitmap)
+                    } else {
+                        bitmapPool.put(bitmap)
+                    }
+                } catch (e: Exception) {
+                    if (e !is CancellationException) Log.e(TAG, "Tile render failed: $memoryKey")
                 }
-                telemetry?.recordTileRendered(renderPassId, memoryKey)
-                tileDiskCache?.put(diskKey, bitmap)
-                if (renderWindowTracker.shouldPublishTile(sessionToken, memoryKey)) {
-                    viewerState.putTile(memoryKey, bitmap)
-                    telemetry?.recordTilePublished(renderPassId, memoryKey, stale = false)
-                } else {
-                    bitmapPool.put(bitmap)
-                    telemetry?.recordTilePublished(renderPassId, memoryKey, stale = true)
-                }
-            } catch (e: Exception) {
-                if (e !is CancellationException) Log.e(TAG, "Tile error for $memoryKey: ${e.message}")
-            } finally {
-                tileJobs.remove(memoryKey)
-                telemetry?.recordActiveJobs(activeJobs.size, tileJobs.size)
             }
-        }
-    }
-
-    /** Cancels all currently active tile rendering tasks. */
-    fun cancelAllTiles() {
-        updateTileWindow(emptySet())
+        ))
     }
 
     private fun publishBitmap(pageIndex: Int, bitmap: Bitmap) {
@@ -285,25 +328,19 @@ internal class RenderScheduler internal constructor(
     }
 
     /**
-     * Drops published base pages that left the active render window.
+     * Resets the entire rendering pipeline by clearing all pending tasks, caches, and current state.
      *
-     * Keeping them in [_renderedPages] makes the UI retain bitmaps indefinitely, which blocks the
-     * delayed hand-off to [com.composepdf.cache.BitmapPool] and creates severe GC pressure while
-     * scrolling through long documents.
+     * This method:
+     * 1. Increments the session token to invalidate any in-flight rendering workers.
+     * 2. Clears the high-priority and low-priority task queues.
+     * 3. Wipes the current [renderedPages] state flow.
+     * 4. Evicts all bitmaps from the memory cache.
+     *
+     * Use this when the document source changes or a global refresh of the rendered content is required.
      */
-    private fun retainRenderedPages(pageIndices: Set<Int>) {
-        _renderedPages.update { current ->
-            val retained = current.filterKeys(pageIndices::contains)
-            if (retained.size == current.size) current else retained
-        }
-    }
-
-    /** Cancels everything and wipes the page cache. */
     fun invalidateAll() {
         renderWindowTracker.beginNewSession()
-        activeJobs.keys.forEach { idx -> activeJobs.remove(idx)?.cancel() }
-        inFlightPageKeys.clear()
-        cancelAllTiles()
+        taskQueue.clear()
         _renderedPages.value = emptyMap()
         cache.clear()
     }

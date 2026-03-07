@@ -1,5 +1,6 @@
 package com.composepdf.remote
 
+import com.composepdf.util.longLivedContext
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -21,14 +22,15 @@ import java.security.MessageDigest
  * @property cacheDir Custom cache directory, or null to use default
  */
 class DiskCacheManager(
-    private val context: Context,
+    context: Context,
     private val cacheDir: File? = null
 ) {
+    private val appContext = context.longLivedContext()
 
     private val mutex = Mutex()
 
     private val actualCacheDir: File by lazy {
-        cacheDir ?: File(context.cacheDir, CACHE_SUBDIRECTORY).also {
+        cacheDir ?: File(appContext.cacheDir, CACHE_SUBDIRECTORY).also {
             it.mkdirs()
         }
     }

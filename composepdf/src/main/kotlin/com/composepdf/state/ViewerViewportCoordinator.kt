@@ -11,22 +11,13 @@ import com.composepdf.layout.PageLayoutSnapshot
 import com.composepdf.renderer.tiles.ViewportState
 
 /**
- * Owns viewport and page-layout state for the viewer.
- *
- * This class keeps geometry concerns together:
- * - viewport dimensions
- * - current page layout snapshot
- * - page visibility lookup
- * - pan clamping
- * - fit zoom calculations
- *
- * `PdfViewerController` uses it as a collaborator so the controller can stay focused on
- * sequencing document loading, gestures and render triggers.
+ * Manages the spatial and geometric state of the PDF viewer, acting as the bridge between
+ * the viewport dimensions, page layouts, and the document's physical scroll position.
  */
 internal class ViewerViewportCoordinator(
     private val state: PdfViewerState,
     private val configProvider: () -> ViewerConfig,
-    private val snapshotFactory: (List<Size>, Float, Float, FitMode, Float) -> PageLayoutSnapshot =
+    private val snapshotFactory: (List<Size>, Float, Float, FitMode, Float, ScrollDirection) -> PageLayoutSnapshot =
         PageLayoutSnapshot::build
 ) {
     var viewportWidth by mutableFloatStateOf(0f)
@@ -72,10 +63,12 @@ internal class ViewerViewportCoordinator(
     fun pageWidthPx(index: Int): Float = layoutSnapshot.pageWidthPx(index)
 
     fun pageTopDocY(index: Int): Float = layoutSnapshot.pageTopDocY(index)
+    
+    fun pageLeftDocX(index: Int): Float = layoutSnapshot.pageLeftDocX(index)
 
     fun visiblePageIndices(): IntRange {
         layoutVersion
-        return layoutSnapshot.visiblePageIndices(state.panY, state.zoom)
+        return layoutSnapshot.visiblePageIndices(state.panX, state.panY, state.zoom)
     }
 
     fun isPointOverPage(point: Offset): Boolean = layoutSnapshot.isPointOverPage(
@@ -108,7 +101,7 @@ internal class ViewerViewportCoordinator(
     }
 
     fun updateCurrentPageFromViewport() {
-        val currentPage = layoutSnapshot.currentPageAtViewportCenter(state.panY, state.zoom) ?: return
+        val currentPage = layoutSnapshot.currentPageAtViewportCenter(state.panX, state.panY, state.zoom) ?: return
         state.currentPage = currentPage.coerceIn(0, (state.pageCount - 1).coerceAtLeast(0))
     }
 
@@ -128,9 +121,9 @@ internal class ViewerViewportCoordinator(
             viewportWidth,
             viewportHeight,
             config.fitMode,
-            config.pageSpacingPx
+            config.pageSpacingPx,
+            config.scrollDirection
         )
         layoutVersion++
     }
 }
-

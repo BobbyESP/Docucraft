@@ -55,8 +55,10 @@ data class RenderTelemetrySnapshot(
  * Internal, lightweight telemetry collector for the render pipeline.
  *
  * It is intentionally in-process and dependency-free so it can be enabled in all builds without
- * affecting network, privacy or startup cost. The main goal is to make render bugs diagnosable by
- * exposing pass metadata, cache hits, stale drops and cancellation patterns.
+ * affecting network, privacy, or startup performance. The main goal is to make render lifecycle
+ * issues diagnosable by exposing pass metadata, cache hits, stale drops, and job cancellation patterns.
+ *
+ * @param maxEvents The maximum number of recent [RenderTelemetryEvent]s to keep in the circular buffer.
  */
 internal class RenderTelemetry(
     private val maxEvents: Int = 200

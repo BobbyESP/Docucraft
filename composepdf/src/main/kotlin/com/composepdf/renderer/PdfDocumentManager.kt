@@ -7,6 +7,7 @@ import android.util.Log
 import android.util.Size
 import com.composepdf.source.PdfSource
 import com.composepdf.source.PdfSourceResolver
+import com.composepdf.util.longLivedContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -21,13 +22,19 @@ import java.util.concurrent.atomic.AtomicInteger
 private const val TAG = "PdfDocumentManager"
 
 /**
- * Manages a pool of [PdfRenderer] instances to allow parallel rendering of pages and tiles.
+ * Manages a pool of [PdfRenderer] instances to enable parallel rendering of PDF pages and tiles.
  *
- * Android's [PdfRenderer] is thread-safe but internally synchronized, meaning it only
- * allows one rendering operation at a time. To achieve true multi-threaded rendering,
- * this manager duplicates the file descriptor and creates multiple renderer instances.
+ * While Android's [PdfRenderer] is thread-safe, it utilizes internal synchronization that
+ * restricts rendering to a single thread at a time per instance. This manager overcomes that
+ * limitation by duplicating the underlying file descriptor and maintaining multiple renderer
+ * instances, allowing for true concurrent processing across CPU cores.
+ *
+ * Access to the renderer pool is managed via a semaphore to prevent resource exhaustion and
+ * native-level contention.
  */
-class PdfDocumentManager(private val context: Context) : Closeable {
+class PdfDocumentManager(context: Context) : Closeable {
+
+    private val appContext = context.longLivedContext()
 
     private var masterFd: ParcelFileDescriptor? = null
     private var sourceResolver: PdfSourceResolver? = null
@@ -50,9 +57,22 @@ class PdfDocumentManager(private val context: Context) : Closeable {
     val pageCount: Int get() = _pageCount
     val isOpen: Boolean get() = masterFd != null
 
+    /**
+     * Opens a PDF document from the specified [source].
+     *
+     * This method initializes the [PdfRenderer] pool by resolving the source into a file descriptor.
+     * To support parallel rendering, it attempts to duplicate the file descriptor up to
+     * [maxParallelRenderers] times. If duplication fails for any instance, it proceeds with
+     * the successfully created renderers.
+     *
+     * If a document is already open, it will be closed before the new one is processed.
+     *
+     * @param source The [PdfSource] pointing to the PDF file (e.g., URI, File, or Asset).
+     * @throws Throwable If the source cannot be resolved or the PDF is invalid/corrupted.
+     */
     suspend fun open(source: PdfSource) = withContext(Dispatchers.IO) {
         closeInternal()
-        val resolver = PdfSourceResolver(context)
+        val resolver = PdfSourceResolver(appContext)
         sourceResolver = resolver
         try {
             val fd = resolver.resolve(source)

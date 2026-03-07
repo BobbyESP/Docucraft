@@ -23,27 +23,10 @@ import com.composepdf.state.PdfViewerState
 import kotlin.math.roundToInt
 
 /**
- * Composable responsible for rendering a single PDF page.
+ * Composable responsible for rendering a single PDF page with industrial-grade precision.
  *
- * Layers two levels of detail on a [Canvas]:
- * 1. **Base bitmap** — a low-resolution full-page render, always visible as a fallback.
- * 2. **Tiles** — high-resolution 256×256 px sub-regions, composited on top at the correct
- *    scale derived from the ratio `currentZoom / tileZoom`.
- *
- * Clipping ([clipToBounds]) prevents tiles from bleeding into the gap between pages.
- *
- * Night-mode color inversion is handled here via [colorFilter], keeping the renderer
- * (CPU-intensive) free from any color-space concerns.
- *
- * Receives [ImageBitmap] (a stable Compose type) rather than [android.graphics.Bitmap]
- * so that this composable is skippable by the Compose compiler when neither the bitmap
- * nor any other parameter has changed.
- *
- * @param state Viewer state — read-only access to zoom level and tile map.
- * @param bitmap The low-resolution base page bitmap as [ImageBitmap], or `null` while rendering.
- * @param pageIndex Zero-based page index used to filter tiles that belong to this page.
- * @param showLoadingIndicator Show a spinner when [bitmap] is null.
- * @param colorFilter Optional [ColorFilter] applied to both base and tile draws (e.g. night mode).
+ * This implementation avoids "seams" (1px gaps) between tiles by calculating 
+ * destinations in a way that ensures adjacent tiles share pixel boundaries perfectly.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -63,6 +46,7 @@ internal fun PdfPage(
         contentAlignment = Alignment.Center
     ) {
         if (bitmap != null) {
+            // Observe tileRevision to trigger recomposition when the tile cache changes
             val tiles = state.run {
                 tileRevision
                 getImageBitmapTilesForPage(pageIndex)
@@ -70,33 +54,38 @@ internal fun PdfPage(
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val zoom = state.zoom
+                val activeSteppedZoom = state.activeSteppedZoom
                 val expectedBaseWidthKey = TileKey.normalizedBaseWidthKey(pageWidthPx)
 
-                // 1. Draw low-resolution base page stretched to fill the measured size.
+                // 1. Draw base low-resolution page. 
+                // Using the full canvas size ensures the base page covers the background entirely.
                 drawImage(
                     image = bitmap,
                     dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
                     colorFilter = colorFilter
                 )
 
-                // 2. Composite only this page's tiles that still match the current geometry.
+                // 2. Draw high-resolution tiles.
+                // We calculate boundaries precisely to avoid sub-pixel gaps.
                 tiles.forEach { publishedTile ->
                     val tileKey = publishedTile.tileKey
-                    if (tileKey.baseWidthKey != expectedBaseWidthKey && tileKey.baseWidthKey >= 0) {
-                        return@forEach
-                    }
+                    
+                    // Filter: Only draw tiles from the current active zoom level and current layout width
+                    if (tileKey.zoom != activeSteppedZoom) return@forEach
+                    if (tileKey.baseWidthKey != expectedBaseWidthKey && tileKey.baseWidthKey >= 0) return@forEach
+
                     val scale = zoom / tileKey.zoom
+
+                    // destination boundaries calculated with high precision
+                    val left = (tileKey.rect.left * scale).roundToInt()
+                    val top = (tileKey.rect.top * scale).roundToInt()
+                    val right = (tileKey.rect.right * scale).roundToInt()
+                    val bottom = (tileKey.rect.bottom * scale).roundToInt()
 
                     drawImage(
                         image = publishedTile.imageBitmap,
-                        dstOffset = IntOffset(
-                            (tileKey.rect.left * scale).roundToInt(),
-                            (tileKey.rect.top * scale).roundToInt()
-                        ),
-                        dstSize = IntSize(
-                            (tileKey.rect.width() * scale).roundToInt(),
-                            (tileKey.rect.height() * scale).roundToInt()
-                        ),
+                        dstOffset = IntOffset(left, top),
+                        dstSize = IntSize(right - left, bottom - top),
                         colorFilter = colorFilter
                     )
                 }

@@ -4,21 +4,19 @@ import android.graphics.Bitmap
 import android.util.LruCache
 
 /**
- * Composite key that uniquely identifies a rendered bitmap in [BitmapCache].
- */
-data class PageCacheKey(
-    val pageIndex: Int,
-    val zoomLevel: Float,
-    val width: Int,
-    val height: Int
-)
-
-/**
- * In-memory LRU cache for rendered PDF page bitmaps.
+ * An in-memory Least Recently Used (LRU) cache for rendered PDF page bitmaps.
  *
- * This cache notifies [onEvicted] when a bitmap is removed from its tracking.
- * It DOES NOT return bitmaps to the pool directly to avoid "trash" drawing,
- * as they might still be currently displayed on screen.
+ * This cache tracks memory usage based on the [Bitmap.allocationByteCount] of each entry
+ * to stay within a specified [maxSizeBytes] limit. It provides an [onEvicted] callback
+ * to handle resource cleanup (such as bitmap recycling) when items are removed.
+ *
+ * Use [clearPagesOutside] to proactively manage memory by evicting pages that are
+ * no longer within a visible or buffered range.
+ *
+ * @param maxSizeBytes The maximum cumulative size in bytes the cache should hold.
+ * Defaults to 15% of the available runtime memory.
+ * @param onEvicted A callback triggered whenever a bitmap is removed from the cache,
+ * providing an opportunity to recycle the bitmap or release resources.
  */
 class BitmapCache(
     maxSizeBytes: Int = calculateDefaultCacheSize(),
@@ -51,23 +49,21 @@ class BitmapCache(
     fun clear() = cache.evictAll()
 
     /**
-     * Removes all cached bitmaps that belong to [pageIndex].
-     *
-     * Useful when a page is no longer needed (e.g. after a document close) and its
-     * memory should be reclaimed before the LRU eviction cycle runs naturally.
+     * Proactively removes cached bitmaps for pages outside the specified range.
+     * This is essential for maintaining a constant memory footprint during large jumps.
      */
-    @Suppress("unused")
-    fun clearPage(pageIndex: Int) {
-        cache.snapshot().keys
-            .filter { it.pageIndex == pageIndex }
-            .forEach { cache.remove(it) }
+    fun clearPagesOutside(keepRange: IntRange) {
+        val snapshot = cache.snapshot()
+        for (key in snapshot.keys) {
+            if (key.pageIndex !in keepRange) {
+                cache.remove(key)
+            }
+        }
     }
 
     companion object {
         fun calculateDefaultCacheSize(): Int {
             val maxMemory = Runtime.getRuntime().maxMemory()
-            // Reduced to 15% of the available heap for the bitmap cache (base pages).
-            // Combined with tile cache (20%) and pool, this leaves more breathing room for the GC.
             return (maxMemory * 0.15).toInt()
         }
     }

@@ -2,7 +2,7 @@ package com.composepdf.state
 
 import android.util.Size
 import androidx.compose.ui.unit.dp
-import com.composepdf.renderer.LoadedPdfDocument
+import com.composepdf.renderer.DocumentResult
 import com.composepdf.renderer.RenderTrigger
 import com.composepdf.source.PdfSource
 import kotlinx.coroutines.CoroutineScope
@@ -79,7 +79,7 @@ class ViewerSessionCoordinatorTest {
             invalidateTiles = {},
             loadDocument = { _, remoteState ->
                 remoteState(com.composepdf.remote.RemotePdfState.Downloading(progress = 0f, bytesDownloaded = 0, totalBytes = 100))
-                LoadedPdfDocument(
+                DocumentResult(
                     documentKey = "doc",
                     pageSizes = listOf(Size(600, 800), Size(600, 800)),
                     pageCount = 2

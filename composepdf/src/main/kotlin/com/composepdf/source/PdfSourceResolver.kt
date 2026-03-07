@@ -2,6 +2,7 @@ package com.composepdf.source
 
 import android.content.Context
 import android.os.ParcelFileDescriptor
+import com.composepdf.util.longLivedContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.Closeable
@@ -18,8 +19,9 @@ import java.io.FileOutputStream
  * The resolver implements [Closeable] and should be closed when the PDF document is no longer needed
  * to clean up any temporary files that were created.
  */
-class PdfSourceResolver(private val context: Context) : Closeable {
+class PdfSourceResolver(context: Context) : Closeable {
 
+    private val appContext = context.longLivedContext()
     private var createdTempFile: File? = null
 
     /**
@@ -40,7 +42,7 @@ class PdfSourceResolver(private val context: Context) : Closeable {
 
             is PdfSource.Asset -> {
                 val file = createTempFile()
-                context.assets.open(source.assetName).use { input ->
+                appContext.assets.open(source.assetName).use { input ->
                     FileOutputStream(file).use { output ->
                         input.copyTo(output)
                     }
@@ -67,7 +69,7 @@ class PdfSourceResolver(private val context: Context) : Closeable {
             }
 
             is PdfSource.Uri -> {
-                context.contentResolver.openFileDescriptor(source.uri, "r")
+                appContext.contentResolver.openFileDescriptor(source.uri, "r")
                     ?: throw IllegalArgumentException("Cannot open URI: ${source.uri}")
             }
 
@@ -98,7 +100,7 @@ class PdfSourceResolver(private val context: Context) : Closeable {
         source: PdfSource.Remote,
         onStateChange: (com.composepdf.remote.RemotePdfState) -> Unit = {}
     ): ParcelFileDescriptor = withContext(Dispatchers.IO) {
-        val loader = com.composepdf.remote.RemotePdfLoader(context)
+        val loader = com.composepdf.remote.RemotePdfLoader(appContext)
         var targetFile: File? = null
 
         loader.load(source).collect { state ->
@@ -118,7 +120,7 @@ class PdfSourceResolver(private val context: Context) : Closeable {
     }
 
     private fun createTempFile(): File {
-        return File.createTempFile("pdf_", ".pdf", context.cacheDir).also {
+        return File.createTempFile("pdf_", ".pdf", appContext.cacheDir).also {
             createdTempFile = it
         }
     }

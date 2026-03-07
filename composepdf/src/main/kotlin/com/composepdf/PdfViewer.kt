@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.composepdf.cache.BitmapPool
 import com.composepdf.source.PdfSource
 import com.composepdf.state.PdfViewerController
 import com.composepdf.state.PdfViewerState
@@ -28,38 +29,20 @@ import com.composepdf.state.ViewerConfig
 import com.composepdf.ui.PdfLayout
 
 /**
- * A Compose-native PDF viewer with tiled high-resolution rendering.
+ * A Jetpack Compose component for displaying PDF documents with support for high-resolution
+ * tiled rendering, pinch-to-zoom, and smooth scrolling.
  *
- * ## Features
- * - Local files, assets, URIs, byte arrays, input streams, and remote URLs
- * - Pinch-to-zoom and double-tap zoom (3-level cycle: fit → 2× → max)
- * - Smooth fling scrolling with exponential decay
- * - High-resolution tile rendering above zoom 1.1× — base page always visible beneath
- * - Night mode (full color inversion via a GPU-side color filter)
- * - In-memory LRU bitmap cache + persistent WebP tile disk cache
- * - State restoration across configuration changes via [rememberPdfViewerState]
+ * This viewer efficiently handles large documents by using memory-managed bitmap pooling
+ * and asynchronous page loading.
  *
- * ## Usage
- * ```kotlin
- * val state = rememberPdfViewerState()
- * PdfViewer(
- *     source = PdfSource.Uri(uri),
- *     state  = state,
- *     config = ViewerConfig(maxZoom = 8f),
- *     onPageChange = { page -> println("Now on page $page") }
- * )
- * // Programmatic control from a coroutine:
- * state.animateScrollToPage(5)
- * state.zoomIn()
- * ```
- *
- * @param source          The PDF to display. See [PdfSource] for supported types.
- * @param modifier        Modifier for the viewer container.
- * @param state           Hoisted viewer state — use [rememberPdfViewerState].
- * @param config          Viewer configuration (zoom limits, fit mode, spacing, …).
- * @param onPageChange    Called whenever the most-visible page index changes (0-based).
- * @param onError         Called if the document fails to load.
- * @param onDocumentLoad  Called once when the document has loaded, with the total page count.
+ * @param source The [PdfSource] representing the document to be displayed (e.g., file, asset, or URI).
+ * @param modifier The [Modifier] to be applied to the viewer's container.
+ * @param state The [PdfViewerState] used to control the viewer and observe its current status.
+ * @param config The [ViewerConfig] used to customize rendering quality and layout behavior.
+ * @param onPageChange An optional callback invoked when the current visible page changes.
+ * @param onError An optional callback invoked when an error occurs during loading or rendering.
+ * @param onDocumentLoad An optional callback invoked when the document is successfully loaded,
+ * providing the total number of pages.
  */
 @Composable
 fun PdfViewer(
@@ -74,16 +57,10 @@ fun PdfViewer(
     val context = LocalContext.current
     val density = LocalDensity.current
 
-    // Bake the current screen density into the config so the controller
-    // can convert Dp → px without needing a CompositionLocal.
     val resolvedConfig = remember(config, density) {
         config.copy(density = density.density)
     }
 
-    // Controller lifecycle: created once per (context, state) pair.
-    // Deliberately NOT keyed on resolvedConfig — config changes are delivered via
-    // updateConfig() to avoid tearing down and reloading the whole document just
-    // because e.g. fitMode changed.
     val controller = remember(context, state) {
         PdfViewerController(context, state, resolvedConfig)
     }
@@ -102,8 +79,6 @@ fun PdfViewer(
 
     val renderedPages by controller.renderedPages.collectAsStateWithLifecycle()
 
-    // rememberUpdatedState ensures callbacks are always the latest lambda without
-    // restarting the LaunchedEffects that reference them.
     val latestOnPageChange by rememberUpdatedState(onPageChange)
     val latestOnError by rememberUpdatedState(onError)
     val latestOnDocumentLoad by rememberUpdatedState(onDocumentLoad)
@@ -151,18 +126,21 @@ fun PdfViewer(
 
 /**
  * Creates and remembers a [PdfViewerState] that survives configuration changes.
- *
- * The returned state can be used both to observe the viewer's current page, zoom,
- * and loading status, and to issue programmatic navigation commands
- * (e.g. [PdfViewerState.animateScrollToPage]).
- *
- * @param initialPage Zero-based index of the page to open first. Defaults to 0.
- * @param initialZoom Initial magnification level. Defaults to 1.0 (fit-to-viewport).
+ * 
+ * In this industrial version, the [BitmapPool] is shared globally or tied to the 
+ * viewer's lifetime to ensure all bitmaps are tracked and recycled.
  */
 @Composable
 fun rememberPdfViewerState(
     initialPage: Int = 0,
     initialZoom: Float = 1f
-): PdfViewerState = rememberSaveable(saver = PdfViewerState.Saver) {
-    PdfViewerState(initialPage, initialZoom)
+): PdfViewerState {
+    // Global or context-scoped BitmapPool for the viewer engine.
+    val bitmapPool = remember { BitmapPool() }
+    
+    return rememberSaveable(
+        saver = PdfViewerState.saver(bitmapPool)
+    ) {
+        PdfViewerState(initialPage, initialZoom, bitmapPool)
+    }
 }

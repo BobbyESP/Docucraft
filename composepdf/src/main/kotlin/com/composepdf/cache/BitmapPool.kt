@@ -12,13 +12,16 @@ private const val TAG = "BitmapPool"
 /**
  * A memory pool for reusing [Bitmap] objects to reduce GC churn and memory fragmentation.
  *
- * This pool uses [Bitmap.reconfigure] to reuse existing bitmap allocations for new requests,
- * which is significantly faster than allocating new memory and prevents large heap spikes
- * during rapid scrolling or zooming.
+ * This pool leverages [Bitmap.reconfigure] to adapt existing allocations for new requests.
+ * This approach is significantly more efficient than fresh memory allocations and helps
+ * prevent large heap spikes during performance-intensive operations like rapid scrolling
+ * or zooming.
  *
- * @property maxSizeBytes Maximum memory (in bytes) to hold in the pool. Default is 64 MB.
- *                        This allows holding at least one full-size 4096px square bitmap,
- *                        or several smaller ones.
+ * The pool manages bitmaps using a [TreeMap] keyed by byte size, allowing it to efficiently
+ * find the smallest available bitmap that satisfies a requested size requirement.
+ *
+ * @property maxSizeBytes The maximum cumulative memory (in bytes) the pool is permitted to hold.
+ * Once this threshold is exceeded, the pool evicts the smallest available bitmaps.
  */
 class BitmapPool(
     private val maxSizeBytes: Int = DEFAULT_POOL_SIZE_BYTES

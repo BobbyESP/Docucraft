@@ -2,6 +2,7 @@ package com.composepdf.layout
 
 import android.util.Size
 import com.composepdf.state.FitMode
+import com.composepdf.state.ScrollDirection
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -12,17 +13,17 @@ class PageLayoutSnapshotTest {
     fun visiblePageIndices_returnsIntersectingPagesAroundViewport() {
         val snapshot = snapshot(
             pageCount = 3,
-            pageTops = floatArrayOf(0f, 520f, 1040f),
+            pageOffsets = floatArrayOf(0f, 520f, 1040f),
             pageHeights = floatArrayOf(500f, 500f, 500f),
             pageWidths = floatArrayOf(500f, 500f, 500f),
-            totalDocumentHeight = 1540f,
-            maxPageWidth = 500f,
+            totalDocumentSize = 1540f,
+            corridorBreadth = 500f,
             viewportWidth = 500f,
             viewportHeight = 500f,
             pageSpacingPx = 20f
         )
 
-        val visible = snapshot.visiblePageIndices(panY = -520f, zoom = 1f)
+        val visible = snapshot.visiblePageIndices(panX = 0f, panY = -520f, zoom = 1f)
 
         assertEquals(1..1, visible)
     }
@@ -31,11 +32,11 @@ class PageLayoutSnapshotTest {
     fun clampPan_centersContentWhenDocumentIsSmallerThanViewport() {
         val snapshot = snapshot(
             pageCount = 1,
-            pageTops = floatArrayOf(0f),
+            pageOffsets = floatArrayOf(0f),
             pageHeights = floatArrayOf(800f),
             pageWidths = floatArrayOf(800f),
-            totalDocumentHeight = 800f,
-            maxPageWidth = 800f,
+            totalDocumentSize = 800f,
+            corridorBreadth = 800f,
             viewportWidth = 800f,
             viewportHeight = 1200f,
             pageSpacingPx = 0f
@@ -51,11 +52,11 @@ class PageLayoutSnapshotTest {
     fun centeredPanForPage_usesViewportCenterAndDocumentCorridor() {
         val snapshot = snapshot(
             pageCount = 2,
-            pageTops = floatArrayOf(0f, 520f),
+            pageOffsets = floatArrayOf(0f, 520f),
             pageHeights = floatArrayOf(500f, 500f),
             pageWidths = floatArrayOf(400f, 300f),
-            totalDocumentHeight = 1020f,
-            maxPageWidth = 400f,
+            totalDocumentSize = 1020f,
+            corridorBreadth = 400f,
             viewportWidth = 600f,
             viewportHeight = 800f,
             pageSpacingPx = 20f
@@ -71,11 +72,11 @@ class PageLayoutSnapshotTest {
     fun fitDocumentZoom_inHeightMode_usesTotalDocumentHeight() {
         val snapshot = snapshot(
             pageCount = 2,
-            pageTops = floatArrayOf(0f, 550f),
+            pageOffsets = floatArrayOf(0f, 550f),
             pageHeights = floatArrayOf(500f, 500f),
             pageWidths = floatArrayOf(500f, 500f),
-            totalDocumentHeight = 1050f,
-            maxPageWidth = 500f,
+            totalDocumentSize = 1050f,
+            corridorBreadth = 500f,
             viewportWidth = 500f,
             viewportHeight = 500f,
             pageSpacingPx = 50f
@@ -93,22 +94,24 @@ class PageLayoutSnapshotTest {
 
     private fun snapshot(
         pageCount: Int,
-        pageTops: FloatArray,
+        pageOffsets: FloatArray,
         pageHeights: FloatArray,
         pageWidths: FloatArray,
-        totalDocumentHeight: Float,
-        maxPageWidth: Float,
+        totalDocumentSize: Float,
+        corridorBreadth: Float,
         viewportWidth: Float,
         viewportHeight: Float,
-        pageSpacingPx: Float
+        pageSpacingPx: Float,
+        scrollDirection: ScrollDirection = ScrollDirection.VERTICAL
     ) = PageLayoutSnapshot(
         pageSizes = List(pageCount) { Size(1, 1) },
-        pageTops = pageTops,
+        pageOffsets = pageOffsets,
         pageHeights = pageHeights,
         pageWidths = pageWidths,
-        totalDocumentHeight = totalDocumentHeight,
-        maxPageWidth = maxPageWidth,
+        totalDocumentSize = totalDocumentSize,
+        corridorBreadth = corridorBreadth,
         viewport = ViewportMetrics(viewportWidth, viewportHeight),
-        pageSpacingPx = pageSpacingPx
+        pageSpacingPx = pageSpacingPx,
+        scrollDirection = scrollDirection
     )
 }

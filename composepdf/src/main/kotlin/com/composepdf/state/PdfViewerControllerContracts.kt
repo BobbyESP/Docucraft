@@ -12,6 +12,8 @@ internal interface ViewerViewportReadContract {
     fun pageHeightPx(index: Int): Float
     fun pageWidthPx(index: Int): Float
     fun pageTopDocY(index: Int): Float
+    fun pageLeftDocX(index: Int): Float
+    fun corridorBreadth(): Float
     fun visiblePageIndices(): IntRange
     fun isPointOverPage(point: Offset): Boolean
     fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float>

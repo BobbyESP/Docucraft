@@ -89,6 +89,8 @@ class PdfViewerStateBridgeTest {
         override fun pageHeightPx(index: Int): Float = 500f
         override fun pageWidthPx(index: Int): Float = 500f
         override fun pageTopDocY(index: Int): Float = index * 520f
+        override fun pageLeftDocX(index: Int): Float = 0f
+        override fun corridorBreadth(): Float = 500f
         override fun visiblePageIndices(): IntRange = 0..0
         override fun isPointOverPage(point: Offset): Boolean = true
         override fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> = 0f to (pageIndex * -520f)
