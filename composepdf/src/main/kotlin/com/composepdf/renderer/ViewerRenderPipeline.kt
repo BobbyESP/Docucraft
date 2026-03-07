@@ -1,6 +1,5 @@
 package com.composepdf.renderer
 
-import com.composepdf.renderer.tiles.TileKey
 import com.composepdf.renderer.tiles.TilePlanner
 import com.composepdf.state.PdfViewerState
 import com.composepdf.state.ViewerConfig

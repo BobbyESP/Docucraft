@@ -97,7 +97,8 @@ internal class ViewerSessionState {
 
     fun getAllTiles(): Map<String, Bitmap> = tilesSnapshot
 
-    fun getImageBitmapTilesForPage(pageIndex: Int): List<PublishedTile> = publishedTilesByPage[pageIndex].orEmpty()
+    fun getImageBitmapTilesForPage(pageIndex: Int): List<PublishedTile> =
+        publishedTilesByPage[pageIndex].orEmpty()
 
     suspend fun putTile(key: String, bitmap: Bitmap) = withContext(Dispatchers.Main.immediate) {
         val tileKey = TileKey.fromCacheKey(key) ?: return@withContext
@@ -119,21 +120,23 @@ internal class ViewerSessionState {
             .filterNot { it.cacheKey == key }
             .toMutableList()
         pageTiles += publishedTile
-        updatedPageTiles[tileKey.pageIndex] = pageTiles.sortedWith(compareBy({ it.tileKey.rect.top }, { it.tileKey.rect.left }))
+        updatedPageTiles[tileKey.pageIndex] =
+            pageTiles.sortedWith(compareBy({ it.tileKey.rect.top }, { it.tileKey.rect.left }))
         publishedTilesByPage = updatedPageTiles
         tileRevision++
     }
 
-    suspend fun pruneTiles(predicate: (String) -> Boolean) = withContext(Dispatchers.Main.immediate) {
-        val keysToRemove = tilesSnapshot.keys.filter(predicate)
-        if (keysToRemove.isEmpty()) return@withContext
+    suspend fun pruneTiles(predicate: (String) -> Boolean) =
+        withContext(Dispatchers.Main.immediate) {
+            val keysToRemove = tilesSnapshot.keys.filter(predicate)
+            if (keysToRemove.isEmpty()) return@withContext
 
-        keysToRemove.forEach { key ->
-            tileCache.remove(key)
-            removePublishedTile(key, incrementRevision = false)
+            keysToRemove.forEach { key ->
+                tileCache.remove(key)
+                removePublishedTile(key, incrementRevision = false)
+            }
+            tileRevision++
         }
-        tileRevision++
-    }
 
     suspend fun clearTiles() = withContext(Dispatchers.Main.immediate) {
         tileCache.evictAll()

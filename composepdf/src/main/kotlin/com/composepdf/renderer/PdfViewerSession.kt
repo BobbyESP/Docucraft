@@ -34,7 +34,8 @@ internal class PdfViewerSession(
     viewportCoordinator: ViewerViewportCoordinator,
     configProvider: () -> ViewerConfig
 ) : Closeable {
-    private val tileDiskCache = TileDiskCache(context.cacheDir.resolve("pdf_tiles"), bitmapPool = bitmapPool)
+    private val tileDiskCache =
+        TileDiskCache(context.cacheDir.resolve("pdf_tiles"), bitmapPool = bitmapPool)
     private val documentManager = PdfDocumentManager(context)
     private val documentSession = PdfDocumentSession(context, documentManager, tileDiskCache)
     private val pageRenderer = PageRenderer(bitmapPool)
@@ -73,7 +74,8 @@ internal class PdfViewerSession(
         renderedPagesProvider = { renderScheduler.renderedPages.value }
     }
 
-    fun recentRenderEvents(limit: Int = 50): List<RenderTelemetryEvent> = telemetry.recentEvents(limit)
+    fun recentRenderEvents(limit: Int = 50): List<RenderTelemetryEvent> =
+        telemetry.recentEvents(limit)
 
     fun updatePrefetchWindow(prefetchDistance: Int) {
         renderScheduler.prefetchWindow = prefetchDistance

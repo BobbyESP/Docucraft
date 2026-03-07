@@ -49,7 +49,7 @@ class BitmapPool(
             Log.w(
                 TAG,
                 "Requested bitmap is too large for pooling: " +
-                    "width=$width, height=$height, config=$config"
+                        "width=$width, height=$height, config=$config"
             )
             // Avoid integer overflow and pooling for extremely large bitmaps.
             return createBitmap(width, height, config)

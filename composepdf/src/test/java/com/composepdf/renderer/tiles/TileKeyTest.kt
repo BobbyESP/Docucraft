@@ -10,8 +10,18 @@ class TileKeyTest {
 
     @Test
     fun cacheKey_changesWhenBasePageGeometryChanges() {
-        val left = TileKey.fromLayout(pageIndex = 0, rect = Rect(0, 0, 256, 256), zoom = 1.25f, baseWidth = 500f)
-        val right = TileKey.fromLayout(pageIndex = 0, rect = Rect(0, 0, 256, 256), zoom = 1.25f, baseWidth = 520f)
+        val left = TileKey.fromLayout(
+            pageIndex = 0,
+            rect = Rect(0, 0, 256, 256),
+            zoom = 1.25f,
+            baseWidth = 500f
+        )
+        val right = TileKey.fromLayout(
+            pageIndex = 0,
+            rect = Rect(0, 0, 256, 256),
+            zoom = 1.25f,
+            baseWidth = 520f
+        )
 
         assertNotEquals(left.toCacheKey(), right.toCacheKey())
     }
