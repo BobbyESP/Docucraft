@@ -29,7 +29,20 @@ import com.composepdf.state.ViewerConfig
 import com.composepdf.ui.PdfLayout
 
 /**
- * A Compose-native PDF viewer with tiled high-resolution rendering.
+ * A Jetpack Compose component for displaying PDF documents with support for high-resolution
+ * tiled rendering, pinch-to-zoom, and smooth scrolling.
+ *
+ * This viewer efficiently handles large documents by using memory-managed bitmap pooling
+ * and asynchronous page loading.
+ *
+ * @param source The [PdfSource] representing the document to be displayed (e.g., file, asset, or URI).
+ * @param modifier The [Modifier] to be applied to the viewer's container.
+ * @param state The [PdfViewerState] used to control the viewer and observe its current status.
+ * @param config The [ViewerConfig] used to customize rendering quality and layout behavior.
+ * @param onPageChange An optional callback invoked when the current visible page changes.
+ * @param onError An optional callback invoked when an error occurs during loading or rendering.
+ * @param onDocumentLoad An optional callback invoked when the document is successfully loaded,
+ * providing the total number of pages.
  */
 @Composable
 fun PdfViewer(
