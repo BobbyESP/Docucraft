@@ -6,6 +6,7 @@ import com.composepdf.state.ViewerConfig
 import com.composepdf.state.ViewerViewportCoordinator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 /**
  * High-level render pipeline for the viewer.
@@ -79,9 +80,17 @@ internal class ViewerRenderPipeline(
                 renderPassId = renderPassId
             )
 
-            if (currentZoom > TILE_ZOOM_THRESHOLD) {
+            // Fling Consideration: If velocity is very high, skip tiles to keep scroll smooth
+            val velocity = state.scrollVelocity
+            val speed = abs(velocity.y) + abs(velocity.x)
+            val isHighSpeed = speed > 2500f // Threshold for "High Speed" scroll
+
+            if (currentZoom > TILE_ZOOM_THRESHOLD && !isHighSpeed) {
                 requestTilesForVisibleArea(visiblePages, currentZoom, steppedZoom, renderPassId)
             } else {
+                if (isHighSpeed) {
+                    renderScheduler.updateTileWindow(emptySet())
+                }
                 telemetry.recordTilePlan(
                     passId = renderPassId,
                     steppedZoom = steppedZoom,

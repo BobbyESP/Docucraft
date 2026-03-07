@@ -1,5 +1,6 @@
 package com.composepdf.ui
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -9,6 +10,8 @@ import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -20,6 +23,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.composepdf.renderer.tiles.TileKey
 import com.composepdf.state.PdfViewerState
+import com.composepdf.state.PublishedTile
 import kotlin.math.roundToInt
 
 /**
@@ -29,11 +33,6 @@ import kotlin.math.roundToInt
  * 1. **Base bitmap** — a low-resolution full-page render, always visible as a fallback.
  * 2. **Tiles** — high-resolution 256×256 px sub-regions, composited on top at the correct
  *    scale derived from the ratio `currentZoom / tileZoom`.
- *
- * Clipping ([clipToBounds]) prevents tiles from bleeding into the gap between pages.
- *
- * Night-mode color inversion is handled here via [colorFilter], keeping the renderer
- * (CPU-intensive) free from any color-space concerns.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -71,22 +70,16 @@ internal fun PdfPage(
                 )
 
                 // 2. Composite only this page's tiles that match the active stepped zoom.
-                // Strict filtering prevents "Tile Soup" (mixing tiles from different zoom levels).
                 tiles.forEach { publishedTile ->
                     val tileKey = publishedTile.tileKey
-                    
-                    // Filter by zoom level
-                    if (tileKey.zoom != activeSteppedZoom) {
-                        return@forEach
-                    }
-                    
-                    // Filter by base width to avoid tiles from previous layouts
-                    if (tileKey.baseWidthKey != expectedBaseWidthKey && tileKey.baseWidthKey >= 0) {
-                        return@forEach
-                    }
+                    if (tileKey.zoom != activeSteppedZoom) return@forEach
+                    if (tileKey.baseWidthKey != expectedBaseWidthKey && tileKey.baseWidthKey >= 0) return@forEach
 
                     val scale = zoom / tileKey.zoom
 
+                    // Note: Professional implementation would use a fade-in per tile,
+                    // but since Canvas draws every frame, we need a way to track 
+                    // individual tile opacities efficiently. For now, we draw at full opacity.
                     drawImage(
                         image = publishedTile.imageBitmap,
                         dstOffset = IntOffset(

@@ -118,6 +118,14 @@ internal class RenderScheduler internal constructor(
         task.action()
     }
 
+    private fun pruneObsoleteTasks() {
+        val currentSession = renderWindowTracker.currentSessionToken()
+        // If queue is getting large, remove tasks from old sessions
+        if (taskQueue.size > 50) {
+            taskQueue.removeIf { it.sessionToken < currentSession }
+        }
+    }
+
     fun onDocumentLoaded(documentKey: String) {
         docKey = documentKey
         renderWindowTracker.beginNewSession()
@@ -143,6 +151,7 @@ internal class RenderScheduler internal constructor(
     ) {
         if (!documentManager.isOpen || pageSizes.isEmpty()) return
 
+        pruneObsoleteTasks()
         val sessionToken = renderWindowTracker.currentSessionToken()
         val roundedZoom = (config.zoomLevel * 100f).roundToInt() / 100f
         val total = pageSizes.size
