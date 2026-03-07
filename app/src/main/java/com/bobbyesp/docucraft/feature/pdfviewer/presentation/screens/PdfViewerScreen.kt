@@ -56,6 +56,7 @@ import com.composepdf.PdfViewer
 import com.composepdf.rememberPdfViewerState
 import com.composepdf.source.PdfSource
 import com.composepdf.state.FitMode
+import com.composepdf.state.ScrollDirection
 import com.composepdf.state.ViewerConfig
 import kotlinx.coroutines.flow.distinctUntilChanged
 
@@ -128,6 +129,7 @@ fun PdfViewerScreen(
             config = ViewerConfig(
                 fitMode = fitMode,
                 isNightModeEnabled = isNightModeEnabled,
+                scrollDirection = ScrollDirection.VERTICAL,
                 minZoom = 0.25f,
                 maxZoom = 10f
             ),

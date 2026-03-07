@@ -3,6 +3,7 @@ package com.composepdf.renderer.tiles
 import android.graphics.Rect
 import com.composepdf.layout.PageLayoutSnapshot
 import com.composepdf.renderer.PageRenderer
+import com.composepdf.state.ScrollDirection
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.ln
@@ -26,7 +27,7 @@ internal class TilePlanner(
      * @param layout Snapshot of the document layout (page positions/sizes).
      * @param zoom The target magnification level.
      * @param visiblePages Range of pages currently intersecting the viewport.
-     * @param scrollDirectionHint 1 for scrolling down, -1 for up, 0 for static.
+     * @param scrollDirectionHint 1 for scrolling forward, -1 for backward, 0 for static.
      * @param isTileCached Check if a tile is already in the memory cache.
      */
     fun computeTilePlan(
@@ -72,10 +73,19 @@ internal class TilePlanner(
             val pageWidth = layout.pageWidthPx(pageIndex)
             val pageHeight = layout.pageHeightPx(pageIndex)
             
-            // Page top in screen coordinates
-            val pageTop = layout.pageTopDocY(pageIndex) * zoom + viewport.panY
+            // Calculate page position in screen coordinates based on scroll direction
+            val pageTop: Float
+            val pageLeft: Float
+            
+            if (layout.scrollDirection == ScrollDirection.VERTICAL) {
+                pageTop = layout.pageTopDocY(pageIndex) * zoom + viewport.panY
+                pageLeft = viewport.panX + (layout.corridorBreadth - pageWidth) * zoom / 2f
+            } else {
+                pageTop = viewport.panY + (layout.corridorBreadth - pageHeight) * zoom / 2f
+                pageLeft = layout.pageLeftDocX(pageIndex) * zoom + viewport.panX
+            }
+            
             val pageBottom = pageTop + pageHeight * zoom
-            val pageLeft = layout.pageScreenLeft(pageIndex, viewport.panX, zoom)
             val pageRight = pageLeft + pageWidth * zoom
 
             // Clip visible area of the page to the viewport

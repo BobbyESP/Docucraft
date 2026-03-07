@@ -51,7 +51,9 @@ internal class ViewerInteractionCoordinator(
         val nextZoom = (previousZoom * zoomChange).coerceIn(currentConfig.minZoom, currentConfig.maxZoom)
         val isZooming = applyZoomAroundPivot(nextZoom, pivot)
 
-        recordPanDelta(panDelta.y)
+        val delta = if (currentConfig.scrollDirection == ScrollDirection.VERTICAL) panDelta.y else panDelta.x
+        recordPanDelta(delta)
+
         state.panX += panDelta.x
         state.panY += panDelta.y
         viewportCoordinator.clampPan()

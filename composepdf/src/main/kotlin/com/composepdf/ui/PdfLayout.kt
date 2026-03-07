@@ -22,6 +22,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Constraints
 import com.composepdf.gesture.viewerGestures
 import com.composepdf.state.PdfViewerState
+import com.composepdf.state.ScrollDirection
 import com.composepdf.state.ViewerConfig
 import com.composepdf.state.ViewerGestureController
 import com.composepdf.state.ViewerLayoutController
@@ -121,30 +122,35 @@ internal fun PdfLayout(
         }
     ) { measurables, constraints ->
         val vpWidth = layoutController.viewportWidth
-        if (measurables.isEmpty() || vpWidth <= 0f) {
+        val vpHeight = layoutController.viewportHeight
+        if (measurables.isEmpty() || vpWidth <= 0f || vpHeight <= 0f) {
             return@Layout layout(constraints.maxWidth, constraints.maxHeight) {}
         }
 
         layout(constraints.maxWidth, constraints.maxHeight) {
-            // maxPageWidth is the width of the document corridor.
-            val maxPageWidth = layoutController.pageSizes.indices
-                .maxOfOrNull(layoutController::pageWidthPx)
-                ?: vpWidth
+            val corridorBreadth = layoutController.corridorBreadth()
 
             measurables.forEach { measurable ->
                 val pageIndex = measurable.layoutId as? Int ?: return@forEach
 
-                val docTopY = layoutController.pageTopDocY(pageIndex)
                 val pageWidth = layoutController.pageWidthPx(pageIndex)
                 val pageHeight = layoutController.pageHeightPx(pageIndex)
 
                 val screenW = (pageWidth * state.zoom).roundToInt().coerceAtLeast(1)
                 val screenH = (pageHeight * state.zoom).roundToInt().coerceAtLeast(1)
 
-                // Each page is horizontally centered within the maxPageWidth corridor.
-                // panX points to the left edge of that corridor in screen space.
-                val x = (state.panX + (maxPageWidth - pageWidth) * state.zoom / 2f).roundToInt()
-                val y = (docTopY * state.zoom + state.panY).roundToInt()
+                val x: Int
+                val y: Int
+
+                if (config.scrollDirection == ScrollDirection.VERTICAL) {
+                    // Vertical: pages centered horizontally in the corridor
+                    x = (state.panX + (corridorBreadth - pageWidth) * state.zoom / 2f).roundToInt()
+                    y = (layoutController.pageTopDocY(pageIndex) * state.zoom + state.panY).roundToInt()
+                } else {
+                    // Horizontal: pages centered vertically in the corridor
+                    x = (layoutController.pageLeftDocX(pageIndex) * state.zoom + state.panX).roundToInt()
+                    y = (state.panY + (corridorBreadth - pageHeight) * state.zoom / 2f).roundToInt()
+                }
 
                 measurable.measure(Constraints.fixed(screenW, screenH)).place(x, y)
             }

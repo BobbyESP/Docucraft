@@ -137,9 +137,10 @@ class PdfViewerState(
     fun scrollToPage(pageIndex: Int) {
         val ctrl = controller ?: return
         val target = pageIndex.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
-        val pageTop = ctrl.pageTopDocY(target)
-        val pageHeight = ctrl.pageHeightPx(target)
-        panY = (ctrl.viewportHeight / 2f) - (pageTop + pageHeight / 2f) * zoom
+        val (targetPanX, targetPanY) = ctrl.computeCenteredPanForPage(target)
+        
+        panX = targetPanX
+        panY = targetPanY
         currentPage = target
         ctrl.clampPan()
         ctrl.requestRenderForVisiblePages()
@@ -152,16 +153,18 @@ class PdfViewerState(
     ) {
         val ctrl = controller ?: return
         val target = pageIndex.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
-        val pageTop = ctrl.pageTopDocY(target)
-        val pageHeight = ctrl.pageHeightPx(target)
-        val targetPanY = (ctrl.viewportHeight / 2f) - (pageTop + pageHeight / 2f) * zoom
+        val (targetPanX, targetPanY) = ctrl.computeCenteredPanForPage(target)
+
+        val startPanX = panX
+        val startPanY = panY
 
         currentPage = target
-        Animatable(panY).animateTo(
-            targetValue = targetPanY,
+        Animatable(0f).animateTo(
+            targetValue = 1f,
             animationSpec = animationSpec
         ) {
-            panY = value
+            panX = startPanX + (targetPanX - startPanX) * value
+            panY = startPanY + (targetPanY - startPanY) * value
             ctrl.clampPan()
             ctrl.requestRenderForVisiblePages()
         }

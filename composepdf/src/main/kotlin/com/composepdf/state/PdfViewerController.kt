@@ -10,7 +10,6 @@ import androidx.compose.ui.geometry.Offset
 import com.composepdf.cache.BitmapPool
 import com.composepdf.renderer.PdfViewerSession
 import com.composepdf.renderer.RenderTelemetryEvent
-import com.composepdf.renderer.RenderTelemetrySnapshot
 import com.composepdf.renderer.RenderTrigger
 import com.composepdf.source.PdfSource
 import kotlinx.coroutines.CoroutineScope
@@ -81,6 +80,8 @@ class PdfViewerController(
         override fun pageHeightPx(index: Int): Float = viewportCoordinator.pageHeightPx(index)
         override fun pageWidthPx(index: Int): Float = viewportCoordinator.pageWidthPx(index)
         override fun pageTopDocY(index: Int): Float = viewportCoordinator.pageTopDocY(index)
+        override fun pageLeftDocX(index: Int): Float = viewportCoordinator.pageLeftDocX(index)
+        override fun corridorBreadth(): Float = viewportCoordinator.snapshot().corridorBreadth
         override fun visiblePageIndices(): IntRange = viewportCoordinator.visiblePageIndices()
         override fun isPointOverPage(point: Offset): Boolean = viewportCoordinator.isPointOverPage(point)
         override fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> =
@@ -107,6 +108,8 @@ class PdfViewerController(
         override fun pageHeightPx(index: Int): Float = viewportCoordinator.pageHeightPx(index)
         override fun pageWidthPx(index: Int): Float = viewportCoordinator.pageWidthPx(index)
         override fun pageTopDocY(index: Int): Float = viewportCoordinator.pageTopDocY(index)
+        override fun pageLeftDocX(index: Int): Float = viewportCoordinator.pageLeftDocX(index)
+        override fun corridorBreadth(): Float = viewportCoordinator.snapshot().corridorBreadth
         override fun visiblePageIndices(): IntRange = viewportCoordinator.visiblePageIndices()
         override fun isPointOverPage(point: Offset): Boolean = viewportCoordinator.isPointOverPage(point)
         override fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> =
@@ -126,6 +129,8 @@ class PdfViewerController(
         override fun pageHeightPx(index: Int): Float = viewportCoordinator.pageHeightPx(index)
         override fun pageWidthPx(index: Int): Float = viewportCoordinator.pageWidthPx(index)
         override fun pageTopDocY(index: Int): Float = viewportCoordinator.pageTopDocY(index)
+        override fun pageLeftDocX(index: Int): Float = viewportCoordinator.pageLeftDocX(index)
+        override fun corridorBreadth(): Float = viewportCoordinator.snapshot().corridorBreadth
         override fun visiblePageIndices(): IntRange = viewportCoordinator.visiblePageIndices()
         override fun isPointOverPage(point: Offset): Boolean = viewportCoordinator.isPointOverPage(point)
         override fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> =
