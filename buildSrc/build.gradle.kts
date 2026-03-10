@@ -15,9 +15,7 @@ dependencies {
 
 allprojects {
     apply(plugin = "com.ncorti.ktfmt.gradle")
-    ktfmt {
-        kotlinLangStyle()
-    }
+    ktfmt { kotlinLangStyle() }
 }
 
 gradlePlugin {

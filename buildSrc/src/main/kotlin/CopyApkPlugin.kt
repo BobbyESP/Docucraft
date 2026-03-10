@@ -7,30 +7,32 @@ import org.gradle.kotlin.dsl.register
 
 class CopyApkPlugin : Plugin<Project> {
     override fun apply(project: Project) {
-        val androidComponents = project.extensions.findByType<ApplicationAndroidComponentsExtension>() ?: return
+        val androidComponents =
+            project.extensions.findByType<ApplicationAndroidComponentsExtension>() ?: return
 
         androidComponents.onVariants { variant ->
             val variantName = variant.name.replaceFirstChar { it.uppercase() }
 
-            val copyTask = project.tasks.register<CopyApkTask>("copy${variantName}Apk") {
-                group = "build"
-                description = "Copies the ${variant.name} APK with a custom name"
+            val copyTask =
+                project.tasks.register<CopyApkTask>("copy${variantName}Apk") {
+                    group = "build"
+                    description = "Copies the ${variant.name} APK with a custom name"
 
-                apkFolder.set(variant.artifacts.get(SingleArtifact.APK))
-                builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
-                
-                outputDirectory.set(
-                    project.layout.buildDirectory.dir("outputs/apk_custom/${variant.name}")
-                )
-                
-                appName.set("Docucraft")
+                    apkFolder.set(variant.artifacts.get(SingleArtifact.APK))
+                    builtArtifactsLoader.set(variant.artifacts.getBuiltArtifactsLoader())
 
-                versionNameStr.set(variant.outputs.first().versionName.getOrElse(""))
-            }
+                    outputDirectory.set(
+                        project.layout.buildDirectory.dir("outputs/apk_custom/${variant.name}")
+                    )
 
-            project.tasks.matching { it.name == "assemble${variantName}" }.configureEach {
-                finalizedBy(copyTask)
-            }
+                    appName.set("Docucraft")
+
+                    versionNameStr.set(variant.outputs.first().versionName.getOrElse(""))
+                }
+
+            project.tasks
+                .matching { it.name == "assemble${variantName}" }
+                .configureEach { finalizedBy(copyTask) }
         }
     }
 }

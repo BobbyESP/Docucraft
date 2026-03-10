@@ -38,14 +38,10 @@ class AndroidConventionPlugin : Plugin<Project> {
             }
 
             tasks.withType<KotlinCompile>().configureEach {
-                compilerOptions {
-                    jvmTarget.set(ProjectConfig.jvmTarget)
-                }
+                compilerOptions { jvmTarget.set(ProjectConfig.jvmTarget) }
             }
 
-            buildFeatures.apply {
-                compose = true
-            }
+            buildFeatures.apply { compose = true }
         }
     }
 }

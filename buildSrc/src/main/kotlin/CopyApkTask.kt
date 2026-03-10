@@ -40,7 +40,8 @@ abstract class CopyApkTask : DefaultTask() {
         outputDir.mkdirs()
 
         builtArtifacts.elements.forEach { artifact ->
-            val customName = "${appName.get()}-${versionNameStr.get()}-${builtArtifacts.variantName}.apk"
+            val customName =
+                "${appName.get()}-${versionNameStr.get()}-${builtArtifacts.variantName}.apk"
             val sourceFile = File(artifact.outputFile)
             val targetFile = outputDirectory.get().file(customName).asFile
 
