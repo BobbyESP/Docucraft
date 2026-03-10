@@ -175,6 +175,7 @@ mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "moc
 #BuildSrc
 gradle = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+ktfmt-gradle-plugin = { module = "com.ncorti.ktfmt.gradle:plugin", version.ref = "ktfmt" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

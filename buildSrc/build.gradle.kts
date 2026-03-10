@@ -6,17 +6,16 @@ plugins {
 repositories {
     google()
     mavenCentral()
+    gradlePluginPortal()
 }
 
 dependencies {
     implementation(libs.gradle)
     implementation(libs.kotlin.gradle.plugin)
+    implementation(libs.ktfmt.gradle.plugin)
 }
 
-allprojects {
-    apply(plugin = "com.ncorti.ktfmt.gradle")
-    ktfmt { kotlinLangStyle() }
-}
+ktfmt { kotlinLangStyle() }
 
 gradlePlugin {
     plugins {
