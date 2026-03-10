@@ -23,26 +23,29 @@ abstract class CopyApkTask : DefaultTask() {
 
     @TaskAction
     fun taskAction() {
+        val apkDir = apkFolder.get().asFile
+        if (!apkDir.exists()) {
+            logger.info("❌ APK directory does not exist, skipping copy.")
+            return
+        }
+
+        val builtArtifacts = builtArtifactsLoader.get().load(apkFolder.get())
+        if (builtArtifacts == null || builtArtifacts.elements.isEmpty()) {
+            logger.info("❌ No APK artifacts found to copy.")
+            return
+        }
+
         val outputDir = outputDirectory.get().asFile
         outputDir.deleteRecursively()
         outputDir.mkdirs()
 
-        val builtArtifacts =
-            builtArtifactsLoader.get().load(apkFolder.get())
-                ?: throw RuntimeException("Cannot load APKs")
-
         builtArtifacts.elements.forEach { artifact ->
-            // Create custom name: Docucraft-1.0.0-beta.9-debug.apk
-            val customName =
-                "${appName.get()}-${versionNameStr.get()}-${builtArtifacts.variantName}.apk"
-
+            val customName = "${appName.get()}-${versionNameStr.get()}-${builtArtifacts.variantName}.apk"
             val sourceFile = File(artifact.outputFile)
             val targetFile = outputDirectory.get().file(customName).asFile
 
             sourceFile.copyTo(targetFile, overwrite = true)
-
-            logger.lifecycle("✅ Copied APK: ${targetFile.name}")
-            logger.lifecycle("\tLocation: ${targetFile.absolutePath}")
+            logger.lifecycle("✅ [SUCCESSFUL] - Copied APK to: ${targetFile.absolutePath}")
         }
     }
 }
