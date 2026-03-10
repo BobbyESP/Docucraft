@@ -1,9 +1,6 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-
 plugins {
     id(libs.plugins.android.application.get().pluginId)
-    alias(libs.plugins.compose.compiler)
+    id("docucraft.android.convention")
     alias(libs.plugins.kotlin.serialization)
     id(libs.plugins.kotlin.parcelize.get().pluginId)
     alias(libs.plugins.kotlin.ksp)
@@ -17,35 +14,19 @@ plugins {
 android {
     namespace = "com.bobbyesp.docucraft"
 
-    compileSdk {
-        version = release(36)
-    }
-
     defaultConfig {
         applicationId = "com.bobbyesp.docucraft"
-        minSdk {
-            version = release(24)
-        }
-
-        targetSdk {
-            version = release(36)
-        }
+        targetSdk = ProjectConfig.targetSdk
 
         versionCode = rootProject.extra["versionCode"] as Int
         versionName = rootProject.extra["versionName"] as String
-
-        vectorDrawables { useSupportLibrary = true }
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
             ndk { debugSymbolLevel = "FULL" }
-
             isShrinkResources = true
             isMinifyEnabled = true
-
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -58,19 +39,10 @@ android {
         }
     }
 
-
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
     }
-
-    buildFeatures { compose = true }
 
     androidResources {
         generateLocaleConfig = true
@@ -84,13 +56,6 @@ composeCompiler {
     )
 }
 
-kotlin {
-    compilerOptions {
-        languageVersion = KotlinVersion.DEFAULT
-        jvmTarget.set(JvmTarget.JVM_17) // Use the enum for target JVM version
-    }
-}
-
 ksp {
     arg(RoomSchemaArgProvider(File(projectDir, "schemas")))
     arg("KOIN_CONFIG_CHECK", "true")
@@ -102,81 +67,56 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.google.fonts)
 
-    // Core UI libraries
     api(platform(libs.compose.bom))
     implementation(libs.androidx.fragment.compose)
 
-    // Accompanist libraries
     implementation(libs.bundles.accompanist)
-
-    // Compose libraries
     implementation(libs.bundles.compose)
     implementation(libs.materialKolor)
     implementation(libs.bundles.glance)
     implementation(libs.bundles.nav3)
 
-    // PDF Viewer
     implementation(project(":composepdf"))
 
-    // Dependency injection
     implementation(libs.bundles.koin)
 
-    // Database
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.room.paging)
     ksp(libs.room.compiler)
 
-    // Key-value storage
     implementation(libs.datastore.preferences)
-
-    // Image loading
     implementation(libs.landscapist.coil)
-
-    // Files management
     implementation(libs.bundles.filekit)
 
-    // Document scanner
     implementation(libs.gms.mlkit.docscanner)
-    // implementation(libs.gms.mlkit.text.recognition)
 
-    // Utilities
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.sonner)
 
-    // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
 
     implementation(libs.profileinstaller)
 
-    // Android testing libraries
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    //    androidTestImplementation(libs.mockk.android)
-    //    androidTestImplementation(libs.kotlinx.coroutines.test)
 
-    // Compose testing and tooling libraries
-    androidTestImplementation(platform(libs.compose.bom))
     implementation(libs.compose.tooling.preview)
     debugImplementation(libs.compose.tooling)
     debugImplementation(libs.compose.test.manifest)
-
     debugImplementation(libs.leakcanary)
 }
 
 class RoomSchemaArgProvider(
     @get:InputDirectory @get:PathSensitive(PathSensitivity.RELATIVE) val schemaDir: File
 ) : CommandLineArgumentProvider {
-
     override fun asArguments(): Iterable<String> {
-        if (!schemaDir.exists()) {
-            schemaDir.mkdirs()
-        }
+        if (!schemaDir.exists()) schemaDir.mkdirs()
         return listOf("room.schemaLocation=${schemaDir.path}")
     }
 }

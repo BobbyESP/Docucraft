@@ -9,23 +9,23 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.kotlin.gradle.plugin)
     implementation(libs.gradle)
+    implementation(libs.kotlin.gradle.plugin)
 }
 
 allprojects {
+    apply(plugin = "com.ncorti.ktfmt.gradle")
     ktfmt {
-        // Google style - 2 space indentation & automatically adds/removes trailing commas
-        // googleStyle()
-
-        // KotlinLang style - 4 space indentation - From
-        // https://kotlinlang.org/docs/coding-conventions.html
         kotlinLangStyle()
     }
 }
 
 gradlePlugin {
     plugins {
+        register("androidConvention") {
+            id = "docucraft.android.convention"
+            implementationClass = "AndroidConventionPlugin"
+        }
         register("copyApkPlugin") {
             id = "copy-apk-plugin"
             implementationClass = "CopyApkPlugin"
