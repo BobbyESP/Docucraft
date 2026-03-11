@@ -1,6 +1,7 @@
 package com.composepdf.renderer.tiles
 
 import android.graphics.Rect
+import com.composepdf.renderer.PageRenderer.Companion.TILE_SIZE
 import kotlin.math.roundToInt
 
 /**
@@ -20,6 +21,12 @@ internal data class TileKey(
     val zoom: Float,
     val baseWidthKey: Int = UNKNOWN_BASE_WIDTH_KEY
 ) {
+    val tileX: Int
+        get() = rect.left / TILE_SIZE
+
+    val tileY: Int
+        get() = rect.top / TILE_SIZE
+
     fun toCacheKey(): String {
         val normalizedZoom = normalizedZoom(zoom)
         return "${pageIndex}_${rect.left}_${rect.top}_${rect.right}_${rect.bottom}_${normalizedZoom}_${normalizedBaseWidthKey(baseWidthKey)}"

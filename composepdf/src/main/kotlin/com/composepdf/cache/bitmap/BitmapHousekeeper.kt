@@ -1,4 +1,4 @@
-package com.composepdf.cache
+package com.composepdf.cache.bitmap
 
 import android.graphics.Bitmap
 import com.composepdf.state.PdfViewerState

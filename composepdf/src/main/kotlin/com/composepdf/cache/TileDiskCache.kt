@@ -3,12 +3,14 @@ package com.composepdf.cache
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
+import com.composepdf.cache.bitmap.BitmapPool
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import kotlin.random.Random
 
 /**
  * Persistent LRU disk cache for high-resolution PDF tiles.
@@ -23,15 +25,23 @@ import java.io.IOException
 class TileDiskCache(
     private val directory: File,
     private val maxSizeBytes: Long = 300L * 1024 * 1024,
-    private val bitmapPool: BitmapPool? = null
 ) {
     init {
         directory.mkdirs()
     }
 
-    private fun fileFor(tileKey: String): File {
+    private fun fileFor(docKey: String, pageIndex: Int, tileKey: String): File {
+
+        val docDir = File(directory, docKey)
+        val pageDir = File(docDir, "p$pageIndex")
+
+        if (!pageDir.exists()) {
+            pageDir.mkdirs()
+        }
+
         val safe = tileKey.replace('/', '_')
-        return File(directory, "$safe.webp")
+
+        return File(pageDir, "$safe.webp")
     }
 
     /**
@@ -44,12 +54,14 @@ class TileDiskCache(
      * - The pool's `recycle()` on eviction can invalidate a bitmap between `get()` and decode
      * - The SIGSEGV crash was caused by exactly this race
      *
-     * The returned bitmap is mutable so it can later be returned to [bitmapPool] by the caller.
+     * The returned bitmap is mutable so it can later be returned to [BitmapPool] by the caller.
      */
-    fun get(tileKey: String): Bitmap? {
-        val file = fileFor(tileKey)
+    fun get(docKey: String, pageIndex: Int, tileKey: String): Bitmap? {
+        val file = fileFor(docKey, pageIndex, tileKey)
         if (!file.exists()) return null
-        file.setLastModified(System.currentTimeMillis())
+        runCatching {
+            file.setLastModified(System.currentTimeMillis())
+        }
 
         val options = BitmapFactory.Options().apply {
             inMutable = true
@@ -57,14 +69,15 @@ class TileDiskCache(
         }
         return try {
             BitmapFactory.decodeFile(file.absolutePath, options)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
 
-    suspend fun put(tileKey: String, bitmap: Bitmap) = withContext(Dispatchers.IO) {
-        val file = fileFor(tileKey)
+    suspend fun put(docKey: String, pageIndex: Int, tileKey: String, bitmap: Bitmap) = withContext(Dispatchers.IO) {
+        val file = fileFor(docKey, pageIndex, tileKey)
         val tmp = File("${file.absolutePath}.tmp")
+
         try {
             FileOutputStream(tmp).use { fos ->
                 BufferedOutputStream(fos).use { out ->
@@ -78,13 +91,17 @@ class TileDiskCache(
                     out.flush()
                 }
             }
-            if (!tmp.renameTo(file)) tmp.delete() else trim()
+            if (!tmp.renameTo(file)) {
+                tmp.delete()
+            } else {
+                if (Random.nextInt(10) == 0) trim()
+            }
         } catch (_: IOException) {
             tmp.delete()
         }
     }
 
-    fun containsKey(tileKey: String): Boolean = fileFor(tileKey).exists()
+    fun containsKey(docKey: String, pageIndex: Int, tileKey: String): Boolean = fileFor(docKey, pageIndex, tileKey).exists()
 
     private fun trim() {
         val files = directory.listFiles() ?: return

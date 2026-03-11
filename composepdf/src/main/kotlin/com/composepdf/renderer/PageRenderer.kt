@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.graphics.Rect
 import android.graphics.pdf.PdfRenderer
-import com.composepdf.cache.BitmapPool
+import com.composepdf.cache.bitmap.BitmapPool
 
 /**
  * Handles the low-level rasterization of PDF pages and individual tiles into [Bitmap] instances.

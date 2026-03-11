@@ -7,7 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
-import com.composepdf.cache.BitmapPool
+import com.composepdf.cache.bitmap.BitmapPool
 import com.composepdf.renderer.PdfViewerSession
 import com.composepdf.renderer.RenderTelemetryEvent
 import com.composepdf.renderer.RenderTrigger

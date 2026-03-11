@@ -3,10 +3,10 @@ package com.composepdf.renderer
 import android.graphics.Bitmap
 import android.util.Log
 import android.util.Size
-import com.composepdf.cache.BitmapCache
-import com.composepdf.cache.BitmapPool
 import com.composepdf.cache.PageCacheKey
 import com.composepdf.cache.TileDiskCache
+import com.composepdf.cache.bitmap.BitmapCache
+import com.composepdf.cache.bitmap.BitmapPool
 import com.composepdf.renderer.tiles.TileKey
 import com.composepdf.state.PdfViewerState
 import kotlinx.coroutines.CancellationException
@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import java.io.Closeable
 import java.util.concurrent.Executors
 import java.util.concurrent.PriorityBlockingQueue
@@ -46,6 +48,7 @@ internal enum class RenderPriority {
 internal data class RenderTask(
     val priority: RenderPriority,
     val distanceSq: Float,
+    val spatialIndex: Int,
     val cacheKey: String,
     val pageIndex: Int,
     val sessionToken: Int,
@@ -53,10 +56,13 @@ internal data class RenderTask(
     val action: suspend (snapshot: RenderWindowSnapshot) -> Unit
 ) : Comparable<RenderTask> {
     override fun compareTo(other: RenderTask): Int {
-        val priorityCompare = this.priority.ordinal.compareTo(other.priority.ordinal)
+        val priorityCompare = priority.ordinal.compareTo(other.priority.ordinal)
         if (priorityCompare != 0) return priorityCompare
-        // Within same priority, sort by distance to viewport center
-        return this.distanceSq.compareTo(other.distanceSq)
+
+        val distanceCompare = distanceSq.compareTo(other.distanceSq)
+        if (distanceCompare != 0) return distanceCompare
+
+        return spatialIndex.compareTo(other.spatialIndex)
     }
 }
 
@@ -83,10 +89,13 @@ internal class RenderScheduler internal constructor(
     private val renderWindowTracker = RenderWindowTracker()
 
     private val taskQueue = PriorityBlockingQueue<RenderTask>()
+    private val diskSemaphore = Semaphore(2)
 
     /** Number of pages to pre-render outside the visible range. */
     var prefetchWindow: Int = 2
-        set(value) { field = value.coerceAtLeast(0) }
+        set(value) {
+            field = value.coerceAtLeast(0)
+        }
 
     /** Stable identifier for the currently open document. */
     var docKey: String = ""
@@ -104,7 +113,7 @@ internal class RenderScheduler internal constructor(
                     try {
                         val task = taskQueue.take()
                         val currentSnapshot = renderWindowTracker.getSnapshot()
-                        
+
                         // 1. Session check: Instant drop if document changed.
                         if (task.sessionToken != currentSnapshot.sessionToken) continue
 
@@ -118,7 +127,7 @@ internal class RenderScheduler internal constructor(
                         if (isStillWanted) {
                             task.action(currentSnapshot)
                         }
-                    } catch (e: InterruptedException) {
+                    } catch (_: InterruptedException) {
                         break
                     } catch (e: Exception) {
                         if (e !is CancellationException) {
@@ -196,11 +205,11 @@ internal class RenderScheduler internal constructor(
 
         val sessionToken = renderWindowTracker.currentSessionToken()
         val roundedZoom = (config.zoomLevel * 100f).roundToInt() / 100f
-        
+
         val winStart = (visiblePages.first - prefetchWindow).coerceAtLeast(0)
         val winEnd = (visiblePages.last + prefetchWindow).coerceAtMost(pageSizes.size - 1)
         val activeWindow = winStart..winEnd
-        
+
         // Remove base bitmaps for pages that left the prefetch window.
         _renderedPages.update { current -> current.filterKeys { it in activeWindow } }
 
@@ -216,39 +225,45 @@ internal class RenderScheduler internal constructor(
         for (pageIndex in activeWindow) {
             val cacheKey = desiredPages[pageIndex] ?: continue
             val cached = cache.get(cacheKey)
-            
+
             if (cached != null) {
                 publishBitmap(pageIndex, cached)
                 telemetry?.recordPageMemoryHit(renderPassId, pageIndex, config.zoomLevel)
                 continue
             }
 
-            val priority = if (pageIndex in visiblePages) RenderPriority.VISIBLE_LOW_RES else RenderPriority.PREFETCH_LOW_RES
-            
-            taskQueue.offer(RenderTask(
-                priority = priority,
-                distanceSq = abs(pageIndex - (visiblePages.first + visiblePages.last) / 2).toFloat(),
-                cacheKey = cacheKey.toString(),
-                pageIndex = pageIndex,
-                sessionToken = sessionToken,
-                pageCacheKey = cacheKey,
-                action = { latestSnapshot ->
-                    try {
-                        val bitmap = documentManager.withPage(pageIndex) { page ->
-                            pageRenderer.render(page, getBaseWidth(pageIndex), config)
+            val priority =
+                if (pageIndex in visiblePages) RenderPriority.VISIBLE_LOW_RES else RenderPriority.PREFETCH_LOW_RES
+
+            taskQueue.offer(
+                RenderTask(
+                    priority = priority,
+                    distanceSq = abs(pageIndex - (visiblePages.first + visiblePages.last) / 2).toFloat(),
+                    spatialIndex = pageIndex, // Here makes no sense yo use morton
+                    cacheKey = cacheKey.toString(),
+                    pageIndex = pageIndex,
+                    sessionToken = sessionToken,
+                    pageCacheKey = cacheKey,
+                    action = { latestSnapshot ->
+                        try {
+                            val bitmap = documentManager.withPage(pageIndex) { page ->
+                                pageRenderer.render(page, getBaseWidth(pageIndex), config)
+                            }
+                            cache.put(cacheKey, bitmap)
+
+                            // Double check relevancy before updating UI flow
+                            if (latestSnapshot.sessionToken == sessionToken && latestSnapshot.desiredPages[pageIndex] == cacheKey) {
+                                publishBitmap(pageIndex, bitmap)
+                            }
+                            telemetry?.recordPagePublished(renderPassId, pageIndex, false)
+                        } catch (e: Exception) {
+                            if (e !is CancellationException) Log.e(
+                                TAG,
+                                "Page render failed: $pageIndex"
+                            )
                         }
-                        cache.put(cacheKey, bitmap)
-                        
-                        // Double check relevancy before updating UI flow
-                        if (latestSnapshot.sessionToken == sessionToken && latestSnapshot.desiredPages[pageIndex] == cacheKey) {
-                            publishBitmap(pageIndex, bitmap)
-                        }
-                        telemetry?.recordPagePublished(renderPassId, pageIndex, false)
-                    } catch (e: Exception) {
-                        if (e !is CancellationException) Log.e(TAG, "Page render failed: $pageIndex")
                     }
-                }
-            ))
+                ))
         }
     }
 
@@ -283,41 +298,59 @@ internal class RenderScheduler internal constructor(
 
         val priority = if (isPrefetch) RenderPriority.PREFETCH_TILE else RenderPriority.VISIBLE_TILE
 
-        taskQueue.offer(RenderTask(
-            priority = priority,
-            distanceSq = distanceSq,
-            cacheKey = memoryKey,
-            pageIndex = tileKey.pageIndex,
-            sessionToken = sessionToken,
-            action = { latestSnapshot ->
-                try {
-                    val diskKey = tileKey.toDiskCacheKey(docKey)
-                    val diskBitmap = tileDiskCache?.get(diskKey)
-                    
-                    val bitmap = if (diskBitmap != null) {
-                        telemetry?.recordTileDiskHit(renderPassId, memoryKey)
-                        diskBitmap
-                    } else {
-                        val rendered = documentManager.withPage(tileKey.pageIndex) { page ->
-                            pageRenderer.renderTile(page, tileKey.rect, tileKey.zoom, baseWidth)
-                        }
-                        tileDiskCache?.put(diskKey, rendered)
-                        telemetry?.recordTileRendered(renderPassId, memoryKey)
-                        rendered
-                    }
+        taskQueue.offer(
+            RenderTask(
+                priority = priority,
+                distanceSq = distanceSq,
+                cacheKey = memoryKey,
+                spatialIndex = morton(tileKey.tileX, tileKey.tileY),
+                pageIndex = tileKey.pageIndex,
+                sessionToken = sessionToken,
+                action = { latestSnapshot ->
+                    try {
+                        val diskKey = tileKey.toDiskCacheKey(docKey)
+                        val diskBitmap = tileDiskCache?.get(
+                            docKey = docKey,
+                            pageIndex = tileKey.pageIndex,
+                            tileKey = diskKey
+                        )
 
-                    // Strict Publication: Only put in State if still in the keep window.
-                    // Otherwise, return to pool immediately to prevent memory leaks.
-                    if (latestSnapshot.sessionToken == sessionToken && memoryKey in latestSnapshot.desiredTiles) {
-                        viewerState.putTile(memoryKey, bitmap)
-                    } else {
-                        bitmapPool.put(bitmap)
+                        val bitmap = if (diskBitmap != null) {
+                            telemetry?.recordTileDiskHit(renderPassId, memoryKey)
+                            diskBitmap
+                        } else {
+                            val rendered = documentManager.withPage(tileKey.pageIndex) { page ->
+                                pageRenderer.renderTile(page, tileKey.rect, tileKey.zoom, baseWidth)
+                            }
+                            scope.launch {
+                                diskSemaphore.withPermit {
+                                    tileDiskCache?.put(
+                                        docKey = docKey,
+                                        pageIndex = tileKey.pageIndex,
+                                        tileKey = diskKey,
+                                        bitmap = rendered
+                                    )
+                                }
+                            }
+                            telemetry?.recordTileRendered(renderPassId, memoryKey)
+                            rendered
+                        }
+
+                        // Strict Publication: Only put in State if still in the keep window.
+                        // Otherwise, return to pool immediately to prevent memory leaks.
+                        if (latestSnapshot.sessionToken == sessionToken && memoryKey in latestSnapshot.desiredTiles) {
+                            viewerState.putTile(memoryKey, bitmap)
+                        } else {
+                            bitmapPool.put(bitmap)
+                        }
+                    } catch (e: Exception) {
+                        if (e !is CancellationException) Log.e(
+                            TAG,
+                            "Tile render failed: $memoryKey"
+                        )
                     }
-                } catch (e: Exception) {
-                    if (e !is CancellationException) Log.e(TAG, "Tile render failed: $memoryKey")
                 }
-            }
-        ))
+            ))
     }
 
     private fun publishBitmap(pageIndex: Int, bitmap: Bitmap) {
@@ -325,6 +358,15 @@ internal class RenderScheduler internal constructor(
             if (current[pageIndex] === bitmap) current
             else current + (pageIndex to bitmap)
         }
+    }
+
+    private fun morton(x: Int, y: Int, bits: Int = 16): Int {
+        var answer = 0
+        for (i in 0 until bits) {
+            answer = answer or ((x shr i and 1) shl (2 * i))
+            answer = answer or ((y shr i and 1) shl (2 * i + 1))
+        }
+        return answer
     }
 
     /**

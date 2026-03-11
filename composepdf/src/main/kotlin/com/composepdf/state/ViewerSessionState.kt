@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import com.composepdf.cache.BitmapPool
+import com.composepdf.cache.bitmap.BitmapPool
 import com.composepdf.cache.LruTileCache
 import com.composepdf.remote.RemotePdfState
 import com.composepdf.renderer.tiles.TileKey

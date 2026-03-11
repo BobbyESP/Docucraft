@@ -1,7 +1,8 @@
-package com.composepdf.cache
+package com.composepdf.cache.bitmap
 
 import android.graphics.Bitmap
 import android.util.LruCache
+import com.composepdf.cache.PageCacheKey
 
 /**
  * An in-memory Least Recently Used (LRU) cache for rendered PDF page bitmaps.

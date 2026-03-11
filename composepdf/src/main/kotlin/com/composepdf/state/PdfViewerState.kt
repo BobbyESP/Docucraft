@@ -13,7 +13,7 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
-import com.composepdf.cache.BitmapPool
+import com.composepdf.cache.bitmap.BitmapPool
 import com.composepdf.remote.RemotePdfState
 import kotlin.math.abs
 

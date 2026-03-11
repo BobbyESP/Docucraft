@@ -81,11 +81,13 @@ internal class ViewerRenderPipeline(
         )
 
         scope.launch {
+            // Low zoom. Render only base pages and clear tiles
             if (currentZoom < TILE_ZOOM_THRESHOLD) {
                 renderScheduler.updateTileWindow(emptySet())
                 state.clearTiles()
             }
 
+            // Render base pages (low-res)
             renderScheduler.requestRender(
                 visiblePages = visiblePages,
                 config = PageRenderer.RenderConfig(
@@ -103,8 +105,15 @@ internal class ViewerRenderPipeline(
             val isHighSpeed = speed > 2500f // Threshold for "High Speed" scroll
 
             if (currentZoom > TILE_ZOOM_THRESHOLD && !isHighSpeed) {
-                requestTilesForVisibleArea(visiblePages, currentZoom, steppedZoom, renderPassId)
+                // Render high-res tiles
+                requestTilesForVisibleArea(
+                    visiblePages = visiblePages,
+                    currentZoom = currentZoom,
+                    steppedZoom = steppedZoom,
+                    renderPassId = renderPassId
+                )
             } else {
+                //Skip tiles to keep scroll smooth
                 if (isHighSpeed) {
                     renderScheduler.updateTileWindow(emptySet())
                 }

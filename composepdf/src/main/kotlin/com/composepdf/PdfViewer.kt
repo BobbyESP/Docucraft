@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.composepdf.cache.BitmapPool
+import com.composepdf.cache.bitmap.BitmapPool
 import com.composepdf.source.PdfSource
 import com.composepdf.state.PdfViewerController
 import com.composepdf.state.PdfViewerState

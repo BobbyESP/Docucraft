@@ -2,8 +2,8 @@ package com.composepdf.renderer
 
 import android.content.Context
 import android.graphics.Bitmap
-import com.composepdf.cache.BitmapHousekeeper
-import com.composepdf.cache.BitmapPool
+import com.composepdf.cache.bitmap.BitmapHousekeeper
+import com.composepdf.cache.bitmap.BitmapPool
 import com.composepdf.cache.TileDiskCache
 import com.composepdf.source.PdfSource
 import com.composepdf.state.PdfViewerState
@@ -36,7 +36,7 @@ internal class PdfViewerSession(
     configProvider: () -> ViewerConfig
 ) : Closeable {
     private val appContext = context.longLivedContext()
-    private val tileDiskCache = TileDiskCache(appContext.cacheDir.resolve("pdf_tiles"), bitmapPool = bitmapPool)
+    private val tileDiskCache = TileDiskCache(appContext.cacheDir.resolve("pdf_tiles"))
     private val documentManager = PdfDocumentManager(appContext)
     private val documentSession = PdfDocumentSession(appContext, documentManager, tileDiskCache)
     private val pageRenderer = PageRenderer(bitmapPool)
