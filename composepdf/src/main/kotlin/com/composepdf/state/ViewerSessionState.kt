@@ -11,7 +11,10 @@ import com.composepdf.cache.bitmap.BitmapPool
 import com.composepdf.cache.LruTileCache
 import com.composepdf.remote.RemotePdfState
 import com.composepdf.renderer.tiles.TileKey
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -26,10 +29,12 @@ internal data class PublishedTile(
 /**
  * Internal document-session store for the viewer.
  *
- * This version enforces strict bitmap ownership. When a tile is evicted from the [tileCache]
- * or pruned, it is returned to the [BitmapPool] immediately.
+ * This version enforces strict bitmap ownership and handles asynchronous pool returns.
+ * When a tile is evicted from the [tileCache], it is returned to the [BitmapPool]
+ * using the provided [scope].
  */
 internal class ViewerSessionState(
+    private val scope: CoroutineScope,
     private val bitmapPool: BitmapPool
 ) {
     var pageCount: Int by mutableIntStateOf(0)
@@ -115,18 +120,26 @@ internal class ViewerSessionState(
     }
 
     private fun handleTileEviction(key: String, bitmap: Bitmap) {
-        // Remove from published snapshots
-        if (tilesSnapshot.containsKey(key)) {
-            tilesSnapshot = tilesSnapshot - key
-            TileKey.fromCacheKey(key)?.let { tileKey ->
-                val updatedByPage = publishedTilesByPage.toMutableMap()
-                val remaining = updatedByPage[tileKey.pageIndex].orEmpty().filterNot { it.cacheKey == key }
-                if (remaining.isEmpty()) updatedByPage.remove(tileKey.pageIndex)
-                else updatedByPage[tileKey.pageIndex] = remaining
-                publishedTilesByPage = updatedByPage
+        scope.launch {
+            // Snapshot cleanup on Main Thread for UI consistency
+            withContext(Dispatchers.Main.immediate) {
+                if (tilesSnapshot.containsKey(key)) {
+                    tilesSnapshot = tilesSnapshot - key
+                    TileKey.fromCacheKey(key)?.let { tileKey ->
+                        val updatedByPage = publishedTilesByPage.toMutableMap()
+                        val remaining = updatedByPage[tileKey.pageIndex].orEmpty().filterNot { it.cacheKey == key }
+                        if (remaining.isEmpty()) updatedByPage.remove(tileKey.pageIndex)
+                        else updatedByPage[tileKey.pageIndex] = remaining
+                        publishedTilesByPage = updatedByPage
+                    }
+                }
+            }
+
+            // Return to pool is now a suspend call.
+            // use NonCancellable to ensure memory is recovered even if the scope is being cancelled.
+            withContext(NonCancellable) {
+                bitmapPool.put(bitmap)
             }
         }
-        // Strict ownership: return to pool immediately
-        bitmapPool.put(bitmap)
     }
 }

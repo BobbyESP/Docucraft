@@ -47,7 +47,7 @@ class PageRenderer(
      * @param config Parameters for rendering, including zoom level, quality, and background color.
      * @return A [Bitmap] containing the rendered page content.
      */
-    fun render(page: PdfRenderer.Page, baseWidth: Float, config: RenderConfig): Bitmap {
+    suspend fun render(page: PdfRenderer.Page, baseWidth: Float, config: RenderConfig): Bitmap {
         val (width, height) = targetSize(page.width, page.height, baseWidth, config)
         val bitmap = bitmapPool.get(width, height, Bitmap.Config.ARGB_8888)
         bitmap.eraseColor(config.backgroundColor)
@@ -69,7 +69,7 @@ class PageRenderer(
      * @param backgroundColor The color used to clear the bitmap before rendering.
      * @return A [Bitmap] from the pool containing the rendered tile content.
      */
-    fun renderTile(
+    suspend fun renderTile(
         page: PdfRenderer.Page,
         tileRect: Rect,
         zoom: Float,

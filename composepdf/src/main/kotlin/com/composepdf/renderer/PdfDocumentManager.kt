@@ -100,7 +100,10 @@ class PdfDocumentManager(context: Context) : Closeable {
         }
     }
 
-    suspend fun <T> withPage(pageIndex: Int, action: (PdfRenderer.Page) -> T): T {
+    /**
+     * Executes an action with an open [PdfRenderer.Page].
+     */
+    suspend fun <T> withPage(pageIndex: Int, action: suspend (PdfRenderer.Page) -> T): T {
         val capturedGeneration = generation.get()
         return semaphore.withPermit {
             val renderer =

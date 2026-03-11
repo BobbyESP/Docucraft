@@ -3,6 +3,12 @@ package com.composepdf.cache.bitmap
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.core.graphics.createBitmap
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.util.ArrayDeque
 import java.util.NavigableMap
 import java.util.TreeMap
@@ -10,154 +16,171 @@ import java.util.TreeMap
 private const val TAG = "BitmapPool"
 
 /**
- * A memory pool for reusing [Bitmap] objects to reduce GC churn and memory fragmentation.
+ * Data class to track the current state of the pool for telemetry/monitoring.
+ */
+data class BitmapPoolStats(
+    val currentBytes: Long = 0,
+    val maxBytes: Long = 0,
+    val bitmapCount: Int = 0,
+    val reuseCount: Long = 0,
+    val creationCount: Long = 0
+)
+
+/**
+ * A coroutine-safe memory pool for [Bitmap] objects designed for high-performance reuse.
  *
- * This pool leverages [Bitmap.reconfigure] to adapt existing allocations for new requests.
- * This approach is significantly more efficient than fresh memory allocations and helps
- * prevent large heap spikes during performance-intensive operations like rapid scrolling
- * or zooming.
+ * This pool facilitates efficient bitmap management by:
+ * 1. **Coroutine Integration**: Using a non-blocking [Mutex] for synchronization, making it
+ *    suitable for asynchronous rendering pipelines.
+ * 2. **Compose Compatibility**: Avoiding explicit [Bitmap.recycle] calls to prevent
+ *    "use-after-recycled" errors during Jetpack Compose's asynchronous drawing cycles.
+ * 3. **Smart Re-allocation**: Utilizing a [NavigableMap] to find the best-fit bitmap
+ *    (ceiling match) and [Bitmap.reconfigure] to minimize memory churn.
+ * 4. **Observability**: Providing a [StateFlow] of [BitmapPoolStats] for real-time
+ *    telemetry and monitoring of cache hits, misses, and memory usage.
  *
- * The pool manages bitmaps using a [TreeMap] keyed by byte size, allowing it to efficiently
- * find the smallest available bitmap that satisfies a requested size requirement.
- *
- * @property maxSizeBytes The maximum cumulative memory (in bytes) the pool is permitted to hold.
- * Once this threshold is exceeded, the pool evicts the smallest available bitmaps.
+ * @param maxSizeBytes The maximum cumulative size of bitmaps allowed in the pool before eviction.
  */
 class BitmapPool(
     private val maxSizeBytes: Int = DEFAULT_POOL_SIZE_BYTES
 ) {
+    private val mutex = Mutex()
+    
     // Map: ByteCount -> Stack of Bitmaps (LIFO for better cache locality)
     private val groupedBitmaps: NavigableMap<Int, ArrayDeque<Bitmap>> = TreeMap()
-    private var currentSizeBytes = 0
+    
+    private val _stats = MutableStateFlow(BitmapPoolStats(maxBytes = maxSizeBytes.toLong()))
+    val stats: StateFlow<BitmapPoolStats> = _stats.asStateFlow()
 
     /**
      * Gets a mutable bitmap of the specified dimensions and config.
      * Tries to reuse an existing bitmap from the pool; creates a new one if none satisfy the requirements.
+     *
+     * This is a suspend function to ensure it plays well with the rendering pipeline's coroutines.
      */
-    @Synchronized
-    fun get(width: Int, height: Int, config: Bitmap.Config = Bitmap.Config.ARGB_8888): Bitmap {
-        // Calculate required size based on the requested bitmap configuration.
-        val bytesPerPixel = when (config) {
-            Bitmap.Config.ALPHA_8 -> 1
-
-            Bitmap.Config.RGB_565,
-            Bitmap.Config.ARGB_4444 -> 2
-
-            Bitmap.Config.ARGB_8888 -> 4
-            else -> throw UnsupportedOperationException("Unsupported config: $config")
+    suspend fun get(width: Int, height: Int, config: Bitmap.Config = Bitmap.Config.ARGB_8888): Bitmap {
+        val targetSizeBytes = calculateRequiredBytes(width, height, config)
+        
+        if (targetSizeBytes == -1) {
+            return createFreshBitmap(width, height, config)
         }
-        val targetSizeBytesLong =
-            width.toLong() * height.toLong() * bytesPerPixel.toLong()
-        if (targetSizeBytesLong > Int.MAX_VALUE) {
-            Log.w(
-                TAG,
-                "Requested bitmap is too large for pooling: " +
-                    "width=$width, height=$height, config=$config"
-            )
-            // Avoid integer overflow and pooling for extremely large bitmaps.
-            return createBitmap(width, height, config)
-        }
-        val targetSizeBytes = targetSizeBytesLong.toInt()
 
-        // Find a bitmap that is at least as large as we need.
-        // ceilingEntry returns the mapping with the least key greater than or equal to current.
-        val entry = groupedBitmaps.ceilingEntry(targetSizeBytes)
+        mutex.withLock {
+            // Find a bitmap that is at least as large as we need.
+            var entry = groupedBitmaps.ceilingEntry(targetSizeBytes)
+            
+            while (entry != null) {
+                val size = entry.key
+                val deque = entry.value
+                val bitmap = deque.pollLast()
 
-        if (entry != null) {
-            val size = entry.key
-            val deque = entry.value
+                if (deque.isEmpty()) {
+                    groupedBitmaps.remove(size)
+                }
 
-            val bitmap = deque.pollLast()
-
-            // If this bucket is now empty, remove it to keep the map clean
-            if (deque.isEmpty()) {
-                groupedBitmaps.remove(size)
-            }
-
-            if (bitmap != null) {
-                if (bitmap.isRecycled) {
-                    // Already recycled — skip and fall through to create new.
-                } else {
-                    try {
-                        bitmap.reconfigure(width, height, config)
-                        bitmap.eraseColor(0)
-                        currentSizeBytes -= size
-                        return bitmap
-                    } catch (e: IllegalArgumentException) {
-                        Log.w(
-                            TAG,
-                            "Failed to reconfigure bitmap: ${e.message}. Recycling and creating new."
-                        )
-                        bitmap.recycle()
+                if (bitmap != null) {
+                    if (!bitmap.isRecycled && bitmap.isMutable) {
+                        return try {
+                            bitmap.reconfigure(width, height, config)
+                            bitmap.eraseColor(0)
+                            
+                            _stats.update { it.copy(
+                                currentBytes = it.currentBytes - size,
+                                bitmapCount = it.bitmapCount - 1,
+                                reuseCount = it.reuseCount + 1
+                            ) }
+                            
+                            bitmap
+                        } catch (e: IllegalArgumentException) {
+                            Log.w(TAG, "Failed to reconfigure bitmap, searching next bucket...")
+                            // Continue searching in other buckets if reconfigure fails
+                            entry = groupedBitmaps.ceilingEntry(size + 1)
+                            continue
+                        }
+                    } else {
+                        // Bitmap was externally recycled or not mutable, update stats and continue
+                        _stats.update { it.copy(
+                            currentBytes = it.currentBytes - size,
+                            bitmapCount = it.bitmapCount - 1
+                        ) }
+                        entry = groupedBitmaps.ceilingEntry(size + 1)
+                        continue
                     }
                 }
+                entry = groupedBitmaps.ceilingEntry(size + 1)
             }
         }
 
-        // Fallback: create a fresh bitmap
-        return createBitmap(width, height, config)
+        return createFreshBitmap(width, height, config)
     }
 
     /**
      * Returns a bitmap to the pool for future reuse.
      *
-     * If the pool is full, old entries are dropped (but **not** recycled — they may still be
-     * referenced by a Compose draw scope for one or two frames). The GC will collect them
-     * once all references are gone. Only bitmaps that cannot fit at all are recycled
-     * immediately, because they were never handed out and thus have no external references.
+     * Important: This implementation NEVER calls [Bitmap.recycle]. If the pool is full,
+     * bitmaps are simply dropped and left for the Garbage Collector.
      */
-    @Synchronized
-    fun put(bitmap: Bitmap) {
-        if (bitmap.isRecycled || !bitmap.isMutable) {
-            return
-        }
+    suspend fun put(bitmap: Bitmap) {
+        if (bitmap.isRecycled || !bitmap.isMutable) return
 
         val size = bitmap.allocationByteCount
+        if (size > maxSizeBytes) return
 
-        // Clean up pool if adding this bitmap would exceed capacity.
-        while (currentSizeBytes + size > maxSizeBytes && groupedBitmaps.isNotEmpty()) {
-            val smallestKey = groupedBitmaps.firstKey()
-            val deque = groupedBitmaps[smallestKey]
-            val evicted = deque?.pollFirst()
+        mutex.withLock {
+            // Evict until we have space
+            while (_stats.value.currentBytes + size > maxSizeBytes && groupedBitmaps.isNotEmpty()) {
+                val smallestKey = groupedBitmaps.firstKey()
+                val deque = groupedBitmaps[smallestKey]
+                val evicted = deque?.pollFirst()
 
-            if (evicted != null) {
-                currentSizeBytes -= smallestKey
-                // Do NOT recycle here — the bitmap may still be drawn by Compose.
-                // Let the GC collect it once all references are released.
+                if (evicted != null) {
+                    _stats.update { it.copy(
+                        currentBytes = it.currentBytes - smallestKey,
+                        bitmapCount = it.bitmapCount - 1
+                    ) }
+                }
+
+                if (deque.isNullOrEmpty()) {
+                    groupedBitmaps.remove(smallestKey)
+                }
             }
 
-            if (deque == null || deque.isEmpty()) {
-                groupedBitmaps.remove(smallestKey)
+            // Add if it fits
+            if (_stats.value.currentBytes + size <= maxSizeBytes) {
+                val deque = groupedBitmaps.getOrPut(size) { ArrayDeque() }
+                deque.offerLast(bitmap)
+                _stats.update { it.copy(
+                    currentBytes = it.currentBytes + size,
+                    bitmapCount = it.bitmapCount + 1
+                ) }
             }
         }
-
-        // Add to pool if there is space.
-        if (currentSizeBytes + size <= maxSizeBytes) {
-            val deque = groupedBitmaps.getOrPut(size) { ArrayDeque() }
-            deque.offerLast(bitmap)
-            currentSizeBytes += size
-        }
-        // If it doesn't fit even after eviction, just let GC handle it.
     }
 
-    /**
-     * Clears all bitmaps from the pool.
-     *
-     * Bitmaps are NOT recycled because they may still be referenced by in-flight Compose
-     * draw scopes. The GC will collect them once all references are released.
-     */
-    @Synchronized
-    fun clear() {
-        groupedBitmaps.clear()
-        currentSizeBytes = 0
+    suspend fun clear() {
+        mutex.withLock {
+            groupedBitmaps.clear()
+            _stats.update { it.copy(currentBytes = 0, bitmapCount = 0) }
+        }
+    }
+
+    private fun createFreshBitmap(w: Int, h: Int, config: Bitmap.Config): Bitmap {
+        _stats.update { it.copy(creationCount = it.creationCount + 1) }
+        return createBitmap(w, h, config)
+    }
+
+    private fun calculateRequiredBytes(width: Int, height: Int, config: Bitmap.Config): Int {
+        val bytesPerPixel = when (config) {
+            Bitmap.Config.ALPHA_8 -> 1
+            Bitmap.Config.RGB_565, Bitmap.Config.ARGB_4444 -> 2
+            Bitmap.Config.ARGB_8888 -> 4
+            else -> 4 // Safe default
+        }
+        val total = width.toLong() * height.toLong() * bytesPerPixel
+        return if (total > Int.MAX_VALUE) -1 else total.toInt()
     }
 
     companion object {
-        /**
-         * 32 MB default pool — enough for ~8 full-size 2048x2048 ARGB_8888 tiles or ~128 small
-         * 256x256 tiles. Keep this well under a third of the typical 256 MB app heap to leave
-         * headroom for the LRU caches and the GC.
-         */
         const val DEFAULT_POOL_SIZE_BYTES = 32 * 1024 * 1024
     }
 }

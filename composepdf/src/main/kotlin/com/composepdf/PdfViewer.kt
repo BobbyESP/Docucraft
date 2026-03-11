@@ -12,6 +12,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -137,9 +138,10 @@ fun rememberPdfViewerState(
 ): PdfViewerState {
     // Global or context-scoped BitmapPool for the viewer engine.
     val bitmapPool = remember { BitmapPool() }
+    val scope = rememberCoroutineScope()
     
     return rememberSaveable(
-        saver = PdfViewerState.saver(bitmapPool)
+        saver = PdfViewerState.saver(bitmapPool, scope)
     ) {
         PdfViewerState(initialPage, initialZoom, bitmapPool)
     }

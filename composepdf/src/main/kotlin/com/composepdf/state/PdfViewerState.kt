@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.spring
+import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -15,21 +16,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.cache.bitmap.BitmapPool
 import com.composepdf.remote.RemotePdfState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlin.math.abs
 
 /**
  * A hoistable state object that manages the UI state and navigation for a PDF viewer.
  *
- * This version enforces strict memory management by requiring a [BitmapPool].
- * Mantiene la API pública completa para control programático.
+ * This version enforces strict memory management by requiring a [BitmapPool] and a [CoroutineScope]
+ * to handle asynchronous tile eviction and pool returns.
  */
 @Stable
 class PdfViewerState(
     initialPage: Int = 0,
     initialZoom: Float = 1f,
-    internal val bitmapPool: BitmapPool = BitmapPool()
+    internal val bitmapPool: BitmapPool = BitmapPool(),
+    internal val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 ) {
-    private val session = ViewerSessionState(bitmapPool)
+    private val session = ViewerSessionState(scope, bitmapPool)
 
     /** The index of the current page most visible in the viewport. */
     var currentPage: Int by mutableIntStateOf(initialPage)
@@ -268,19 +273,22 @@ class PdfViewerState(
     }
 
     companion object {
-        fun saver(bitmapPool: BitmapPool): Saver<PdfViewerState, *> = listSaver(
+        /**
+         * Creates a [Saver] for [PdfViewerState].
+         * Note: The [scope] is not saved; a new one must be provided upon restoration.
+         */
+        fun saver(bitmapPool: BitmapPool, scope: CoroutineScope): Saver<PdfViewerState, *> = listSaver(
             save = { listOf(it.currentPage, it.zoom, it.panX, it.panY) },
             restore = {
                 PdfViewerState(
                     initialPage = it[0] as Int,
                     initialZoom = it[1] as Float,
-                    bitmapPool = bitmapPool
+                    bitmapPool = bitmapPool,
+                    scope = scope
                 ).also { s ->
                     s.panX = it[2] as Float; s.panY = it[3] as Float
                 }
             }
         )
-
-        val Saver: Saver<PdfViewerState, *> = saver(BitmapPool())
     }
 }
