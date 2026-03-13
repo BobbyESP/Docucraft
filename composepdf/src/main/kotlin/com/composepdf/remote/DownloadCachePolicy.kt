@@ -21,7 +21,7 @@ import kotlin.time.Duration.Companion.days
  * val noCache = CachePolicy.NoCache
  * ```
  */
-data class CachePolicy(
+data class DownloadCachePolicy(
     /**
      * Maximum age of cached files before they expire.
      * Files older than this will be re-downloaded.
@@ -50,17 +50,17 @@ data class CachePolicy(
         /**
          * Default cache policy: 7 days, 100MB max.
          */
-        val Default = CachePolicy()
+        val Default = DownloadCachePolicy()
 
         /**
          * No caching - always download fresh copy.
          */
-        val NoCache = CachePolicy(maxAge = Duration.ZERO)
+        val NoCache = DownloadCachePolicy(maxAge = Duration.ZERO)
 
         /**
          * Aggressive caching - 30 days, 500MB max.
          */
-        val Aggressive = CachePolicy(
+        val Aggressive = DownloadCachePolicy(
             maxAge = 30.days,
             maxSizeBytes = 500 * 1024 * 1024
         )

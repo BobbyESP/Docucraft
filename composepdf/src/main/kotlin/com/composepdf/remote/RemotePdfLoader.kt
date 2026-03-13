@@ -62,7 +62,7 @@ class RemotePdfLoader(
         val cacheKey = source.cacheKey ?: source.url
 
         // Check cache first
-        val cachedFile = cacheManager.get(cacheKey, source.cachePolicy)
+        val cachedFile = cacheManager.get(cacheKey, source.downloadCachePolicy)
         if (cachedFile != null && cachedFile.exists() && cachedFile.length() > 0) {
             // Verify it's a valid PDF (check magic bytes)
             if (isPdfFile(cachedFile)) {
@@ -97,7 +97,7 @@ class RemotePdfLoader(
                 // Verify the downloaded file is a valid PDF
                 if (isPdfFile(result.file)) {
                     // Update cache metadata
-                    cacheManager.put(cacheKey, result.file, source.cachePolicy)
+                    cacheManager.put(cacheKey, result.file, source.downloadCachePolicy)
                     emit(RemotePdfState.Cached(result.file))
                 } else {
                     // Downloaded file is not a valid PDF

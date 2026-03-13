@@ -42,7 +42,7 @@ class DiskCacheManager(
      * @param policy The cache policy to apply
      * @return The cached file if valid, or null
      */
-    suspend fun get(cacheKey: String, policy: CachePolicy): File? = mutex.withLock {
+    suspend fun get(cacheKey: String, policy: DownloadCachePolicy): File? = mutex.withLock {
         withContext(Dispatchers.IO) {
             val hashedKey = hashKey(cacheKey)
             val cacheFile = File(actualCacheDir, "$hashedKey.pdf")
@@ -93,7 +93,7 @@ class DiskCacheManager(
      * @param file The downloaded file
      * @param policy The cache policy for cleanup
      */
-    suspend fun put(cacheKey: String, file: File, policy: CachePolicy) = mutex.withLock {
+    suspend fun put(cacheKey: String, file: File, policy: DownloadCachePolicy) = mutex.withLock {
         withContext(Dispatchers.IO) {
             // Update modification time
             file.setLastModified(System.currentTimeMillis())

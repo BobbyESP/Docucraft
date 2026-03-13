@@ -1,6 +1,6 @@
 package com.composepdf.source
 
-import com.composepdf.remote.CachePolicy
+import com.composepdf.remote.DownloadCachePolicy
 import java.io.InputStream
 
 /**
@@ -99,12 +99,12 @@ sealed interface PdfSource {
      * @property url The HTTPS URL to download the PDF from
      * @property headers Optional HTTP headers (e.g., Authorization)
      * @property cacheKey Optional custom cache key. If null, URL hash is used
-     * @property cachePolicy Cache behavior configuration
+     * @property downloadCachePolicy Cache behavior configuration
      */
     data class Remote(
         val url: String,
         val headers: Map<String, String> = emptyMap(),
         val cacheKey: String? = null,
-        val cachePolicy: CachePolicy = CachePolicy.Default
+        val downloadCachePolicy: DownloadCachePolicy = DownloadCachePolicy.Default
     ) : PdfSource
 }
