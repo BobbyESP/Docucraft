@@ -61,54 +61,62 @@ ksp {
 }
 
 dependencies {
-    implementation(libs.bundles.core)
-    implementation(libs.bundles.coroutines)
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-    implementation(libs.google.fonts)
-
-    api(platform(libs.compose.bom))
-    implementation(libs.androidx.fragment.compose)
-
-    implementation(libs.bundles.accompanist)
+    // Bundles
+    implementation(libs.bundles.androidx.core)
+    implementation(libs.bundles.androidx.lifecycle)
     implementation(libs.bundles.compose)
-    implementation(libs.materialKolor)
-    implementation(libs.bundles.glance)
-    implementation(libs.bundles.nav3)
-
-    implementation(project(":composepdf"))
-
+    implementation(libs.bundles.navigation3)
     implementation(libs.bundles.koin)
+    implementation(libs.bundles.coroutines)
+    implementation(libs.bundles.glance)
+    implementation(libs.bundles.filekit)
+    implementation(libs.bundles.accompanist)
 
+    // Platforms
+    api(platform(libs.androidx.compose.bom))
+    implementation(platform(libs.firebase.bom))
+
+    // UI & Misc
+    implementation(libs.google.fonts)
+    implementation(libs.material.kolor)
+    implementation(libs.landscapist.coil)
+    implementation(libs.sonner)
+    
+    // Storage
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.room.paging)
     ksp(libs.room.compiler)
-
     implementation(libs.datastore.preferences)
-    implementation(libs.landscapist.coil)
-    implementation(libs.bundles.filekit)
 
+    // ML Kit
     implementation(libs.gms.mlkit.docscanner)
 
+    //KotlinX
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.sonner)
 
-    implementation(platform(libs.firebase.bom))
+    // Firebase
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
 
-    implementation(libs.profileinstaller)
+    // Performance & Utils
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(libs.androidx.profileinstaller)
+    debugImplementation(libs.leakcanary)
 
+    // Local Projects
+    implementation(project(":composepdf"))
+
+    // Testing & Tooling
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.espresso.core)
+    androidTestImplementation(libs.androidx.espresso.core)
 
-    implementation(libs.compose.tooling.preview)
-    debugImplementation(libs.compose.tooling)
-    debugImplementation(libs.compose.test.manifest)
-    debugImplementation(libs.leakcanary)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
 
 class RoomSchemaArgProvider(
