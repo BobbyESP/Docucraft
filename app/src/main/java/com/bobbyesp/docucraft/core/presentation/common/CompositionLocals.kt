@@ -19,8 +19,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.ImageLoader
-import com.bobbyesp.docucraft.core.domain.preferences.AppPreferencesController
 import com.bobbyesp.docucraft.core.data.local.preferences.AppSettings
+import com.bobbyesp.docucraft.core.domain.preferences.AppPreferencesController
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.presentation.preferences.theme.DarkThemePreference
@@ -28,8 +28,6 @@ import com.bobbyesp.docucraft.core.presentation.preferences.theme.DarkThemePrefe
 import com.bobbyesp.docucraft.core.presentation.theme.DEFAULT_SEED_COLOR
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.isDynamicColoringSupported
-import com.dokar.sonner.ToasterState
-import com.dokar.sonner.rememberToasterState
 import com.materialkolor.rememberDynamicMaterialThemeState
 import com.skydoves.landscapist.coil.LocalCoilImageLoader
 
