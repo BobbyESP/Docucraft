@@ -65,4 +65,19 @@
 	<string name="field_too_long">최대 길이를 초과했습니다</string>
 	<string name="widget_scan_title">문서 스캔</string>
 	<string name="widget_scan_subtitle">스캔을 시작하려면 누르세요</string>
+	<string name="page_of">%2$s 중 %1$s</string>
+	<string name="fit_mode">맞춤 모드</string>
+	<string name="fit_height">높이에 맞춤</string>
+	<string name="page_navigation">페이지 탐색</string>
+	<string name="go_to_page">페이지로 이동</string>
+	<string name="fit_proportional">비례</string>
+	<string name="next_page">다음 페이지</string>
+	<string name="zoom_reset">줌 초기화</string>
+	<string name="page_input_label">페이지</string>
+	<string name="zoom_out">축소</string>
+	<string name="night_mode">야간 모드</string>
+	<string name="fit_page">페이지에 맞춤</string>
+	<string name="zoom_in">확대</string>
+	<string name="previous_page">이전 페이지</string>
+	<string name="fit_width">너비에 맞춤</string>
 </resources>

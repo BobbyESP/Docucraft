@@ -65,4 +65,19 @@
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="widget_scan_title">Dokument scannen</string>
 	<string name="widget_scan_subtitle">Zum Scannen tippen</string>
+	<string name="page_of">%1$s von %2$s</string>
+	<string name="zoom_in">Vergrößern</string>
+	<string name="page_navigation">Seitennavigation</string>
+	<string name="go_to_page">Gehe zu Seite</string>
+	<string name="fit_height">Höhe anpassen</string>
+	<string name="fit_proportional">Proportional</string>
+	<string name="fit_page">Seite anpassen</string>
+	<string name="fit_mode">Anpassungsmodus</string>
+	<string name="page_input_label">Seite</string>
+	<string name="night_mode">Nachtmodus</string>
+	<string name="zoom_reset">Zoom zurücksetzen</string>
+	<string name="fit_width">Breite anpassen</string>
+	<string name="previous_page">Vorherige Seite</string>
+	<string name="next_page">Nächste Seite</string>
+	<string name="zoom_out">Verkleinern</string>
 </resources>

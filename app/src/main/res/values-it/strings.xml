@@ -65,4 +65,19 @@
 	<string name="clear_field">Cancella campo</string>
 	<string name="widget_scan_title">Scansiona documento</string>
 	<string name="widget_scan_subtitle">Tocca per iniziare la scansione</string>
+	<string name="fit_height">Adatta all\'altezza</string>
+	<string name="zoom_in">Zoom avanti</string>
+	<string name="fit_proportional">Proporzionale</string>
+	<string name="previous_page">Pagina precedente</string>
+	<string name="fit_mode">Modalità di adattamento</string>
+	<string name="page_input_label">Pagina</string>
+	<string name="fit_page">Adatta alla pagina</string>
+	<string name="fit_width">Adatta alla larghezza</string>
+	<string name="page_navigation">Navigazione tra le pagine</string>
+	<string name="go_to_page">Vai alla pagina</string>
+	<string name="night_mode">Modalità notte</string>
+	<string name="page_of">%1$s di %2$s</string>
+	<string name="next_page">Pagina successiva</string>
+	<string name="zoom_out">Zoom indietro</string>
+	<string name="zoom_reset">Ripristina zoom</string>
 </resources>

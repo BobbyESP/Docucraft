@@ -66,4 +66,19 @@
 	<string name="clear_field">清除字段</string>
 	<string name="widget_scan_title">扫描文档</string>
 	<string name="widget_scan_subtitle">点击开始扫描</string>
+	<string name="night_mode">夜间模式</string>
+	<string name="page_navigation">页面导航</string>
+	<string name="zoom_in">放大</string>
+	<string name="previous_page">上一页</string>
+	<string name="page_of">第 %1$s 页，共 %2$s 页</string>
+	<string name="next_page">下一页</string>
+	<string name="fit_mode">适应模式</string>
+	<string name="zoom_out">缩小</string>
+	<string name="fit_width">适应宽度</string>
+	<string name="fit_height">适应高度</string>
+	<string name="fit_page">适应页面</string>
+	<string name="page_input_label">页码</string>
+	<string name="go_to_page">跳转到页面</string>
+	<string name="fit_proportional">比例</string>
+	<string name="zoom_reset">重置缩放</string>
 </resources>

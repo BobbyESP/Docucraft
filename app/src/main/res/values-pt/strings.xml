@@ -66,4 +66,19 @@
 	<string name="clear_field">Limpar campo</string>
 	<string name="widget_scan_title">Digitalizar documento</string>
 	<string name="widget_scan_subtitle">Toque para começar a digitalizar</string>
+	<string name="page_input_label">Página</string>
+	<string name="fit_proportional">Proporcional</string>
+	<string name="fit_width">Ajustar à largura</string>
+	<string name="zoom_in">Aumentar o zoom</string>
+	<string name="fit_page">Ajustar à página</string>
+	<string name="zoom_out">Diminuir o zoom</string>
+	<string name="go_to_page">Ir para a página</string>
+	<string name="page_navigation">Navegação da página</string>
+	<string name="previous_page">Página anterior</string>
+	<string name="zoom_reset">Redefinir zoom</string>
+	<string name="next_page">Próxima página</string>
+	<string name="page_of">%1$s de %2$s</string>
+	<string name="fit_height">Ajustar à altura</string>
+	<string name="fit_mode">Modo de ajuste</string>
+	<string name="night_mode">Modo noturno</string>
 </resources>

@@ -65,4 +65,19 @@
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="widget_scan_subtitle">Appuyez pour commencer à numériser</string>
 	<string name="widget_scan_title">Scanner un document</string>
+	<string name="fit_page">Ajuster à la page</string>
+	<string name="fit_mode">Mode d\'ajustement</string>
+	<string name="fit_proportional">Proportionnel</string>
+	<string name="night_mode">Mode nuit</string>
+	<string name="page_navigation">Navigation dans les pages</string>
+	<string name="fit_width">Ajuster à la largeur</string>
+	<string name="zoom_in">Zoom avant</string>
+	<string name="go_to_page">Aller à la page</string>
+	<string name="page_of">%1$s sur %2$s</string>
+	<string name="zoom_out">Zoom arrière</string>
+	<string name="previous_page">Page précédente</string>
+	<string name="fit_height">Ajuster à la hauteur</string>
+	<string name="next_page">Page suivante</string>
+	<string name="page_input_label">Page</string>
+	<string name="zoom_reset">Réinitialiser le zoom</string>
 </resources>

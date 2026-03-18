@@ -65,4 +65,19 @@
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="widget_scan_title">مسح المستند ضوئيًا</string>
 	<string name="widget_scan_subtitle">انقر لبدء المسح الضوئي</string>
+	<string name="fit_proportional">تناسبي</string>
+	<string name="fit_height">احتواء الارتفاع</string>
+	<string name="previous_page">الصفحة السابقة</string>
+	<string name="zoom_out">تصغير</string>
+	<string name="go_to_page">اذهب إلى الصفحة</string>
+	<string name="fit_page">احتواء الصفحة</string>
+	<string name="next_page">الصفحة التالية</string>
+	<string name="zoom_reset">إعادة تعيين التكبير</string>
+	<string name="fit_width">احتواء العرض</string>
+	<string name="page_of">%1$s من %2$s</string>
+	<string name="fit_mode">وضع الاحتواء</string>
+	<string name="page_input_label">صفحة</string>
+	<string name="night_mode">الوضع الليلي</string>
+	<string name="zoom_in">تكبير</string>
+	<string name="page_navigation">التنقل بين الصفحات</string>
 </resources>

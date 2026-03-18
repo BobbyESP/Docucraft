@@ -65,4 +65,19 @@
 	<string name="clear_field">Очистить поле</string>
 	<string name="widget_scan_subtitle">Нажмите, чтобы начать сканирование</string>
 	<string name="widget_scan_title">Сканировать документ</string>
+	<string name="fit_proportional">Пропорционально</string>
+	<string name="previous_page">Предыдущая страница</string>
+	<string name="zoom_in">Увеличить</string>
+	<string name="page_navigation">Навигация по страницам</string>
+	<string name="go_to_page">Перейти к странице</string>
+	<string name="fit_mode">Режим масштабирования</string>
+	<string name="night_mode">Ночной режим</string>
+	<string name="fit_page">По странице</string>
+	<string name="fit_height">По высоте</string>
+	<string name="zoom_reset">Сбросить масштаб</string>
+	<string name="page_of">%1$s из %2$s</string>
+	<string name="page_input_label">Страница</string>
+	<string name="zoom_out">Уменьшить</string>
+	<string name="fit_width">По ширине</string>
+	<string name="next_page">Следующая страница</string>
 </resources>

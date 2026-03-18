@@ -65,4 +65,19 @@
 	<string name="field_required">यह फ़ील्ड ज़रूरी है</string>
 	<string name="widget_scan_title">दस्तावेज़ स्कैन करें</string>
 	<string name="widget_scan_subtitle">स्कैन करना शुरू करने के लिए टैप करें</string>
+	<string name="page_of">%1$s का %2$s</string>
+	<string name="night_mode">नाइट मोड</string>
+	<string name="zoom_in">ज़ूम इन करें</string>
+	<string name="previous_page">पिछला पेज</string>
+	<string name="page_input_label">पेज</string>
+	<string name="fit_proportional">आनुपातिक</string>
+	<string name="zoom_out">ज़ूम आउट करें</string>
+	<string name="zoom_reset">ज़ूम रीसेट करें</string>
+	<string name="fit_page">पेज में फिट करें</string>
+	<string name="fit_width">चौड़ाई में फिट करें</string>
+	<string name="page_navigation">पेज नेविगेशन</string>
+	<string name="fit_height">ऊँचाई में फिट करें</string>
+	<string name="fit_mode">फिट मोड</string>
+	<string name="go_to_page">पेज पर जाएँ</string>
+	<string name="next_page">अगला पेज</string>
 </resources>

@@ -65,4 +65,19 @@
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="widget_scan_subtitle">タップしてスキャンを開始</string>
 	<string name="widget_scan_title">ドキュメントをスキャン</string>
+	<string name="go_to_page">ページへ移動</string>
+	<string name="next_page">次のページ</string>
+	<string name="page_input_label">ページ</string>
+	<string name="zoom_in">ズームイン</string>
+	<string name="zoom_out">ズームアウト</string>
+	<string name="night_mode">ナイトモード</string>
+	<string name="fit_mode">表示モード</string>
+	<string name="page_of">%2$sページ中%1$sページ</string>
+	<string name="fit_page">ページ全体を表示</string>
+	<string name="page_navigation">ページ移動</string>
+	<string name="zoom_reset">ズームをリセット</string>
+	<string name="fit_height">高さに合わせる</string>
+	<string name="previous_page">前のページ</string>
+	<string name="fit_proportional">縦横比を維持</string>
+	<string name="fit_width">幅に合わせる</string>
 </resources>
