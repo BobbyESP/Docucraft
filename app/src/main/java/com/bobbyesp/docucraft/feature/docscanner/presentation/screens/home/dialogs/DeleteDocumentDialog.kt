@@ -153,6 +153,7 @@ private fun DeleteDocumentContent(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
+            modifier = Modifier.fillMaxWidth(),
             text = buildAnnotatedString {
                 val start = text.indexOf(documentTitle)
                 val end = start + documentTitle.length
@@ -171,7 +172,7 @@ private fun DeleteDocumentContent(
         )
 
         Text(
-            modifier = Modifier.alpha(0.66f),
+            modifier = Modifier.alpha(0.66f).fillMaxWidth(),
             text = stringResource(R.string.doc_delete_warning),
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center

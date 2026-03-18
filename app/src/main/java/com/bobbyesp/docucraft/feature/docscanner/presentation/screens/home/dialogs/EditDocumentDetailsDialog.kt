@@ -4,15 +4,17 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,15 +29,17 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -43,6 +47,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
@@ -54,9 +59,6 @@ import com.bobbyesp.docucraft.util.MockData
 private const val TITLE_MAX_LENGTH = 60
 private const val DESCRIPTION_MAX_LENGTH = 200
 
-// ---------------------------------------------------------------------------
-// Sheet variant
-// ---------------------------------------------------------------------------
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EditDocumentDetailsSheet(
@@ -75,6 +77,7 @@ fun EditDocumentDetailsSheet(
         },
         icon = Icons.Rounded.Edit,
         headingTitle = stringResource(R.string.doc_modify_details),
+        headingDescription = stringResource(R.string.doc_modify_details_description),
         content = {
             EditDocumentDetailsContent(
                 modifier = Modifier.padding(12.dp),
@@ -110,9 +113,6 @@ fun EditDocumentDetailsSheet(
     )
 }
 
-// ---------------------------------------------------------------------------
-// AlertDialog variant
-// ---------------------------------------------------------------------------
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EditDocumentDetailsDialog(
@@ -137,10 +137,22 @@ fun EditDocumentDetailsDialog(
             )
         },
         title = {
-            Text(
-                text = stringResource(R.string.doc_modify_details),
-                fontWeight = FontWeight.SemiBold,
-            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.doc_modify_details),
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = stringResource(R.string.doc_modify_details_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         },
         text = {
             LazyColumn {
@@ -166,9 +178,6 @@ fun EditDocumentDetailsDialog(
     )
 }
 
-// ---------------------------------------------------------------------------
-// Shared content
-// ---------------------------------------------------------------------------
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EditDocumentDetailsContent(
@@ -181,12 +190,6 @@ private fun EditDocumentDetailsContent(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            text = stringResource(R.string.doc_modify_details_description),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
         LimitedTextField(
             value = state.title,
             onValueChange = onTitleChange,
@@ -211,9 +214,6 @@ private fun EditDocumentDetailsContent(
     }
 }
 
-// ---------------------------------------------------------------------------
-// LimitedTextField & CharacterCounter
-// ---------------------------------------------------------------------------
 @Composable
 private fun LimitedTextField(
     value: String,
@@ -227,78 +227,86 @@ private fun LimitedTextField(
     singleLine: Boolean = true,
     minLines: Int = 1,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            label = { Text(label) },
-            isError = isError,
-            singleLine = singleLine,
-            minLines = minLines,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Sentences,
-                autoCorrectEnabled = true,
-                imeAction = imeAction,
-            ),
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth(),
-            trailingIcon = {
-                AnimatedVisibility(
-                    visible = value.isNotEmpty(),
-                    enter = fadeIn() + slideInVertically { -it / 2 },
-                    exit = fadeOut() + slideOutVertically { -it / 2 },
-                ) {
-                    IconButton(
-                        onClick = { onValueChange("") },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = if (isError)
-                                MaterialTheme.colorScheme.error
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Rounded.Clear,
-                            contentDescription = stringResource(R.string.clear_field),
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                }
-            },
-        )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = if (isError) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
+        else MaterialTheme.colorScheme.surfaceContainerLow,
+        border = if (isError) BorderStroke(1.dp, MaterialTheme.colorScheme.error) else null
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            AnimatedContent(
-                targetState = supportingText,
-                transitionSpec = {
-                    (fadeIn() + slideInVertically { -it / 2 }) togetherWith
-                        (fadeOut() + slideOutVertically { it / 2 })
+            TextField(
+                value = value,
+                onValueChange = { if (it.length <= maxLength) onValueChange(it) },
+                label = {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                 },
-                label = "supporting_text",
-            ) { text ->
-                Text(
-                    text = text.orEmpty(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isError)
-                        MaterialTheme.colorScheme.error
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant,
+                isError = isError,
+                singleLine = singleLine,
+                minLines = minLines,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    errorContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    errorIndicatorColor = Color.Transparent
+                ),
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences,
+                    autoCorrectEnabled = true,
+                    imeAction = imeAction,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+                trailingIcon = {
+                    AnimatedVisibility(
+                        visible = value.isNotEmpty(),
+                        enter = fadeIn() + scaleIn(),
+                        exit = fadeOut() + scaleOut(),
+                    ) {
+                        IconButton(onClick = { onValueChange("") }) {
+                            Icon(
+                                imageVector = Icons.Rounded.Clear,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = if (isError) MaterialTheme.colorScheme.error
+                                else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                },
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AnimatedContent(targetState = supportingText, label = "supp_text") { text ->
+                    Text(
+                        text = text.orEmpty(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isError) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                CharacterCounter(
+                    current = value.length,
+                    max = maxLength,
+                    isError = isError
                 )
             }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            CharacterCounter(
-                current = value.length,
-                max = maxLength,
-                isError = isError,
-            )
         }
     }
 }
@@ -343,9 +351,6 @@ private fun CharacterCounter(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Previews
-// ---------------------------------------------------------------------------
 @PreviewLightDark
 @Composable
 private fun EditDocumentDetailsDialogPreview() {

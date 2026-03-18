@@ -10,7 +10,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,26 +23,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.DocumentScanner
-import androidx.compose.material.icons.rounded.Error
 import androidx.compose.material.icons.rounded.FileCopy
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -80,12 +72,12 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.components.selectiongroup.SelectionGroupRow
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscroll
@@ -98,7 +90,6 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatu
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
 import com.bobbyesp.docucraft.util.MockData
-import com.materialkolor.ktx.harmonize
 import kotlin.math.roundToInt
 
 @OptIn(
@@ -214,14 +205,14 @@ fun HomeContent(
                 HomeStatus.Idle -> {
                     if (!uiState.hasDocuments) {
                         Box(
-                            modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
                             EmptyStateScreen(
-                                modifier = Modifier,
-                                onScanDocument = {
+                                modifier = Modifier, onScanDocument = {
                                     onAction(HomeUiAction.LaunchDocumentScanner)
-                                }
-                            )
+                                })
                         }
                     } else {
                         ScannedDocumentsList(
@@ -314,7 +305,7 @@ private fun ScannedDocumentsList(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun SortOptionsRow(
+private fun SortOptionsRow(
     currentSortOption: SortOption,
     onSortOptionChange: (SortOption) -> Unit,
     modifier: Modifier = Modifier,
@@ -425,158 +416,30 @@ private fun SearchBar(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun EmptyStateScreen(onScanDocument: () -> Unit, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .border(
-                width = 2.dp,
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary.copy(alpha = .8f),
-                        MaterialTheme.colorScheme.primary.copy(alpha = .2f),
-                    )
-                ),
-                shape = RoundedCornerShape(16.dp),
-            ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.FileCopy,
-                contentDescription = stringResource(R.string.doc_scan_new),
-                modifier = Modifier.size(72.dp),
-                tint = MaterialTheme.colorScheme.primary,
-            )
-
-            Text(
-                text = stringResource(R.string.no_scanned_documents),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-
-            Text(
-                text = stringResource(R.string.doc_scan_to_see_document_list),
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            Button(
-                onClick = onScanDocument,
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(56.dp),
-                shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.CameraAlt,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Text(
-                    text = stringResource(R.string.doc_scan_new),
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
-        }
-    }
+private fun EmptyStateScreen(onScanDocument: () -> Unit, modifier: Modifier = Modifier) {
+    ScreenPlaceholderCard(
+        modifier = modifier.padding(24.dp),
+        title = stringResource(R.string.no_scanned_documents),
+        description = stringResource(R.string.doc_scan_to_see_document_list),
+        actionText = stringResource(R.string.doc_scan_new),
+        onAction = onScanDocument,
+        icon = Icons.Rounded.FileCopy,
+        iconAction = Icons.Rounded.CameraAlt
+    )
 }
 
 @Composable
 private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .border(
-                width = 2.dp,
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.error.copy(alpha = .8f),
-                        MaterialTheme.colorScheme.error.copy(alpha = .2f),
-                    )
-                ),
-                shape = RoundedCornerShape(16.dp),
-            ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(6.dp)
-                .harmonize(other = MaterialTheme.colorScheme.errorContainer)
-        ),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.Error,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(64.dp),
-            )
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = stringResource(id = R.string.unknown_error),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = errorMessage ?: stringResource(id = R.string.error_loading_docs),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            Button(
-                onClick = onRetry,
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .height(50.dp),
-                shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                elevation = ButtonDefaults.elevatedButtonElevation(defaultElevation = 8.dp),
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Refresh,
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(id = R.string.retry),
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
-        }
-    }
+    ScreenPlaceholderCard(
+        modifier = Modifier.padding(24.dp),
+        title = stringResource(id = R.string.unknown_error),
+        description = errorMessage ?: stringResource(id = R.string.error_loading_docs),
+        actionText = stringResource(id = R.string.retry),
+        onAction = onRetry,
+        icon = Icons.Rounded.Warning,
+        iconAction = Icons.Rounded.Refresh,
+        isError = true
+    )
 }
 
 @PreviewLightDark
@@ -584,7 +447,9 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
 private fun HomeContentPreview() {
     DocucraftTheme {
         HomeContent(
-            uiState = HomeUiState(visibleDocuments = MockData.Documents.documentsList),
+            uiState = HomeUiState(
+                status = HomeStatus.Idle, visibleDocuments = MockData.Documents.documentsList
+            ),
             onAction = {},
             onOpenSheet = {},
         )
