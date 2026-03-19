@@ -11,7 +11,7 @@ import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.repository.logScreenView
 import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
-import com.bobbyesp.docucraft.core.presentation.common.Route
+import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect

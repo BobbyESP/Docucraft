@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.core.presentation.navigation
+package com.bobbyesp.docucraft.core.presentation.navigation.backstack
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateListOf

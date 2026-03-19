@@ -1,9 +1,9 @@
-package com.bobbyesp.docucraft.core.presentation.navigation
+package com.bobbyesp.docucraft.core.presentation.navigation.backstack
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
-import com.bobbyesp.docucraft.core.presentation.common.Route
+import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import kotlinx.serialization.json.Json
 
 private val serializer = Json {

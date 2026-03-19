@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.core.presentation.notifications
+package com.bobbyesp.docucraft.core.presentation.common
 
 import android.content.Context
 import com.bobbyesp.docucraft.R

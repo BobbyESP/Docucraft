@@ -90,7 +90,6 @@ fun DocumentActionSheetSkeleton(
 ) {
     val iconSize: Dp = 28.dp
 
-    // Infinite rotation animation
     val infiniteTransition = rememberInfiniteTransition(label = "SheetIconRotation")
     val rotation by infiniteTransition.animateFloat(
         initialValue = 0f,

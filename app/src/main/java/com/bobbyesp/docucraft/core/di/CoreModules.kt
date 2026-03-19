@@ -5,7 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
-import com.bobbyesp.docucraft.core.presentation.notifications.AndroidStringProvider
+import com.bobbyesp.docucraft.core.presentation.common.AndroidStringProvider
 import com.bobbyesp.docucraft.core.data.local.preferences.AppPreferences
 import com.bobbyesp.docucraft.core.data.local.preferences.datastore.dataStore
 import com.bobbyesp.docucraft.core.domain.StringProvider

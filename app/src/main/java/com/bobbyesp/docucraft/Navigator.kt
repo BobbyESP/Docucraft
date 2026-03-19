@@ -13,8 +13,8 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.bobbyesp.docucraft.core.presentation.common.Route
-import com.bobbyesp.docucraft.core.presentation.navigation.TopLevelBackStack
+import com.bobbyesp.docucraft.core.presentation.navigation.Route
+import com.bobbyesp.docucraft.core.presentation.navigation.backstack.TopLevelBackStack
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.HomeScreen
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
 import kotlinx.collections.immutable.persistentListOf

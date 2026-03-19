@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.core.presentation.common
+package com.bobbyesp.docucraft.core.presentation.navigation.backstack
 
 import androidx.compose.runtime.Immutable
 

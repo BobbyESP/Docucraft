@@ -3,19 +3,19 @@ package com.bobbyesp.docucraft.core.presentation.theme
 import androidx.compose.ui.unit.dp
 
 object DocucraftElevationDefaults {
-    /** Nivel 0: Fondo de la aplicación (Scaffold) */
+    /** Level 0: App background (Scaffold) */
     val Level0 = 0.dp
 
-    /** Nivel 1: Elevación mínima (Cards, Search bars) */
+    /** Level 1: Minimum elevation (Cards, Search bars) */
     val Level1 = 1.dp
 
-    /** Nivel 2: Elevación estándar (Surface intermedio) */
+    /** Level 2: Standard elevation (intermediate Surface) */
     val Level2 = 3.dp
 
-    /** Nivel 3: Elevación acentuada (Modals, Action Sheets) */
+    /** Level 3: Accentuated/Bold elevation (Modals, Action Sheets) */
     val Level3 = 6.dp
 
-    /** Nivel 4: Elevación máxima (FAB, Menus flotantes) */
+    /** Level 4: Maximum elevation (FAB, Menus flotantes) */
     val Level4 = 8.dp
 
     val Scaffold = Level0

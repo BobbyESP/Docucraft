@@ -29,7 +29,6 @@ val dmSerifTextFont = FontFamily(
     )
 )
 
-// Set of Material typography styles to start with
 val Typography =
     Typography(
         bodyLarge = TextStyle(
@@ -53,13 +52,4 @@ val Typography =
             lineHeight = 28.sp,
             letterSpacing = 0.sp
         ),
-        /*
-        labelSmall = TextStyle(
-            fontFamily = FontFamily.Default,
-            fontWeight = FontWeight.Medium,
-            fontSize = 11.sp,
-            lineHeight = 16.sp,
-            letterSpacing = 0.5.sp
-        )
-        */
     )

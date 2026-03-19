@@ -1,6 +1,6 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.contract
 
-import com.bobbyesp.docucraft.core.presentation.common.Route
+import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult

@@ -8,7 +8,7 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
-import com.bobbyesp.docucraft.core.presentation.common.Route
+import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions

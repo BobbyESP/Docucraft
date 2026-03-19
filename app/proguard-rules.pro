@@ -51,8 +51,8 @@
 
 
 # Keep app Routes for navigation
--keep class com.bobbyesp.docucraft.core.presentation.common.Route { *; }
--keepclassmembers class com.bobbyesp.docucraft.core.presentation.common.Route$** { *; }
+-keep class com.bobbyesp.docucraft.core.presentation.navigation.Route { *; }
+-keepclassmembers class com.bobbyesp.docucraft.core.presentation.navigation.Route$** { *; }
 
 -dontwarn java.lang.management.ManagementFactory
 -dontwarn java.lang.management.RuntimeMXBean

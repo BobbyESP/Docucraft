@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.core.presentation.common
+package com.bobbyesp.docucraft.core.presentation.navigation
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
