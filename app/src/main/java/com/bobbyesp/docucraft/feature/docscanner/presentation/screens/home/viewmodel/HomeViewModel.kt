@@ -18,11 +18,11 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.exception.DocumentExport
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DocumentFilterUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentByIdUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
@@ -52,7 +52,7 @@ class HomeViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val scannerManager: ScannerManager,
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
-    private val searchDocumentsUseCase: SearchDocumentsUseCase,
+    private val documentFilterUseCase: DocumentFilterUseCase,
     private val getDocumentByIdUseCase: GetDocumentByIdUseCase,
     private val saveScannedDocumentUseCase: SaveScannedDocumentUseCase,
     private val deleteDocumentUseCase: DeleteDocumentUseCase,
@@ -103,13 +103,14 @@ class HomeViewModel(
     }
 
     fun onSheetAction(action: SheetAction) {
-        when(action) {
+        when (action) {
             SheetAction.Dismiss -> dismissSheet()
             SheetAction.Back -> {
                 val stack = _uiState.value.sheetState?.pageStack ?: return
                 if (stack.size <= 1) dismissSheet()
                 else updateSheet { it.copy(pageStack = stack.dropLast(1)) }
             }
+
             SheetAction.ConfirmDelete -> {
                 val id = _uiState.value.sheetState?.activeDocument?.id ?: return
                 dismissSheet()
@@ -118,21 +119,26 @@ class HomeViewModel(
                     onDeleteDocument(doc.path)
                 }
             }
+
             SheetAction.ConfirmEdit -> confirmSheetEdit()
             is SheetAction.Navigate -> {
                 updateSheet { it.copy(pageStack = it.pageStack + action.page) }
             }
+
             SheetAction.RequestSave -> {
                 val doc = _uiState.value.sheetState?.activeDocument ?: return
                 onExportDocument(doc)
             }
+
             SheetAction.RequestShare -> {
                 val doc = _uiState.value.sheetState?.activeDocument ?: return
                 onShareDocument(doc.path)
             }
+
             is SheetAction.UpdateDescription -> {
                 updateSheet { it.copy(editDescription = action.value) }
             }
+
             is SheetAction.UpdateTitle -> {
                 updateSheet { it.copy(editTitle = action.value) }
             }
@@ -183,22 +189,32 @@ class HomeViewModel(
                 _uiState.map { it.searchQuery },
                 _uiState.map { it.filterOptions },
             ) { documents, query, filterOptions ->
-                applyFiltersAndSort(documents, query, filterOptions)
+                documentFilterUseCase(documents, query, filterOptions)
             }.onStart { _uiState.update { it.copy(status = HomeStatus.Loading) } }
                 .catch { error ->
                     logError("Failed to retrieve documents: ${error.message}", error)
-                    _uiState.update { it.copy(status = HomeStatus.Error(stringProvider.getError(error))) }
+                    _uiState.update {
+                        it.copy(
+                            status = HomeStatus.Error(
+                                stringProvider.getError(
+                                    error
+                                )
+                            )
+                        )
+                    }
                     _events.emitEvent(UiEvent.ShowMessage(stringProvider.getError(error)))
-                }.collect { (filteredList, isRepositoryEmpty) ->
+                }.collect { docs ->
+                    val isRepositoryEmpty = docs.isEmpty()
                     _uiState.update { state ->
                         // Keep the sheet's active document in sync with the latest DB data.
                         val updatedSheet = state.sheetState?.let { sheet ->
-                            val refreshed = filteredList.firstOrNull { it.id == sheet.activeDocument?.id }
-                                ?: sheet.activeDocument
+                            val refreshed =
+                                docs.firstOrNull { it.id == sheet.activeDocument?.id }
+                                    ?: sheet.activeDocument
                             sheet.copy(activeDocument = refreshed)
                         }
                         state.copy(
-                            visibleDocuments = filteredList,
+                            visibleDocuments = docs,
                             hasDocuments = !isRepositoryEmpty,
                             status = HomeStatus.Idle,
                             sheetState = updatedSheet,
@@ -206,57 +222,6 @@ class HomeViewModel(
                     }
                 }
         }
-    }
-
-    private suspend fun applyFiltersAndSort(
-        unfilteredDocuments: List<ScannedDocument>,
-        query: String,
-        filterOptions: FilterOptions,
-    ): Pair<List<ScannedDocument>, Boolean> {
-        var result = unfilteredDocuments
-
-        if (query.isNotBlank()) {
-            try {
-                val searchResults = searchDocumentsUseCase(query)
-                result = result.filter { document -> searchResults.any { it.id == document.id } }
-            } catch (e: Exception) {
-                logError("Search failed: ${e.message}", e)
-                result = result.filter { document ->
-                    document.title?.contains(query, ignoreCase = true) == true ||
-                            document.filename.contains(query, ignoreCase = true) ||
-                            document.description?.contains(query, ignoreCase = true) == true
-                }
-            }
-        }
-
-        filterOptions.minPageCount?.let { minPages ->
-            result = result.filter { it.pageCount >= minPages }
-        }
-        filterOptions.minFileSize?.let { minSize ->
-            result = result.filter { it.fileSize >= minSize }
-        }
-        filterOptions.dateRange?.let { (start, end) ->
-            result = result.filter { it.createdTimestamp in start..end }
-        }
-
-        result = when (filterOptions.sortBy.criteria) {
-            SortOption.Criteria.DATE ->
-                if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                    result.sortedByDescending { it.createdTimestamp }
-                else result.sortedBy { it.createdTimestamp }
-
-            SortOption.Criteria.NAME ->
-                if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                    result.sortedByDescending { it.title ?: it.filename }
-                else result.sortedBy { it.title ?: it.filename }
-
-            SortOption.Criteria.SIZE ->
-                if (filterOptions.sortBy.order == SortOption.Order.DESC)
-                    result.sortedByDescending { it.fileSize }
-                else result.sortedBy { it.fileSize }
-        }
-
-        return result to unfilteredDocuments.isEmpty()
     }
 
     private fun processScanResult(rawScanResult: RawScanResult) {
@@ -274,7 +239,10 @@ class HomeViewModel(
                     logError("Failed to save document: ${error.message}", error)
                     _events.emitEvent(
                         UiEvent.ShowMessage(
-                            message = stringProvider.get(R.string.doc_save_error_with_reason, error),
+                            message = stringProvider.get(
+                                R.string.doc_save_error_with_reason,
+                                error
+                            ),
                             type = NotificationType.Error,
                         )
                     )
