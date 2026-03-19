@@ -34,6 +34,9 @@ val documentScannerDataModule = module {
     factory { OpenDocumentInViewerUseCase(context = androidContext()) }
     factory { ShareDocumentUseCase(context = androidContext()) }
     factory { ExportDocumentUseCase() }
+    factory { SortDocumentsUseCase() }
+    factory { FilterDocumentsUseCase() }
+    factory { DocumentFilterUseCase(search = get(), filter = get(), sort = get()) }
 
     factory {
         DeleteDocumentUseCase(
