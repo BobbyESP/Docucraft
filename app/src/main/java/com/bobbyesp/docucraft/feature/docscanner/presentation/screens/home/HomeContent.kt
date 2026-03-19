@@ -291,7 +291,11 @@ private fun ScannedDocumentsList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .animateItem(),
+                    .animateItem(
+                        fadeInSpec = motionScheme.defaultEffectsSpec(),
+                        placementSpec = motionScheme.slowSpatialSpec(),
+                        fadeOutSpec = motionScheme.defaultEffectsSpec()
+                    ),
                 pdf = scannedDocument,
                 position = position,
                 onItemClick = { id -> onAction(HomeUiAction.ViewDocument(id)) },
