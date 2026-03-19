@@ -26,7 +26,7 @@ class LocalDocumentsRepositoryImpl(
             return emptyList()
         }
 
-        val result = scannedDocumentDao.searchDocuments(searchQuery = query)
+        val result = scannedDocumentDao.searchDocumentsFts(query = query)
 
         return result.map { it.toModel() }
     }

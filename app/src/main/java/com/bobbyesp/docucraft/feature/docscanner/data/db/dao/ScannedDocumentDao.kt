@@ -28,24 +28,20 @@ interface ScannedDocumentDao : BaseDao<ScannedDocumentEntity> {
 
     @Query(
         """
-        SELECT * FROM scanned_documents 
-        WHERE (:searchQuery IS NULL OR 
-               title LIKE '%' || :searchQuery || '%' OR 
-               filename LIKE '%' || :searchQuery || '%' OR 
-               description LIKE '%' || :searchQuery || '%')
-        AND (:startTime IS NULL OR createdTimestamp >= :startTime)
-        AND (:endTime IS NULL OR createdTimestamp <= :endTime)
-        AND (:minPages IS NULL OR pageCount >= :minPages)
-        AND (:minSize IS NULL OR fileSize >= :minSize)
-        ORDER BY createdTimestamp DESC
+            SELECT * FROM scanned_documents d
+            JOIN scanned_documents_fts fts ON d.id = fts.rowid
+            WHERE (
+        ( (d.title IS NOT NULL OR d.description IS NOT NULL) 
+          AND scanned_documents_fts MATCH 'title:' || :query || '* OR description:' || :query || '*' )
+        OR
+        
+        ( (d.title IS NULL AND d.description IS NULL)
+          AND scanned_documents_fts MATCH 'filename:' || :query || '*' )
+    )
     """
     )
-    suspend fun searchDocuments(
-        searchQuery: String? = null,
-        startTime: Long? = null,
-        endTime: Long? = null,
-        minPages: Int? = null,
-        minSize: Long? = null,
+    suspend fun searchDocumentsFts(
+        query: String? = null,
     ): List<ScannedDocumentEntity>
 
     @Query(
