@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import java.text.Normalizer
 
 class LocalDocumentsRepositoryImpl(
     private val scannedDocumentDao: ScannedDocumentDao,
@@ -22,20 +23,21 @@ class LocalDocumentsRepositoryImpl(
             .flowOn(Dispatchers.IO)
 
     override suspend fun searchDocuments(query: String): List<ScannedDocument> {
-        if (query.isBlank()) {
-            return emptyList()
-        }
+        val trimmed = query.trim()
+        if (trimmed.isEmpty()) return emptyList()
 
-        val result = scannedDocumentDao.searchDocumentsFts(query = query)
+        val ftsQuery = buildFtsQuery(trimmed)
+
+        val result = scannedDocumentDao.searchDocumentsFts(ftsQuery)
 
         return result.map { it.toModel() }
     }
 
-    override suspend fun getDocument(id: String): ScannedDocument {
-        require(id.isNotEmpty()) { "Document ID must not be empty" }
+    override suspend fun getDocument(uuid: String): ScannedDocument {
+        require(uuid.isNotEmpty()) { "Document UUID must not be empty" }
         val entity =
-            scannedDocumentDao.getById(id)
-                ?: throw NoSuchElementException("No document found with ID: $id")
+            scannedDocumentDao.getByUuid(uuid)
+                ?: throw NoSuchElementException("No document found with ID: $uuid")
         return entity.toModel()
     }
 
@@ -47,11 +49,7 @@ class LocalDocumentsRepositoryImpl(
     }
 
     override suspend fun saveDocument(scannedDocument: ScannedDocumentEntity) {
-        try {
-            scannedDocumentDao.insert(scannedDocument)
-        } catch (e: Exception) {
-            throw RuntimeException("Failed to save document: ${e.message}", e)
-        }
+        scannedDocumentDao.insert(scannedDocument)
     }
 
     override suspend fun modifyFields(
@@ -61,11 +59,15 @@ class LocalDocumentsRepositoryImpl(
     ) {
         require(id.isNotEmpty()) { "Document ID must not be empty" }
 
-        val updatedCount = scannedDocumentDao.updateDocumentDetails(id, title, description)
+        val existing = scannedDocumentDao.getByUuid(id)
+            ?: throw NoSuchElementException("No document found with ID: $id")
 
-        if (updatedCount <= 0) {
-            throw NoSuchElementException("No document found with ID: $id")
-        }
+        val updated = existing.copy(
+            title = title,
+            description = description
+        )
+
+        scannedDocumentDao.update(updated)
     }
 
     override suspend fun deleteDocument(path: Uri) {
@@ -77,7 +79,17 @@ class LocalDocumentsRepositoryImpl(
         }
     }
 
-    companion object {
-        private const val TAG = "ScannedDocumentsRepository"
+    private fun normalize(text: String): String {
+        return Normalizer.normalize(text, Normalizer.Form.NFD)
+            .replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "")
+            .lowercase()
+    }
+
+    private fun buildFtsQuery(query: String): String {
+        return query
+            .trim()
+            .split("\\s+".toRegex())
+            .map { normalize(it) }
+            .joinToString(" AND ") { "$it*" }
     }
 }

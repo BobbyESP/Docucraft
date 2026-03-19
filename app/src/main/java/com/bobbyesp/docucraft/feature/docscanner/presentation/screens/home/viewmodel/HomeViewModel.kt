@@ -115,10 +115,10 @@ class HomeViewModel(
             }
 
             SheetAction.ConfirmDelete -> {
-                val id = _uiState.value.sheetState?.activeDocument?.id ?: return
+                val uuid = _uiState.value.sheetState?.activeDocument?.uuid ?: return
                 dismissSheet()
                 launchIO {
-                    val doc = getDocumentUseCase(id)
+                    val doc = getDocumentUseCase(uuid)
                     onDeleteDocument(doc.path)
                 }
             }
@@ -158,7 +158,7 @@ class HomeViewModel(
 
             is HomeUiAction.ViewDocument -> {
                 launchIO {
-                    val basicInformation = getBasicInformationForId(action.id)
+                    val basicInformation = getBasicInformationForUuid(action.id)
                     sendEvent(HomeUiEffect.Navigate(Route.PdfViewer(documentInfo = basicInformation)))
                 }
             }
@@ -217,7 +217,7 @@ class HomeViewModel(
                         // Keep the sheet's active document in sync with the latest DB data.
                         val updatedSheet = state.sheetState?.let { sheet ->
                             val refreshed =
-                                sortedDocuments.firstOrNull { it.id == sheet.activeDocument?.id }
+                                sortedDocuments.firstOrNull { it.uuid == sheet.activeDocument?.uuid }
                                     ?: sheet.activeDocument
                             sheet.copy(activeDocument = refreshed)
                         }
@@ -258,10 +258,10 @@ class HomeViewModel(
         }
     }
 
-    private suspend fun getBasicInformationForId(id: String): BasicDocument {
-        val document = getDocumentUseCase(id)
+    private suspend fun getBasicInformationForUuid(uuid: String): BasicDocument {
+        val document = getDocumentUseCase(uuid)
         return BasicDocument(
-            id = document.id,
+            uuid = document.uuid,
             filename = document.filename,
             uri = document.path.toString(),
             title = document.title,
@@ -391,7 +391,7 @@ class HomeViewModel(
         ) {
             val newTitle = sheet.editTitle.trim().ifBlank { null }
             val newDescription = sheet.editDescription.trim().ifBlank { null }
-            updateDocumentFieldsUseCase(doc.id, newTitle, newDescription)
+            updateDocumentFieldsUseCase(doc.uuid, newTitle, newDescription)
             updateSheet { current ->
                 current.copy(
                     pageStack = current.pageStack

@@ -10,7 +10,8 @@ object MockData {
         val documentsList: ImmutableList<ScannedDocument> =
             persistentListOf(
                 ScannedDocument(
-                    id = "1",
+                    id = 1,
+                    uuid = "1asd",
                     filename = "document1.pdf",
                     title = "Documento 1 de prueba. Título corto",
                     description =
@@ -22,7 +23,8 @@ object MockData {
                     thumbnail = "content://com.example.thumbnails/thumbnail/1",
                 ),
                 ScannedDocument(
-                    id = "2",
+                    id = 2,
+                    uuid = "2asd",
                     filename = "document2.pdf",
                     title = "Apuntes de programación",
                     description =

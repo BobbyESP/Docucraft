@@ -27,8 +27,8 @@ class SearchDocumentsUseCase(
             // to ensure we maintain the most up-to-date document state.
             if (queryResults.isEmpty()) throw NoSuchElementException("No results found in query strategies")
 
-            val ids = queryResults.map { it.id }.toSet()
-            documents.filter { it.id in ids }
+            val ids = queryResults.map { it.uuid }.toSet()
+            documents.filter { it.uuid in ids }
         }.getOrElse {
             // Fallback to local in-memory search if query strategy fails or returns nothing
             localStrategy.search(documents, query)

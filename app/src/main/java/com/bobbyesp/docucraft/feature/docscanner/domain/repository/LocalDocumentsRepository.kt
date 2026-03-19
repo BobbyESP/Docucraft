@@ -41,14 +41,14 @@ interface LocalDocumentsRepository {
     /**
      * Retrieves a single scanned PDF by its unique identifier.
      *
-     * Performs a lookup in the persistence layer to find the document with the matching [id].
+     * Performs a lookup in the persistence layer to find the document with the matching [uuid].
      * This is useful for opening details screens or performing operations on a specific item.
      *
-     * @param id The unique identifier string of the PDF to retrieve.
+     * @param uuid The unique identifier string of the PDF to retrieve.
      * @return The [ScannedDocument] domain object corresponding to the ID.
      * @throws NoSuchElementException If no document is found with the provided ID.
      */
-    suspend fun getDocument(id: String): ScannedDocument
+    suspend fun getDocument(uuid: String): ScannedDocument
 
     /**
      * Retrieves a ScannedPdf object based on its file location URI.

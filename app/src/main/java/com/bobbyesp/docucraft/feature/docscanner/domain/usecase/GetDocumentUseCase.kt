@@ -7,9 +7,9 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocument
 class GetDocumentUseCase(
     private val repository: LocalDocumentsRepository
 ) {
-    suspend operator fun invoke(documentId: String): ScannedDocument {
-        require(documentId.isNotBlank()) { "Document ID cannot be blank" }
-        return repository.getDocument(documentId)
+    suspend operator fun invoke(documentUuid: String): ScannedDocument {
+        require(documentUuid.isNotBlank()) { "Document ID cannot be blank" }
+        return repository.getDocument(documentUuid)
     }
 
     suspend operator fun invoke(documentPath: Uri): ScannedDocument {

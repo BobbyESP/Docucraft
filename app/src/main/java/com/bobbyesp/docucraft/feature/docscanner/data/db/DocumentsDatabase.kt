@@ -7,7 +7,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentFtsEntity
 
-const val CURRENT_VERSION = 3
+const val CURRENT_VERSION = 4
 
 @Database(
     entities = [ScannedDocumentEntity::class, ScannedDocumentFtsEntity::class],

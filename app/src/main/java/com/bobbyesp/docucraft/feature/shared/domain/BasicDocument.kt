@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Stable
 @Serializable
 data class BasicDocument(
-    val id: String,
+    val uuid: String,
     val filename: String,
     val uri: String,
     val title: String? = null,

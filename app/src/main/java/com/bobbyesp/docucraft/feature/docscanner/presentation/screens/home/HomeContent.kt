@@ -277,7 +277,7 @@ private fun ScannedDocumentsList(
 
         itemsIndexed(
             items = scannedDocuments,
-            key = { _, scannedDocument -> scannedDocument.id },
+            key = { _, scannedDocument -> scannedDocument.uuid },
             contentType = { _, scannedDocument -> scannedDocument.javaClass.name },
         ) { index, scannedDocument ->
             val position = when {
@@ -295,7 +295,7 @@ private fun ScannedDocumentsList(
                 pdf = scannedDocument,
                 position = position,
                 onItemClick = { id -> onAction(HomeUiAction.ViewDocument(id)) },
-                onItemLongClick = { onOpenSheet(scannedDocument.id) },
+                onItemLongClick = { onOpenSheet(scannedDocument.uuid) },
             )
         }
 
@@ -448,7 +448,9 @@ private fun HomeContentPreview() {
     DocucraftTheme {
         HomeContent(
             uiState = HomeUiState(
-                status = HomeStatus.Idle, visibleDocuments = MockData.Documents.documentsList
+                status = HomeStatus.Idle,
+                hasDocuments = true,
+                visibleDocuments = MockData.Documents.documentsList
             ),
             onAction = {},
             onOpenSheet = {},

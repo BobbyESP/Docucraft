@@ -14,7 +14,8 @@ import kotlinx.serialization.Serializable
  * and file-related information. It is marked as @Serializable to allow serialization and
  * deserialization, and as @Immutable to ensure immutability for Compose compatibility.
  *
- * @property id A unique identifier for the scanned document.
+ * @property id The unique identifier for the scanned document in the database.
+ * @property uuid A unique identifier for the scanned document.
  * @property filename The name of the document file without extension (e.g., "internet_bill_january_2026").
  * @property title The title of the document. This field is optional and can be null.
  * @property description A brief description of the document. This field is optional and can be null.
@@ -29,7 +30,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Immutable
 data class ScannedDocument(
-    val id: String,
+    val id: Long,
+    val uuid: String,
     val filename: String,
     val title: String?,
     val description: String?,
@@ -52,6 +54,7 @@ data class ScannedDocument(
         fun ScannedDocumentEntity.toModel(): ScannedDocument {
             return ScannedDocument(
                 id = id,
+                uuid = uuid,
                 filename = filename,
                 title = title,
                 description = description,

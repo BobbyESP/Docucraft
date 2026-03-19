@@ -1,6 +1,5 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.components.card
 
-import android.app.LocaleConfig
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -22,10 +21,12 @@ import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,6 +43,7 @@ import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftElevationDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
@@ -78,11 +80,11 @@ fun ScannedDocumentListItem(
                 .clip(shape)
                 .combinedClickable(
                     role = Role.Button,
-                    onClick = { onItemClick(pdf.id) },
+                    onClick = { onItemClick(pdf.uuid) },
                     onLongClick = onItemLongClick,
                 ),
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainer,
+        color = MaterialTheme.colorScheme.surfaceColorAtElevation(DocucraftElevationDefaults.Card),
     ) {
         Row(
             modifier = Modifier
@@ -163,7 +165,14 @@ fun ScannedDocumentListItem(
                 )
             }
 
-            IconButton(onClick = onItemLongClick) {
+            IconButton(
+                modifier = Modifier,
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                ),
+                shapes = IconButtonDefaults.shapes(),
+                onClick = onItemLongClick
+            ) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
                     contentDescription = stringResource(id = R.string.more_options),
@@ -189,7 +198,8 @@ private fun ScannedDocumentListItemPreview() {
                     fileSize = 1024,
                     pageCount = 5,
                     thumbnail = "thumbnail",
-                    id = UUID.randomUUID().toString(),
+                    uuid = UUID.randomUUID().toString(),
+                    id = 1
                 ),
             onItemClick = {},
             onItemLongClick = {},
@@ -212,14 +222,15 @@ private fun ListScannedDocumentListItemPreview() {
                     fileSize = 1024L * it,
                     pageCount = 5 + it,
                     thumbnail = if (it % 3 == 0) "thumbnail" else null,
-                    id = UUID.randomUUID().toString(),
+                    uuid = UUID.randomUUID().toString(),
+                    id = 2
                 )
             }
         LazyColumn(
             modifier = Modifier.background(MaterialTheme.colorScheme.surface),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            itemsIndexed(items = list, key = { _, item -> item.id }) { index, item ->
+            itemsIndexed(items = list, key = { _, item -> item.uuid }) { index, item ->
                 val position =
                     when {
                         list.size == 1 -> ScannedDocumentCardPosition.SINGLE
