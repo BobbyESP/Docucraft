@@ -12,6 +12,16 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrate
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.service.DocumentOperationsService
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.*
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.CopyDocumentToFileUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GenerateDocumentThumbnailUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -38,8 +48,7 @@ val documentScannerDataModule = module {
 
     // Use cases
     factory { ObserveDocumentsUseCase(repository = get()) }
-    factory { GetDocumentByIdUseCase(repository = get()) }
-    factory { GetDocumentByPathUseCase(repository = get()) }
+    factory { GetDocumentUseCase(repository = get()) }
     factory { UpdateDocumentFieldsUseCase(repository = get()) }
     factory { CopyDocumentToFileUseCase(context = androidContext()) }
     factory { GenerateDocumentThumbnailUseCase(documentOperationsService = get()) }

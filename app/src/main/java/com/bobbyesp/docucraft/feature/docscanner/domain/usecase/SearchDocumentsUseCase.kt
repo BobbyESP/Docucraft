@@ -6,8 +6,8 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrate
 
 /**
  * Use case for searching PDFs by title or description.
- * It coordinates different search strategies, typically trying a [QuerySearchStrategy] 
- * (like Database FTS or Remote API) first, and falling back to a [LocalSearchStrategy] 
+ * It coordinates different search strategies, typically trying a [QuerySearchStrategy]
+ * (like Database FTS or Remote API) first, and falling back to a [LocalSearchStrategy]
  * (in-memory filtering) if needed.
  */
 class SearchDocumentsUseCase(
@@ -22,7 +22,7 @@ class SearchDocumentsUseCase(
 
         return runCatching {
             val queryResults = queryStrategy.search(query)
-            
+
             // If the query strategy returns results, we filter the 'live' document list by ID
             // to ensure we maintain the most up-to-date document state.
             if (queryResults.isEmpty()) throw NoSuchElementException("No results found in query strategies")

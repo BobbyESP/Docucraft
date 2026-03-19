@@ -19,12 +19,12 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.FilterDocumentsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentByIdUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SortDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
@@ -56,7 +56,7 @@ class HomeViewModel(
     private val searchDocumentsUseCase: SearchDocumentsUseCase,
     private val filterDocumentsUseCase: FilterDocumentsUseCase,
     private val sortDocumentsUseCase: SortDocumentsUseCase,
-    private val getDocumentByIdUseCase: GetDocumentByIdUseCase,
+    private val getDocumentUseCase: GetDocumentUseCase,
     private val saveScannedDocumentUseCase: SaveScannedDocumentUseCase,
     private val deleteDocumentUseCase: DeleteDocumentUseCase,
     private val shareDocumentUseCase: ShareDocumentUseCase,
@@ -118,7 +118,7 @@ class HomeViewModel(
                 val id = _uiState.value.sheetState?.activeDocument?.id ?: return
                 dismissSheet()
                 launchIO {
-                    val doc = getDocumentByIdUseCase(id)
+                    val doc = getDocumentUseCase(id)
                     onDeleteDocument(doc.path)
                 }
             }
@@ -259,7 +259,7 @@ class HomeViewModel(
     }
 
     private suspend fun getBasicInformationForId(id: String): BasicDocument {
-        val document = getDocumentByIdUseCase(pdfId = id)
+        val document = getDocumentUseCase(id)
         return BasicDocument(
             id = document.id,
             filename = document.filename,
@@ -338,7 +338,7 @@ class HomeViewModel(
     private fun openSheet(documentId: String) {
         savedStateHandle[KEY_ACTIVE_SHEET_DOC_ID] = documentId
         launchIO {
-            val doc = getDocumentByIdUseCase(documentId)
+            val doc = getDocumentUseCase(documentId)
             _uiState.update {
                 it.copy(
                     sheetState = DocumentSheetUiState(
