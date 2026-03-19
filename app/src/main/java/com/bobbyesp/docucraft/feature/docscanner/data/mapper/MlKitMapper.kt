@@ -1,4 +1,4 @@
-package com.bobbyesp.docucraft.feature.docscanner.data
+package com.bobbyesp.docucraft.feature.docscanner.data.mapper
 
 import android.net.Uri
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult

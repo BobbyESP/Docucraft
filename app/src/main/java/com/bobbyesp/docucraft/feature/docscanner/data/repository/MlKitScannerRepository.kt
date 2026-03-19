@@ -2,7 +2,7 @@ package com.bobbyesp.docucraft.feature.docscanner.data.repository
 
 import android.app.Activity
 import androidx.activity.result.ActivityResult
-import com.bobbyesp.docucraft.feature.docscanner.data.MlKitMapper
+import com.bobbyesp.docucraft.feature.docscanner.data.mapper.MlKitMapper
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScannerException
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannerRepository
