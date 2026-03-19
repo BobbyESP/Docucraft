@@ -13,17 +13,18 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.CoroutineBasedViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
-import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.DocumentExportFailure
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DocumentFilterUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.FilterDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentByIdUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SortDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
@@ -52,7 +53,9 @@ class HomeViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val scannerManager: ScannerManager,
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
-    private val documentFilterUseCase: DocumentFilterUseCase,
+    private val searchDocumentsUseCase: SearchDocumentsUseCase,
+    private val filterDocumentsUseCase: FilterDocumentsUseCase,
+    private val sortDocumentsUseCase: SortDocumentsUseCase,
     private val getDocumentByIdUseCase: GetDocumentByIdUseCase,
     private val saveScannedDocumentUseCase: SaveScannedDocumentUseCase,
     private val deleteDocumentUseCase: DeleteDocumentUseCase,
@@ -189,7 +192,13 @@ class HomeViewModel(
                 _uiState.map { it.searchQuery },
                 _uiState.map { it.filterOptions },
             ) { documents, query, filterOptions ->
-                documentFilterUseCase(documents, query, filterOptions)
+                val searched = searchDocumentsUseCase(documents, query)
+                val filtered = filterDocumentsUseCase(searched, filterOptions)
+                val sorted = sortDocumentsUseCase(filtered, filterOptions.sortBy)
+
+                Pair(
+                    documents.isEmpty(), sorted
+                )
             }.onStart { _uiState.update { it.copy(status = HomeStatus.Loading) } }
                 .catch { error ->
                     logError("Failed to retrieve documents: ${error.message}", error)
@@ -203,18 +212,17 @@ class HomeViewModel(
                         )
                     }
                     _events.emitEvent(UiEvent.ShowMessage(stringProvider.getError(error)))
-                }.collect { docs ->
-                    val isRepositoryEmpty = docs.isEmpty()
+                }.collect { (isRepositoryEmpty, sortedDocuments) ->
                     _uiState.update { state ->
                         // Keep the sheet's active document in sync with the latest DB data.
                         val updatedSheet = state.sheetState?.let { sheet ->
                             val refreshed =
-                                docs.firstOrNull { it.id == sheet.activeDocument?.id }
+                                sortedDocuments.firstOrNull { it.id == sheet.activeDocument?.id }
                                     ?: sheet.activeDocument
                             sheet.copy(activeDocument = refreshed)
                         }
                         state.copy(
-                            visibleDocuments = docs,
+                            visibleDocuments = sortedDocuments,
                             hasDocuments = !isRepositoryEmpty,
                             status = HomeStatus.Idle,
                             sheetState = updatedSheet,

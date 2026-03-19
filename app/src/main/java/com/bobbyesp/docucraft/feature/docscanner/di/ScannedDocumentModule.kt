@@ -5,6 +5,11 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.LocalDocumentsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.search.CompositeSearchStrategy
+import com.bobbyesp.docucraft.feature.docscanner.domain.search.DatabaseSearchStrategy
+import com.bobbyesp.docucraft.feature.docscanner.domain.search.InMemorySearchStrategy
+import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
+import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.service.DocumentOperationsService
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.*
 import org.koin.android.ext.koin.androidContext
@@ -23,9 +28,16 @@ val documentScannerDataModule = module {
         LocalDocumentsRepositoryImpl(scannedDocumentDao = get<ScannedDocumentDao>())
     }
 
+    // Search Strategies
+    factory<LocalSearchStrategy> { InMemorySearchStrategy() }
+    factory<QuerySearchStrategy> {
+        CompositeSearchStrategy(
+            listOf(DatabaseSearchStrategy(repository = get()))
+        )
+    }
+
     // Use cases
     factory { ObserveDocumentsUseCase(repository = get()) }
-    factory { SearchDocumentsUseCase(repository = get()) }
     factory { GetDocumentByIdUseCase(repository = get()) }
     factory { GetDocumentByPathUseCase(repository = get()) }
     factory { UpdateDocumentFieldsUseCase(repository = get()) }
@@ -36,7 +48,7 @@ val documentScannerDataModule = module {
     factory { ExportDocumentUseCase() }
     factory { SortDocumentsUseCase() }
     factory { FilterDocumentsUseCase() }
-    factory { DocumentFilterUseCase(search = get(), filter = get(), sort = get()) }
+    factory { SearchDocumentsUseCase(queryStrategy = get(), localStrategy = get()) }
 
     factory {
         DeleteDocumentUseCase(
