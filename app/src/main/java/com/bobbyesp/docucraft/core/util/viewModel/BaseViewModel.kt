@@ -32,11 +32,11 @@ abstract class BaseViewModel<Intent : Any, State : Any, Effect : Any>(
 
     // ---------------- INTENTS ----------------
 
-    fun sendIntent(intent: Intent) {
-        handleIntent(intent)
+    fun onSendIntent(intent: Intent) {
+        onHandleIntent(intent)
     }
 
-    protected abstract fun handleIntent(intent: Intent)
+    protected abstract fun onHandleIntent(intent: Intent)
 
     // ---------------- REDUCER ----------------
 
