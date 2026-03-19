@@ -8,7 +8,11 @@ import org.koin.dsl.module
 
 val scannedDocumentsDatabaseModule = module {
     single<DocumentsDatabase> {
-        Room.databaseBuilder(androidContext(), DocumentsDatabase::class.java, "scanned_pdfs.db")
+        Room.databaseBuilder(
+            context = androidContext(),
+            klass = DocumentsDatabase::class.java,
+            name = "scanned_pdfs.db"
+        )
             .build()
     }
 

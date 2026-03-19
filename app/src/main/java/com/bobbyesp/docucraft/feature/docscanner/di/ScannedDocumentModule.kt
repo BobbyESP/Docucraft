@@ -5,9 +5,9 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.LocalDocumentsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
-import com.bobbyesp.docucraft.feature.docscanner.domain.search.CompositeSearchStrategy
-import com.bobbyesp.docucraft.feature.docscanner.domain.search.DatabaseSearchStrategy
-import com.bobbyesp.docucraft.feature.docscanner.domain.search.InMemorySearchStrategy
+import com.bobbyesp.docucraft.feature.docscanner.data.search.CompositeSearchStrategy
+import com.bobbyesp.docucraft.feature.docscanner.data.search.DatabaseSearchStrategy
+import com.bobbyesp.docucraft.feature.docscanner.data.search.InMemorySearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.service.DocumentOperationsService

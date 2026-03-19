@@ -68,12 +68,12 @@ class LocalDocumentsRepositoryImpl(
         }
     }
 
-    override suspend fun deleteDocument(pdfPath: Uri) {
+    override suspend fun deleteDocument(path: Uri) {
         // First remove from database to maintain referential integrity
-        val deletedCount = scannedDocumentDao.deleteByPath(pdfPath.toString())
+        val deletedCount = scannedDocumentDao.deleteByPath(path.toString())
 
         if (deletedCount <= 0) {
-            throw IllegalArgumentException("No document found with path: $pdfPath")
+            throw IllegalArgumentException("No document found with path: $path")
         }
     }
 

@@ -1,6 +1,5 @@
 package com.bobbyesp.docucraft.feature.docscanner.data.db.dao
 
-import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Query
 import com.bobbyesp.docucraft.core.data.local.db.BaseDao
@@ -9,9 +8,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ScannedDocumentDao : BaseDao<ScannedDocumentEntity> {
-    @Query("SELECT * FROM scanned_documents ORDER BY createdTimestamp DESC LIMIT :limit OFFSET :offset")
-    fun fetchPaginated(offset: Int = 0, limit: Int = 20): PagingSource<Int, ScannedDocumentEntity>
-
     @Query("SELECT * FROM scanned_documents WHERE id = :id")
     suspend fun getById(id: String): ScannedDocumentEntity?
 
@@ -21,28 +17,14 @@ interface ScannedDocumentDao : BaseDao<ScannedDocumentEntity> {
     @Query("SELECT * FROM scanned_documents ORDER BY createdTimestamp DESC")
     fun observeDocuments(): Flow<List<ScannedDocumentEntity>>
 
-    @Query("SELECT * FROM scanned_documents WHERE filename LIKE '%' || :searchQuery || '%'")
-    suspend fun searchByFilename(searchQuery: String): List<ScannedDocumentEntity>
-
-    @Query("SELECT * FROM scanned_documents WHERE description LIKE '%' || :searchQuery || '%'")
-    suspend fun searchByDescription(searchQuery: String): List<ScannedDocumentEntity>
-
-    @Query("SELECT COUNT(*) FROM scanned_documents")
-    suspend fun getScannedDocumentsCount(): Int
+    @Query("UPDATE scanned_documents SET title = :title, description = :description WHERE id = :id")
+    suspend fun updateDocumentDetails(id: String, title: String?, description: String?): Int
 
     @Query("DELETE FROM scanned_documents WHERE path = :path")
     suspend fun deleteByPath(path: String): Int
 
     @Query("DELETE FROM scanned_documents WHERE id = :id")
     suspend fun deleteById(id: String): Int
-
-    @Query("DELETE FROM scanned_documents")
-    suspend fun clear(): Int
-
-    @Query(
-        "SELECT * FROM scanned_documents WHERE createdTimestamp BETWEEN :startTime AND :endTime ORDER BY createdTimestamp DESC"
-    )
-    suspend fun getWithinTimeRange(startTime: Long, endTime: Long): List<ScannedDocumentEntity>
 
     @Query(
         """
@@ -66,6 +48,11 @@ interface ScannedDocumentDao : BaseDao<ScannedDocumentEntity> {
         minSize: Long? = null,
     ): List<ScannedDocumentEntity>
 
-    @Query("UPDATE scanned_documents SET title = :title, description = :description WHERE id = :id")
-    suspend fun updateDocumentDetails(id: String, title: String?, description: String?): Int
+    @Query(
+        "SELECT * FROM scanned_documents WHERE createdTimestamp BETWEEN :startTime AND :endTime ORDER BY createdTimestamp DESC"
+    )
+    suspend fun getWithinTimeRange(startTime: Long, endTime: Long): List<ScannedDocumentEntity>
+
+    @Query("DELETE FROM scanned_documents")
+    suspend fun clear(): Int
 }

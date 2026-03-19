@@ -2,7 +2,7 @@ package com.bobbyesp.docucraft.feature.docscanner.data.repository
 
 import android.app.Activity
 import androidx.activity.result.ActivityResult
-import com.bobbyesp.docucraft.feature.docscanner.data.mapper.MlKitMapper
+import com.bobbyesp.docucraft.feature.docscanner.data.mapper.MlKitScannerMapper.toRawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScannerException
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannerRepository
@@ -17,7 +17,7 @@ class MlKitScannerRepository : ScannerRepository {
                 throw ScannerException.ScanCancelled()
             } else {
                 if (result.resultCode == Activity.RESULT_OK) {
-                    Result.success(MlKitMapper.mapToDomain(gmsResult))
+                    Result.success(gmsResult.toRawScanResult())
                 } else {
                     Result.failure(ScannerException.ScanCancelled())
                 }
@@ -27,5 +27,4 @@ class MlKitScannerRepository : ScannerRepository {
             Result.failure(ScannerException.ScanFailed(e.message ?: "Unknown error"))
         }
     }
-
 }

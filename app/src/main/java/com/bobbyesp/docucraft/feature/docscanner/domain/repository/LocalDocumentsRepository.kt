@@ -101,8 +101,8 @@ interface LocalDocumentsRepository {
      * 2. (Optional depending on implementation) Deleting the actual physical file from the device storage
      *    referenced by [pdfPath].
      *
-     * @param pdfPath The [Uri] of the document to be deleted.
+     * @param path The [Uri] of the document to be deleted.
      * @throws SecurityException If the app lacks permissions to delete the physical file.
      */
-    suspend fun deleteDocument(pdfPath: Uri)
+    suspend fun deleteDocument(path: Uri)
 }
