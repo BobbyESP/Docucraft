@@ -86,8 +86,8 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentCardPosition
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
+import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
 import com.bobbyesp.docucraft.util.MockData
 import kotlin.math.roundToInt
@@ -100,8 +100,7 @@ import kotlin.math.roundToInt
 @Composable
 fun HomeContent(
     uiState: HomeUiState,
-    onAction: (HomeUiAction) -> Unit,
-    onOpenSheet: (documentId: String) -> Unit,
+    onAction: (HomeIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val searchQuery = uiState.searchQuery
@@ -161,8 +160,8 @@ fun HomeContent(
                     ) {
                         SearchBar(
                             query = searchQuery,
-                            onQueryChange = { onAction(HomeUiAction.UpdateSearchQuery(it)) },
-                            onClear = { onAction(HomeUiAction.ClearSearch) },
+                            onQueryChange = { onAction(HomeIntent.UpdateSearch(it)) },
+                            onClear = { onAction(HomeIntent.ClearSearch) },
                             onFocusChange = { isSearchFocused = it },
                             modifier = Modifier.weight(1f),
                         )
@@ -176,7 +175,7 @@ fun HomeContent(
                                     contentDescription = stringResource(id = R.string.doc_scan_new),
                                 )
                             },
-                            onClick = { onAction(HomeUiAction.LaunchDocumentScanner) },
+                            onClick = { onAction(HomeIntent.LaunchScanner) },
                         )
                     }
                 }
@@ -211,14 +210,13 @@ fun HomeContent(
                         ) {
                             EmptyStateScreen(
                                 modifier = Modifier, onScanDocument = {
-                                    onAction(HomeUiAction.LaunchDocumentScanner)
+                                    onAction(HomeIntent.LaunchScanner)
                                 })
                         }
                     } else {
                         ScannedDocumentsList(
                             scannedDocuments = uiState.visibleDocuments,
                             onAction = onAction,
-                            onOpenSheet = onOpenSheet,
                             filterOptions = filterOptions,
                             listState = listState,
                         )
@@ -234,8 +232,7 @@ fun HomeContent(
 private fun ScannedDocumentsList(
     scannedDocuments: List<ScannedDocument>,
     filterOptions: FilterOptions,
-    onAction: (HomeUiAction) -> Unit,
-    onOpenSheet: (documentId: String) -> Unit,
+    onAction: (HomeIntent) -> Unit,
     listState: LazyListState,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
@@ -257,7 +254,7 @@ private fun ScannedDocumentsList(
             SortOptionsRow(
                 currentSortOption = filterOptions.sortBy,
                 onSortOptionChange = {
-                    onAction(HomeUiAction.ApplySort(it))
+                    onAction(HomeIntent.ApplySort(it))
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
                 },
                 modifier = Modifier
@@ -298,8 +295,8 @@ private fun ScannedDocumentsList(
                     ),
                 pdf = scannedDocument,
                 position = position,
-                onItemClick = { id -> onAction(HomeUiAction.ViewDocument(id)) },
-                onItemLongClick = { onOpenSheet(scannedDocument.uuid) },
+                onItemClick = { id -> onAction(HomeIntent.ViewDocument(id)) },
+                onItemLongClick = { onAction(HomeIntent.OpenSheet(scannedDocument.uuid)) },
             )
         }
 
@@ -457,7 +454,6 @@ private fun HomeContentPreview() {
                 visibleDocuments = MockData.Documents.documentsList
             ),
             onAction = {},
-            onOpenSheet = {},
         )
     }
 }

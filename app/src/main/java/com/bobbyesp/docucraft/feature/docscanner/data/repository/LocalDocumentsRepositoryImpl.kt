@@ -20,7 +20,7 @@ class LocalDocumentsRepositoryImpl(
         scannedDocumentDao
             .observeDocuments()
             .map { entities -> entities.map { it.toModel() } }
-            .flowOn(Dispatchers.IO)
+            .flowOn(Dispatchers.Default)
 
     override suspend fun searchDocuments(query: String): List<ScannedDocument> {
         val trimmed = query.trim()
@@ -53,14 +53,14 @@ class LocalDocumentsRepositoryImpl(
     }
 
     override suspend fun modifyFields(
-        id: String,
+        uuid: String,
         title: String?,
         description: String?,
     ) {
-        require(id.isNotEmpty()) { "Document ID must not be empty" }
+        require(uuid.isNotEmpty()) { "Document UUID must not be empty" }
 
-        val existing = scannedDocumentDao.getByUuid(id)
-            ?: throw NoSuchElementException("No document found with ID: $id")
+        val existing = scannedDocumentDao.getByUuid(uuid)
+            ?: throw NoSuchElementException("No document found with UUID: $uuid")
 
         val updated = existing.copy(
             title = title,

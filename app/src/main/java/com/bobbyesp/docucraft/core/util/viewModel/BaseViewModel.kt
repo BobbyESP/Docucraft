@@ -2,6 +2,7 @@ package com.bobbyesp.docucraft.core.util.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bobbyesp.docucraft.core.util.events.UiEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.coroutines.CoroutineContext
 
 abstract class BaseViewModel<Intent : Any, State : Any, Effect : Any>(
     initialState: State
@@ -29,6 +31,9 @@ abstract class BaseViewModel<Intent : Any, State : Any, Effect : Any>(
 
     private val _effects = Channel<Effect>(Channel.BUFFERED)
     val effects: Flow<Effect> = _effects.receiveAsFlow()
+
+    private val _defaultUiEvents = Channel<UiEvent>(Channel.BUFFERED)
+    val defaultEvents: Flow<UiEvent> = _defaultUiEvents.receiveAsFlow()
 
     // ---------------- INTENTS ----------------
 
@@ -52,13 +57,20 @@ abstract class BaseViewModel<Intent : Any, State : Any, Effect : Any>(
         }
     }
 
+    protected fun sendUiEvent(event: UiEvent) {
+        viewModelScope.launch {
+            _defaultUiEvents.send(event)
+        }
+    }
+
     // ---------------- SAFE LAUNCH ----------------
 
     protected fun launch(
         onError: ((Throwable) -> Unit)? = null,
+        context: CoroutineContext = viewModelScope.coroutineContext,
         block: suspend CoroutineScope.() -> Unit
     ): Job {
-        return viewModelScope.launch {
+        return viewModelScope.launch(context) {
             runCatching { block() }
                 .onFailure { error ->
                     onError?.invoke(error)
@@ -70,6 +82,6 @@ abstract class BaseViewModel<Intent : Any, State : Any, Effect : Any>(
     // ---------------- ERROR HOOK ----------------
 
     protected open fun handleError(throwable: Throwable) {
-        // override opcional
+        //Optional override
     }
 }

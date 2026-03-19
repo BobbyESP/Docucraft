@@ -18,6 +18,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import com.bobbyesp.docucraft.core.presentation.common.LocalWindowWidthState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsContent
+import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentSheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsDialog
@@ -27,15 +28,19 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialo
 @Composable
 fun DocumentDialogWrapper(
     sheetState: DocumentSheetUiState,
-    onAction: (SheetAction) -> Unit,
+    onHomeIntent: (HomeIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val onAction: (SheetAction) -> Unit = {
+        onHomeIntent(HomeIntent.Sheet(it))
+    }
+
     val windowSizeClass = LocalWindowWidthState.current
     val isCompact = windowSizeClass == WindowWidthSizeClass.Compact
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
-        onDismissRequest = { onAction(SheetAction.Dismiss) },
+        onDismissRequest = { onAction( SheetAction.Dismiss) },
         sheetState = bottomSheetState,
         modifier = modifier,
     ) {

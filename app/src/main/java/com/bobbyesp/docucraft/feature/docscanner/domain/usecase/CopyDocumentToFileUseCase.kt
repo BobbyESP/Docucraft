@@ -5,6 +5,8 @@ import android.net.Uri
 import com.bobbyesp.docucraft.core.util.ensureParent
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.sink
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.io.buffered
 
 /**
@@ -12,20 +14,24 @@ import kotlinx.io.buffered
  * operation.
  */
 class CopyDocumentToFileUseCase(private val context: Context) {
-    operator fun invoke(inputUri: Uri, outputFile: PlatformFile): Result<Unit> = runCatching {
-        outputFile.ensureParent(mustCreate = true)
+    suspend operator fun invoke(inputUri: Uri, outputFile: PlatformFile): Result<Unit> = withContext(
+        Dispatchers.IO
+    ) {
+        runCatching {
+            outputFile.ensureParent(mustCreate = true)
 
-        val sink = outputFile.sink(append = false).buffered()
+            val sink = outputFile.sink(append = false).buffered()
 
-        sink.use { bufferedSink ->
-            context.contentResolver.openInputStream(inputUri)?.use { inputStream ->
-                val buffer = ByteArray(BUFFER_SIZE)
-                var bytesRead: Int
-                while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-                    bufferedSink.write(buffer, 0, bytesRead)
+            sink.use { bufferedSink ->
+                context.contentResolver.openInputStream(inputUri)?.use { inputStream ->
+                    val buffer = ByteArray(BUFFER_SIZE)
+                    var bytesRead: Int
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        bufferedSink.write(buffer, 0, bytesRead)
+                    }
                 }
+                    ?: throw IllegalStateException("Could not open input stream for URI: $inputUri")
             }
-                ?: throw IllegalStateException("Could not open input stream for URI: $inputUri")
         }
     }
 

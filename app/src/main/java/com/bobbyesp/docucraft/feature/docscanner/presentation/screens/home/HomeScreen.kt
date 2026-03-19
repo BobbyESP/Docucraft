@@ -13,8 +13,7 @@ import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiAction
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiEffect
+import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentDialogWrapper
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import kotlinx.coroutines.flow.Flow
@@ -29,32 +28,31 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
 
     HandleHomeUiEffects(
-        uiEffectFlow = viewModel.uiEffect,
-        uiEventFlow = viewModel.events,
+        uiEffectFlow = viewModel.effects,
+        uiEventFlow = viewModel.defaultEvents,
         onNavigate = onNavigate,
     )
 
     uiState.sheetState?.let { sheetState ->
         DocumentDialogWrapper(
             sheetState = sheetState,
-            onAction = viewModel::onSheetAction,
+            onHomeIntent = viewModel::onSendIntent,
         )
     }
 
     HomeContent(
         modifier = modifier,
         uiState = uiState,
-        onAction = viewModel::onAction,
-        onOpenSheet = { id -> viewModel.onAction(HomeUiAction.OpenSheet(id)) },
+        onAction = viewModel::onSendIntent,
     )
 }
 
 @Composable
 private fun HandleHomeUiEffects(
-    uiEffectFlow: Flow<HomeUiEffect>,
+    uiEffectFlow: Flow<HomeEffect>,
     uiEventFlow: Flow<UiEvent>,
     onNavigate: (Route) -> Unit,
 ) {
@@ -64,7 +62,7 @@ private fun HandleHomeUiEffects(
     LaunchedEffect(uiEffectFlow) {
         uiEffectFlow.collectLatest { effect ->
             when (effect) {
-                is HomeUiEffect.Navigate -> {
+                is HomeEffect.Navigate -> {
                     currentOnNavigate(effect.route)
                     analyticsHelper.logScreenView(effect.route::class.simpleName.toString())
                 }

@@ -1,6 +1,5 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.contract
 
-import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
@@ -32,29 +31,4 @@ data class HomeUiState(
     }
 
     val isEmptyResult: Boolean = visibleDocuments.isEmpty() && hasDocuments
-}
-
-// --- ACTIONS (Inputs from UI) ---
-sealed interface HomeUiAction {
-    // Scanning
-    data object LaunchDocumentScanner : HomeUiAction
-    data class ScanResultAction(val rawScanResult: RawScanResult) : HomeUiAction
-
-    // Document viewing
-    data class ViewDocument(val id: String) : HomeUiAction
-
-    // Search & Filter
-    data class UpdateSearchQuery(val query: String) : HomeUiAction
-    data object ClearSearch : HomeUiAction
-    data class ToggleSearchBar(val isVisible: Boolean) : HomeUiAction
-    data class ApplySort(val sortOption: SortOption) : HomeUiAction
-    data class ApplyFilter(val filterOptions: FilterOptions) : HomeUiAction
-    data object ClearFilters : HomeUiAction
-
-    data class OpenSheet(val documentId: String) : HomeUiAction
-}
-
-// --- EFFECTS (One-off Events for UI) ---
-sealed interface HomeUiEffect {
-    data class Navigate(val route: Route) : HomeUiEffect
 }

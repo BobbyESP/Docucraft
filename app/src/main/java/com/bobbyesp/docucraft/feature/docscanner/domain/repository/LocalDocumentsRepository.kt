@@ -86,12 +86,12 @@ interface LocalDocumentsRepository {
      * that the current value of that field should remain unchanged. This allows for partial updates
      * (e.g., renaming the file without clearing the description).
      *
-     * @param id The unique identifier of the document to update.
+     * @param uuid The unique identifier of the document to update.
      * @param title The new title to set. If `null`, the existing title is preserved.
      * @param description The new description to set. If `null`, the existing description is preserved.
-     * @throws IllegalArgumentException If the provided [id] does not exist.
+     * @throws IllegalArgumentException If the provided [uuid] does not exist.
      */
-    suspend fun modifyFields(id: String, title: String?, description: String?)
+    suspend fun modifyFields(uuid: String, title: String?, description: String?)
 
     /**
      * Permanently removes a document from the system.

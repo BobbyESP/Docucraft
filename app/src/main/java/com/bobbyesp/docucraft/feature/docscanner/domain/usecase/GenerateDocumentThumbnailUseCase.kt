@@ -7,6 +7,8 @@ import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.filesDir
 import io.github.vinceglb.filekit.path
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
@@ -14,7 +16,7 @@ import java.io.File
  * thumbnail generation.
  */
 class GenerateDocumentThumbnailUseCase(private val documentOperationsService: DocumentOperationsService) {
-    operator fun invoke(pdfUri: Uri, filename: String): String {
+    suspend operator fun invoke(pdfUri: Uri, filename: String): String = withContext(Dispatchers.IO) {
         val thumbnailDir = PlatformFile(FileKit.filesDir, "previews")
         thumbnailDir.ensure(mustCreate = true)
 
@@ -27,7 +29,7 @@ class GenerateDocumentThumbnailUseCase(private val documentOperationsService: Do
             quality = THUMBNAIL_QUALITY,
         )
 
-        return thumbnailFile.path
+        thumbnailFile.path
     }
 
     companion object {

@@ -7,6 +7,8 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocument
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.delete
 import io.github.vinceglb.filekit.exists
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Use case for deleting a scanned PDF. Handles both database removal and physical file deletion.
@@ -15,8 +17,7 @@ class DeleteDocumentUseCase(
     private val repository: LocalDocumentsRepository,
     private val fileRepository: FileRepository,
 ) {
-    suspend operator fun invoke(documentUri: Uri) {
-        // Remove from database first (maintains referential integrity)
+    suspend operator fun invoke(documentUri: Uri) = withContext(Dispatchers.IO) {
         repository.deleteDocument(documentUri)
         deleteFile(documentUri)
     }
