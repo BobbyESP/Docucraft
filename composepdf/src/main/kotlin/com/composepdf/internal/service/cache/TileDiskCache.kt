@@ -74,34 +74,36 @@ class TileDiskCache(
         }
     }
 
-    suspend fun put(docKey: String, pageIndex: Int, tileKey: String, bitmap: Bitmap) = withContext(Dispatchers.IO) {
-        val file = fileFor(docKey, pageIndex, tileKey)
-        val tmp = File("${file.absolutePath}.tmp")
+    suspend fun put(docKey: String, pageIndex: Int, tileKey: String, bitmap: Bitmap) =
+        withContext(Dispatchers.IO) {
+            val file = fileFor(docKey, pageIndex, tileKey)
+            val tmp = File("${file.absolutePath}.tmp")
 
-        try {
-            FileOutputStream(tmp).use { fos ->
-                BufferedOutputStream(fos).use { out ->
-                    val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        Bitmap.CompressFormat.WEBP_LOSSLESS
-                    } else {
-                        @Suppress("DEPRECATION")
-                        Bitmap.CompressFormat.WEBP
+            try {
+                FileOutputStream(tmp).use { fos ->
+                    BufferedOutputStream(fos).use { out ->
+                        val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            Bitmap.CompressFormat.WEBP_LOSSLESS
+                        } else {
+                            @Suppress("DEPRECATION")
+                            Bitmap.CompressFormat.WEBP
+                        }
+                        bitmap.compress(format, 100, out)
+                        out.flush()
                     }
-                    bitmap.compress(format, 100, out)
-                    out.flush()
                 }
-            }
-            if (!tmp.renameTo(file)) {
+                if (!tmp.renameTo(file)) {
+                    tmp.delete()
+                } else {
+                    if (Random.nextInt(10) == 0) trim()
+                }
+            } catch (_: IOException) {
                 tmp.delete()
-            } else {
-                if (Random.nextInt(10) == 0) trim()
             }
-        } catch (_: IOException) {
-            tmp.delete()
         }
-    }
 
-    fun containsKey(docKey: String, pageIndex: Int, tileKey: String): Boolean = fileFor(docKey, pageIndex, tileKey).exists()
+    fun containsKey(docKey: String, pageIndex: Int, tileKey: String): Boolean =
+        fileFor(docKey, pageIndex, tileKey).exists()
 
     private fun trim() {
         val files = directory.listFiles() ?: return

@@ -13,10 +13,10 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
-import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import com.composepdf.internal.logic.PdfViewerStateControllerBridge
 import com.composepdf.internal.logic.PublishedTile
 import com.composepdf.internal.logic.ViewerSessionState
+import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -144,7 +144,7 @@ class PdfViewerState(
         val ctrl = controller ?: return
         val target = pageIndex.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
         val (targetPanX, targetPanY) = ctrl.computeCenteredPanForPage(target)
-        
+
         panX = targetPanX
         panY = targetPanY
         currentPage = target
@@ -278,18 +278,19 @@ class PdfViewerState(
          * Creates a [Saver] for [PdfViewerState].
          * Note: The [scope] is not saved; a new one must be provided upon restoration.
          */
-        fun saver(bitmapPool: BitmapPool, scope: CoroutineScope): Saver<PdfViewerState, *> = listSaver(
-            save = { listOf(it.currentPage, it.zoom, it.panX, it.panY) },
-            restore = {
-                PdfViewerState(
-                    initialPage = it[0] as Int,
-                    initialZoom = it[1] as Float,
-                    bitmapPool = bitmapPool,
-                    scope = scope
-                ).also { s ->
-                    s.panX = it[2] as Float; s.panY = it[3] as Float
+        fun saver(bitmapPool: BitmapPool, scope: CoroutineScope): Saver<PdfViewerState, *> =
+            listSaver(
+                save = { listOf(it.currentPage, it.zoom, it.panX, it.panY) },
+                restore = {
+                    PdfViewerState(
+                        initialPage = it[0] as Int,
+                        initialZoom = it[1] as Float,
+                        bitmapPool = bitmapPool,
+                        scope = scope
+                    ).also { s ->
+                        s.panX = it[2] as Float; s.panY = it[3] as Float
+                    }
                 }
-            }
-        )
+            )
     }
 }

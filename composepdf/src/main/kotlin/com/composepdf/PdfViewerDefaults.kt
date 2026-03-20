@@ -3,6 +3,8 @@ package com.composepdf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.composepdf.PdfViewerDefaults.DoubleTapZoom
+import com.composepdf.PdfViewerDefaults.MaxZoom
 
 /**
  * Default values for [PdfViewer] configuration and appearance.

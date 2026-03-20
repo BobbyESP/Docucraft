@@ -2,9 +2,9 @@ package com.composepdf.renderer.tiles
 
 import android.graphics.Rect
 import android.util.Size
+import com.composepdf.ScrollDirection
 import com.composepdf.internal.logic.PageLayoutSnapshot
 import com.composepdf.internal.logic.ViewportMetrics
-import com.composepdf.ScrollDirection
 import com.composepdf.internal.logic.tiles.TileKey
 import com.composepdf.internal.logic.tiles.TilePlanner
 import com.composepdf.internal.logic.tiles.ViewportState

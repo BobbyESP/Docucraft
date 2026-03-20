@@ -1,9 +1,9 @@
 package com.composepdf.internal.service.renderer
 
-import com.composepdf.internal.logic.tiles.TilePlanner
 import com.composepdf.PdfViewerState
 import com.composepdf.ViewerConfig
 import com.composepdf.internal.logic.ViewerViewportCoordinator
+import com.composepdf.internal.logic.tiles.TilePlanner
 import com.composepdf.internal.service.pdf.PageRenderer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

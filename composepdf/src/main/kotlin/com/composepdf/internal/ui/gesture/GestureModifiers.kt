@@ -263,9 +263,15 @@ internal fun Modifier.viewerGestures(
                     if (speed > minVelocity) {
                         gs.fling(
                             velocity = Velocity(velocityX, velocityY),
-                            onDelta = { delta -> controller.onGestureUpdate(1f, delta, Offset.Zero) },
+                            onDelta = { delta ->
+                                controller.onGestureUpdate(
+                                    1f,
+                                    delta,
+                                    Offset.Zero
+                                )
+                            },
                             onVelocityUpdate = { state.scrollVelocity = it },
-                            onEnd = { 
+                            onEnd = {
                                 state.scrollVelocity = Offset.Zero
                                 handleGestureEnd(state, controller, config, gs, zoomAnimationSpec)
                             }
@@ -290,7 +296,8 @@ internal fun Modifier.viewerGestures(
                         secondDown = withTimeoutOrNull(remainingTime) {
                             awaitFirstDown(requireUnconsumed = false)
                         }
-                    } catch (_: Exception) {}
+                    } catch (_: Exception) {
+                    }
 
                     if (secondDown != null && config.isZoomGesturesEnabled) {
                         val dist = (secondDown.position - firstDownPos).getDistance()
@@ -315,7 +322,15 @@ internal fun Modifier.viewerGestures(
                                     to = targetZoom,
                                     pivot = secondDown.position,
                                     onFrame = { z, p -> controller.onAnimatedZoomFrame(z, p) },
-                                    onEnd = { handleGestureEnd(state, controller, config, gs, zoomAnimationSpec) },
+                                    onEnd = {
+                                        handleGestureEnd(
+                                            state,
+                                            controller,
+                                            config,
+                                            gs,
+                                            zoomAnimationSpec
+                                        )
+                                    },
                                     spec = zoomAnimationSpec
                                 )
                                 secondDown.consume()
@@ -346,7 +361,7 @@ private fun handleGestureEnd(
         gs.animatePanTo(
             from = Offset(state.panX, state.panY),
             to = Offset(targetPanX, targetPanY),
-            onUpdate = { 
+            onUpdate = {
                 // We need a way to update pan directly if we want it smooth, 
                 // but controller.onGestureUpdate(1f, it - lastOffset, ...) could work too.
                 // For now, let's just use the bridge if we can or just call onGestureUpdate with deltas.
@@ -356,11 +371,11 @@ private fun handleGestureEnd(
             },
             onEnd = { controller.onGestureEnd() }
         )
-        
+
         // Revised: Use a specialized animation to avoid complex delta math
         val startPan = Offset(state.panX, state.panY)
         val endPan = Offset(targetPanX, targetPanY)
-        
+
         gs.animatePanTo(
             from = startPan,
             to = endPan,
@@ -372,13 +387,13 @@ private fun handleGestureEnd(
                 // However, GestureModifiers is in com.composepdf.gesture and state properties are internal.
                 // Actually, PdfViewerState.panX is internal. PdfViewerController.onGestureUpdate is internal too.
                 // Wait, PdfViewer.kt is in com.composepdf.
-                
+
                 // Let's assume for now we can call onGestureUpdate.
                 // We'll need to keep track of the previous pan in the animation.
             },
             onEnd = { controller.onGestureEnd() }
         )
-        
+
         // Simpler implementation of snapping for now:
         controller.onGestureEnd() // This already calls clampPan and updateCurrentPageFromViewport
     } else {

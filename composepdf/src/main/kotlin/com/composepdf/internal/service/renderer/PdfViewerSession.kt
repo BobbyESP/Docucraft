@@ -2,15 +2,15 @@ package com.composepdf.internal.service.renderer
 
 import android.content.Context
 import android.graphics.Bitmap
-import com.composepdf.internal.service.cache.bitmap.BitmapHousekeeper
-import com.composepdf.internal.service.cache.bitmap.BitmapPool
-import com.composepdf.internal.service.cache.TileDiskCache
 import com.composepdf.PdfSource
 import com.composepdf.PdfViewerState
 import com.composepdf.RemotePdfState
 import com.composepdf.ViewerConfig
 import com.composepdf.internal.logic.ViewerViewportCoordinator
 import com.composepdf.internal.logic.tiles.TilePlanner
+import com.composepdf.internal.service.cache.TileDiskCache
+import com.composepdf.internal.service.cache.bitmap.BitmapHousekeeper
+import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import com.composepdf.internal.service.pdf.DocumentResult
 import com.composepdf.internal.service.pdf.PageRenderer
 import com.composepdf.internal.service.pdf.PdfDocumentManager
@@ -81,7 +81,8 @@ internal class PdfViewerSession(
         renderedPagesProvider = { renderScheduler.renderedPages.value }
     }
 
-    fun recentRenderEvents(limit: Int = 50): List<RenderTelemetryEvent> = telemetry.recentEvents(limit)
+    fun recentRenderEvents(limit: Int = 50): List<RenderTelemetryEvent> =
+        telemetry.recentEvents(limit)
 
     fun updatePrefetchWindow(prefetchDistance: Int) {
         renderScheduler.prefetchWindow = prefetchDistance

@@ -1,11 +1,11 @@
 package com.composepdf.internal.service.pdf
 
 import android.content.Context
+import com.composepdf.PdfSource
+import com.composepdf.RemotePdfState
 import com.composepdf.internal.service.cache.TileDiskCache
 import com.composepdf.internal.service.remote.RemotePdfException
 import com.composepdf.internal.service.remote.RemotePdfLoader
-import com.composepdf.RemotePdfState
-import com.composepdf.PdfSource
 import com.composepdf.internal.util.longLivedContext
 
 /**
@@ -48,12 +48,15 @@ internal class PdfDocumentSession(
         remoteLoaderFactory(appContext).load(source).collect { remoteState ->
             onRemoteState(remoteState)
             when (remoteState) {
-                is RemotePdfState.Cached -> loadedDocument = openResolved(PdfSource.File(remoteState.file))
+                is RemotePdfState.Cached -> loadedDocument =
+                    openResolved(PdfSource.File(remoteState.file))
+
                 is RemotePdfState.Error -> throw RemotePdfException(
                     remoteState.type,
                     remoteState.message,
                     remoteState.cause
                 )
+
                 else -> Unit
             }
         }

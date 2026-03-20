@@ -22,8 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import com.composepdf.internal.logic.PdfViewerController
+import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import com.composepdf.internal.ui.PdfLayout
 
 /**
@@ -124,8 +124,8 @@ fun PdfViewer(
 
 /**
  * Creates and remembers a [PdfViewerState] that survives configuration changes.
- * 
- * In this industrial version, the [BitmapPool] is shared globally or tied to the 
+ *
+ * In this industrial version, the [BitmapPool] is shared globally or tied to the
  * viewer's lifetime to ensure all bitmaps are tracked and recycled.
  */
 @Composable
@@ -136,7 +136,7 @@ fun rememberPdfViewerState(
     // Global or context-scoped BitmapPool for the viewer engine.
     val bitmapPool = remember { BitmapPool() }
     val scope = rememberCoroutineScope()
-    
+
     return rememberSaveable(
         saver = PdfViewerState.saver(bitmapPool, scope)
     ) {

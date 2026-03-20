@@ -7,10 +7,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import com.composepdf.internal.service.cache.bitmap.BitmapPool
-import com.composepdf.internal.service.cache.LruTileCache
 import com.composepdf.RemotePdfState
 import com.composepdf.internal.logic.tiles.TileKey
+import com.composepdf.internal.service.cache.LruTileCache
+import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -104,15 +104,16 @@ internal class ViewerSessionState(
         tileRevision++
     }
 
-    suspend fun pruneTiles(predicate: (String) -> Boolean) = withContext(Dispatchers.Main.immediate) {
-        val keysToRemove = tilesSnapshot.keys.filterNot(predicate)
-        if (keysToRemove.isEmpty()) return@withContext
+    suspend fun pruneTiles(predicate: (String) -> Boolean) =
+        withContext(Dispatchers.Main.immediate) {
+            val keysToRemove = tilesSnapshot.keys.filterNot(predicate)
+            if (keysToRemove.isEmpty()) return@withContext
 
-        keysToRemove.forEach { key ->
-            tileCache.remove(key) // Triggers handleTileEviction
+            keysToRemove.forEach { key ->
+                tileCache.remove(key) // Triggers handleTileEviction
+            }
+            tileRevision++
         }
-        tileRevision++
-    }
 
     suspend fun clearTiles() = withContext(Dispatchers.Main.immediate) {
         tileCache.evictAll() // Triggers handleTileEviction for all
@@ -127,7 +128,8 @@ internal class ViewerSessionState(
                     tilesSnapshot = tilesSnapshot - key
                     TileKey.fromCacheKey(key)?.let { tileKey ->
                         val updatedByPage = publishedTilesByPage.toMutableMap()
-                        val remaining = updatedByPage[tileKey.pageIndex].orEmpty().filterNot { it.cacheKey == key }
+                        val remaining = updatedByPage[tileKey.pageIndex].orEmpty()
+                            .filterNot { it.cacheKey == key }
                         if (remaining.isEmpty()) updatedByPage.remove(tileKey.pageIndex)
                         else updatedByPage[tileKey.pageIndex] = remaining
                         publishedTilesByPage = updatedByPage

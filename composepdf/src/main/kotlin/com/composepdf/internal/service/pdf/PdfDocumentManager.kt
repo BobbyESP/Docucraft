@@ -110,7 +110,7 @@ class PdfDocumentManager(context: Context) : Closeable {
                     Log.e(
                         TAG,
                         "Inconsistent PdfDocumentManager state: acquired semaphore permit but no PdfRenderer available. " +
-                            "Renderer pool size=${rendererPool.size}."
+                                "Renderer pool size=${rendererPool.size}."
                     )
                     throw IllegalStateException(
                         "Inconsistent PdfDocumentManager state: acquired permit but no PdfRenderer available"
@@ -122,7 +122,9 @@ class PdfDocumentManager(context: Context) : Closeable {
                 if (generation.get() == capturedGeneration) {
                     rendererPool.offer(renderer)
                 } else {
-                    try { renderer.close() } catch (e: Exception) {
+                    try {
+                        renderer.close()
+                    } catch (e: Exception) {
                         Log.e(TAG, "Failed to close stale renderer: ${e.message}")
                     }
                 }
@@ -140,7 +142,7 @@ class PdfDocumentManager(context: Context) : Closeable {
      * @return List of [Size] objects in page-index order.
      */
     suspend fun getAllPageSizes(): List<Size> = coroutineScope {
-        if(!isOpen) throw IllegalStateException("Document not open")
+        if (!isOpen) throw IllegalStateException("Document not open")
         (0 until _pageCount).map { index ->
             async(Dispatchers.IO) {
                 withPage(index) { page -> Size(page.width, page.height) }
@@ -185,18 +187,24 @@ class PdfDocumentManager(context: Context) : Closeable {
     private fun drainAndClosePool() {
         while (true) {
             val renderer = rendererPool.poll() ?: break
-            try { renderer.close() } catch (e: Exception) {
+            try {
+                renderer.close()
+            } catch (e: Exception) {
                 Log.e(TAG, "Failed to close renderer: ${e.message}")
             }
         }
     }
 
     private fun closeFdAndResolver() {
-        try { masterFd?.close() } catch (e: Exception) {
+        try {
+            masterFd?.close()
+        } catch (e: Exception) {
             Log.e(TAG, "Failed to close master FD: ${e.message}")
         }
         masterFd = null
-        try { sourceResolver?.close() } catch (e: Exception) {
+        try {
+            sourceResolver?.close()
+        } catch (e: Exception) {
             Log.e(TAG, "Failed to close source resolver: ${e.message}")
         }
         sourceResolver = null

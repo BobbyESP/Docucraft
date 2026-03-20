@@ -1,11 +1,11 @@
 package com.composepdf.internal.logic
 
+import com.composepdf.PdfSource
 import com.composepdf.PdfViewerState
-import com.composepdf.ViewerConfig
 import com.composepdf.RemotePdfState
+import com.composepdf.ViewerConfig
 import com.composepdf.internal.service.pdf.DocumentResult
 import com.composepdf.internal.service.renderer.RenderTrigger
-import com.composepdf.PdfSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -33,8 +33,8 @@ internal class ViewerSessionCoordinator(
         updatePrefetchWindow(newConfig.prefetchDistance)
 
         val requiresLayoutRefresh = previousConfig.fitMode != newConfig.fitMode ||
-            previousConfig.pageSpacingPx != newConfig.pageSpacingPx ||
-            previousConfig.scrollDirection != newConfig.scrollDirection
+                previousConfig.pageSpacingPx != newConfig.pageSpacingPx ||
+                previousConfig.scrollDirection != newConfig.scrollDirection
 
         if (!requiresLayoutRefresh) {
             requestRender(RenderTrigger.CONFIG_CHANGED)

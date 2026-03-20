@@ -1,9 +1,9 @@
 package com.composepdf.internal.logic.tiles
 
 import android.graphics.Rect
+import com.composepdf.ScrollDirection
 import com.composepdf.internal.logic.PageLayoutSnapshot
 import com.composepdf.internal.service.pdf.PageRenderer
-import com.composepdf.ScrollDirection
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.ln
@@ -13,7 +13,7 @@ import kotlin.math.sqrt
 
 /**
  * Plans which high-resolution tiles should exist for the current viewport.
- * 
+ *
  * Refined to use normalized coordinate grids to prevent sub-pixel seams (gaps) between tiles
  * at extreme zoom levels.
  */
@@ -22,7 +22,7 @@ internal class TilePlanner(
 ) {
     /**
      * Computes the set of tiles required to cover the current viewport for the given layout.
-     * 
+     *
      * @param viewport Current screen-space viewport bounds and offset.
      * @param layout Snapshot of the document layout (page positions/sizes).
      * @param zoom The target magnification level.
@@ -50,7 +50,7 @@ internal class TilePlanner(
         val steppedZoom = computeSteppedZoom(zoom)
         val keepKeys = mutableSetOf<String>()
         val requests = mutableListOf<TileRequest>()
-        
+
         val viewportCenterX = viewport.width / 2f
         val viewportCenterY = viewport.height / 2f
 
@@ -72,11 +72,11 @@ internal class TilePlanner(
             val isPrefetchPage = pageIndex !in visiblePages
             val pageWidth = layout.pageWidthPx(pageIndex)
             val pageHeight = layout.pageHeightPx(pageIndex)
-            
+
             // Calculate page position in screen coordinates based on scroll direction
             val pageTop: Float
             val pageLeft: Float
-            
+
             if (layout.scrollDirection == ScrollDirection.VERTICAL) {
                 pageTop = layout.pageTopDocY(pageIndex) * zoom + viewport.panY
                 pageLeft = viewport.panX + (layout.corridorBreadth - pageWidth) * zoom / 2f
@@ -84,7 +84,7 @@ internal class TilePlanner(
                 pageTop = viewport.panY + (layout.corridorBreadth - pageHeight) * zoom / 2f
                 pageLeft = layout.pageLeftDocX(pageIndex) * zoom + viewport.panX
             }
-            
+
             val pageBottom = pageTop + pageHeight * zoom
             val pageRight = pageLeft + pageWidth * zoom
 
@@ -101,7 +101,7 @@ internal class TilePlanner(
             // Map screen visible bounds to "stepped-zoom" page coordinates
             // This is the critical math section to avoid seams.
             val scaleToStep = steppedZoom / zoom
-            
+
             // Bounds in stepped-zoom pixels
             val localVisibleTop = (visibleTop - pageTop) * scaleToStep
             val localVisibleBottom = (visibleBottom - pageTop) * scaleToStep
@@ -110,20 +110,22 @@ internal class TilePlanner(
 
             val pageWidthAtStep = pageWidth * steppedZoom
             val pageHeightAtStep = pageHeight * steppedZoom
-            
+
             val maxTileCols = ceil(pageWidthAtStep / tileSize).toInt().coerceAtLeast(1)
             val maxTileRows = ceil(pageHeightAtStep / tileSize).toInt().coerceAtLeast(1)
 
             // Calculate tile indices. Using a small epsilon to avoid edge-case "ghost" tiles.
             val epsilon = 0.001f
             val startX = floor((localVisibleLeft + epsilon) / tileSize).toInt().coerceAtLeast(0)
-            val endX = ceil((localVisibleRight - epsilon) / tileSize).toInt().coerceAtMost(maxTileCols)
+            val endX =
+                ceil((localVisibleRight - epsilon) / tileSize).toInt().coerceAtMost(maxTileCols)
             val startY = floor((localVisibleTop + epsilon) / tileSize).toInt().coerceAtLeast(0)
-            val endY = ceil((localVisibleBottom - epsilon) / tileSize).toInt().coerceAtMost(maxTileRows)
+            val endY =
+                ceil((localVisibleBottom - epsilon) / tileSize).toInt().coerceAtMost(maxTileRows)
 
             // Halo: Prefetch tiles immediately adjacent to the viewport to enable smooth panning.
             val halo = if (isPrefetchPage) 0 else PREFETCH_HALO_TILES
-            
+
             val tileStartX = (startX - halo).coerceAtLeast(0)
             val tileEndX = (endX + halo).coerceAtMost(maxTileCols)
             val tileStartY = (startY - halo).coerceAtLeast(0)
@@ -137,7 +139,7 @@ internal class TilePlanner(
                         ((tx + 1) * tileSize).coerceAtMost(pageWidthAtStep.roundToInt()),
                         ((ty + 1) * tileSize).coerceAtMost(pageHeightAtStep.roundToInt())
                     )
-                    
+
                     val tileKey = TileKey.fromLayout(
                         pageIndex = pageIndex,
                         rect = tileRect,
@@ -149,13 +151,16 @@ internal class TilePlanner(
 
                     if (!isTileCached(cacheKey)) {
                         // Priority is based on distance to viewport center in screen space
-                        val tileCenterX = ((tileRect.left + tileRect.right) / 2f / scaleToStep) + pageLeft
-                        val tileCenterY = ((tileRect.top + tileRect.bottom) / 2f / scaleToStep) + pageTop
-                        
+                        val tileCenterX =
+                            ((tileRect.left + tileRect.right) / 2f / scaleToStep) + pageLeft
+                        val tileCenterY =
+                            ((tileRect.top + tileRect.bottom) / 2f / scaleToStep) + pageTop
+
                         val dx = tileCenterX - viewportCenterX
                         val dy = tileCenterY - viewportCenterY
-                        val distanceSq = if (isPrefetchPage) Float.MAX_VALUE else (dx * dx + dy * dy)
-                        
+                        val distanceSq =
+                            if (isPrefetchPage) Float.MAX_VALUE else (dx * dx + dy * dy)
+
                         requests.add(TileRequest(tileKey, distanceSq))
                     }
                 }

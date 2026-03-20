@@ -4,9 +4,9 @@ import android.util.Size
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.PdfViewerState
 import com.composepdf.ViewerConfig
-import com.composepdf.internal.logic.ViewerViewportCoordinator
 import com.composepdf.internal.logic.PageLayoutSnapshot
 import com.composepdf.internal.logic.ViewerInteractionCoordinator
+import com.composepdf.internal.logic.ViewerViewportCoordinator
 import com.composepdf.internal.logic.ViewportMetrics
 import com.composepdf.internal.service.renderer.RenderTrigger
 import kotlinx.coroutines.CoroutineScope

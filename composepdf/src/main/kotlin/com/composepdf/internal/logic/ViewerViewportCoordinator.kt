@@ -66,7 +66,7 @@ internal class ViewerViewportCoordinator(
     fun pageWidthPx(index: Int): Float = layoutSnapshot.pageWidthPx(index)
 
     fun pageTopDocY(index: Int): Float = layoutSnapshot.pageTopDocY(index)
-    
+
     fun pageLeftDocX(index: Int): Float = layoutSnapshot.pageLeftDocX(index)
 
     fun visiblePageIndices(): IntRange {
@@ -104,7 +104,8 @@ internal class ViewerViewportCoordinator(
     }
 
     fun updateCurrentPageFromViewport() {
-        val currentPage = layoutSnapshot.currentPageAtViewportCenter(state.panX, state.panY, state.zoom) ?: return
+        val currentPage =
+            layoutSnapshot.currentPageAtViewportCenter(state.panX, state.panY, state.zoom) ?: return
         state.currentPage = currentPage.coerceIn(0, (state.pageCount - 1).coerceAtLeast(0))
     }
 

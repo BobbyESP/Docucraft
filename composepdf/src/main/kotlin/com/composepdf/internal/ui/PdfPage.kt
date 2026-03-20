@@ -18,14 +18,14 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.composepdf.internal.logic.tiles.TileKey
 import com.composepdf.PdfViewerState
+import com.composepdf.internal.logic.tiles.TileKey
 import kotlin.math.roundToInt
 
 /**
  * Composable responsible for rendering a single PDF page with industrial-grade precision.
  *
- * This implementation avoids "seams" (1px gaps) between tiles by calculating 
+ * This implementation avoids "seams" (1px gaps) between tiles by calculating
  * destinations in a way that ensures adjacent tiles share pixel boundaries perfectly.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -69,7 +69,7 @@ internal fun PdfPage(
                 // We calculate boundaries precisely to avoid sub-pixel gaps.
                 tiles.forEach { publishedTile ->
                     val tileKey = publishedTile.tileKey
-                    
+
                     // Filter: Only draw tiles from the current active zoom level and current layout width
                     if (tileKey.zoom != activeSteppedZoom) return@forEach
                     if (tileKey.baseWidthKey != expectedBaseWidthKey && tileKey.baseWidthKey >= 0) return@forEach

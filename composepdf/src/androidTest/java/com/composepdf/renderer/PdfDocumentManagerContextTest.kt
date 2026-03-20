@@ -12,8 +12,10 @@ import org.junit.runner.RunWith
 class PdfDocumentManagerContextTest {
     @Test
     fun storesApplicationContextForLongLivedWork() {
-        val appContext = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
-        val activityLikeContext = ContextThemeWrapper(appContext, android.R.style.Theme_DeviceDefault)
+        val appContext =
+            InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+        val activityLikeContext =
+            ContextThemeWrapper(appContext, android.R.style.Theme_DeviceDefault)
 
         val manager = PdfDocumentManager(activityLikeContext)
 

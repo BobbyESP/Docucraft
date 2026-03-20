@@ -45,10 +45,10 @@ class BitmapPool(
     private val maxSizeBytes: Int = DEFAULT_POOL_SIZE_BYTES
 ) {
     private val mutex = Mutex()
-    
+
     // Map: ByteCount -> Stack of Bitmaps (LIFO for better cache locality)
     private val groupedBitmaps: NavigableMap<Int, ArrayDeque<Bitmap>> = TreeMap()
-    
+
     private val _stats = MutableStateFlow(BitmapPoolStats(maxBytes = maxSizeBytes.toLong()))
     val stats: StateFlow<BitmapPoolStats> = _stats.asStateFlow()
 
@@ -58,9 +58,13 @@ class BitmapPool(
      *
      * This is a suspend function to ensure it plays well with the rendering pipeline's coroutines.
      */
-    suspend fun get(width: Int, height: Int, config: Bitmap.Config = Bitmap.Config.ARGB_8888): Bitmap {
+    suspend fun get(
+        width: Int,
+        height: Int,
+        config: Bitmap.Config = Bitmap.Config.ARGB_8888
+    ): Bitmap {
         val targetSizeBytes = calculateRequiredBytes(width, height, config)
-        
+
         if (targetSizeBytes == -1) {
             return createFreshBitmap(width, height, config)
         }
@@ -68,7 +72,7 @@ class BitmapPool(
         mutex.withLock {
             // Find a bitmap that is at least as large as we need.
             var entry = groupedBitmaps.ceilingEntry(targetSizeBytes)
-            
+
             while (entry != null) {
                 val size = entry.key
                 val deque = entry.value
@@ -83,13 +87,15 @@ class BitmapPool(
                         return try {
                             bitmap.reconfigure(width, height, config)
                             bitmap.eraseColor(0)
-                            
-                            _stats.update { it.copy(
-                                currentBytes = it.currentBytes - size,
-                                bitmapCount = it.bitmapCount - 1,
-                                reuseCount = it.reuseCount + 1
-                            ) }
-                            
+
+                            _stats.update {
+                                it.copy(
+                                    currentBytes = it.currentBytes - size,
+                                    bitmapCount = it.bitmapCount - 1,
+                                    reuseCount = it.reuseCount + 1
+                                )
+                            }
+
                             bitmap
                         } catch (e: IllegalArgumentException) {
                             Log.w(TAG, "Failed to reconfigure bitmap, searching next bucket...")
@@ -99,10 +105,12 @@ class BitmapPool(
                         }
                     } else {
                         // Bitmap was externally recycled or not mutable, update stats and continue
-                        _stats.update { it.copy(
-                            currentBytes = it.currentBytes - size,
-                            bitmapCount = it.bitmapCount - 1
-                        ) }
+                        _stats.update {
+                            it.copy(
+                                currentBytes = it.currentBytes - size,
+                                bitmapCount = it.bitmapCount - 1
+                            )
+                        }
                         entry = groupedBitmaps.ceilingEntry(size + 1)
                         continue
                     }
@@ -134,10 +142,12 @@ class BitmapPool(
                 val evicted = deque?.pollFirst()
 
                 if (evicted != null) {
-                    _stats.update { it.copy(
-                        currentBytes = it.currentBytes - smallestKey,
-                        bitmapCount = it.bitmapCount - 1
-                    ) }
+                    _stats.update {
+                        it.copy(
+                            currentBytes = it.currentBytes - smallestKey,
+                            bitmapCount = it.bitmapCount - 1
+                        )
+                    }
                 }
 
                 if (deque.isNullOrEmpty()) {
@@ -149,10 +159,12 @@ class BitmapPool(
             if (_stats.value.currentBytes + size <= maxSizeBytes) {
                 val deque = groupedBitmaps.getOrPut(size) { ArrayDeque() }
                 deque.offerLast(bitmap)
-                _stats.update { it.copy(
-                    currentBytes = it.currentBytes + size,
-                    bitmapCount = it.bitmapCount + 1
-                ) }
+                _stats.update {
+                    it.copy(
+                        currentBytes = it.currentBytes + size,
+                        bitmapCount = it.bitmapCount + 1
+                    )
+                }
             }
         }
     }

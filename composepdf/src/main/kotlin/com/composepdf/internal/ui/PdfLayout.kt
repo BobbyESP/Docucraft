@@ -20,12 +20,12 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Constraints
-import com.composepdf.internal.ui.gesture.viewerGestures
 import com.composepdf.PdfViewerState
 import com.composepdf.ScrollDirection
 import com.composepdf.ViewerConfig
 import com.composepdf.internal.logic.ViewerGestureController
 import com.composepdf.internal.logic.ViewerLayoutController
+import com.composepdf.internal.ui.gesture.viewerGestures
 import kotlin.math.roundToInt
 
 /**
@@ -145,10 +145,12 @@ internal fun PdfLayout(
                 if (config.scrollDirection == ScrollDirection.VERTICAL) {
                     // Vertical: pages centered horizontally in the corridor
                     x = (state.panX + (corridorBreadth - pageWidth) * state.zoom / 2f).roundToInt()
-                    y = (layoutController.pageTopDocY(pageIndex) * state.zoom + state.panY).roundToInt()
+                    y =
+                        (layoutController.pageTopDocY(pageIndex) * state.zoom + state.panY).roundToInt()
                 } else {
                     // Horizontal: pages centered vertically in the corridor
-                    x = (layoutController.pageLeftDocX(pageIndex) * state.zoom + state.panX).roundToInt()
+                    x =
+                        (layoutController.pageLeftDocX(pageIndex) * state.zoom + state.panX).roundToInt()
                     y = (state.panY + (corridorBreadth - pageHeight) * state.zoom / 2f).roundToInt()
                 }
 
