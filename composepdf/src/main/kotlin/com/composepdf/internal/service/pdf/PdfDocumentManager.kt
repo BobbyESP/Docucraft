@@ -7,15 +7,14 @@ import android.util.Log
 import android.util.Size
 import com.composepdf.PdfSource
 import com.composepdf.internal.util.longLivedContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import java.io.Closeable
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
 private const val TAG = "PdfDocumentManager"
@@ -26,12 +25,10 @@ class PdfDocumentManager(context: Context) : Closeable {
 
     private var masterFd: ParcelFileDescriptor? = null
     private var sourceResolver: PdfSourceResolver? = null
-    private val rendererPool = ConcurrentLinkedQueue<PdfRenderer>()
+
+    private var rendererChannel: Channel<PdfRenderer>? = null
 
     private val maxParallelRenderers = 2
-    private var semaphore = Semaphore(1)
-    private var currentPermits = 1
-
     private val generation = AtomicInteger(0)
 
     private var _pageCount = 0
@@ -48,20 +45,19 @@ class PdfDocumentManager(context: Context) : Closeable {
 
             val firstRenderer = PdfRenderer(fd)
             _pageCount = firstRenderer.pageCount
-            rendererPool.offer(firstRenderer)
 
-            var actualRenderers = 1
+            val channel = Channel<PdfRenderer>(maxParallelRenderers)
+            channel.send(firstRenderer)
+
             repeat(maxParallelRenderers - 1) {
                 try {
                     val dupFd = ParcelFileDescriptor.dup(fd.fileDescriptor)
-                    rendererPool.offer(PdfRenderer(dupFd))
-                    actualRenderers++
+                    channel.send(PdfRenderer(dupFd))
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to dup FD for parallel rendering: ${e.message}")
                 }
             }
-            semaphore = Semaphore(actualRenderers)
-            currentPermits = actualRenderers
+            rendererChannel = channel
         } catch (t: Throwable) {
             closeInternal()
             throw t
@@ -69,31 +65,29 @@ class PdfDocumentManager(context: Context) : Closeable {
     }
 
     suspend fun <T> withPage(pageIndex: Int, action: suspend (PdfRenderer.Page) -> T): T {
+        val currentChannel = rendererChannel ?: throw IllegalStateException("Document not open")
         val capturedGeneration = generation.get()
-        return semaphore.withPermit {
-            val renderer =
-                rendererPool.poll() ?: run {
-                    Log.e(
-                        TAG,
-                        "Inconsistent PdfDocumentManager state: acquired semaphore permit but no PdfRenderer available. " +
-                                "Renderer pool size=${rendererPool.size}."
-                    )
-                    throw IllegalStateException(
-                        "Inconsistent PdfDocumentManager state: acquired permit but no PdfRenderer available"
-                    )
+
+        val renderer = try {
+            currentChannel.receive()
+        } catch (e: Exception) {
+            throw CancellationException("Document closed while waiting for renderer", e)
+        }
+        
+        return try {
+            if (generation.get() != capturedGeneration) {
+                 throw CancellationException("Document closed (generation mismatch)")
+            }
+            
+            renderer.openPage(pageIndex).use { page -> action(page) }
+        } finally {
+            if (generation.get() == capturedGeneration) {
+                val result = currentChannel.trySend(renderer)
+                if (result.isFailure) {
+                     safeCloseRenderer(renderer)
                 }
-            try {
-                renderer.openPage(pageIndex).use { page -> action(page) }
-            } finally {
-                if (generation.get() == capturedGeneration) {
-                    rendererPool.offer(renderer)
-                } else {
-                    try {
-                        renderer.close()
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to close stale renderer: ${e.message}")
-                    }
-                }
+            } else {
+                safeCloseRenderer(renderer)
             }
         }
     }
@@ -108,38 +102,46 @@ class PdfDocumentManager(context: Context) : Closeable {
     }
 
     override fun close() {
+        try {
+           generation.incrementAndGet()
+           closeParams()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error closing document manager", e)
+        }
+    }
+
+    private fun closeInternal() {
         generation.incrementAndGet()
-        drainAndClosePool()
+        closeParams()
+    }
+
+    private fun closeParams() {
+        val channel = rendererChannel
+        rendererChannel = null
+
+        // Close channel to stop new consumers
+        channel?.close()
+        
+        // Drain and close existing renderers
+        if (channel != null) {
+            // Try to receive all available items
+            var renderer = channel.tryReceive().getOrNull()
+            while (renderer != null) {
+                safeCloseRenderer(renderer)
+                renderer = channel.tryReceive().getOrNull()
+            }
+        }
+
+        // Clean up FDs
         closeFdAndResolver()
         _pageCount = 0
-        currentPermits = 1
-        semaphore = Semaphore(1)
     }
 
-    private suspend fun closeInternal() {
-        val permitsToAcquire = currentPermits
-        val previousSemaphore = semaphore
-        repeat(permitsToAcquire) { previousSemaphore.acquire() }
+    private fun safeCloseRenderer(renderer: PdfRenderer) {
         try {
-            generation.incrementAndGet()
-            drainAndClosePool()
-            closeFdAndResolver()
-            _pageCount = 0
-            currentPermits = 1
-        } finally {
-            repeat(permitsToAcquire) { previousSemaphore.release() }
-        }
-        semaphore = Semaphore(1)
-    }
-
-    private fun drainAndClosePool() {
-        while (true) {
-            val renderer = rendererPool.poll() ?: break
-            try {
-                renderer.close()
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to close renderer: ${e.message}")
-            }
+            renderer.close()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to close renderer: ${e.message}")
         }
     }
 
@@ -147,7 +149,7 @@ class PdfDocumentManager(context: Context) : Closeable {
         try {
             masterFd?.close()
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to close master FD: ${e.message}")
+             Log.d(TAG, "Master FD close: ${e.message}")
         }
         masterFd = null
         try {

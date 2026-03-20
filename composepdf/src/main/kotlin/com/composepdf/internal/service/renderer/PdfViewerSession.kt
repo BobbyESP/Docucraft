@@ -22,19 +22,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import java.io.Closeable
 
-/**
- * Groups the active document session and the render infrastructure of the viewer.
- *
- * This object owns the lifecycle of:
- * - persistent tile disk cache
- * - document opening/session state
- * - bitmap housekeeping
- * - render scheduler
- * - tile planning/render pipeline
- *
- * `PdfViewerController` delegates document/render concerns here and stays focused on public
- * orchestration and state-facing APIs.
- */
 internal class PdfViewerSession(
     context: Context,
     scope: CoroutineScope,
