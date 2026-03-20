@@ -40,6 +40,8 @@ internal data class TileKey(
         if (documentKey.isNotEmpty()) "${documentKey}_${toCacheKey()}" else toCacheKey()
 
     companion object {
+        const val BASE_LAYER_ZOOM = 1.0f
+
         fun fromCacheKey(key: String): TileKey? {
             val parts = key.split("_")
             if (parts.size !in 6..7) return null
@@ -69,6 +71,8 @@ internal data class TileKey(
             if (baseWidthKey == UNKNOWN_BASE_WIDTH_KEY) UNKNOWN_BASE_WIDTH_KEY else baseWidthKey
 
         private fun normalizedZoom(zoom: Float): Float = (zoom * 100f).roundToInt() / 100f
+
+
         private const val UNKNOWN_BASE_WIDTH_KEY = -1
     }
 }

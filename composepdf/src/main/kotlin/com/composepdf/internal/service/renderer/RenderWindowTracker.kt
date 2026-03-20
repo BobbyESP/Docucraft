@@ -1,6 +1,6 @@
 package com.composepdf.internal.service.renderer
 
-import com.composepdf.internal.service.cache.PageCacheKey
+import com.composepdf.internal.logic.tiles.TileKey
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 internal data class RenderWindowSnapshot(
     val sessionToken: Int,
-    val desiredPages: Map<Int, PageCacheKey>,
+    val desiredPages: Map<Int, TileKey>,
     val desiredTiles: Set<String>
 )
 
@@ -47,7 +47,7 @@ internal class RenderWindowTracker {
         return next.sessionToken
     }
 
-    fun updateDesiredPages(specs: Map<Int, PageCacheKey>) {
+    fun updateDesiredPages(specs: Map<Int, TileKey>) {
         var old: RenderWindowSnapshot
         var next: RenderWindowSnapshot
         do {
@@ -68,7 +68,7 @@ internal class RenderWindowTracker {
     /**
      * Final publication check. Returns true if the session and key are still current.
      */
-    fun shouldPublishPage(session: Int, pageIndex: Int, cacheKey: PageCacheKey): Boolean {
+    fun shouldPublishPage(session: Int, pageIndex: Int, cacheKey: TileKey): Boolean {
         val current = snapshot.get()
         return session == current.sessionToken && current.desiredPages[pageIndex] == cacheKey
     }

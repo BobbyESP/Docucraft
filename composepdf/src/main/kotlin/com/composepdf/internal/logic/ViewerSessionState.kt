@@ -9,7 +9,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.composepdf.RemotePdfState
 import com.composepdf.internal.logic.tiles.TileKey
-import com.composepdf.internal.service.cache.LruTileCache
+import com.composepdf.internal.service.cache.MemoryCache
 import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,9 +43,10 @@ internal class ViewerSessionState(
     var remoteState: RemotePdfState by mutableStateOf(RemotePdfState.Idle)
     val isLoaded: Boolean get() = !isLoading && error == null && pageCount > 0
 
-    private val tileCache = LruTileCache(onEvicted = { key, bitmap ->
-        handleTileEviction(key, bitmap)
-    })
+    private val tileCache = MemoryCache<String>(
+        maxSizeBytes = (Runtime.getRuntime().maxMemory() * 0.20).toInt(),
+        onEvicted = { key, bitmap -> handleTileEviction(key, bitmap) }
+    )
 
     var tileRevision by mutableIntStateOf(0)
         private set

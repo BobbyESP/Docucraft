@@ -9,7 +9,6 @@ import com.composepdf.ViewerConfig
 import com.composepdf.internal.logic.ViewerViewportCoordinator
 import com.composepdf.internal.logic.tiles.TilePlanner
 import com.composepdf.internal.service.cache.TileDiskCache
-import com.composepdf.internal.service.cache.bitmap.BitmapHousekeeper
 import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import com.composepdf.internal.service.pdf.DocumentResult
 import com.composepdf.internal.service.pdf.PageRenderer
@@ -48,16 +47,9 @@ internal class PdfViewerSession(
     private val pageRenderer = PageRenderer(bitmapPool)
     private var renderedPagesProvider: () -> Map<Int, Bitmap> = { emptyMap() }
     private val telemetry = RenderTelemetry()
-    private val bitmapHousekeeper = BitmapHousekeeper(
-        scope = scope,
-        state = state,
-        renderedPagesProvider = { renderedPagesProvider() },
-        bitmapPool = bitmapPool
-    )
     private val renderScheduler = RenderScheduler(
         documentManager = documentManager,
         pageRenderer = pageRenderer,
-        cache = bitmapHousekeeper.bitmapCache,
         viewerState = state,
         bitmapPool = bitmapPool,
         tileDiskCache = tileDiskCache,
@@ -75,7 +67,6 @@ internal class PdfViewerSession(
     )
 
     val renderedPages: StateFlow<Map<Int, Bitmap>> = renderScheduler.renderedPages
-    val renderTelemetry: StateFlow<RenderTelemetrySnapshot> = telemetry.snapshot
 
     init {
         renderedPagesProvider = { renderScheduler.renderedPages.value }
@@ -116,6 +107,5 @@ internal class PdfViewerSession(
     override fun close() {
         renderScheduler.close()
         documentManager.close()
-        bitmapHousekeeper.clear()
     }
 }

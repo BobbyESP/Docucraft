@@ -1,13 +1,12 @@
 package com.composepdf.internal.service.renderer
 
 import android.graphics.Bitmap
+import android.graphics.Rect
 import android.util.Log
 import android.util.Size
 import com.composepdf.PdfViewerState
 import com.composepdf.internal.logic.tiles.TileKey
-import com.composepdf.internal.service.cache.PageCacheKey
 import com.composepdf.internal.service.cache.TileDiskCache
-import com.composepdf.internal.service.cache.bitmap.BitmapCache
 import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import com.composepdf.internal.service.pdf.PageRenderer
 import com.composepdf.internal.service.pdf.PdfDocumentManager
@@ -28,7 +27,6 @@ import java.io.Closeable
 import java.util.concurrent.Executors
 import java.util.concurrent.PriorityBlockingQueue
 import kotlin.math.abs
-import kotlin.math.roundToInt
 
 private const val TAG = "PdfRenderScheduler"
 
@@ -51,11 +49,10 @@ internal data class RenderTask(
     val priority: RenderPriority,
     val distanceSq: Float,
     val spatialIndex: Int,
-    val cacheKey: String,
-    val pageIndex: Int,
+    val tileKey: TileKey,
+    val baseWidth: Float,
     val sessionToken: Int,
-    val pageCacheKey: PageCacheKey? = null,
-    val action: suspend (snapshot: RenderWindowSnapshot) -> Unit
+    val renderPassId: Int
 ) : Comparable<RenderTask> {
     override fun compareTo(other: RenderTask): Int {
         val priorityCompare = priority.ordinal.compareTo(other.priority.ordinal)
@@ -79,9 +76,10 @@ internal data class RenderTask(
 internal class RenderScheduler internal constructor(
     private val documentManager: PdfDocumentManager,
     private val pageRenderer: PageRenderer,
-    private val cache: BitmapCache,
     private val viewerState: PdfViewerState,
-    private val bitmapPool: BitmapPool,
+    private val bitmapPool: BitmapPool, // Now used by worker logic via pool.get() implicitly inside PageRenderer - wait, PageRenderer uses pool internally. This might be used for recycling?
+    // Actually, viewerState.putTile manages the recycling via housekeeper.
+    // Let's keep it for now as it might be needed for recycling dropped tasks
     private val tileDiskCache: TileDiskCache? = null,
     private val telemetry: RenderTelemetry? = null
 ) : Closeable {
@@ -119,15 +117,105 @@ internal class RenderScheduler internal constructor(
                         // 1. Session check: Instant drop if document changed.
                         if (task.sessionToken != currentSnapshot.sessionToken) continue
 
-                        // 2. Relevancy check: Is this specific key still wanted?
-                        val isStillWanted = if (task.pageCacheKey != null) {
-                            currentSnapshot.desiredPages[task.pageIndex] == task.pageCacheKey
-                        } else {
-                            task.cacheKey in currentSnapshot.desiredTiles
+                        // Greedy Batching: Collect other tasks for the same page
+                        val tasksToProcess = mutableListOf(task)
+                        val iterator = taskQueue.iterator()
+                        while (iterator.hasNext()) {
+                            val next = iterator.next()
+                            if (next.tileKey.pageIndex == task.tileKey.pageIndex &&
+                                next.sessionToken == task.sessionToken &&
+                                next.priority == task.priority
+                            ) {
+                                tasksToProcess.add(next)
+                                iterator.remove()
+                            }
+                            if (tasksToProcess.size >= 16) break // Cap batch size
                         }
 
-                        if (isStillWanted) {
-                            task.action(currentSnapshot)
+                        // Open page ONCE and render all
+                        documentManager.withPage(task.tileKey.pageIndex) { page ->
+                            tasksToProcess.forEach { currentTask ->
+                                val tileKey = currentTask.tileKey
+                                val memoryKey = tileKey.toCacheKey()
+
+                                // Double-check relevancy inside the lock
+                                val snapshot = renderWindowTracker.getSnapshot()
+                                val isNeeded = if (tileKey.zoom == TileKey.BASE_LAYER_ZOOM) {
+                                    // For base layer, check if the page index matches what's requested for that index
+                                    snapshot.desiredPages[tileKey.pageIndex] == tileKey
+                                } else {
+                                    memoryKey in snapshot.desiredTiles
+                                }
+
+                                if (isNeeded) {
+                                    try {
+                                        val diskKey = tileKey.toDiskCacheKey(docKey)
+                                        val diskBitmap = tileDiskCache?.get(
+                                            docKey = docKey,
+                                            pageIndex = tileKey.pageIndex,
+                                            tileKey = diskKey
+                                        )
+
+                                        val bitmap = if (diskBitmap != null) {
+                                            telemetry?.recordTileDiskHit(
+                                                currentTask.renderPassId,
+                                                memoryKey
+                                            )
+                                            diskBitmap
+                                        } else {
+                                            val rendered = if (tileKey.zoom == TileKey.BASE_LAYER_ZOOM) {
+                                                // Base Page Render
+                                                pageRenderer.render(
+                                                    page,
+                                                    currentTask.baseWidth,
+                                                    // Map zoom/quality from task or config? 
+                                                    // For now assume base layer is standard config
+                                                    PageRenderer.RenderConfig(
+                                                        zoomLevel = 1.0f,
+                                                        renderQuality = 1.0f
+                                                    )
+                                                )
+                                            } else {
+                                                // Tile Render
+                                                pageRenderer.renderTile(
+                                                    page,
+                                                    tileKey.rect,
+                                                    tileKey.zoom,
+                                                    currentTask.baseWidth
+                                                )
+                                            }
+
+                                            // Write to disk in background
+                                            if (tileKey.zoom != TileKey.BASE_LAYER_ZOOM) {
+                                                launch {
+                                                    diskSemaphore.withPermit {
+                                                        tileDiskCache?.put(
+                                                            docKey = docKey,
+                                                            pageIndex = tileKey.pageIndex,
+                                                            tileKey = diskKey,
+                                                            bitmap = rendered
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            telemetry?.recordTileRendered(
+                                                currentTask.renderPassId,
+                                                memoryKey
+                                            )
+                                            rendered
+                                        }
+
+                                        if (tileKey.zoom == TileKey.BASE_LAYER_ZOOM) {
+                                            publishBitmap(tileKey.pageIndex, bitmap)
+                                        } else {
+                                            viewerState.putTile(memoryKey, bitmap)
+                                        }
+
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Render failed for $memoryKey: ${e.message}")
+                                    }
+                                }
+                            }
                         }
                     } catch (_: InterruptedException) {
                         break
@@ -139,17 +227,6 @@ internal class RenderScheduler internal constructor(
                 }
             }
         }
-    }
-
-    /**
-     * Reclaims memory from pages that are significantly far from the current viewport.
-     * This prevents OOM during rapid navigation across large documents.
-     */
-    private fun proactivelyEvictFarPages(visiblePages: IntRange, totalPages: Int) {
-        val keepRadius = prefetchWindow + 5 // Margin to avoid immediate re-rendering
-        val minKeep = (visiblePages.first - keepRadius).coerceAtLeast(0)
-        val maxKeep = (visiblePages.last + keepRadius).coerceAtMost(totalPages - 1)
-        cache.clearPagesOutside(minKeep..maxKeep)
     }
 
     /**
@@ -182,9 +259,9 @@ internal class RenderScheduler internal constructor(
      * Schedules rendering for base pages within and surrounding the active viewport.
      *
      * This method manages the lifecycle of low-resolution page bitmaps by:
-     * 1. Pruning obsolete tasks and proactively evicting far-away pages from memory.
+     * 1. Pruning obsolete tasks.
      * 2. Calculating the active window (visible pages plus [prefetchWindow]).
-     * 3. Syncing the [RenderWindowTracker] with current [PageCacheKey] requirements.
+     * 3. Syncing the [RenderWindowTracker] with current [TileKey] requirements.
      * 4. Dispatching prioritized [RenderTask]s for missing pages while publishing cached ones.
      *
      * @param visiblePages The range of page indices currently visible to the user.
@@ -203,33 +280,58 @@ internal class RenderScheduler internal constructor(
         if (!documentManager.isOpen || pageSizes.isEmpty()) return
 
         pruneObsoleteTasks()
-        proactivelyEvictFarPages(visiblePages, pageSizes.size)
 
         val sessionToken = renderWindowTracker.currentSessionToken()
-        val roundedZoom = (config.zoomLevel * 100f).roundToInt() / 100f
 
         val winStart = (visiblePages.first - prefetchWindow).coerceAtLeast(0)
         val winEnd = (visiblePages.last + prefetchWindow).coerceAtMost(pageSizes.size - 1)
         val activeWindow = winStart..winEnd
 
         // Remove base bitmaps for pages that left the prefetch window.
-        _renderedPages.update { current -> current.filterKeys { it in activeWindow } }
+        val dropped = mutableListOf<Bitmap>()
+        _renderedPages.update { current ->
+            val newMap = current.filterKeys { it in activeWindow }
+            // Identify dropped bitmaps to recycle
+            val droppedKeys = current.keys - newMap.keys
+            droppedKeys.forEach { pageId ->
+                current[pageId]?.let { bmp ->
+                    dropped.add(bmp)
+                }
+            }
+            newMap
+        }
 
+        // Return dropped bitmaps to pool asynchronously.
+        if (dropped.isNotEmpty()) {
+            scope.launch {
+                dropped.forEach { bmp ->
+                    if (!bmp.isRecycled) bitmapPool.put(bmp)
+                }
+            }
+        }
+
+        // We need to update RenderWindowTracker to accept TileKey instead of PageCacheKey
         val desiredPages = activeWindow.associateWith { pageIndex ->
-            val size = pageSizes[pageIndex]
-            val (targetW, targetH) = pageRenderer.calculateRenderSize(
-                size.width, size.height, getBaseWidth(pageIndex), config
-            )
-            PageCacheKey(pageIndex, roundedZoom, targetW, targetH)
+             // For base pages, we use zoom 1.0 (or what config says?)
+             // Base pages are usually rendered at zoom 1.0
+             // But TileKey needs explicit zoom.
+             // Base pages are rendered at `currentTask.baseWidth` / intrinsicWidth scale?
+             // No, `render(page, baseWidth)` handles scale internally.
+             // For TileKey representing a base page, let's use a special constant for zoom if needed, 
+             // but here we can just use 1.0f as placeholder or actual zoom.
+             // Wait, TileKey is used for cache key.
+             // If we change zoom, cache key changes.
+             // For base layer, we don't really use TileKey cache key except for identifying the task.
+             // Let's use `TileKey(pageIndex = pageIndex, tileX = 0, tileY = 0, zoom = BASE_LAYER_ZOOM)`
+             TileKey(pageIndex, Rect(0, 0, 0, 0), TileKey.BASE_LAYER_ZOOM)
         }
         renderWindowTracker.updateDesiredPages(desiredPages)
-
+        
         for (pageIndex in activeWindow) {
-            val cacheKey = desiredPages[pageIndex] ?: continue
-            val cached = cache.get(cacheKey)
+            val tileKey = desiredPages[pageIndex] ?: continue
+            val cached = _renderedPages.value[pageIndex] // Check strictly existing map
 
             if (cached != null) {
-                publishBitmap(pageIndex, cached)
                 telemetry?.recordPageMemoryHit(renderPassId, pageIndex, config.zoomLevel)
                 continue
             }
@@ -241,30 +343,11 @@ internal class RenderScheduler internal constructor(
                 RenderTask(
                     priority = priority,
                     distanceSq = abs(pageIndex - (visiblePages.first + visiblePages.last) / 2).toFloat(),
-                    spatialIndex = pageIndex, // Here makes no sense yo use morton
-                    cacheKey = cacheKey.toString(),
-                    pageIndex = pageIndex,
+                    spatialIndex = pageIndex,
+                    tileKey = tileKey,
+                    baseWidth = getBaseWidth(pageIndex),
                     sessionToken = sessionToken,
-                    pageCacheKey = cacheKey,
-                    action = { latestSnapshot ->
-                        try {
-                            val bitmap = documentManager.withPage(pageIndex) { page ->
-                                pageRenderer.render(page, getBaseWidth(pageIndex), config)
-                            }
-                            cache.put(cacheKey, bitmap)
-
-                            // Double check relevancy before updating UI flow
-                            if (latestSnapshot.sessionToken == sessionToken && latestSnapshot.desiredPages[pageIndex] == cacheKey) {
-                                publishBitmap(pageIndex, bitmap)
-                            }
-                            telemetry?.recordPagePublished(renderPassId, pageIndex, false)
-                        } catch (e: Exception) {
-                            if (e !is CancellationException) Log.e(
-                                TAG,
-                                "Page render failed: $pageIndex"
-                            )
-                        }
-                    }
+                    renderPassId = renderPassId
                 ))
         }
     }
@@ -304,54 +387,11 @@ internal class RenderScheduler internal constructor(
             RenderTask(
                 priority = priority,
                 distanceSq = distanceSq,
-                cacheKey = memoryKey,
                 spatialIndex = morton(tileKey.tileX, tileKey.tileY),
-                pageIndex = tileKey.pageIndex,
+                tileKey = tileKey,
+                baseWidth = baseWidth,
                 sessionToken = sessionToken,
-                action = { latestSnapshot ->
-                    try {
-                        val diskKey = tileKey.toDiskCacheKey(docKey)
-                        val diskBitmap = tileDiskCache?.get(
-                            docKey = docKey,
-                            pageIndex = tileKey.pageIndex,
-                            tileKey = diskKey
-                        )
-
-                        val bitmap = if (diskBitmap != null) {
-                            telemetry?.recordTileDiskHit(renderPassId, memoryKey)
-                            diskBitmap
-                        } else {
-                            val rendered = documentManager.withPage(tileKey.pageIndex) { page ->
-                                pageRenderer.renderTile(page, tileKey.rect, tileKey.zoom, baseWidth)
-                            }
-                            scope.launch {
-                                diskSemaphore.withPermit {
-                                    tileDiskCache?.put(
-                                        docKey = docKey,
-                                        pageIndex = tileKey.pageIndex,
-                                        tileKey = diskKey,
-                                        bitmap = rendered
-                                    )
-                                }
-                            }
-                            telemetry?.recordTileRendered(renderPassId, memoryKey)
-                            rendered
-                        }
-
-                        // Strict Publication: Only put in State if still in the keep window.
-                        // Otherwise, return to pool immediately to prevent memory leaks.
-                        if (latestSnapshot.sessionToken == sessionToken && memoryKey in latestSnapshot.desiredTiles) {
-                            viewerState.putTile(memoryKey, bitmap)
-                        } else {
-                            bitmapPool.put(bitmap)
-                        }
-                    } catch (e: Exception) {
-                        if (e !is CancellationException) Log.e(
-                            TAG,
-                            "Tile render failed: $memoryKey"
-                        )
-                    }
-                }
+                renderPassId = renderPassId
             ))
     }
 
@@ -386,7 +426,6 @@ internal class RenderScheduler internal constructor(
         renderWindowTracker.beginNewSession()
         taskQueue.clear()
         _renderedPages.value = emptyMap()
-        cache.clear()
     }
 
     override fun close() {
