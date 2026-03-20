@@ -1,6 +1,7 @@
 package com.composepdf.renderer
 
-import com.composepdf.cache.PageCacheKey
+import com.composepdf.internal.service.cache.PageCacheKey
+import com.composepdf.internal.service.renderer.RenderWindowTracker
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

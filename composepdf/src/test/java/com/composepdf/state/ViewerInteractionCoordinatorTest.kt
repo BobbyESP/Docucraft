@@ -2,9 +2,15 @@ package com.composepdf.state
 
 import android.util.Size
 import androidx.compose.ui.geometry.Offset
-import com.composepdf.layout.PageLayoutSnapshot
-import com.composepdf.layout.ViewportMetrics
-import com.composepdf.renderer.RenderTrigger
+import com.composepdf.PdfViewerState
+import com.composepdf.ViewerConfig
+import com.composepdf.internal.logic.ViewerViewportCoordinator
+import com.composepdf.internal.logic.PageLayoutSnapshot
+import com.composepdf.internal.logic.ViewerInteractionCoordinator
+import com.composepdf.internal.logic.ViewportMetrics
+import com.composepdf.internal.service.renderer.RenderTrigger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -19,7 +25,7 @@ class ViewerInteractionCoordinatorTest {
         var renderRequests = 0
         var lastTrigger: RenderTrigger? = null
         val coordinator = ViewerInteractionCoordinator(
-            scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined),
+            scope = CoroutineScope(Dispatchers.Unconfined),
             state = state,
             configProvider = { ViewerConfig() },
             viewportCoordinator = viewportCoordinator,
@@ -48,7 +54,7 @@ class ViewerInteractionCoordinatorTest {
         var renderRequests = 0
         var lastTrigger: RenderTrigger? = null
         val coordinator = ViewerInteractionCoordinator(
-            scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined),
+            scope = CoroutineScope(Dispatchers.Unconfined),
             state = state,
             configProvider = { ViewerConfig(minZoom = 1f, maxZoom = 5f) },
             viewportCoordinator = viewportCoordinator,
@@ -79,7 +85,7 @@ class ViewerInteractionCoordinatorTest {
         var renderRequests = 0
         var lastTrigger: RenderTrigger? = null
         val coordinator = ViewerInteractionCoordinator(
-            scope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Unconfined),
+            scope = CoroutineScope(Dispatchers.Unconfined),
             state = state,
             configProvider = { ViewerConfig(minZoom = 1f, maxZoom = 4f) },
             viewportCoordinator = viewportCoordinator,

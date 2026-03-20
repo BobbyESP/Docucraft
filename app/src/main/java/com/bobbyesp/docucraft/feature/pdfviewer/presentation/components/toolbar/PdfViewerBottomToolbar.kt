@@ -67,8 +67,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
-import com.composepdf.state.FitMode
-import com.composepdf.state.PdfViewerState
+import com.composepdf.FitMode
+import com.composepdf.PdfViewerState
 import kotlinx.coroutines.launch
 import kotlin.math.max
 

@@ -36,7 +36,7 @@ object PdfViewerDefaults {
      * Base oversampling factor for base-page rendering.
      *
      * At zoom = 1 the bitmap will be `viewportWidth × RenderQuality` pixels wide.
-     * At high zoom levels the bitmap is capped at [com.composepdf.renderer.PageRenderer.MAX_BITMAP_PX]
+     * At high zoom levels the bitmap is capped at [com.composepdf.internal.service.pdf.PageRenderer.MAX_BITMAP_PX]
      * so this factor is effectively reduced automatically — no OOM risk.
      *
      * 1.5 = 50 % oversampling → sharp on FullHD / QHD screens at zoom = 1.

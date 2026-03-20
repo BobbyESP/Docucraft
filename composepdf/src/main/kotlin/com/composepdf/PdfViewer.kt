@@ -22,12 +22,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.composepdf.cache.bitmap.BitmapPool
-import com.composepdf.source.PdfSource
-import com.composepdf.state.PdfViewerController
-import com.composepdf.state.PdfViewerState
-import com.composepdf.state.ViewerConfig
-import com.composepdf.ui.PdfLayout
+import com.composepdf.internal.service.cache.bitmap.BitmapPool
+import com.composepdf.internal.logic.PdfViewerController
+import com.composepdf.internal.ui.PdfLayout
 
 /**
  * A Jetpack Compose component for displaying PDF documents with support for high-resolution

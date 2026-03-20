@@ -2,9 +2,15 @@ package com.composepdf.state
 
 import android.util.Size
 import androidx.compose.ui.unit.dp
-import com.composepdf.renderer.DocumentResult
-import com.composepdf.renderer.RenderTrigger
-import com.composepdf.source.PdfSource
+import com.composepdf.FitMode
+import com.composepdf.PdfViewerState
+import com.composepdf.ViewerConfig
+import com.composepdf.internal.service.pdf.DocumentResult
+import com.composepdf.internal.service.renderer.RenderTrigger
+import com.composepdf.PdfSource
+import com.composepdf.RemotePdfState
+import com.composepdf.internal.logic.ViewerSessionCoordinator
+import com.composepdf.internal.logic.ViewerViewportCoordinator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -78,7 +84,13 @@ class ViewerSessionCoordinatorTest {
             invalidateAll = { invalidatedAll++ },
             invalidateTiles = {},
             loadDocument = { _, remoteState ->
-                remoteState(com.composepdf.remote.RemotePdfState.Downloading(progress = 0f, bytesDownloaded = 0, totalBytes = 100))
+                remoteState(
+                    RemotePdfState.Downloading(
+                        progress = 0f,
+                        bytesDownloaded = 0,
+                        totalBytes = 100
+                    )
+                )
                 DocumentResult(
                     documentKey = "doc",
                     pageSizes = listOf(Size(600, 800), Size(600, 800)),

@@ -1,8 +1,12 @@
 package com.composepdf.state
 
 import android.util.Size
-import com.composepdf.layout.PageLayoutSnapshot
-import com.composepdf.layout.ViewportMetrics
+import com.composepdf.PdfViewerState
+import com.composepdf.ScrollDirection
+import com.composepdf.ViewerConfig
+import com.composepdf.internal.logic.ViewerViewportCoordinator
+import com.composepdf.internal.logic.PageLayoutSnapshot
+import com.composepdf.internal.logic.ViewportMetrics
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

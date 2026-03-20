@@ -2,9 +2,12 @@ package com.composepdf.renderer.tiles
 
 import android.graphics.Rect
 import android.util.Size
-import com.composepdf.layout.PageLayoutSnapshot
-import com.composepdf.layout.ViewportMetrics
-import com.composepdf.state.ScrollDirection
+import com.composepdf.internal.logic.PageLayoutSnapshot
+import com.composepdf.internal.logic.ViewportMetrics
+import com.composepdf.ScrollDirection
+import com.composepdf.internal.logic.tiles.TileKey
+import com.composepdf.internal.logic.tiles.TilePlanner
+import com.composepdf.internal.logic.tiles.ViewportState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

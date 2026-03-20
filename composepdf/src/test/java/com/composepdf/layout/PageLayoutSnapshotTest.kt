@@ -1,8 +1,10 @@
 package com.composepdf.layout
 
 import android.util.Size
-import com.composepdf.state.FitMode
-import com.composepdf.state.ScrollDirection
+import com.composepdf.FitMode
+import com.composepdf.ScrollDirection
+import com.composepdf.internal.logic.PageLayoutSnapshot
+import com.composepdf.internal.logic.ViewportMetrics
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

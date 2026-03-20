@@ -54,10 +54,10 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.composepdf.PdfViewer
 import com.composepdf.rememberPdfViewerState
-import com.composepdf.source.PdfSource
-import com.composepdf.state.FitMode
-import com.composepdf.state.ScrollDirection
-import com.composepdf.state.ViewerConfig
+import com.composepdf.PdfSource
+import com.composepdf.FitMode
+import com.composepdf.ScrollDirection
+import com.composepdf.ViewerConfig
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(

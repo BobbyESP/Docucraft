@@ -1,6 +1,7 @@
 package com.composepdf.renderer.tiles
 
 import android.graphics.Rect
+import com.composepdf.internal.logic.tiles.TileKey
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue

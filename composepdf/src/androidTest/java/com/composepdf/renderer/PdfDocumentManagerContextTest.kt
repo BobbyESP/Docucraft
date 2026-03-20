@@ -3,6 +3,7 @@ package com.composepdf.renderer
 import android.view.ContextThemeWrapper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.composepdf.internal.service.pdf.PdfDocumentManager
 import org.junit.Assert.assertSame
 import org.junit.Test
 import org.junit.runner.RunWith

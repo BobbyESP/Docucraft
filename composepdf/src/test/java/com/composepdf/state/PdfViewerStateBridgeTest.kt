@@ -2,7 +2,11 @@ package com.composepdf.state
 
 import android.util.Size
 import androidx.compose.ui.geometry.Offset
-import com.composepdf.remote.RemotePdfState
+import com.composepdf.FitMode
+import com.composepdf.PdfViewerState
+import com.composepdf.ViewerConfig
+import com.composepdf.RemotePdfState
+import com.composepdf.internal.logic.PdfViewerStateControllerBridge
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
