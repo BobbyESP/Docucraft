@@ -13,14 +13,19 @@ import java.io.IOException
 import kotlin.random.Random
 
 /**
- * Persistent LRU disk cache for high-resolution PDF tiles.
+ * A persistent disk-based cache for storing rendered PDF tile bitmaps.
  *
- * Keys are the same strings used by [com.composepdf.PdfViewerState] for in-memory
- * tile storage: `"pageIndex_left_top_right_bottom_zoom"`, optionally prefixed with a
- * document identifier to avoid collisions when loading different PDFs.
+ * This cache organizes tiles using a hierarchical directory structure based on document keys
+ * and page indices. It implements a Least Recently Used (LRU) eviction policy by updating
+ * the file's last modified timestamp on every read and trimming the directory size when
+ * it exceeds the specified threshold.
  *
- * Writes are atomic (temp file + rename) to prevent corrupt cache entries.
- * LRU eviction respects actual access order by updating [File.lastModified] on reads.
+ * Key features:
+ * - **Atomic Writes**: Uses temporary files and renames to ensure cache integrity even if a write is interrupted.
+ * - **WebP Compression**: Saves tiles in WebP format (lossless on Android R+) to minimize disk usage.
+ * - **LRU Eviction**: Periodically trims the oldest files when the cache size exceeds [maxSizeBytes].
+ * - **Concurrency Safe**: Designed to handle concurrent reads, while writes are handled via coroutines on the IO dispatcher.
+ *
  */
 class TileDiskCache(
     private val directory: File,
@@ -45,16 +50,16 @@ class TileDiskCache(
     }
 
     /**
-     * Reads a tile bitmap from disk.
+     * Retrieves a cached bitmap tile from the disk.
      *
-     * A fresh [BitmapFactory.Options] is created per call to avoid race conditions between
-     * the render threads that call this concurrently. Pool reuse via `inBitmap` is intentionally
-     * **not** used because:
-     * - WebP decoding has strict size-matching requirements for `inBitmap`
-     * - The pool's `recycle()` on eviction can invalidate a bitmap between `get()` and decode
-     * - The SIGSEGV crash was caused by exactly this race
+     * This method updates the file's last modified timestamp to ensure it is treated as
+     * "recently used" for the LRU eviction policy. The resulting bitmap is decoded as
+     * a mutable [Bitmap] with [Bitmap.Config.ARGB_8888] configuration.
      *
-     * The returned bitmap is mutable so it can later be returned to [BitmapPool] by the caller.
+     * @param docKey The unique identifier for the document.
+     * @param pageIndex The zero-based index of the page.
+     * @param tileKey The unique identifier for the specific tile.
+     * @return The cached [Bitmap] if found and successfully decoded, or `null` otherwise.
      */
     fun get(docKey: String, pageIndex: Int, tileKey: String): Bitmap? {
         val file = fileFor(docKey, pageIndex, tileKey)

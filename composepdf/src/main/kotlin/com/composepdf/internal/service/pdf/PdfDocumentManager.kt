@@ -20,17 +20,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private const val TAG = "PdfDocumentManager"
 
-/**
- * Manages a pool of [PdfRenderer] instances to enable parallel rendering of PDF pages and tiles.
- *
- * While Android's [PdfRenderer] is thread-safe, it utilizes internal synchronization that
- * restricts rendering to a single thread at a time per instance. This manager overcomes that
- * limitation by duplicating the underlying file descriptor and maintaining multiple renderer
- * instances, allowing for true concurrent processing across CPU cores.
- *
- * Access to the renderer pool is managed via a semaphore to prevent resource exhaustion and
- * native-level contention.
- */
 class PdfDocumentManager(context: Context) : Closeable {
 
     private val appContext = context.longLivedContext()
@@ -39,36 +28,16 @@ class PdfDocumentManager(context: Context) : Closeable {
     private var sourceResolver: PdfSourceResolver? = null
     private val rendererPool = ConcurrentLinkedQueue<PdfRenderer>()
 
-    // Set to 2 to match the scheduler's thread count.
-    // Having more renderers than threads causes contention on the native side without speed gain.
     private val maxParallelRenderers = 2
     private var semaphore = Semaphore(1)
     private var currentPermits = 1
 
-    /**
-     * Incremented on every close cycle. [withPage] captures the generation before acquiring
-     * the permit and discards the renderer on return if the generation changed, preventing
-     * zombie renderers from leaking into a new session.
-     */
     private val generation = AtomicInteger(0)
 
     private var _pageCount = 0
     val pageCount: Int get() = _pageCount
     val isOpen: Boolean get() = masterFd != null
 
-    /**
-     * Opens a PDF document from the specified [source].
-     *
-     * This method initializes the [PdfRenderer] pool by resolving the source into a file descriptor.
-     * To support parallel rendering, it attempts to duplicate the file descriptor up to
-     * [maxParallelRenderers] times. If duplication fails for any instance, it proceeds with
-     * the successfully created renderers.
-     *
-     * If a document is already open, it will be closed before the new one is processed.
-     *
-     * @param source The [PdfSource] pointing to the PDF file (e.g., URI, File, or Asset).
-     * @throws Throwable If the source cannot be resolved or the PDF is invalid/corrupted.
-     */
     suspend fun open(source: PdfSource) = withContext(Dispatchers.IO) {
         closeInternal()
         val resolver = PdfSourceResolver(appContext)
@@ -99,9 +68,6 @@ class PdfDocumentManager(context: Context) : Closeable {
         }
     }
 
-    /**
-     * Executes an action with an open [PdfRenderer.Page].
-     */
     suspend fun <T> withPage(pageIndex: Int, action: suspend (PdfRenderer.Page) -> T): T {
         val capturedGeneration = generation.get()
         return semaphore.withPermit {
@@ -132,15 +98,6 @@ class PdfDocumentManager(context: Context) : Closeable {
         }
     }
 
-    /**
-     * Reads the width and height (in PDF points) for every page in the document.
-     *
-     * Pages are fetched concurrently using all available renderer slots in the pool,
-     * so this is significantly faster than sequential reads on large documents.
-     * Must be called after a successful [open].
-     *
-     * @return List of [Size] objects in page-index order.
-     */
     suspend fun getAllPageSizes(): List<Size> = coroutineScope {
         if (!isOpen) throw IllegalStateException("Document not open")
         (0 until _pageCount).map { index ->
@@ -150,10 +107,6 @@ class PdfDocumentManager(context: Context) : Closeable {
         }.awaitAll()
     }
 
-    /**
-     * Synchronous close (Closeable). Bumps the generation so in-flight [withPage] calls
-     * discard their renderer instead of returning it to the pool.
-     */
     override fun close() {
         generation.incrementAndGet()
         drainAndClosePool()
@@ -163,11 +116,6 @@ class PdfDocumentManager(context: Context) : Closeable {
         semaphore = Semaphore(1)
     }
 
-    /**
-     * Suspend-safe close. Acquires all semaphore permits first — suspending, not blocking —
-     * so every in-flight [withPage] has finished and returned its renderer to the pool
-     * before we drain it. Generation is bumped after acquiring to ensure the pool is full.
-     */
     private suspend fun closeInternal() {
         val permitsToAcquire = currentPermits
         val previousSemaphore = semaphore
