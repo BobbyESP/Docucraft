@@ -2,9 +2,9 @@ package com.composepdf.internal.logic
 
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.PdfViewerState
+import com.composepdf.RenderTrigger
 import com.composepdf.ScrollDirection
 import com.composepdf.ViewerConfig
-import com.composepdf.internal.service.renderer.RenderTrigger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

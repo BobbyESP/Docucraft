@@ -3,9 +3,9 @@ package com.composepdf.internal.logic
 import com.composepdf.PdfSource
 import com.composepdf.PdfViewerState
 import com.composepdf.RemotePdfState
+import com.composepdf.RenderTrigger
 import com.composepdf.ViewerConfig
 import com.composepdf.internal.service.pdf.DocumentResult
-import com.composepdf.internal.service.renderer.RenderTrigger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

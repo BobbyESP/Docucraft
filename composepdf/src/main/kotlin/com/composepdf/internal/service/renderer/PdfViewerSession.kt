@@ -5,6 +5,9 @@ import android.graphics.Bitmap
 import com.composepdf.PdfSource
 import com.composepdf.PdfViewerState
 import com.composepdf.RemotePdfState
+import com.composepdf.RenderTelemetryEvent
+import com.composepdf.RenderTelemetrySnapshot
+import com.composepdf.RenderTrigger
 import com.composepdf.ViewerConfig
 import com.composepdf.internal.logic.ViewerViewportCoordinator
 import com.composepdf.internal.logic.tiles.TilePlanner
@@ -47,6 +50,9 @@ internal class PdfViewerSession(
     private val pageRenderer = PageRenderer(bitmapPool)
     private var renderedPagesProvider: () -> Map<Int, Bitmap> = { emptyMap() }
     private val telemetry = RenderTelemetry()
+    
+    val telemetrySnapshot: StateFlow<RenderTelemetrySnapshot> = telemetry.snapshot
+
     private val renderScheduler = RenderScheduler(
         documentManager = documentManager,
         pageRenderer = pageRenderer,

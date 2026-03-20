@@ -8,12 +8,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.composepdf.RemotePdfState
+import com.composepdf.RenderTelemetrySnapshot
 import com.composepdf.internal.logic.tiles.TileKey
 import com.composepdf.internal.service.cache.MemoryCache
 import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -47,6 +51,13 @@ internal class ViewerSessionState(
         maxSizeBytes = (Runtime.getRuntime().maxMemory() * 0.20).toInt(),
         onEvicted = { key, bitmap -> handleTileEviction(key, bitmap) }
     )
+    
+    private val _telemetrySnapshot = MutableStateFlow(RenderTelemetrySnapshot())
+    val telemetrySnapshot: StateFlow<RenderTelemetrySnapshot> = _telemetrySnapshot.asStateFlow()
+
+    fun updateTelemetry(snapshot: RenderTelemetrySnapshot) {
+        _telemetrySnapshot.value = snapshot
+    }
 
     var tileRevision by mutableIntStateOf(0)
         private set

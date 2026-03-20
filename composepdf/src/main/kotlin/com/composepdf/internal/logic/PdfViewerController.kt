@@ -9,17 +9,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.PdfSource
 import com.composepdf.PdfViewerState
+import com.composepdf.RenderTelemetryEvent
+import com.composepdf.RenderTrigger
 import com.composepdf.ViewerConfig
 import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import com.composepdf.internal.service.renderer.PdfViewerSession
-import com.composepdf.internal.service.renderer.RenderTelemetryEvent
-import com.composepdf.internal.service.renderer.RenderTrigger
 import com.composepdf.internal.util.longLivedContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.io.Closeable
 
 /**
@@ -49,8 +51,17 @@ class PdfViewerController(
         state = state,
         bitmapPool = state.bitmapPool, // Use the pool from the state
         viewportCoordinator = viewportCoordinator,
-        configProvider = { config }
+        configProvider = { initialConfig }
     )
+    
+    // Bridge backing session telemetry to UI state
+    init {
+        scope.launch {
+            viewerSession.telemetrySnapshot.collectLatest { snapshot ->
+                state.session.updateTelemetry(snapshot)
+            }
+        }
+    }
 
     private val interactionCoordinator = ViewerInteractionCoordinator(
         scope = scope,

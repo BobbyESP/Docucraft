@@ -12,8 +12,8 @@ import com.composepdf.internal.service.pdf.PageRenderer
 import com.composepdf.internal.service.pdf.PdfDocumentManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,8 +24,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import java.io.Closeable
-import java.util.concurrent.Executors
 import java.util.concurrent.PriorityBlockingQueue
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.abs
 
 private const val TAG = "PdfRenderScheduler"
@@ -84,9 +84,25 @@ internal class RenderScheduler internal constructor(
     private val telemetry: RenderTelemetry? = null
 ) : Closeable {
 
-    private val renderDispatcher = Executors.newFixedThreadPool(3).asCoroutineDispatcher()
+    // Replaced Executors.newFixedThreadPool with Dispatchers.IO.limitedParallelism
+    // which is more resource-efficient and idiomatic for Coroutines.
+    private val renderDispatcher = Dispatchers.IO.limitedParallelism(3)
     private val scope = CoroutineScope(renderDispatcher + SupervisorJob())
-    private val renderWindowTracker = RenderWindowTracker()
+    
+    // Internal state tracking replacing RenderWindowTracker
+    private data class RenderWindowSnapshot(
+        val sessionToken: Int,
+        val desiredPages: Map<Int, TileKey>,
+        val desiredTiles: Set<String>
+    )
+
+    private val snapshot = AtomicReference(
+        RenderWindowSnapshot(
+            sessionToken = 0,
+            desiredPages = emptyMap(),
+            desiredTiles = emptySet()
+        )
+    )
 
     private val taskQueue = PriorityBlockingQueue<RenderTask>()
     private val diskSemaphore = Semaphore(2)
@@ -112,7 +128,7 @@ internal class RenderScheduler internal constructor(
                 while (isActive) {
                     try {
                         val task = taskQueue.take()
-                        val currentSnapshot = renderWindowTracker.getSnapshot()
+                        val currentSnapshot = snapshot.get()
 
                         // 1. Session check: Instant drop if document changed.
                         if (task.sessionToken != currentSnapshot.sessionToken) continue
@@ -120,8 +136,14 @@ internal class RenderScheduler internal constructor(
                         // Greedy Batching: Collect other tasks for the same page
                         val tasksToProcess = mutableListOf(task)
                         val iterator = taskQueue.iterator()
-                        while (iterator.hasNext()) {
+                        
+                        // Limit the scan to prevent O(N) behavior on large queues.
+                        // We check the next 50 items for batching candidates.
+                        var scanned = 0
+                        while (iterator.hasNext() && scanned < 50) {
                             val next = iterator.next()
+                            scanned++
+                            
                             if (next.tileKey.pageIndex == task.tileKey.pageIndex &&
                                 next.sessionToken == task.sessionToken &&
                                 next.priority == task.priority
@@ -139,7 +161,7 @@ internal class RenderScheduler internal constructor(
                                 val memoryKey = tileKey.toCacheKey()
 
                                 // Double-check relevancy inside the lock
-                                val snapshot = renderWindowTracker.getSnapshot()
+                                val snapshot = snapshot.get()
                                 val isNeeded = if (tileKey.zoom == TileKey.BASE_LAYER_ZOOM) {
                                     // For base layer, check if the page index matches what's requested for that index
                                     snapshot.desiredPages[tileKey.pageIndex] == tileKey
@@ -238,7 +260,7 @@ internal class RenderScheduler internal constructor(
      * rapid document changes or resets.
      */
     private fun pruneObsoleteTasks() {
-        val currentSession = renderWindowTracker.currentSessionToken()
+        val currentSession = snapshot.get().sessionToken
         if (taskQueue.size > 50) {
             taskQueue.removeIf { it.sessionToken < currentSession }
         }
@@ -246,13 +268,19 @@ internal class RenderScheduler internal constructor(
 
     fun onDocumentLoaded(documentKey: String) {
         docKey = documentKey
-        renderWindowTracker.beginNewSession()
+        updateSnapshot { old ->
+            RenderWindowSnapshot(
+                sessionToken = old.sessionToken + 1,
+                desiredPages = emptyMap(),
+                desiredTiles = emptySet()
+            )
+        }
         taskQueue.clear()
         _renderedPages.value = emptyMap()
     }
 
     fun updateTileWindow(keepKeys: Set<String>) {
-        renderWindowTracker.updateDesiredTiles(keepKeys)
+        updateSnapshot { it.copy(desiredTiles = keepKeys.toSet()) }
     }
 
     /**
@@ -261,7 +289,7 @@ internal class RenderScheduler internal constructor(
      * This method manages the lifecycle of low-resolution page bitmaps by:
      * 1. Pruning obsolete tasks.
      * 2. Calculating the active window (visible pages plus [prefetchWindow]).
-     * 3. Syncing the [RenderWindowTracker] with current [TileKey] requirements.
+     * 3. Syncing the internal snapshot with current [TileKey] requirements.
      * 4. Dispatching prioritized [RenderTask]s for missing pages while publishing cached ones.
      *
      * @param visiblePages The range of page indices currently visible to the user.
@@ -281,7 +309,7 @@ internal class RenderScheduler internal constructor(
 
         pruneObsoleteTasks()
 
-        val sessionToken = renderWindowTracker.currentSessionToken()
+        val sessionToken = snapshot.get().sessionToken
 
         val winStart = (visiblePages.first - prefetchWindow).coerceAtLeast(0)
         val winEnd = (visiblePages.last + prefetchWindow).coerceAtMost(pageSizes.size - 1)
@@ -325,7 +353,8 @@ internal class RenderScheduler internal constructor(
              // Let's use `TileKey(pageIndex = pageIndex, tileX = 0, tileY = 0, zoom = BASE_LAYER_ZOOM)`
              TileKey(pageIndex, Rect(0, 0, 0, 0), TileKey.BASE_LAYER_ZOOM)
         }
-        renderWindowTracker.updateDesiredPages(desiredPages)
+        
+        updateSnapshot { it.copy(desiredPages = desiredPages) }
         
         for (pageIndex in activeWindow) {
             val tileKey = desiredPages[pageIndex] ?: continue
@@ -376,7 +405,7 @@ internal class RenderScheduler internal constructor(
         isPrefetch: Boolean,
         renderPassId: Int
     ) {
-        val sessionToken = renderWindowTracker.currentSessionToken()
+        val sessionToken = snapshot.get().sessionToken
         val memoryKey = tileKey.toCacheKey()
 
         if (viewerState.getTile(memoryKey) != null) return
@@ -423,14 +452,29 @@ internal class RenderScheduler internal constructor(
      * Use this when the document source changes or a global refresh of the rendered content is required.
      */
     fun invalidateAll() {
-        renderWindowTracker.beginNewSession()
+        updateSnapshot { old ->
+            RenderWindowSnapshot(
+                sessionToken = old.sessionToken + 1,
+                desiredPages = emptyMap(),
+                desiredTiles = emptySet()
+            )
+        }
         taskQueue.clear()
         _renderedPages.value = emptyMap()
+    }
+
+    private fun updateSnapshot(transform: (RenderWindowSnapshot) -> RenderWindowSnapshot) {
+        var old: RenderWindowSnapshot
+        var next: RenderWindowSnapshot
+        do {
+            old = snapshot.get()
+            next = transform(old)
+        } while (!snapshot.compareAndSet(old, next))
     }
 
     override fun close() {
         invalidateAll()
         scope.cancel()
-        renderDispatcher.close()
+        // No need to close renderDispatcher as it's a CoroutineDispatcher
     }
 }

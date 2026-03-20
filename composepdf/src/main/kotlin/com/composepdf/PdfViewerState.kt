@@ -20,6 +20,7 @@ import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.StateFlow
 import kotlin.math.abs
 
 /**
@@ -35,7 +36,7 @@ class PdfViewerState(
     internal val bitmapPool: BitmapPool = BitmapPool(),
     internal val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 ) {
-    private val session = ViewerSessionState(scope, bitmapPool)
+    internal val session = ViewerSessionState(scope, bitmapPool)
 
     /** The index of the current page most visible in the viewport. */
     var currentPage: Int by mutableIntStateOf(initialPage)
@@ -97,6 +98,12 @@ class PdfViewerState(
 
     /** Revision counter to notify Compose when the tile cache is updated. */
     val tileRevision: Int get() = session.tileRevision
+    
+    /** 
+     * Live telemetry snapshot of the rendering pipeline. 
+     * Can be collected to monitor performance, cache hits, and render triggers.
+     */
+    val telemetry: StateFlow<RenderTelemetrySnapshot> get() = session.telemetrySnapshot
 
     internal fun getTile(key: String): Bitmap? = session.getTile(key)
 
