@@ -6,11 +6,11 @@ import com.composepdf.FitMode
 import com.composepdf.PdfSource
 import com.composepdf.PdfViewerState
 import com.composepdf.RemotePdfState
+import com.composepdf.RenderTrigger
 import com.composepdf.ViewerConfig
 import com.composepdf.internal.logic.ViewerSessionCoordinator
 import com.composepdf.internal.logic.ViewerViewportCoordinator
 import com.composepdf.internal.service.pdf.DocumentResult
-import com.composepdf.internal.service.renderer.RenderTrigger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

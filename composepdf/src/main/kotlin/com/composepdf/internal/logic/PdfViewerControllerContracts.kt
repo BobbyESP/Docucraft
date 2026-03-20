@@ -4,7 +4,12 @@ import android.util.Size
 import androidx.compose.ui.geometry.Offset
 import com.composepdf.ViewerConfig
 
-/** Read-only viewport/layout contract used by UI and state helpers. */
+/**
+ * Read-only contract providing access to the current layout and viewport state of the PDF viewer.
+ *
+ * This interface allows UI components and gesture handlers to query the dimensions of the
+ * viewport, the positions of pages within the document coordinate space, and calculate
+ */
 internal interface ViewerViewportReadContract {
     val viewportWidth: Float
     val viewportHeight: Float
@@ -22,24 +27,40 @@ internal interface ViewerViewportReadContract {
     fun computeFitPageZoom(pageIndex: Int): Float
 }
 
-/** Render request entry-point shared by UI callbacks and imperative state APIs. */
+/**
+ * Interface for requesting document rendering updates.
+ * Serves as a shared entry point for UI event callbacks and imperative state APIs
+ * to trigger the rendering of currently visible pages.
+ */
 internal interface ViewerRenderRequester {
     fun requestRenderForVisiblePages()
 }
 
-/** Mutations that affect viewport geometry from layout or programmatic navigation. */
+/**
+ * Defines viewport geometry mutations triggered by physical layout changes
+ * or the enforcement of spatial constraints.
+ */
 internal interface ViewerViewportHostActions {
     fun onViewportSizeChanged(width: Float, height: Float)
     fun clampPan()
 }
 
-/** Configuration commands needed by the hoisted public state object. */
+/**
+ * Contract for managing [ViewerConfig] state, providing a bridge to synchronize
+ * configuration settings between the public state object and internal logic.
+ */
 internal interface ViewerConfigContract {
     val viewerConfig: ViewerConfig
     fun updateConfig(newConfig: ViewerConfig)
 }
 
-/** Gesture and animation actions consumed by the gesture modifier. */
+/**
+ * Contract for handling user gestures and animated transformations.
+ *
+ * This interface defines the actions required to update the viewport's pan and zoom state
+ * during active user interaction—such as pinching or dragging—as well as during
+ * programmatic animation sequences.
+ */
 internal interface ViewerInteractionContract {
     fun onGestureStart()
     fun onGestureEnd()
@@ -47,14 +68,18 @@ internal interface ViewerInteractionContract {
     fun onAnimatedZoomFrame(targetZoom: Float, pivot: Offset)
 }
 
-/** Layout-facing controller used by [com.composepdf.internal.ui.PdfLayout]. */
-@Suppress("unused")
+/**
+ * Interface used by [com.composepdf.internal.ui.PdfLayout] to coordinate viewport geometry,
+ * manage layout updates, and initiate page rendering cycles.
+ */
 internal interface ViewerLayoutController :
     ViewerViewportReadContract,
     ViewerViewportHostActions,
     ViewerRenderRequester
 
-/** Narrow bridge used by [com.composepdf.PdfViewerState] for imperative programmatic APIs. */
+/**
+ * Internal bridge interface providing the hoisted [com.composepdf.PdfViewerState] with access
+ */
 internal interface PdfViewerStateControllerBridge :
     ViewerViewportReadContract,
     ViewerViewportHostActions,
@@ -62,5 +87,8 @@ internal interface PdfViewerStateControllerBridge :
     ViewerInteractionContract,
     ViewerConfigContract
 
-/** Combined contract used by gesture handling, which needs reads plus interaction actions. */
+/**
+ * Combined contract for gesture handling, providing read-only access to viewport geometry
+ * and methods to process interaction-driven updates.
+ */
 internal interface ViewerGestureController : ViewerViewportReadContract, ViewerInteractionContract

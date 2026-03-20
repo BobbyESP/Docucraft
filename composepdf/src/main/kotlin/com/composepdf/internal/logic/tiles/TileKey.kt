@@ -5,15 +5,17 @@ import com.composepdf.internal.service.pdf.PageRenderer.Companion.TILE_SIZE
 import kotlin.math.roundToInt
 
 /**
- * Unique identifier for a rendered PDF tile.
+ * Represents a unique identifier for a specific tile within a PDF document.
  *
- * The same typed key now drives the full pipeline:
- * - tile planning
- * - in-memory cache lookup
- * - disk-cache namespacing
- * - UI decoding for composition
+ * This key encapsulates all parameters required to identify, cache, and retrieve a rendered
+ * image segment of a page. It is used across the entire rendering pipeline, including
+ * tile planning, memory caching, and disk persistence.
  *
- * Keeping the format in one place avoids stringly-typed duplication across the system.
+ * @property pageIndex The zero-based index of the page in the PDF document.
+ * @property rect The boundaries of the tile in pixels relative to the page at the given zoom level.
+ * @property zoom The magnification level at which the tile was rendered.
+ * @property baseWidthKey A normalized integer representation of the page's base width, used to
+ * invalidate caches when the layout or orientation changes.
  */
 internal data class TileKey(
     val pageIndex: Int,

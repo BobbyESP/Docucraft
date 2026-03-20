@@ -14,8 +14,19 @@ import com.composepdf.ViewerConfig
 import com.composepdf.internal.logic.tiles.ViewportState
 
 /**
- * Manages the spatial and geometric state of the PDF viewer, acting as the bridge between
- * the viewport dimensions, page layouts, and the document's physical scroll position.
+ * Coordinates the spatial relationship between the physical viewport (screen dimensions)
+ * and the logical layout of PDF pages.
+ *
+ * This class serves as the central engine for geometric calculations, managing how pages
+ * are positioned, scaled, and constrained within the viewer. It reacts to changes in
+ * viewport size, zoom levels, and document configuration to provide an up-to-date
+ * [PageLayoutSnapshot].
+ *
+ * Key responsibilities include:
+ * - Calculating page positions (X, Y) and dimensions based on [FitMode] and [ScrollDirection].
+ * - Clamping pan offsets to prevent scrolling beyond document boundaries.
+ * - Determining which pages are currently visible within the viewport.
+ * - Synchronizing the current page index based on the viewport's center point.
  */
 internal class ViewerViewportCoordinator(
     private val state: PdfViewerState,

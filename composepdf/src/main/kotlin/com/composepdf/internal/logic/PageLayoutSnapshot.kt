@@ -8,20 +8,20 @@ import kotlin.math.min
 /**
  * An immutable snapshot of the document layout calculated at a base zoom level of `1f`.
  *
- * This class serves as a pure, side-effect-free representation of the document geometry.
- * It is responsible for translating document coordinates to screen coordinates and performing
- * spatial queries such as visibility detection, hit testing, and pan clamping.
+ * This class serves as a pure representation of the document geometry. It is responsible for
+ * translating document coordinates to screen coordinates and performing spatial queries such
+ * as visibility detection, hit testing, and pan clamping.
  *
  * The layout is recalculated and a new snapshot is emitted whenever the viewport dimensions,
- * page list, spacing, or [FitMode] change.
+ * page list, spacing, [ScrollDirection], or [FitMode] change.
  *
- * @property pageSizes The original dimensions of the PDF pages.
- * @property pageOffsets The vertical or horizontal offsets (Y or X) of each page in document space.
+ * @property pageSizes The original dimensions (width/height) of the PDF pages.
+ * @property pageOffsets The offsets (Y if vertical, X if horizontal) of each page in document space.
  * @property pageHeights The calculated heights of each page after applying [FitMode].
  * @property pageWidths The calculated widths of each page after applying [FitMode].
- * @property totalDocumentSize The total height or width of the scrollable area, including spacing.
- * @property corridorBreadth The breadth of the document corridor (max height if horizontal, max width if vertical).
- * @property viewport The dimensions of the visible component area.
+ * @property totalDocumentSize The total length of the scrollable area (sum of page sizes and spacing).
+ * @property corridorBreadth The breadth of the document corridor (max page width if vertical, max page height if horizontal).
+ * @property viewport The current dimensions of the visible component area.
  * @property pageSpacingPx The gap between pages in pixels.
  * @property scrollDirection The direction in which pages are laid out.
  */

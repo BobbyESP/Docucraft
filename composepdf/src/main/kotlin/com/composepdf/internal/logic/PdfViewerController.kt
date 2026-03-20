@@ -12,7 +12,6 @@ import com.composepdf.PdfViewerState
 import com.composepdf.RenderTelemetryEvent
 import com.composepdf.RenderTrigger
 import com.composepdf.ViewerConfig
-import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import com.composepdf.internal.service.renderer.PdfViewerSession
 import com.composepdf.internal.util.longLivedContext
 import kotlinx.coroutines.CoroutineScope
@@ -25,10 +24,25 @@ import kotlinx.coroutines.launch
 import java.io.Closeable
 
 /**
- * Main façade that orchestrates the viewer lifecycle.
+ * The central controller and façade for the PDF viewer, responsible for orchestrating the
+ * document lifecycle, rendering sessions, and UI interactions.
  *
- * Refined to use the [BitmapPool] provided by [PdfViewerState] to ensure
- * a single source of truth for memory management.
+ * This class serves as the glue between the [PdfViewerState], the underlying rendering
+ * engine ([PdfViewerSession]), and the various coordinators handling layout and gestures.
+ * It manages the [CoroutineScope] for asynchronous operations and ensures that the
+ * [com.composepdf.internal.service.cache.bitmap.BitmapPool] is shared across components for efficient memory management.
+ *
+ * Key responsibilities include:
+ * - Managing the [PdfViewerSession] for document loading and bitmap rendering.
+ * - Coordinating viewport calculations (zoom, pan, constraints) via [ViewerViewportCoordinator].
+ * - Handling user input and gestures through [ViewerInteractionCoordinator].
+ * - Synchronizing telemetry and session state back to the [PdfViewerState].
+ * - Providing internal bridges ([stateBridge], [layoutController], [gestureController])
+ *   to expose specific functionality to UI components.
+ *
+ * @property state The observable state object that represents the current UI status of the viewer.
+ * @property config The current [ViewerConfig] defining display settings and behavior.
+ * @property scope The [CoroutineScope] used for background rendering and state synchronization.
  */
 @Stable
 class PdfViewerController(
@@ -49,12 +63,11 @@ class PdfViewerController(
         context = this.context,
         scope = scope,
         state = state,
-        bitmapPool = state.bitmapPool, // Use the pool from the state
+        bitmapPool = state.bitmapPool,
         viewportCoordinator = viewportCoordinator,
         configProvider = { initialConfig }
     )
-    
-    // Bridge backing session telemetry to UI state
+
     init {
         scope.launch {
             viewerSession.telemetrySnapshot.collectLatest { snapshot ->
@@ -208,7 +221,6 @@ class PdfViewerController(
         sessionCoordinator.loadDocument(source)
     }
 
-    @Suppress("unused")
     fun recentRenderEvents(limit: Int = 50): List<RenderTelemetryEvent> =
         viewerSession.recentRenderEvents(limit)
 

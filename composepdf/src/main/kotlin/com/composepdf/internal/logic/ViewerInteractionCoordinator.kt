@@ -22,6 +22,14 @@ import kotlinx.coroutines.launch
  *
  * It acts as the internal logic engine for [PdfViewerController], abstracting viewport
  * manipulation and rendering triggers away from the public API.
+ *
+ * @property scope The coroutine scope used for launching debounced render jobs.
+ * @property state The mutable state of the PDF viewer being managed.
+ * @property configProvider A provider for the current [ViewerConfig], used to access zoom limits and scroll direction.
+ * @property viewportCoordinator Coordinator responsible for clamping offsets and mapping the viewport to pages.
+ * @property recordPanDelta Callback to record the displacement for specific interaction tracking.
+ * @property requestRender Callback to trigger a new render pass via a [RenderTrigger].
+ * @property debounceDelay The delay mechanism used for debouncing, defaults to standard coroutine delay.
  */
 internal class ViewerInteractionCoordinator(
     private val scope: CoroutineScope,
@@ -64,8 +72,6 @@ internal class ViewerInteractionCoordinator(
         viewportCoordinator.clampPan()
         viewportCoordinator.updateCurrentPageFromViewport()
 
-        // Increased debounce slightly during active gestures to avoid queueing too many
-        // concurrent render passes while the user is still moving the viewport.
         debounceGestureRender(if (isZooming) 200L else 120L)
     }
 
@@ -80,7 +86,6 @@ internal class ViewerInteractionCoordinator(
 
         animatedZoomRenderJob?.cancel()
         animatedZoomRenderJob = scope.launch {
-            // Animating is very high-churn, increase debounce.
             debounceDelay(150L)
             requestRender(RenderTrigger.ANIMATED_ZOOM_SETTLED)
         }

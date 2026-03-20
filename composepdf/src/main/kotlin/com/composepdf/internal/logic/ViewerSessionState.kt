@@ -22,7 +22,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Immutable UI-ready representation of a published high-resolution tile.
+ * Represents a rendered segment of a PDF page that has been processed and is ready for display.
+ *
+ * This data class serves as the bridge between the internal bitmap cache and the UI layer,
+ * providing the necessary metadata and the Compose-compatible [ImageBitmap] for rendering.
+ *
+ * @property cacheKey The unique string identifier used to track this tile in the memory cache.
+ * @property tileKey The decomposed metadata of the tile, including its page index and position.
+ * @property imageBitmap The actual visual content of the tile converted for use in Compose.
  */
 internal data class PublishedTile(
     val cacheKey: String,
@@ -31,11 +38,22 @@ internal data class PublishedTile(
 )
 
 /**
- * Internal document-session store for the viewer.
+ * Manages the internal state and lifecycle of a PDF viewing session.
  *
- * This version enforces strict bitmap ownership and handles asynchronous pool returns.
- * When a tile is evicted from the [tileCache], it is returned to the [BitmapPool]
- * using the provided [scope].
+ * This class serves as the central state holder for a specific document session, tracking
+ * document loading progress, error states, and remote synchronization status. It integrates
+ * with Jetpack Compose via [mutableStateOf] to provide observable updates to the UI.
+ *
+ * Key responsibilities include:
+ * - Tracking document metadata such as [pageCount] and [isLoading] status.
+ * - Managing an in-memory cache of rendered PDF tiles using [MemoryCache].
+ * - Synchronizing tile snapshots for UI rendering and ensuring efficient memory usage
+ *   by returning evicted bitmaps to the [BitmapPool].
+ * - Providing telemetry snapshots for performance monitoring.
+ *
+ * All state modifications involving UI-bound snapshots are performed on the Main dispatcher
+ * to ensure consistency.
+ *
  */
 internal class ViewerSessionState(
     private val scope: CoroutineScope,

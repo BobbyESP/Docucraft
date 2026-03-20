@@ -24,10 +24,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlin.math.abs
 
 /**
- * A hoistable state object that manages the UI state and navigation for a PDF viewer.
+ * A hoistable state object that manages the UI state, navigation, and rendering lifecycle for a PDF viewer.
  *
- * This version enforces strict memory management by requiring a [BitmapPool] and a [CoroutineScope]
- * to handle asynchronous tile eviction and pool returns.
+ * This class serves as the primary controller for programmatic interaction with the PDF viewer,
+ * exposing properties for current page, zoom level, and pan offsets, while also providing
+ * methods for animated navigation and configuration updates.
+ *
+ * It enforces strict memory management by utilizing a [BitmapPool] for tile recycling and a
+ * [CoroutineScope] to handle asynchronous rendering and tile eviction.
+ *
+ * @property initialPage The index of the page to show initially.
+ * @property initialZoom The magnification level to apply initially (1.0f represents the base fit).
+ * @property bitmapPool The pool used to manage and reuse [android.graphics.Bitmap] instances to reduce GC pressure.
+ * @property scope The coroutine scope used for background rendering tasks and animations.
  */
 @Stable
 class PdfViewerState(
@@ -141,10 +150,6 @@ class PdfViewerState(
 
     val minZoom: Float get() = controller?.viewerConfig?.minZoom ?: 1f
     val maxZoom: Float get() = controller?.viewerConfig?.maxZoom ?: 5f
-
-    // -------------------------------------------------------------------------
-    // Public Programmatic API
-    // -------------------------------------------------------------------------
 
     /** Instantly jumps to [pageIndex] without animation. */
     fun scrollToPage(pageIndex: Int) {

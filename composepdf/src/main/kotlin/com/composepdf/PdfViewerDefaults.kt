@@ -39,7 +39,7 @@ object PdfViewerDefaults {
      *
      * At zoom = 1 the bitmap will be `viewportWidth × RenderQuality` pixels wide.
      * At high zoom levels the bitmap is capped at [com.composepdf.internal.service.pdf.PageRenderer.MAX_BITMAP_PX]
-     * so this factor is effectively reduced automatically — no OOM risk.
+     * so this factor is effectively reduced automatically.
      *
      * 1.5 = 50 % oversampling → sharp on FullHD / QHD screens at zoom = 1.
      */
@@ -59,7 +59,7 @@ object PdfViewerDefaults {
      *   2. [DoubleTapZoom] → [MaxZoom]
      *   3. [MaxZoom] → fit-page zoom
      */
-    const val DoubleTapZoom: Float = 2.5f
+    const val DoubleTapZoom: Float = (MinZoom + MaxZoom) / 2f
 
     /**
      * Number of pages to render speculatively beyond the visible range in each direction.

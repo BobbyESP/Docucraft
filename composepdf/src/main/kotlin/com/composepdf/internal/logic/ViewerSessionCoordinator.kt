@@ -10,13 +10,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /**
- * Sequences document/session mutations that should not live in [PdfViewerController].
+ * Coordinates the lifecycle and state mutations of a PDF viewing session.
  *
- * It keeps the controller as a thin façade while centralizing the delicate order of operations for:
- * - document reset/open/commit/failure publication
- * - viewport/layout refreshes
- * - high-resolution tile invalidation when geometry changes
- * - render triggers emitted after state has reached a coherent snapshot
+ * This class acts as the central orchestrator for complex operations that involve multiple
+ * components, ensuring that state updates, viewport adjustments, and rendering triggers
+ * occur in the correct sequence. It handles:
+ * - Loading new documents and managing the transition between document states.
+ * - Responding to configuration changes (e.g., fit mode, spacing) by refreshing layouts.
+ * - Processing viewport size changes and invalidating high-resolution tiles.
+ * - Emitting render triggers only after the internal state has reached a coherent snapshot.
+ *
+ * By centralizing these orchestration concerns, it allows [PdfViewerState] to remain a pure
+ * state container and the controller to act as a thin façade.
  */
 internal class ViewerSessionCoordinator(
     private val scope: CoroutineScope,

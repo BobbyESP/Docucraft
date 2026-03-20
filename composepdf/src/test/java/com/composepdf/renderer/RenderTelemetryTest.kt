@@ -1,7 +1,7 @@
 package com.composepdf.renderer
 
+import com.composepdf.RenderTrigger
 import com.composepdf.internal.service.renderer.RenderTelemetry
-import com.composepdf.internal.service.renderer.RenderTrigger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

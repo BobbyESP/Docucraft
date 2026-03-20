@@ -129,10 +129,8 @@ class PageRenderer(
     }
 
     companion object {
-        /** Cap to prevent OOM on extremely large pages. */
         const val MAX_BITMAP_PX = 2048
 
-        /** Standard size for high-res tiles. Small tiles render faster. */
         const val TILE_SIZE = 256
     }
 }
