@@ -133,13 +133,11 @@ fun AppLocalSettingsProvider(
         }
 
     CompositionLocalProvider(
-        LocalDarkTheme provides darkTheme, // Tells the app what dark theme to use
+        LocalDarkTheme provides darkTheme,
         LocalSeedColor provides
-                seedColor, // Tells the app what color to use as seed for the palette
+                seedColor,
         LocalDynamicColoringSwitch provides
-                useDynamicColoring, // Tells the app if it should use dynamic colors or not
-        // (Android
-        // 12+ feature)
+                useDynamicColoring,
         LocalAppPreferencesController provides appPreferences,
         LocalWindowWidthState provides windowWidthSize,
         LocalOrientation provides config.orientation,

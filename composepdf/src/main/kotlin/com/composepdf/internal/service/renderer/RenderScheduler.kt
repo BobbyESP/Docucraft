@@ -84,7 +84,6 @@ internal class RenderScheduler internal constructor(
     private val renderDispatcher = Dispatchers.IO.limitedParallelism(3)
     private val scope = CoroutineScope(renderDispatcher + SupervisorJob())
 
-    // Internal state tracking replacing RenderWindowTracker
     private data class RenderWindowSnapshot(
         val sessionToken: Int,
         val desiredPages: Map<Int, TileKey>,
