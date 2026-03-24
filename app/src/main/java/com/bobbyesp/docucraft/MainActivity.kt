@@ -35,27 +35,28 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 
-class MainActivity : ComponentActivity(), KoinComponent {
+class MainActivity : ComponentActivity() {
 
     private val appPreferences: AppPreferences by inject()
     private val inAppNotificationsService: InAppNotificationsService by inject()
     private val analyticsHelper: AnalyticsHelper by inject()
 
+    private val scannerRepository: ScannerRepository by inject()
     private val scannerManager: ScannerManager by inject()
     private val scannerClient: GmsDocumentScanner by inject()
-    private val scannerRepository: ScannerRepository by inject()
 
     private val scannerLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
         lifecycleScope.launch {
-            scannerRepository.processResult(result).onSuccess { rawScanResult ->
-                scannerManager.onScanResult(
-                    Result.success(rawScanResult)
-                )
-            }.onFailure { error ->
-                scannerManager.onScanResult(Result.failure(error))
-            }
+            scannerRepository.processResult(result)
+                .onSuccess { rawScanResult ->
+                    scannerManager.onScanResult(
+                        Result.success(rawScanResult)
+                    )
+                }.onFailure { error ->
+                    scannerManager.onScanResult(Result.failure(error))
+                }
         }
     }
 

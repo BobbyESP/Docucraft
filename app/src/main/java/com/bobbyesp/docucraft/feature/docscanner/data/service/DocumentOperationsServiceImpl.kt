@@ -13,8 +13,13 @@ import java.io.File
 import java.io.FileOutputStream
 
 /**
- * Implementation of PdfDocumentService. Handles PDF document operations like extracting pages as
- * images.
+ * Implementation of [DocumentOperationsService] that provides concrete logic for PDF document operations.
+ *
+ * This service handles the low-level tasks of resolving document [Uri]s, rendering PDF pages
+ * into bitmaps using [PdfRenderer], and persisting those pages as image files to the local storage.
+ * It supports both `file://` and `content://` URI schemes.
+ *
+ * @property context The [Context] used to access the [android.content.ContentResolver].
  */
 class DocumentOperationsServiceImpl(private val context: Context) : DocumentOperationsService {
     companion object {

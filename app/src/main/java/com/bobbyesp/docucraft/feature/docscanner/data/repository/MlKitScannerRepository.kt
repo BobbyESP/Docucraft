@@ -8,6 +8,13 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannerRepository
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 
+/**
+ * Implementation of [ScannerRepository] that utilizes the Google ML Kit Document Scanner API.
+ *
+ * This repository handles the processing of [ActivityResult] data returned by the ML Kit
+ * scanning activity. It maps the underlying [GmsDocumentScanningResult] to the domain's
+ * [RawScanResult] and provides unified error handling for scan cancellations or technical failures.
+ */
 class MlKitScannerRepository : ScannerRepository {
     override suspend fun processResult(result: ActivityResult): Result<RawScanResult> {
         return try {

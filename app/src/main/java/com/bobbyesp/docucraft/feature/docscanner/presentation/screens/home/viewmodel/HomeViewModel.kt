@@ -308,18 +308,23 @@ class HomeViewModel(
         val sheet = currentState.sheetState ?: return@launch
         val doc = sheet.activeDocument ?: return@launch
 
-        updateDocumentFieldsUseCase(
-            doc.uuid,
-            sheet.editTitle.trim().ifBlank { null },
-            sheet.editDescription.trim().ifBlank { null }
-        )
+        val hasChanges = sheet.editTitle.trim() != doc.title ||
+                sheet.editDescription.trim() != doc.description
 
-        sendUiEvent(
-            UiEvent.ShowMessage(
-                stringProvider.get(R.string.doc_updated_successfully),
-                NotificationType.Success
+        if(hasChanges) {
+            updateDocumentFieldsUseCase(
+                doc.uuid,
+                sheet.editTitle.trim().ifBlank { null },
+                sheet.editDescription.trim().ifBlank { null }
             )
-        )
+
+            sendUiEvent(
+                UiEvent.ShowMessage(
+                    stringProvider.get(R.string.doc_updated_successfully),
+                    NotificationType.Success
+                )
+            )
+        }
 
         updateSheet {
             it.copy(pageStack = listOf(SheetPage.Actions))
