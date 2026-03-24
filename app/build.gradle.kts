@@ -1,9 +1,5 @@
 plugins {
-    id(libs.plugins.android.application.get().pluginId)
-    id("docucraft.android.convention")
-    alias(libs.plugins.kotlin.serialization)
-    id(libs.plugins.kotlin.parcelize.get().pluginId)
-    alias(libs.plugins.kotlin.ksp)
+    id("app.convention")
     alias(libs.plugins.google.gms)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.stability.analyzer)

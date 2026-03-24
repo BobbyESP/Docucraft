@@ -1,6 +1,6 @@
 plugins {
-    id(libs.plugins.android.library.get().pluginId)
-    id("docucraft.android.convention")
+    id("lib.convention")
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -9,6 +9,8 @@ android {
     defaultConfig {
         consumerProguardFiles("consumer-rules.pro")
     }
+
+    buildFeatures { compose = true }
 }
 
 dependencies {
