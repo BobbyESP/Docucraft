@@ -1,0 +1,125 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 4,
+    "identityHash": "3431aed1f5c9010e0d3bde47a9b2ce92",
+    "entities": [
+      {
+        "tableName": "scanned_documents",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `uuid` TEXT NOT NULL, `filename` TEXT NOT NULL, `title` TEXT, `description` TEXT, `path` TEXT NOT NULL, `createdTimestamp` INTEGER NOT NULL, `fileSize` INTEGER NOT NULL, `pageCount` INTEGER NOT NULL, `thumbnail` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uuid",
+            "columnName": "uuid",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "filename",
+            "columnName": "filename",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "path",
+            "columnName": "path",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdTimestamp",
+            "columnName": "createdTimestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileSize",
+            "columnName": "fileSize",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pageCount",
+            "columnName": "pageCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thumbnail",
+            "columnName": "thumbnail",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "scanned_documents_fts",
+        "createSql": "CREATE VIRTUAL TABLE IF NOT EXISTS `${TABLE_NAME}` USING FTS4(`title` TEXT, `description` TEXT, `filename` TEXT NOT NULL, content=`scanned_documents`)",
+        "fields": [
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "filename",
+            "columnName": "filename",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": []
+        },
+        "ftsVersion": "FTS4",
+        "ftsOptions": {
+          "tokenizer": "simple",
+          "tokenizerArgs": [],
+          "contentTable": "scanned_documents",
+          "languageIdColumnName": "",
+          "matchInfo": "FTS4",
+          "notIndexedColumns": [],
+          "prefixSizes": [],
+          "preferredOrder": "ASC"
+        },
+        "contentSyncTriggers": [
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_scanned_documents_fts_BEFORE_UPDATE BEFORE UPDATE ON `scanned_documents` BEGIN DELETE FROM `scanned_documents_fts` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_scanned_documents_fts_BEFORE_DELETE BEFORE DELETE ON `scanned_documents` BEGIN DELETE FROM `scanned_documents_fts` WHERE `docid`=OLD.`rowid`; END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_scanned_documents_fts_AFTER_UPDATE AFTER UPDATE ON `scanned_documents` BEGIN INSERT INTO `scanned_documents_fts`(`docid`, `title`, `description`, `filename`) VALUES (NEW.`rowid`, NEW.`title`, NEW.`description`, NEW.`filename`); END",
+          "CREATE TRIGGER IF NOT EXISTS room_fts_content_sync_scanned_documents_fts_AFTER_INSERT AFTER INSERT ON `scanned_documents` BEGIN INSERT INTO `scanned_documents_fts`(`docid`, `title`, `description`, `filename`) VALUES (NEW.`rowid`, NEW.`title`, NEW.`description`, NEW.`filename`); END"
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3431aed1f5c9010e0d3bde47a9b2ce92')"
+    ]
+  }
+}
