@@ -21,13 +21,25 @@ ktfmt { kotlinLangStyle() }
 gradlePlugin {
     plugins {
         register("androidAppConvention") {
-            id = "app.convention"
+            id = "android.app.convention"
             implementationClass = "AndroidAppConventionPlugin"
         }
-        register("androidLibConvention") {
-            id = "lib.convention"
-            implementationClass = "AndroidLibraryConventionPlugin"
+
+        register("androidFeatureConvention") {
+            id = "android.feature.convention"
+            implementationClass = "FeatureModuleConventionPlugin"
         }
+
+        register("androidCoreConvention") {
+            id = "android.core.convention"
+            implementationClass = "CoreModuleConventionPlugin"
+        }
+
+        register("androidCoreUiConvention") {
+            id = "android.core.ui.convention"
+            implementationClass = "CoreUiConventionPlugin"
+        }
+
         register("copyApkPlugin") {
             id = "copy-apk-plugin"
             implementationClass = "CopyApkPlugin"

@@ -1,10 +1,12 @@
+import ProjectConfig.setupJvmConfiguration
 import ProjectConfig.setupMainConfiguration
 import com.android.build.api.dsl.CommonExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.internal.Actions.with
+import org.gradle.kotlin.dsl.configure
 
-class AndroidLibraryConventionPlugin: Plugin<Project> {
+class CoreModuleConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             applyPlugins(
@@ -12,8 +14,11 @@ class AndroidLibraryConventionPlugin: Plugin<Project> {
                 "kotlin-serialization"
             )
 
-            val extension = extensions.getByType(CommonExtension::class.java)
-            setupMainConfiguration(extension)
+            extensions.configure<CommonExtension> {
+                setupMainConfiguration(this)
+            }
+
+            setupJvmConfiguration()
         }
     }
 }

@@ -1,5 +1,5 @@
 plugins {
-    id("app.convention")
+    id("android.app.convention")
     alias(libs.plugins.google.gms)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.stability.analyzer)

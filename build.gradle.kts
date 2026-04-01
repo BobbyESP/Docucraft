@@ -11,6 +11,16 @@ plugins {
     alias(libs.plugins.stability.analyzer) apply false
 }
 
+val currentVersion: Version = Version.Beta(
+    major = 1,
+    minor = 0,
+    patch = 0,
+    build = 17
+)
+
+val versionCode by extra(currentVersion.toVersionCode())
+val versionName by extra(currentVersion.toVersionName())
+
 sealed class Version(
     open val major: Int,
     open val minor: Int,
@@ -80,13 +90,3 @@ sealed class Version(
         override val build = 0
     }
 }
-
-val currentVersion: Version = Version.Beta(
-    major = 1,
-    minor = 0,
-    patch = 0,
-    build = 17
-)
-
-val versionCode by extra(currentVersion.toVersionCode())
-val versionName by extra(currentVersion.toVersionName())

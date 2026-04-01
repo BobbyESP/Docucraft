@@ -1,16 +1,9 @@
 plugins {
-    id("lib.convention")
-    alias(libs.plugins.kotlin.compose)
+    id("android.feature.convention")
 }
 
 android {
     namespace = "com.composepdf"
-
-    defaultConfig {
-        consumerProguardFiles("consumer-rules.pro")
-    }
-
-    buildFeatures { compose = true }
 }
 
 dependencies {
