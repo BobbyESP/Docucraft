@@ -1,5 +1,6 @@
 package com.bobbyesp.docucraft.core.data.remote.analytics
 
+import android.util.Log
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.google.firebase.analytics.FirebaseAnalytics
@@ -9,6 +10,7 @@ class FirebaseAnalyticsHelperImpl(
     private val firebaseAnalytics: FirebaseAnalytics
 ): AnalyticsHelper {
     override fun logEvent(event: AnalyticsEvent) {
+        Log.d("Analytics", "Logging event: ${event.type}, extras: ${event.extras}")
         firebaseAnalytics.logEvent(event.type) {
             event.extras.forEach { extraData ->
                 param(

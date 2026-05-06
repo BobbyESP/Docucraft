@@ -3,6 +3,7 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.view
 import androidx.lifecycle.SavedStateHandle
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.StringProvider
+import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.navigation.Route
@@ -65,6 +66,7 @@ class HomeViewModel(
             HomeIntent.Load -> observeDocuments()
 
             HomeIntent.LaunchScanner -> launch {
+                analyticsHelper.logEvent(AnalyticsEvent(AnalyticsEvent.Types.SCAN_STARTED))
                 scannerManager.requestScan()
             }
 
@@ -72,8 +74,22 @@ class HomeViewModel(
 
             is HomeIntent.ViewDocument -> openDocument(intent.id)
 
-            is HomeIntent.UpdateSearch ->
+            is HomeIntent.UpdateSearch -> {
+                if (intent.query.length >= 3 && intent.query != currentState.searchQuery) {
+                    analyticsHelper.logEvent(
+                        AnalyticsEvent(
+                            type = AnalyticsEvent.Types.SEARCH_PERFORMED,
+                            extras = listOf(
+                                AnalyticsEvent.Param(
+                                    AnalyticsEvent.ParamKeys.QUERY_LENGTH,
+                                    intent.query.length.toString()
+                                )
+                            )
+                        )
+                    )
+                }
                 setState { copy(searchQuery = intent.query) }
+            }
 
             HomeIntent.ClearSearch ->
                 setState { copy(searchQuery = "") }
@@ -81,11 +97,35 @@ class HomeViewModel(
             is HomeIntent.ToggleSearch ->
                 setState { copy(isSearchBarVisible = intent.visible) }
 
-            is HomeIntent.ApplySort ->
+            is HomeIntent.ApplySort -> {
+                analyticsHelper.logEvent(
+                    AnalyticsEvent(
+                        type = AnalyticsEvent.Types.FILTER_APPLIED,
+                        extras = listOf(
+                            AnalyticsEvent.Param(
+                                AnalyticsEvent.ParamKeys.SORT_BY,
+                                "${intent.sort.criteria.name}_${intent.sort.order.name}"
+                            )
+                        )
+                    )
+                )
                 setState { copy(filterOptions = filterOptions.copy(sortBy = intent.sort)) }
+            }
 
-            is HomeIntent.ApplyFilter ->
+            is HomeIntent.ApplyFilter -> {
+                analyticsHelper.logEvent(
+                    AnalyticsEvent(
+                        type = AnalyticsEvent.Types.FILTER_APPLIED,
+                        extras = listOf(
+                            AnalyticsEvent.Param(
+                                AnalyticsEvent.ParamKeys.FILTER_TYPE,
+                                "complex_filter"
+                            )
+                        )
+                    )
+                )
                 setState { copy(filterOptions = intent.filter) }
+            }
 
             HomeIntent.ClearFilters ->
                 setState { copy(filterOptions = FilterOptions.default) }
@@ -144,6 +184,17 @@ class HomeViewModel(
             result
                 .onSuccess { processScanResult(it) }
                 .onFailure {
+                    analyticsHelper.logEvent(
+                        AnalyticsEvent(
+                            type = AnalyticsEvent.Types.SCAN_CANCELLED,
+                            extras = listOf(
+                                AnalyticsEvent.Param(
+                                    AnalyticsEvent.ParamKeys.STATUS,
+                                    it.message ?: "unknown"
+                                )
+                            )
+                        )
+                    )
                     setState { copy(isScanning = false) }
                 }
         }
@@ -182,6 +233,18 @@ class HomeViewModel(
         setState { copy(isScanning = false) }
 
         saveScannedDocumentUseCase(result)
+
+        analyticsHelper.logEvent(
+            AnalyticsEvent(
+                type = AnalyticsEvent.Types.SCAN_COMPLETED,
+                extras = listOf(
+                    AnalyticsEvent.Param(
+                        AnalyticsEvent.ParamKeys.PAGE_COUNT,
+                        result.pageCount.toString()
+                    )
+                )
+            )
+        )
 
         sendUiEvent(
             UiEvent.ShowMessage(
@@ -257,6 +320,12 @@ class HomeViewModel(
 
         deleteDocumentUseCase(doc.path)
 
+        analyticsHelper.logEvent(
+            AnalyticsEvent(
+                type = AnalyticsEvent.Types.DOCUMENT_DELETED
+            )
+        )
+
         sendUiEvent(
             UiEvent.ShowMessage(
                 stringProvider.get(R.string.doc_deleted_successfully),
@@ -272,6 +341,11 @@ class HomeViewModel(
 
         runCatching {
             shareDocumentUseCase(doc.path)
+            analyticsHelper.logEvent(
+                AnalyticsEvent(
+                    type = AnalyticsEvent.Types.DOCUMENT_SHARED
+                )
+            )
         }.onFailure {
             sendUiEvent(
                 UiEvent.ShowMessage(
@@ -287,6 +361,11 @@ class HomeViewModel(
 
         exportDocumentUseCase(doc)
             .onSuccess { uri ->
+                analyticsHelper.logEvent(
+                    AnalyticsEvent(
+                        type = AnalyticsEvent.Types.DOCUMENT_EXPORTED
+                    )
+                )
                 sendUiEvent(
                     UiEvent.ShowMessage(
                         stringProvider.get(R.string.doc_saved_successfully_to, uri),

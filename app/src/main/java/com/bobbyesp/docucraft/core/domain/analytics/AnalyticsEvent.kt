@@ -10,6 +10,16 @@ data class AnalyticsEvent(
         const val SELECT_ITEM = "select_item"
         const val BUTTON_CLICK = "button_click"
         const val SUBMIT_RATING = "submit_rating"
+
+        const val SCAN_STARTED = "scan_started"
+        const val SCAN_COMPLETED = "scan_completed"
+        const val SCAN_CANCELLED = "scan_cancelled"
+        const val DOCUMENT_DELETED = "document_deleted"
+        const val DOCUMENT_SHARED = "document_shared"
+        const val DOCUMENT_EXPORTED = "document_exported"
+        const val SEARCH_PERFORMED = "search_performed"
+        const val FILTER_APPLIED = "filter_applied"
+        const val PDF_VIEWER_SETTING_CHANGED = "pdf_viewer_setting_changed"
     }
 
     /**
@@ -34,5 +44,14 @@ data class AnalyticsEvent(
         const val ITEM_NAME = "item_name"
         const val RATING_TYPE = "rating_type"
         const val RATING_CONTENT = "rating_content"
+
+        const val PAGE_COUNT = "page_count"
+        const val FILE_SIZE = "file_size"
+        const val STATUS = "status"
+        const val QUERY_LENGTH = "query_length"
+        const val SORT_BY = "sort_by"
+        const val FILTER_TYPE = "filter_type"
+        const val SETTING_NAME = "setting_name"
+        const val SETTING_VALUE = "setting_value"
     }
 }

@@ -50,6 +50,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
+import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
+import com.bobbyesp.docucraft.core.domain.repository.logScreenView
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.composepdf.PdfViewer
@@ -72,6 +75,11 @@ fun PdfViewerScreen(
     modifier: Modifier = Modifier
 ) {
     val pdfViewerState = rememberPdfViewerState()
+    val analyticsHelper = LocalAnalyticsHelper.current
+
+    LaunchedEffect(Unit) {
+        analyticsHelper.logScreenView("PdfViewer")
+    }
 
     // ── Overlay visibility ────────────────────────────────────────────────────
     // Controls follow a two-state machine:
@@ -255,8 +263,42 @@ fun PdfViewerScreen(
                 state = pdfViewerState,
                 isNightModeEnabled = isNightModeEnabled,
                 fitMode = fitMode,
-                onFitModeChange = { fitMode = it },
-                onNightModeToggle = { isNightModeEnabled = !isNightModeEnabled },
+                onFitModeChange = {
+                    fitMode = it
+                    analyticsHelper.logEvent(
+                        AnalyticsEvent(
+                            type = AnalyticsEvent.Types.PDF_VIEWER_SETTING_CHANGED,
+                            extras = listOf(
+                                AnalyticsEvent.Param(
+                                    AnalyticsEvent.ParamKeys.SETTING_NAME,
+                                    "fit_mode"
+                                ),
+                                AnalyticsEvent.Param(
+                                    AnalyticsEvent.ParamKeys.SETTING_VALUE,
+                                    it.name
+                                )
+                            )
+                        )
+                    )
+                },
+                onNightModeToggle = {
+                    isNightModeEnabled = !isNightModeEnabled
+                    analyticsHelper.logEvent(
+                        AnalyticsEvent(
+                            type = AnalyticsEvent.Types.PDF_VIEWER_SETTING_CHANGED,
+                            extras = listOf(
+                                AnalyticsEvent.Param(
+                                    AnalyticsEvent.ParamKeys.SETTING_NAME,
+                                    "night_mode"
+                                ),
+                                AnalyticsEvent.Param(
+                                    AnalyticsEvent.ParamKeys.SETTING_VALUE,
+                                    isNightModeEnabled.toString()
+                                )
+                            )
+                        )
+                    )
+                },
             )
         }
     }
