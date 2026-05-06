@@ -25,19 +25,25 @@ val commonModule = module {
 
     single<ImageLoader> {
         val context = androidContext()
+
         ImageLoader.Builder(context)
-            .memoryCache { MemoryCache.Builder(context).maxSizePercent(0.4).build() }
+            .memoryCache {
+                MemoryCache.Builder(context)
+                    .maxSizePercent(0.25)
+                    .build()
+            }
             .diskCache {
                 DiskCache.Builder()
                     .directory(context.cacheDir.resolve("image_cache"))
-                    .maxSizeBytes(7 * 1024 * 1024)
+                    .maxSizePercent(0.02)
                     .build()
             }
             .respectCacheHeaders(false)
             .allowHardware(true)
-            .crossfade(300)
-            .bitmapFactoryMaxParallelism(12)
-            .dispatcher(Dispatchers.IO)
+            .bitmapFactoryMaxParallelism(
+                Runtime.getRuntime().availableProcessors().coerceAtMost(4)
+            )
+            .crossfade(true)
             .build()
     }
 

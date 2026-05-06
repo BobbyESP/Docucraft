@@ -40,7 +40,7 @@ fun DocumentDialogWrapper(
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
-        onDismissRequest = { onAction( SheetAction.Dismiss) },
+        onDismissRequest = { onAction(SheetAction.Dismiss) },
         sheetState = bottomSheetState,
         modifier = modifier,
     ) {
@@ -106,6 +106,7 @@ fun DocumentDialogWrapper(
                     modifier = Modifier.widthIn(max = 560.dp),
                 )
             }
+
             is SheetPage.Delete -> {
                 val doc = sheetState.activeDocument ?: return
                 DeleteDocumentDialog(
@@ -115,6 +116,7 @@ fun DocumentDialogWrapper(
                     modifier = Modifier.widthIn(max = 560.dp),
                 )
             }
+
             else -> Unit
         }
     }

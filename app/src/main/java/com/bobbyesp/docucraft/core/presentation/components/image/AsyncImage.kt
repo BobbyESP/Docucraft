@@ -19,6 +19,10 @@ import com.skydoves.landscapist.ImageOptions
 import com.skydoves.landscapist.coil.CoilImage
 import com.skydoves.landscapist.coil.CoilImageState
 import com.skydoves.landscapist.coil.LocalCoilImageLoader
+import com.skydoves.landscapist.components.rememberImageComponent
+import com.skydoves.landscapist.crossfade.CrossfadePlugin
+import com.skydoves.landscapist.placeholder.shimmer.Shimmer
+import com.skydoves.landscapist.placeholder.shimmer.ShimmerPlugin
 
 @Composable
 fun AsyncImage(
@@ -41,6 +45,15 @@ fun AsyncImage(
         modifier = modifier.clip(shape),
         imageModel = { imageUrl },
         imageOptions = imageOptions,
+        component = rememberImageComponent {
+            +CrossfadePlugin(300)
+            +ShimmerPlugin(
+                Shimmer.Resonate(
+                    baseColor = MaterialTheme.colorScheme.surface,
+                    highlightColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        },
         onImageStateChanged = { state ->
             if (state is CoilImageState.Success) {
                 onSuccessData(state)

@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
+import androidx.compose.material.icons.rounded.Deblur
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -106,11 +106,11 @@ fun ScannedDocumentListItem(
                         modifier = Modifier
                             .padding(12.dp)
                             .fillMaxSize(),
-                        imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
+                        imageVector = Icons.Rounded.Deblur,
                         contentDescription = stringResource(id = R.string.file_icon),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
-                } else if (pdf.thumbnail != null) {
+                } else {
                     AsyncImage(
                         modifier = Modifier.fillMaxSize(),
                         imageModel = pdf.thumbnail,
@@ -122,25 +122,6 @@ fun ScannedDocumentListItem(
                                 colorful = true,
                             )
                         },
-                        loading = {
-                            Icon(
-                                modifier = Modifier
-                                    .padding(12.dp)
-                                    .fillMaxSize(),
-                                imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
-                                contentDescription = stringResource(id = R.string.file_icon),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            )
-                        },
-                    )
-                } else {
-                    Icon(
-                        modifier = Modifier
-                            .padding(12.dp)
-                            .fillMaxSize(),
-                        imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
-                        contentDescription = stringResource(id = R.string.file_icon),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
             }

@@ -30,6 +30,9 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.isDynamicColoringSupported
 import com.materialkolor.rememberDynamicMaterialThemeState
 import com.skydoves.landscapist.coil.LocalCoilImageLoader
+import com.skydoves.landscapist.components.LocalImageComponent
+import com.skydoves.landscapist.components.imageComponent
+import com.skydoves.landscapist.crossfade.CrossfadePlugin
 
 val LocalDarkTheme =
     compositionLocalOf<DarkThemePreference> { error("No Dark Theme preferences provided") }
@@ -132,14 +135,12 @@ fun AppLocalSettingsProvider(
                 .colorScheme
         }
 
-    CompositionLocalProvider(
-        LocalDarkTheme provides darkTheme, // Tells the app what dark theme to use
+        CompositionLocalProvider(
+        LocalDarkTheme provides darkTheme,
         LocalSeedColor provides
-                seedColor, // Tells the app what color to use as seed for the palette
+                seedColor,
         LocalDynamicColoringSwitch provides
-                useDynamicColoring, // Tells the app if it should use dynamic colors or not
-        // (Android
-        // 12+ feature)
+                useDynamicColoring,
         LocalAppPreferencesController provides appPreferences,
         LocalWindowWidthState provides windowWidthSize,
         LocalOrientation provides config.orientation,

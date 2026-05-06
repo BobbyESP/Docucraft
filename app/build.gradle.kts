@@ -80,6 +80,7 @@ dependencies {
     implementation(libs.google.fonts)
     implementation(libs.material.kolor)
     implementation(libs.landscapist.coil)
+    implementation(libs.landscapist.placeholder)
     implementation(libs.sonner)
     
     // Storage
