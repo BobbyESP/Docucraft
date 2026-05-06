@@ -53,6 +53,7 @@ filekit = "0.14.0"
 # Utils
 leakcanary = "2.14"
 desugarJdkLibs = "2.1.5"
+stabilityCompiler = "0.7.4"
 
 # Testing
 junit = "4.13.2"
@@ -161,7 +162,7 @@ google-gms = { id = "com.google.gms.google-services", version.ref = "googleServi
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }
 ktfmt = { id = "com.ncorti.ktfmt.gradle", version.ref = "ktfmt" }
 androidx-baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidxBaselineProfile" }
-stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version = "0.7.0" }
+stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version.ref = "stabilityCompiler" }
 
 [bundles]
 androidx-core = [
