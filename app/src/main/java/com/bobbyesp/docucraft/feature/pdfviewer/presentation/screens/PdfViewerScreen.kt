@@ -77,33 +77,17 @@ fun PdfViewerScreen(
     val pdfViewerState = rememberPdfViewerState()
     val analyticsHelper = LocalAnalyticsHelper.current
 
-    LaunchedEffect(Unit) {
-        analyticsHelper.logScreenView("PdfViewer")
-    }
-
-    // ── Overlay visibility ────────────────────────────────────────────────────
-    // Controls follow a two-state machine:
-    //   • Initially both top bar and bottom toolbar are visible.
-    //   • First real scroll (gesture active + document loaded) hides the top bar only.
-    //   • Subsequent taps toggle visibility of both overlays together.
     var areControlsVisible by remember { mutableStateOf(true) }
     var isTopBarVisible by remember { mutableStateOf(true) }
     var hasScrolled by remember { mutableStateOf(false) }
 
-    // ── Viewer settings (owned here so toolbar can mutate them) ───────────────
     var fitMode by remember { mutableStateOf(FitMode.BOTH) }
     var isNightModeEnabled by remember { mutableStateOf(false) }
 
-    // ── Tap detection for overlay toggling ────────────────────────────────────
-    // Tracks the pointer position at finger-down so we can distinguish a tap
-    // (no significant movement) from a scroll or zoom gesture.
     var touchStartX by remember { mutableFloatStateOf(0f) }
     var touchStartY by remember { mutableFloatStateOf(0f) }
     val touchSlop = LocalViewConfiguration.current.touchSlop
 
-    // Auto-hide top bar when the user starts actively scrolling the document.
-    // We observe panY + isGestureActive together to ignore automatic repositioning
-    // (e.g. vertical centering of a short document on load or after zoom reset).
     LaunchedEffect(pdfViewerState) {
         snapshotFlow { pdfViewerState.panY to pdfViewerState.isGestureActive }
             .distinctUntilChanged()
@@ -123,7 +107,6 @@ fun PdfViewerScreen(
         .calculateTopPadding()
     val topAppBarHeight = TopAppBarDefaults.TopAppBarExpandedHeight + topInsetDp
 
-    // Animate the PDF top padding so the page doesn't jump when the top bar appears/disappears.
     val pdfTopPadding by animateDpAsState(
         targetValue = if (isTopBarVisible && !hasScrolled) topAppBarHeight else 0.dp,
         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
@@ -186,7 +169,6 @@ fun PdfViewerScreen(
                 }
         )
 
-        // ── Top bar ───────────────────────────────────────────────────────────
         AnimatedVisibility(
             modifier = Modifier.align(Alignment.TopCenter),
             visible = isTopBarVisible,
@@ -239,7 +221,6 @@ fun PdfViewerScreen(
             )
         }
 
-        // ── Bottom toolbar ────────────────────────────────────────────────────
         AnimatedVisibility(
             modifier = Modifier
                 .align(Alignment.BottomCenter)

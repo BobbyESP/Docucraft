@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface Route : NavKey {
     @Serializable
-    data object Home : Route, TopLevelRoute, NavKey {
+    data object Home : Route, TopLevelRoute {
         override val icon: ImageVector
             get() = Icons.Rounded.Home
     }
@@ -18,17 +18,12 @@ sealed interface Route : NavKey {
     @Serializable
     data class PdfViewer(
         val documentInfo: BasicDocument
-    ) : Route, NavKey
+    ) : Route
 
-    //    @Serializable
-    //    data object Playground : Route, TopLevelRoute {
-    //        override val icon: ImageVector
-    //            get() = Icons.Rounded.DataObject
-    //    }
 }
 
 interface TopLevelRoute {
     val icon: ImageVector
 }
 
-val TopLevelRoutes = listOf<TopLevelRoute>(Route.Home) // Route.Playground
+val TopLevelRoutes = listOf<TopLevelRoute>(Route.Home)

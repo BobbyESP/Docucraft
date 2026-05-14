@@ -99,7 +99,7 @@ interface LocalDocumentsRepository {
      * This operation performs a cleanup that involves:
      * 1. Removing the record from the local database.
      * 2. (Optional depending on implementation) Deleting the actual physical file from the device storage
-     *    referenced by [pdfPath].
+     *    referenced by [path].
      *
      * @param path The [Uri] of the document to be deleted.
      * @throws SecurityException If the app lacks permissions to delete the physical file.
