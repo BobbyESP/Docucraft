@@ -48,10 +48,10 @@ fun RoundedTag(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     border: BorderStroke? = null,
-    shape: Shape = MaterialTheme.shapes.extraLarge, // Más redondeado para mayor expresividad
+    shape: Shape = MaterialTheme.shapes.extraLarge,
     containerColor: Color = MaterialTheme.colorScheme.secondaryContainer,
     contentColor: Color = contentColorFor(containerColor),
-    contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 6.dp), // Padding más generoso
+    contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
 ) {
     Surface(
         modifier = modifier,

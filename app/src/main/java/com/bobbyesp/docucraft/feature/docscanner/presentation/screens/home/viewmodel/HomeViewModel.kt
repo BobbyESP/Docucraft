@@ -14,13 +14,11 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.FilterDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SortDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
@@ -30,18 +28,24 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetPage
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.withContext
 
 class HomeViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val scannerManager: ScannerManager,
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
-    private val searchDocumentsUseCase: SearchDocumentsUseCase,
-    private val filterDocumentsUseCase: FilterDocumentsUseCase,
-    private val sortDocumentsUseCase: SortDocumentsUseCase,
+    private val processDocumentsUseCase: ProcessDocumentsUseCase,
     private val getDocumentUseCase: GetDocumentUseCase,
     private val saveScannedDocumentUseCase: SaveScannedDocumentUseCase,
     private val deleteDocumentUseCase: DeleteDocumentUseCase,
@@ -139,36 +143,57 @@ class HomeViewModel(
 
     // ---------------- OBSERVE ----------------
 
+    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     private fun observeDocuments() = launch {
+
         combine(
             observeDocumentsUseCase(),
-            state.map { it.searchQuery },
-            state.map { it.filterOptions }
-        ) { docs, query, filters ->
-            val searched = searchDocumentsUseCase(docs, query)
-            val filtered = filterDocumentsUseCase(searched, filters)
-            val sorted = sortDocumentsUseCase(filtered, filters.sortBy)
 
-            Pair(
-                sorted,
-                docs.isNotEmpty()
-            )
+            state.map { it.searchQuery }
+                .debounce(150)
+                .distinctUntilChanged(),
+
+            state.map { it.filterOptions }
+                .distinctUntilChanged()
+
+        ) { docs, query, filters ->
+            Triple(docs, query, filters)
         }
+            .mapLatest { (docs, query, filters) ->
+
+                val processed = withContext(Dispatchers.Default) {
+                    processDocumentsUseCase(
+                        docs,
+                        query,
+                        filters,
+                        filters.sortBy
+                    )
+                }
+
+                processed to docs.isNotEmpty()
+            }
             .onStart {
-                setState { copy(status = HomeStatus.Loading) }
+                setState {
+                    copy(status = HomeStatus.Loading)
+                }
             }
             .catch { error ->
+
+                val message = stringProvider.getError(error)
+
                 setState {
-                    copy(status = HomeStatus.Error(stringProvider.getError(error)))
+                    copy(status = HomeStatus.Error(message))
                 }
+
                 sendUiEvent(
                     UiEvent.ShowMessage(
-                        stringProvider.getError(error),
+                        message,
                         NotificationType.Error
                     )
                 )
             }
             .collect { (sorted, hasDocuments) ->
+
                 setState {
                     copy(
                         visibleDocuments = sorted,

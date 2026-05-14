@@ -11,16 +11,16 @@ import com.bobbyesp.docucraft.feature.docscanner.data.search.InMemorySearchStrat
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.service.DocumentOperationsService
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.*
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.CopyDocumentToFileUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GenerateDocumentThumbnailUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -55,9 +55,7 @@ val documentScannerDataModule = module {
     factory { OpenDocumentInViewerUseCase(context = androidContext()) }
     factory { ShareDocumentUseCase(context = androidContext()) }
     factory { ExportDocumentUseCase() }
-    factory { SortDocumentsUseCase() }
-    factory { FilterDocumentsUseCase() }
-    factory { SearchDocumentsUseCase(queryStrategy = get(), localStrategy = get()) }
+    factory { ProcessDocumentsUseCase(querySearchStrategy = get(), localSearchStrategy = get()) }
 
     factory {
         DeleteDocumentUseCase(
