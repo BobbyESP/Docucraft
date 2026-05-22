@@ -31,8 +31,15 @@ import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.SettingsSuggest
+import androidx.compose.material.icons.rounded.TextFields
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -43,12 +50,15 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.surfaceColorAtElevation
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -87,6 +97,14 @@ private val SeedColorHexFormat =
             prefix = "#"
         }
     }
+
+enum class TypographyCategory {
+    DISPLAY,
+    TITLE,
+    BODY,
+    LABEL,
+    MONOSPACE
+}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -168,6 +186,7 @@ fun AppearanceScreenContent(
     val isDark = uiState.themeConfig.isDarkTheme()
 
     var showColorPicker by rememberSaveable { mutableStateOf(false) }
+    var activeTypographyCategory by rememberSaveable { mutableStateOf<TypographyCategory?>(null) }
 
     Scaffold(
         modifier = modifier
@@ -334,49 +353,39 @@ fun AppearanceScreenContent(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        TypographyCategorySelector(
+                        TypographyCategoryRow(
                             categoryName = stringResource(R.string.typography_display),
                             categoryDesc = stringResource(R.string.typography_display_desc),
                             selectedFont = uiState.displayFont,
-                            onFontSelect = onDisplayFontChange,
-                            previewText = "Docucraft Scanner",
-                            previewStyle = MaterialTheme.typography.headlineMedium
+                            onClick = { activeTypographyCategory = TypographyCategory.DISPLAY }
                         )
 
-                        TypographyCategorySelector(
+                        TypographyCategoryRow(
                             categoryName = stringResource(R.string.typography_title),
                             categoryDesc = stringResource(R.string.typography_title_desc),
                             selectedFont = uiState.titleFont,
-                            onFontSelect = onTitleFontChange,
-                            previewText = "Scanned Documents",
-                            previewStyle = MaterialTheme.typography.titleMedium
+                            onClick = { activeTypographyCategory = TypographyCategory.TITLE }
                         )
 
-                        TypographyCategorySelector(
+                        TypographyCategoryRow(
                             categoryName = stringResource(R.string.typography_body),
                             categoryDesc = stringResource(R.string.typography_body_desc),
                             selectedFont = uiState.bodyFont,
-                            onFontSelect = onBodyFontChange,
-                            previewText = "This document was processed using Docucraft with advanced layout intelligence.",
-                            previewStyle = MaterialTheme.typography.bodyMedium
+                            onClick = { activeTypographyCategory = TypographyCategory.BODY }
                         )
 
-                        TypographyCategorySelector(
+                        TypographyCategoryRow(
                             categoryName = stringResource(R.string.typography_label),
                             categoryDesc = stringResource(R.string.typography_label_desc),
                             selectedFont = uiState.labelFont,
-                            onFontSelect = onLabelFontChange,
-                            previewText = "CONFIRM EDIT",
-                            previewStyle = MaterialTheme.typography.labelLarge
+                            onClick = { activeTypographyCategory = TypographyCategory.LABEL }
                         )
 
-                        TypographyCategorySelector(
+                        TypographyCategoryRow(
                             categoryName = stringResource(R.string.typography_monospace),
                             categoryDesc = stringResource(R.string.typography_monospace_desc),
                             selectedFont = uiState.monospaceFont,
-                            onFontSelect = onMonospaceFontChange,
-                            previewText = "ID: 46F1-37FB-AC5A (60 chars)",
-                            previewStyle = MaterialTheme.typography.bodySmall
+                            onClick = { activeTypographyCategory = TypographyCategory.MONOSPACE }
                         )
                     }
                 }
@@ -389,6 +398,63 @@ fun AppearanceScreenContent(
             initialColor = Color(uiState.themeSeedColor),
             onColorSelected = { onThemeSeedColorChange(it.toArgb()) },
             onDismiss = { showColorPicker = false }
+        )
+    }
+
+    activeTypographyCategory?.let { category ->
+        val title = when (category) {
+            TypographyCategory.DISPLAY -> stringResource(R.string.typography_display)
+            TypographyCategory.TITLE -> stringResource(R.string.typography_title)
+            TypographyCategory.BODY -> stringResource(R.string.typography_body)
+            TypographyCategory.LABEL -> stringResource(R.string.typography_label)
+            TypographyCategory.MONOSPACE -> stringResource(R.string.typography_monospace)
+        }
+        val desc = when (category) {
+            TypographyCategory.DISPLAY -> stringResource(R.string.typography_display_desc)
+            TypographyCategory.TITLE -> stringResource(R.string.typography_title_desc)
+            TypographyCategory.BODY -> stringResource(R.string.typography_body_desc)
+            TypographyCategory.LABEL -> stringResource(R.string.typography_label_desc)
+            TypographyCategory.MONOSPACE -> stringResource(R.string.typography_monospace_desc)
+        }
+        val selectedFont = when (category) {
+            TypographyCategory.DISPLAY -> uiState.displayFont
+            TypographyCategory.TITLE -> uiState.titleFont
+            TypographyCategory.BODY -> uiState.bodyFont
+            TypographyCategory.LABEL -> uiState.labelFont
+            TypographyCategory.MONOSPACE -> uiState.monospaceFont
+        }
+        val onFontSelect: (FontConfig) -> Unit = { font ->
+            when (category) {
+                TypographyCategory.DISPLAY -> onDisplayFontChange(font)
+                TypographyCategory.TITLE -> onTitleFontChange(font)
+                TypographyCategory.BODY -> onBodyFontChange(font)
+                TypographyCategory.LABEL -> onLabelFontChange(font)
+                TypographyCategory.MONOSPACE -> onMonospaceFontChange(font)
+            }
+        }
+        val previewText = when (category) {
+            TypographyCategory.DISPLAY -> "Docucraft Scanner"
+            TypographyCategory.TITLE -> "Scanned Documents"
+            TypographyCategory.BODY -> "This document was processed using Docucraft with advanced layout intelligence."
+            TypographyCategory.LABEL -> "CONFIRM EDIT"
+            TypographyCategory.MONOSPACE -> "ID: 46F1-37FB-AC5A (60 chars)"
+        }
+        val previewStyle = when (category) {
+            TypographyCategory.DISPLAY -> MaterialTheme.typography.headlineMedium
+            TypographyCategory.TITLE -> MaterialTheme.typography.titleMedium
+            TypographyCategory.BODY -> MaterialTheme.typography.bodyMedium
+            TypographyCategory.LABEL -> MaterialTheme.typography.labelLarge
+            TypographyCategory.MONOSPACE -> MaterialTheme.typography.bodySmall
+        }
+
+        FontSelectionDialog(
+            title = title,
+            description = desc,
+            selectedFont = selectedFont,
+            onFontSelect = onFontSelect,
+            previewText = previewText,
+            previewStyle = previewStyle,
+            onDismiss = { activeTypographyCategory = null }
         )
     }
 }
@@ -461,74 +527,210 @@ private fun AppearanceScreenNoDynamicColorPreview() {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun TypographyCategorySelector(
+fun TypographyCategoryRow(
     categoryName: String,
     categoryDesc: String,
+    selectedFont: FontConfig,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val fontFamily = remember(selectedFont) { selectedFont.toFontFamily() }
+
+    ListItem(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.largeIncreased)
+            .clickable(onClick = onClick),
+        headlineContent = {
+            Text(
+                text = categoryName,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleMedium
+            )
+        },
+        supportingContent = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = categoryDesc,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "Active: ${selectedFont.name}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        },
+        leadingContent = {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.TextFields,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        },
+        trailingContent = {
+            Box(
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Aa",
+                    fontFamily = fontFamily,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+        )
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FontSelectionDialog(
+    title: String,
+    description: String,
     selectedFont: FontConfig,
     onFontSelect: (FontConfig) -> Unit,
     previewText: String,
     previewStyle: TextStyle,
+    onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp))
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Column {
-            Text(
-                text = categoryName,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = categoryDesc,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        // Font Preview Box
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(MaterialTheme.shapes.small)
-                .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
-                .padding(12.dp)
-        ) {
-            val fontFamily = remember(selectedFont) { selectedFont.toFontFamily() }
-            Text(
-                text = previewText,
-                style = previewStyle.copy(fontFamily = fontFamily)
-            )
-        }
-
-        // Horizontal scroll list of fonts
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(vertical = 4.dp)
-        ) {
-            items(FontConfig.entries) { fontConfig ->
-                val isSelected = selectedFont == fontConfig
-                val fontFamily = remember(fontConfig) { fontConfig.toFontFamily() }
-                ToggleButton(
-                    checked = isSelected,
-                    onCheckedChange = { if (it) onFontSelect(fontConfig) },
-                    colors = ToggleButtonDefaults.tonalToggleButtonColors()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.confirm))
+            }
+        },
+        title = {
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Live preview card at the top
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    ),
+                    shape = MaterialTheme.shapes.large
                 ) {
-                    Text(
-                        text = fontConfig.name,
-                        fontFamily = fontFamily,
-                        style = MaterialTheme.typography.labelMedium
-                    )
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "PREVIEW",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        
+                        val fontFamily = remember(selectedFont) { selectedFont.toFontFamily() }
+                        Text(
+                            text = previewText,
+                            style = previewStyle.copy(fontFamily = fontFamily),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+                
+                // Scrollable list of fonts below
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(280.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(FontConfig.entries) { fontConfig ->
+                        val isSelected = selectedFont == fontConfig
+                        val fontFamily = remember(fontConfig) { fontConfig.toFontFamily() }
+                        
+                        ListItem(
+                            modifier = Modifier
+                                .clip(MaterialTheme.shapes.medium)
+                                .clickable { onFontSelect(fontConfig) },
+                            headlineContent = {
+                                Text(
+                                    text = fontConfig.name,
+                                    fontFamily = fontFamily,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            },
+                            leadingContent = {
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                            else MaterialTheme.colorScheme.surfaceVariant
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Aa",
+                                        fontFamily = fontFamily,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                                                else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            },
+                            trailingContent = {
+                                RadioButton(
+                                    selected = isSelected,
+                                    onClick = { onFontSelect(fontConfig) }
+                                )
+                            },
+                            colors = ListItemDefaults.colors(
+                                containerColor = if (isSelected) {
+                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+                                } else {
+                                    Color.Transparent
+                                }
+                            )
+                        )
+                    }
                 }
             }
-        }
-    }
+        },
+        shape = MaterialTheme.shapes.extraLarge,
+        modifier = modifier
+    )
 }
