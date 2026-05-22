@@ -20,7 +20,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ColorLens
@@ -129,7 +132,11 @@ fun AppearanceScreen(
                     onThemeSeedColorChange = viewModel::updateThemeSeedColor,
                     onPaletteStyleChange = viewModel::updatePaletteStyle,
                     onHighContrastModeChange = viewModel::updateHighContrastMode,
-                    onFontConfigChange = viewModel::updateFontConfig
+                    onDisplayFontChange = viewModel::updateDisplayFont,
+                    onTitleFontChange = viewModel::updateTitleFont,
+                    onBodyFontChange = viewModel::updateBodyFont,
+                    onLabelFontChange = viewModel::updateLabelFont,
+                    onMonospaceFontChange = viewModel::updateMonospaceFont
                 )
             }
         }
@@ -150,7 +157,11 @@ fun AppearanceScreenContent(
     onThemeSeedColorChange: (Int) -> Unit,
     onPaletteStyleChange: (PaletteStyleConfig) -> Unit,
     onHighContrastModeChange: (Boolean) -> Unit,
-    onFontConfigChange: (FontConfig) -> Unit,
+    onDisplayFontChange: (FontConfig) -> Unit,
+    onTitleFontChange: (FontConfig) -> Unit,
+    onBodyFontChange: (FontConfig) -> Unit,
+    onLabelFontChange: (FontConfig) -> Unit,
+    onMonospaceFontChange: (FontConfig) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -316,31 +327,57 @@ fun AppearanceScreenContent(
                 }
             }
 
-            // Typography Selection
+            // Typography Selection (Redesigned)
             item(key = "typography_selection", contentType = "settings_section") {
                 AppearanceSection(title = stringResource(R.string.typography)) {
-                    val entries = remember { FontConfig.entries }
-                    FlowRow(
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        entries.forEach { fontConfig ->
-                            val isSelected = uiState.fontConfig == fontConfig
-                            val fontFamily = remember(fontConfig) { fontConfig.toFontFamily() }
-                            ToggleButton(
-                                modifier = Modifier,
-                                checked = isSelected,
-                                onCheckedChange = { if (it) onFontConfigChange(fontConfig) },
-                                colors = ToggleButtonDefaults.tonalToggleButtonColors()
-                            ) {
-                                Text(
-                                    text = fontConfig.name,
-                                    fontFamily = fontFamily,
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                            }
-                        }
+                        TypographyCategorySelector(
+                            categoryName = stringResource(R.string.typography_display),
+                            categoryDesc = stringResource(R.string.typography_display_desc),
+                            selectedFont = uiState.displayFont,
+                            onFontSelect = onDisplayFontChange,
+                            previewText = "Docucraft Scanner",
+                            previewStyle = MaterialTheme.typography.headlineMedium
+                        )
+
+                        TypographyCategorySelector(
+                            categoryName = stringResource(R.string.typography_title),
+                            categoryDesc = stringResource(R.string.typography_title_desc),
+                            selectedFont = uiState.titleFont,
+                            onFontSelect = onTitleFontChange,
+                            previewText = "Scanned Documents",
+                            previewStyle = MaterialTheme.typography.titleMedium
+                        )
+
+                        TypographyCategorySelector(
+                            categoryName = stringResource(R.string.typography_body),
+                            categoryDesc = stringResource(R.string.typography_body_desc),
+                            selectedFont = uiState.bodyFont,
+                            onFontSelect = onBodyFontChange,
+                            previewText = "This document was processed using Docucraft with advanced layout intelligence.",
+                            previewStyle = MaterialTheme.typography.bodyMedium
+                        )
+
+                        TypographyCategorySelector(
+                            categoryName = stringResource(R.string.typography_label),
+                            categoryDesc = stringResource(R.string.typography_label_desc),
+                            selectedFont = uiState.labelFont,
+                            onFontSelect = onLabelFontChange,
+                            previewText = "CONFIRM EDIT",
+                            previewStyle = MaterialTheme.typography.labelLarge
+                        )
+
+                        TypographyCategorySelector(
+                            categoryName = stringResource(R.string.typography_monospace),
+                            categoryDesc = stringResource(R.string.typography_monospace_desc),
+                            selectedFont = uiState.monospaceFont,
+                            onFontSelect = onMonospaceFontChange,
+                            previewText = "ID: 46F1-37FB-AC5A (60 chars)",
+                            previewStyle = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }
@@ -392,7 +429,11 @@ private fun AppearanceScreenPreview() {
             onThemeSeedColorChange = {},
             onPaletteStyleChange = {},
             onHighContrastModeChange = {},
-            onFontConfigChange = {}
+            onDisplayFontChange = {},
+            onTitleFontChange = {},
+            onBodyFontChange = {},
+            onLabelFontChange = {},
+            onMonospaceFontChange = {}
         )
     }
 }
@@ -411,7 +452,83 @@ private fun AppearanceScreenNoDynamicColorPreview() {
             onThemeSeedColorChange = {},
             onPaletteStyleChange = {},
             onHighContrastModeChange = {},
-            onFontConfigChange = {}
+            onDisplayFontChange = {},
+            onTitleFontChange = {},
+            onBodyFontChange = {},
+            onLabelFontChange = {},
+            onMonospaceFontChange = {}
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun TypographyCategorySelector(
+    categoryName: String,
+    categoryDesc: String,
+    selectedFont: FontConfig,
+    onFontSelect: (FontConfig) -> Unit,
+    previewText: String,
+    previewStyle: TextStyle,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Column {
+            Text(
+                text = categoryName,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = categoryDesc,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        // Font Preview Box
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.small)
+                .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
+                .padding(12.dp)
+        ) {
+            val fontFamily = remember(selectedFont) { selectedFont.toFontFamily() }
+            Text(
+                text = previewText,
+                style = previewStyle.copy(fontFamily = fontFamily)
+            )
+        }
+
+        // Horizontal scroll list of fonts
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(vertical = 4.dp)
+        ) {
+            items(FontConfig.entries) { fontConfig ->
+                val isSelected = selectedFont == fontConfig
+                val fontFamily = remember(fontConfig) { fontConfig.toFontFamily() }
+                ToggleButton(
+                    checked = isSelected,
+                    onCheckedChange = { if (it) onFontSelect(fontConfig) },
+                    colors = ToggleButtonDefaults.tonalToggleButtonColors()
+                ) {
+                    Text(
+                        text = fontConfig.name,
+                        fontFamily = fontFamily,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+        }
     }
 }

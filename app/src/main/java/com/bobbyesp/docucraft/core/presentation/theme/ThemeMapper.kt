@@ -24,7 +24,10 @@ fun FontConfig.toFontFamily(): FontFamily? = when (this) {
     FontConfig.Inter -> getCachedGoogleFont("Inter")
     FontConfig.Roboto -> getCachedGoogleFont("Roboto")
     FontConfig.Montserrat -> getCachedGoogleFont("Montserrat")
+    FontConfig.JetBrainsMono -> getCachedGoogleFont("JetBrains Mono")
+    FontConfig.FiraCode -> getCachedGoogleFont("Fira Code")
 }
+
 
 /**
  * Maps the domain [ThemeConfig] to a boolean representing if the dark theme should be active.

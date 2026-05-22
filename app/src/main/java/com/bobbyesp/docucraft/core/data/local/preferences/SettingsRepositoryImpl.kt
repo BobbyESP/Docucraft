@@ -28,7 +28,12 @@ class SettingsRepositoryImpl(
         val USE_DYNAMIC_COLORING = booleanPreferencesKey("dynamic_coloring")
         val THEME_COLOR = intPreferencesKey("theme_color")
         val PALETTE_STYLE = stringPreferencesKey("palette_style")
-        val FONT_CONFIG = stringPreferencesKey("font_config")
+        val FONT_CONFIG = stringPreferencesKey("font_config") // legacy key for migration
+        val DISPLAY_FONT = stringPreferencesKey("display_font")
+        val TITLE_FONT = stringPreferencesKey("title_font")
+        val BODY_FONT = stringPreferencesKey("body_font")
+        val LABEL_FONT = stringPreferencesKey("label_font")
+        val MONOSPACE_FONT = stringPreferencesKey("monospace_font")
         val COMPLETED_ONBOARDING = booleanPreferencesKey("completed_onboarding")
         val MARQUEE_TEXT_ENABLED = booleanPreferencesKey("marquee_text_enabled")
     }
@@ -42,6 +47,14 @@ class SettingsRepositoryImpl(
             }
         }
         .map { preferences ->
+            val legacyFont = preferences[PreferencesKeys.FONT_CONFIG]?.let {
+                try {
+                    FontConfig.valueOf(it)
+                } catch (_: IllegalArgumentException) {
+                    null
+                }
+            }
+
             UserPreferences(
                 themeConfig = preferences[PreferencesKeys.DARK_THEME_VALUE]?.let {
                     try {
@@ -65,13 +78,21 @@ class SettingsRepositoryImpl(
                         PaletteStyleConfig.Vibrant
                     }
                 } ?: PaletteStyleConfig.Vibrant,
-                fontConfig = preferences[PreferencesKeys.FONT_CONFIG]?.let {
-                    try {
-                        FontConfig.valueOf(it)
-                    } catch (_: IllegalArgumentException) {
-                        FontConfig.GoogleSansFlex
-                    }
-                } ?: FontConfig.GoogleSansFlex,
+                displayFont = preferences[PreferencesKeys.DISPLAY_FONT]?.let {
+                    try { FontConfig.valueOf(it) } catch (_: IllegalArgumentException) { null }
+                } ?: legacyFont ?: FontConfig.GoogleSansFlex,
+                titleFont = preferences[PreferencesKeys.TITLE_FONT]?.let {
+                    try { FontConfig.valueOf(it) } catch (_: IllegalArgumentException) { null }
+                } ?: legacyFont ?: FontConfig.GoogleSansFlex,
+                bodyFont = preferences[PreferencesKeys.BODY_FONT]?.let {
+                    try { FontConfig.valueOf(it) } catch (_: IllegalArgumentException) { null }
+                } ?: legacyFont ?: FontConfig.Roboto,
+                labelFont = preferences[PreferencesKeys.LABEL_FONT]?.let {
+                    try { FontConfig.valueOf(it) } catch (_: IllegalArgumentException) { null }
+                } ?: legacyFont ?: FontConfig.System,
+                monospaceFont = preferences[PreferencesKeys.MONOSPACE_FONT]?.let {
+                    try { FontConfig.valueOf(it) } catch (_: IllegalArgumentException) { null }
+                } ?: FontConfig.JetBrainsMono,
                 completedOnboarding = preferences[PreferencesKeys.COMPLETED_ONBOARDING] ?: false,
                 marqueeTextEnabled = preferences[PreferencesKeys.MARQUEE_TEXT_ENABLED] ?: true
             )
@@ -107,9 +128,33 @@ class SettingsRepositoryImpl(
         }
     }
 
-    override suspend fun updateFontConfig(fontConfig: FontConfig) {
+    override suspend fun updateDisplayFont(fontConfig: FontConfig) {
         dataStore.edit { preferences ->
-            preferences[PreferencesKeys.FONT_CONFIG] = fontConfig.name
+            preferences[PreferencesKeys.DISPLAY_FONT] = fontConfig.name
+        }
+    }
+
+    override suspend fun updateTitleFont(fontConfig: FontConfig) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.TITLE_FONT] = fontConfig.name
+        }
+    }
+
+    override suspend fun updateBodyFont(fontConfig: FontConfig) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.BODY_FONT] = fontConfig.name
+        }
+    }
+
+    override suspend fun updateLabelFont(fontConfig: FontConfig) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.LABEL_FONT] = fontConfig.name
+        }
+    }
+
+    override suspend fun updateMonospaceFont(fontConfig: FontConfig) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.MONOSPACE_FONT] = fontConfig.name
         }
     }
 

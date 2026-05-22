@@ -14,7 +14,12 @@ interface SettingsRepository {
     suspend fun updateDynamicColoring(enabled: Boolean)
     suspend fun updateThemeSeedColor(color: Int)
     suspend fun updatePaletteStyle(paletteStyle: PaletteStyleConfig)
-    suspend fun updateFontConfig(fontConfig: FontConfig)
+    suspend fun updateDisplayFont(fontConfig: FontConfig)
+    suspend fun updateTitleFont(fontConfig: FontConfig)
+    suspend fun updateBodyFont(fontConfig: FontConfig)
+    suspend fun updateLabelFont(fontConfig: FontConfig)
+    suspend fun updateMonospaceFont(fontConfig: FontConfig)
     suspend fun setCompletedOnboarding(completed: Boolean)
     suspend fun setMarqueeTextEnabled(enabled: Boolean)
 }
+

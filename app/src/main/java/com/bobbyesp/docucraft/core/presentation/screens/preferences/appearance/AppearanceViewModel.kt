@@ -60,9 +60,34 @@ class AppearanceViewModel(
         }
     }
 
-    fun updateFontConfig(fontConfig: FontConfig) {
+    fun updateDisplayFont(fontConfig: FontConfig) {
         viewModelScope.launch {
-            settingsRepository.updateFontConfig(fontConfig)
+            settingsRepository.updateDisplayFont(fontConfig)
+        }
+    }
+
+    fun updateTitleFont(fontConfig: FontConfig) {
+        viewModelScope.launch {
+            settingsRepository.updateTitleFont(fontConfig)
+        }
+    }
+
+    fun updateBodyFont(fontConfig: FontConfig) {
+        viewModelScope.launch {
+            settingsRepository.updateBodyFont(fontConfig)
+        }
+    }
+
+    fun updateLabelFont(fontConfig: FontConfig) {
+        viewModelScope.launch {
+            settingsRepository.updateLabelFont(fontConfig)
+        }
+    }
+
+    fun updateMonospaceFont(fontConfig: FontConfig) {
+        viewModelScope.launch {
+            settingsRepository.updateMonospaceFont(fontConfig)
         }
     }
 }
+

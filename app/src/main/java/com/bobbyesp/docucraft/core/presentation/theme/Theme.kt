@@ -16,6 +16,33 @@ import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.materialkolor.rememberDynamicMaterialThemeState
 import kotlinx.coroutines.CoroutineExceptionHandler
 
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+
+import androidx.compose.ui.unit.sp
+
+@Immutable
+data class DocucraftCustomTypography(
+    val monospaceCode: TextStyle = TextStyle(
+        fontFamily = FontFamily.Monospace,
+        fontWeight = FontWeight.Normal,
+        fontSize = 13.sp,
+        lineHeight = 18.sp
+    )
+)
+
+val LocalMonospaceFontFamily = staticCompositionLocalOf<FontFamily> { FontFamily.Monospace }
+val LocalDocucraftCustomTypography = staticCompositionLocalOf { DocucraftCustomTypography() }
+
+object DocucraftTheme {
+    val customTypography: DocucraftCustomTypography
+        @Composable
+        get() = LocalDocucraftCustomTypography.current
+}
+
 @Suppress("ModifierRequired")
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -43,14 +70,37 @@ fun DocucraftTheme(
         ).colorScheme
     }
 
+    val displayFont = userPreferences.displayFont.toFontFamily()
+    val titleFont = userPreferences.titleFont.toFontFamily()
+    val bodyFont = userPreferences.bodyFont.toFontFamily()
+    val labelFont = userPreferences.labelFont.toFontFamily()
+    val monospaceFont = userPreferences.monospaceFont.toFontFamily() ?: FontFamily.Monospace
+
+    val customTypography = DocucraftCustomTypography(
+        monospaceCode = TextStyle(
+            fontFamily = monospaceFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = 13.sp,
+            lineHeight = 18.sp
+        )
+    )
+
     CompositionLocalProvider(
-        LocalFontFamilyResolver provides createFontFamilyResolver(context, fontHandler)
+        LocalFontFamilyResolver provides createFontFamilyResolver(context, fontHandler),
+        LocalMonospaceFontFamily provides monospaceFont,
+        LocalDocucraftCustomTypography provides customTypography
     ) {
         MaterialExpressiveTheme(
             colorScheme = colorScheme,
             motionScheme = MotionScheme.expressive(),
-            typography = createTypography(userPreferences.fontConfig.toFontFamily()),
+            typography = createTypography(
+                displayFont = displayFont,
+                titleFont = titleFont,
+                bodyFont = bodyFont,
+                labelFont = labelFont
+            ),
             content = content,
         )
     }
 }
+
