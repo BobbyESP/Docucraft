@@ -1,13 +1,9 @@
 package com.bobbyesp.docucraft.core.presentation.theme
 
 import androidx.compose.material3.Typography
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.googlefonts.Font
-import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
-import com.bobbyesp.docucraft.R
 
 /**
  * Creates a [Typography] object applying the given [fontFamily] to all text styles.

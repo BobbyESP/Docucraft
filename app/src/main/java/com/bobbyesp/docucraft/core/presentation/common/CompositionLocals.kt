@@ -60,7 +60,7 @@ fun AppLocalSettingsProvider(
     val config = LocalConfiguration.current
     val isDark = userPreferences.themeConfig.isDarkTheme()
 
-        CompositionLocalProvider(
+    CompositionLocalProvider(
         LocalDarkTheme provides isDark,
         LocalSettingsRepository provides settingsRepository,
         LocalWindowWidthState provides windowWidthSize,

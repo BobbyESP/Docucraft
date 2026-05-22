@@ -27,6 +27,24 @@
     <string name="results">Results</string>
     <string name="unknown_error">Unknown error</string>
 
+    <!-- ═══════════════════════════════════════════════
+         SETTINGS
+         ════════════════════════════════════════════════ -->
+    <string name="appearance">Appearance</string>
+    <string name="appearance_desc">Theme, colors and typography</string>
+    <string name="theme">Theme</string>
+    <string name="system">System</string>
+    <string name="light">Light</string>
+    <string name="dark">Dark</string>
+    <string name="dynamic_coloring">Dynamic coloring</string>
+    <string name="dynamic_coloring_desc">Use wallpaper colors for the app theme</string>
+    <string name="custom_colors">Custom colors</string>
+    <string name="seed_color">Seed color</string>
+    <string name="palette_style">Palette style</string>
+    <string name="high_contrast">High contrast</string>
+    <string name="high_contrast_desc">Optimized for AMOLED screens</string>
+    <string name="typography">Typography</string>
+
     <!-- ════════════════════════════════════════════════
          DOCUMENT — General
          ════════════════════════════════════════════════ -->
@@ -124,4 +142,6 @@
     <string name="night_mode">Night mode</string>
     <string name="page_input_label">Page</string>
     <string name="page_of">%1$s of %2$s</string>
+    <string name="settings">Settings</string>
+    <string name="general">General</string>
 </resources>

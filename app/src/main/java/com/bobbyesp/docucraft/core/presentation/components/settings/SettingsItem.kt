@@ -81,7 +81,7 @@ fun SettingsGroup(items: ImmutableList<SettingsItem>, modifier: Modifier = Modif
                     Modifier.fillMaxWidth()
                         .clip(
                             when {
-                                items.size == 1 -> DocucraftShapeDefaults.middleListItemShape
+                                items.size == 1 -> DocucraftShapeDefaults.independentListItemShape
                                 index == 0 -> DocucraftShapeDefaults.topListItemShape
                                 index == items.lastIndex -> DocucraftShapeDefaults.bottomListItemShape
                                 else -> MaterialTheme.shapes.medium

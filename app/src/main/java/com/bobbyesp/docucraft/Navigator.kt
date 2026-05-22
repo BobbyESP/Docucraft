@@ -15,6 +15,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.backstack.TopLevelBackStack
+import com.bobbyesp.docucraft.core.presentation.screens.SettingsRouting
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.HomeScreen
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
 import kotlinx.collections.immutable.persistentListOf
@@ -42,6 +43,12 @@ fun Navigator(
                     onNavigate = { rootBackStack.push(it) },
                 )
             }
+
+            SettingsRouting(
+                onNavigate = { rootBackStack.push(it) },
+                onBack = onBack
+            )
+
             entry<Route.PdfViewer> { key ->
                 PdfViewerScreen(
                     documentInfo = key.documentInfo,

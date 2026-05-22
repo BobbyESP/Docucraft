@@ -32,6 +32,9 @@ object DocucraftShapeDefaults {
                 bottomEnd = shapes.largeIncreased.bottomEnd,
             )
 
+    val independentListItemShape: RoundedCornerShape
+        @Composable get() = RoundedCornerShape(shapes.largeIncreased.topStart)
+
     @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     val cardShape: CornerBasedShape
         @Composable get() = shapes.largeIncreased
