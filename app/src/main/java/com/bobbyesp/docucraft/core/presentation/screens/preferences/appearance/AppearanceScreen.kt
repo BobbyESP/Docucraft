@@ -42,6 +42,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -85,6 +86,7 @@ import com.bobbyesp.docucraft.core.presentation.components.ColorPickerDialog
 import com.bobbyesp.docucraft.core.presentation.components.settings.PaletteStylePicker
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingSwitch
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.isDarkTheme
 import com.bobbyesp.docucraft.core.presentation.theme.isDynamicColoringSupported
 import com.bobbyesp.docucraft.core.presentation.theme.toFontFamily
@@ -227,7 +229,9 @@ fun AppearanceScreenContent(
                         horizontalArrangement = Arrangement.spacedBy(
                             ButtonGroupDefaults.ConnectedSpaceBetween
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
                     ) {
                         ThemeConfig.entries.forEach { config ->
                             val isSelected = uiState.themeConfig == config
@@ -285,15 +289,17 @@ fun AppearanceScreenContent(
                     }
 
                     AppearanceSection(title = stringResource(R.string.custom_colors)) {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
                             // Seed Color
                             ListItem(
                                 modifier = Modifier
-                                    .clip(MaterialTheme.shapes.largeIncreased)
+                                    .fillMaxWidth()
+                                    .clip(DocucraftShapeDefaults.topListItemShape)
                                     .clickable { showColorPicker = true },
                                 headlineContent = {
                                     Text(
                                         text = stringResource(R.string.seed_color),
+                                        style = MaterialTheme.typography.bodyLarge,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                 },
@@ -301,9 +307,7 @@ fun AppearanceScreenContent(
                                     Text(seedColorHex, style = MaterialTheme.typography.bodyMedium)
                                 },
                                 colors = ListItemDefaults.colors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(
-                                        8.dp
-                                    )
+                                    containerColor = Color.Transparent
                                 ),
                                 trailingContent = {
                                     Box(
@@ -316,6 +320,13 @@ fun AppearanceScreenContent(
                                 }
                             )
 
+                            HorizontalDivider(
+                                modifier = Modifier.fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
                             // Palette Style
                             Text(
                                 text = stringResource(R.string.palette_style),
@@ -323,13 +334,18 @@ fun AppearanceScreenContent(
                                 color = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.padding(horizontal = 16.dp)
                             )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
                             PaletteStylePicker(
                                 selectedStyle = uiState.paletteStyle,
                                 seedColor = seedColor,
                                 isDark = isDark,
                                 isAmoled = uiState.isHighContrastModeEnabled,
                                 onStyleSelect = onPaletteStyleChange,
-                                modifier = Modifier.padding(horizontal = 16.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
                             )
                         }
                     }
@@ -350,42 +366,66 @@ fun AppearanceScreenContent(
             item(key = "typography_selection", contentType = "settings_section") {
                 AppearanceSection(title = stringResource(R.string.typography)) {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         TypographyCategoryRow(
                             categoryName = stringResource(R.string.typography_display),
                             categoryDesc = stringResource(R.string.typography_display_desc),
                             selectedFont = uiState.displayFont,
-                            onClick = { activeTypographyCategory = TypographyCategory.DISPLAY }
+                            onClick = { activeTypographyCategory = TypographyCategory.DISPLAY },
+                            modifier = Modifier.clip(DocucraftShapeDefaults.topListItemShape)
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                         )
 
                         TypographyCategoryRow(
                             categoryName = stringResource(R.string.typography_title),
                             categoryDesc = stringResource(R.string.typography_title_desc),
                             selectedFont = uiState.titleFont,
-                            onClick = { activeTypographyCategory = TypographyCategory.TITLE }
+                            onClick = { activeTypographyCategory = TypographyCategory.TITLE },
+                            modifier = Modifier.clip(DocucraftShapeDefaults.middleListItemShape)
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                         )
 
                         TypographyCategoryRow(
                             categoryName = stringResource(R.string.typography_body),
                             categoryDesc = stringResource(R.string.typography_body_desc),
                             selectedFont = uiState.bodyFont,
-                            onClick = { activeTypographyCategory = TypographyCategory.BODY }
+                            onClick = { activeTypographyCategory = TypographyCategory.BODY },
+                            modifier = Modifier.clip(DocucraftShapeDefaults.middleListItemShape)
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                         )
 
                         TypographyCategoryRow(
                             categoryName = stringResource(R.string.typography_label),
                             categoryDesc = stringResource(R.string.typography_label_desc),
                             selectedFont = uiState.labelFont,
-                            onClick = { activeTypographyCategory = TypographyCategory.LABEL }
+                            onClick = { activeTypographyCategory = TypographyCategory.LABEL },
+                            modifier = Modifier.clip(DocucraftShapeDefaults.middleListItemShape)
+                        )
+
+                        HorizontalDivider(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                         )
 
                         TypographyCategoryRow(
                             categoryName = stringResource(R.string.typography_monospace),
                             categoryDesc = stringResource(R.string.typography_monospace_desc),
                             selectedFont = uiState.monospaceFont,
-                            onClick = { activeTypographyCategory = TypographyCategory.MONOSPACE }
+                            onClick = { activeTypographyCategory = TypographyCategory.MONOSPACE },
+                            modifier = Modifier.clip(DocucraftShapeDefaults.bottomListItemShape)
                         )
                     }
                 }
@@ -459,6 +499,7 @@ fun AppearanceScreenContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppearanceSection(
     title: String,
@@ -468,16 +509,16 @@ fun AppearanceSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .clip(DocucraftShapeDefaults.cardShape)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
         )
         content()
     }
@@ -539,13 +580,12 @@ fun TypographyCategoryRow(
 
     ListItem(
         modifier = modifier
-            .clip(MaterialTheme.shapes.largeIncreased)
             .clickable(onClick = onClick),
         headlineContent = {
             Text(
                 text = categoryName,
                 fontWeight = FontWeight.SemiBold,
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.bodyLarge
             )
         },
         supportingContent = {
@@ -568,13 +608,13 @@ fun TypographyCategoryRow(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                    .background(MaterialTheme.colorScheme.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Rounded.TextFields,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -583,7 +623,7 @@ fun TypographyCategoryRow(
             Box(
                 modifier = Modifier
                     .clip(MaterialTheme.shapes.medium)
-                    .background(MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -597,7 +637,7 @@ fun TypographyCategoryRow(
             }
         },
         colors = ListItemDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+            containerColor = Color.Transparent
         )
     )
 }
@@ -644,7 +684,7 @@ private fun FontSelectionDialog(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
                     ),
                     shape = MaterialTheme.shapes.large
                 ) {
@@ -697,7 +737,7 @@ private fun FontSelectionDialog(
                                         .size(36.dp)
                                         .clip(CircleShape)
                                         .background(
-                                            if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                            if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
                                             else MaterialTheme.colorScheme.surfaceVariant
                                         ),
                                     contentAlignment = Alignment.Center
@@ -707,7 +747,7 @@ private fun FontSelectionDialog(
                                         fontFamily = fontFamily,
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer
                                                 else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
@@ -720,9 +760,14 @@ private fun FontSelectionDialog(
                             },
                             colors = ListItemDefaults.colors(
                                 containerColor = if (isSelected) {
-                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+                                    MaterialTheme.colorScheme.primaryContainer
                                 } else {
                                     Color.Transparent
+                                },
+                                headlineColor = if (isSelected) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
                                 }
                             )
                         )
