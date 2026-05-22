@@ -87,7 +87,7 @@ fun RoundedTag(
 @PreviewLightDark
 @Composable
 private fun RoundedTagPreview() {
-    DocucraftTheme() {
+    DocucraftTheme {
         Surface {
             RoundedTag(
                 text = "14.53 kB",

@@ -14,9 +14,11 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Dns
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -30,10 +32,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+
+@Immutable
+data class SettingSegmentOption(
+    val icon: ImageVector,
+    val contentDescription: String,
+    val onClick: () -> Unit,
+)
 
 @Composable
 fun SettingSegmentOptions(
@@ -45,18 +57,23 @@ fun SettingSegmentOptions(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier.clip(ShapeDefaults.Large),
+        modifier = modifier
+            .clip(MaterialTheme.shapes.large)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
-            tint = MaterialTheme.colorScheme.onSurface,
+            tint = MaterialTheme.colorScheme.primary,
             contentDescription = null,
         )
 
-        Column(modifier = Modifier
-            .weight(1f)
-            .padding(horizontal = 16.dp)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 16.dp)
+        ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
@@ -75,7 +92,7 @@ fun SettingSegmentOptions(
                 Modifier
                     .width(IntrinsicSize.Min)
                     .height(IntrinsicSize.Min)
-                    .clip(ShapeDefaults.ExtraLarge)
+                    .clip(CircleShape)
                     .background(color = MaterialTheme.colorScheme.surfaceContainerHighest)
         ) {
             var midPoint by remember { mutableStateOf(0.dp) }
@@ -92,7 +109,7 @@ fun SettingSegmentOptions(
                         .fillMaxHeight()
                         .fillMaxWidth(.5f)
                         .offset { IntOffset(capsuleOffset.value.toInt(), 0) }
-                        .clip(ShapeDefaults.ExtraLarge)
+                        .clip(CircleShape)
                         .background(color = MaterialTheme.colorScheme.primary)
             )
 
@@ -113,9 +130,9 @@ fun SettingSegmentOptions(
                             } else MaterialTheme.colorScheme.onSurface,
                         modifier =
                             Modifier
+                                .clip(CircleShape)
                                 .clickable { option.onClick() }
-                                .padding(8.dp)
-                                .clip(CircleShape),
+                                .padding(8.dp),
                     )
                 }
             }
@@ -123,9 +140,33 @@ fun SettingSegmentOptions(
     }
 }
 
-@Immutable
-data class SettingSegmentOption(
-    val icon: ImageVector,
-    val contentDescription: String,
-    val onClick: () -> Unit,
-)
+@PreviewLightDark
+@Composable
+private fun SettingsSegmentOptionPreview() {
+    val options = persistentListOf(
+        SettingSegmentOption(
+            icon = Icons.Rounded.Settings,
+            contentDescription = "Settings",
+            onClick = {}
+        ),
+        SettingSegmentOption(
+            icon = Icons.Rounded.Dns,
+            contentDescription = "Server",
+            onClick = {}
+        )
+    )
+
+    DocucraftTheme {
+        Box(
+            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow).padding(16.dp)
+        ) {
+            SettingSegmentOptions(
+                title = "Text",
+                supportingText = "Supporting Text",
+                icon = Icons.Rounded.Dns,
+                options = options,
+                selectedOptionIndex = 0
+            )
+        }
+    }
+}

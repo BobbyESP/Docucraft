@@ -1,28 +1,28 @@
 package com.bobbyesp.docucraft.core.presentation.components.settings
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -34,40 +34,43 @@ data class SettingsItem(
     val onClick: () -> Unit,
 )
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsItem(item: SettingsItem, modifier: Modifier = Modifier) {
-    Row(
-        modifier =
-            modifier
-                .background(color = MaterialTheme.colorScheme.surfaceContainer)
-                .combinedClickable(onClick = item.onClick)
-                .padding(horizontal = 24.dp, vertical = 16.dp), // maybe delete this padding
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Icon(
-            imageVector = item.icon,
-            tint = MaterialTheme.colorScheme.onSurface,
-            contentDescription = null,
-        )
-
-        Column {
+    ListItem(
+        headlineContent = {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.titleMedium
             )
-
+        },
+        supportingContent = {
             Text(
                 text = item.supportingText,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium
             )
-        }
-    }
+        },
+        leadingContent = {
+            Icon(
+                imageVector = item.icon,
+                contentDescription = null
+            )
+        },
+        trailingContent = {
+            Icon(
+                imageVector = Icons.Rounded.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+            )
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        modifier = modifier.clickable(onClick = item.onClick)
+    )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsGroup(items: ImmutableList<SettingsItem>, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -75,25 +78,13 @@ fun SettingsGroup(items: ImmutableList<SettingsItem>, modifier: Modifier = Modif
             SettingsItem(
                 item = item,
                 modifier =
-                    Modifier
-                        .fillMaxWidth()
+                    Modifier.fillMaxWidth()
                         .clip(
                             when {
-                                items.size == 1 -> {
-                                    DocucraftShapeDefaults.middleListItemShape
-                                }
-
-                                index == 0 -> {
-                                    DocucraftShapeDefaults.topListItemShape
-                                }
-
-                                index == items.lastIndex -> {
-                                    DocucraftShapeDefaults.bottomListItemShape
-                                }
-
-                                else -> {
-                                    MaterialTheme.shapes.medium
-                                }
+                                items.size == 1 -> DocucraftShapeDefaults.middleListItemShape
+                                index == 0 -> DocucraftShapeDefaults.topListItemShape
+                                index == items.lastIndex -> DocucraftShapeDefaults.bottomListItemShape
+                                else -> MaterialTheme.shapes.medium
                             }
                         ),
             )
@@ -101,69 +92,66 @@ fun SettingsGroup(items: ImmutableList<SettingsItem>, modifier: Modifier = Modif
     }
 }
 
-// create previews
-@Preview
+@PreviewLightDark
 @Composable
-fun SettingsItemPreview() {
-    SettingsItem(
-        item =
-            SettingsItem(
-                title = "Title",
-                supportingText = "Supporting Text",
-                icon = Icons.Rounded.Settings,
-                onClick = {},
-            )
-    )
+private fun SettingsItemPreview() {
+    DocucraftTheme {
+        SettingsItem(
+            item =
+                SettingsItem(
+                    title = "Title",
+                    supportingText = "Supporting Text",
+                    icon = Icons.Rounded.Settings,
+                    onClick = {},
+                )
+        )
+    }
 }
 
-@Preview
+@PreviewLightDark
 @Composable
-fun SettingsGroupPreview() {
-    SettingsGroup(
-        items =
-            persistentListOf(
-                SettingsItem(
-                    title = "Title",
-                    supportingText = "Supporting Text",
-                    icon = Icons.Rounded.Settings,
-                    onClick = {},
-                ),
-                SettingsItem(
-                    title = "Title",
-                    supportingText = "Supporting Text",
-                    icon = Icons.Rounded.Settings,
-                    onClick = {},
-                ),
-                SettingsItem(
-                    title = "Title",
-                    supportingText = "Supporting Text",
-                    icon = Icons.Rounded.Settings,
-                    onClick = {},
-                ),
-                SettingsItem(
-                    title = "Title",
-                    supportingText = "Supporting Text",
-                    icon = Icons.Rounded.Settings,
-                    onClick = {},
-                ),
-                SettingsItem(
-                    title = "Title",
-                    supportingText = "Supporting Text",
-                    icon = Icons.Rounded.Settings,
-                    onClick = {},
-                ),
-                SettingsItem(
-                    title = "Title",
-                    supportingText = "Supporting Text",
-                    icon = Icons.Rounded.Settings,
-                    onClick = {},
-                ),
-                SettingsItem(
-                    title = "Title",
-                    supportingText = "Supporting Text",
-                    icon = Icons.Rounded.Settings,
-                    onClick = {},
-                ),
-            )
-    )
+private fun SettingsGroupPreview() {
+    DocucraftTheme {
+        SettingsGroup(
+            items =
+                persistentListOf(
+                    SettingsItem(
+                        title = "Title",
+                        supportingText = "Supporting Text",
+                        icon = Icons.Rounded.Settings,
+                        onClick = {},
+                    ),
+                    SettingsItem(
+                        title = "Title",
+                        supportingText = "Supporting Text",
+                        icon = Icons.Rounded.Settings,
+                        onClick = {},
+                    ),
+                    SettingsItem(
+                        title = "Title",
+                        supportingText = "Supporting Text",
+                        icon = Icons.Rounded.Settings,
+                        onClick = {},
+                    ),
+                    SettingsItem(
+                        title = "Title",
+                        supportingText = "Supporting Text",
+                        icon = Icons.Rounded.Settings,
+                        onClick = {},
+                    ),
+                    SettingsItem(
+                        title = "Title",
+                        supportingText = "Supporting Text",
+                        icon = Icons.Rounded.Settings,
+                        onClick = {},
+                    ),
+                    SettingsItem(
+                        title = "Appearance",
+                        supportingText = "Theme and typography",
+                        icon = Icons.Rounded.Settings,
+                        onClick = {},
+                    ),
+                )
+        )
+    }
 }
