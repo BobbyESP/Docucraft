@@ -13,6 +13,7 @@ import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.domain.usecase.NotifyUserUseCase
 import com.bobbyesp.docucraft.core.presentation.common.AndroidStringProvider
 import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
+import com.bobbyesp.docucraft.core.presentation.MainViewModel
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.appearance.AppearanceViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +54,8 @@ val commonModule = module {
     single<CoroutineScope>(qualifier = named("AppMainSupervisedScope")) {
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     }
+
+    viewModelOf(::MainViewModel)
 }
 
 val preferencesModule = module {

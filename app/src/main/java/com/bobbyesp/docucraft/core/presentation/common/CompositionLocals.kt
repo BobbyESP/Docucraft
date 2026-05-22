@@ -1,6 +1,7 @@
 package com.bobbyesp.docucraft.core.presentation.common
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -46,17 +47,13 @@ val LocalAnalyticsHelper = staticCompositionLocalOf<AnalyticsHelper> {
 fun AppLocalSettingsProvider(
     windowWidthSize: WindowWidthSizeClass,
     settingsRepository: SettingsRepository,
-    initialUserPreferences: UserPreferences,
+    userPreferences: UserPreferences,
     imageLoader: ImageLoader,
     inAppNotificationsService: InAppNotificationsService,
     analyticsHelper: AnalyticsHelper,
 
     content: @Composable () -> Unit
 ) {
-    val userPreferences by settingsRepository.settings.collectAsStateWithLifecycle(
-        initialValue = initialUserPreferences
-    )
-
     val config = LocalConfiguration.current
     val isDark = userPreferences.themeConfig.isDarkTheme()
 

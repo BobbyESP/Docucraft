@@ -4,11 +4,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.getValue
@@ -24,12 +24,14 @@ import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
+import com.bobbyesp.docucraft.core.presentation.MainActivityUiState
+import com.bobbyesp.docucraft.core.presentation.MainViewModel
+import com.bobbyesp.docucraft.core.domain.model.ThemeConfig
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.core.presentation.navigation.backstack.rememberTopLevelBackStack
 import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
-import com.bobbyesp.docucraft.core.util.emphasizedTransform
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannerRepository
 import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.ACTION_SCAN_DOCUMENT
@@ -37,9 +39,9 @@ import com.dokar.sonner.Toaster
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.component.KoinComponent
 
 class MainActivity : ComponentActivity(), KoinComponent {
@@ -47,6 +49,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
     private val settingsRepository: SettingsRepository by inject()
     private val inAppNotificationsService: InAppNotificationsService by inject()
     private val analyticsHelper: AnalyticsHelper by inject()
+    private val mainViewModel: MainViewModel by viewModel()
 
     private val scannerManager: ScannerManager by inject()
     private val scannerClient: GmsDocumentScanner by inject()
@@ -71,20 +74,43 @@ class MainActivity : ComponentActivity(), KoinComponent {
         val splashscreen = installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        var userPreferences: UserPreferences? by mutableStateOf(null)
+        var uiState: MainActivityUiState by mutableStateOf(MainActivityUiState.Loading)
 
         // Keep the splash screen on-screen until the settings are loaded
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                userPreferences = settingsRepository.settings.first()
+                mainViewModel.uiState.collect { state ->
+                    uiState = state
+
+                    // Reactively apply system bar theme overrides based on user preferences
+                    if (state is MainActivityUiState.Success) {
+                        val isDark = state.userPreferences.themeConfig.shouldUseDarkTheme(this@MainActivity)
+                        enableEdgeToEdge(
+                            statusBarStyle = if (isDark) {
+                                SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                            } else {
+                                SystemBarStyle.light(
+                                    android.graphics.Color.TRANSPARENT,
+                                    android.graphics.Color.TRANSPARENT
+                                )
+                            },
+                            navigationBarStyle = if (isDark) {
+                                SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                            } else {
+                                SystemBarStyle.light(
+                                    android.graphics.Color.TRANSPARENT,
+                                    android.graphics.Color.TRANSPARENT
+                                )
+                            }
+                        )
+                    }
+                }
             }
         }
 
         splashscreen.setKeepOnScreenCondition {
-            userPreferences == null
+            uiState is MainActivityUiState.Loading
         }
-
-        enableEdgeToEdge()
 
         FileKit.init(this)
         val sonnerManager = inAppNotificationsService as SonnerNotificationServiceImpl
@@ -103,33 +129,27 @@ class MainActivity : ComponentActivity(), KoinComponent {
             val windowSizeClass = calculateWindowSizeClass(this)
             val rootBackStack = rememberTopLevelBackStack(startRoute = Route.Home)
 
-            AnimatedContent(
-                targetState = userPreferences != null,
-                transitionSpec = { emphasizedTransform }
-            ) { target ->
-                if (target) {
-                    AppLocalSettingsProvider(
-                        windowWidthSize = windowSizeClass.widthSizeClass,
-                        inAppNotificationsService = inAppNotificationsService,
-                        imageLoader = imageLoader,
-                        settingsRepository = settingsRepository,
-                        initialUserPreferences = userPreferences
-                            ?: error("User preferences should not be null here"),
-                        analyticsHelper = analyticsHelper,
-                    ) {
-                        Navigator(
-                            rootBackStack = rootBackStack,
-                        )
+            val state = uiState
+            if (state is MainActivityUiState.Success) {
+                AppLocalSettingsProvider(
+                    windowWidthSize = windowSizeClass.widthSizeClass,
+                    inAppNotificationsService = inAppNotificationsService,
+                    imageLoader = imageLoader,
+                    settingsRepository = settingsRepository,
+                    userPreferences = state.userPreferences,
+                    analyticsHelper = analyticsHelper,
+                ) {
+                    Navigator(
+                        rootBackStack = rootBackStack,
+                    )
 
-                        Toaster(
-                            state = sonnerManager.sonnerState,
-                            richColors = true,
-                            showCloseButton = true,
-                            alignment = Alignment.TopCenter,
-                            darkTheme =
-                                LocalDarkTheme.current,
-                        )
-                    }
+                    Toaster(
+                        state = sonnerManager.sonnerState,
+                        richColors = true,
+                        showCloseButton = true,
+                        alignment = Alignment.TopCenter,
+                        darkTheme = LocalDarkTheme.current,
+                    )
                 }
             }
         }
@@ -179,5 +199,14 @@ class MainActivity : ComponentActivity(), KoinComponent {
             lifecycleScope.launch { scannerManager.requestScan() }
             intent.action = null
         }
+    }
+
+    private fun ThemeConfig.shouldUseDarkTheme(context: android.content.Context): Boolean = when (this) {
+        ThemeConfig.FOLLOW_SYSTEM -> {
+            val uiMode = context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
+            uiMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        }
+        ThemeConfig.LIGHT -> false
+        ThemeConfig.DARK -> true
     }
 }
