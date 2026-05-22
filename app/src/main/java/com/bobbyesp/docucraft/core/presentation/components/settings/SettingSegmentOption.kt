@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -32,10 +33,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -47,6 +50,7 @@ data class SettingSegmentOption(
     val onClick: () -> Unit,
 )
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingSegmentOptions(
     title: String,
@@ -58,14 +62,14 @@ fun SettingSegmentOptions(
 ) {
     Row(
         modifier = modifier
-            .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .clip(DocucraftShapeDefaults.cardShape)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             contentDescription = null,
         )
 
@@ -76,7 +80,8 @@ fun SettingSegmentOptions(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
 
@@ -93,7 +98,7 @@ fun SettingSegmentOptions(
                     .width(IntrinsicSize.Min)
                     .height(IntrinsicSize.Min)
                     .clip(CircleShape)
-                    .background(color = MaterialTheme.colorScheme.surfaceContainerHighest)
+                    .background(color = MaterialTheme.colorScheme.surfaceContainer)
         ) {
             var midPoint by remember { mutableStateOf(0.dp) }
             val density = LocalDensity.current
@@ -127,7 +132,7 @@ fun SettingSegmentOptions(
                         tint =
                             if (selectedOptionIndex == index) {
                                 MaterialTheme.colorScheme.onPrimary
-                            } else MaterialTheme.colorScheme.onSurface,
+                            } else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier =
                             Modifier
                                 .clip(CircleShape)
