@@ -2,6 +2,7 @@ package com.bobbyesp.docucraft.core.presentation.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
@@ -13,6 +14,15 @@ sealed interface Route : NavKey {
     data object Home : Route, TopLevelRoute {
         override val icon: ImageVector
             get() = Icons.Rounded.Home
+    }
+
+    @Serializable
+    data object Settings : Route, TopLevelRoute {
+        override val icon: ImageVector
+            get() = Icons.Rounded.Settings
+
+        @Serializable
+        data object Appearance : Route
     }
 
     @Serializable

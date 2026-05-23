@@ -35,6 +35,7 @@ import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.FileCopy
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -127,6 +128,14 @@ fun HomeContent(
                             text = stringResource(id = R.string.app_name),
                             fontWeight = FontWeight.SemiBold,
                             style = MaterialTheme.typography.titleLarge,
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { onAction(HomeIntent.OpenSettings) }) {
+                        Icon(
+                            imageVector = Icons.Rounded.Settings,
+                            contentDescription = stringResource(id = R.string.settings)
                         )
                     }
                 },

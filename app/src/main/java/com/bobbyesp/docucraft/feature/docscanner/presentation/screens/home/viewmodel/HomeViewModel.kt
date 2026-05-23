@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
@@ -138,6 +137,7 @@ class HomeViewModel(
             HomeIntent.DismissSheet -> dismissSheet()
 
             is HomeIntent.Sheet -> handleSheet(intent.action)
+            HomeIntent.OpenSettings -> sendEffect(HomeEffect.Navigate(Route.Settings))
         }
     }
 

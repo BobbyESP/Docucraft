@@ -38,9 +38,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftElevationDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -147,5 +149,19 @@ fun ScreenPlaceholderCard(
                 Text(text = actionText.uppercase(), style = MaterialTheme.typography.labelLarge)
             }
         }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun ScreenPlaceholderCardPreview() {
+    DocucraftTheme {
+        ScreenPlaceholderCard(
+            title = "No Documents",
+            description = "You haven't created any documents yet. Start by creating a new one!",
+            actionText = "Create Document",
+            onAction = {},
+            icon = Icons.Rounded.CameraAlt,
+        )
     }
 }

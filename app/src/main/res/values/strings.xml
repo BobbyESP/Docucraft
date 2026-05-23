@@ -27,6 +27,35 @@
     <string name="results">Results</string>
     <string name="unknown_error">Unknown error</string>
 
+    <!-- ═══════════════════════════════════════════════
+         SETTINGS
+         ════════════════════════════════════════════════ -->
+    <string name="appearance">Appearance</string>
+    <string name="appearance_desc">Theme, colors and typography</string>
+    <string name="theme">Theme</string>
+    <string name="system">System</string>
+    <string name="light">Light</string>
+    <string name="dark">Dark</string>
+    <string name="dynamic_coloring">Dynamic coloring</string>
+    <string name="dynamic_coloring_desc">Use wallpaper colors for the app theme</string>
+    <string name="custom_colors">Custom colors</string>
+    <string name="seed_color">Seed color</string>
+    <string name="palette_style">Palette style</string>
+    <string name="high_contrast">High contrast</string>
+    <string name="high_contrast_desc">Optimized for AMOLED screens</string>
+    <string name="typography">Typography</string>
+    <string name="typography_display">Display &amp; Headlines</string>
+    <string name="typography_display_desc">Used for large splash headers, counts, and hero sections.</string>
+    <string name="typography_title">Titles &amp; Headers</string>
+    <string name="typography_title_desc">Used for list headers, card titles, and action dialogs.</string>
+    <string name="typography_body">Body &amp; Content</string>
+    <string name="typography_body_desc">Used for document descriptions, details, and general reading text.</string>
+    <string name="typography_label">Labels &amp; UI Text</string>
+    <string name="typography_label_desc">Used for button labels, settings options, and small tag badges.</string>
+    <string name="typography_monospace">Monospace &amp; Technical</string>
+    <string name="typography_monospace_desc">Used for technical details, character counts, and date formatting.</string>
+
+
     <!-- ════════════════════════════════════════════════
          DOCUMENT — General
          ════════════════════════════════════════════════ -->
@@ -124,4 +153,6 @@
     <string name="night_mode">Night mode</string>
     <string name="page_input_label">Page</string>
     <string name="page_of">%1$s of %2$s</string>
+    <string name="settings">Settings</string>
+    <string name="general">General</string>
 </resources>

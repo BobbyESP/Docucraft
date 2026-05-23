@@ -9,13 +9,12 @@ import com.bobbyesp.docucraft.core.di.analyticsModule
 import com.bobbyesp.docucraft.core.di.commonModule
 import com.bobbyesp.docucraft.core.di.fileManagementModule
 import com.bobbyesp.docucraft.core.di.notificationsServiceModule
+import com.bobbyesp.docucraft.core.di.preferencesModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerDataModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.gmsScannerModule
 import com.bobbyesp.docucraft.feature.docscanner.di.mlKitModule
 import com.bobbyesp.docucraft.feature.docscanner.di.scannedDocumentsDatabaseModule
-import com.google.firebase.Firebase
-import com.google.firebase.analytics.analytics
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
@@ -28,6 +27,7 @@ class App : Application() {
             androidContext(this@App)
             modules(
                 commonModule,
+                preferencesModule,
                 notificationsServiceModule,
                 scannedDocumentsDatabaseModule,
                 documentScannerDataModule,

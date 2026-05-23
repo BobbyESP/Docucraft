@@ -9,6 +9,8 @@ sealed interface HomeIntent {
     data object Load : HomeIntent
     data object LaunchScanner : HomeIntent
 
+    data object OpenSettings : HomeIntent
+
     data class ScanResult(val result: RawScanResult) : HomeIntent
     data class ViewDocument(val id: String) : HomeIntent
 

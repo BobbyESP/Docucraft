@@ -76,7 +76,7 @@ fun WavyDivider(
 @PreviewLightDark
 @Composable
 private fun WavyDividerPreview() {
-    DocucraftTheme() {
+    DocucraftTheme {
         WavyDivider()
     }
 }
