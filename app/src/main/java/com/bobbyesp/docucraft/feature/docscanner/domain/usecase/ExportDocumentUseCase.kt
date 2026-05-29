@@ -11,11 +11,12 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.copyTo
+import io.github.vinceglb.filekit.dialogs.FileKitDialogSettings
 import io.github.vinceglb.filekit.dialogs.openFileSaver
 import io.github.vinceglb.filekit.exists
 import io.github.vinceglb.filekit.path
 
-class ExportDocumentUseCase() {
+class ExportDocumentUseCase {
     suspend operator fun invoke(scannedDocument: ScannedDocument): Result<Uri> {
         val androidDocumentsDirectory =
             PlatformFile(
@@ -27,9 +28,7 @@ class ExportDocumentUseCase() {
         val file =
             FileKit.openFileSaver(
                 suggestedName = scannedDocument.title ?: scannedDocument.filename,
-                extension = "pdf",
-                directory = dir,
-            )
+                defaultExtension = "pdf", directory = dir, dialogSettings = FileKitDialogSettings.createDefault())
                 ?: run {
                     return Result.failure(DocumentExportFailure.Cancelled())
                 }
