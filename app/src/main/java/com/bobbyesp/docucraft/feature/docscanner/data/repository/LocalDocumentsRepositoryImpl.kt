@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.data.repository
 
 import android.net.Uri
@@ -6,15 +9,14 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentE
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument.Companion.toModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
+import java.text.Normalizer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import java.text.Normalizer
 
-class LocalDocumentsRepositoryImpl(
-    private val scannedDocumentDao: ScannedDocumentDao,
-) : LocalDocumentsRepository {
+class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocumentDao) :
+    LocalDocumentsRepository {
 
     override suspend fun observeDocuments(): Flow<List<ScannedDocument>> =
         scannedDocumentDao
@@ -52,20 +54,14 @@ class LocalDocumentsRepositoryImpl(
         scannedDocumentDao.insert(scannedDocument)
     }
 
-    override suspend fun modifyFields(
-        uuid: String,
-        title: String?,
-        description: String?,
-    ) {
+    override suspend fun modifyFields(uuid: String, title: String?, description: String?) {
         require(uuid.isNotEmpty()) { "Document UUID must not be empty" }
 
-        val existing = scannedDocumentDao.getByUuid(uuid)
-            ?: throw NoSuchElementException("No document found with UUID: $uuid")
+        val existing =
+            scannedDocumentDao.getByUuid(uuid)
+                ?: throw NoSuchElementException("No document found with UUID: $uuid")
 
-        val updated = existing.copy(
-            title = title,
-            description = description
-        )
+        val updated = existing.copy(title = title, description = description)
 
         scannedDocumentDao.update(updated)
     }

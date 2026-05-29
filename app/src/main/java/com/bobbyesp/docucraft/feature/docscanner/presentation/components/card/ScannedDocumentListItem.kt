@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.components.card
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -87,15 +90,12 @@ fun ScannedDocumentListItem(
         color = MaterialTheme.colorScheme.surfaceColorAtElevation(DocucraftElevationDefaults.Card),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             val imageModifier =
-                Modifier
-                    .widthIn(max = 58.dp)
+                Modifier.widthIn(max = 58.dp)
                     .aspectRatio(Measurements.A4_RATIO)
                     .clip(MaterialShapes.Slanted.toShape())
                     .background(MaterialTheme.colorScheme.primaryContainer)
@@ -103,9 +103,7 @@ fun ScannedDocumentListItem(
             Box(modifier = imageModifier) {
                 if (LocalInspectionMode.current) {
                     Icon(
-                        modifier = Modifier
-                            .padding(12.dp)
-                            .fillMaxSize(),
+                        modifier = Modifier.padding(12.dp).fillMaxSize(),
                         imageVector = Icons.Rounded.Deblur,
                         contentDescription = stringResource(id = R.string.file_icon),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -148,11 +146,12 @@ fun ScannedDocumentListItem(
 
             IconButton(
                 modifier = Modifier,
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
-                ),
+                colors =
+                    IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    ),
                 shapes = IconButtonDefaults.shapes(),
-                onClick = onItemLongClick
+                onClick = onItemLongClick,
             ) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
@@ -180,7 +179,7 @@ private fun ScannedDocumentListItemPreview() {
                     pageCount = 5,
                     thumbnail = "thumbnail",
                     uuid = UUID.randomUUID().toString(),
-                    id = 1
+                    id = 1,
                 ),
             onItemClick = {},
             onItemLongClick = {},
@@ -204,7 +203,7 @@ private fun ListScannedDocumentListItemPreview() {
                     pageCount = 5 + it,
                     thumbnail = if (it % 3 == 0) "thumbnail" else null,
                     uuid = UUID.randomUUID().toString(),
-                    id = 2
+                    id = 2,
                 )
             }
         LazyColumn(

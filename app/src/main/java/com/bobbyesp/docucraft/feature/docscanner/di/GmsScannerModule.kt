@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.MlKitScannerRepository
@@ -10,18 +13,14 @@ import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions.SCANNER
 import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
 import org.koin.dsl.module
 
-val mlKitModule = module {
-    single<ScannerRepository> { MlKitScannerRepository() }
-}
+val mlKitModule = module { single<ScannerRepository> { MlKitScannerRepository() } }
 
 val gmsScannerModule = module {
     single<GmsDocumentScannerOptions> {
         GmsDocumentScannerOptions.Builder()
             .setGalleryImportAllowed(true)
             .setPageLimit(Integer.MAX_VALUE)
-            .setResultFormats(
-                RESULT_FORMAT_PDF
-            )
+            .setResultFormats(RESULT_FORMAT_PDF)
             .setScannerMode(SCANNER_MODE_FULL)
             .build()
     }

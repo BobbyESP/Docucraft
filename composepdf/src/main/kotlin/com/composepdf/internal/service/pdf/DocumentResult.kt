@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.service.pdf
 
 import android.util.Size
@@ -6,5 +9,5 @@ import android.util.Size
 internal data class DocumentResult(
     val documentKey: String,
     val pageSizes: List<Size>,
-    val pageCount: Int
+    val pageCount: Int,
 )

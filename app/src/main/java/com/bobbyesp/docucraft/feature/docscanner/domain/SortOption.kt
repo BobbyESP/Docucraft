@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.domain
 
 import androidx.compose.material.icons.Icons
@@ -26,8 +29,7 @@ data class SortOption(val criteria: Criteria, val order: Order) {
         }
 
         companion object {
-            @Composable
-            fun toString(criteria: Criteria): String = criteria.getLocalizedName()
+            @Composable fun toString(criteria: Criteria): String = criteria.getLocalizedName()
         }
     }
 

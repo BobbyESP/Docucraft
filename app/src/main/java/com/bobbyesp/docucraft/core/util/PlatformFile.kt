@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.util
 
 import io.github.vinceglb.filekit.PlatformFile

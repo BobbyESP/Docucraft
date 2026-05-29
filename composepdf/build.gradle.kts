@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 plugins {
     id(libs.plugins.android.library.get().pluginId)
     id("docucraft.android.convention")
@@ -6,9 +9,7 @@ plugins {
 android {
     namespace = "com.composepdf"
 
-    defaultConfig {
-        consumerProguardFiles("consumer-rules.pro")
-    }
+    defaultConfig { consumerProguardFiles("consumer-rules.pro") }
 }
 
 dependencies {

@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
 import android.net.Uri
@@ -7,30 +10,33 @@ import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.filesDir
 import io.github.vinceglb.filekit.path
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
 
 /**
  * Use case for generating a thumbnail image from a PDF's first page. Single responsibility:
  * thumbnail generation.
  */
-class GenerateDocumentThumbnailUseCase(private val documentOperationsService: DocumentOperationsService) {
-    suspend operator fun invoke(pdfUri: Uri, filename: String): String = withContext(Dispatchers.IO) {
-        val thumbnailDir = PlatformFile(FileKit.filesDir, "previews")
-        thumbnailDir.ensure(mustCreate = true)
+class GenerateDocumentThumbnailUseCase(
+    private val documentOperationsService: DocumentOperationsService
+) {
+    suspend operator fun invoke(pdfUri: Uri, filename: String): String =
+        withContext(Dispatchers.IO) {
+            val thumbnailDir = PlatformFile(FileKit.filesDir, "previews")
+            thumbnailDir.ensure(mustCreate = true)
 
-        val thumbnailFile = PlatformFile(thumbnailDir, "$filename.png")
+            val thumbnailFile = PlatformFile(thumbnailDir, "$filename.png")
 
-        documentOperationsService.saveDocumentPageAsImage(
-            documentUri = pdfUri,
-            outputFile = File(thumbnailFile.path),
-            pageIndex = 0,
-            quality = THUMBNAIL_QUALITY,
-        )
+            documentOperationsService.saveDocumentPageAsImage(
+                documentUri = pdfUri,
+                outputFile = File(thumbnailFile.path),
+                pageIndex = 0,
+                quality = THUMBNAIL_QUALITY,
+            )
 
-        thumbnailFile.path
-    }
+            thumbnailFile.path
+        }
 
     companion object {
         private const val THUMBNAIL_QUALITY = 65

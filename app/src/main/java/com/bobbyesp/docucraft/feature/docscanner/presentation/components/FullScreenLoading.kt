@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.components
 
 import androidx.compose.foundation.background
@@ -15,13 +18,11 @@ import androidx.compose.ui.graphics.Color
 @Composable
 fun FullScreenLoading(
     modifier: Modifier = Modifier,
-    scrimColor: Color = Color.Black.copy(alpha = 0.6f)
+    scrimColor: Color = Color.Black.copy(alpha = 0.6f),
 ) {
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(scrimColor)
-            .clickable(enabled = false, onClick = {}),
+        modifier =
+            modifier.fillMaxSize().background(scrimColor).clickable(enabled = false, onClick = {}),
         contentAlignment = Alignment.Center,
     ) {
         CircularWavyProgressIndicator()

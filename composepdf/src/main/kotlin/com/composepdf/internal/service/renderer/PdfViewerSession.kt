@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.service.renderer
 
 import android.content.Context
@@ -16,9 +19,9 @@ import com.composepdf.internal.service.pdf.PageRenderer
 import com.composepdf.internal.service.pdf.PdfDocumentManager
 import com.composepdf.internal.service.pdf.PdfDocumentSession
 import com.composepdf.internal.util.longLivedContext
+import java.io.Closeable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
-import java.io.Closeable
 
 /**
  * Groups the active document session and the render infrastructure of the viewer.
@@ -39,7 +42,7 @@ internal class PdfViewerSession(
     state: PdfViewerState,
     bitmapPool: BitmapPool,
     viewportCoordinator: ViewerViewportCoordinator,
-    configProvider: () -> ViewerConfig
+    configProvider: () -> ViewerConfig,
 ) : Closeable {
     private val appContext = context.longLivedContext()
     private val tileDiskCache = TileDiskCache(appContext.cacheDir.resolve("pdf_tiles"))
@@ -48,31 +51,34 @@ internal class PdfViewerSession(
     private val pageRenderer = PageRenderer(bitmapPool)
     private var renderedPagesProvider: () -> Map<Int, Bitmap> = { emptyMap() }
     private val telemetry = RenderTelemetry()
-    private val bitmapHousekeeper = BitmapHousekeeper(
-        scope = scope,
-        state = state,
-        renderedPagesProvider = { renderedPagesProvider() },
-        bitmapPool = bitmapPool
-    )
-    private val renderScheduler = RenderScheduler(
-        documentManager = documentManager,
-        pageRenderer = pageRenderer,
-        cache = bitmapHousekeeper.bitmapCache,
-        viewerState = state,
-        bitmapPool = bitmapPool,
-        tileDiskCache = tileDiskCache,
-        telemetry = telemetry
-    )
-    private val renderPipeline = ViewerRenderPipeline(
-        scope = scope,
-        state = state,
-        viewportCoordinator = viewportCoordinator,
-        renderScheduler = renderScheduler,
-        tilePlanner = TilePlanner(PageRenderer.TILE_SIZE),
-        telemetry = telemetry,
-        configProvider = configProvider,
-        isDocumentOpen = { documentManager.isOpen }
-    )
+    private val bitmapHousekeeper =
+        BitmapHousekeeper(
+            scope = scope,
+            state = state,
+            renderedPagesProvider = { renderedPagesProvider() },
+            bitmapPool = bitmapPool,
+        )
+    private val renderScheduler =
+        RenderScheduler(
+            documentManager = documentManager,
+            pageRenderer = pageRenderer,
+            cache = bitmapHousekeeper.bitmapCache,
+            viewerState = state,
+            bitmapPool = bitmapPool,
+            tileDiskCache = tileDiskCache,
+            telemetry = telemetry,
+        )
+    private val renderPipeline =
+        ViewerRenderPipeline(
+            scope = scope,
+            state = state,
+            viewportCoordinator = viewportCoordinator,
+            renderScheduler = renderScheduler,
+            tilePlanner = TilePlanner(PageRenderer.TILE_SIZE),
+            telemetry = telemetry,
+            configProvider = configProvider,
+            isDocumentOpen = { documentManager.isOpen },
+        )
 
     val renderedPages: StateFlow<Map<Int, Bitmap>> = renderScheduler.renderedPages
     val renderTelemetry: StateFlow<RenderTelemetrySnapshot> = telemetry.snapshot
@@ -90,7 +96,7 @@ internal class PdfViewerSession(
 
     suspend fun loadDocument(
         source: PdfSource,
-        onRemoteState: (RemotePdfState) -> Unit = {}
+        onRemoteState: (RemotePdfState) -> Unit = {},
     ): DocumentResult {
         val loadedDocument = documentSession.open(source, onRemoteState)
         renderPipeline.onDocumentLoaded(loadedDocument.documentKey)

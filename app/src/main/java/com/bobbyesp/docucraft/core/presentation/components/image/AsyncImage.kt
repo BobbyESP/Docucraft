@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components.image
 
 import android.content.Context
@@ -45,15 +48,16 @@ fun AsyncImage(
         modifier = modifier.clip(shape),
         imageModel = { imageUrl },
         imageOptions = imageOptions,
-        component = rememberImageComponent {
-            +CrossfadePlugin(300)
-            +ShimmerPlugin(
-                Shimmer.Resonate(
-                    baseColor = MaterialTheme.colorScheme.surface,
-                    highlightColor = MaterialTheme.colorScheme.primary
+        component =
+            rememberImageComponent {
+                +CrossfadePlugin(300)
+                +ShimmerPlugin(
+                    Shimmer.Resonate(
+                        baseColor = MaterialTheme.colorScheme.surface,
+                        highlightColor = MaterialTheme.colorScheme.primary,
+                    )
                 )
-            )
-        },
+            },
         onImageStateChanged = { state ->
             if (state is CoilImageState.Success) {
                 onSuccessData(state)

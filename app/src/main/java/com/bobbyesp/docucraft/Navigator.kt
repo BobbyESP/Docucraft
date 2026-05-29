@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft
 
 import androidx.compose.animation.slideInHorizontally
@@ -22,54 +25,42 @@ import kotlinx.collections.immutable.persistentListOf
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun Navigator(
-    rootBackStack: TopLevelBackStack<Route>, modifier: Modifier = Modifier,
-) {
+fun Navigator(rootBackStack: TopLevelBackStack<Route>, modifier: Modifier = Modifier) {
     val onBack: () -> Unit = { rootBackStack.pop() }
 
     NavDisplay(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         backStack = rootBackStack.backStack,
-        entryDecorators = persistentListOf(
-            rememberSaveableStateHolderNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator()
-        ),
+        entryDecorators =
+            persistentListOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberViewModelStoreNavEntryDecorator(),
+            ),
         onBack = onBack,
-        entryProvider = entryProvider {
-            entry<Route.Home> {
-                HomeScreen(
-                    onNavigate = { rootBackStack.push(it) },
-                )
-            }
+        entryProvider =
+            entryProvider {
+                entry<Route.Home> { HomeScreen(onNavigate = { rootBackStack.push(it) }) }
 
-            SettingsRouting(
-                onNavigate = { rootBackStack.push(it) },
-                onBack = onBack
-            )
+                SettingsRouting(onNavigate = { rootBackStack.push(it) }, onBack = onBack)
 
-            entry<Route.PdfViewer> { key ->
-                PdfViewerScreen(
-                    documentInfo = key.documentInfo,
-                    onBack = onBack
-                )
-            }
-        },
+                entry<Route.PdfViewer> { key ->
+                    PdfViewerScreen(documentInfo = key.documentInfo, onBack = onBack)
+                }
+            },
         transitionSpec = {
             // Slide in from right when navigating forward
             slideInHorizontally(initialOffsetX = { it }) togetherWith
-                    slideOutHorizontally(targetOffsetX = { -it })
+                slideOutHorizontally(targetOffsetX = { -it })
         },
         popTransitionSpec = {
             // Slide in from left when navigating back
             slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                    slideOutHorizontally(targetOffsetX = { it })
+                slideOutHorizontally(targetOffsetX = { it })
         },
         predictivePopTransitionSpec = {
             // Slide in from left when navigating back
             slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                    slideOutHorizontally(targetOffsetX = { it })
+                slideOutHorizontally(targetOffsetX = { it })
         },
     )
 }

@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.logic
 
 import com.composepdf.PdfSource
@@ -27,12 +30,13 @@ internal class ViewerSessionCoordinator(
     private val invalidateTiles: suspend () -> Unit,
     private val loadDocument: suspend (PdfSource, (RemotePdfState) -> Unit) -> DocumentResult,
     private val requestRender: (RenderTrigger) -> Unit,
-    private val resetState: suspend () -> Unit = { state.reset() }
+    private val resetState: suspend () -> Unit = { state.reset() },
 ) {
     fun onConfigChanged(previousConfig: ViewerConfig, newConfig: ViewerConfig) {
         updatePrefetchWindow(newConfig.prefetchDistance)
 
-        val requiresLayoutRefresh = previousConfig.fitMode != newConfig.fitMode ||
+        val requiresLayoutRefresh =
+            previousConfig.fitMode != newConfig.fitMode ||
                 previousConfig.pageSpacingPx != newConfig.pageSpacingPx ||
                 previousConfig.scrollDirection != newConfig.scrollDirection
 

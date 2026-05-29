@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.renderer
 
 import com.composepdf.internal.service.renderer.RenderTelemetry
@@ -16,14 +19,14 @@ class RenderTelemetryTest {
             passId = 7,
             trigger = RenderTrigger.GESTURE_DEBOUNCED,
             zoom = 2f,
-            visiblePages = 3..4
+            visiblePages = 3..4,
         )
         telemetry.recordTilePlan(
             passId = 7,
             steppedZoom = 1.77f,
             keepTileCount = 12,
             requestCount = 5,
-            prefetchPages = listOf(5)
+            prefetchPages = listOf(5),
         )
         telemetry.recordTileDiskHit(7, "tile-a")
         telemetry.recordTilePublished(7, "tile-a", stale = false)
@@ -45,4 +48,3 @@ class RenderTelemetryTest {
         assertTrue(events.any { it.action == "published" && it.source == "tile" })
     }
 }
-

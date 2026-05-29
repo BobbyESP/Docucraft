@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.navigation.backstack
 
 import androidx.compose.runtime.Stable
@@ -10,32 +13,34 @@ import androidx.navigation3.runtime.NavKey
 /**
  * Manages the back stack for a top-level navigation structure, such as a bottom navigation bar.
  *
- * This class maintains a separate back stack for each top-level destination (e.g., each tab).
- * It keeps track of the history of visited top-level destinations, allowing for proper "back"
- * navigation between them. The most recently visited top-level destination is considered the "current" one.
+ * This class maintains a separate back stack for each top-level destination (e.g., each tab). It
+ * keeps track of the history of visited top-level destinations, allowing for proper "back"
+ * navigation between them. The most recently visited top-level destination is considered the
+ * "current" one.
  *
  * The internal state is managed using `LinkedHashMap` to preserve the insertion order of top-level
- * destinations, effectively creating a history of which tabs were visited. The individual back stacks
- * for each tab are `MutableList`s that are observable by Compose.
+ * destinations, effectively creating a history of which tabs were visited. The individual back
+ * stacks for each tab are `MutableList`s that are observable by Compose.
  *
  * This class is designed to be saved and restored using a `Saver`, for which the `saveState()`
  * method is provided.
  *
  * @param T The type of the navigation key, which must extend [NavKey].
  * @param initialBackStacks A map where each key is a top-level destination and the value is its
- * initial back stack. Used for state restoration.
+ *   initial back stack. Used for state restoration.
  * @param initialTopLevelOrder A list representing the historical order of visited top-level
- * destinations. Used for state restoration.
+ *   destinations. Used for state restoration.
  */
 @Stable
 class TopLevelBackStack<T : NavKey>(
     initialBackStacks: Map<T, List<T>>,
-    initialTopLevelOrder: List<T>
+    initialTopLevelOrder: List<T>,
 ) {
     // We use SnapshotStateMap so Compose detects when tabs are added/removed.
     private val topLevelStacks: SnapshotStateMap<T, MutableList<T>> = mutableStateMapOf()
 
-    // We maintain a separate list to track the order (history) of tabs, since Map doesn't guarantee it.
+    // We maintain a separate list to track the order (history) of tabs, since Map doesn't guarantee
+    // it.
     private val topLevelOrder: MutableList<T> = mutableStateListOf()
 
     init {
@@ -51,18 +56,16 @@ class TopLevelBackStack<T : NavKey>(
         get() = topLevelOrder.last()
 
     /**
-     * Flattens all backstacks into a single list for the navigator.
-     * This acts as the source of truth for the displayed content.
+     * Flattens all backstacks into a single list for the navigator. This acts as the source of
+     * truth for the displayed content.
      */
     val backStack: List<T>
-        get() = topLevelOrder.flatMap { key ->
-            topLevelStacks[key] ?: emptyList()
-        }
+        get() = topLevelOrder.flatMap { key -> topLevelStacks[key] ?: emptyList() }
 
     /**
-     * Returns ONLY the backstack of the currently active top-level destination.
-     * This is the most efficient way to render if you don't need cross-tab animations.
-     * The inactive tabs remain in memory (state) but are not composed.
+     * Returns ONLY the backstack of the currently active top-level destination. This is the most
+     * efficient way to render if you don't need cross-tab animations. The inactive tabs remain in
+     * memory (state) but are not composed.
      */
     val visibleBackStack: List<T>
         get() {
@@ -103,9 +106,7 @@ class TopLevelBackStack<T : NavKey>(
         }
     }
 
-    /**
-     * Extracts the raw state for the Saver to persist.
-     */
+    /** Extracts the raw state for the Saver to persist. */
     fun saveState(): Pair<Map<T, List<T>>, List<T>> {
         return topLevelStacks.toMap().mapValues { it.value.toList() } to topLevelOrder.toList()
     }

@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components
 
 import androidx.compose.animation.core.LinearEasing
@@ -54,7 +57,7 @@ fun ScreenPlaceholderCard(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
-    iconAction: ImageVector = Icons.Rounded.CameraAlt
+    iconAction: ImageVector = Icons.Rounded.CameraAlt,
 ) {
     val iconSize = 48.dp
     val colorScheme = MaterialTheme.colorScheme
@@ -66,42 +69,46 @@ fun ScreenPlaceholderCard(
     val cardShape = DocucraftShapeDefaults.cardShape
 
     val infiniteTransition = rememberInfiniteTransition(label = "PlaceholderRotation")
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(if (isError) 10000 else 6000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "RotationAngle"
-    )
+    val rotation by
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(if (isError) 10000 else 6000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            label = "RotationAngle",
+        )
 
     ElevatedCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = if (isError) colorScheme.error.copy(alpha = 0.2f) else colorScheme.outlineVariant,
-                shape = cardShape
-            ),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    color =
+                        if (isError) colorScheme.error.copy(alpha = 0.2f)
+                        else colorScheme.outlineVariant,
+                    shape = cardShape,
+                ),
         shape = cardShape,
         colors = CardDefaults.elevatedCardColors(containerColor = colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = DocucraftElevationDefaults.Card),
+        elevation =
+            CardDefaults.elevatedCardElevation(defaultElevation = DocucraftElevationDefaults.Card),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(32.dp),
+            modifier = Modifier.fillMaxWidth().padding(32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(modifier = Modifier.size(iconSize * 2), contentAlignment = Alignment.Center) {
                 Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .graphicsLayer { rotationZ = rotation }
-                        .clip(MaterialShapes.Cookie6Sided.toShape())
-                        .background(containerColor)
+                    modifier =
+                        Modifier.matchParentSize()
+                            .graphicsLayer { rotationZ = rotation }
+                            .clip(MaterialShapes.Cookie6Sided.toShape())
+                            .background(containerColor)
                 )
                 Icon(
                     imageVector = icon,
@@ -113,7 +120,7 @@ fun ScreenPlaceholderCard(
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = title,
@@ -133,17 +140,15 @@ fun ScreenPlaceholderCard(
 
             Button(
                 onClick = onAction,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
+                modifier = Modifier.fillMaxWidth().height(56.dp),
                 shapes = ButtonDefaults.shapes(),
                 colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
             ) {
                 Icon(
                     imageVector = iconAction,
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = actionText.uppercase(), style = MaterialTheme.typography.labelLarge)

@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components.others
 
 import androidx.compose.foundation.BorderStroke
@@ -28,17 +31,19 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 /**
  * A compact tag with rounded corners and optional leading icon.
  *
- * This composable creates a customizable tag component with rounded corners. It supports
- * an optional leading icon, customizable colors, shapes, and padding. The tag is styled
- * using Material 3 design principles.
+ * This composable creates a customizable tag component with rounded corners. It supports an
+ * optional leading icon, customizable colors, shapes, and padding. The tag is styled using Material
+ * 3 design principles.
  *
  * @param text The label displayed inside the tag.
  * @param modifier The [Modifier] applied to the outer [Surface].
  * @param icon An optional leading [ImageVector] icon displayed before the text.
  * @param border An optional [BorderStroke] for the tag's border.
  * @param shape The [Shape] of the tag's corners. Defaults to [MaterialTheme.shapes.medium].
- * @param containerColor The background color of the tag. Defaults to [MaterialTheme.colorScheme.secondaryContainer].
- * @param contentColor The color applied to the text and icon. Defaults to a color derived from [containerColor].
+ * @param containerColor The background color of the tag. Defaults to
+ *   [MaterialTheme.colorScheme.secondaryContainer].
+ * @param contentColor The color applied to the text and icon. Defaults to a color derived from
+ *   [containerColor].
  * @param contentPadding The padding inside the tag. Defaults to 8.dp horizontal and 4.dp vertical.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -53,12 +58,7 @@ fun RoundedTag(
     contentColor: Color = contentColorFor(containerColor),
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
 ) {
-    Surface(
-        modifier = modifier,
-        color = containerColor,
-        shape = shape,
-        border = border
-    ) {
+    Surface(modifier = modifier, color = containerColor, shape = shape, border = border) {
         Row(
             modifier = Modifier.padding(contentPadding),
             verticalAlignment = Alignment.CenterVertically,
@@ -83,16 +83,8 @@ fun RoundedTag(
     }
 }
 
-
 @PreviewLightDark
 @Composable
 private fun RoundedTagPreview() {
-    DocucraftTheme {
-        Surface {
-            RoundedTag(
-                text = "14.53 kB",
-                icon = Icons.Rounded.Storage,
-            )
-        }
-    }
+    DocucraftTheme { Surface { RoundedTag(text = "14.53 kB", icon = Icons.Rounded.Storage) } }
 }

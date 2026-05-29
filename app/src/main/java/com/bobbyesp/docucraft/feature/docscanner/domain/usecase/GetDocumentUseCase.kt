@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
 import android.net.Uri
@@ -6,15 +9,13 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocument
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class GetDocumentUseCase(
-    private val repository: LocalDocumentsRepository
-) {
-    suspend operator fun invoke(documentUuid: String): ScannedDocument = withContext(Dispatchers.IO) {
-        require(documentUuid.isNotBlank()) { "Document ID cannot be blank" }
-        repository.getDocument(documentUuid)
-    }
+class GetDocumentUseCase(private val repository: LocalDocumentsRepository) {
+    suspend operator fun invoke(documentUuid: String): ScannedDocument =
+        withContext(Dispatchers.IO) {
+            require(documentUuid.isNotBlank()) { "Document ID cannot be blank" }
+            repository.getDocument(documentUuid)
+        }
 
-    suspend operator fun invoke(documentPath: Uri): ScannedDocument = withContext(Dispatchers.IO) {
-        repository.getDocument(documentPath)
-    }
+    suspend operator fun invoke(documentPath: Uri): ScannedDocument =
+        withContext(Dispatchers.IO) { repository.getDocument(documentPath) }
 }

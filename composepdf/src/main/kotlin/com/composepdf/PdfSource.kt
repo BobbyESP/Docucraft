@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf
 
 import java.io.InputStream
@@ -5,8 +8,8 @@ import java.io.InputStream
 /**
  * Represents different sources from which a PDF document can be loaded.
  *
- * This sealed interface provides type-safe handling of various PDF sources
- * including files, assets, byte arrays, input streams, and content URIs.
+ * This sealed interface provides type-safe handling of various PDF sources including files, assets,
+ * byte arrays, input streams, and content URIs.
  *
  * Example usage:
  * ```kotlin
@@ -32,15 +35,16 @@ sealed interface PdfSource {
     /**
      * Load PDF from application assets.
      *
-     * @property assetName The asset path relative to the assets folder (e.g., "documents/sample.pdf")
+     * @property assetName The asset path relative to the assets folder (e.g.,
+     *   "documents/sample.pdf")
      */
     data class Asset(val assetName: String) : PdfSource
 
     /**
      * Load PDF from a byte array.
      *
-     * Note: The byte array will be written to a temporary file for use with [android.graphics.pdf.PdfRenderer],
-     * as it requires a [android.os.ParcelFileDescriptor].
+     * Note: The byte array will be written to a temporary file for use with
+     * [android.graphics.pdf.PdfRenderer], as it requires a [android.os.ParcelFileDescriptor].
      *
      * @property bytes The PDF content as a byte array
      */
@@ -58,12 +62,14 @@ sealed interface PdfSource {
     /**
      * Load PDF from an [java.io.InputStream].
      *
-     * The stream provider is a lambda that creates a new stream each time it's called.
-     * This allows for retry logic and ensures the stream is fresh on each access.
+     * The stream provider is a lambda that creates a new stream each time it's called. This allows
+     * for retry logic and ensures the stream is fresh on each access.
      *
-     * Note: The stream content will be written to a temporary file for use with [android.graphics.pdf.PdfRenderer].
+     * Note: The stream content will be written to a temporary file for use with
+     * [android.graphics.pdf.PdfRenderer].
      *
-     * @property streamProvider A factory function that provides a new [java.io.InputStream] when called
+     * @property streamProvider A factory function that provides a new [java.io.InputStream] when
+     *   called
      */
     data class Stream(val streamProvider: () -> InputStream) : PdfSource
 
@@ -79,8 +85,8 @@ sealed interface PdfSource {
     /**
      * Load PDF from a remote URL.
      *
-     * Downloads the PDF from the specified URL, caching it locally for rendering.
-     * Supports authentication via custom headers.
+     * Downloads the PDF from the specified URL, caching it locally for rendering. Supports
+     * authentication via custom headers.
      *
      * Example usage:
      * ```kotlin
@@ -104,6 +110,6 @@ sealed interface PdfSource {
         val url: String,
         val headers: Map<String, String> = emptyMap(),
         val cacheKey: String? = null,
-        val downloadCachePolicy: DownloadCachePolicy = DownloadCachePolicy.Companion.Default
+        val downloadCachePolicy: DownloadCachePolicy = DownloadCachePolicy.Companion.Default,
     ) : PdfSource
 }

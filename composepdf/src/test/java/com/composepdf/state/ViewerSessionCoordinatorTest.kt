@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.state
 
 import android.util.Size
@@ -11,6 +14,7 @@ import com.composepdf.internal.logic.ViewerSessionCoordinator
 import com.composepdf.internal.logic.ViewerViewportCoordinator
 import com.composepdf.internal.service.pdf.DocumentResult
 import com.composepdf.internal.service.renderer.RenderTrigger
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -19,41 +23,37 @@ import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 class ViewerSessionCoordinatorTest {
 
     @Test
     fun onConfigChanged_withLayoutImpact_invalidatesTilesAndRequestsRender() = runBlocking {
         val state = PdfViewerState().apply { pageCount = 1 }
-        val viewportCoordinator = ViewerViewportCoordinator(
-            state = state,
-            configProvider = { ViewerConfig() }
-        )
+        val viewportCoordinator =
+            ViewerViewportCoordinator(state = state, configProvider = { ViewerConfig() })
 
         var invalidatedTiles = 0
         val renderTriggers = mutableListOf<RenderTrigger>()
 
-        val coordinator = ViewerSessionCoordinator(
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            state = state,
-            viewportCoordinator = viewportCoordinator,
-            updatePrefetchWindow = {},
-            invalidateAll = {},
-            invalidateTiles = { invalidatedTiles++ },
-            loadDocument = { _, _ -> error("unused") },
-            requestRender = { renderTriggers += it },
-            resetState = {}
-        )
+        val coordinator =
+            ViewerSessionCoordinator(
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                state = state,
+                viewportCoordinator = viewportCoordinator,
+                updatePrefetchWindow = {},
+                invalidateAll = {},
+                invalidateTiles = { invalidatedTiles++ },
+                loadDocument = { _, _ -> error("unused") },
+                requestRender = { renderTriggers += it },
+                resetState = {},
+            )
 
         coordinator.onConfigChanged(
             previousConfig = ViewerConfig(fitMode = FitMode.WIDTH, pageSpacing = 12.dp),
-            newConfig = ViewerConfig(fitMode = FitMode.BOTH, pageSpacing = 12.dp)
+            newConfig = ViewerConfig(fitMode = FitMode.BOTH, pageSpacing = 12.dp),
         )
 
-        withTimeout(1_000) {
-            while (renderTriggers.isEmpty()) yield()
-        }
+        withTimeout(1_000) { while (renderTriggers.isEmpty()) yield() }
 
         assertEquals(1, invalidatedTiles)
         assertEquals(listOf(RenderTrigger.CONFIG_CHANGED), renderTriggers)
@@ -61,58 +61,56 @@ class ViewerSessionCoordinatorTest {
 
     @Test
     fun loadDocument_resetsStateCommitsPagesAndRequestsRender() = runBlocking {
-        val state = PdfViewerState().apply {
-            pageCount = 4
-            zoom = 2f
-            panX = 10f
-            panY = 20f
-            isGestureActive = true
-            error = IllegalStateException("stale")
-        }
-        val viewportCoordinator = ViewerViewportCoordinator(
-            state = state,
-            configProvider = { ViewerConfig() }
-        )
+        val state =
+            PdfViewerState().apply {
+                pageCount = 4
+                zoom = 2f
+                panX = 10f
+                panY = 20f
+                isGestureActive = true
+                error = IllegalStateException("stale")
+            }
+        val viewportCoordinator =
+            ViewerViewportCoordinator(state = state, configProvider = { ViewerConfig() })
         var invalidatedAll = 0
         val renderTriggers = mutableListOf<RenderTrigger>()
 
-        val coordinator = ViewerSessionCoordinator(
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            state = state,
-            viewportCoordinator = viewportCoordinator,
-            updatePrefetchWindow = {},
-            invalidateAll = { invalidatedAll++ },
-            invalidateTiles = {},
-            loadDocument = { _, remoteState ->
-                remoteState(
-                    RemotePdfState.Downloading(
-                        progress = 0f,
-                        bytesDownloaded = 0,
-                        totalBytes = 100
+        val coordinator =
+            ViewerSessionCoordinator(
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                state = state,
+                viewportCoordinator = viewportCoordinator,
+                updatePrefetchWindow = {},
+                invalidateAll = { invalidatedAll++ },
+                invalidateTiles = {},
+                loadDocument = { _, remoteState ->
+                    remoteState(
+                        RemotePdfState.Downloading(
+                            progress = 0f,
+                            bytesDownloaded = 0,
+                            totalBytes = 100,
+                        )
                     )
-                )
-                DocumentResult(
-                    documentKey = "doc",
-                    pageSizes = listOf(Size(600, 800), Size(600, 800)),
-                    pageCount = 2
-                )
-            },
-            requestRender = { renderTriggers += it },
-            resetState = {
-                state.currentPage = 0
-                state.zoom = 1f
-                state.panX = 0f
-                state.panY = 0f
-                state.isGestureActive = false
-                state.beginDocumentLoad()
-            }
-        )
+                    DocumentResult(
+                        documentKey = "doc",
+                        pageSizes = listOf(Size(600, 800), Size(600, 800)),
+                        pageCount = 2,
+                    )
+                },
+                requestRender = { renderTriggers += it },
+                resetState = {
+                    state.currentPage = 0
+                    state.zoom = 1f
+                    state.panX = 0f
+                    state.panY = 0f
+                    state.isGestureActive = false
+                    state.beginDocumentLoad()
+                },
+            )
 
         coordinator.loadDocument(PdfSource.File(File("sample.pdf")))
 
-        withTimeout(1_000) {
-            while (renderTriggers.isEmpty() || !state.isLoaded) yield()
-        }
+        withTimeout(1_000) { while (renderTriggers.isEmpty() || !state.isLoaded) yield() }
 
         assertEquals(1, invalidatedAll)
         assertEquals(2, state.pageCount)

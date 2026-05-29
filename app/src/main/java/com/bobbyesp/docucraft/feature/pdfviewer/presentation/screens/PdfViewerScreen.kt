@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
@@ -52,27 +55,26 @@ import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
-import com.bobbyesp.docucraft.core.domain.repository.logScreenView
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
-import com.composepdf.PdfViewer
-import com.composepdf.rememberPdfViewerState
-import com.composepdf.PdfSource
 import com.composepdf.FitMode
+import com.composepdf.PdfSource
+import com.composepdf.PdfViewer
 import com.composepdf.ScrollDirection
 import com.composepdf.ViewerConfig
+import com.composepdf.rememberPdfViewerState
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(
     ExperimentalMaterial3ExpressiveApi::class,
     ExperimentalComposeUiApi::class,
-    ExperimentalMaterial3Api::class
+    ExperimentalMaterial3Api::class,
 )
 @Composable
 fun PdfViewerScreen(
     documentInfo: BasicDocument,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val pdfViewerState = rememberPdfViewerState()
     val analyticsHelper = LocalAnalyticsHelper.current
@@ -101,87 +103,92 @@ fun PdfViewerScreen(
 
     val overlayBackground = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
 
-    val topInsetDp = WindowInsets.statusBars
-        .union(WindowInsets.displayCutout)
-        .asPaddingValues()
-        .calculateTopPadding()
+    val topInsetDp =
+        WindowInsets.statusBars
+            .union(WindowInsets.displayCutout)
+            .asPaddingValues()
+            .calculateTopPadding()
     val topAppBarHeight = TopAppBarDefaults.TopAppBarExpandedHeight + topInsetDp
 
-    val pdfTopPadding by animateDpAsState(
-        targetValue = if (isTopBarVisible && !hasScrolled) topAppBarHeight else 0.dp,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
-        label = "pdfTopPadding"
-    )
+    val pdfTopPadding by
+        animateDpAsState(
+            targetValue = if (isTopBarVisible && !hasScrolled) topAppBarHeight else 0.dp,
+            animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+            label = "pdfTopPadding",
+        )
 
     Box(modifier = modifier.fillMaxSize()) {
         PdfViewer(
             source = PdfSource.Uri(documentInfo.uri.toUri()),
             state = pdfViewerState,
-            config = ViewerConfig(
-                fitMode = fitMode,
-                isNightModeEnabled = isNightModeEnabled,
-                scrollDirection = ScrollDirection.VERTICAL,
-                minZoom = 0.25f,
-                maxZoom = 10f
-            ),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = pdfTopPadding.coerceIn(minimumValue = 0.dp, maximumValue = null))
-                .pointerInput(Unit) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent(PointerEventPass.Initial)
-                            val change = event.changes.firstOrNull() ?: continue
+            config =
+                ViewerConfig(
+                    fitMode = fitMode,
+                    isNightModeEnabled = isNightModeEnabled,
+                    scrollDirection = ScrollDirection.VERTICAL,
+                    minZoom = 0.25f,
+                    maxZoom = 10f,
+                ),
+            modifier =
+                Modifier.fillMaxSize()
+                    .padding(top = pdfTopPadding.coerceIn(minimumValue = 0.dp, maximumValue = null))
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent(PointerEventPass.Initial)
+                                val change = event.changes.firstOrNull() ?: continue
 
-                            when {
-                                change.changedToDown() -> {
-                                    touchStartX = change.position.x
-                                    touchStartY = change.position.y
-                                }
+                                when {
+                                    change.changedToDown() -> {
+                                        touchStartX = change.position.x
+                                        touchStartY = change.position.y
+                                    }
 
-                                change.changedToUp() -> {
-                                    val dx = kotlin.math.abs(change.position.x - touchStartX)
-                                    val dy = kotlin.math.abs(change.position.y - touchStartY)
+                                    change.changedToUp() -> {
+                                        val dx = kotlin.math.abs(change.position.x - touchStartX)
+                                        val dy = kotlin.math.abs(change.position.y - touchStartY)
 
-                                    // Only react to taps — ignore scrolls and zooms.
-                                    if (dx < touchSlop && dy < touchSlop) {
-                                        when {
-                                            // Top bar + controls both visible → hide both
-                                            isTopBarVisible && areControlsVisible -> {
-                                                isTopBarVisible = false
-                                                areControlsVisible = false
-                                            }
-                                            // Only controls visible → hide controls
-                                            !isTopBarVisible && areControlsVisible -> {
-                                                areControlsVisible = false
-                                            }
-                                            // Everything hidden → show both
-                                            else -> {
-                                                isTopBarVisible = true
-                                                areControlsVisible = true
+                                        // Only react to taps — ignore scrolls and zooms.
+                                        if (dx < touchSlop && dy < touchSlop) {
+                                            when {
+                                                // Top bar + controls both visible → hide both
+                                                isTopBarVisible && areControlsVisible -> {
+                                                    isTopBarVisible = false
+                                                    areControlsVisible = false
+                                                }
+                                                // Only controls visible → hide controls
+                                                !isTopBarVisible && areControlsVisible -> {
+                                                    areControlsVisible = false
+                                                }
+                                                // Everything hidden → show both
+                                                else -> {
+                                                    isTopBarVisible = true
+                                                    areControlsVisible = true
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                }
+                    },
         )
 
         AnimatedVisibility(
             modifier = Modifier.align(Alignment.TopCenter),
             visible = isTopBarVisible,
-            enter = fadeIn(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
+            enter =
+                fadeIn(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
                     slideInVertically(
                         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
-                        initialOffsetY = { -it }
+                        initialOffsetY = { -it },
                     ),
-            exit = fadeOut(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
+            exit =
+                fadeOut(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
                     slideOutVertically(
                         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
-                        targetOffsetY = { -it }
-                    )
+                        targetOffsetY = { -it },
+                    ),
         ) {
             TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = overlayBackground),
@@ -189,17 +196,17 @@ fun PdfViewerScreen(
                 title = {
                     Column(
                         horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.SpaceBetween
+                        verticalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Text(
                             text = documentInfo.title ?: documentInfo.filename,
                             style = MaterialTheme.typography.titleLargeEmphasized,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
                         )
                         Text(
                             modifier = Modifier.alpha(0.66f),
-                            text = documentInfo.description
-                                ?: stringResource(R.string.no_description),
+                            text =
+                                documentInfo.description ?: stringResource(R.string.no_description),
                             style = MaterialTheme.typography.bodyMediumEmphasized,
                         )
                     }
@@ -208,37 +215,41 @@ fun PdfViewerScreen(
                     FilledIconButton(
                         onClick = onBack,
                         shapes = IconButtonDefaults.shapes(),
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                        )
+                        colors =
+                            IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                            ),
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.cancel)
+                            contentDescription = stringResource(R.string.cancel),
                         )
                     }
-                }
+                },
             )
         }
 
         AnimatedVisibility(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(
-                    bottom = WindowInsets.navigationBars.asPaddingValues()
-                        .calculateBottomPadding() + 16.dp
-                ),
+            modifier =
+                Modifier.align(Alignment.BottomCenter)
+                    .padding(
+                        bottom =
+                            WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
+                                16.dp
+                    ),
             visible = areControlsVisible,
-            enter = fadeIn(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
+            enter =
+                fadeIn(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
                     slideInVertically(
                         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
-                        initialOffsetY = { it }
+                        initialOffsetY = { it },
                     ),
-            exit = fadeOut(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
+            exit =
+                fadeOut(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
                     slideOutVertically(
                         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
-                        targetOffsetY = { it }
-                    )
+                        targetOffsetY = { it },
+                    ),
         ) {
             PdfViewerBottomToolbar(
                 state = pdfViewerState,
@@ -249,16 +260,17 @@ fun PdfViewerScreen(
                     analyticsHelper.logEvent(
                         AnalyticsEvent(
                             type = AnalyticsEvent.Types.PDF_VIEWER_SETTING_CHANGED,
-                            extras = listOf(
-                                AnalyticsEvent.Param(
-                                    AnalyticsEvent.ParamKeys.SETTING_NAME,
-                                    "fit_mode"
+                            extras =
+                                listOf(
+                                    AnalyticsEvent.Param(
+                                        AnalyticsEvent.ParamKeys.SETTING_NAME,
+                                        "fit_mode",
+                                    ),
+                                    AnalyticsEvent.Param(
+                                        AnalyticsEvent.ParamKeys.SETTING_VALUE,
+                                        it.name,
+                                    ),
                                 ),
-                                AnalyticsEvent.Param(
-                                    AnalyticsEvent.ParamKeys.SETTING_VALUE,
-                                    it.name
-                                )
-                            )
                         )
                     )
                 },
@@ -267,16 +279,17 @@ fun PdfViewerScreen(
                     analyticsHelper.logEvent(
                         AnalyticsEvent(
                             type = AnalyticsEvent.Types.PDF_VIEWER_SETTING_CHANGED,
-                            extras = listOf(
-                                AnalyticsEvent.Param(
-                                    AnalyticsEvent.ParamKeys.SETTING_NAME,
-                                    "night_mode"
+                            extras =
+                                listOf(
+                                    AnalyticsEvent.Param(
+                                        AnalyticsEvent.ParamKeys.SETTING_NAME,
+                                        "night_mode",
+                                    ),
+                                    AnalyticsEvent.Param(
+                                        AnalyticsEvent.ParamKeys.SETTING_VALUE,
+                                        isNightModeEnabled.toString(),
+                                    ),
                                 ),
-                                AnalyticsEvent.Param(
-                                    AnalyticsEvent.ParamKeys.SETTING_VALUE,
-                                    isNightModeEnabled.toString()
-                                )
-                            )
                         )
                     )
                 },

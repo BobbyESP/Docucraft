@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf
 
 import androidx.compose.ui.unit.Dp
@@ -16,57 +19,43 @@ data class ViewerConfig(
     val isZoomGesturesEnabled: Boolean = true,
     val isLoadingIndicatorVisible: Boolean = true,
     /** Screen density used to convert [pageSpacing] Dp → pixels. Set automatically by PdfViewer. */
-    internal val density: Float = 1f
+    internal val density: Float = 1f,
 ) {
     /**
-     * [pageSpacing] converted to screen pixels using the current screen density.
-     * Used by [com.composepdf.internal.logic.PdfViewerController] for layout geometry calculations.
+     * [pageSpacing] converted to screen pixels using the current screen density. Used by
+     * [com.composepdf.internal.logic.PdfViewerController] for layout geometry calculations.
      */
-    val pageSpacingPx: Float get() = pageSpacing.value * density
+    val pageSpacingPx: Float
+        get() = pageSpacing.value * density
 }
 
-/**
- * Direction of scrolling/swiping between pages.
- */
+/** Direction of scrolling/swiping between pages. */
 enum class ScrollDirection {
-    /**
-     * Pages are arranged vertically, scroll up/down to navigate.
-     */
+    /** Pages are arranged vertically, scroll up/down to navigate. */
     VERTICAL,
 
-    /**
-     * Pages are arranged horizontally, scroll left/right to navigate.
-     */
-    HORIZONTAL
+    /** Pages are arranged horizontally, scroll left/right to navigate. */
+    HORIZONTAL,
 }
 
-/**
- * How pages should be fitted within the viewport.
- */
+/** How pages should be fitted within the viewport. */
 enum class FitMode {
     /**
-     * Scale page to fit the viewport width.
-     * All pages fill the full width regardless of their actual dimensions.
-     * This is the standard "reader" mode.
+     * Scale page to fit the viewport width. All pages fill the full width regardless of their
+     * actual dimensions. This is the standard "reader" mode.
      */
     WIDTH,
 
-    /**
-     * Scale page to fit the viewport height.
-     * Page width may extend beyond the viewport.
-     */
+    /** Scale page to fit the viewport height. Page width may extend beyond the viewport. */
     HEIGHT,
 
-    /**
-     * Scale page to fit entirely within the viewport.
-     * Letterboxing may occur.
-     */
+    /** Scale page to fit entirely within the viewport. Letterboxing may occur. */
     BOTH,
 
     /**
-     * Preserve each page's width relative to the widest page in the document.
-     * A page that is half as wide as the widest page will occupy half the viewport width.
-     * This makes mixed-size documents (e.g. A4 + A5 + landscape) look correct.
+     * Preserve each page's width relative to the widest page in the document. A page that is half
+     * as wide as the widest page will occupy half the viewport width. This makes mixed-size
+     * documents (e.g. A4 + A5 + landscape) look correct.
      */
-    PROPORTIONAL
+    PROPORTIONAL,
 }

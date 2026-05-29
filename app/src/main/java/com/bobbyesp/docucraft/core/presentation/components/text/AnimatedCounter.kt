@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components.text
 
 import androidx.compose.animation.AnimatedContent
@@ -78,7 +81,7 @@ fun AnimatedCounter(
                 transitionSpec = {
                     val direction = if (count > oldCount) 1 else -1
                     slideInVertically { it * direction } togetherWith
-                            slideOutVertically { -it * direction }
+                        slideOutVertically { -it * direction }
                 },
                 label = "AnimatedCounter_digit_$i",
             ) { character ->

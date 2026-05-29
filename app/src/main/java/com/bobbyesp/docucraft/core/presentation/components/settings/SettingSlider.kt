@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components.settings
 
 import androidx.annotation.IntRange
@@ -33,11 +36,12 @@ fun SettingSlider(
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
 ) {
     Column(
-        modifier = modifier
-            .clip(DocucraftShapeDefaults.cardShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier =
+            modifier
+                .clip(DocucraftShapeDefaults.cardShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(

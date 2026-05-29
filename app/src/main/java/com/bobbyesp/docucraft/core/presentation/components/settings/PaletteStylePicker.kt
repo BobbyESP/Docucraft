@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components.settings
 
 import androidx.compose.foundation.Canvas
@@ -37,7 +40,7 @@ fun PaletteStylePicker(
     isDark: Boolean,
     isAmoled: Boolean,
     onStyleSelect: (PaletteStyleConfig) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
@@ -47,34 +50,36 @@ fun PaletteStylePicker(
         PaletteStyleConfig.entries.forEach { styleConfig ->
             val isSelected = styleConfig == selectedStyle
             val style = remember(styleConfig) { styleConfig.toPaletteStyle() }
-            val scheme = rememberDynamicColorScheme(
-                seedColor = seedColor,
-                isDark = isDark,
-                isAmoled = isAmoled,
-                style = style
-            )
-
-            val colorList = remember(scheme) {
-                listOf(
-                    scheme.primary,
-                    scheme.primaryContainer,
-                    scheme.secondary,
-                    scheme.secondaryContainer,
-                    scheme.tertiary,
-                    scheme.tertiaryContainer,
+            val scheme =
+                rememberDynamicColorScheme(
+                    seedColor = seedColor,
+                    isDark = isDark,
+                    isAmoled = isAmoled,
+                    style = style,
                 )
-            }
+
+            val colorList =
+                remember(scheme) {
+                    listOf(
+                        scheme.primary,
+                        scheme.primaryContainer,
+                        scheme.secondary,
+                        scheme.secondaryContainer,
+                        scheme.tertiary,
+                        scheme.tertiaryContainer,
+                    )
+                }
 
             Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(if (isSelected) MaterialShapes.VerySunny.toShape() else CircleShape)
-                    .clickable {
-                        if (!isSelected) {
-                            onStyleSelect(styleConfig)
-                        }
-                    },
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier.size(56.dp)
+                        .clip(if (isSelected) MaterialShapes.VerySunny.toShape() else CircleShape)
+                        .clickable {
+                            if (!isSelected) {
+                                onStyleSelect(styleConfig)
+                            }
+                        },
+                contentAlignment = Alignment.Center,
             ) {
                 Canvas(modifier = Modifier.matchParentSize()) {
                     val sweepAngle = 360f / colorList.size
@@ -83,22 +88,21 @@ fun PaletteStylePicker(
                             color = color,
                             startAngle = index * sweepAngle,
                             sweepAngle = sweepAngle,
-                            useCenter = true
+                            useCenter = true,
                         )
                     }
                 }
 
                 if (isSelected) {
                     Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .background(Color.Black.copy(alpha = 0.2f))
+                        modifier =
+                            Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.2f))
                     )
                     Icon(
                         imageVector = Icons.Rounded.Check,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(24.dp),
                     )
                 }
             }
@@ -115,7 +119,7 @@ private fun PaletteStylePickerPreview() {
             seedColor = Color(0xFF6200EE),
             isDark = false,
             isAmoled = false,
-            onStyleSelect = {}
+            onStyleSelect = {},
         )
     }
 }

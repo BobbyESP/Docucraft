@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf
 
 import android.graphics.Bitmap
@@ -17,10 +20,10 @@ import com.composepdf.internal.logic.PdfViewerStateControllerBridge
 import com.composepdf.internal.logic.PublishedTile
 import com.composepdf.internal.logic.ViewerSessionState
 import com.composepdf.internal.service.cache.bitmap.BitmapPool
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlin.math.abs
 
 /**
  * A hoistable state object that manages the UI state and navigation for a PDF viewer.
@@ -33,7 +36,8 @@ class PdfViewerState(
     initialPage: Int = 0,
     initialZoom: Float = 1f,
     internal val bitmapPool: BitmapPool = BitmapPool(),
-    internal val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+    internal val scope: CoroutineScope =
+        CoroutineScope(Dispatchers.Main.immediate + SupervisorJob()),
 ) {
     private val session = ViewerSessionState(scope, bitmapPool)
 
@@ -52,9 +56,7 @@ class PdfViewerState(
     var zoom: Float by mutableFloatStateOf(initialZoom)
         internal set
 
-    /**
-     * The stepped zoom level currently being rendered and displayed for high-res tiles.
-     */
+    /** The stepped zoom level currently being rendered and displayed for high-res tiles. */
     var activeSteppedZoom: Float by mutableFloatStateOf(1f)
         internal set
 
@@ -96,7 +98,8 @@ class PdfViewerState(
         }
 
     /** Revision counter to notify Compose when the tile cache is updated. */
-    val tileRevision: Int get() = session.tileRevision
+    val tileRevision: Int
+        get() = session.tileRevision
 
     internal fun getTile(key: String): Bitmap? = session.getTile(key)
 
@@ -128,12 +131,16 @@ class PdfViewerState(
     }
 
     /** True if a document is loaded and ready for interaction. */
-    val isLoaded: Boolean get() = session.isLoaded
+    val isLoaded: Boolean
+        get() = session.isLoaded
 
     internal var controller: PdfViewerStateControllerBridge? = null
 
-    val minZoom: Float get() = controller?.viewerConfig?.minZoom ?: 1f
-    val maxZoom: Float get() = controller?.viewerConfig?.maxZoom ?: 5f
+    val minZoom: Float
+        get() = controller?.viewerConfig?.minZoom ?: 1f
+
+    val maxZoom: Float
+        get() = controller?.viewerConfig?.maxZoom ?: 5f
 
     // -------------------------------------------------------------------------
     // Public Programmatic API
@@ -155,7 +162,7 @@ class PdfViewerState(
     /** Smoothly animates the scroll to [pageIndex]. */
     suspend fun animateScrollToPage(
         pageIndex: Int,
-        animationSpec: AnimationSpec<Float> = spring()
+        animationSpec: AnimationSpec<Float> = spring(),
     ) {
         val ctrl = controller ?: return
         val target = pageIndex.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
@@ -165,10 +172,7 @@ class PdfViewerState(
         val startPanY = panY
 
         currentPage = target
-        Animatable(0f).animateTo(
-            targetValue = 1f,
-            animationSpec = animationSpec
-        ) {
+        Animatable(0f).animateTo(targetValue = 1f, animationSpec = animationSpec) {
             panX = startPanX + (targetPanX - startPanX) * value
             panY = startPanY + (targetPanY - startPanY) * value
             ctrl.clampPan()
@@ -185,18 +189,12 @@ class PdfViewerState(
     }
 
     /** Smoothly animates to the given absolute zoom level, centered on the viewport. */
-    suspend fun animateZoomTo(
-        zoomLevel: Float,
-        animationSpec: AnimationSpec<Float> = spring()
-    ) {
+    suspend fun animateZoomTo(zoomLevel: Float, animationSpec: AnimationSpec<Float> = spring()) {
         val ctrl = controller ?: return
         val pivot = Offset(ctrl.viewportWidth / 2f, ctrl.viewportHeight / 2f)
         val clampedTarget = zoomLevel.coerceIn(ctrl.viewerConfig.minZoom, ctrl.viewerConfig.maxZoom)
 
-        Animatable(zoom).animateTo(
-            targetValue = clampedTarget,
-            animationSpec = animationSpec
-        ) {
+        Animatable(zoom).animateTo(targetValue = clampedTarget, animationSpec = animationSpec) {
             ctrl.onAnimatedZoomFrame(value, pivot)
         }
     }
@@ -275,22 +273,24 @@ class PdfViewerState(
 
     companion object {
         /**
-         * Creates a [Saver] for [PdfViewerState].
-         * Note: The [scope] is not saved; a new one must be provided upon restoration.
+         * Creates a [Saver] for [PdfViewerState]. Note: The [scope] is not saved; a new one must be
+         * provided upon restoration.
          */
         fun saver(bitmapPool: BitmapPool, scope: CoroutineScope): Saver<PdfViewerState, *> =
             listSaver(
                 save = { listOf(it.currentPage, it.zoom, it.panX, it.panY) },
                 restore = {
                     PdfViewerState(
-                        initialPage = it[0] as Int,
-                        initialZoom = it[1] as Float,
-                        bitmapPool = bitmapPool,
-                        scope = scope
-                    ).also { s ->
-                        s.panX = it[2] as Float; s.panY = it[3] as Float
-                    }
-                }
+                            initialPage = it[0] as Int,
+                            initialZoom = it[1] as Float,
+                            bitmapPool = bitmapPool,
+                            scope = scope,
+                        )
+                        .also { s ->
+                            s.panX = it[2] as Float
+                            s.panY = it[3] as Float
+                        }
+                },
             )
     }
 }

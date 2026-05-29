@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.logic
 
 import androidx.compose.ui.geometry.Offset
@@ -17,11 +20,11 @@ import kotlinx.coroutines.launch
  * - Tracking the gesture lifecycle (start/end/update).
  * - Calculating zoom levels relative to a specific pivot point.
  * - Accumulating and clamping pan offsets within the viewport bounds.
- * - Managing render debouncing to ensure performance during high-churn operations like
- *   active dragging or animated transitions.
+ * - Managing render debouncing to ensure performance during high-churn operations like active
+ *   dragging or animated transitions.
  *
- * It acts as the internal logic engine for [PdfViewerController], abstracting viewport
- * manipulation and rendering triggers away from the public API.
+ * It acts as the internal logic engine for [PdfViewerController], abstracting viewport manipulation
+ * and rendering triggers away from the public API.
  */
 internal class ViewerInteractionCoordinator(
     private val scope: CoroutineScope,
@@ -30,7 +33,7 @@ internal class ViewerInteractionCoordinator(
     private val viewportCoordinator: ViewerViewportCoordinator,
     private val recordPanDelta: (Float) -> Unit,
     private val requestRender: (RenderTrigger) -> Unit,
-    private val debounceDelay: suspend (Long) -> Unit = { delay(it) }
+    private val debounceDelay: suspend (Long) -> Unit = { delay(it) },
 ) {
     private var gestureRenderJob: Job? = null
     private var animatedZoomRenderJob: Job? = null
@@ -56,7 +59,8 @@ internal class ViewerInteractionCoordinator(
         val isZooming = applyZoomAroundPivot(nextZoom, pivot)
 
         val delta =
-            if (currentConfig.scrollDirection == ScrollDirection.VERTICAL) panDelta.y else panDelta.x
+            if (currentConfig.scrollDirection == ScrollDirection.VERTICAL) panDelta.y
+            else panDelta.x
         recordPanDelta(delta)
 
         state.panX += panDelta.x
@@ -79,19 +83,21 @@ internal class ViewerInteractionCoordinator(
         viewportCoordinator.updateCurrentPageFromViewport()
 
         animatedZoomRenderJob?.cancel()
-        animatedZoomRenderJob = scope.launch {
-            // Animating is very high-churn, increase debounce.
-            debounceDelay(150L)
-            requestRender(RenderTrigger.ANIMATED_ZOOM_SETTLED)
-        }
+        animatedZoomRenderJob =
+            scope.launch {
+                // Animating is very high-churn, increase debounce.
+                debounceDelay(150L)
+                requestRender(RenderTrigger.ANIMATED_ZOOM_SETTLED)
+            }
     }
 
     private fun debounceGestureRender(delayMs: Long) {
         gestureRenderJob?.cancel()
-        gestureRenderJob = scope.launch {
-            debounceDelay(delayMs)
-            requestRender(RenderTrigger.GESTURE_DEBOUNCED)
-        }
+        gestureRenderJob =
+            scope.launch {
+                debounceDelay(delayMs)
+                requestRender(RenderTrigger.GESTURE_DEBOUNCED)
+            }
     }
 
     private fun applyZoomAroundPivot(targetZoom: Float, pivot: Offset): Boolean {

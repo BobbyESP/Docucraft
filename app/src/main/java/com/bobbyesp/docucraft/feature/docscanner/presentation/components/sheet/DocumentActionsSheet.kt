@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet
 
 import android.text.format.Formatter.formatFileSize
@@ -85,32 +88,29 @@ fun DocumentActionsContent(
     onModifyFields: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val options = rememberDocumentActions(
-        onSave = onSave,
-        onShare = onShare,
-        onModifyFields = onModifyFields,
-        onDelete = onDelete,
-    )
+    val options =
+        rememberDocumentActions(
+            onSave = onSave,
+            onShare = onShare,
+            onModifyFields = onModifyFields,
+            onDelete = onDelete,
+        )
 
     Column(modifier = modifier) {
         DocumentHeader(
             scannedDocument = scannedDocument,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
         )
 
         AnimatedWavyDivider(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             strokeWidth = 4.dp,
-            colors = AnimatedWavyDividerDefaults.colors(
-                color = MaterialTheme.colorScheme.outlineVariant
-            )
+            colors =
+                AnimatedWavyDividerDefaults.colors(color = MaterialTheme.colorScheme.outlineVariant),
         )
 
         Box(modifier = Modifier.heightIn(min = 120.dp)) {
-            DocumentActionsRow(
-                options = options,
-                onOptionSelect = { it() },
-            )
+            DocumentActionsRow(options = options, onOptionSelect = { it() })
         }
     }
 }
@@ -152,14 +152,8 @@ private fun rememberDocumentActions(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DocumentHeader(
-    scannedDocument: ScannedDocument,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+private fun DocumentHeader(scannedDocument: ScannedDocument, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         DocumentThumbnail(thumbnail = scannedDocument.thumbnail)
         DocumentInfo(scannedDocument = scannedDocument)
     }
@@ -168,16 +162,14 @@ private fun DocumentHeader(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Suppress("COMPOSE_UNSTABLE_PARAMETER")
 @Composable
-private fun DocumentThumbnail(
-    thumbnail: Any?,
-    modifier: Modifier = Modifier,
-) {
+private fun DocumentThumbnail(thumbnail: Any?, modifier: Modifier = Modifier) {
     AsyncImage(
-        modifier = modifier
-            .widthIn(max = 120.dp)
-            .aspectRatio(Measurements.A4_RATIO)
-            .clip(MaterialShapes.Slanted.toShape())
-            .background(MaterialTheme.colorScheme.primaryContainer),
+        modifier =
+            modifier
+                .widthIn(max = 120.dp)
+                .aspectRatio(Measurements.A4_RATIO)
+                .clip(MaterialShapes.Slanted.toShape())
+                .background(MaterialTheme.colorScheme.primaryContainer),
         imageModel = thumbnail,
         failure = {
             Placeholder(
@@ -189,9 +181,7 @@ private fun DocumentThumbnail(
         },
         loading = {
             Icon(
-                modifier = Modifier
-                    .padding(12.dp)
-                    .heightIn(min = 48.dp),
+                modifier = Modifier.padding(12.dp).heightIn(min = 48.dp),
                 imageVector = Icons.AutoMirrored.Rounded.InsertDriveFile,
                 contentDescription = stringResource(id = R.string.file_icon),
                 tint = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -202,16 +192,14 @@ private fun DocumentThumbnail(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DocumentInfo(
-    scannedDocument: ScannedDocument,
-    modifier: Modifier = Modifier,
-) {
-    val formattedDate = rememberSaveable(scannedDocument.createdTimestamp) {
-        DateTime.formatDate(
-            timestampMillis = scannedDocument.createdTimestamp,
-            format = DateTime.DateFormat.LOCALIZED_MEDIUM,
-        )
-    }
+private fun DocumentInfo(scannedDocument: ScannedDocument, modifier: Modifier = Modifier) {
+    val formattedDate =
+        rememberSaveable(scannedDocument.createdTimestamp) {
+            DateTime.formatDate(
+                timestampMillis = scannedDocument.createdTimestamp,
+                format = DateTime.DateFormat.LOCALIZED_MEDIUM,
+            )
+        }
 
     Column(
         modifier = modifier,
@@ -248,11 +236,8 @@ private fun DocumentTagsRow(
 ) {
     val context = LocalContext.current
 
-    val pageCountLabel = pluralStringResource(
-        id = R.plurals.doc_n_pages,
-        count = pageCount,
-        pageCount,
-    )
+    val pageCountLabel =
+        pluralStringResource(id = R.plurals.doc_n_pages, count = pageCount, pageCount)
 
     FlowRow(
         modifier = modifier.fillMaxWidth(),

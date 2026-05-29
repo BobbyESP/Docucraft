@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.logic
 
 import android.graphics.Bitmap
@@ -17,35 +20,32 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/**
- * Immutable UI-ready representation of a published high-resolution tile.
- */
+/** Immutable UI-ready representation of a published high-resolution tile. */
 internal data class PublishedTile(
     val cacheKey: String,
     val tileKey: TileKey,
-    val imageBitmap: ImageBitmap
+    val imageBitmap: ImageBitmap,
 )
 
 /**
  * Internal document-session store for the viewer.
  *
- * This version enforces strict bitmap ownership and handles asynchronous pool returns.
- * When a tile is evicted from the [tileCache], it is returned to the [BitmapPool]
- * using the provided [scope].
+ * This version enforces strict bitmap ownership and handles asynchronous pool returns. When a tile
+ * is evicted from the [tileCache], it is returned to the [BitmapPool] using the provided [scope].
  */
 internal class ViewerSessionState(
     private val scope: CoroutineScope,
-    private val bitmapPool: BitmapPool
+    private val bitmapPool: BitmapPool,
 ) {
     var pageCount: Int by mutableIntStateOf(0)
     var isLoading: Boolean by mutableStateOf(true)
     var error: Throwable? by mutableStateOf(null)
     var remoteState: RemotePdfState by mutableStateOf(RemotePdfState.Idle)
-    val isLoaded: Boolean get() = !isLoading && error == null && pageCount > 0
+    val isLoaded: Boolean
+        get() = !isLoading && error == null && pageCount > 0
 
-    private val tileCache = LruTileCache(onEvicted = { key, bitmap ->
-        handleTileEviction(key, bitmap)
-    })
+    private val tileCache =
+        LruTileCache(onEvicted = { key, bitmap -> handleTileEviction(key, bitmap) })
 
     var tileRevision by mutableIntStateOf(0)
         private set
@@ -82,27 +82,31 @@ internal class ViewerSessionState(
     fun getImageBitmapTilesForPage(pageIndex: Int): List<PublishedTile> =
         publishedTilesByPage[pageIndex].orEmpty()
 
-    suspend fun putTile(key: String, bitmap: Bitmap) = withContext(Dispatchers.Main.immediate) {
-        val tileKey = TileKey.fromCacheKey(key) ?: return@withContext
-        tileCache.put(key, bitmap)
+    suspend fun putTile(key: String, bitmap: Bitmap) =
+        withContext(Dispatchers.Main.immediate) {
+            val tileKey = TileKey.fromCacheKey(key) ?: return@withContext
+            tileCache.put(key, bitmap)
 
-        val publishedTile = PublishedTile(
-            cacheKey = key,
-            tileKey = tileKey,
-            imageBitmap = bitmap.asImageBitmap()
-        )
+            val publishedTile =
+                PublishedTile(
+                    cacheKey = key,
+                    tileKey = tileKey,
+                    imageBitmap = bitmap.asImageBitmap(),
+                )
 
-        tilesSnapshot = tilesSnapshot + (key to bitmap)
+            tilesSnapshot = tilesSnapshot + (key to bitmap)
 
-        val updatedPageTiles = publishedTilesByPage.toMutableMap()
-        val pageTiles = updatedPageTiles[tileKey.pageIndex].orEmpty()
-            .filterNot { it.cacheKey == key }
-            .toMutableList()
-        pageTiles += publishedTile
-        updatedPageTiles[tileKey.pageIndex] = pageTiles.sortedBy { it.cacheKey }
-        publishedTilesByPage = updatedPageTiles
-        tileRevision++
-    }
+            val updatedPageTiles = publishedTilesByPage.toMutableMap()
+            val pageTiles =
+                updatedPageTiles[tileKey.pageIndex]
+                    .orEmpty()
+                    .filterNot { it.cacheKey == key }
+                    .toMutableList()
+            pageTiles += publishedTile
+            updatedPageTiles[tileKey.pageIndex] = pageTiles.sortedBy { it.cacheKey }
+            publishedTilesByPage = updatedPageTiles
+            tileRevision++
+        }
 
     suspend fun pruneTiles(predicate: (String) -> Boolean) =
         withContext(Dispatchers.Main.immediate) {
@@ -115,10 +119,11 @@ internal class ViewerSessionState(
             tileRevision++
         }
 
-    suspend fun clearTiles() = withContext(Dispatchers.Main.immediate) {
-        tileCache.evictAll() // Triggers handleTileEviction for all
-        tileRevision++
-    }
+    suspend fun clearTiles() =
+        withContext(Dispatchers.Main.immediate) {
+            tileCache.evictAll() // Triggers handleTileEviction for all
+            tileRevision++
+        }
 
     private fun handleTileEviction(key: String, bitmap: Bitmap) {
         scope.launch {
@@ -128,8 +133,10 @@ internal class ViewerSessionState(
                     tilesSnapshot = tilesSnapshot - key
                     TileKey.fromCacheKey(key)?.let { tileKey ->
                         val updatedByPage = publishedTilesByPage.toMutableMap()
-                        val remaining = updatedByPage[tileKey.pageIndex].orEmpty()
-                            .filterNot { it.cacheKey == key }
+                        val remaining =
+                            updatedByPage[tileKey.pageIndex].orEmpty().filterNot {
+                                it.cacheKey == key
+                            }
                         if (remaining.isEmpty()) updatedByPage.remove(tileKey.pageIndex)
                         else updatedByPage[tileKey.pageIndex] = remaining
                         publishedTilesByPage = updatedByPage
@@ -138,10 +145,9 @@ internal class ViewerSessionState(
             }
 
             // Return to pool is now a suspend call.
-            // use NonCancellable to ensure memory is recovered even if the scope is being cancelled.
-            withContext(NonCancellable) {
-                bitmapPool.put(bitmap)
-            }
+            // use NonCancellable to ensure memory is recovered even if the scope is being
+            // cancelled.
+            withContext(NonCancellable) { bitmapPool.put(bitmap) }
         }
     }
 }

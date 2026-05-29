@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.di
 
 import com.bobbyesp.docucraft.core.data.remote.analytics.FirebaseAnalyticsHelperImpl

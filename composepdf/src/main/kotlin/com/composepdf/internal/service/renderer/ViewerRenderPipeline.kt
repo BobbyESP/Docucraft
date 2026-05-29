@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.service.renderer
 
 import com.composepdf.PdfViewerState
@@ -5,18 +8,21 @@ import com.composepdf.ViewerConfig
 import com.composepdf.internal.logic.ViewerViewportCoordinator
 import com.composepdf.internal.logic.tiles.TilePlanner
 import com.composepdf.internal.service.pdf.PageRenderer
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 /**
  * High-level orchestration component that manages the rendering lifecycle of the PDF viewer.
  *
  * The [ViewerRenderPipeline] is responsible for:
  * - Coordinating between the viewport state, the tile planner, and the render scheduler.
- * - Deciding when to render low-resolution base pages versus high-resolution tiles based on the zoom level.
- * - Managing "render passes" to ensure UI consistency and performance during scroll and zoom operations.
- * - Implementing optimizations such as scroll direction hints and velocity-based tile skipping to maintain high frame rates.
+ * - Deciding when to render low-resolution base pages versus high-resolution tiles based on the
+ *   zoom level.
+ * - Managing "render passes" to ensure UI consistency and performance during scroll and zoom
+ *   operations.
+ * - Implementing optimizations such as scroll direction hints and velocity-based tile skipping to
+ *   maintain high frame rates.
  * - Reporting telemetry data for performance monitoring and debugging.
  */
 internal class ViewerRenderPipeline(
@@ -27,7 +33,7 @@ internal class ViewerRenderPipeline(
     private val tilePlanner: TilePlanner,
     private val telemetry: RenderTelemetry,
     private val configProvider: () -> ViewerConfig,
-    private val isDocumentOpen: () -> Boolean
+    private val isDocumentOpen: () -> Boolean,
 ) {
     private var lastScrollDirectionHint: Int = 0
     private var nextRenderPassId: Int = 0
@@ -52,10 +58,11 @@ internal class ViewerRenderPipeline(
      *
      * This function calculates the necessary zoom levels, identifies visible pages, and coordinates
      * with the [RenderScheduler] to update both the base page textures and high-resolution tiles.
-     * It accounts for current scroll velocity to skip tile rendering during high-speed flings
-     * to maintain UI performance.
+     * It accounts for current scroll velocity to skip tile rendering during high-speed flings to
+     * maintain UI performance.
      *
-     * @param trigger The reason for the render request (e.g., programmatic, user interaction, or layout change).
+     * @param trigger The reason for the render request (e.g., programmatic, user interaction, or
+     *   layout change).
      */
     fun requestRenderForVisiblePages(trigger: RenderTrigger = RenderTrigger.PROGRAMMATIC) {
         if (!isDocumentOpen() || !viewportCoordinator.hasLayout) return
@@ -78,7 +85,7 @@ internal class ViewerRenderPipeline(
             passId = renderPassId,
             trigger = trigger,
             zoom = currentZoom,
-            visiblePages = visiblePages
+            visiblePages = visiblePages,
         )
 
         scope.launch {
@@ -91,13 +98,15 @@ internal class ViewerRenderPipeline(
             // Render base pages (low-res)
             renderScheduler.requestRender(
                 visiblePages = visiblePages,
-                config = PageRenderer.RenderConfig(
-                    zoomLevel = basePageRenderZoom,
-                    renderQuality = if (currentZoom > TILE_ZOOM_THRESHOLD) 1.0f else config.renderQuality
-                ),
+                config =
+                    PageRenderer.RenderConfig(
+                        zoomLevel = basePageRenderZoom,
+                        renderQuality =
+                            if (currentZoom > TILE_ZOOM_THRESHOLD) 1.0f else config.renderQuality,
+                    ),
                 pageSizes = pageSizesSnapshot,
                 getBaseWidth = viewportCoordinator::pageWidthPx,
-                renderPassId = renderPassId
+                renderPassId = renderPassId,
             )
 
             // Fling Consideration: If velocity is very high, skip tiles to keep scroll smooth
@@ -111,10 +120,10 @@ internal class ViewerRenderPipeline(
                     visiblePages = visiblePages,
                     currentZoom = currentZoom,
                     steppedZoom = steppedZoom,
-                    renderPassId = renderPassId
+                    renderPassId = renderPassId,
                 )
             } else {
-                //Skip tiles to keep scroll smooth
+                // Skip tiles to keep scroll smooth
                 if (isHighSpeed) {
                     renderScheduler.updateTileWindow(emptySet())
                 }
@@ -123,7 +132,7 @@ internal class ViewerRenderPipeline(
                     steppedZoom = steppedZoom,
                     keepTileCount = 0,
                     requestCount = 0,
-                    prefetchPages = emptyList()
+                    prefetchPages = emptyList(),
                 )
             }
         }
@@ -133,42 +142,45 @@ internal class ViewerRenderPipeline(
      * Calculates and schedules the rendering of high-resolution tiles for the currently visible
      * area of the document.
      *
-     * This method determines which tiles are already in memory, which should be kept, and which
-     * new tiles need to be requested from the [renderScheduler]. It also handles prefetching
-     * tiles for pages adjacent to the visible range based on the scroll direction.
+     * This method determines which tiles are already in memory, which should be kept, and which new
+     * tiles need to be requested from the [renderScheduler]. It also handles prefetching tiles for
+     * pages adjacent to the visible range based on the scroll direction.
      *
      * @param visiblePages The range of page indices currently visible in the viewport.
      * @param currentZoom The exact current zoom level of the viewer.
-     * @param steppedZoom The discretized zoom level used for tile generation to maintain cache consistency.
-     * @param renderPassId A unique identifier for the current render pass, used for telemetry and task prioritization.
+     * @param steppedZoom The discretized zoom level used for tile generation to maintain cache
+     *   consistency.
+     * @param renderPassId A unique identifier for the current render pass, used for telemetry and
+     *   task prioritization.
      */
     private fun requestTilesForVisibleArea(
         visiblePages: IntRange,
         currentZoom: Float,
         steppedZoom: Float,
-        renderPassId: Int
+        renderPassId: Int,
     ) {
-        val tilePlan = tilePlanner.computeTilePlan(
-            viewport = viewportCoordinator.viewportState(),
-            layout = viewportCoordinator.snapshot(),
-            zoom = currentZoom,
-            visiblePages = visiblePages,
-            scrollDirectionHint = lastScrollDirectionHint,
-            isTileCached = { cacheKey ->
-                val cached = state.getTile(cacheKey) != null
-                if (cached) {
-                    telemetry.recordTileMemoryHit(renderPassId, cacheKey)
-                }
-                cached
-            }
-        )
+        val tilePlan =
+            tilePlanner.computeTilePlan(
+                viewport = viewportCoordinator.viewportState(),
+                layout = viewportCoordinator.snapshot(),
+                zoom = currentZoom,
+                visiblePages = visiblePages,
+                scrollDirectionHint = lastScrollDirectionHint,
+                isTileCached = { cacheKey ->
+                    val cached = state.getTile(cacheKey) != null
+                    if (cached) {
+                        telemetry.recordTileMemoryHit(renderPassId, cacheKey)
+                    }
+                    cached
+                },
+            )
 
         telemetry.recordTilePlan(
             passId = renderPassId,
             steppedZoom = steppedZoom,
             keepTileCount = tilePlan.keepKeys.size,
             requestCount = tilePlan.requests.size,
-            prefetchPages = tilePlan.prefetchPages
+            prefetchPages = tilePlan.prefetchPages,
         )
 
         renderScheduler.updateTileWindow(tilePlan.keepKeys)
@@ -179,7 +191,7 @@ internal class ViewerRenderPipeline(
                 baseWidth = viewportCoordinator.pageWidthPx(request.tileKey.pageIndex),
                 distanceSq = request.distanceSq,
                 isPrefetch = isPrefetch,
-                renderPassId = renderPassId
+                renderPassId = renderPassId,
             )
         }
     }

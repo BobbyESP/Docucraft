@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.utilities.modifier
 
 import androidx.compose.runtime.LaunchedEffect
@@ -23,8 +26,7 @@ import kotlinx.coroutines.delay
  * A [Modifier] that draws a border around elements that are recomposing. The border increases in
  * size and interpolates from red to green as more recompositions occur before a timeout.
  */
-@Stable
-fun Modifier.recomposeHighlighter(): Modifier = this.then(recomposeModifier)
+@Stable fun Modifier.recomposeHighlighter(): Modifier = this.then(recomposeModifier)
 
 // Use a single instance + @Stable to ensure that recompositions can enable skipping optimizations
 // Modifier.composed will still remember unique data per call site.

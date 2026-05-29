@@ -1,29 +1,30 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.service.cache.bitmap
 
 import android.graphics.Bitmap
 import android.util.Log
 import androidx.core.graphics.createBitmap
+import java.util.ArrayDeque
+import java.util.NavigableMap
+import java.util.TreeMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.ArrayDeque
-import java.util.NavigableMap
-import java.util.TreeMap
 
 private const val TAG = "BitmapPool"
 
-/**
- * Data class to track the current state of the pool for telemetry/monitoring.
- */
+/** Data class to track the current state of the pool for telemetry/monitoring. */
 data class BitmapPoolStats(
     val currentBytes: Long = 0,
     val maxBytes: Long = 0,
     val bitmapCount: Int = 0,
     val reuseCount: Long = 0,
-    val creationCount: Long = 0
+    val creationCount: Long = 0,
 )
 
 /**
@@ -34,16 +35,14 @@ data class BitmapPoolStats(
  *    suitable for asynchronous rendering pipelines.
  * 2. **Compose Compatibility**: Avoiding explicit [Bitmap.recycle] calls to prevent
  *    "use-after-recycled" errors during Jetpack Compose's asynchronous drawing cycles.
- * 3. **Smart Re-allocation**: Utilizing a [NavigableMap] to find the best-fit bitmap
- *    (ceiling match) and [Bitmap.reconfigure] to minimize memory churn.
- * 4. **Observability**: Providing a [StateFlow] of [BitmapPoolStats] for real-time
- *    telemetry and monitoring of cache hits, misses, and memory usage.
+ * 3. **Smart Re-allocation**: Utilizing a [NavigableMap] to find the best-fit bitmap (ceiling
+ *    match) and [Bitmap.reconfigure] to minimize memory churn.
+ * 4. **Observability**: Providing a [StateFlow] of [BitmapPoolStats] for real-time telemetry and
+ *    monitoring of cache hits, misses, and memory usage.
  *
  * @param maxSizeBytes The maximum cumulative size of bitmaps allowed in the pool before eviction.
  */
-class BitmapPool(
-    private val maxSizeBytes: Int = DEFAULT_POOL_SIZE_BYTES
-) {
+class BitmapPool(private val maxSizeBytes: Int = DEFAULT_POOL_SIZE_BYTES) {
     private val mutex = Mutex()
 
     // Map: ByteCount -> Stack of Bitmaps (LIFO for better cache locality)
@@ -53,15 +52,15 @@ class BitmapPool(
     val stats: StateFlow<BitmapPoolStats> = _stats.asStateFlow()
 
     /**
-     * Gets a mutable bitmap of the specified dimensions and config.
-     * Tries to reuse an existing bitmap from the pool; creates a new one if none satisfy the requirements.
+     * Gets a mutable bitmap of the specified dimensions and config. Tries to reuse an existing
+     * bitmap from the pool; creates a new one if none satisfy the requirements.
      *
      * This is a suspend function to ensure it plays well with the rendering pipeline's coroutines.
      */
     suspend fun get(
         width: Int,
         height: Int,
-        config: Bitmap.Config = Bitmap.Config.ARGB_8888
+        config: Bitmap.Config = Bitmap.Config.ARGB_8888,
     ): Bitmap {
         val targetSizeBytes = calculateRequiredBytes(width, height, config)
 
@@ -92,7 +91,7 @@ class BitmapPool(
                                 it.copy(
                                     currentBytes = it.currentBytes - size,
                                     bitmapCount = it.bitmapCount - 1,
-                                    reuseCount = it.reuseCount + 1
+                                    reuseCount = it.reuseCount + 1,
                                 )
                             }
 
@@ -108,7 +107,7 @@ class BitmapPool(
                         _stats.update {
                             it.copy(
                                 currentBytes = it.currentBytes - size,
-                                bitmapCount = it.bitmapCount - 1
+                                bitmapCount = it.bitmapCount - 1,
                             )
                         }
                         entry = groupedBitmaps.ceilingEntry(size + 1)
@@ -125,8 +124,8 @@ class BitmapPool(
     /**
      * Returns a bitmap to the pool for future reuse.
      *
-     * Important: This implementation NEVER calls [Bitmap.recycle]. If the pool is full,
-     * bitmaps are simply dropped and left for the Garbage Collector.
+     * Important: This implementation NEVER calls [Bitmap.recycle]. If the pool is full, bitmaps are
+     * simply dropped and left for the Garbage Collector.
      */
     suspend fun put(bitmap: Bitmap) {
         if (bitmap.isRecycled || !bitmap.isMutable) return
@@ -145,7 +144,7 @@ class BitmapPool(
                     _stats.update {
                         it.copy(
                             currentBytes = it.currentBytes - smallestKey,
-                            bitmapCount = it.bitmapCount - 1
+                            bitmapCount = it.bitmapCount - 1,
                         )
                     }
                 }
@@ -160,10 +159,7 @@ class BitmapPool(
                 val deque = groupedBitmaps.getOrPut(size) { ArrayDeque() }
                 deque.offerLast(bitmap)
                 _stats.update {
-                    it.copy(
-                        currentBytes = it.currentBytes + size,
-                        bitmapCount = it.bitmapCount + 1
-                    )
+                    it.copy(currentBytes = it.currentBytes + size, bitmapCount = it.bitmapCount + 1)
                 }
             }
         }
@@ -182,12 +178,14 @@ class BitmapPool(
     }
 
     private fun calculateRequiredBytes(width: Int, height: Int, config: Bitmap.Config): Int {
-        val bytesPerPixel = when (config) {
-            Bitmap.Config.ALPHA_8 -> 1
-            Bitmap.Config.RGB_565, Bitmap.Config.ARGB_4444 -> 2
-            Bitmap.Config.ARGB_8888 -> 4
-            else -> 4 // Safe default
-        }
+        val bytesPerPixel =
+            when (config) {
+                Bitmap.Config.ALPHA_8 -> 1
+                Bitmap.Config.RGB_565,
+                Bitmap.Config.ARGB_4444 -> 2
+                Bitmap.Config.ARGB_8888 -> 4
+                else -> 4 // Safe default
+            }
         val total = width.toLong() * height.toLong() * bytesPerPixel
         return if (total > Int.MAX_VALUE) -1 else total.toInt()
     }

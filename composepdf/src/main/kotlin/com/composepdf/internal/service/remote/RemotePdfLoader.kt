@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.service.remote
 
 import android.content.Context
@@ -7,9 +10,9 @@ import com.composepdf.HttpClientProvider
 import com.composepdf.PdfSource
 import com.composepdf.RemotePdfState
 import com.composepdf.internal.util.longLivedContext
+import java.io.File
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import java.io.File
 
 /**
  * Orchestrates remote PDF loading with caching and progress reporting.
@@ -20,8 +23,8 @@ import java.io.File
  * 3. Cache the downloaded file
  * 4. Return the local file for rendering
  *
- * The loader emits [RemotePdfState] updates as a Flow, allowing the UI
- * to observe download progress and handle errors.
+ * The loader emits [RemotePdfState] updates as a Flow, allowing the UI to observe download progress
+ * and handle errors.
  *
  * Example usage:
  * ```kotlin
@@ -44,7 +47,7 @@ import java.io.File
 class RemotePdfLoader(
     context: Context,
     private val httpClient: HttpClientProvider = DefaultHttpClientProvider(),
-    private val cacheManager: DiskCacheManager = DiskCacheManager(context.longLivedContext())
+    private val cacheManager: DiskCacheManager = DiskCacheManager(context.longLivedContext()),
 ) {
     /**
      * Loads a remote PDF, returning a Flow of state updates.
@@ -54,8 +57,7 @@ class RemotePdfLoader(
      * 2. [RemotePdfState.Cached] when ready
      * 3. [RemotePdfState.Error] if something goes wrong
      *
-     * If a valid cached copy exists, it will be returned immediately
-     * without downloading.
+     * If a valid cached copy exists, it will be returned immediately without downloading.
      *
      * @param source The remote PDF source configuration
      * @return Flow of [RemotePdfState] updates
@@ -81,20 +83,22 @@ class RemotePdfLoader(
         // Download the file
         val outputFile = cacheManager.getCacheFile(cacheKey)
 
-        val result = httpClient.download(
-            url = source.url,
-            headers = source.headers,
-            outputFile = outputFile,
-            onProgress = { bytesRead, totalBytes ->
-                val progress = if (totalBytes != null && totalBytes > 0) {
-                    (bytesRead.toFloat() / totalBytes.toFloat()).coerceIn(0f, 1f)
-                } else {
-                    null
-                }
-                // Note: We can't emit from this callback, so progress is limited
-                // In a real implementation, we'd use a channel or shared flow
-            }
-        )
+        val result =
+            httpClient.download(
+                url = source.url,
+                headers = source.headers,
+                outputFile = outputFile,
+                onProgress = { bytesRead, totalBytes ->
+                    val progress =
+                        if (totalBytes != null && totalBytes > 0) {
+                            (bytesRead.toFloat() / totalBytes.toFloat()).coerceIn(0f, 1f)
+                        } else {
+                            null
+                        }
+                    // Note: We can't emit from this callback, so progress is limited
+                    // In a real implementation, we'd use a channel or shared flow
+                },
+            )
 
         when (result) {
             is DownloadResult.Success -> {
@@ -109,7 +113,7 @@ class RemotePdfLoader(
                     emit(
                         RemotePdfState.Error(
                             type = ErrorType.CORRUPTED,
-                            message = "Downloaded file is not a valid PDF"
+                            message = "Downloaded file is not a valid PDF",
                         )
                     )
                 }
@@ -120,7 +124,7 @@ class RemotePdfLoader(
                     RemotePdfState.Error(
                         type = result.error.type,
                         message = result.error.message,
-                        cause = result.error.cause
+                        cause = result.error.cause,
                     )
                 )
             }
@@ -130,8 +134,8 @@ class RemotePdfLoader(
     /**
      * Loads a remote PDF and returns the cached file directly.
      *
-     * This is a suspend function that blocks until the file is ready.
-     * For progress updates, use [load] instead.
+     * This is a suspend function that blocks until the file is ready. For progress updates, use
+     * [load] instead.
      *
      * @param source The remote PDF source configuration
      * @return The cached PDF file
@@ -145,27 +149,25 @@ class RemotePdfLoader(
             when (state) {
                 is RemotePdfState.Cached -> resultFile = state.file
                 is RemotePdfState.Error -> error = state
-                else -> { /* Ignore progress states */
+                else -> {
+                    /* Ignore progress states */
                 }
             }
         }
 
-        return resultFile ?: throw RemotePdfException(
-            error?.type ?: ErrorType.NETWORK,
-            error?.message ?: "Unknown error"
-        )
+        return resultFile
+            ?: throw RemotePdfException(
+                error?.type ?: ErrorType.NETWORK,
+                error?.message ?: "Unknown error",
+            )
     }
 
-    /**
-     * Clears all cached PDF files.
-     */
+    /** Clears all cached PDF files. */
     suspend fun clearCache() {
         cacheManager.clear()
     }
 
-    /**
-     * Checks if a file is a valid PDF by examining its magic bytes.
-     */
+    /** Checks if a file is a valid PDF by examining its magic bytes. */
     private fun isPdfFile(file: File): Boolean {
         return try {
             file.inputStream().use { input ->
@@ -179,11 +181,9 @@ class RemotePdfLoader(
     }
 }
 
-/**
- * Exception thrown when remote PDF loading fails.
- */
+/** Exception thrown when remote PDF loading fails. */
 class RemotePdfException(
     val type: ErrorType,
     override val message: String,
-    override val cause: Throwable? = null
+    override val cause: Throwable? = null,
 ) : Exception(message, cause)

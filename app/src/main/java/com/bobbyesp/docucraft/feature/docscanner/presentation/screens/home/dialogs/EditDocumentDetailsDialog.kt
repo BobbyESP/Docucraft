@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs
 
 import androidx.compose.animation.AnimatedContent
@@ -43,7 +46,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -73,9 +75,10 @@ fun EditDocumentDetailsSheet(
     val focusManager = LocalFocusManager.current
 
     DocumentActionSheetSkeleton(
-        modifier = modifier.pointerInput(Unit) {
-            detectTapGestures(onTap = { focusManager.clearFocus() })
-        },
+        modifier =
+            modifier.pointerInput(Unit) {
+                detectTapGestures(onTap = { focusManager.clearFocus() })
+            },
         icon = Icons.Rounded.Edit,
         headingTitle = stringResource(R.string.doc_modify_details),
         headingDescription = stringResource(R.string.doc_modify_details_description),
@@ -127,9 +130,10 @@ fun EditDocumentDetailsDialog(
     val focusManager = LocalFocusManager.current
 
     AlertDialog(
-        modifier = modifier.pointerInput(Unit) {
-            detectTapGestures(onTap = { focusManager.clearFocus() })
-        },
+        modifier =
+            modifier.pointerInput(Unit) {
+                detectTapGestures(onTap = { focusManager.clearFocus() })
+            },
         onDismissRequest = onDismiss,
         icon = {
             Icon(
@@ -172,9 +176,7 @@ fun EditDocumentDetailsDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         },
     )
 }
@@ -187,17 +189,15 @@ private fun EditDocumentDetailsContent(
     onDescriptionChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         LimitedTextField(
             value = state.title,
             onValueChange = onTitleChange,
             label = stringResource(R.string.title),
             maxLength = TITLE_MAX_LENGTH,
             isError = state.isTitleError,
-            supportingText = if (state.isTitleError) stringResource(R.string.field_too_long) else null,
+            supportingText =
+                if (state.isTitleError) stringResource(R.string.field_too_long) else null,
             imeAction = ImeAction.Next,
         )
 
@@ -207,7 +207,8 @@ private fun EditDocumentDetailsContent(
             label = stringResource(R.string.description),
             maxLength = DESCRIPTION_MAX_LENGTH,
             isError = state.isDescriptionError,
-            supportingText = if (state.isDescriptionError) stringResource(R.string.field_too_long) else null,
+            supportingText =
+                if (state.isDescriptionError) stringResource(R.string.field_too_long) else null,
             imeAction = ImeAction.Done,
             singleLine = false,
             minLines = 2,
@@ -231,13 +232,14 @@ private fun LimitedTextField(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
-        color = if (isError) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
-        else MaterialTheme.colorScheme.surfaceContainerLow,
-        border = if (isError) BorderStroke(1.dp, MaterialTheme.colorScheme.error) else null
+        color =
+            if (isError) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.2f)
+            else MaterialTheme.colorScheme.surfaceContainerLow,
+        border = if (isError) BorderStroke(1.dp, MaterialTheme.colorScheme.error) else null,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             TextField(
                 value = value,
@@ -246,26 +248,28 @@ private fun LimitedTextField(
                     Text(
                         text = label,
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 },
                 isError = isError,
                 singleLine = singleLine,
                 minLines = minLines,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    errorContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    disabledIndicatorColor = Color.Transparent,
-                    errorIndicatorColor = Color.Transparent
-                ),
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences,
-                    autoCorrectEnabled = true,
-                    imeAction = imeAction,
-                ),
+                colors =
+                    TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        errorContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent,
+                        errorIndicatorColor = Color.Transparent,
+                    ),
+                keyboardOptions =
+                    KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        autoCorrectEnabled = true,
+                        imeAction = imeAction,
+                    ),
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
                     AnimatedVisibility(
@@ -278,8 +282,9 @@ private fun LimitedTextField(
                                 imageVector = Icons.Rounded.Clear,
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
-                                tint = if (isError) MaterialTheme.colorScheme.error
-                                else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint =
+                                    if (isError) MaterialTheme.colorScheme.error
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -287,26 +292,21 @@ private fun LimitedTextField(
             )
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 AnimatedContent(targetState = supportingText, label = "supp_text") { text ->
                     Text(
                         text = text.orEmpty(),
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (isError) MaterialTheme.colorScheme.error
-                        else MaterialTheme.colorScheme.onSurfaceVariant
+                        color =
+                            if (isError) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
-                CharacterCounter(
-                    current = value.length,
-                    max = maxLength,
-                    isError = isError
-                )
+                CharacterCounter(current = value.length, max = maxLength, isError = isError)
             }
         }
     }
@@ -319,10 +319,9 @@ private fun CharacterCounter(
     isError: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val color = if (isError)
-        MaterialTheme.colorScheme.error
-    else
-        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+    val color =
+        if (isError) MaterialTheme.colorScheme.error
+        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
 
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         val currentStr = current.toString()
@@ -358,10 +357,11 @@ private fun EditDocumentDetailsDialogPreview() {
     val doc = MockData.Documents.documentsList.first()
     DocucraftTheme {
         EditDocumentDetailsDialog(
-            state = EditDocumentUiState(
-                title = doc.title.orEmpty(),
-                description = doc.description.orEmpty(),
-            ),
+            state =
+                EditDocumentUiState(
+                    title = doc.title.orEmpty(),
+                    description = doc.description.orEmpty(),
+                ),
             onTitleChange = {},
             onDescriptionChange = {},
             onDismiss = {},
@@ -377,10 +377,11 @@ private fun EditDocumentDetailsSheetPreview() {
     DocucraftTheme {
         EditDocumentDetailsSheet(
             modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow),
-            state = EditDocumentUiState(
-                title = doc.title.orEmpty(),
-                description = doc.description.orEmpty(),
-            ),
+            state =
+                EditDocumentUiState(
+                    title = doc.title.orEmpty(),
+                    description = doc.description.orEmpty(),
+                ),
             onTitleChange = {},
             onDescriptionChange = {},
             onPopDialog = {},

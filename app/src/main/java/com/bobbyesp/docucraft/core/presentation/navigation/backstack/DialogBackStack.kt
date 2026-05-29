@@ -1,11 +1,12 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.navigation.backstack
 
 import androidx.compose.runtime.Immutable
 
 @Immutable
-data class DialogBackStack<T>(
-    val stack: List<T> = emptyList()
-) {
+data class DialogBackStack<T>(val stack: List<T> = emptyList()) {
     val active: T? = stack.lastOrNull()
     val isVisible: Boolean = stack.isNotEmpty()
 

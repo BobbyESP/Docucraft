@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation
 
 import androidx.lifecycle.ViewModel
@@ -11,17 +14,17 @@ import kotlinx.coroutines.flow.stateIn
 
 sealed interface MainActivityUiState {
     data object Loading : MainActivityUiState
+
     data class Success(val userPreferences: UserPreferences) : MainActivityUiState
 }
 
-class MainViewModel(
-    settingsRepository: SettingsRepository
-) : ViewModel() {
-    val uiState: StateFlow<MainActivityUiState> = settingsRepository.settings
-        .map { MainActivityUiState.Success(it) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = MainActivityUiState.Loading
-        )
+class MainViewModel(settingsRepository: SettingsRepository) : ViewModel() {
+    val uiState: StateFlow<MainActivityUiState> =
+        settingsRepository.settings
+            .map { MainActivityUiState.Success(it) }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = MainActivityUiState.Loading,
+            )
 }

@@ -1,8 +1,11 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.widgets
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.annotation.SuppressLint
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -54,9 +57,7 @@ private val EXPANDED = DpSize(110.dp, 180.dp)
 
 class ScanDocumentWidget : GlanceAppWidget() {
 
-    override val sizeMode = SizeMode.Responsive(
-        setOf(COMPACT, EXPANDED)
-    )
+    override val sizeMode = SizeMode.Responsive(setOf(COMPACT, EXPANDED))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val scanTitle = context.getString(R.string.widget_scan_title)
@@ -85,12 +86,12 @@ class ScanDocumentWidget : GlanceAppWidget() {
 @GlanceComposable
 internal fun ScanDocumentWidgetCompact(scanTitle: String) {
     Box(
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .background(GlanceTheme.colors.primary)
-            .cornerRadius(28.dp)
-            .clickable(actionRunCallback<ScanDocumentActionCallback>())
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+        modifier =
+            GlanceModifier.fillMaxSize()
+                .background(GlanceTheme.colors.primary)
+                .cornerRadius(28.dp)
+                .clickable(actionRunCallback<ScanDocumentActionCallback>())
+                .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         Row(
@@ -107,11 +108,12 @@ internal fun ScanDocumentWidgetCompact(scanTitle: String) {
             Spacer(modifier = GlanceModifier.width(8.dp))
             Text(
                 text = scanTitle,
-                style = TextStyle(
-                    color = GlanceTheme.colors.onPrimary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                ),
+                style =
+                    TextStyle(
+                        color = GlanceTheme.colors.onPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                    ),
             )
         }
     }
@@ -120,23 +122,17 @@ internal fun ScanDocumentWidgetCompact(scanTitle: String) {
 @SuppressLint("ModifierParameter")
 @Composable
 @GlanceComposable
-internal fun ScanDocumentWidgetContent(
-    appName: String,
-    scanTitle: String,
-    scanSubtitle: String,
-) {
+internal fun ScanDocumentWidgetContent(appName: String, scanTitle: String, scanSubtitle: String) {
     Box(
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .background(GlanceTheme.colors.primaryContainer)
-            .cornerRadius(28.dp)
-            .clickable(actionRunCallback<ScanDocumentActionCallback>()),
+        modifier =
+            GlanceModifier.fillMaxSize()
+                .background(GlanceTheme.colors.primaryContainer)
+                .cornerRadius(28.dp)
+                .clickable(actionRunCallback<ScanDocumentActionCallback>()),
         contentAlignment = Alignment.TopStart,
     ) {
         Column(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .padding(horizontal = 18.dp, vertical = 16.dp),
+            modifier = GlanceModifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 16.dp),
             verticalAlignment = Alignment.Vertical.Top,
             horizontalAlignment = Alignment.Horizontal.Start,
         ) {
@@ -147,12 +143,13 @@ internal fun ScanDocumentWidgetContent(
             ) {
                 Text(
                     text = appName,
-                    style = TextStyle(
-                        color = GlanceTheme.colors.onPrimaryContainer,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        fontStyle = FontStyle.Normal,
-                    ),
+                    style =
+                        TextStyle(
+                            color = GlanceTheme.colors.onPrimaryContainer,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            fontStyle = FontStyle.Normal,
+                        ),
                 )
             }
 
@@ -160,10 +157,10 @@ internal fun ScanDocumentWidgetContent(
 
             // ── Hero: logo de la app ──────────────────────────────────────
             Box(
-                modifier = GlanceModifier
-                    .size(52.dp)
-                    .background(GlanceTheme.colors.primary)
-                    .cornerRadius(18.dp),
+                modifier =
+                    GlanceModifier.size(52.dp)
+                        .background(GlanceTheme.colors.primary)
+                        .cornerRadius(18.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
@@ -179,11 +176,12 @@ internal fun ScanDocumentWidgetContent(
             // ── Title — M3 "Title Large" scale ───────────────────────────
             Text(
                 text = scanTitle,
-                style = TextStyle(
-                    color = GlanceTheme.colors.onPrimaryContainer,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                ),
+                style =
+                    TextStyle(
+                        color = GlanceTheme.colors.onPrimaryContainer,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
             )
 
             Spacer(modifier = GlanceModifier.height(2.dp))
@@ -191,23 +189,24 @@ internal fun ScanDocumentWidgetContent(
             // ── Subtitle — M3 "Body Small" scale ────────────────────────
             Text(
                 text = scanSubtitle,
-                style = TextStyle(
-                    color = GlanceTheme.colors.onPrimaryContainer,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Normal,
-                ),
+                style =
+                    TextStyle(
+                        color = GlanceTheme.colors.onPrimaryContainer,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Normal,
+                    ),
             )
 
             Spacer(modifier = GlanceModifier.height(14.dp))
 
             // ── Pill action button ───────────────────────────────────────
             Box(
-                modifier = GlanceModifier
-                    .wrapContentWidth()
-                    .height(34.dp)
-                    .background(GlanceTheme.colors.primary)
-                    .cornerRadius(50.dp)
-                    .padding(horizontal = 16.dp, vertical = 0.dp),
+                modifier =
+                    GlanceModifier.wrapContentWidth()
+                        .height(34.dp)
+                        .background(GlanceTheme.colors.primary)
+                        .cornerRadius(50.dp)
+                        .padding(horizontal = 16.dp, vertical = 0.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Row(
@@ -224,11 +223,12 @@ internal fun ScanDocumentWidgetContent(
                     Spacer(modifier = GlanceModifier.width(6.dp))
                     Text(
                         text = scanTitle,
-                        style = TextStyle(
-                            color = GlanceTheme.colors.onPrimary,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                        ),
+                        style =
+                            TextStyle(
+                                color = GlanceTheme.colors.onPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                            ),
                     )
                 }
             }

@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.logic.tiles
 
 import android.graphics.Rect
@@ -19,7 +22,7 @@ internal data class TileKey(
     val pageIndex: Int,
     val rect: Rect,
     val zoom: Float,
-    val baseWidthKey: Int = UNKNOWN_BASE_WIDTH_KEY
+    val baseWidthKey: Int = UNKNOWN_BASE_WIDTH_KEY,
 ) {
     val tileX: Int
         get() = rect.left / TILE_SIZE
@@ -60,7 +63,7 @@ internal data class TileKey(
                 pageIndex = pageIndex,
                 rect = rect,
                 zoom = zoom,
-                baseWidthKey = normalizedBaseWidthKey(baseWidth)
+                baseWidthKey = normalizedBaseWidthKey(baseWidth),
             )
 
         fun normalizedBaseWidthKey(baseWidth: Float): Int = (baseWidth * 100f).roundToInt()
@@ -69,6 +72,7 @@ internal data class TileKey(
             if (baseWidthKey == UNKNOWN_BASE_WIDTH_KEY) UNKNOWN_BASE_WIDTH_KEY else baseWidthKey
 
         private fun normalizedZoom(zoom: Float): Float = (zoom * 100f).roundToInt() / 100f
+
         private const val UNKNOWN_BASE_WIDTH_KEY = -1
     }
 }

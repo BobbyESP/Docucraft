@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft
 
 import android.app.Application
@@ -35,7 +38,7 @@ class App : Application() {
                 documentScannerViewModels,
                 mlKitModule,
                 fileManagementModule,
-                analyticsModule
+                analyticsModule,
             )
         }
         packageInfo =

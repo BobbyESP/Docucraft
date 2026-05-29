@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.util
 
 import java.time.Instant
@@ -97,21 +100,18 @@ object DateTime {
         locale: Locale = Locale.getDefault(),
         zoneId: ZoneId = ZoneId.systemDefault(),
     ): String {
-        val localDate = Instant.ofEpochMilli(timestampMillis)
-            .atZone(zoneId)
-            .toLocalDate()
+        val localDate = Instant.ofEpochMilli(timestampMillis).atZone(zoneId).toLocalDate()
 
-        val formatter = when (format) {
-            DateFormat.LOCALIZED_LONG -> DateTimeFormatter
-                .ofLocalizedDate(FormatStyle.LONG)
-                .withLocale(locale)
+        val formatter =
+            when (format) {
+                DateFormat.LOCALIZED_LONG ->
+                    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale)
 
-            DateFormat.LOCALIZED_MEDIUM -> DateTimeFormatter
-                .ofLocalizedDate(FormatStyle.MEDIUM)
-                .withLocale(locale)
+                DateFormat.LOCALIZED_MEDIUM ->
+                    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
 
-            else -> DateTimeFormatter.ofPattern(requireNotNull(format.pattern), locale)
-        }
+                else -> DateTimeFormatter.ofPattern(requireNotNull(format.pattern), locale)
+            }
 
         return localDate.format(formatter)
     }
@@ -131,9 +131,7 @@ object DateTime {
         locale: Locale = Locale.getDefault(),
         zoneId: ZoneId = ZoneId.systemDefault(),
     ): String {
-        val localDate = Instant.ofEpochMilli(timestampMillis)
-            .atZone(zoneId)
-            .toLocalDate()
+        val localDate = Instant.ofEpochMilli(timestampMillis).atZone(zoneId).toLocalDate()
 
         return localDate.format(DateTimeFormatter.ofPattern(pattern, locale))
     }
@@ -157,21 +155,18 @@ object DateTime {
         locale: Locale = Locale.getDefault(),
         zoneId: ZoneId = ZoneId.systemDefault(),
     ): String {
-        val localTime = Instant.ofEpochMilli(timestampMillis)
-            .atZone(zoneId)
-            .toLocalTime()
+        val localTime = Instant.ofEpochMilli(timestampMillis).atZone(zoneId).toLocalTime()
 
-        val formatter = when (format) {
-            TimeFormat.LOCALIZED_SHORT -> DateTimeFormatter
-                .ofLocalizedTime(FormatStyle.SHORT)
-                .withLocale(locale)
+        val formatter =
+            when (format) {
+                TimeFormat.LOCALIZED_SHORT ->
+                    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
 
-            TimeFormat.LOCALIZED_MEDIUM -> DateTimeFormatter
-                .ofLocalizedTime(FormatStyle.MEDIUM)
-                .withLocale(locale)
+                TimeFormat.LOCALIZED_MEDIUM ->
+                    DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM).withLocale(locale)
 
-            else -> DateTimeFormatter.ofPattern(requireNotNull(format.pattern), locale)
-        }
+                else -> DateTimeFormatter.ofPattern(requireNotNull(format.pattern), locale)
+            }
 
         return localTime.format(formatter)
     }
@@ -191,9 +186,7 @@ object DateTime {
         locale: Locale = Locale.getDefault(),
         zoneId: ZoneId = ZoneId.systemDefault(),
     ): String {
-        val localTime = Instant.ofEpochMilli(timestampMillis)
-            .atZone(zoneId)
-            .toLocalTime()
+        val localTime = Instant.ofEpochMilli(timestampMillis).atZone(zoneId).toLocalTime()
 
         return localTime.format(DateTimeFormatter.ofPattern(pattern, locale))
     }
@@ -217,21 +210,19 @@ object DateTime {
         locale: Locale = Locale.getDefault(),
         zoneId: ZoneId = ZoneId.systemDefault(),
     ): String {
-        val localDateTime = Instant.ofEpochMilli(timestampMillis)
-            .atZone(zoneId)
-            .toLocalDateTime()
+        val localDateTime = Instant.ofEpochMilli(timestampMillis).atZone(zoneId).toLocalDateTime()
 
-        val formatter = when (format) {
-            DateTimeFormat.LOCALIZED_LONG -> DateTimeFormatter
-                .ofLocalizedDateTime(FormatStyle.LONG, FormatStyle.SHORT)
-                .withLocale(locale)
+        val formatter =
+            when (format) {
+                DateTimeFormat.LOCALIZED_LONG ->
+                    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.LONG, FormatStyle.SHORT)
+                        .withLocale(locale)
 
-            DateTimeFormat.LOCALIZED_MEDIUM -> DateTimeFormatter
-                .ofLocalizedDateTime(FormatStyle.MEDIUM)
-                .withLocale(locale)
+                DateTimeFormat.LOCALIZED_MEDIUM ->
+                    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withLocale(locale)
 
-            else -> DateTimeFormatter.ofPattern(requireNotNull(format.pattern), locale)
-        }
+                else -> DateTimeFormatter.ofPattern(requireNotNull(format.pattern), locale)
+            }
 
         return localDateTime.format(formatter)
     }
@@ -251,9 +242,7 @@ object DateTime {
         locale: Locale = Locale.getDefault(),
         zoneId: ZoneId = ZoneId.systemDefault(),
     ): String {
-        val localDateTime = Instant.ofEpochMilli(timestampMillis)
-            .atZone(zoneId)
-            .toLocalDateTime()
+        val localDateTime = Instant.ofEpochMilli(timestampMillis).atZone(zoneId).toLocalDateTime()
 
         return localDateTime.format(DateTimeFormatter.ofPattern(pattern, locale))
     }

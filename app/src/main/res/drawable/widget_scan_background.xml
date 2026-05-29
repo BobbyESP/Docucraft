@@ -4,4 +4,3 @@
     <corners android:radius="28dp" />
     <solid android:color="@color/widget_preview_background" />
 </shape>
-

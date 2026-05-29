@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.domain.notifications
 
 enum class NotificationType {
@@ -5,5 +8,5 @@ enum class NotificationType {
     Success,
     Info,
     Warning,
-    Error
+    Error,
 }

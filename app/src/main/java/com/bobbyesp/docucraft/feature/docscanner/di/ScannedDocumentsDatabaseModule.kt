@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
 import androidx.room.Room
@@ -11,13 +14,11 @@ import org.koin.dsl.module
 val scannedDocumentsDatabaseModule = module {
     single<DocumentsDatabase> {
         Room.databaseBuilder(
-            context = androidContext(),
-            klass = DocumentsDatabase::class.java,
-            name = "scanned_pdfs.db"
-        ).addMigrations(
-            MIGRATION_2_3,
-            MIGRATION_3_4
-        )
+                context = androidContext(),
+                klass = DocumentsDatabase::class.java,
+                name = "scanned_pdfs.db",
+            )
+            .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
             .build()
     }
 

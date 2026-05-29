@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.ui
 
 import android.graphics.Bitmap
@@ -47,7 +50,8 @@ import kotlin.math.roundToInt
  * @param pageSizes List of pre-calculated page dimensions at zoom 1.0.
  * @param renderedPages Map of page indices to their low-resolution base bitmaps.
  * @param state The current UI state (zoom, pan, tiles).
- * @param layoutController Layout-facing contract with viewport reads and layout-triggered mutations.
+ * @param layoutController Layout-facing contract with viewport reads and layout-triggered
+ *   mutations.
  * @param gestureController Gesture-oriented contract used by the modifier.
  * @param config Viewer configuration (night mode, indicators, etc.).
  * @param modifier Layout modifier.
@@ -62,42 +66,62 @@ internal fun PdfLayout(
     layoutController: ViewerLayoutController,
     gestureController: ViewerGestureController,
     config: ViewerConfig,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     // Recompose only when the set of visible page indices actually changes.
-    val visiblePages by remember(layoutController) {
-        derivedStateOf { layoutController.visiblePageIndices() }
-    }
+    val visiblePages by
+        remember(layoutController) { derivedStateOf { layoutController.visiblePageIndices() } }
 
-    val colorFilter = remember(config.isNightModeEnabled) {
-        if (config.isNightModeEnabled) {
-            ColorFilter.colorMatrix(
-                ColorMatrix(
-                    floatArrayOf(
-                        -1f, 0f, 0f, 0f, 255f,
-                        0f, -1f, 0f, 0f, 255f,
-                        0f, 0f, -1f, 0f, 255f,
-                        0f, 0f, 0f, 1f, 0f
+    val colorFilter =
+        remember(config.isNightModeEnabled) {
+            if (config.isNightModeEnabled) {
+                ColorFilter.colorMatrix(
+                    ColorMatrix(
+                        floatArrayOf(
+                            -1f,
+                            0f,
+                            0f,
+                            0f,
+                            255f,
+                            0f,
+                            -1f,
+                            0f,
+                            0f,
+                            255f,
+                            0f,
+                            0f,
+                            -1f,
+                            0f,
+                            255f,
+                            0f,
+                            0f,
+                            0f,
+                            1f,
+                            0f,
+                        )
                     )
                 )
-            )
-        } else null
-    }
+            } else null
+        }
 
     Layout(
-        modifier = modifier
-            .fillMaxSize()
-            .clipToBounds()
-            .onSizeChanged { size ->
-                layoutController.onViewportSizeChanged(size.width.toFloat(), size.height.toFloat())
-            }
-            .viewerGestures(
-                state = state,
-                controller = gestureController,
-                config = config,
-                zoomAnimationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
-                enabled = state.isLoaded
-            ),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .clipToBounds()
+                .onSizeChanged { size ->
+                    layoutController.onViewportSizeChanged(
+                        size.width.toFloat(),
+                        size.height.toFloat(),
+                    )
+                }
+                .viewerGestures(
+                    state = state,
+                    controller = gestureController,
+                    config = config,
+                    zoomAnimationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+                    enabled = state.isLoaded,
+                ),
         content = {
             for (index in visiblePages) {
                 key(index) {
@@ -114,12 +138,12 @@ internal fun PdfLayout(
                             pageWidthPx = layoutController.pageWidthPx(index),
                             showLoadingIndicator = config.isLoadingIndicatorVisible,
                             colorFilter = colorFilter,
-                            modifier = Modifier.layoutId(index)
+                            modifier = Modifier.layoutId(index),
                         )
                     }
                 }
             }
-        }
+        },
     ) { measurables, constraints ->
         val vpWidth = layoutController.viewportWidth
         val vpHeight = layoutController.viewportHeight
@@ -146,11 +170,13 @@ internal fun PdfLayout(
                     // Vertical: pages centered horizontally in the corridor
                     x = (state.panX + (corridorBreadth - pageWidth) * state.zoom / 2f).roundToInt()
                     y =
-                        (layoutController.pageTopDocY(pageIndex) * state.zoom + state.panY).roundToInt()
+                        (layoutController.pageTopDocY(pageIndex) * state.zoom + state.panY)
+                            .roundToInt()
                 } else {
                     // Horizontal: pages centered vertically in the corridor
                     x =
-                        (layoutController.pageLeftDocX(pageIndex) * state.zoom + state.panX).roundToInt()
+                        (layoutController.pageLeftDocX(pageIndex) * state.zoom + state.panX)
+                            .roundToInt()
                     y = (state.panY + (corridorBreadth - pageHeight) * state.zoom / 2f).roundToInt()
                 }
 

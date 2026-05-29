@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home
 
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,17 +40,10 @@ fun HomeScreen(
     )
 
     uiState.sheetState?.let { sheetState ->
-        DocumentDialogWrapper(
-            sheetState = sheetState,
-            onHomeIntent = viewModel::onSendIntent,
-        )
+        DocumentDialogWrapper(sheetState = sheetState, onHomeIntent = viewModel::onSendIntent)
     }
 
-    HomeContent(
-        modifier = modifier,
-        uiState = uiState,
-        onAction = viewModel::onSendIntent,
-    )
+    HomeContent(modifier = modifier, uiState = uiState, onAction = viewModel::onSendIntent)
 }
 
 @Composable
@@ -75,12 +71,10 @@ private fun HandleHomeUiEffects(
     LaunchedEffect(uiEventFlow) {
         uiEventFlow.collectLatest { event ->
             when (event) {
-                is UiEvent.ShowMessage -> notificationsService.show(
-                    InAppNotification(
-                        message = event.message,
-                        type = event.type,
+                is UiEvent.ShowMessage ->
+                    notificationsService.show(
+                        InAppNotification(message = event.message, type = event.type)
                     )
-                )
             }
         }
     }

@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.state
 
 import android.util.Size
@@ -40,10 +43,11 @@ class PdfViewerStateBridgeTest {
 
     @Test
     fun scrollToPage_centersTargetPageAndRequestsRender() {
-        val state = PdfViewerState().apply {
-            pageCount = 3
-            zoom = 1f
-        }
+        val state =
+            PdfViewerState().apply {
+                pageCount = 3
+                zoom = 1f
+            }
         val bridge = FakeStateBridge(viewportWidth = 500f, viewportHeight = 500f)
         state.controller = bridge
 
@@ -82,7 +86,7 @@ class PdfViewerStateBridgeTest {
     private class FakeStateBridge(
         override val viewportWidth: Float = 500f,
         override val viewportHeight: Float = 500f,
-        override var viewerConfig: ViewerConfig = ViewerConfig()
+        override var viewerConfig: ViewerConfig = ViewerConfig(),
     ) : PdfViewerStateControllerBridge {
         override val pageSizes: List<Size> = listOf(Size(1, 1), Size(1, 1), Size(1, 1))
 
@@ -92,18 +96,28 @@ class PdfViewerStateBridgeTest {
         var clampPanCalled = false
 
         override fun pageHeightPx(index: Int): Float = 500f
+
         override fun pageWidthPx(index: Int): Float = 500f
+
         override fun pageTopDocY(index: Int): Float = index * 520f
+
         override fun pageLeftDocX(index: Int): Float = 0f
+
         override fun corridorBreadth(): Float = 500f
+
         override fun visiblePageIndices(): IntRange = 0..0
+
         override fun isPointOverPage(point: Offset): Boolean = true
+
         override fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> =
             0f to (pageIndex * -520f)
 
         override fun computeFitDocumentZoom(): Float = 1f
+
         override fun computeFitPageZoom(pageIndex: Int): Float = 1f
+
         override fun onViewportSizeChanged(width: Float, height: Float) = Unit
+
         override fun requestRenderForVisiblePages() {
             renderRequested = true
         }
@@ -113,8 +127,11 @@ class PdfViewerStateBridgeTest {
         }
 
         override fun onGestureStart() = Unit
+
         override fun onGestureEnd() = Unit
+
         override fun onGestureUpdate(zoomChange: Float, panDelta: Offset, pivot: Offset) = Unit
+
         override fun onAnimatedZoomFrame(targetZoom: Float, pivot: Offset) {
             lastAnimatedZoom = targetZoom
             lastPivot = pivot

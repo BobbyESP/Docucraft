@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.domain.repository
 
 import android.net.Uri
@@ -10,14 +13,15 @@ interface LocalDocumentsRepository {
     /**
      * Retrieves a reactive stream of all scanned documents currently available in the system.
      *
-     * This function subscribes to the underlying data source (e.g., Room database) and emits
-     * a new list of [ScannedDocument] objects whenever the data set changes. This includes events
-     * such as adding a new scan, deleting a document, or updating a document's metadata.
+     * This function subscribes to the underlying data source (e.g., Room database) and emits a new
+     * list of [ScannedDocument] objects whenever the data set changes. This includes events such as
+     * adding a new scan, deleting a document, or updating a document's metadata.
      *
-     * The returned [Flow] is infinite and will continue to emit updates until the consumer
-     * cancels the collection.
+     * The returned [Flow] is infinite and will continue to emit updates until the consumer cancels
+     * the collection.
      *
-     * @return A [Flow] emitting the complete list of [ScannedDocument]s representing the current state.
+     * @return A [Flow] emitting the complete list of [ScannedDocument]s representing the current
+     *   state.
      */
     suspend fun observeDocuments(): Flow<List<ScannedDocument>>
 
@@ -28,13 +32,13 @@ interface LocalDocumentsRepository {
      * attributes of the PDF documents simultaneously. Typically, this includes the **file name**,
      * **user-defined title**, and **description**.
      *
-     * The search is expected to be case-insensitive and allow partial matches (substrings).
-     * This centralization allows the UI to expose a single search bar without requiring the user
-     * to specify which field to filter by.
+     * The search is expected to be case-insensitive and allow partial matches (substrings). This
+     * centralization allows the UI to expose a single search bar without requiring the user to
+     * specify which field to filter by.
      *
      * @param query The text string to search for.
-     * @return A list of [ScannedDocument] objects where the query matches at least one of the searchable fields.
-     *         Returns an empty list if no matches are found.
+     * @return A list of [ScannedDocument] objects where the query matches at least one of the
+     *   searchable fields. Returns an empty list if no matches are found.
      */
     suspend fun searchDocuments(query: String): List<ScannedDocument>
 
@@ -53,9 +57,9 @@ interface LocalDocumentsRepository {
     /**
      * Retrieves a ScannedPdf object based on its file location URI.
      *
-     * This is useful when the application receives an intent with a file URI or needs to
-     * reconcile a file on disk with its database entry. It may involve reading file metadata
-     * from the [path] if the entry is not fully cached.
+     * This is useful when the application receives an intent with a file URI or needs to reconcile
+     * a file on disk with its database entry. It may involve reading file metadata from the [path]
+     * if the entry is not fully cached.
      *
      * @param path The [Uri] pointing to the PDF file location.
      * @return A [ScannedDocument] object representing the file at the given path.
@@ -88,7 +92,8 @@ interface LocalDocumentsRepository {
      *
      * @param uuid The unique identifier of the document to update.
      * @param title The new title to set. If `null`, the existing title is preserved.
-     * @param description The new description to set. If `null`, the existing description is preserved.
+     * @param description The new description to set. If `null`, the existing description is
+     *   preserved.
      * @throws IllegalArgumentException If the provided [uuid] does not exist.
      */
     suspend fun modifyFields(uuid: String, title: String?, description: String?)
@@ -98,8 +103,8 @@ interface LocalDocumentsRepository {
      *
      * This operation performs a cleanup that involves:
      * 1. Removing the record from the local database.
-     * 2. (Optional depending on implementation) Deleting the actual physical file from the device storage
-     *    referenced by [path].
+     * 2. (Optional depending on implementation) Deleting the actual physical file from the device
+     *    storage referenced by [path].
      *
      * @param path The [Uri] of the document to be deleted.
      * @throws SecurityException If the app lacks permissions to delete the physical file.

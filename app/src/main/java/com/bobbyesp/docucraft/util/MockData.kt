@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.util
 
 import androidx.core.net.toUri
@@ -29,7 +32,7 @@ object MockData {
                     title = "Apuntes de programación",
                     description =
                         "Esta descripción va a sobrepasar el límite de caracteres para ver cómo se comporta el diseño. " +
-                                "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
+                            "Esto es una prueba para ver cómo se comporta el diseño en caso de que la descripción sea muy larga.",
                     path = "content://com.example.documents/document/2".toUri(),
                     createdTimestamp = System.currentTimeMillis(),
                     fileSize = 2048,

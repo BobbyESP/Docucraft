@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.renderer
 
 import com.composepdf.internal.service.renderer.selectBasePageRenderZoom
@@ -10,12 +13,13 @@ class ViewerRenderPipelineTest {
     fun selectBasePageRenderZoom_usesCurrentZoomBelowTileThreshold() {
         assertEquals(
             1.05f,
-            selectBasePageRenderZoom(currentZoom = 1.05f, steppedZoom = 1.25f), 0.001f
+            selectBasePageRenderZoom(currentZoom = 1.05f, steppedZoom = 1.25f),
+            0.001f,
         )
         assertEquals(
             1.1f,
             selectBasePageRenderZoom(currentZoom = 1.1f, steppedZoom = 1.25f),
-            0.001f
+            0.001f,
         )
     }
 
@@ -23,12 +27,13 @@ class ViewerRenderPipelineTest {
     fun selectBasePageRenderZoom_usesSteppedZoomWhenTilesAreActive() {
         assertEquals(
             1.25f,
-            selectBasePageRenderZoom(currentZoom = 1.26f, steppedZoom = 1.25f), 0.001f
+            selectBasePageRenderZoom(currentZoom = 1.26f, steppedZoom = 1.25f),
+            0.001f,
         )
         assertEquals(
             1.77f,
-            selectBasePageRenderZoom(currentZoom = 1.9f, steppedZoom = 1.77f), 0.001f
+            selectBasePageRenderZoom(currentZoom = 1.9f, steppedZoom = 1.77f),
+            0.001f,
         )
     }
 }
-

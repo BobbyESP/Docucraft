@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.logic
 
 import android.content.Context
@@ -15,62 +18,63 @@ import com.composepdf.internal.service.renderer.PdfViewerSession
 import com.composepdf.internal.service.renderer.RenderTelemetryEvent
 import com.composepdf.internal.service.renderer.RenderTrigger
 import com.composepdf.internal.util.longLivedContext
+import java.io.Closeable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
-import java.io.Closeable
 
 /**
  * Main façade that orchestrates the viewer lifecycle.
  *
- * Refined to use the [BitmapPool] provided by [PdfViewerState] to ensure
- * a single source of truth for memory management.
+ * Refined to use the [BitmapPool] provided by [PdfViewerState] to ensure a single source of truth
+ * for memory management.
  */
 @Stable
 class PdfViewerController(
     sourceContext: Context,
     val state: PdfViewerState,
     initialConfig: ViewerConfig = ViewerConfig(),
-    val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+    val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob()),
 ) : Closeable {
 
     val context: Context = sourceContext.longLivedContext()
 
-    private val viewportCoordinator = ViewerViewportCoordinator(
-        state = state,
-        configProvider = { config }
-    )
+    private val viewportCoordinator =
+        ViewerViewportCoordinator(state = state, configProvider = { config })
 
-    private val viewerSession = PdfViewerSession(
-        context = this.context,
-        scope = scope,
-        state = state,
-        bitmapPool = state.bitmapPool, // Use the pool from the state
-        viewportCoordinator = viewportCoordinator,
-        configProvider = { config }
-    )
+    private val viewerSession =
+        PdfViewerSession(
+            context = this.context,
+            scope = scope,
+            state = state,
+            bitmapPool = state.bitmapPool, // Use the pool from the state
+            viewportCoordinator = viewportCoordinator,
+            configProvider = { config },
+        )
 
-    private val interactionCoordinator = ViewerInteractionCoordinator(
-        scope = scope,
-        state = state,
-        configProvider = { config },
-        viewportCoordinator = viewportCoordinator,
-        recordPanDelta = viewerSession::recordPanDelta,
-        requestRender = viewerSession::requestRenderForVisiblePages
-    )
+    private val interactionCoordinator =
+        ViewerInteractionCoordinator(
+            scope = scope,
+            state = state,
+            configProvider = { config },
+            viewportCoordinator = viewportCoordinator,
+            recordPanDelta = viewerSession::recordPanDelta,
+            requestRender = viewerSession::requestRenderForVisiblePages,
+        )
 
-    private val sessionCoordinator = ViewerSessionCoordinator(
-        scope = scope,
-        state = state,
-        viewportCoordinator = viewportCoordinator,
-        updatePrefetchWindow = viewerSession::updatePrefetchWindow,
-        invalidateAll = viewerSession::invalidateAll,
-        invalidateTiles = viewerSession::invalidateTiles,
-        loadDocument = viewerSession::loadDocument,
-        requestRender = viewerSession::requestRenderForVisiblePages
-    )
+    private val sessionCoordinator =
+        ViewerSessionCoordinator(
+            scope = scope,
+            state = state,
+            viewportCoordinator = viewportCoordinator,
+            updatePrefetchWindow = viewerSession::updatePrefetchWindow,
+            invalidateAll = viewerSession::invalidateAll,
+            invalidateTiles = viewerSession::invalidateTiles,
+            loadDocument = viewerSession::loadDocument,
+            requestRender = viewerSession::requestRenderForVisiblePages,
+        )
 
     val renderedPages: StateFlow<Map<Int, Bitmap>> = viewerSession.renderedPages
 
@@ -79,16 +83,30 @@ class PdfViewerController(
 
     internal val stateBridge: PdfViewerStateControllerBridge =
         object : PdfViewerStateControllerBridge {
-            override val viewerConfig: ViewerConfig get() = config
-            override val viewportWidth: Float get() = viewportCoordinator.viewportWidth
-            override val viewportHeight: Float get() = viewportCoordinator.viewportHeight
-            override val pageSizes get() = viewportCoordinator.pageSizes
+            override val viewerConfig: ViewerConfig
+                get() = config
+
+            override val viewportWidth: Float
+                get() = viewportCoordinator.viewportWidth
+
+            override val viewportHeight: Float
+                get() = viewportCoordinator.viewportHeight
+
+            override val pageSizes
+                get() = viewportCoordinator.pageSizes
+
             override fun pageHeightPx(index: Int): Float = viewportCoordinator.pageHeightPx(index)
+
             override fun pageWidthPx(index: Int): Float = viewportCoordinator.pageWidthPx(index)
+
             override fun pageTopDocY(index: Int): Float = viewportCoordinator.pageTopDocY(index)
+
             override fun pageLeftDocX(index: Int): Float = viewportCoordinator.pageLeftDocX(index)
+
             override fun corridorBreadth(): Float = viewportCoordinator.snapshot().corridorBreadth
+
             override fun visiblePageIndices(): IntRange = viewportCoordinator.visiblePageIndices()
+
             override fun isPointOverPage(point: Offset): Boolean =
                 viewportCoordinator.isPointOverPage(point)
 
@@ -108,8 +126,11 @@ class PdfViewerController(
                 this@PdfViewerController.requestRenderForVisiblePages()
 
             override fun clampPan() = viewportCoordinator.clampPan()
+
             override fun onGestureStart() = interactionCoordinator.onGestureStart()
+
             override fun onGestureEnd() = interactionCoordinator.onGestureEnd()
+
             override fun onGestureUpdate(zoomChange: Float, panDelta: Offset, pivot: Offset) =
                 interactionCoordinator.onGestureUpdate(zoomChange, panDelta, pivot)
 
@@ -120,63 +141,95 @@ class PdfViewerController(
                 this@PdfViewerController.updateConfig(newConfig)
         }
 
-    internal val layoutController: ViewerLayoutController = object : ViewerLayoutController {
-        override val viewportWidth: Float get() = viewportCoordinator.viewportWidth
-        override val viewportHeight: Float get() = viewportCoordinator.viewportHeight
-        override val pageSizes get() = viewportCoordinator.pageSizes
-        override fun pageHeightPx(index: Int): Float = viewportCoordinator.pageHeightPx(index)
-        override fun pageWidthPx(index: Int): Float = viewportCoordinator.pageWidthPx(index)
-        override fun pageTopDocY(index: Int): Float = viewportCoordinator.pageTopDocY(index)
-        override fun pageLeftDocX(index: Int): Float = viewportCoordinator.pageLeftDocX(index)
-        override fun corridorBreadth(): Float = viewportCoordinator.snapshot().corridorBreadth
-        override fun visiblePageIndices(): IntRange = viewportCoordinator.visiblePageIndices()
-        override fun isPointOverPage(point: Offset): Boolean =
-            viewportCoordinator.isPointOverPage(point)
+    internal val layoutController: ViewerLayoutController =
+        object : ViewerLayoutController {
+            override val viewportWidth: Float
+                get() = viewportCoordinator.viewportWidth
 
-        override fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> =
-            viewportCoordinator.computeCenteredPanForPage(pageIndex)
+            override val viewportHeight: Float
+                get() = viewportCoordinator.viewportHeight
 
-        override fun computeFitDocumentZoom(): Float = viewportCoordinator.computeFitDocumentZoom()
-        override fun computeFitPageZoom(pageIndex: Int): Float =
-            viewportCoordinator.computeFitPageZoom(pageIndex)
+            override val pageSizes
+                get() = viewportCoordinator.pageSizes
 
-        override fun onViewportSizeChanged(width: Float, height: Float) =
-            this@PdfViewerController.onViewportSizeChanged(width, height)
+            override fun pageHeightPx(index: Int): Float = viewportCoordinator.pageHeightPx(index)
 
-        override fun requestRenderForVisiblePages() =
-            this@PdfViewerController.requestRenderForVisiblePages()
+            override fun pageWidthPx(index: Int): Float = viewportCoordinator.pageWidthPx(index)
 
-        override fun clampPan() = viewportCoordinator.clampPan()
-    }
+            override fun pageTopDocY(index: Int): Float = viewportCoordinator.pageTopDocY(index)
 
-    internal val gestureController: ViewerGestureController = object : ViewerGestureController {
-        override val viewportWidth: Float get() = viewportCoordinator.viewportWidth
-        override val viewportHeight: Float get() = viewportCoordinator.viewportHeight
-        override val pageSizes get() = viewportCoordinator.pageSizes
-        override fun pageHeightPx(index: Int): Float = viewportCoordinator.pageHeightPx(index)
-        override fun pageWidthPx(index: Int): Float = viewportCoordinator.pageWidthPx(index)
-        override fun pageTopDocY(index: Int): Float = viewportCoordinator.pageTopDocY(index)
-        override fun pageLeftDocX(index: Int): Float = viewportCoordinator.pageLeftDocX(index)
-        override fun corridorBreadth(): Float = viewportCoordinator.snapshot().corridorBreadth
-        override fun visiblePageIndices(): IntRange = viewportCoordinator.visiblePageIndices()
-        override fun isPointOverPage(point: Offset): Boolean =
-            viewportCoordinator.isPointOverPage(point)
+            override fun pageLeftDocX(index: Int): Float = viewportCoordinator.pageLeftDocX(index)
 
-        override fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> =
-            viewportCoordinator.computeCenteredPanForPage(pageIndex)
+            override fun corridorBreadth(): Float = viewportCoordinator.snapshot().corridorBreadth
 
-        override fun computeFitDocumentZoom(): Float = viewportCoordinator.computeFitDocumentZoom()
-        override fun computeFitPageZoom(pageIndex: Int): Float =
-            viewportCoordinator.computeFitPageZoom(pageIndex)
+            override fun visiblePageIndices(): IntRange = viewportCoordinator.visiblePageIndices()
 
-        override fun onGestureStart() = interactionCoordinator.onGestureStart()
-        override fun onGestureEnd() = interactionCoordinator.onGestureEnd()
-        override fun onGestureUpdate(zoomChange: Float, panDelta: Offset, pivot: Offset) =
-            interactionCoordinator.onGestureUpdate(zoomChange, panDelta, pivot)
+            override fun isPointOverPage(point: Offset): Boolean =
+                viewportCoordinator.isPointOverPage(point)
 
-        override fun onAnimatedZoomFrame(targetZoom: Float, pivot: Offset) =
-            interactionCoordinator.onAnimatedZoomFrame(targetZoom, pivot)
-    }
+            override fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> =
+                viewportCoordinator.computeCenteredPanForPage(pageIndex)
+
+            override fun computeFitDocumentZoom(): Float =
+                viewportCoordinator.computeFitDocumentZoom()
+
+            override fun computeFitPageZoom(pageIndex: Int): Float =
+                viewportCoordinator.computeFitPageZoom(pageIndex)
+
+            override fun onViewportSizeChanged(width: Float, height: Float) =
+                this@PdfViewerController.onViewportSizeChanged(width, height)
+
+            override fun requestRenderForVisiblePages() =
+                this@PdfViewerController.requestRenderForVisiblePages()
+
+            override fun clampPan() = viewportCoordinator.clampPan()
+        }
+
+    internal val gestureController: ViewerGestureController =
+        object : ViewerGestureController {
+            override val viewportWidth: Float
+                get() = viewportCoordinator.viewportWidth
+
+            override val viewportHeight: Float
+                get() = viewportCoordinator.viewportHeight
+
+            override val pageSizes
+                get() = viewportCoordinator.pageSizes
+
+            override fun pageHeightPx(index: Int): Float = viewportCoordinator.pageHeightPx(index)
+
+            override fun pageWidthPx(index: Int): Float = viewportCoordinator.pageWidthPx(index)
+
+            override fun pageTopDocY(index: Int): Float = viewportCoordinator.pageTopDocY(index)
+
+            override fun pageLeftDocX(index: Int): Float = viewportCoordinator.pageLeftDocX(index)
+
+            override fun corridorBreadth(): Float = viewportCoordinator.snapshot().corridorBreadth
+
+            override fun visiblePageIndices(): IntRange = viewportCoordinator.visiblePageIndices()
+
+            override fun isPointOverPage(point: Offset): Boolean =
+                viewportCoordinator.isPointOverPage(point)
+
+            override fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> =
+                viewportCoordinator.computeCenteredPanForPage(pageIndex)
+
+            override fun computeFitDocumentZoom(): Float =
+                viewportCoordinator.computeFitDocumentZoom()
+
+            override fun computeFitPageZoom(pageIndex: Int): Float =
+                viewportCoordinator.computeFitPageZoom(pageIndex)
+
+            override fun onGestureStart() = interactionCoordinator.onGestureStart()
+
+            override fun onGestureEnd() = interactionCoordinator.onGestureEnd()
+
+            override fun onGestureUpdate(zoomChange: Float, panDelta: Offset, pivot: Offset) =
+                interactionCoordinator.onGestureUpdate(zoomChange, panDelta, pivot)
+
+            override fun onAnimatedZoomFrame(targetZoom: Float, pivot: Offset) =
+                interactionCoordinator.onAnimatedZoomFrame(targetZoom, pivot)
+        }
 
     init {
         viewerSession.updatePrefetchWindow(config.prefetchDistance)

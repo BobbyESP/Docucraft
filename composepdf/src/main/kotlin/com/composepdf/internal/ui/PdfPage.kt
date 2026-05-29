@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.ui
 
 import androidx.compose.foundation.Canvas
@@ -25,8 +28,8 @@ import kotlin.math.roundToInt
 /**
  * Composable responsible for rendering a single PDF page with industrial-grade precision.
  *
- * This implementation avoids "seams" (1px gaps) between tiles by calculating
- * destinations in a way that ensures adjacent tiles share pixel boundaries perfectly.
+ * This implementation avoids "seams" (1px gaps) between tiles by calculating destinations in a way
+ * that ensures adjacent tiles share pixel boundaries perfectly.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -37,32 +40,31 @@ internal fun PdfPage(
     pageWidthPx: Float,
     showLoadingIndicator: Boolean,
     modifier: Modifier = Modifier,
-    colorFilter: ColorFilter? = null
+    colorFilter: ColorFilter? = null,
 ) {
     Box(
-        modifier = modifier
-            .clipToBounds()
-            .background(Color.White),
-        contentAlignment = Alignment.Center
+        modifier = modifier.clipToBounds().background(Color.White),
+        contentAlignment = Alignment.Center,
     ) {
         if (bitmap != null) {
             // Observe tileRevision to trigger recomposition when the tile cache changes
-            val tiles = state.run {
-                tileRevision
-                getImageBitmapTilesForPage(pageIndex)
-            }
+            val tiles =
+                state.run {
+                    tileRevision
+                    getImageBitmapTilesForPage(pageIndex)
+                }
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val zoom = state.zoom
                 val activeSteppedZoom = state.activeSteppedZoom
                 val expectedBaseWidthKey = TileKey.normalizedBaseWidthKey(pageWidthPx)
 
-                // 1. Draw base low-resolution page. 
+                // 1. Draw base low-resolution page.
                 // Using the full canvas size ensures the base page covers the background entirely.
                 drawImage(
                     image = bitmap,
                     dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
-                    colorFilter = colorFilter
+                    colorFilter = colorFilter,
                 )
 
                 // 2. Draw high-resolution tiles.
@@ -70,9 +72,11 @@ internal fun PdfPage(
                 tiles.forEach { publishedTile ->
                     val tileKey = publishedTile.tileKey
 
-                    // Filter: Only draw tiles from the current active zoom level and current layout width
+                    // Filter: Only draw tiles from the current active zoom level and current layout
+                    // width
                     if (tileKey.zoom != activeSteppedZoom) return@forEach
-                    if (tileKey.baseWidthKey != expectedBaseWidthKey && tileKey.baseWidthKey >= 0) return@forEach
+                    if (tileKey.baseWidthKey != expectedBaseWidthKey && tileKey.baseWidthKey >= 0)
+                        return@forEach
 
                     val scale = zoom / tileKey.zoom
 
@@ -86,7 +90,7 @@ internal fun PdfPage(
                         image = publishedTile.imageBitmap,
                         dstOffset = IntOffset(left, top),
                         dstSize = IntSize(right - left, bottom - top),
-                        colorFilter = colorFilter
+                        colorFilter = colorFilter,
                     )
                 }
             }

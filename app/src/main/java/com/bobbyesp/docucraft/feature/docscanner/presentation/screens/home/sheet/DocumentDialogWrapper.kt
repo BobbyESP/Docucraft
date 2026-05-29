@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet
 
 import androidx.compose.animation.animateContentSize
@@ -31,9 +34,7 @@ fun DocumentDialogWrapper(
     onHomeIntent: (HomeIntent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val onAction: (SheetAction) -> Unit = {
-        onHomeIntent(HomeIntent.Sheet(it))
-    }
+    val onAction: (SheetAction) -> Unit = { onHomeIntent(HomeIntent.Sheet(it)) }
 
     val windowSizeClass = LocalWindowWidthState.current
     val isCompact = windowSizeClass == WindowWidthSizeClass.Compact
@@ -45,51 +46,53 @@ fun DocumentDialogWrapper(
         modifier = modifier,
     ) {
         NavDisplay(
-            modifier = Modifier.animateContentSize(
-                animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
-            ),
+            modifier =
+                Modifier.animateContentSize(
+                    animationSpec = MaterialTheme.motionScheme.fastSpatialSpec()
+                ),
             backStack = if (isCompact) sheetState.pageStack else sheetState.pageStack.take(1),
             onBack = { onAction(SheetAction.Back) },
-            entryProvider = entryProvider {
-                entry<SheetPage.Actions> {
-                    val doc = sheetState.activeDocument ?: return@entry
-                    DocumentActionsContent(
-                        scannedDocument = doc,
-                        onSave = { onAction(SheetAction.RequestSave) },
-                        onShare = { onAction(SheetAction.RequestShare) },
-                        onDelete = { onAction(SheetAction.Navigate(SheetPage.Delete)) },
-                        onModifyFields = { onAction(SheetAction.Navigate(SheetPage.Edit)) },
-                    )
-                }
-                entry<SheetPage.Edit> {
-                    EditDocumentDetailsSheet(
-                        state = sheetState.editUiState,
-                        onTitleChange = { onAction(SheetAction.UpdateTitle(it)) },
-                        onDescriptionChange = { onAction(SheetAction.UpdateDescription(it)) },
-                        onPopDialog = { onAction(SheetAction.Back) },
-                        onConfirmEdit = { onAction(SheetAction.ConfirmEdit) },
-                    )
-                }
-                entry<SheetPage.Delete> {
-                    val doc = sheetState.activeDocument ?: return@entry
-                    DeleteDocumentSheet(
-                        document = doc,
-                        onDismiss = { onAction(SheetAction.Back) },
-                        onConfirm = { onAction(SheetAction.ConfirmDelete) },
-                    )
-                }
-            },
+            entryProvider =
+                entryProvider {
+                    entry<SheetPage.Actions> {
+                        val doc = sheetState.activeDocument ?: return@entry
+                        DocumentActionsContent(
+                            scannedDocument = doc,
+                            onSave = { onAction(SheetAction.RequestSave) },
+                            onShare = { onAction(SheetAction.RequestShare) },
+                            onDelete = { onAction(SheetAction.Navigate(SheetPage.Delete)) },
+                            onModifyFields = { onAction(SheetAction.Navigate(SheetPage.Edit)) },
+                        )
+                    }
+                    entry<SheetPage.Edit> {
+                        EditDocumentDetailsSheet(
+                            state = sheetState.editUiState,
+                            onTitleChange = { onAction(SheetAction.UpdateTitle(it)) },
+                            onDescriptionChange = { onAction(SheetAction.UpdateDescription(it)) },
+                            onPopDialog = { onAction(SheetAction.Back) },
+                            onConfirmEdit = { onAction(SheetAction.ConfirmEdit) },
+                        )
+                    }
+                    entry<SheetPage.Delete> {
+                        val doc = sheetState.activeDocument ?: return@entry
+                        DeleteDocumentSheet(
+                            document = doc,
+                            onDismiss = { onAction(SheetAction.Back) },
+                            onConfirm = { onAction(SheetAction.ConfirmDelete) },
+                        )
+                    }
+                },
             transitionSpec = {
                 slideInHorizontally(initialOffsetX = { it }) togetherWith
-                        slideOutHorizontally(targetOffsetX = { -it })
+                    slideOutHorizontally(targetOffsetX = { -it })
             },
             popTransitionSpec = {
                 slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                        slideOutHorizontally(targetOffsetX = { it })
+                    slideOutHorizontally(targetOffsetX = { it })
             },
             predictivePopTransitionSpec = {
                 slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                        slideOutHorizontally(targetOffsetX = { it })
+                    slideOutHorizontally(targetOffsetX = { it })
             },
         )
     }
@@ -121,4 +124,3 @@ fun DocumentDialogWrapper(
         }
     }
 }
-

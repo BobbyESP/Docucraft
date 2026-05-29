@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.utilities.modifier
 
 import androidx.compose.animation.core.Animatable
@@ -79,10 +82,10 @@ fun Modifier.customOverscroll(
                 val previous = overscrollAmountAnimatable.value
                 val newValue =
                     previous +
-                            when (orientation) {
-                                Orientation.Vertical -> available.y
-                                Orientation.Horizontal -> available.x
-                            }
+                        when (orientation) {
+                            Orientation.Vertical -> available.y
+                            Orientation.Horizontal -> available.x
+                        }
                 return when {
                     previous > 0 -> newValue.coerceAtLeast(0f)
                     previous < 0 -> newValue.coerceAtMost(0f)
@@ -93,7 +96,7 @@ fun Modifier.customOverscroll(
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 if (
                     overscrollAmountAnimatable.value != 0f &&
-                    source != NestedScrollSource.SideEffect
+                        source != NestedScrollSource.SideEffect
                 ) {
                     scope.launch {
                         overscrollAmountAnimatable.snapTo(calculateOverscroll(available))
@@ -180,8 +183,7 @@ fun Modifier.customOverscroll(
         }
     }
 
-    return this
-        .onSizeChanged {
+    return this.onSizeChanged {
             length =
                 when (orientation) {
                     Orientation.Vertical -> it.height.toFloat()

@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 plugins {
     id(libs.plugins.android.application.get().pluginId)
     id("docucraft.android.convention")
@@ -43,15 +46,13 @@ android {
         includeInBundle = false
     }
 
-    androidResources {
-        generateLocaleConfig = true
-    }
+    androidResources { generateLocaleConfig = true }
 }
 
 composeCompiler {
     reportsDestination = layout.buildDirectory.dir("compose_compiler")
     stabilityConfigurationFiles.addAll(
-        project.layout.projectDirectory.file("compose_stability_main.conf"),
+        project.layout.projectDirectory.file("compose_stability_main.conf")
     )
 }
 
@@ -82,7 +83,7 @@ dependencies {
     implementation(libs.landscapist.coil)
     implementation(libs.landscapist.placeholder)
     implementation(libs.sonner)
-    
+
     // Storage
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
@@ -93,7 +94,7 @@ dependencies {
     // ML Kit
     implementation(libs.gms.mlkit.docscanner)
 
-    //KotlinX
+    // KotlinX
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)

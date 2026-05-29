@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.domain.notifications
 
 import androidx.compose.runtime.Immutable
@@ -14,5 +17,5 @@ data class InAppNotification(
     val type: NotificationType = NotificationType.Normal,
     val action: NotificationAction? = null,
     val duration: Duration = 4000.milliseconds,
-    val onDismiss: (() -> Unit)? = null
+    val onDismiss: (() -> Unit)? = null,
 )

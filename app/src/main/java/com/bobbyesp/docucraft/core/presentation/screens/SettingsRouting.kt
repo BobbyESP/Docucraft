@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.screens
 
 import androidx.compose.runtime.Composable
@@ -9,27 +12,14 @@ import com.bobbyesp.docucraft.core.presentation.screens.preferences.appearance.A
 
 @Suppress("ModifierRequired")
 @Composable
-fun EntryProviderScope<Route>.SettingsRouting(
-    onNavigate: (Route) -> Unit,
-    onBack: () -> Unit,
-) {
+fun EntryProviderScope<Route>.SettingsRouting(onNavigate: (Route) -> Unit, onBack: () -> Unit) {
     entry<Route.Settings> {
         SettingsScreen(
             modifier = Modifier,
-            onBack = {
-                onBack()
-            },
-            onNavigate = { route ->
-                onNavigate(route)
-            }
+            onBack = { onBack() },
+            onNavigate = { route -> onNavigate(route) },
         )
     }
 
-    entry<Route.Settings.Appearance> {
-        AppearanceScreen(
-            onBack = {
-                onBack()
-            }
-        )
-    }
+    entry<Route.Settings.Appearance> { AppearanceScreen(onBack = { onBack() }) }
 }

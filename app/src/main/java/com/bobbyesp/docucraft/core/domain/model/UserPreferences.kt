@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.domain.model
 
 import androidx.compose.runtime.Immutable
@@ -10,13 +13,11 @@ data class UserPreferences(
     val themeSeedColor: Int = DEFAULT_SEED_COLOR,
     val paletteStyle: PaletteStyleConfig = PaletteStyleConfig.Vibrant,
     val isHighContrastModeEnabled: Boolean = false,
-
     val displayFont: FontConfig = FontConfig.DMSerifText,
     val titleFont: FontConfig = FontConfig.DMSerifText,
     val bodyFont: FontConfig = FontConfig.Inter,
     val labelFont: FontConfig = FontConfig.Inter,
     val monospaceFont: FontConfig = FontConfig.JetBrainsMono,
-
     val completedOnboarding: Boolean = false,
     val marqueeTextEnabled: Boolean = true,
 )

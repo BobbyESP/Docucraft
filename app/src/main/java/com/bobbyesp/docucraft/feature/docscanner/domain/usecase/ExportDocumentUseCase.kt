@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
 import android.net.Uri
@@ -14,21 +17,22 @@ import io.github.vinceglb.filekit.path
 
 class ExportDocumentUseCase() {
     suspend operator fun invoke(scannedDocument: ScannedDocument): Result<Uri> {
-        val androidDocumentsDirectory = PlatformFile(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-        )
+        val androidDocumentsDirectory =
+            PlatformFile(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+            )
 
         val dir = PlatformFile(androidDocumentsDirectory, "Docucraft")
 
-        val file = FileKit.openFileSaver(
-            suggestedName = scannedDocument.title ?: scannedDocument.filename,
-            extension = "pdf",
-            directory = dir,
-        ) ?: run {
-            return Result.failure(
-                DocumentExportFailure.Cancelled()
+        val file =
+            FileKit.openFileSaver(
+                suggestedName = scannedDocument.title ?: scannedDocument.filename,
+                extension = "pdf",
+                directory = dir,
             )
-        }
+                ?: run {
+                    return Result.failure(DocumentExportFailure.Cancelled())
+                }
 
         val internalDocument = PlatformFile(scannedDocument.path)
 
@@ -39,13 +43,9 @@ class ExportDocumentUseCase() {
         }
 
         if (!file.exists()) {
-            return Result.failure(
-                DocumentExportFailure.Unknown()
-            )
+            return Result.failure(DocumentExportFailure.Unknown())
         }
 
-        return Result.success(
-            file.path.toUri()
-        )
+        return Result.success(file.path.toUri())
     }
 }

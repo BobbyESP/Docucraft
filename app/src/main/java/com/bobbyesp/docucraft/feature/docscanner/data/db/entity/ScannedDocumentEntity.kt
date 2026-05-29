@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.data.db.entity
 
 import androidx.room.ColumnInfo
@@ -10,8 +13,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Entity(tableName = "scanned_documents")
 data class ScannedDocumentEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val uuid: String = UUID.randomUUID().toString(),
     val filename: String,
     val title: String?,
@@ -25,7 +27,7 @@ data class ScannedDocumentEntity(
 
 data class ScannedDocumentEntityWithMatchInfo(
     @Embedded val document: ScannedDocumentEntity,
-    @ColumnInfo(name = "matchInfo") val matchInfo: ByteArray
+    @ColumnInfo(name = "matchInfo") val matchInfo: ByteArray,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

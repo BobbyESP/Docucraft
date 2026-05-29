@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components.settings
 
 import androidx.compose.foundation.background
@@ -20,8 +23,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -38,35 +41,30 @@ fun SettingSwitch(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
         },
         supportingContent = {
             Text(
                 text = supportingText,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
         leadingContent = {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
-        trailingContent = {
-            Switch(
-                checked = isChecked,
-                onCheckedChange = onCheckedChange
-            )
-        },
-        colors = ListItemDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
-        modifier = modifier
-            .clip(DocucraftShapeDefaults.cardShape)
-            .clickable { onCheckedChange(!isChecked) }
+        trailingContent = { Switch(checked = isChecked, onCheckedChange = onCheckedChange) },
+        colors =
+            ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        modifier =
+            modifier.clip(DocucraftShapeDefaults.cardShape).clickable {
+                onCheckedChange(!isChecked)
+            },
     )
 }
 
@@ -75,16 +73,15 @@ fun SettingSwitch(
 private fun SettingsSwitchPreview() {
     DocucraftTheme {
         Box(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                .padding(16.dp)
+            modifier =
+                Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow).padding(16.dp)
         ) {
             SettingSwitch(
                 title = "Title",
                 supportingText = "Supporting Text",
                 icon = Icons.Rounded.Settings,
                 isChecked = true,
-                onCheckedChange = {}
+                onCheckedChange = {},
             )
         }
     }

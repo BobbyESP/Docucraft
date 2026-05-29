@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs
 
 import androidx.compose.foundation.layout.Arrangement
@@ -49,29 +52,27 @@ fun DeleteDocumentSheet(
         icon = Icons.Rounded.DeleteForever,
         iconTint = MaterialTheme.colorScheme.error,
         content = {
-            DeleteDocumentContent(
-                modifier = Modifier.padding(8.dp),
-                scannedDocument = document
-            )
+            DeleteDocumentContent(modifier = Modifier.padding(8.dp), scannedDocument = document)
         },
         footer = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Button(
                     onClick = onConfirm,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError
-                    ),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError,
+                        ),
                     shapes = ButtonDefaults.shapes(),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.Delete,
                         contentDescription = stringResource(R.string.doc_delete),
-                        modifier = Modifier.size(ButtonDefaults.IconSize)
+                        modifier = Modifier.size(ButtonDefaults.IconSize),
                     )
 
                     Text(stringResource(R.string.delete))
@@ -80,16 +81,13 @@ fun DeleteDocumentSheet(
                 OutlinedButton(
                     onClick = onDismiss,
                     shapes = ButtonDefaults.shapes(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .sizeIn(
-                            minHeight = ButtonDefaults.MinHeight * 1.5f
-                        )
+                    modifier =
+                        Modifier.fillMaxWidth().sizeIn(minHeight = ButtonDefaults.MinHeight * 1.5f),
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
             }
-        }
+        },
     )
 }
 
@@ -111,71 +109,56 @@ fun DeleteDocumentDialog(
             )
         },
         title = {
-            Text(
-                text = stringResource(R.string.doc_delete),
-                fontWeight = FontWeight.SemiBold
-            )
+            Text(text = stringResource(R.string.doc_delete), fontWeight = FontWeight.SemiBold)
         },
-        text = {
-            DeleteDocumentContent(
-                scannedDocument = scannedDocument
-            )
-        },
+        text = { DeleteDocumentContent(scannedDocument = scannedDocument) },
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                ),
+                colors =
+                    ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
             ) {
                 Text(text = stringResource(R.string.delete))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.cancel))
-            }
+            TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.cancel)) }
         },
     )
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DeleteDocumentContent(
-    scannedDocument: ScannedDocument,
-    modifier: Modifier = Modifier,
-) {
+private fun DeleteDocumentContent(scannedDocument: ScannedDocument, modifier: Modifier = Modifier) {
     val documentTitle = scannedDocument.title ?: scannedDocument.filename
     val text = stringResource(R.string.doc_delete_confirmation, documentTitle)
 
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             modifier = Modifier.fillMaxWidth(),
-            text = buildAnnotatedString {
-                val start = text.indexOf(documentTitle)
-                val end = start + documentTitle.length
+            text =
+                buildAnnotatedString {
+                    val start = text.indexOf(documentTitle)
+                    val end = start + documentTitle.length
 
-                append(text)
+                    append(text)
 
-                if (start >= 0) {
-                    addStyle(
-                        style = SpanStyle(fontWeight = FontWeight.Bold),
-                        start = start,
-                        end = end
-                    )
-                }
-            },
-            textAlign = TextAlign.Center
+                    if (start >= 0) {
+                        addStyle(
+                            style = SpanStyle(fontWeight = FontWeight.Bold),
+                            start = start,
+                            end = end,
+                        )
+                    }
+                },
+            textAlign = TextAlign.Center,
         )
 
         Text(
             modifier = Modifier.alpha(0.66f).fillMaxWidth(),
             text = stringResource(R.string.doc_delete_warning),
             style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -189,7 +172,7 @@ private fun DeleteDocumentSheetPreview() {
                 modifier = Modifier,
                 document = MockData.Documents.documentsList.first(),
                 onDismiss = {},
-                onConfirm = {}
+                onConfirm = {},
             )
         }
     }

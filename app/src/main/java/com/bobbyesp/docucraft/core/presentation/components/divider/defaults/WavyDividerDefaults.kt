@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components.divider.defaults
 
 import androidx.compose.material3.MaterialTheme
@@ -8,9 +11,7 @@ import androidx.compose.ui.unit.dp
 
 object WavyDividerDefaults {
     @Composable
-    fun colors(
-        color: Color = MaterialTheme.colorScheme.outlineVariant,
-    ): WavyDividerColors {
+    fun colors(color: Color = MaterialTheme.colorScheme.outlineVariant): WavyDividerColors {
         return WavyDividerColors(color)
     }
 

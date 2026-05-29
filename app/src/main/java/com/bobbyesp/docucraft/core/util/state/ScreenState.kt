@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.util.state
 
 sealed class ScreenState<out T> {
@@ -13,7 +16,7 @@ sealed class ScreenState<out T> {
     data class Error<T>(
         override val message: String,
         override val data: T? = null,
-        override val error: Throwable? = null
+        override val error: Throwable? = null,
     ) : ScreenState<T>()
 
     data class Loading<T>(override val data: T? = null) : ScreenState<T>() {

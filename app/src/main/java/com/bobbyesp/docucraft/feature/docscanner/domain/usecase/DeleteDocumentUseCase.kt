@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
 import android.net.Uri
@@ -17,20 +20,22 @@ class DeleteDocumentUseCase(
     private val repository: LocalDocumentsRepository,
     private val fileRepository: FileRepository,
 ) {
-    suspend operator fun invoke(documentUri: Uri) = withContext(Dispatchers.IO) {
-        repository.deleteDocument(documentUri)
-        deleteFile(documentUri)
-    }
+    suspend operator fun invoke(documentUri: Uri) =
+        withContext(Dispatchers.IO) {
+            repository.deleteDocument(documentUri)
+            deleteFile(documentUri)
+        }
 
     private suspend fun deleteFile(documentUri: Uri) {
-        val filePath = when (documentUri.scheme) {
-            "content" -> fileRepository.getFilePathFromUri(documentUri)
-            "file" -> documentUri.path
-            else -> {
-                Log.w(TAG, "Unsupported URI scheme: ${documentUri.scheme}")
-                return
+        val filePath =
+            when (documentUri.scheme) {
+                "content" -> fileRepository.getFilePathFromUri(documentUri)
+                "file" -> documentUri.path
+                else -> {
+                    Log.w(TAG, "Unsupported URI scheme: ${documentUri.scheme}")
+                    return
+                }
             }
-        }
 
         if (filePath.isNullOrBlank()) {
             Log.w(TAG, "Invalid file path from URI: $documentUri")

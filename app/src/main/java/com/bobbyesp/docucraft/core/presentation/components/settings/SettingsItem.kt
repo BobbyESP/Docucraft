@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components.settings
 
 import androidx.compose.foundation.background
@@ -46,34 +49,32 @@ fun SettingsItem(item: SettingsItem, modifier: Modifier = Modifier) {
             Text(
                 text = item.title,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
             )
         },
         supportingContent = {
             Text(
                 text = item.supportingText,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
         leadingContent = {
             Icon(
                 imageVector = item.icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
         trailingContent = {
             Icon(
                 imageVector = Icons.Rounded.ChevronRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
             )
         },
-        colors = ListItemDefaults.colors(
-            containerColor = Color.Transparent
-        ),
-        modifier = modifier.clickable(onClick = item.onClick)
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        modifier = modifier.clickable(onClick = item.onClick),
     )
 }
 
@@ -81,30 +82,32 @@ fun SettingsItem(item: SettingsItem, modifier: Modifier = Modifier) {
 @Composable
 fun SettingsGroup(items: ImmutableList<SettingsItem>, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(DocucraftShapeDefaults.cardShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(DocucraftShapeDefaults.cardShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerLow),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         items.fastForEachIndexed { index, item ->
             SettingsItem(
                 item = item,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(
-                        when {
-                            items.size == 1 -> DocucraftShapeDefaults.independentListItemShape
-                            index == 0 -> DocucraftShapeDefaults.topListItemShape
-                            index == items.lastIndex -> DocucraftShapeDefaults.bottomListItemShape
-                            else -> DocucraftShapeDefaults.middleListItemShape
-                        }
-                    ),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .clip(
+                            when {
+                                items.size == 1 -> DocucraftShapeDefaults.independentListItemShape
+                                index == 0 -> DocucraftShapeDefaults.topListItemShape
+                                index == items.lastIndex ->
+                                    DocucraftShapeDefaults.bottomListItemShape
+                                else -> DocucraftShapeDefaults.middleListItemShape
+                            }
+                        ),
             )
             if (index < items.lastIndex) {
                 HorizontalDivider(
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                 )
             }
         }

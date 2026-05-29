@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components.settings
 
 import androidx.compose.animation.core.animateDpAsState
@@ -61,10 +64,11 @@ fun SettingSegmentOptions(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .clip(DocucraftShapeDefaults.cardShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .padding(16.dp),
+        modifier =
+            modifier
+                .clip(DocucraftShapeDefaults.cardShape)
+                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -73,11 +77,7 @@ fun SettingSegmentOptions(
             contentDescription = null,
         )
 
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 16.dp)
-        ) {
+        Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
@@ -94,8 +94,7 @@ fun SettingSegmentOptions(
 
         Box(
             modifier =
-                Modifier
-                    .width(IntrinsicSize.Min)
+                Modifier.width(IntrinsicSize.Min)
                     .height(IntrinsicSize.Min)
                     .clip(CircleShape)
                     .background(color = MaterialTheme.colorScheme.surfaceContainer)
@@ -103,15 +102,14 @@ fun SettingSegmentOptions(
             var midPoint by remember { mutableStateOf(0.dp) }
             val density = LocalDensity.current
             val capsuleOffset by
-            animateDpAsState(
-                targetValue = if (selectedOptionIndex == 0) 0.dp else midPoint,
-                label = "capsule-offset-animation",
-            )
+                animateDpAsState(
+                    targetValue = if (selectedOptionIndex == 0) 0.dp else midPoint,
+                    label = "capsule-offset-animation",
+                )
 
             Box(
                 modifier =
-                    Modifier
-                        .fillMaxHeight()
+                    Modifier.fillMaxHeight()
                         .fillMaxWidth(.5f)
                         .offset { IntOffset(capsuleOffset.value.toInt(), 0) }
                         .clip(CircleShape)
@@ -134,10 +132,7 @@ fun SettingSegmentOptions(
                                 MaterialTheme.colorScheme.onPrimary
                             } else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier =
-                            Modifier
-                                .clip(CircleShape)
-                                .clickable { option.onClick() }
-                                .padding(8.dp),
+                            Modifier.clip(CircleShape).clickable { option.onClick() }.padding(8.dp),
                     )
                 }
             }
@@ -148,29 +143,31 @@ fun SettingSegmentOptions(
 @PreviewLightDark
 @Composable
 private fun SettingsSegmentOptionPreview() {
-    val options = persistentListOf(
-        SettingSegmentOption(
-            icon = Icons.Rounded.Settings,
-            contentDescription = "Settings",
-            onClick = {}
-        ),
-        SettingSegmentOption(
-            icon = Icons.Rounded.Dns,
-            contentDescription = "Server",
-            onClick = {}
+    val options =
+        persistentListOf(
+            SettingSegmentOption(
+                icon = Icons.Rounded.Settings,
+                contentDescription = "Settings",
+                onClick = {},
+            ),
+            SettingSegmentOption(
+                icon = Icons.Rounded.Dns,
+                contentDescription = "Server",
+                onClick = {},
+            ),
         )
-    )
 
     DocucraftTheme {
         Box(
-            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow).padding(16.dp)
+            modifier =
+                Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow).padding(16.dp)
         ) {
             SettingSegmentOptions(
                 title = "Text",
                 supportingText = "Supporting Text",
                 icon = Icons.Rounded.Dns,
                 options = options,
-                selectedOptionIndex = 0
+                selectedOptionIndex = 0,
             )
         }
     }

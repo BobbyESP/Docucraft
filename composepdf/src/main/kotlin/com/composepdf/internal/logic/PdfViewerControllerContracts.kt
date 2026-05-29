@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.logic
 
 import android.util.Size
@@ -11,14 +14,23 @@ internal interface ViewerViewportReadContract {
     val pageSizes: List<Size>
 
     fun pageHeightPx(index: Int): Float
+
     fun pageWidthPx(index: Int): Float
+
     fun pageTopDocY(index: Int): Float
+
     fun pageLeftDocX(index: Int): Float
+
     fun corridorBreadth(): Float
+
     fun visiblePageIndices(): IntRange
+
     fun isPointOverPage(point: Offset): Boolean
+
     fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float>
+
     fun computeFitDocumentZoom(): Float
+
     fun computeFitPageZoom(pageIndex: Int): Float
 }
 
@@ -30,29 +42,32 @@ internal interface ViewerRenderRequester {
 /** Mutations that affect viewport geometry from layout or programmatic navigation. */
 internal interface ViewerViewportHostActions {
     fun onViewportSizeChanged(width: Float, height: Float)
+
     fun clampPan()
 }
 
 /** Configuration commands needed by the hoisted public state object. */
 internal interface ViewerConfigContract {
     val viewerConfig: ViewerConfig
+
     fun updateConfig(newConfig: ViewerConfig)
 }
 
 /** Gesture and animation actions consumed by the gesture modifier. */
 internal interface ViewerInteractionContract {
     fun onGestureStart()
+
     fun onGestureEnd()
+
     fun onGestureUpdate(zoomChange: Float, panDelta: Offset, pivot: Offset)
+
     fun onAnimatedZoomFrame(targetZoom: Float, pivot: Offset)
 }
 
 /** Layout-facing controller used by [com.composepdf.internal.ui.PdfLayout]. */
 @Suppress("unused")
 internal interface ViewerLayoutController :
-    ViewerViewportReadContract,
-    ViewerViewportHostActions,
-    ViewerRenderRequester
+    ViewerViewportReadContract, ViewerViewportHostActions, ViewerRenderRequester
 
 /** Narrow bridge used by [com.composepdf.PdfViewerState] for imperative programmatic APIs. */
 internal interface PdfViewerStateControllerBridge :

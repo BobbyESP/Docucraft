@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.screens.preferences
 
 import androidx.compose.foundation.layout.Arrangement
@@ -33,74 +36,57 @@ import kotlinx.collections.immutable.persistentListOf
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun SettingsScreen(
-    onNavigate: (Route) -> Unit,
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun SettingsScreen(onNavigate: (Route) -> Unit, onBack: () -> Unit, modifier: Modifier = Modifier) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val settings: PersistentList<SettingsItem> = persistentListOf(
-        SettingsItem(
-            title = stringResource(R.string.appearance),
-            supportingText = stringResource(R.string.appearance_desc),
-            icon = Icons.Rounded.ColorLens,
-            onClick = {
-                onNavigate(Route.Settings.Appearance)
-            }
+    val settings: PersistentList<SettingsItem> =
+        persistentListOf(
+            SettingsItem(
+                title = stringResource(R.string.appearance),
+                supportingText = stringResource(R.string.appearance_desc),
+                icon = Icons.Rounded.ColorLens,
+                onClick = { onNavigate(Route.Settings.Appearance) },
+            )
         )
-    )
 
     Scaffold(
-        modifier = modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeFlexibleTopAppBar(
-                title = {
-                    Text(text = stringResource(R.string.settings))
-                },
+                title = { Text(text = stringResource(R.string.settings)) },
                 modifier = Modifier,
                 navigationIcon = {
                     IconButton(
                         shape = CircleShape,
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                        ),
+                        colors =
+                            IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                            ),
                         onClick = { onBack() },
                         content = {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = null
+                                contentDescription = null,
                             )
-                        }
+                        },
                     )
                 },
-                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior,
             )
-        }
+        },
     ) { paddingValues ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(32.dp)
+            contentPadding = PaddingValues(32.dp),
         ) {
-            item(
-                contentType = "settings_category"
-            ) {
+            item(contentType = "settings_category") {
                 Text(
                     text = stringResource(R.string.general),
-                    style = MaterialTheme.typography.labelLargeEmphasized
+                    style = MaterialTheme.typography.labelLargeEmphasized,
                 )
             }
-            item(
-                contentType = "settings_list"
-            ) {
-                SettingsGroup(
-                    modifier = Modifier,
-                    items = settings,
-                )
+            item(contentType = "settings_list") {
+                SettingsGroup(modifier = Modifier, items = settings)
             }
         }
     }

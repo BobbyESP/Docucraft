@@ -1,9 +1,9 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.domain.analytics
 
-data class AnalyticsEvent(
-    val type: String,
-    val extras: List<Param> = emptyList(),
-) {
+data class AnalyticsEvent(val type: String, val extras: List<Param> = emptyList()) {
     // Standard analytics types.
     object Types {
         const val SCREEN_VIEW = "screen_view" // (eg. extras: SCREEN_NAME)
@@ -23,15 +23,12 @@ data class AnalyticsEvent(
     }
 
     /**
-     * A key-value pair used to supply extra context to an 
-     * analytics event.
+     * A key-value pair used to supply extra context to an analytics event.
      *
-     * @param key - the parameter key. Wherever possible use 
-     * one of the standard `ParamKeys`, however, if no suitable 
-     * key is available you can define your own as long as it is 
-     * configured in your backend analytics system (for example, 
-     * by creating a Firebase Analytics custom parameter).
-     *
+     * @param key - the parameter key. Wherever possible use one of the standard `ParamKeys`,
+     *   however, if no suitable key is available you can define your own as long as it is
+     *   configured in your backend analytics system (for example, by creating a Firebase Analytics
+     *   custom parameter).
      * @param value - the parameter value.
      */
     data class Param(val key: String, val value: String)

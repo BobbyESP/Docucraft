@@ -1,13 +1,16 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.core.domain.repository.FileRepository
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.LocalDocumentsRepositoryImpl
-import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.data.search.CompositeSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.data.search.DatabaseSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.data.search.InMemorySearchStrategy
+import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.service.DocumentOperationsService
@@ -16,8 +19,8 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUs
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GenerateDocumentThumbnailUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
@@ -26,8 +29,8 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 /**
- * Dependency injection module for Document Scanner feature. Provides: repositories, services, and use
- * cases.
+ * Dependency injection module for Document Scanner feature. Provides: repositories, services, and
+ * use cases.
  */
 val documentScannerDataModule = module {
     // Service layer
@@ -41,9 +44,7 @@ val documentScannerDataModule = module {
     // Search Strategies
     factory<LocalSearchStrategy> { InMemorySearchStrategy() }
     factory<QuerySearchStrategy> {
-        CompositeSearchStrategy(
-            listOf(DatabaseSearchStrategy(repository = get()))
-        )
+        CompositeSearchStrategy(listOf(DatabaseSearchStrategy(repository = get())))
     }
 
     // Use cases
@@ -57,12 +58,7 @@ val documentScannerDataModule = module {
     factory { ExportDocumentUseCase() }
     factory { ProcessDocumentsUseCase(querySearchStrategy = get(), localSearchStrategy = get()) }
 
-    factory {
-        DeleteDocumentUseCase(
-            repository = get(),
-            fileRepository = get<FileRepository>(),
-        )
-    }
+    factory { DeleteDocumentUseCase(repository = get(), fileRepository = get<FileRepository>()) }
 
     factory {
         SaveScannedDocumentUseCase(

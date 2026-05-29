@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.state
 
 import android.util.Size
@@ -24,15 +27,19 @@ class ViewerInteractionCoordinatorTest {
         val viewportCoordinator = viewportCoordinator(state)
         var renderRequests = 0
         var lastTrigger: RenderTrigger? = null
-        val coordinator = ViewerInteractionCoordinator(
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            state = state,
-            configProvider = { ViewerConfig() },
-            viewportCoordinator = viewportCoordinator,
-            recordPanDelta = {},
-            requestRender = { trigger -> renderRequests++; lastTrigger = trigger },
-            debounceDelay = {}
-        )
+        val coordinator =
+            ViewerInteractionCoordinator(
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                state = state,
+                configProvider = { ViewerConfig() },
+                viewportCoordinator = viewportCoordinator,
+                recordPanDelta = {},
+                requestRender = { trigger ->
+                    renderRequests++
+                    lastTrigger = trigger
+                },
+                debounceDelay = {},
+            )
 
         viewportCoordinator.updatePageSizes(List(2) { Size(1, 1) })
         viewportCoordinator.updateViewport(500f, 500f)
@@ -53,15 +60,19 @@ class ViewerInteractionCoordinatorTest {
         var recordedPan = 0f
         var renderRequests = 0
         var lastTrigger: RenderTrigger? = null
-        val coordinator = ViewerInteractionCoordinator(
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            state = state,
-            configProvider = { ViewerConfig(minZoom = 1f, maxZoom = 5f) },
-            viewportCoordinator = viewportCoordinator,
-            recordPanDelta = { recordedPan = it },
-            requestRender = { trigger -> renderRequests++; lastTrigger = trigger },
-            debounceDelay = {}
-        )
+        val coordinator =
+            ViewerInteractionCoordinator(
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                state = state,
+                configProvider = { ViewerConfig(minZoom = 1f, maxZoom = 5f) },
+                viewportCoordinator = viewportCoordinator,
+                recordPanDelta = { recordedPan = it },
+                requestRender = { trigger ->
+                    renderRequests++
+                    lastTrigger = trigger
+                },
+                debounceDelay = {},
+            )
 
         viewportCoordinator.updatePageSizes(List(2) { Size(1, 1) })
         viewportCoordinator.updateViewport(500f, 500f)
@@ -69,7 +80,7 @@ class ViewerInteractionCoordinatorTest {
         coordinator.onGestureUpdate(
             zoomChange = 1.5f,
             panDelta = Offset(-30f, -40f),
-            pivot = Offset(250f, 250f)
+            pivot = Offset(250f, 250f),
         )
 
         assertEquals(-40f, recordedPan, 0.001f)
@@ -84,51 +95,62 @@ class ViewerInteractionCoordinatorTest {
         val viewportCoordinator = viewportCoordinator(state)
         var renderRequests = 0
         var lastTrigger: RenderTrigger? = null
-        val coordinator = ViewerInteractionCoordinator(
-            scope = CoroutineScope(Dispatchers.Unconfined),
-            state = state,
-            configProvider = { ViewerConfig(minZoom = 1f, maxZoom = 4f) },
-            viewportCoordinator = viewportCoordinator,
-            recordPanDelta = {},
-            requestRender = { trigger -> renderRequests++; lastTrigger = trigger },
-            debounceDelay = {}
-        )
+        val coordinator =
+            ViewerInteractionCoordinator(
+                scope = CoroutineScope(Dispatchers.Unconfined),
+                state = state,
+                configProvider = { ViewerConfig(minZoom = 1f, maxZoom = 4f) },
+                viewportCoordinator = viewportCoordinator,
+                recordPanDelta = {},
+                requestRender = { trigger ->
+                    renderRequests++
+                    lastTrigger = trigger
+                },
+                debounceDelay = {},
+            )
 
         viewportCoordinator.updatePageSizes(List(1) { Size(1, 1) })
         viewportCoordinator.updateViewport(500f, 500f)
 
-        coordinator.onAnimatedZoomFrame(
-            targetZoom = 2f,
-            pivot = Offset(250f, 250f)
-        )
+        coordinator.onAnimatedZoomFrame(targetZoom = 2f, pivot = Offset(250f, 250f))
 
         assertEquals(2f, state.zoom, 0.001f)
         assertEquals(1, renderRequests)
         assertEquals(RenderTrigger.ANIMATED_ZOOM_SETTLED, lastTrigger)
     }
 
-    private fun configuredState(pageCount: Int) = PdfViewerState().apply {
-        this.pageCount = pageCount
-        zoom = 1f
-        panX = 0f
-        panY = 0f
-    }
-
-    private fun viewportCoordinator(state: PdfViewerState) = ViewerViewportCoordinator(
-        state = state,
-        configProvider = { ViewerConfig() },
-        snapshotFactory = { pageSizes, viewportWidth, viewportHeight, _, pageSpacingPx, scrollDirection ->
-            PageLayoutSnapshot(
-                pageSizes = List(pageSizes.size) { Size(1, 1) },
-                pageOffsets = FloatArray(pageSizes.size) { index -> index * 520f },
-                pageHeights = FloatArray(pageSizes.size) { 500f },
-                pageWidths = FloatArray(pageSizes.size) { 500f },
-                totalDocumentSize = if (pageSizes.isEmpty()) 0f else (pageSizes.size * 500f) + ((pageSizes.size - 1) * 20f),
-                corridorBreadth = 500f,
-                viewport = ViewportMetrics(viewportWidth, viewportHeight),
-                pageSpacingPx = pageSpacingPx,
-                scrollDirection = scrollDirection
-            )
+    private fun configuredState(pageCount: Int) =
+        PdfViewerState().apply {
+            this.pageCount = pageCount
+            zoom = 1f
+            panX = 0f
+            panY = 0f
         }
-    )
+
+    private fun viewportCoordinator(state: PdfViewerState) =
+        ViewerViewportCoordinator(
+            state = state,
+            configProvider = { ViewerConfig() },
+            snapshotFactory = {
+                pageSizes,
+                viewportWidth,
+                viewportHeight,
+                _,
+                pageSpacingPx,
+                scrollDirection ->
+                PageLayoutSnapshot(
+                    pageSizes = List(pageSizes.size) { Size(1, 1) },
+                    pageOffsets = FloatArray(pageSizes.size) { index -> index * 520f },
+                    pageHeights = FloatArray(pageSizes.size) { 500f },
+                    pageWidths = FloatArray(pageSizes.size) { 500f },
+                    totalDocumentSize =
+                        if (pageSizes.isEmpty()) 0f
+                        else (pageSizes.size * 500f) + ((pageSizes.size - 1) * 20f),
+                    corridorBreadth = 500f,
+                    viewport = ViewportMetrics(viewportWidth, viewportHeight),
+                    pageSpacingPx = pageSpacingPx,
+                    scrollDirection = scrollDirection,
+                )
+            },
+        )
 }

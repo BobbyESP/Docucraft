@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.logic.tiles
 
 import android.graphics.Rect
@@ -14,12 +17,10 @@ import kotlin.math.sqrt
 /**
  * Plans which high-resolution tiles should exist for the current viewport.
  *
- * Refined to use normalized coordinate grids to prevent sub-pixel seams (gaps) between tiles
- * at extreme zoom levels.
+ * Refined to use normalized coordinate grids to prevent sub-pixel seams (gaps) between tiles at
+ * extreme zoom levels.
  */
-internal class TilePlanner(
-    private val tileSize: Int = PageRenderer.TILE_SIZE
-) {
+internal class TilePlanner(private val tileSize: Int = PageRenderer.TILE_SIZE) {
     /**
      * Computes the set of tiles required to cover the current viewport for the given layout.
      *
@@ -36,14 +37,14 @@ internal class TilePlanner(
         zoom: Float,
         visiblePages: IntRange,
         scrollDirectionHint: Int,
-        isTileCached: (String) -> Boolean
+        isTileCached: (String) -> Boolean,
     ): TilePlan {
         if (layout.isEmpty || visiblePages.isEmpty() || zoom <= 0f) {
             return TilePlan(
                 steppedZoom = zoom,
                 keepKeys = emptySet(),
                 requests = emptyList(),
-                prefetchPages = emptyList()
+                prefetchPages = emptyList(),
             )
         }
 
@@ -56,11 +57,12 @@ internal class TilePlanner(
 
         // 1. Identify prefetch pages based on scroll direction to warm up low-res textures.
         val prefetchPages = buildList {
-            val candidate = when {
-                scrollDirectionHint > 0 -> visiblePages.last + 1
-                scrollDirectionHint < 0 -> visiblePages.first - 1
-                else -> -1
-            }
+            val candidate =
+                when {
+                    scrollDirectionHint > 0 -> visiblePages.last + 1
+                    scrollDirectionHint < 0 -> visiblePages.first - 1
+                    else -> -1
+                }
             if (candidate in 0..layout.pageSizes.lastIndex && candidate !in visiblePages) {
                 add(candidate)
             }
@@ -133,19 +135,21 @@ internal class TilePlanner(
 
             for (ty in tileStartY until tileEndY) {
                 for (tx in tileStartX until tileEndX) {
-                    val tileRect = Rect(
-                        tx * tileSize,
-                        ty * tileSize,
-                        ((tx + 1) * tileSize).coerceAtMost(pageWidthAtStep.roundToInt()),
-                        ((ty + 1) * tileSize).coerceAtMost(pageHeightAtStep.roundToInt())
-                    )
+                    val tileRect =
+                        Rect(
+                            tx * tileSize,
+                            ty * tileSize,
+                            ((tx + 1) * tileSize).coerceAtMost(pageWidthAtStep.roundToInt()),
+                            ((ty + 1) * tileSize).coerceAtMost(pageHeightAtStep.roundToInt()),
+                        )
 
-                    val tileKey = TileKey.fromLayout(
-                        pageIndex = pageIndex,
-                        rect = tileRect,
-                        zoom = steppedZoom,
-                        baseWidth = pageWidth
-                    )
+                    val tileKey =
+                        TileKey.fromLayout(
+                            pageIndex = pageIndex,
+                            rect = tileRect,
+                            zoom = steppedZoom,
+                            baseWidth = pageWidth,
+                        )
                     val cacheKey = tileKey.toCacheKey()
                     keepKeys.add(cacheKey)
 
@@ -171,20 +175,23 @@ internal class TilePlanner(
             steppedZoom = steppedZoom,
             keepKeys = keepKeys,
             requests = requests.sortedBy { it.distanceSq },
-            prefetchPages = prefetchPages
+            prefetchPages = prefetchPages,
         )
     }
 
     /**
-     * Logic to snap current zoom to a fixed scale step.
-     * This prevents "Tile Soup" by ensuring all visible high-res tiles belong to the same power-of-sqrt(2) grid.
+     * Logic to snap current zoom to a fixed scale step. This prevents "Tile Soup" by ensuring all
+     * visible high-res tiles belong to the same power-of-sqrt(2) grid.
      */
     internal fun computeSteppedZoom(zoom: Float): Float {
-        val step = floor(ln(zoom.toDouble() / TILE_STEP_BASE) / ln(TILE_STEP_RATIO)).toInt()
-            .coerceAtLeast(0)
+        val step =
+            floor(ln(zoom.toDouble() / TILE_STEP_BASE) / ln(TILE_STEP_RATIO))
+                .toInt()
+                .coerceAtLeast(0)
 
-        return (TILE_STEP_BASE * TILE_STEP_RATIO.pow(step.toDouble())).toFloat()
-            .let { (it * 100).roundToInt() / 100f }
+        return (TILE_STEP_BASE * TILE_STEP_RATIO.pow(step.toDouble())).toFloat().let {
+            (it * 100).roundToInt() / 100f
+        }
     }
 
     private companion object {
@@ -198,18 +205,15 @@ internal data class TilePlan(
     val steppedZoom: Float,
     val keepKeys: Set<String>,
     val requests: List<TileRequest>,
-    val prefetchPages: List<Int>
+    val prefetchPages: List<Int>,
 )
 
-internal data class TileRequest(
-    val tileKey: TileKey,
-    val distanceSq: Float
-)
+internal data class TileRequest(val tileKey: TileKey, val distanceSq: Float)
 
 /** Runtime viewport state used during tile planning. */
 internal data class ViewportState(
     val width: Float,
     val height: Float,
     val panX: Float,
-    val panY: Float
+    val panY: Float,
 )

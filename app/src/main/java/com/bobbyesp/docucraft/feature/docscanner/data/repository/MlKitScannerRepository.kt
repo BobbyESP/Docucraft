@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.data.repository
 
 import android.app.Activity
@@ -22,7 +25,6 @@ class MlKitScannerRepository : ScannerRepository {
                     Result.failure(ScannerException.ScanCancelled())
                 }
             }
-
         } catch (e: Exception) {
             Result.failure(ScannerException.ScanFailed(e.message ?: "Unknown error"))
         }

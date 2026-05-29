@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.domain.model
 
 import android.net.Uri
@@ -10,22 +13,24 @@ import kotlinx.serialization.Serializable
 /**
  * Data class that represents a scanned document.
  *
- * This class is used to model the details of a scanned PDF document, including its metadata
- * and file-related information. It is marked as @Serializable to allow serialization and
+ * This class is used to model the details of a scanned PDF document, including its metadata and
+ * file-related information. It is marked as @Serializable to allow serialization and
  * deserialization, and as @Immutable to ensure immutability for Compose compatibility.
  *
  * @property id The unique identifier for the scanned document in the database.
  * @property uuid A unique identifier for the scanned document.
- * @property filename The name of the document file without extension (e.g., "internet_bill_january_2026").
+ * @property filename The name of the document file without extension (e.g.,
+ *   "internet_bill_january_2026").
  * @property title The title of the document. This field is optional and can be null.
- * @property description A brief description of the document. This field is optional and can be null.
- * @property path The Uri representing the location of the file on the device's storage.
- *                This property uses a custom serializer, `UriSerializer`, for proper serialization.
+ * @property description A brief description of the document. This field is optional and can be
+ *   null.
+ * @property path The Uri representing the location of the file on the device's storage. This
+ *   property uses a custom serializer, `UriSerializer`, for proper serialization.
  * @property createdTimestamp The timestamp (in milliseconds) indicating when the file was created.
  * @property fileSize The size of the file in bytes.
  * @property pageCount The total number of pages in the document.
- * @property thumbnail The Uri (as a String) representing the location of the thumbnail image for the file.
- *                     This field is optional and can be null.
+ * @property thumbnail The Uri (as a String) representing the location of the thumbnail image for
+ *   the file. This field is optional and can be null.
  */
 @Serializable
 @Immutable
@@ -48,8 +53,8 @@ data class ScannedDocument(
          * This function is used to convert a database entity representation of a scanned document
          * into its domain model representation.
          *
-         * @receiver ScannedDocumentEntity The database entity to be converted.
          * @return ScannedDocument The domain model representation of the scanned document.
+         * @receiver ScannedDocumentEntity The database entity to be converted.
          */
         fun ScannedDocumentEntity.toModel(): ScannedDocument {
             return ScannedDocument(

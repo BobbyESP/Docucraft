@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.state
 
 import android.util.Size
@@ -15,25 +18,33 @@ class ViewerViewportCoordinatorTest {
 
     @Test
     fun updateViewport_rebuildsLayoutAndExposesQueries() {
-        val state = PdfViewerState().apply {
-            pageCount = 3
-            zoom = 1f
-            panX = 0f
-            panY = -520f
-        }
-        val coordinator = ViewerViewportCoordinator(
-            state = state,
-            configProvider = { ViewerConfig() },
-            snapshotFactory = { pageSizes, viewportWidth, viewportHeight, _, pageSpacingPx, scrollDirection ->
-                fakeSnapshot(
-                    pageCount = pageSizes.size,
-                    viewportWidth = viewportWidth,
-                    viewportHeight = viewportHeight,
-                    pageSpacingPx = pageSpacingPx,
-                    scrollDirection = scrollDirection
-                )
+        val state =
+            PdfViewerState().apply {
+                pageCount = 3
+                zoom = 1f
+                panX = 0f
+                panY = -520f
             }
-        )
+        val coordinator =
+            ViewerViewportCoordinator(
+                state = state,
+                configProvider = { ViewerConfig() },
+                snapshotFactory = {
+                    pageSizes,
+                    viewportWidth,
+                    viewportHeight,
+                    _,
+                    pageSpacingPx,
+                    scrollDirection ->
+                    fakeSnapshot(
+                        pageCount = pageSizes.size,
+                        viewportWidth = viewportWidth,
+                        viewportHeight = viewportHeight,
+                        pageSpacingPx = pageSpacingPx,
+                        scrollDirection = scrollDirection,
+                    )
+                },
+            )
 
         coordinator.updatePageSizes(List(3) { Size(1, 1) })
         val changed = coordinator.updateViewport(500f, 500f)
@@ -47,29 +58,31 @@ class ViewerViewportCoordinatorTest {
 
     @Test
     fun clampPan_andCurrentPage_areDelegatedToSnapshotGeometry() {
-        val state = PdfViewerState().apply {
-            pageCount = 2
-            zoom = 1f
-            panX = -50f
-            panY = -700f
-        }
-        val coordinator = ViewerViewportCoordinator(
-            state = state,
-            configProvider = { ViewerConfig() },
-            snapshotFactory = { _, viewportWidth, viewportHeight, _, _, scrollDirection ->
-                PageLayoutSnapshot(
-                    pageSizes = listOf(Size(1, 1), Size(1, 1)),
-                    pageOffsets = floatArrayOf(0f, 520f),
-                    pageHeights = floatArrayOf(500f, 500f),
-                    pageWidths = floatArrayOf(500f, 500f),
-                    totalDocumentSize = 1020f,
-                    corridorBreadth = 500f,
-                    viewport = ViewportMetrics(viewportWidth, viewportHeight),
-                    pageSpacingPx = 20f,
-                    scrollDirection = scrollDirection
-                )
+        val state =
+            PdfViewerState().apply {
+                pageCount = 2
+                zoom = 1f
+                panX = -50f
+                panY = -700f
             }
-        )
+        val coordinator =
+            ViewerViewportCoordinator(
+                state = state,
+                configProvider = { ViewerConfig() },
+                snapshotFactory = { _, viewportWidth, viewportHeight, _, _, scrollDirection ->
+                    PageLayoutSnapshot(
+                        pageSizes = listOf(Size(1, 1), Size(1, 1)),
+                        pageOffsets = floatArrayOf(0f, 520f),
+                        pageHeights = floatArrayOf(500f, 500f),
+                        pageWidths = floatArrayOf(500f, 500f),
+                        totalDocumentSize = 1020f,
+                        corridorBreadth = 500f,
+                        viewport = ViewportMetrics(viewportWidth, viewportHeight),
+                        pageSpacingPx = 20f,
+                        scrollDirection = scrollDirection,
+                    )
+                },
+            )
 
         coordinator.updatePageSizes(List(2) { Size(1, 1) })
         coordinator.updateViewport(500f, 500f)
@@ -84,23 +97,24 @@ class ViewerViewportCoordinatorTest {
     fun computeFitZooms_delegateToSnapshotUsingCurrentConfig() {
         val state = PdfViewerState().apply { pageCount = 1 }
         val config = ViewerConfig(minZoom = 0.5f, maxZoom = 4f)
-        val coordinator = ViewerViewportCoordinator(
-            state = state,
-            configProvider = { config },
-            snapshotFactory = { _, viewportWidth, viewportHeight, _, _, scrollDirection ->
-                PageLayoutSnapshot(
-                    pageSizes = listOf(Size(1, 1)),
-                    pageOffsets = floatArrayOf(0f),
-                    pageHeights = floatArrayOf(500f),
-                    pageWidths = floatArrayOf(250f),
-                    totalDocumentSize = 500f,
-                    corridorBreadth = 250f,
-                    viewport = ViewportMetrics(viewportWidth, viewportHeight),
-                    pageSpacingPx = 0f,
-                    scrollDirection = scrollDirection
-                )
-            }
-        )
+        val coordinator =
+            ViewerViewportCoordinator(
+                state = state,
+                configProvider = { config },
+                snapshotFactory = { _, viewportWidth, viewportHeight, _, _, scrollDirection ->
+                    PageLayoutSnapshot(
+                        pageSizes = listOf(Size(1, 1)),
+                        pageOffsets = floatArrayOf(0f),
+                        pageHeights = floatArrayOf(500f),
+                        pageWidths = floatArrayOf(250f),
+                        totalDocumentSize = 500f,
+                        corridorBreadth = 250f,
+                        viewport = ViewportMetrics(viewportWidth, viewportHeight),
+                        pageSpacingPx = 0f,
+                        scrollDirection = scrollDirection,
+                    )
+                },
+            )
 
         coordinator.updatePageSizes(List(1) { Size(1, 1) })
         coordinator.updateViewport(500f, 1000f)
@@ -114,16 +128,17 @@ class ViewerViewportCoordinatorTest {
         viewportWidth: Float,
         viewportHeight: Float,
         pageSpacingPx: Float,
-        scrollDirection: ScrollDirection = ScrollDirection.VERTICAL
-    ) = PageLayoutSnapshot(
-        pageSizes = List(pageCount) { Size(1, 1) },
-        pageOffsets = floatArrayOf(0f, 520f, 1040f),
-        pageHeights = floatArrayOf(500f, 500f, 500f),
-        pageWidths = floatArrayOf(500f, 500f, 500f),
-        totalDocumentSize = 1540f,
-        corridorBreadth = 500f,
-        viewport = ViewportMetrics(viewportWidth, viewportHeight),
-        pageSpacingPx = pageSpacingPx,
-        scrollDirection = scrollDirection
-    )
+        scrollDirection: ScrollDirection = ScrollDirection.VERTICAL,
+    ) =
+        PageLayoutSnapshot(
+            pageSizes = List(pageCount) { Size(1, 1) },
+            pageOffsets = floatArrayOf(0f, 520f, 1040f),
+            pageHeights = floatArrayOf(500f, 500f, 500f),
+            pageWidths = floatArrayOf(500f, 500f, 500f),
+            totalDocumentSize = 1540f,
+            corridorBreadth = 500f,
+            viewport = ViewportMetrics(viewportWidth, viewportHeight),
+            pageSpacingPx = pageSpacingPx,
+            scrollDirection = scrollDirection,
+        )
 }

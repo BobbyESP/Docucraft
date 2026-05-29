@@ -1,8 +1,12 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.util.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.core.util.events.UiEvent
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -13,11 +17,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
 
-abstract class BaseViewModel<Intent : Any, State : Any, Effect : Any>(
-    initialState: State
-) : ViewModel() {
+abstract class BaseViewModel<Intent : Any, State : Any, Effect : Any>(initialState: State) :
+    ViewModel() {
 
     // ---------------- STATE ----------------
 
@@ -52,15 +54,11 @@ abstract class BaseViewModel<Intent : Any, State : Any, Effect : Any>(
     // ---------------- EFFECT EMITTER ----------------
 
     protected fun sendEffect(effect: Effect) {
-        viewModelScope.launch {
-            _effects.send(effect)
-        }
+        viewModelScope.launch { _effects.send(effect) }
     }
 
     protected fun sendUiEvent(event: UiEvent) {
-        viewModelScope.launch {
-            _defaultUiEvents.send(event)
-        }
+        viewModelScope.launch { _defaultUiEvents.send(event) }
     }
 
     // ---------------- SAFE LAUNCH ----------------
@@ -68,7 +66,7 @@ abstract class BaseViewModel<Intent : Any, State : Any, Effect : Any>(
     protected fun launch(
         onError: ((Throwable) -> Unit)? = null,
         context: CoroutineContext = viewModelScope.coroutineContext,
-        block: suspend CoroutineScope.() -> Unit
+        block: suspend CoroutineScope.() -> Unit,
     ): Job {
         return viewModelScope.launch(context) {
             runCatching { block() }
@@ -82,6 +80,6 @@ abstract class BaseViewModel<Intent : Any, State : Any, Effect : Any>(
     // ---------------- ERROR HOOK ----------------
 
     protected open fun handleError(throwable: Throwable) {
-        //Optional override
+        // Optional override
     }
 }

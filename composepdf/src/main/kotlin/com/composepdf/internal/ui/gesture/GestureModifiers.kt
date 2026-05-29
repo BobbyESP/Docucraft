@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.ui.gesture
 
 import androidx.compose.animation.core.Animatable
@@ -26,15 +29,13 @@ import androidx.compose.ui.unit.Velocity
 import com.composepdf.PdfViewerState
 import com.composepdf.ViewerConfig
 import com.composepdf.internal.logic.ViewerGestureController
+import kotlin.math.abs
+import kotlin.math.sqrt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlin.math.abs
-import kotlin.math.sqrt
 
-/**
- * Manages the state and execution of coroutine-based animations for document interaction.
- */
+/** Manages the state and execution of coroutine-based animations for document interaction. */
 @Stable
 internal class GestureState(private val scope: CoroutineScope) {
 
@@ -51,72 +52,74 @@ internal class GestureState(private val scope: CoroutineScope) {
         animJob?.cancel()
     }
 
-    /**
-     * Runs an exponential-decay fling animation on both the X and Y axes.
-     */
+    /** Runs an exponential-decay fling animation on both the X and Y axes. */
     fun fling(
         velocity: Velocity,
         onDelta: (Offset) -> Unit,
         onVelocityUpdate: (Offset) -> Unit,
-        onEnd: () -> Unit
+        onEnd: () -> Unit,
     ) {
         flingJob?.cancel()
-        flingJob = scope.launch {
-            val decay = exponentialDecay<Float>(frictionMultiplier = 1.15f)
-            val jx = launch {
-                var last = 0f
-                Animatable(0f).animateDecay(velocity.x, decay) {
-                    onDelta(Offset(value - last, 0f))
-                    onVelocityUpdate(Offset(velocity.x, velocity.y))
-                    last = value
+        flingJob =
+            scope.launch {
+                val decay = exponentialDecay<Float>(frictionMultiplier = 1.15f)
+                val jx = launch {
+                    var last = 0f
+                    Animatable(0f).animateDecay(velocity.x, decay) {
+                        onDelta(Offset(value - last, 0f))
+                        onVelocityUpdate(Offset(velocity.x, velocity.y))
+                        last = value
+                    }
                 }
-            }
-            val jy = launch {
-                var last = 0f
-                Animatable(0f).animateDecay(velocity.y, decay) {
-                    onDelta(Offset(0f, value - last))
-                    last = value
+                val jy = launch {
+                    var last = 0f
+                    Animatable(0f).animateDecay(velocity.y, decay) {
+                        onDelta(Offset(0f, value - last))
+                        last = value
+                    }
                 }
+                jx.join()
+                jy.join()
+                onVelocityUpdate(Offset.Zero)
+                onEnd()
             }
-            jx.join(); jy.join()
-            onVelocityUpdate(Offset.Zero)
-            onEnd()
-        }
     }
 
-    /**
-     * Runs a spring-interpolated zoom animation.
-     */
+    /** Runs a spring-interpolated zoom animation. */
     fun animateZoom(
-        from: Float, to: Float, pivot: Offset,
+        from: Float,
+        to: Float,
+        pivot: Offset,
         onFrame: (zoom: Float, pivot: Offset) -> Unit,
         onEnd: () -> Unit,
-        spec: AnimationSpec<Float> = spring(dampingRatio = 0.72f, stiffness = 420f)
+        spec: AnimationSpec<Float> = spring(dampingRatio = 0.72f, stiffness = 420f),
     ) {
         animJob?.cancel()
-        animJob = scope.launch {
-            Animatable(from).animateTo(to, spec) { onFrame(value, pivot) }
-            onEnd()
-        }
+        animJob =
+            scope.launch {
+                Animatable(from).animateTo(to, spec) { onFrame(value, pivot) }
+                onEnd()
+            }
     }
 
-    /**
-     * Smoothly scrolls to a specific pan position.
-     */
+    /** Smoothly scrolls to a specific pan position. */
     fun animatePan(
         from: Offset,
         to: Offset,
         onFrame: (Offset) -> Unit,
         onEnd: () -> Unit,
-        spec: AnimationSpec<Offset> = spring()
+        spec: AnimationSpec<Offset> = spring(),
     ) {
         animJob?.cancel()
-        animJob = scope.launch {
-            Animatable(from.x).animateTo(to.x, spring()) {
-                onFrame(Offset(value, from.y)) // This is a bit simplified, but works for the logic
+        animJob =
+            scope.launch {
+                Animatable(from.x).animateTo(to.x, spring()) {
+                    onFrame(
+                        Offset(value, from.y)
+                    ) // This is a bit simplified, but works for the logic
+                }
+                // Better to use Animatable<Offset, AnimationVector2D> or just two Animatable<Float>
             }
-            // Better to use Animatable<Offset, AnimationVector2D> or just two Animatable<Float>
-        }
     }
 
     fun animatePanTo(
@@ -124,46 +127,35 @@ internal class GestureState(private val scope: CoroutineScope) {
         to: Offset,
         onUpdate: (Offset) -> Unit,
         onEnd: () -> Unit,
-        spec: AnimationSpec<Float> = spring()
+        spec: AnimationSpec<Float> = spring(),
     ) {
         animJob?.cancel()
-        animJob = scope.launch {
-            val animX = Animatable(from.x)
-            val animY = Animatable(from.y)
-            launch {
-                animX.animateTo(to.x, spec) {
-                    onUpdate(Offset(value, animY.value))
-                }
+        animJob =
+            scope.launch {
+                val animX = Animatable(from.x)
+                val animY = Animatable(from.y)
+                launch { animX.animateTo(to.x, spec) { onUpdate(Offset(value, animY.value)) } }
+                launch { animY.animateTo(to.y, spec) { onUpdate(Offset(animX.value, value)) } }
+                onEnd()
             }
-            launch {
-                animY.animateTo(to.y, spec) {
-                    onUpdate(Offset(animX.value, value))
-                }
-            }
-            onEnd()
-        }
     }
 }
 
-/**
- * Creates and remembers a [GestureState] instance across recompositions.
- */
+/** Creates and remembers a [GestureState] instance across recompositions. */
 @Composable
 internal fun rememberGestureState(): GestureState {
     val scope = rememberCoroutineScope()
     return remember { GestureState(scope) }
 }
 
-/**
- * A unified gesture [Modifier] for PDF interaction.
- */
+/** A unified gesture [Modifier] for PDF interaction. */
 @Composable
 internal fun Modifier.viewerGestures(
     state: PdfViewerState,
     controller: ViewerGestureController,
     config: ViewerConfig,
     zoomAnimationSpec: AnimationSpec<Float> = spring(dampingRatio = 0.72f, stiffness = 420f),
-    enabled: Boolean = true
+    enabled: Boolean = true,
 ): Modifier {
     val gs = rememberGestureState()
     val viewConfiguration = LocalViewConfiguration.current
@@ -222,7 +214,10 @@ internal fun Modifier.viewerGestures(
                     val panDistSq = accPan.getDistanceSquared()
                     val zoomDist = abs(1f - accZoom)
 
-                    if (panDistSq > touchSlop * touchSlop || (config.isZoomGesturesEnabled && zoomDist > 0.05f)) {
+                    if (
+                        panDistSq > touchSlop * touchSlop ||
+                            (config.isZoomGesturesEnabled && zoomDist > 0.05f)
+                    ) {
                         pastSlop = true
                         controller.onGestureUpdate(accZoom, accPan, centroid)
                     }
@@ -244,7 +239,6 @@ internal fun Modifier.viewerGestures(
                 }
 
                 if (changes.all { !it.pressed }) canceled = true
-
             } while (!canceled && event.changes.any { it.pressed })
 
             if (pastSlop) {
@@ -264,17 +258,13 @@ internal fun Modifier.viewerGestures(
                         gs.fling(
                             velocity = Velocity(velocityX, velocityY),
                             onDelta = { delta ->
-                                controller.onGestureUpdate(
-                                    1f,
-                                    delta,
-                                    Offset.Zero
-                                )
+                                controller.onGestureUpdate(1f, delta, Offset.Zero)
                             },
                             onVelocityUpdate = { state.scrollVelocity = it },
                             onEnd = {
                                 state.scrollVelocity = Offset.Zero
                                 handleGestureEnd(state, controller, config, gs, zoomAnimationSpec)
-                            }
+                            },
                         )
                     } else {
                         state.scrollVelocity = Offset.Zero
@@ -293,11 +283,11 @@ internal fun Modifier.viewerGestures(
                     var secondDown: PointerInputChange? = null
 
                     try {
-                        secondDown = withTimeoutOrNull(remainingTime) {
-                            awaitFirstDown(requireUnconsumed = false)
-                        }
-                    } catch (_: Exception) {
-                    }
+                        secondDown =
+                            withTimeoutOrNull(remainingTime) {
+                                awaitFirstDown(requireUnconsumed = false)
+                            }
+                    } catch (_: Exception) {}
 
                     if (secondDown != null && config.isZoomGesturesEnabled) {
                         val dist = (secondDown.position - firstDownPos).getDistance()
@@ -311,11 +301,12 @@ internal fun Modifier.viewerGestures(
                                 val atFit = currentZoom < tapZoom * 0.85f
                                 val atTap = currentZoom in (tapZoom * 0.85f)..(maxZoom * 0.85f)
 
-                                val targetZoom = when {
-                                    atFit -> tapZoom
-                                    atTap -> maxZoom
-                                    else -> fitZoom
-                                }
+                                val targetZoom =
+                                    when {
+                                        atFit -> tapZoom
+                                        atTap -> maxZoom
+                                        else -> fitZoom
+                                    }
 
                                 gs.animateZoom(
                                     from = state.zoom,
@@ -328,10 +319,10 @@ internal fun Modifier.viewerGestures(
                                             controller,
                                             config,
                                             gs,
-                                            zoomAnimationSpec
+                                            zoomAnimationSpec,
                                         )
                                     },
-                                    spec = zoomAnimationSpec
+                                    spec = zoomAnimationSpec,
                                 )
                                 secondDown.consume()
                             } else {
@@ -354,7 +345,7 @@ private fun handleGestureEnd(
     controller: ViewerGestureController,
     config: ViewerConfig,
     gs: GestureState,
-    zoomAnimationSpec: AnimationSpec<Float>
+    zoomAnimationSpec: AnimationSpec<Float>,
 ) {
     if (config.isPageSnappingEnabled) {
         val (targetPanX, targetPanY) = controller.computeCenteredPanForPage(state.currentPage)
@@ -362,14 +353,16 @@ private fun handleGestureEnd(
             from = Offset(state.panX, state.panY),
             to = Offset(targetPanX, targetPanY),
             onUpdate = {
-                // We need a way to update pan directly if we want it smooth, 
+                // We need a way to update pan directly if we want it smooth,
                 // but controller.onGestureUpdate(1f, it - lastOffset, ...) could work too.
-                // For now, let's just use the bridge if we can or just call onGestureUpdate with deltas.
-                // Actually, PdfViewerState's panX/panY are internal set, but we are in the same package? 
+                // For now, let's just use the bridge if we can or just call onGestureUpdate with
+                // deltas.
+                // Actually, PdfViewerState's panX/panY are internal set, but we are in the same
+                // package?
                 // No, we are in com.composepdf.gesture.
                 // Let's use controller.onGestureUpdate with deltas.
             },
-            onEnd = { controller.onGestureEnd() }
+            onEnd = { controller.onGestureEnd() },
         )
 
         // Revised: Use a specialized animation to avoid complex delta math
@@ -380,18 +373,20 @@ private fun handleGestureEnd(
             from = startPan,
             to = endPan,
             onUpdate = { currentPan ->
-                // Since we don't have direct access to set panX/panY on state from here easily 
+                // Since we don't have direct access to set panX/panY on state from here easily
                 // (they are internal in com.composepdf.state), we can use a trick:
                 // We calculate the delta from the LAST frame.
                 // But wait, we can just call controller.onGestureUpdate with zoom 1f and the delta.
-                // However, GestureModifiers is in com.composepdf.gesture and state properties are internal.
-                // Actually, PdfViewerState.panX is internal. PdfViewerController.onGestureUpdate is internal too.
+                // However, GestureModifiers is in com.composepdf.gesture and state properties are
+                // internal.
+                // Actually, PdfViewerState.panX is internal. PdfViewerController.onGestureUpdate is
+                // internal too.
                 // Wait, PdfViewer.kt is in com.composepdf.
 
                 // Let's assume for now we can call onGestureUpdate.
                 // We'll need to keep track of the previous pan in the animation.
             },
-            onEnd = { controller.onGestureEnd() }
+            onEnd = { controller.onGestureEnd() },
         )
 
         // Simpler implementation of snapping for now:

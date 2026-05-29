@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components.divider
 
 import androidx.compose.animation.core.LinearEasing
@@ -44,42 +47,42 @@ fun AnimatedWavyDivider(
 
     val infiniteTransition = rememberInfiniteTransition(label = "wave")
 
-    val phase by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = (2f * PI).toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = duration, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "phase"
-    )
+    val phase by
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = (2f * PI).toFloat(),
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(durationMillis = duration, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            label = "phase",
+        )
 
-    Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(AnimatedWavyDividerDefaults.Height)
-    ) {
+    Canvas(modifier = modifier.fillMaxWidth().height(AnimatedWavyDividerDefaults.Height)) {
         val width = size.width
         val centerY = size.height / 2
 
         clipRect(right = width) {
-            val path = Path().apply {
+            val path =
+                Path().apply {
+                    val startY = centerY + (amplitudePx * sin(phase.toDouble())).toFloat()
+                    moveTo(0f, startY)
 
-                val startY = centerY + (amplitudePx * sin(phase.toDouble())).toFloat()
-                moveTo(0f, startY)
-
-                var x = 0f
-                while (x <= width) {
-                    val y = centerY + (amplitudePx * sin((2 * PI * x / waveLengthPx + phase))).toFloat()
-                    lineTo(x, y)
-                    x += 2f
+                    var x = 0f
+                    while (x <= width) {
+                        val y =
+                            centerY +
+                                (amplitudePx * sin((2 * PI * x / waveLengthPx + phase))).toFloat()
+                        lineTo(x, y)
+                        x += 2f
+                    }
                 }
-            }
 
             drawPath(
                 path = path,
                 color = color,
-                style = Stroke(width = strokePx, cap = StrokeCap.Round)
+                style = Stroke(width = strokePx, cap = StrokeCap.Round),
             )
         }
     }

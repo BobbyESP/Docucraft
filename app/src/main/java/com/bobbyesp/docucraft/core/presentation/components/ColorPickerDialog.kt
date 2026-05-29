@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components
 
 import androidx.compose.foundation.background
@@ -33,30 +36,31 @@ fun ColorPickerDialog(
     initialColor: Color,
     onColorSelected: (Color) -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
-    val presetColors = listOf(
-        Color(0xFF6200EE), // Default
-        Color(0xFFF44336), // Red
-        Color(0xFFE91E63), // Pink
-        Color(0xFF9C27B0), // Purple
-        Color(0xFF673AB7), // Deep Purple
-        Color(0xFF3F51B5), // Indigo
-        Color(0xFF2196F3), // Blue
-        Color(0xFF03A9F4), // Light Blue
-        Color(0xFF00BCD4), // Cyan
-        Color(0xFF009688), // Teal
-        Color(0xFF4CAF50), // Green
-        Color(0xFF8BC34A), // Light Green
-        Color(0xFFCDDC39), // Lime
-        Color(0xFFFFEB3B), // Yellow
-        Color(0xFFFFC107), // Amber
-        Color(0xFFFF9800), // Orange
-        Color(0xFFFF5722), // Deep Orange
-        Color(0xFF795548), // Brown
-        Color(0xFF9E9E9E), // Grey
-        Color(0xFF607D8B)  // Blue Grey
-    )
+    val presetColors =
+        listOf(
+            Color(0xFF6200EE), // Default
+            Color(0xFFF44336), // Red
+            Color(0xFFE91E63), // Pink
+            Color(0xFF9C27B0), // Purple
+            Color(0xFF673AB7), // Deep Purple
+            Color(0xFF3F51B5), // Indigo
+            Color(0xFF2196F3), // Blue
+            Color(0xFF03A9F4), // Light Blue
+            Color(0xFF00BCD4), // Cyan
+            Color(0xFF009688), // Teal
+            Color(0xFF4CAF50), // Green
+            Color(0xFF8BC34A), // Light Green
+            Color(0xFFCDDC39), // Lime
+            Color(0xFFFFEB3B), // Yellow
+            Color(0xFFFFC107), // Amber
+            Color(0xFFFF9800), // Orange
+            Color(0xFFFF5722), // Deep Orange
+            Color(0xFF795548), // Brown
+            Color(0xFF9E9E9E), // Grey
+            Color(0xFF607D8B), // Blue Grey
+        )
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -67,34 +71,36 @@ fun ColorPickerDialog(
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     presetColors.forEach { color ->
                         val isSelected = color == initialColor
                         Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(CircleShape)
-                                .background(color)
-                                .then(
-                                    if (isSelected) Modifier.border(
-                                        2.dp,
-                                        MaterialTheme.colorScheme.onSurface,
-                                        CircleShape
-                                    ) else Modifier
-                                )
-                                .clickable {
-                                    onColorSelected(color)
-                                    onDismiss()
-                                },
-                            contentAlignment = Alignment.Center
+                            modifier =
+                                Modifier.size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(color)
+                                    .then(
+                                        if (isSelected)
+                                            Modifier.border(
+                                                2.dp,
+                                                MaterialTheme.colorScheme.onSurface,
+                                                CircleShape,
+                                            )
+                                        else Modifier
+                                    )
+                                    .clickable {
+                                        onColorSelected(color)
+                                        onDismiss()
+                                    },
+                            contentAlignment = Alignment.Center,
                         ) {
                             if (isSelected) {
                                 Icon(
                                     imageVector = Icons.Rounded.Check,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(24.dp),
                                 )
                             }
                         }
@@ -103,9 +109,7 @@ fun ColorPickerDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        },
     )
 }

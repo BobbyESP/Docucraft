@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.service.cache.bitmap
 
 import android.graphics.Bitmap
@@ -11,15 +14,15 @@ import kotlinx.coroutines.withContext
 /**
  * Manages the bitmap eviction policy and handles the delayed return of bitmaps to the pool.
  *
- * This class ensures that bitmaps are kept alive for a short grace period after being evicted from the
- * cache. This prevents issues where Compose might still attempt to draw a bitmap for a few frames after
- * it has been removed from the active cache maps.
+ * This class ensures that bitmaps are kept alive for a short grace period after being evicted from
+ * the cache. This prevents issues where Compose might still attempt to draw a bitmap for a few
+ * frames after it has been removed from the active cache maps.
  */
 internal class BitmapHousekeeper(
     private val scope: CoroutineScope,
     private val state: PdfViewerState,
     private val renderedPagesProvider: () -> Map<Int, Bitmap>,
-    private val bitmapPool: BitmapPool
+    private val bitmapPool: BitmapPool,
 ) {
     val bitmapCache = BitmapCache { evictedBitmap ->
         scope.launch {

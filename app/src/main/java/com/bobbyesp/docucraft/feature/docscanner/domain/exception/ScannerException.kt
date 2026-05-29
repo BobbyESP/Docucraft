@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.domain.exception
 
 sealed class ScannerException(override val message: String?) : Exception(message) {
@@ -5,5 +8,6 @@ sealed class ScannerException(override val message: String?) : Exception(message
         ScannerException(message)
 
     class ScanFailed(message: String?) : ScannerException(message)
+
     class Unknown(message: String? = "An unknown error occurred") : ScannerException(message)
 }

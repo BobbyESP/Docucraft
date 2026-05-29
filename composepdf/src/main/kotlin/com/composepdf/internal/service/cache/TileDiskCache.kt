@@ -1,26 +1,29 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.service.cache
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
 import com.composepdf.internal.service.cache.bitmap.BitmapPool
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import kotlin.random.Random
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Persistent LRU disk cache for high-resolution PDF tiles.
  *
- * Keys are the same strings used by [com.composepdf.PdfViewerState] for in-memory
- * tile storage: `"pageIndex_left_top_right_bottom_zoom"`, optionally prefixed with a
- * document identifier to avoid collisions when loading different PDFs.
+ * Keys are the same strings used by [com.composepdf.PdfViewerState] for in-memory tile storage:
+ * `"pageIndex_left_top_right_bottom_zoom"`, optionally prefixed with a document identifier to avoid
+ * collisions when loading different PDFs.
  *
- * Writes are atomic (temp file + rename) to prevent corrupt cache entries.
- * LRU eviction respects actual access order by updating [File.lastModified] on reads.
+ * Writes are atomic (temp file + rename) to prevent corrupt cache entries. LRU eviction respects
+ * actual access order by updating [File.lastModified] on reads.
  */
 class TileDiskCache(
     private val directory: File,
@@ -47,8 +50,8 @@ class TileDiskCache(
     /**
      * Reads a tile bitmap from disk.
      *
-     * A fresh [BitmapFactory.Options] is created per call to avoid race conditions between
-     * the render threads that call this concurrently. Pool reuse via `inBitmap` is intentionally
+     * A fresh [BitmapFactory.Options] is created per call to avoid race conditions between the
+     * render threads that call this concurrently. Pool reuse via `inBitmap` is intentionally
      * **not** used because:
      * - WebP decoding has strict size-matching requirements for `inBitmap`
      * - The pool's `recycle()` on eviction can invalidate a bitmap between `get()` and decode
@@ -59,14 +62,13 @@ class TileDiskCache(
     fun get(docKey: String, pageIndex: Int, tileKey: String): Bitmap? {
         val file = fileFor(docKey, pageIndex, tileKey)
         if (!file.exists()) return null
-        runCatching {
-            file.setLastModified(System.currentTimeMillis())
-        }
+        runCatching { file.setLastModified(System.currentTimeMillis()) }
 
-        val options = BitmapFactory.Options().apply {
-            inMutable = true
-            inPreferredConfig = Bitmap.Config.ARGB_8888
-        }
+        val options =
+            BitmapFactory.Options().apply {
+                inMutable = true
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }
         return try {
             BitmapFactory.decodeFile(file.absolutePath, options)
         } catch (_: Exception) {
@@ -82,12 +84,12 @@ class TileDiskCache(
             try {
                 FileOutputStream(tmp).use { fos ->
                     BufferedOutputStream(fos).use { out ->
-                        val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            Bitmap.CompressFormat.WEBP_LOSSLESS
-                        } else {
-                            @Suppress("DEPRECATION")
-                            Bitmap.CompressFormat.WEBP
-                        }
+                        val format =
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                Bitmap.CompressFormat.WEBP_LOSSLESS
+                            } else {
+                                @Suppress("DEPRECATION") Bitmap.CompressFormat.WEBP
+                            }
                         bitmap.compress(format, 100, out)
                         out.flush()
                     }
@@ -109,11 +111,13 @@ class TileDiskCache(
         val files = directory.listFiles() ?: return
         var total = files.sumOf { it.length() }
         if (total <= maxSizeBytes) return
-        files.sortedBy { it.lastModified() }.forEach { f ->
-            total -= f.length()
-            f.delete()
-            if (total <= maxSizeBytes) return
-        }
+        files
+            .sortedBy { it.lastModified() }
+            .forEach { f ->
+                total -= f.length()
+                f.delete()
+                if (total <= maxSizeBytes) return
+            }
     }
 
     /** Removes all tiles for a specific document prefix (e.g. when a new PDF is loaded). */
@@ -125,5 +129,3 @@ class TileDiskCache(
         directory.listFiles()?.forEach { it.delete() }
     }
 }
-
-

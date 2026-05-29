@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.navigation
 
 import androidx.compose.material.icons.Icons
@@ -21,15 +24,10 @@ sealed interface Route : NavKey {
         override val icon: ImageVector
             get() = Icons.Rounded.Settings
 
-        @Serializable
-        data object Appearance : Route
+        @Serializable data object Appearance : Route
     }
 
-    @Serializable
-    data class PdfViewer(
-        val documentInfo: BasicDocument
-    ) : Route
-
+    @Serializable data class PdfViewer(val documentInfo: BasicDocument) : Route
 }
 
 interface TopLevelRoute {

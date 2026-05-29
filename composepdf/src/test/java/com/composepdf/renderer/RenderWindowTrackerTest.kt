@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.renderer
 
 import com.composepdf.internal.service.cache.PageCacheKey
@@ -44,4 +47,3 @@ class RenderWindowTrackerTest {
         assertFalse(tracker.shouldPublishTile(session, tileKey))
     }
 }
-

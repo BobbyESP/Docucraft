@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 pluginManagement {
     repositories {
         google {
@@ -12,6 +15,7 @@ pluginManagement {
         maven("https://jitpack.io")
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -22,5 +26,7 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Docucraft"
+
 include(":app")
+
 include(":composepdf")

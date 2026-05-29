@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf
 
 import androidx.compose.foundation.background
@@ -27,20 +30,21 @@ import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import com.composepdf.internal.ui.PdfLayout
 
 /**
- * A Jetpack Compose component for displaying PDF documents with support for high-resolution
- * tiled rendering, pinch-to-zoom, and smooth scrolling.
+ * A Jetpack Compose component for displaying PDF documents with support for high-resolution tiled
+ * rendering, pinch-to-zoom, and smooth scrolling.
  *
- * This viewer efficiently handles large documents by using memory-managed bitmap pooling
- * and asynchronous page loading.
+ * This viewer efficiently handles large documents by using memory-managed bitmap pooling and
+ * asynchronous page loading.
  *
- * @param source The [PdfSource] representing the document to be displayed (e.g., file, asset, or URI).
+ * @param source The [PdfSource] representing the document to be displayed (e.g., file, asset, or
+ *   URI).
  * @param modifier The [Modifier] to be applied to the viewer's container.
  * @param state The [PdfViewerState] used to control the viewer and observe its current status.
  * @param config The [ViewerConfig] used to customize rendering quality and layout behavior.
  * @param onPageChange An optional callback invoked when the current visible page changes.
  * @param onError An optional callback invoked when an error occurs during loading or rendering.
  * @param onDocumentLoad An optional callback invoked when the document is successfully loaded,
- * providing the total number of pages.
+ *   providing the total number of pages.
  */
 @Composable
 fun PdfViewer(
@@ -50,22 +54,17 @@ fun PdfViewer(
     config: ViewerConfig = ViewerConfig(),
     onPageChange: ((Int) -> Unit)? = null,
     onError: ((Throwable) -> Unit)? = null,
-    onDocumentLoad: ((pageCount: Int) -> Unit)? = null
+    onDocumentLoad: ((pageCount: Int) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
 
-    val resolvedConfig = remember(config, density) {
-        config.copy(density = density.density)
-    }
+    val resolvedConfig = remember(config, density) { config.copy(density = density.density) }
 
-    val controller = remember(context, state) {
-        PdfViewerController(context, state, resolvedConfig)
-    }
+    val controller =
+        remember(context, state) { PdfViewerController(context, state, resolvedConfig) }
 
-    LaunchedEffect(controller, resolvedConfig) {
-        controller.updateConfig(resolvedConfig)
-    }
+    LaunchedEffect(controller, resolvedConfig) { controller.updateConfig(resolvedConfig) }
 
     DisposableEffect(controller) {
         state.controller = controller.stateBridge
@@ -89,35 +88,37 @@ fun PdfViewer(
     }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(PdfViewerDefaults.ViewerBackground),
-        contentAlignment = Alignment.Center
+        modifier = modifier.fillMaxSize().background(PdfViewerDefaults.ViewerBackground),
+        contentAlignment = Alignment.Center,
     ) {
         when {
-            state.isLoading -> CircularProgressIndicator(
-                modifier = Modifier.size(64.dp),
-                color = MaterialTheme.colorScheme.primary,
-                strokeWidth = 6.dp
-            )
+            state.isLoading ->
+                CircularProgressIndicator(
+                    modifier = Modifier.size(64.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 6.dp,
+                )
 
-            state.error != null -> Text(
-                text = state.error?.let { err ->
-                    val type = err::class.simpleName ?: "Error"
-                    "$type: ${err.message}"
-                } ?: "Unknown error",
-                color = Color.White,
-                style = MaterialTheme.typography.bodyLarge
-            )
+            state.error != null ->
+                Text(
+                    text =
+                        state.error?.let { err ->
+                            val type = err::class.simpleName ?: "Error"
+                            "$type: ${err.message}"
+                        } ?: "Unknown error",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
 
-            state.isLoaded -> PdfLayout(
-                pageSizes = controller.layoutController.pageSizes,
-                renderedPages = renderedPages,
-                state = state,
-                layoutController = controller.layoutController,
-                gestureController = controller.gestureController,
-                config = resolvedConfig
-            )
+            state.isLoaded ->
+                PdfLayout(
+                    pageSizes = controller.layoutController.pageSizes,
+                    renderedPages = renderedPages,
+                    state = state,
+                    layoutController = controller.layoutController,
+                    gestureController = controller.gestureController,
+                    config = resolvedConfig,
+                )
         }
     }
 }
@@ -125,21 +126,16 @@ fun PdfViewer(
 /**
  * Creates and remembers a [PdfViewerState] that survives configuration changes.
  *
- * In this industrial version, the [BitmapPool] is shared globally or tied to the
- * viewer's lifetime to ensure all bitmaps are tracked and recycled.
+ * In this industrial version, the [BitmapPool] is shared globally or tied to the viewer's lifetime
+ * to ensure all bitmaps are tracked and recycled.
  */
 @Composable
-fun rememberPdfViewerState(
-    initialPage: Int = 0,
-    initialZoom: Float = 1f
-): PdfViewerState {
+fun rememberPdfViewerState(initialPage: Int = 0, initialZoom: Float = 1f): PdfViewerState {
     // Global or context-scoped BitmapPool for the viewer engine.
     val bitmapPool = remember { BitmapPool() }
     val scope = rememberCoroutineScope()
 
-    return rememberSaveable(
-        saver = PdfViewerState.saver(bitmapPool, scope)
-    ) {
+    return rememberSaveable(saver = PdfViewerState.saver(bitmapPool, scope)) {
         PdfViewerState(initialPage, initialZoom, bitmapPool)
     }
 }

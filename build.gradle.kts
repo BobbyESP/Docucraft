@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 import com.diffplug.gradle.spotless.SpotlessExtension
 
 // Top-level build file where you can add configuration options common to all subprojects/modules.
@@ -43,12 +46,11 @@ allprojects {
     }
 }
 
-
 sealed class Version(
     open val major: Int,
     open val minor: Int,
     open val patch: Int,
-    open val build: Int = 0
+    open val build: Int = 0,
 ) {
     protected abstract val stageCode: Int // 0: Alpha, 1: Beta, 2: RC, 3: Stable
     protected abstract val stageName: String
@@ -62,22 +64,22 @@ sealed class Version(
     }
 
     /**
-     * Format: MMMMmmPPsBB (Major - Minor - Patch - stage - Build)
-     * Major: Max. 200 - Example
-     * Minor: Max. 99
-     * Patch: Max. 99
-     * Stage: 0-3
-     * Build: 0-99
+     * Format: MMMMmmPPsBB (Major - Minor - Patch - stage - Build) Major: Max. 200 - Example Minor:
+     * Max. 99 Patch: Max. 99 Stage: 0-3 Build: 0-99
      */
     fun toVersionCode(): Int {
-        return (major * 10_000_000) + (minor * 100_000) + (patch * 1_000) + (stageCode * 100) + build
+        return (major * 10_000_000) +
+            (minor * 100_000) +
+            (patch * 1_000) +
+            (stageCode * 100) +
+            build
     }
 
     data class Alpha(
         override val major: Int,
         override val minor: Int,
         override val patch: Int,
-        override val build: Int
+        override val build: Int,
     ) : Version(major, minor, patch, build) {
         override val stageCode = 0
         override val stageName = "alpha"
@@ -87,7 +89,7 @@ sealed class Version(
         override val major: Int,
         override val minor: Int,
         override val patch: Int,
-        override val build: Int
+        override val build: Int,
     ) : Version(major, minor, patch, build) {
         override val stageCode = 1
         override val stageName = "beta"
@@ -97,29 +99,21 @@ sealed class Version(
         override val major: Int,
         override val minor: Int,
         override val patch: Int,
-        override val build: Int
+        override val build: Int,
     ) : Version(major, minor, patch, build) {
         override val stageCode = 2
         override val stageName = "rc"
     }
 
-    data class Stable(
-        override val major: Int,
-        override val minor: Int,
-        override val patch: Int
-    ) : Version(major, minor, patch) {
+    data class Stable(override val major: Int, override val minor: Int, override val patch: Int) :
+        Version(major, minor, patch) {
         override val stageCode = 3
         override val stageName = ""
         override val build = 0
     }
 }
 
-val currentVersion: Version = Version.Beta(
-    major = 1,
-    minor = 0,
-    patch = 0,
-    build = 17
-)
+val currentVersion: Version = Version.Beta(major = 1, minor = 0, patch = 0, build = 17)
 
 val versionCode by extra(currentVersion.toVersionCode())
 val versionName by extra(currentVersion.toVersionName())

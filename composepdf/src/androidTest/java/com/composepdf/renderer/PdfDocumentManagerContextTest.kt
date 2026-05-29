@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.renderer
 
 import android.view.ContextThemeWrapper
@@ -27,4 +30,3 @@ class PdfDocumentManagerContextTest {
         manager.close()
     }
 }
-

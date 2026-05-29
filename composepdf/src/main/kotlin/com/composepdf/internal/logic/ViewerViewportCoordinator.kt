@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.logic
 
 import android.util.Size
@@ -14,14 +17,15 @@ import com.composepdf.ViewerConfig
 import com.composepdf.internal.logic.tiles.ViewportState
 
 /**
- * Manages the spatial and geometric state of the PDF viewer, acting as the bridge between
- * the viewport dimensions, page layouts, and the document's physical scroll position.
+ * Manages the spatial and geometric state of the PDF viewer, acting as the bridge between the
+ * viewport dimensions, page layouts, and the document's physical scroll position.
  */
 internal class ViewerViewportCoordinator(
     private val state: PdfViewerState,
     private val configProvider: () -> ViewerConfig,
-    private val snapshotFactory: (List<Size>, Float, Float, FitMode, Float, ScrollDirection) -> PageLayoutSnapshot =
-        PageLayoutSnapshot::build
+    private val snapshotFactory:
+        (List<Size>, Float, Float, FitMode, Float, ScrollDirection) -> PageLayoutSnapshot =
+        PageLayoutSnapshot::build,
 ) {
     var viewportWidth by mutableFloatStateOf(0f)
         private set
@@ -35,7 +39,8 @@ internal class ViewerViewportCoordinator(
     private var layoutSnapshot by mutableStateOf(PageLayoutSnapshot.empty())
     private var layoutVersion by mutableIntStateOf(0)
 
-    val hasLayout: Boolean get() = !layoutSnapshot.isEmpty
+    val hasLayout: Boolean
+        get() = !layoutSnapshot.isEmpty
 
     fun updateViewport(width: Float, height: Float): Boolean {
         if (width == viewportWidth && height == viewportHeight) return false
@@ -74,13 +79,14 @@ internal class ViewerViewportCoordinator(
         return layoutSnapshot.visiblePageIndices(state.panX, state.panY, state.zoom)
     }
 
-    fun isPointOverPage(point: Offset): Boolean = layoutSnapshot.isPointOverPage(
-        screenX = point.x,
-        screenY = point.y,
-        panX = state.panX,
-        panY = state.panY,
-        zoom = state.zoom
-    )
+    fun isPointOverPage(point: Offset): Boolean =
+        layoutSnapshot.isPointOverPage(
+            screenX = point.x,
+            screenY = point.y,
+            panX = state.panX,
+            panY = state.panY,
+            zoom = state.zoom,
+        )
 
     fun clampPan() {
         val clampedPan = layoutSnapshot.clampPan(state.panX, state.panY, state.zoom)
@@ -109,25 +115,27 @@ internal class ViewerViewportCoordinator(
         state.currentPage = currentPage.coerceIn(0, (state.pageCount - 1).coerceAtLeast(0))
     }
 
-    fun viewportState(): ViewportState = ViewportState(
-        width = viewportWidth,
-        height = viewportHeight,
-        panX = state.panX,
-        panY = state.panY
-    )
+    fun viewportState(): ViewportState =
+        ViewportState(
+            width = viewportWidth,
+            height = viewportHeight,
+            panX = state.panX,
+            panY = state.panY,
+        )
 
     fun snapshot(): PageLayoutSnapshot = layoutSnapshot
 
     private fun rebuildLayoutSnapshot() {
         val config = configProvider()
-        layoutSnapshot = snapshotFactory(
-            pageSizes,
-            viewportWidth,
-            viewportHeight,
-            config.fitMode,
-            config.pageSpacingPx,
-            config.scrollDirection
-        )
+        layoutSnapshot =
+            snapshotFactory(
+                pageSizes,
+                viewportWidth,
+                viewportHeight,
+                config.fitMode,
+                config.pageSpacingPx,
+                config.scrollDirection,
+            )
         layoutVersion++
     }
 }

@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components.divider
 
 import androidx.compose.foundation.Canvas
@@ -32,11 +35,7 @@ fun WavyDivider(
 
     val color by colors.color()
 
-    Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(amplitude * 2)
-    ) {
+    Canvas(modifier = modifier.fillMaxWidth().height(amplitude * 2)) {
         val width = size.width
         val centerY = size.height / 2
 
@@ -47,19 +46,9 @@ fun WavyDivider(
             var currentX = 0f
 
             while (currentX < width) {
-                path.relativeQuadraticTo(
-                    waveLengthPx / 4,
-                    -amplitudePx,
-                    waveLengthPx / 2,
-                    0f
-                )
+                path.relativeQuadraticTo(waveLengthPx / 4, -amplitudePx, waveLengthPx / 2, 0f)
 
-                path.relativeQuadraticTo(
-                    waveLengthPx / 4,
-                    amplitudePx,
-                    waveLengthPx / 2,
-                    0f
-                )
+                path.relativeQuadraticTo(waveLengthPx / 4, amplitudePx, waveLengthPx / 2, 0f)
 
                 currentX += waveLengthPx
             }
@@ -67,7 +56,7 @@ fun WavyDivider(
             drawPath(
                 path = path,
                 color = color,
-                style = Stroke(width = strokePx, cap = StrokeCap.Round)
+                style = Stroke(width = strokePx, cap = StrokeCap.Round),
             )
         }
     }
@@ -76,7 +65,5 @@ fun WavyDivider(
 @PreviewLightDark
 @Composable
 private fun WavyDividerPreview() {
-    DocucraftTheme {
-        WavyDivider()
-    }
+    DocucraftTheme { WavyDivider() }
 }

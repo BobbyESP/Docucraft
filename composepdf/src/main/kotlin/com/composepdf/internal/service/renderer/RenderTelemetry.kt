@@ -1,10 +1,13 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.service.renderer
 
+import java.util.ArrayDeque
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import java.util.ArrayDeque
 
 /** High-level reason that triggered a render pass. */
 enum class RenderTrigger {
@@ -14,7 +17,7 @@ enum class RenderTrigger {
     PROGRAMMATIC,
     GESTURE_DEBOUNCED,
     GESTURE_END,
-    ANIMATED_ZOOM_SETTLED
+    ANIMATED_ZOOM_SETTLED,
 }
 
 /** One recent telemetry event recorded inside the render pipeline. */
@@ -23,7 +26,7 @@ data class RenderTelemetryEvent(
     val source: String,
     val action: String,
     val detail: String,
-    val timestampMs: Long = System.currentTimeMillis()
+    val timestampMs: Long = System.currentTimeMillis(),
 )
 
 /** Aggregate snapshot of the current render pipeline state. */
@@ -48,7 +51,7 @@ data class RenderTelemetrySnapshot(
     val tileJobsCancelled: Int = 0,
     val activePageJobs: Int = 0,
     val activeTileJobs: Int = 0,
-    val recentEventCount: Int = 0
+    val recentEventCount: Int = 0,
 )
 
 /**
@@ -56,35 +59,34 @@ data class RenderTelemetrySnapshot(
  *
  * It is intentionally in-process and dependency-free so it can be enabled in all builds without
  * affecting network, privacy, or startup performance. The main goal is to make render lifecycle
- * issues diagnosable by exposing pass metadata, cache hits, stale drops, and job cancellation patterns.
+ * issues diagnosable by exposing pass metadata, cache hits, stale drops, and job cancellation
+ * patterns.
  *
- * @param maxEvents The maximum number of recent [RenderTelemetryEvent]s to keep in the circular buffer.
+ * @param maxEvents The maximum number of recent [RenderTelemetryEvent]s to keep in the circular
+ *   buffer.
  */
-internal class RenderTelemetry(
-    private val maxEvents: Int = 200
-) {
+internal class RenderTelemetry(private val maxEvents: Int = 200) {
     private val eventLock = Any()
     private val recentEventsBuffer = ArrayDeque<RenderTelemetryEvent>(maxEvents)
     private val _snapshot = MutableStateFlow(RenderTelemetrySnapshot())
 
     val snapshot: StateFlow<RenderTelemetrySnapshot> = _snapshot.asStateFlow()
 
-    fun recentEvents(limit: Int = 50): List<RenderTelemetryEvent> = synchronized(eventLock) {
-        recentEventsBuffer.toList().takeLast(limit.coerceAtLeast(0))
-    }
+    fun recentEvents(limit: Int = 50): List<RenderTelemetryEvent> =
+        synchronized(eventLock) { recentEventsBuffer.toList().takeLast(limit.coerceAtLeast(0)) }
 
     fun recordPassStarted(
         passId: Int,
         trigger: RenderTrigger,
         zoom: Float,
-        visiblePages: IntRange
+        visiblePages: IntRange,
     ) {
         _snapshot.update {
             it.copy(
                 lastPassId = passId,
                 lastTrigger = trigger,
                 lastZoom = zoom,
-                lastVisiblePages = visiblePages.toString()
+                lastVisiblePages = visiblePages.toString(),
             )
         }
         appendEvent(passId, "pipeline", "pass_started", "$trigger zoom=$zoom visible=$visiblePages")
@@ -95,21 +97,21 @@ internal class RenderTelemetry(
         steppedZoom: Float,
         keepTileCount: Int,
         requestCount: Int,
-        prefetchPages: List<Int>
+        prefetchPages: List<Int>,
     ) {
         _snapshot.update {
             it.copy(
                 lastSteppedZoom = steppedZoom,
                 lastKeepTileCount = keepTileCount,
                 lastRequestedTiles = requestCount,
-                lastPrefetchPages = prefetchPages.joinToString()
+                lastPrefetchPages = prefetchPages.joinToString(),
             )
         }
         appendEvent(
             passId,
             "pipeline",
             "tile_plan",
-            "step=$steppedZoom keep=$keepTileCount request=$requestCount prefetch=$prefetchPages"
+            "step=$steppedZoom keep=$keepTileCount request=$requestCount prefetch=$prefetchPages",
         )
     }
 
@@ -127,7 +129,7 @@ internal class RenderTelemetry(
         _snapshot.update {
             it.copy(
                 pagesPublished = it.pagesPublished + if (!stale) 1 else 0,
-                pagesDroppedAsStale = it.pagesDroppedAsStale + if (stale) 1 else 0
+                pagesDroppedAsStale = it.pagesDroppedAsStale + if (stale) 1 else 0,
             )
         }
         appendEvent(passId, "page", if (stale) "stale_drop" else "published", "page=$pageIndex")
@@ -152,7 +154,7 @@ internal class RenderTelemetry(
         _snapshot.update {
             it.copy(
                 tilesPublished = it.tilesPublished + if (!stale) 1 else 0,
-                tilesDroppedAsStale = it.tilesDroppedAsStale + if (stale) 1 else 0
+                tilesDroppedAsStale = it.tilesDroppedAsStale + if (stale) 1 else 0,
             )
         }
         appendEvent(passId, "tile", if (stale) "stale_drop" else "published", tileKey)
@@ -177,7 +179,7 @@ internal class RenderTelemetry(
                     passId = passId,
                     source = source,
                     action = action,
-                    detail = detail
+                    detail = detail,
                 )
             )
             _snapshot.update { it.copy(recentEventCount = recentEventsBuffer.size) }

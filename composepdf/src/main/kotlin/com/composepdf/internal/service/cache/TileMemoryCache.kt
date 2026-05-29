@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.service.cache
 
 import android.graphics.Bitmap
@@ -8,13 +11,10 @@ import androidx.compose.ui.graphics.asImageBitmap
  * In-memory cache for rendered tiles.
  *
  * Maintains both:
- *
  * - Bitmap storage
  * - ImageBitmap snapshot for Compose rendering
  */
-class TileMemoryCache(
-    maxSize: Int
-) {
+class TileMemoryCache(maxSize: Int) {
     private val lru = LruTileCache(maxSize)
 
     private val bitmapSnapshot = mutableMapOf<String, ImageBitmap>()
@@ -26,6 +26,5 @@ class TileMemoryCache(
         bitmapSnapshot[key] = bitmap.asImageBitmap()
     }
 
-    fun snapshot(): Map<String, ImageBitmap> =
-        bitmapSnapshot
+    fun snapshot(): Map<String, ImageBitmap> = bitmapSnapshot
 }

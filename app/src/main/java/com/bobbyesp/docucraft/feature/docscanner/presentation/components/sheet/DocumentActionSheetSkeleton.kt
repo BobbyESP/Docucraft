@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet
 
 import androidx.compose.animation.core.LinearEasing
@@ -45,20 +48,18 @@ fun DocumentActionSheetSkeleton(
     elevation: Dp = DocucraftElevationDefaults.Modal,
     header: @Composable () -> Unit = {},
     footer: @Composable () -> Unit = {},
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         // Header container
         Surface(
             modifier = Modifier.fillMaxWidth(),
             tonalElevation = elevation,
-            shape = DocucraftShapeDefaults.topListItemShape
+            shape = DocucraftShapeDefaults.topListItemShape,
         ) {
             header()
         }
@@ -67,7 +68,7 @@ fun DocumentActionSheetSkeleton(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             tonalElevation = elevation,
-            shape = DocucraftShapeDefaults.bottomListItemShape
+            shape = DocucraftShapeDefaults.bottomListItemShape,
         ) {
             content()
         }
@@ -86,20 +87,22 @@ fun DocumentActionSheetSkeleton(
     iconTint: Color = MaterialTheme.colorScheme.primary,
     headingDescription: String? = null,
     footer: @Composable () -> Unit = {},
-    content: @Composable () -> Unit = {}
+    content: @Composable () -> Unit = {},
 ) {
     val iconSize: Dp = 28.dp
 
     val infiniteTransition = rememberInfiniteTransition(label = "SheetIconRotation")
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(8000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "RotationAngle"
-    )
+    val rotation by
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(8000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            label = "RotationAngle",
+        )
 
     DocumentActionSheetSkeleton(
         modifier = modifier,
@@ -107,39 +110,39 @@ fun DocumentActionSheetSkeleton(
             Column(
                 modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 icon?.let {
                     Box(
                         modifier = Modifier.size(iconSize * 2),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .graphicsLayer { rotationZ = rotation }
-                                .clip(MaterialShapes.Cookie6Sided.toShape())
-                                .background(MaterialTheme.colorScheme.primaryContainer)
+                            modifier =
+                                Modifier.matchParentSize()
+                                    .graphicsLayer { rotationZ = rotation }
+                                    .clip(MaterialShapes.Cookie6Sided.toShape())
+                                    .background(MaterialTheme.colorScheme.primaryContainer)
                         )
 
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
                             tint = iconTint,
-                            modifier = Modifier.size(iconSize)
+                            modifier = Modifier.size(iconSize),
                         )
                     }
                 }
 
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         text = headingTitle,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
 
                     headingDescription?.let { desc ->
@@ -147,14 +150,14 @@ fun DocumentActionSheetSkeleton(
                             text = desc,
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
             }
         },
         footer = footer,
-        content = content
+        content = content,
     )
 }
 
@@ -169,7 +172,7 @@ private fun DocumentActionSheetSkeletonPreview() {
             content = {
                 Column(
                     modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text("Option 1")
                     Text("Option 2")
@@ -180,10 +183,9 @@ private fun DocumentActionSheetSkeletonPreview() {
                 Text(
                     text = "Footer content goes here.",
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(8.dp)
+                    modifier = Modifier.padding(8.dp),
                 )
-            }
+            },
         )
-
     }
 }

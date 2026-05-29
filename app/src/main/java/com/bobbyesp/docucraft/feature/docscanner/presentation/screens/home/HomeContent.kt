@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home
 
 import androidx.compose.animation.AnimatedContent
@@ -113,9 +116,10 @@ fun HomeContent(
     val usableMotionScheme = motionScheme
 
     Scaffold(
-        modifier = modifier.pointerInput(Unit) {
-            detectTapGestures(onTap = { focusManager.clearFocus() })
-        },
+        modifier =
+            modifier.pointerInput(Unit) {
+                detectTapGestures(onTap = { focusManager.clearFocus() })
+            },
         topBar = {
             TopAppBar(
                 modifier = Modifier,
@@ -135,7 +139,7 @@ fun HomeContent(
                     IconButton(onClick = { onAction(HomeIntent.OpenSettings) }) {
                         Icon(
                             imageVector = Icons.Rounded.Settings,
-                            contentDescription = stringResource(id = R.string.settings)
+                            contentDescription = stringResource(id = R.string.settings),
                         )
                     }
                 },
@@ -145,19 +149,20 @@ fun HomeContent(
             var isSearchFocused by remember { mutableStateOf(false) }
 
             AnimatedContent(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 32.dp)
-                    .windowInsetsPadding(WindowInsets.ime),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(start = 32.dp)
+                        .windowInsetsPadding(WindowInsets.ime),
                 targetState = uiState.hasDocuments,
                 transitionSpec = {
                     ContentTransform(
-                        targetContentEnter = slideInVertically(
-                            animationSpec = usableMotionScheme.defaultSpatialSpec()
-                        ) + fadeIn(tween(500)),
-                        initialContentExit = slideOutVertically(usableMotionScheme.defaultSpatialSpec()) + fadeOut(
-                            tween(500)
-                        ),
+                        targetContentEnter =
+                            slideInVertically(
+                                animationSpec = usableMotionScheme.defaultSpatialSpec()
+                            ) + fadeIn(tween(500)),
+                        initialContentExit =
+                            slideOutVertically(usableMotionScheme.defaultSpatialSpec()) +
+                                fadeOut(tween(500)),
                     )
                 },
             ) { isFabAndSearchVisible ->
@@ -213,14 +218,13 @@ fun HomeContent(
                 HomeStatus.Idle -> {
                     if (!uiState.hasDocuments) {
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize(),
-                            contentAlignment = Alignment.Center
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
                         ) {
                             EmptyStateScreen(
-                                modifier = Modifier, onScanDocument = {
-                                    onAction(HomeIntent.LaunchScanner)
-                                })
+                                modifier = Modifier,
+                                onScanDocument = { onAction(HomeIntent.LaunchScanner) },
+                            )
                         }
                     } else {
                         ScannedDocumentsList(
@@ -231,7 +235,6 @@ fun HomeContent(
                         )
                     }
                 }
-
             }
         }
     }
@@ -249,13 +252,13 @@ private fun ScannedDocumentsList(
     var animatedOverscrollAmount by remember { mutableFloatStateOf(0f) }
 
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .customOverscroll(
-                listState = listState,
-                onNewOverscrollAmount = { animatedOverscrollAmount = it },
-            )
-            .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
+        modifier =
+            Modifier.fillMaxSize()
+                .customOverscroll(
+                    listState = listState,
+                    onNewOverscrollAmount = { animatedOverscrollAmount = it },
+                )
+                .offset { IntOffset(0, animatedOverscrollAmount.roundToInt()) },
         state = listState,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -266,18 +269,20 @@ private fun ScannedDocumentsList(
                     onAction(HomeIntent.ApplySort(it))
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
                 },
-                modifier = Modifier
-                    .background(
-                        // fade to transparent from background
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.background,
-                                Color.Transparent,
-                            ),
-                            startY = 100f,
+                modifier =
+                    Modifier.background(
+                            // fade to transparent from background
+                            brush =
+                                Brush.verticalGradient(
+                                    colors =
+                                        listOf(
+                                            MaterialTheme.colorScheme.background,
+                                            Color.Transparent,
+                                        ),
+                                    startY = 100f,
+                                )
                         )
-                    )
-                    .padding(8.dp),
+                        .padding(8.dp),
             )
         }
 
@@ -286,22 +291,23 @@ private fun ScannedDocumentsList(
             key = { _, scannedDocument -> scannedDocument.uuid },
             contentType = { _, scannedDocument -> scannedDocument.javaClass.name },
         ) { index, scannedDocument ->
-            val position = when {
-                scannedDocuments.size == 1 -> ScannedDocumentCardPosition.SINGLE
-                index == 0 -> ScannedDocumentCardPosition.TOP
-                index == scannedDocuments.lastIndex -> ScannedDocumentCardPosition.BOTTOM
-                else -> ScannedDocumentCardPosition.MIDDLE
-            }
+            val position =
+                when {
+                    scannedDocuments.size == 1 -> ScannedDocumentCardPosition.SINGLE
+                    index == 0 -> ScannedDocumentCardPosition.TOP
+                    index == scannedDocuments.lastIndex -> ScannedDocumentCardPosition.BOTTOM
+                    else -> ScannedDocumentCardPosition.MIDDLE
+                }
 
             ScannedDocumentListItem(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .animateItem(
-                        fadeInSpec = motionScheme.defaultEffectsSpec(),
-                        placementSpec = motionScheme.slowSpatialSpec(),
-                        fadeOutSpec = motionScheme.defaultEffectsSpec()
-                    ),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .animateItem(
+                            fadeInSpec = motionScheme.defaultEffectsSpec(),
+                            placementSpec = motionScheme.slowSpatialSpec(),
+                            fadeOutSpec = motionScheme.defaultEffectsSpec(),
+                        ),
                 pdf = scannedDocument,
                 position = position,
                 onItemClick = { id -> onAction(HomeIntent.ViewDocument(id)) },
@@ -321,9 +327,7 @@ private fun SortOptionsRow(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -340,26 +344,29 @@ private fun SortOptionsRow(
 
         VerticalDivider(
             color = MaterialTheme.colorScheme.outline,
-            modifier = Modifier
-                .height(24.dp)
-                .padding(horizontal = 8.dp),
+            modifier = Modifier.height(24.dp).padding(horizontal = 8.dp),
         )
 
         IconButton(
-            modifier = Modifier, colors = IconButtonDefaults.iconButtonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-            ), onClick = {
+            modifier = Modifier,
+            colors =
+                IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+                ),
+            onClick = {
                 onSortOptionChange(
                     SortOption(currentSortOption.criteria, currentSortOption.order.reverse())
                 )
-            }) {
+            },
+        ) {
             Icon(
                 imageVector = currentSortOption.getSortIcon(),
-                contentDescription = if (currentSortOption.order == SortOption.Order.ASC) {
-                    stringResource(R.string.sort_ascending)
-                } else {
-                    stringResource(R.string.sort_descending)
-                },
+                contentDescription =
+                    if (currentSortOption.order == SortOption.Order.ASC) {
+                        stringResource(R.string.sort_ascending)
+                    } else {
+                        stringResource(R.string.sort_descending)
+                    },
             )
         }
     }
@@ -382,17 +389,16 @@ private fun SearchBar(
         TextField(
             value = query,
             onValueChange = onQueryChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged { onFocusChange(it.isFocused) },
-            colors = TextFieldDefaults.colors(
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-                errorIndicatorColor = MaterialTheme.colorScheme.error,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ),
+            modifier = Modifier.fillMaxWidth().onFocusChanged { onFocusChange(it.isFocused) },
+            colors =
+                TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                    errorIndicatorColor = MaterialTheme.colorScheme.error,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
             placeholder = {
                 Text(
                     modifier = Modifier.alpha(0.66f),
@@ -434,7 +440,7 @@ private fun EmptyStateScreen(onScanDocument: () -> Unit, modifier: Modifier = Mo
         actionText = stringResource(R.string.doc_scan_new),
         onAction = onScanDocument,
         icon = Icons.Rounded.FileCopy,
-        iconAction = Icons.Rounded.CameraAlt
+        iconAction = Icons.Rounded.CameraAlt,
     )
 }
 
@@ -448,7 +454,7 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
         onAction = onRetry,
         icon = Icons.Rounded.Warning,
         iconAction = Icons.Rounded.Refresh,
-        isError = true
+        isError = true,
     )
 }
 
@@ -457,11 +463,12 @@ private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
 private fun HomeContentPreview() {
     DocucraftTheme {
         HomeContent(
-            uiState = HomeUiState(
-                status = HomeStatus.Idle,
-                hasDocuments = true,
-                visibleDocuments = MockData.Documents.documentsList
-            ),
+            uiState =
+                HomeUiState(
+                    status = HomeStatus.Idle,
+                    hasDocuments = true,
+                    visibleDocuments = MockData.Documents.documentsList,
+                ),
             onAction = {},
         )
     }

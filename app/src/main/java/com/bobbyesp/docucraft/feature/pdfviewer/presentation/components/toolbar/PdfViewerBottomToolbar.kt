@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar
 
 import androidx.compose.animation.animateContentSize
@@ -69,8 +72,8 @@ import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.composepdf.FitMode
 import com.composepdf.PdfViewerState
-import kotlinx.coroutines.launch
 import kotlin.math.max
+import kotlinx.coroutines.launch
 
 /**
  * Bottom floating toolbar for the PDF viewer.
@@ -83,11 +86,11 @@ import kotlin.math.max
  *
  * Designed following Material 3 Expressive guidelines.
  *
- * @param state         The hoisted [PdfViewerState].
+ * @param state The hoisted [PdfViewerState].
  * @param isNightModeEnabled Whether night mode is currently active.
- * @param fitMode       The currently active [FitMode].
+ * @param fitMode The currently active [FitMode].
  * @param onNightModeToggle Callback to toggle night mode.
- * @param modifier      Optional modifier for the toolbar container.
+ * @param modifier Optional modifier for the toolbar container.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -105,30 +108,29 @@ fun PdfViewerBottomToolbar(
         val metrics = remember(maxWidth) { toolbarMetrics(maxWidth) }
 
         Surface(
-            modifier = Modifier
-                .height(metrics.containerHeight)
-                .animateContentSize(),
+            modifier = Modifier.height(metrics.containerHeight).animateContentSize(),
             shape = MaterialTheme.shapes.extraLargeIncreased,
             color = MaterialTheme.colorScheme.primaryContainer,
             tonalElevation = 4.dp,
         ) {
             Row(
-                modifier = Modifier.padding(
-                    horizontal = metrics.containerHorizontalPadding,
-                    vertical = metrics.containerVerticalPadding
-                ),
+                modifier =
+                    Modifier.padding(
+                        horizontal = metrics.containerHorizontalPadding,
+                        vertical = metrics.containerVerticalPadding,
+                    ),
                 horizontalArrangement = Arrangement.spacedBy(metrics.itemSpacing),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(
                     onClick = { state.scrollToPage(state.currentPage - 1) },
                     enabled = state.currentPage > 0,
                     shapes = IconButtonDefaults.shapes(),
-                    modifier = Modifier.size(metrics.iconButtonSize)
+                    modifier = Modifier.size(metrics.iconButtonSize),
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.SkipPrevious,
-                        contentDescription = stringResource(R.string.previous_page)
+                        contentDescription = stringResource(R.string.previous_page),
                     )
                 }
 
@@ -138,18 +140,18 @@ fun PdfViewerBottomToolbar(
                     showPageTotal = metrics.showPageTotal,
                     pageFieldWidth = metrics.pageFieldWidth,
                     pageFieldHeight = metrics.pageFieldHeight,
-                    onGoToPage = { page -> state.scrollToPage(page - 1) }
+                    onGoToPage = { page -> state.scrollToPage(page - 1) },
                 )
 
                 IconButton(
                     onClick = { state.scrollToPage(state.currentPage + 1) },
                     enabled = state.currentPage < state.pageCount - 1,
                     shapes = IconButtonDefaults.shapes(),
-                    modifier = Modifier.size(metrics.iconButtonSize)
+                    modifier = Modifier.size(metrics.iconButtonSize),
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.SkipNext,
-                        contentDescription = stringResource(R.string.next_page)
+                        contentDescription = stringResource(R.string.next_page),
                     )
                 }
 
@@ -159,11 +161,11 @@ fun PdfViewerBottomToolbar(
                     onClick = { state.zoomOut(0.25f) },
                     enabled = state.zoom > state.minZoom,
                     shapes = IconButtonDefaults.shapes(),
-                    modifier = Modifier.size(metrics.iconButtonSize)
+                    modifier = Modifier.size(metrics.iconButtonSize),
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.ZoomOut,
-                        contentDescription = stringResource(R.string.zoom_out)
+                        contentDescription = stringResource(R.string.zoom_out),
                     )
                 }
 
@@ -181,11 +183,11 @@ fun PdfViewerBottomToolbar(
                     onClick = { state.zoomIn(0.25f) },
                     enabled = state.zoom < state.maxZoom,
                     shapes = IconButtonDefaults.shapes(),
-                    modifier = Modifier.size(metrics.iconButtonSize)
+                    modifier = Modifier.size(metrics.iconButtonSize),
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.ZoomIn,
-                        contentDescription = stringResource(R.string.zoom_in)
+                        contentDescription = stringResource(R.string.zoom_in),
                     )
                 }
 
@@ -194,24 +196,25 @@ fun PdfViewerBottomToolbar(
                 IconButton(
                     onClick = { onFitModeChange(fitMode.next()) },
                     shapes = IconButtonDefaults.shapes(),
-                    modifier = Modifier.size(metrics.iconButtonSize)
+                    modifier = Modifier.size(metrics.iconButtonSize),
                 ) {
                     Icon(
                         imageVector = fitMode.icon(),
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        contentDescription = stringResource(R.string.fit_mode)
+                        contentDescription = stringResource(R.string.fit_mode),
                     )
                 }
 
                 FilledIconToggleButton(
                     checked = isNightModeEnabled,
                     onCheckedChange = { onNightModeToggle() },
-                    modifier = Modifier.size(metrics.iconButtonSize)
+                    modifier = Modifier.size(metrics.iconButtonSize),
                 ) {
                     Icon(
-                        imageVector = if (isNightModeEnabled) Icons.Rounded.DarkMode
-                        else Icons.Rounded.LightMode,
-                        contentDescription = stringResource(R.string.night_mode)
+                        imageVector =
+                            if (isNightModeEnabled) Icons.Rounded.DarkMode
+                            else Icons.Rounded.LightMode,
+                        contentDescription = stringResource(R.string.night_mode),
                     )
                 }
             }
@@ -252,65 +255,64 @@ private fun PageInputField(
     }
 
     Box(
-        modifier = Modifier
-            .clip(MaterialTheme.shapes.small)
-            .padding(horizontal = pageFieldWidth / 10, vertical = pageFieldHeight / 14),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier.clip(MaterialTheme.shapes.small)
+                .padding(horizontal = pageFieldWidth / 10, vertical = pageFieldHeight / 14),
+        contentAlignment = Alignment.Center,
     ) {
         Row(
             modifier = Modifier.height(pageFieldHeight),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             BasicTextField(
                 value = pageText,
                 onValueChange = { input ->
                     pageText = input.filter { it.isDigit() }.take(maxDigits)
                 },
-                modifier = Modifier
-                    .height(pageFieldHeight)
-                    .widthIn(min = pageFieldWidth, max = pageFieldWidth * 1.5f)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(MaterialTheme.colorScheme.onPrimaryFixed.copy(alpha = 0.45f))
-                    .border(
-                        width = 2.dp,
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.65f),
-                        shape = MaterialTheme.shapes.small
-                    )
-                    .padding(horizontal = 8.dp)
-                    .onFocusChanged { focusState ->
-                        isFocused = focusState.isFocused
-                        if (focusState.isFocused) {
-                            pageText = currentPage.coerceIn(1, maxPage).toString()
-                        }
-                    },
-                textStyle = MaterialTheme.typography.labelLarge.copy(
-                    textAlign = TextAlign.Center,
-                    color = contentColor
-                ),
+                modifier =
+                    Modifier.height(pageFieldHeight)
+                        .widthIn(min = pageFieldWidth, max = pageFieldWidth * 1.5f)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(MaterialTheme.colorScheme.onPrimaryFixed.copy(alpha = 0.45f))
+                        .border(
+                            width = 2.dp,
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.65f),
+                            shape = MaterialTheme.shapes.small,
+                        )
+                        .padding(horizontal = 8.dp)
+                        .onFocusChanged { focusState ->
+                            isFocused = focusState.isFocused
+                            if (focusState.isFocused) {
+                                pageText = currentPage.coerceIn(1, maxPage).toString()
+                            }
+                        },
+                textStyle =
+                    MaterialTheme.typography.labelLarge.copy(
+                        textAlign = TextAlign.Center,
+                        color = contentColor,
+                    ),
                 cursorBrush = SolidColor(contentColor),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Go
-                ),
+                keyboardOptions =
+                    KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Go),
                 keyboardActions = KeyboardActions(onGo = { commitPageChange() }),
                 singleLine = true,
                 interactionSource = remember { MutableInteractionSource() },
                 decorationBox = { innerTextField ->
                     Box(
                         modifier = Modifier.height(pageFieldHeight),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.Center,
                     ) {
                         innerTextField()
                     }
-                }
+                },
             )
 
             if (showPageTotal) {
                 Text(
                     text = "/ $pageCount",
                     style = MaterialTheme.typography.labelMedium,
-                    color = contentColor.copy(alpha = 0.74f)
+                    color = contentColor.copy(alpha = 0.74f),
                 )
             }
         }
@@ -333,34 +335,35 @@ private fun ZoomResetButton(
     var dragAccumulator by remember { mutableFloatStateOf(0f) }
 
     Box(
-        modifier = Modifier
-            .height(height)
-            .clip(MaterialTheme.shapes.small)
-            .draggable(
-                orientation = Orientation.Horizontal,
-                state = rememberDraggableState { delta ->
-                    dragAccumulator += delta
-                    while (dragAccumulator >= dragStepPx) {
-                        onSlideRight()
-                        dragAccumulator -= dragStepPx
-                    }
-                    while (dragAccumulator <= -dragStepPx) {
-                        onSlideLeft()
-                        dragAccumulator += dragStepPx
-                    }
-                },
-                onDragStarted = { dragAccumulator = 0f },
-                onDragStopped = { dragAccumulator = 0f },
-            )
-            .combinedClickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(),
-                role = Role.Button,
-                onClick = onClick,
-            )
-            .padding(horizontal = horizontalPadding)
-            .widthIn(min = minWidth),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier.height(height)
+                .clip(MaterialTheme.shapes.small)
+                .draggable(
+                    orientation = Orientation.Horizontal,
+                    state =
+                        rememberDraggableState { delta ->
+                            dragAccumulator += delta
+                            while (dragAccumulator >= dragStepPx) {
+                                onSlideRight()
+                                dragAccumulator -= dragStepPx
+                            }
+                            while (dragAccumulator <= -dragStepPx) {
+                                onSlideLeft()
+                                dragAccumulator += dragStepPx
+                            }
+                        },
+                    onDragStarted = { dragAccumulator = 0f },
+                    onDragStopped = { dragAccumulator = 0f },
+                )
+                .combinedClickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(),
+                    role = Role.Button,
+                    onClick = onClick,
+                )
+                .padding(horizontal = horizontalPadding)
+                .widthIn(min = minWidth),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = zoomPercent,
@@ -373,10 +376,8 @@ private fun ZoomResetButton(
 @Composable
 private fun ToolbarDivider(height: Dp, horizontalPadding: Dp) {
     VerticalDivider(
-        modifier = Modifier
-            .height(height)
-            .padding(horizontal = horizontalPadding),
-        color = LocalContentColor.current.copy(alpha = 0.24f)
+        modifier = Modifier.height(height).padding(horizontal = horizontalPadding),
+        color = LocalContentColor.current.copy(alpha = 0.24f),
     )
 }
 
@@ -396,70 +397,76 @@ private data class ToolbarMetrics(
     val showPageTotal: Boolean,
 )
 
-private fun toolbarMetrics(toolbarWidth: Dp): ToolbarMetrics = when {
-    toolbarWidth < 420.dp -> ToolbarMetrics(
-        containerHeight = 56.dp,
-        containerHorizontalPadding = 8.dp,
-        containerVerticalPadding = 4.dp,
-        itemSpacing = 2.dp,
-        iconButtonSize = 32.dp,
-        pageFieldWidth = 34.dp,
-        pageFieldHeight = 30.dp,
-        zoomResetMinWidth = 46.dp,
-        zoomResetHeight = 30.dp,
-        zoomResetHorizontalPadding = 8.dp,
-        dividerHeight = 18.dp,
-        dividerHorizontalPadding = 0.dp,
-        showPageTotal = false,
-    )
+private fun toolbarMetrics(toolbarWidth: Dp): ToolbarMetrics =
+    when {
+        toolbarWidth < 420.dp ->
+            ToolbarMetrics(
+                containerHeight = 56.dp,
+                containerHorizontalPadding = 8.dp,
+                containerVerticalPadding = 4.dp,
+                itemSpacing = 2.dp,
+                iconButtonSize = 32.dp,
+                pageFieldWidth = 34.dp,
+                pageFieldHeight = 30.dp,
+                zoomResetMinWidth = 46.dp,
+                zoomResetHeight = 30.dp,
+                zoomResetHorizontalPadding = 8.dp,
+                dividerHeight = 18.dp,
+                dividerHorizontalPadding = 0.dp,
+                showPageTotal = false,
+            )
 
-    toolbarWidth < 620.dp -> ToolbarMetrics(
-        containerHeight = 64.dp,
-        containerHorizontalPadding = 10.dp,
-        containerVerticalPadding = 6.dp,
-        itemSpacing = 3.dp,
-        iconButtonSize = 36.dp,
-        pageFieldWidth = 38.dp,
-        pageFieldHeight = 34.dp,
-        zoomResetMinWidth = 54.dp,
-        zoomResetHeight = 34.dp,
-        zoomResetHorizontalPadding = 10.dp,
-        dividerHeight = 22.dp,
-        dividerHorizontalPadding = 1.dp,
-        showPageTotal = true,
-    )
+        toolbarWidth < 620.dp ->
+            ToolbarMetrics(
+                containerHeight = 64.dp,
+                containerHorizontalPadding = 10.dp,
+                containerVerticalPadding = 6.dp,
+                itemSpacing = 3.dp,
+                iconButtonSize = 36.dp,
+                pageFieldWidth = 38.dp,
+                pageFieldHeight = 34.dp,
+                zoomResetMinWidth = 54.dp,
+                zoomResetHeight = 34.dp,
+                zoomResetHorizontalPadding = 10.dp,
+                dividerHeight = 22.dp,
+                dividerHorizontalPadding = 1.dp,
+                showPageTotal = true,
+            )
 
-    else -> ToolbarMetrics(
-        containerHeight = 70.dp,
-        containerHorizontalPadding = 12.dp,
-        containerVerticalPadding = 7.dp,
-        itemSpacing = 4.dp,
-        iconButtonSize = 40.dp,
-        pageFieldWidth = 44.dp,
-        pageFieldHeight = 38.dp,
-        zoomResetMinWidth = 62.dp,
-        zoomResetHeight = 38.dp,
-        zoomResetHorizontalPadding = 12.dp,
-        dividerHeight = 24.dp,
-        dividerHorizontalPadding = 2.dp,
-        showPageTotal = true,
-    )
-}
+        else ->
+            ToolbarMetrics(
+                containerHeight = 70.dp,
+                containerHorizontalPadding = 12.dp,
+                containerVerticalPadding = 7.dp,
+                itemSpacing = 4.dp,
+                iconButtonSize = 40.dp,
+                pageFieldWidth = 44.dp,
+                pageFieldHeight = 38.dp,
+                zoomResetMinWidth = 62.dp,
+                zoomResetHeight = 38.dp,
+                zoomResetHorizontalPadding = 12.dp,
+                dividerHeight = 24.dp,
+                dividerHorizontalPadding = 2.dp,
+                showPageTotal = true,
+            )
+    }
 
 // ── FitMode helpers ───────────────────────────────────────────────────────────
 
 /** Cycles through fit modes: WIDTH → HEIGHT → BOTH → PROPORTIONAL → WIDTH */
-private fun FitMode.next(): FitMode = when (this) {
-    FitMode.WIDTH -> FitMode.HEIGHT
-    FitMode.HEIGHT -> FitMode.BOTH
-    FitMode.BOTH -> FitMode.PROPORTIONAL
-    FitMode.PROPORTIONAL -> FitMode.WIDTH
-}
+private fun FitMode.next(): FitMode =
+    when (this) {
+        FitMode.WIDTH -> FitMode.HEIGHT
+        FitMode.HEIGHT -> FitMode.BOTH
+        FitMode.BOTH -> FitMode.PROPORTIONAL
+        FitMode.PROPORTIONAL -> FitMode.WIDTH
+    }
 
 @Composable
-private fun FitMode.icon(): ImageVector = when (this) {
-    FitMode.WIDTH -> ImageVector.vectorResource(R.drawable.fit_page_width)
-    FitMode.HEIGHT -> ImageVector.vectorResource(R.drawable.fit_page_height)
-    FitMode.BOTH -> Icons.Rounded.FitScreen
-    FitMode.PROPORTIONAL -> ImageVector.vectorResource(R.drawable.fit_page)
-}
+private fun FitMode.icon(): ImageVector =
+    when (this) {
+        FitMode.WIDTH -> ImageVector.vectorResource(R.drawable.fit_page_width)
+        FitMode.HEIGHT -> ImageVector.vectorResource(R.drawable.fit_page_height)
+        FitMode.BOTH -> Icons.Rounded.FitScreen
+        FitMode.PROPORTIONAL -> ImageVector.vectorResource(R.drawable.fit_page)
+    }

@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.composepdf.internal.logic
 
 import android.util.Size
@@ -8,19 +11,20 @@ import kotlin.math.min
 /**
  * An immutable snapshot of the document layout calculated at a base zoom level of `1f`.
  *
- * This class serves as a pure, side-effect-free representation of the document geometry.
- * It is responsible for translating document coordinates to screen coordinates and performing
- * spatial queries such as visibility detection, hit testing, and pan clamping.
+ * This class serves as a pure, side-effect-free representation of the document geometry. It is
+ * responsible for translating document coordinates to screen coordinates and performing spatial
+ * queries such as visibility detection, hit testing, and pan clamping.
  *
- * The layout is recalculated and a new snapshot is emitted whenever the viewport dimensions,
- * page list, spacing, or [FitMode] change.
+ * The layout is recalculated and a new snapshot is emitted whenever the viewport dimensions, page
+ * list, spacing, or [FitMode] change.
  *
  * @property pageSizes The original dimensions of the PDF pages.
  * @property pageOffsets The vertical or horizontal offsets (Y or X) of each page in document space.
  * @property pageHeights The calculated heights of each page after applying [FitMode].
  * @property pageWidths The calculated widths of each page after applying [FitMode].
  * @property totalDocumentSize The total height or width of the scrollable area, including spacing.
- * @property corridorBreadth The breadth of the document corridor (max height if horizontal, max width if vertical).
+ * @property corridorBreadth The breadth of the document corridor (max height if horizontal, max
+ *   width if vertical).
  * @property viewport The dimensions of the visible component area.
  * @property pageSpacingPx The gap between pages in pixels.
  * @property scrollDirection The direction in which pages are laid out.
@@ -34,21 +38,24 @@ internal class PageLayoutSnapshot(
     val corridorBreadth: Float,
     val viewport: ViewportMetrics,
     val pageSpacingPx: Float,
-    val scrollDirection: ScrollDirection
+    val scrollDirection: ScrollDirection,
 ) {
-    val isEmpty: Boolean get() = pageSizes.isEmpty() || !viewport.isReady
+    val isEmpty: Boolean
+        get() = pageSizes.isEmpty() || !viewport.isReady
 
     fun pageHeightPx(index: Int): Float = pageHeights.getOrNull(index) ?: viewport.height
 
     fun pageWidthPx(index: Int): Float = pageWidths.getOrNull(index) ?: viewport.width
 
-    fun pageTopDocY(index: Int): Float = if (scrollDirection == ScrollDirection.VERTICAL) {
-        pageOffsets.getOrNull(index) ?: 0f
-    } else 0f
+    fun pageTopDocY(index: Int): Float =
+        if (scrollDirection == ScrollDirection.VERTICAL) {
+            pageOffsets.getOrNull(index) ?: 0f
+        } else 0f
 
-    fun pageLeftDocX(index: Int): Float = if (scrollDirection == ScrollDirection.HORIZONTAL) {
-        pageOffsets.getOrNull(index) ?: 0f
-    } else 0f
+    fun pageLeftDocX(index: Int): Float =
+        if (scrollDirection == ScrollDirection.HORIZONTAL) {
+            pageOffsets.getOrNull(index) ?: 0f
+        } else 0f
 
     fun visiblePageIndices(panX: Float, panY: Float, zoom: Float): IntRange {
         if (isEmpty || zoom <= 0f) return IntRange.EMPTY
@@ -75,18 +82,19 @@ internal class PageLayoutSnapshot(
         screenY: Float,
         panX: Float,
         panY: Float,
-        zoom: Float
+        zoom: Float,
     ): Boolean {
         if (isEmpty || zoom <= 0f) return false
 
         val docX = (screenX - panX) / zoom
         val docY = (screenY - panY) / zoom
 
-        val pageIndex = if (scrollDirection == ScrollDirection.VERTICAL) {
-            pageIndexAtDocumentOffset(docY)
-        } else {
-            pageIndexAtDocumentOffset(docX)
-        }
+        val pageIndex =
+            if (scrollDirection == ScrollDirection.VERTICAL) {
+                pageIndexAtDocumentOffset(docY)
+            } else {
+                pageIndexAtDocumentOffset(docX)
+            }
 
         if (pageIndex == -1) return false
 
@@ -97,12 +105,16 @@ internal class PageLayoutSnapshot(
 
         return if (scrollDirection == ScrollDirection.VERTICAL) {
             val actualPageLeft = panX + (corridorBreadth - pageWidth) * zoom / 2f
-            docY >= pageTop && docY <= pageTop + pageHeight &&
-                    screenX >= actualPageLeft && screenX <= actualPageLeft + pageWidth * zoom
+            docY >= pageTop &&
+                docY <= pageTop + pageHeight &&
+                screenX >= actualPageLeft &&
+                screenX <= actualPageLeft + pageWidth * zoom
         } else {
             val actualPageTop = panY + (corridorBreadth - pageHeight) * zoom / 2f
-            docX >= pageLeft && docX <= pageLeft + pageWidth &&
-                    screenY >= actualPageTop && screenY <= actualPageTop + pageHeight * zoom
+            docX >= pageLeft &&
+                docX <= pageLeft + pageWidth &&
+                screenY >= actualPageTop &&
+                screenY <= actualPageTop + pageHeight * zoom
         }
     }
 
@@ -120,17 +132,19 @@ internal class PageLayoutSnapshot(
             scaledHeight = corridorBreadth * zoom
         }
 
-        val clampedX = if (scaledWidth <= viewport.width) {
-            (viewport.width - scaledWidth) / 2f
-        } else {
-            panX.coerceIn(-(scaledWidth - viewport.width), 0f)
-        }
+        val clampedX =
+            if (scaledWidth <= viewport.width) {
+                (viewport.width - scaledWidth) / 2f
+            } else {
+                panX.coerceIn(-(scaledWidth - viewport.width), 0f)
+            }
 
-        val clampedY = if (scaledHeight <= viewport.height) {
-            (viewport.height - scaledHeight) / 2f
-        } else {
-            panY.coerceIn(viewport.height - scaledHeight, 0f)
-        }
+        val clampedY =
+            if (scaledHeight <= viewport.height) {
+                (viewport.height - scaledHeight) / 2f
+            } else {
+                panY.coerceIn(viewport.height - scaledHeight, 0f)
+            }
 
         return PanPosition(clampedX, clampedY)
     }
@@ -163,11 +177,13 @@ internal class PageLayoutSnapshot(
 
         if (docWidth <= 0f || docHeight <= 0f) return minZoom
 
-        val zoom = when (fitMode) {
-            FitMode.WIDTH, FitMode.PROPORTIONAL -> viewport.width / docWidth
-            FitMode.HEIGHT -> viewport.height / docHeight
-            FitMode.BOTH -> min(viewport.width / docWidth, viewport.height / docHeight)
-        }
+        val zoom =
+            when (fitMode) {
+                FitMode.WIDTH,
+                FitMode.PROPORTIONAL -> viewport.width / docWidth
+                FitMode.HEIGHT -> viewport.height / docHeight
+                FitMode.BOTH -> min(viewport.width / docWidth, viewport.height / docHeight)
+            }
         return zoom.coerceIn(minZoom, maxZoom)
     }
 
@@ -178,22 +194,25 @@ internal class PageLayoutSnapshot(
         val baseWidth = pageWidthPx(safeIndex).takeIf { it > 0f } ?: return minZoom
         val baseHeight = pageHeightPx(safeIndex).takeIf { it > 0f } ?: return minZoom
 
-        val zoom = when (fitMode) {
-            FitMode.WIDTH, FitMode.PROPORTIONAL -> viewport.width / baseWidth
-            FitMode.HEIGHT -> viewport.height / baseHeight
-            FitMode.BOTH -> min(viewport.width / baseWidth, viewport.height / baseHeight)
-        }
+        val zoom =
+            when (fitMode) {
+                FitMode.WIDTH,
+                FitMode.PROPORTIONAL -> viewport.width / baseWidth
+                FitMode.HEIGHT -> viewport.height / baseHeight
+                FitMode.BOTH -> min(viewport.width / baseWidth, viewport.height / baseHeight)
+            }
         return zoom.coerceIn(minZoom, maxZoom)
     }
 
     fun currentPageAtViewportCenter(panX: Float, panY: Float, zoom: Float): Int? {
         if (isEmpty || zoom <= 0f) return null
 
-        val centerOffset = if (scrollDirection == ScrollDirection.VERTICAL) {
-            (viewport.height / 2f - panY) / zoom
-        } else {
-            (viewport.width / 2f - panX) / zoom
-        }
+        val centerOffset =
+            if (scrollDirection == ScrollDirection.VERTICAL) {
+                (viewport.height / 2f - panY) / zoom
+            } else {
+                (viewport.width / 2f - panX) / zoom
+            }
 
         val pageIndex = pageIndexAtDocumentOffset(centerOffset)
         return pageIndex.takeIf { it >= 0 }?.coerceIn(0, pageOffsets.lastIndex)
@@ -206,7 +225,11 @@ internal class PageLayoutSnapshot(
 
         while (low <= high) {
             val mid = (low + high) ushr 1
-            if (pageOffsets[mid] + (if (scrollDirection == ScrollDirection.VERTICAL) pageHeights[mid] else pageWidths[mid]) >= offset) {
+            if (
+                pageOffsets[mid] +
+                    (if (scrollDirection == ScrollDirection.VERTICAL) pageHeights[mid]
+                    else pageWidths[mid]) >= offset
+            ) {
                 first = mid
                 high = mid - 1
             } else {
@@ -261,7 +284,7 @@ internal class PageLayoutSnapshot(
                 corridorBreadth = viewport.width,
                 viewport = viewport,
                 pageSpacingPx = 0f,
-                scrollDirection = ScrollDirection.VERTICAL
+                scrollDirection = ScrollDirection.VERTICAL,
             )
 
         fun build(
@@ -270,12 +293,11 @@ internal class PageLayoutSnapshot(
             viewportHeight: Float,
             fitMode: FitMode,
             pageSpacingPx: Float,
-            scrollDirection: ScrollDirection
+            scrollDirection: ScrollDirection,
         ): PageLayoutSnapshot {
             val viewport = ViewportMetrics(viewportWidth, viewportHeight)
-            if (pageSizes.isEmpty() || !viewport.isReady) return empty(viewport).copy(
-                scrollDirection = scrollDirection
-            )
+            if (pageSizes.isEmpty() || !viewport.isReady)
+                return empty(viewport).copy(scrollDirection = scrollDirection)
 
             val count = pageSizes.size
             val pageOffsets = FloatArray(count)
@@ -294,24 +316,25 @@ internal class PageLayoutSnapshot(
                 val pdfHeight = pageSize.height.toFloat()
                 val aspectRatio = pdfWidth / pdfHeight
 
-                val (baseWidth, baseHeight) = when (fitMode) {
-                    FitMode.WIDTH -> viewport.width to (viewport.width / aspectRatio)
-                    FitMode.HEIGHT -> (viewport.height * aspectRatio) to viewport.height
-                    FitMode.BOTH -> {
-                        val scale = min(viewport.width / pdfWidth, viewport.height / pdfHeight)
-                        (pdfWidth * scale) to (pdfHeight * scale)
-                    }
-
-                    FitMode.PROPORTIONAL -> {
-                        if (scrollDirection == ScrollDirection.VERTICAL) {
-                            val scale = viewport.width / maxPdfWidth
-                            (pdfWidth * scale) to (pdfHeight * scale)
-                        } else {
-                            val scale = viewport.height / maxPdfHeight
+                val (baseWidth, baseHeight) =
+                    when (fitMode) {
+                        FitMode.WIDTH -> viewport.width to (viewport.width / aspectRatio)
+                        FitMode.HEIGHT -> (viewport.height * aspectRatio) to viewport.height
+                        FitMode.BOTH -> {
+                            val scale = min(viewport.width / pdfWidth, viewport.height / pdfHeight)
                             (pdfWidth * scale) to (pdfHeight * scale)
                         }
+
+                        FitMode.PROPORTIONAL -> {
+                            if (scrollDirection == ScrollDirection.VERTICAL) {
+                                val scale = viewport.width / maxPdfWidth
+                                (pdfWidth * scale) to (pdfHeight * scale)
+                            } else {
+                                val scale = viewport.height / maxPdfHeight
+                                (pdfWidth * scale) to (pdfHeight * scale)
+                            }
+                        }
                     }
-                }
 
                 pageWidths[index] = baseWidth
                 pageHeights[index] = baseHeight
@@ -335,7 +358,7 @@ internal class PageLayoutSnapshot(
                 corridorBreadth = maxBreadth,
                 viewport = viewport,
                 pageSpacingPx = pageSpacingPx,
-                scrollDirection = scrollDirection
+                scrollDirection = scrollDirection,
             )
         }
     }
@@ -349,30 +372,26 @@ internal class PageLayoutSnapshot(
         corridorBreadth: Float = this.corridorBreadth,
         viewport: ViewportMetrics = this.viewport,
         pageSpacingPx: Float = this.pageSpacingPx,
-        scrollDirection: ScrollDirection = this.scrollDirection
-    ) = PageLayoutSnapshot(
-        pageSizes,
-        pageOffsets,
-        pageHeights,
-        pageWidths,
-        totalDocumentSize,
-        corridorBreadth,
-        viewport,
-        pageSpacingPx,
-        scrollDirection
-    )
+        scrollDirection: ScrollDirection = this.scrollDirection,
+    ) =
+        PageLayoutSnapshot(
+            pageSizes,
+            pageOffsets,
+            pageHeights,
+            pageWidths,
+            totalDocumentSize,
+            corridorBreadth,
+            viewport,
+            pageSpacingPx,
+            scrollDirection,
+        )
 }
 
 /** Viewport metrics used by layout and tile planning. */
-internal data class ViewportMetrics(
-    val width: Float = 0f,
-    val height: Float = 0f
-) {
-    val isReady: Boolean get() = width > 0f && height > 0f
+internal data class ViewportMetrics(val width: Float = 0f, val height: Float = 0f) {
+    val isReady: Boolean
+        get() = width > 0f && height > 0f
 }
 
 /** Simple value object for pan coordinates. */
-internal data class PanPosition(
-    val x: Float,
-    val y: Float
-)
+internal data class PanPosition(val x: Float, val y: Float)

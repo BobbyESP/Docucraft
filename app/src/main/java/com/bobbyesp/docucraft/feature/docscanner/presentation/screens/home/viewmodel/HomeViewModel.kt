@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
@@ -53,9 +56,7 @@ class HomeViewModel(
     private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
-) : BaseViewModel<HomeIntent, HomeUiState, HomeEffect>(
-    initialState = HomeUiState()
-) {
+) : BaseViewModel<HomeIntent, HomeUiState, HomeEffect>(initialState = HomeUiState()) {
 
     init {
         observeDocuments()
@@ -68,10 +69,11 @@ class HomeViewModel(
         when (intent) {
             HomeIntent.Load -> observeDocuments()
 
-            HomeIntent.LaunchScanner -> launch {
-                analyticsHelper.logEvent(AnalyticsEvent(AnalyticsEvent.Types.SCAN_STARTED))
-                scannerManager.requestScan()
-            }
+            HomeIntent.LaunchScanner ->
+                launch {
+                    analyticsHelper.logEvent(AnalyticsEvent(AnalyticsEvent.Types.SCAN_STARTED))
+                    scannerManager.requestScan()
+                }
 
             is HomeIntent.ScanResult -> processScanResult(intent.result)
 
@@ -82,34 +84,34 @@ class HomeViewModel(
                     analyticsHelper.logEvent(
                         AnalyticsEvent(
                             type = AnalyticsEvent.Types.SEARCH_PERFORMED,
-                            extras = listOf(
-                                AnalyticsEvent.Param(
-                                    AnalyticsEvent.ParamKeys.QUERY_LENGTH,
-                                    intent.query.length.toString()
-                                )
-                            )
+                            extras =
+                                listOf(
+                                    AnalyticsEvent.Param(
+                                        AnalyticsEvent.ParamKeys.QUERY_LENGTH,
+                                        intent.query.length.toString(),
+                                    )
+                                ),
                         )
                     )
                 }
                 setState { copy(searchQuery = intent.query) }
             }
 
-            HomeIntent.ClearSearch ->
-                setState { copy(searchQuery = "") }
+            HomeIntent.ClearSearch -> setState { copy(searchQuery = "") }
 
-            is HomeIntent.ToggleSearch ->
-                setState { copy(isSearchBarVisible = intent.visible) }
+            is HomeIntent.ToggleSearch -> setState { copy(isSearchBarVisible = intent.visible) }
 
             is HomeIntent.ApplySort -> {
                 analyticsHelper.logEvent(
                     AnalyticsEvent(
                         type = AnalyticsEvent.Types.FILTER_APPLIED,
-                        extras = listOf(
-                            AnalyticsEvent.Param(
-                                AnalyticsEvent.ParamKeys.SORT_BY,
-                                "${intent.sort.criteria.name}_${intent.sort.order.name}"
-                            )
-                        )
+                        extras =
+                            listOf(
+                                AnalyticsEvent.Param(
+                                    AnalyticsEvent.ParamKeys.SORT_BY,
+                                    "${intent.sort.criteria.name}_${intent.sort.order.name}",
+                                )
+                            ),
                     )
                 )
                 setState { copy(filterOptions = filterOptions.copy(sortBy = intent.sort)) }
@@ -119,19 +121,19 @@ class HomeViewModel(
                 analyticsHelper.logEvent(
                     AnalyticsEvent(
                         type = AnalyticsEvent.Types.FILTER_APPLIED,
-                        extras = listOf(
-                            AnalyticsEvent.Param(
-                                AnalyticsEvent.ParamKeys.FILTER_TYPE,
-                                "complex_filter"
-                            )
-                        )
+                        extras =
+                            listOf(
+                                AnalyticsEvent.Param(
+                                    AnalyticsEvent.ParamKeys.FILTER_TYPE,
+                                    "complex_filter",
+                                )
+                            ),
                     )
                 )
                 setState { copy(filterOptions = intent.filter) }
             }
 
-            HomeIntent.ClearFilters ->
-                setState { copy(filterOptions = FilterOptions.default) }
+            HomeIntent.ClearFilters -> setState { copy(filterOptions = FilterOptions.default) }
 
             is HomeIntent.OpenSheet -> openSheet(intent.id)
             HomeIntent.DismissSheet -> dismissSheet()
@@ -145,60 +147,35 @@ class HomeViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     private fun observeDocuments() = launch {
-
         combine(
-            observeDocumentsUseCase(),
-
-            state.map { it.searchQuery }
-                .debounce(150)
-                .distinctUntilChanged(),
-
-            state.map { it.filterOptions }
-                .distinctUntilChanged()
-
-        ) { docs, query, filters ->
-            Triple(docs, query, filters)
-        }
+                observeDocumentsUseCase(),
+                state.map { it.searchQuery }.debounce(150).distinctUntilChanged(),
+                state.map { it.filterOptions }.distinctUntilChanged(),
+            ) { docs, query, filters ->
+                Triple(docs, query, filters)
+            }
             .mapLatest { (docs, query, filters) ->
-
-                val processed = withContext(Dispatchers.Default) {
-                    processDocumentsUseCase(
-                        docs,
-                        query,
-                        filters,
-                        filters.sortBy
-                    )
-                }
+                val processed =
+                    withContext(Dispatchers.Default) {
+                        processDocumentsUseCase(docs, query, filters, filters.sortBy)
+                    }
 
                 processed to docs.isNotEmpty()
             }
-            .onStart {
-                setState {
-                    copy(status = HomeStatus.Loading)
-                }
-            }
+            .onStart { setState { copy(status = HomeStatus.Loading) } }
             .catch { error ->
-
                 val message = stringProvider.getError(error)
 
-                setState {
-                    copy(status = HomeStatus.Error(message))
-                }
+                setState { copy(status = HomeStatus.Error(message)) }
 
-                sendUiEvent(
-                    UiEvent.ShowMessage(
-                        message,
-                        NotificationType.Error
-                    )
-                )
+                sendUiEvent(UiEvent.ShowMessage(message, NotificationType.Error))
             }
             .collect { (sorted, hasDocuments) ->
-
                 setState {
                     copy(
                         visibleDocuments = sorted,
                         hasDocuments = hasDocuments,
-                        status = HomeStatus.Idle
+                        status = HomeStatus.Idle,
                     )
                 }
             }
@@ -212,12 +189,13 @@ class HomeViewModel(
                     analyticsHelper.logEvent(
                         AnalyticsEvent(
                             type = AnalyticsEvent.Types.SCAN_CANCELLED,
-                            extras = listOf(
-                                AnalyticsEvent.Param(
-                                    AnalyticsEvent.ParamKeys.STATUS,
-                                    it.message ?: "unknown"
-                                )
-                            )
+                            extras =
+                                listOf(
+                                    AnalyticsEvent.Param(
+                                        AnalyticsEvent.ParamKeys.STATUS,
+                                        it.message ?: "unknown",
+                                    )
+                                ),
                         )
                     )
                     setState { copy(isScanning = false) }
@@ -233,51 +211,51 @@ class HomeViewModel(
         sendEffect(
             HomeEffect.Navigate(
                 Route.PdfViewer(
-                    documentInfo = BasicDocument(
-                        uuid = doc.uuid,
-                        filename = doc.filename,
-                        uri = doc.path.toString(),
-                        title = doc.title,
-                        description = doc.description
-                    )
+                    documentInfo =
+                        BasicDocument(
+                            uuid = doc.uuid,
+                            filename = doc.filename,
+                            uri = doc.path.toString(),
+                            title = doc.title,
+                            description = doc.description,
+                        )
                 )
             )
         )
     }
 
-    private fun processScanResult(result: RawScanResult) = launch(
-        onError = {
+    private fun processScanResult(result: RawScanResult) =
+        launch(
+            onError = {
+                sendUiEvent(
+                    UiEvent.ShowMessage(stringProvider.getError(it), NotificationType.Error)
+                )
+            }
+        ) {
+            setState { copy(isScanning = false) }
+
+            saveScannedDocumentUseCase(result)
+
+            analyticsHelper.logEvent(
+                AnalyticsEvent(
+                    type = AnalyticsEvent.Types.SCAN_COMPLETED,
+                    extras =
+                        listOf(
+                            AnalyticsEvent.Param(
+                                AnalyticsEvent.ParamKeys.PAGE_COUNT,
+                                result.pageCount.toString(),
+                            )
+                        ),
+                )
+            )
+
             sendUiEvent(
                 UiEvent.ShowMessage(
-                    stringProvider.getError(it),
-                    NotificationType.Error
+                    stringProvider.get(R.string.doc_saved_successfully),
+                    NotificationType.Success,
                 )
             )
         }
-    ) {
-        setState { copy(isScanning = false) }
-
-        saveScannedDocumentUseCase(result)
-
-        analyticsHelper.logEvent(
-            AnalyticsEvent(
-                type = AnalyticsEvent.Types.SCAN_COMPLETED,
-                extras = listOf(
-                    AnalyticsEvent.Param(
-                        AnalyticsEvent.ParamKeys.PAGE_COUNT,
-                        result.pageCount.toString()
-                    )
-                )
-            )
-        )
-
-        sendUiEvent(
-            UiEvent.ShowMessage(
-                stringProvider.get(R.string.doc_saved_successfully),
-                NotificationType.Success
-            )
-        )
-    }
 
     // ---------------- SHEET ----------------
 
@@ -302,8 +280,7 @@ class HomeViewModel(
 
             SheetAction.RequestShare -> shareCurrent()
 
-            is SheetAction.UpdateTitle ->
-                updateSheet { it.copy(editTitle = action.value) }
+            is SheetAction.UpdateTitle -> updateSheet { it.copy(editTitle = action.value) }
 
             is SheetAction.UpdateDescription ->
                 updateSheet { it.copy(editDescription = action.value) }
@@ -317,12 +294,13 @@ class HomeViewModel(
 
         setState {
             copy(
-                sheetState = DocumentSheetUiState(
-                    activeDocument = doc,
-                    pageStack = listOf(SheetPage.Actions),
-                    editTitle = doc.title.orEmpty(),
-                    editDescription = doc.description.orEmpty()
-                )
+                sheetState =
+                    DocumentSheetUiState(
+                        activeDocument = doc,
+                        pageStack = listOf(SheetPage.Actions),
+                        editTitle = doc.title.orEmpty(),
+                        editDescription = doc.description.orEmpty(),
+                    )
             )
         }
     }
@@ -333,9 +311,7 @@ class HomeViewModel(
     }
 
     private fun updateSheet(transform: (DocumentSheetUiState) -> DocumentSheetUiState) {
-        setState {
-            copy(sheetState = sheetState?.let(transform))
-        }
+        setState { copy(sheetState = sheetState?.let(transform)) }
     }
 
     // ---------------- DOMAIN OPS ----------------
@@ -345,16 +321,12 @@ class HomeViewModel(
 
         deleteDocumentUseCase(doc.path)
 
-        analyticsHelper.logEvent(
-            AnalyticsEvent(
-                type = AnalyticsEvent.Types.DOCUMENT_DELETED
-            )
-        )
+        analyticsHelper.logEvent(AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_DELETED))
 
         sendUiEvent(
             UiEvent.ShowMessage(
                 stringProvider.get(R.string.doc_deleted_successfully),
-                NotificationType.Success
+                NotificationType.Success,
             )
         )
 
@@ -365,20 +337,19 @@ class HomeViewModel(
         val doc = currentState.sheetState?.activeDocument ?: return
 
         runCatching {
-            shareDocumentUseCase(doc.path)
-            analyticsHelper.logEvent(
-                AnalyticsEvent(
-                    type = AnalyticsEvent.Types.DOCUMENT_SHARED
+                shareDocumentUseCase(doc.path)
+                analyticsHelper.logEvent(
+                    AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_SHARED)
                 )
-            )
-        }.onFailure {
-            sendUiEvent(
-                UiEvent.ShowMessage(
-                    stringProvider.get(R.string.issue_sharing_doc),
-                    NotificationType.Error
+            }
+            .onFailure {
+                sendUiEvent(
+                    UiEvent.ShowMessage(
+                        stringProvider.get(R.string.issue_sharing_doc),
+                        NotificationType.Error,
+                    )
                 )
-            )
-        }
+            }
     }
 
     private fun exportCurrent() = launch {
@@ -387,23 +358,18 @@ class HomeViewModel(
         exportDocumentUseCase(doc)
             .onSuccess { uri ->
                 analyticsHelper.logEvent(
-                    AnalyticsEvent(
-                        type = AnalyticsEvent.Types.DOCUMENT_EXPORTED
-                    )
+                    AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_EXPORTED)
                 )
                 sendUiEvent(
                     UiEvent.ShowMessage(
                         stringProvider.get(R.string.doc_saved_successfully_to, uri),
-                        NotificationType.Success
+                        NotificationType.Success,
                     )
                 )
             }
             .onFailure {
                 sendUiEvent(
-                    UiEvent.ShowMessage(
-                        stringProvider.getError(it),
-                        NotificationType.Error
-                    )
+                    UiEvent.ShowMessage(stringProvider.getError(it), NotificationType.Error)
                 )
             }
     }
@@ -415,18 +381,16 @@ class HomeViewModel(
         updateDocumentFieldsUseCase(
             doc.uuid,
             sheet.editTitle.trim().ifBlank { null },
-            sheet.editDescription.trim().ifBlank { null }
+            sheet.editDescription.trim().ifBlank { null },
         )
 
         sendUiEvent(
             UiEvent.ShowMessage(
                 stringProvider.get(R.string.doc_updated_successfully),
-                NotificationType.Success
+                NotificationType.Success,
             )
         )
 
-        updateSheet {
-            it.copy(pageStack = listOf(SheetPage.Actions))
-        }
+        updateSheet { it.copy(pageStack = listOf(SheetPage.Actions)) }
     }
 }

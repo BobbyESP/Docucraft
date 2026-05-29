@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.presentation.components.others
 
 import androidx.annotation.StringRes
@@ -69,9 +72,7 @@ fun LazyGridScope.GridMenuItem(
             onClick = onClick,
             shapes =
                 ButtonShapes(shape = ShapeDefaults.ExtraLarge, pressedShape = ShapeDefaults.Large),
-            modifier = modifier
-                .fillMaxWidth()
-                .heightIn(min = 84.dp),
+            modifier = modifier.fillMaxWidth().heightIn(min = 84.dp),
             enabled = enabled,
             colors =
                 ButtonDefaults.elevatedButtonColors(

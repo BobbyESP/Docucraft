@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.feature.docscanner.data.db
 
 import androidx.room.AutoMigration
@@ -13,9 +16,8 @@ const val CURRENT_VERSION = 4
     entities = [ScannedDocumentEntity::class, ScannedDocumentFtsEntity::class],
     version = CURRENT_VERSION,
     exportSchema = true,
-    autoMigrations = [
-        AutoMigration(from = 1, to = 2, spec = DocumentsDatabaseMigrations.Migration1To2::class),
-    ],
+    autoMigrations =
+        [AutoMigration(from = 1, to = 2, spec = DocumentsDatabaseMigrations.Migration1To2::class)],
 )
 abstract class DocumentsDatabase : RoomDatabase() {
     abstract fun scannedDocumentDao(): ScannedDocumentDao

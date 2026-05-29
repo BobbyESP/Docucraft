@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft
 
 import android.content.Intent
@@ -20,13 +23,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import coil.imageLoader
-import com.bobbyesp.docucraft.core.domain.model.UserPreferences
+import com.bobbyesp.docucraft.core.domain.model.ThemeConfig
 import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.presentation.MainActivityUiState
 import com.bobbyesp.docucraft.core.presentation.MainViewModel
-import com.bobbyesp.docucraft.core.domain.model.ThemeConfig
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.navigation.Route
@@ -55,19 +57,17 @@ class MainActivity : ComponentActivity(), KoinComponent {
     private val scannerClient: GmsDocumentScanner by inject()
     private val scannerRepository: ScannerRepository by inject()
 
-    private val scannerLauncher = registerForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult()
-    ) { result ->
-        lifecycleScope.launch {
-            scannerRepository.processResult(result).onSuccess { rawScanResult ->
-                scannerManager.onScanResult(
-                    Result.success(rawScanResult)
-                )
-            }.onFailure { error ->
-                scannerManager.onScanResult(Result.failure(error))
+    private val scannerLauncher =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            lifecycleScope.launch {
+                scannerRepository
+                    .processResult(result)
+                    .onSuccess { rawScanResult ->
+                        scannerManager.onScanResult(Result.success(rawScanResult))
+                    }
+                    .onFailure { error -> scannerManager.onScanResult(Result.failure(error)) }
             }
         }
-    }
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -84,33 +84,34 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
                     // Reactively apply system bar theme overrides based on user preferences
                     if (state is MainActivityUiState.Success) {
-                        val isDark = state.userPreferences.themeConfig.shouldUseDarkTheme(this@MainActivity)
+                        val isDark =
+                            state.userPreferences.themeConfig.shouldUseDarkTheme(this@MainActivity)
                         enableEdgeToEdge(
-                            statusBarStyle = if (isDark) {
-                                SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
-                            } else {
-                                SystemBarStyle.light(
-                                    android.graphics.Color.TRANSPARENT,
-                                    android.graphics.Color.TRANSPARENT
-                                )
-                            },
-                            navigationBarStyle = if (isDark) {
-                                SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
-                            } else {
-                                SystemBarStyle.light(
-                                    android.graphics.Color.TRANSPARENT,
-                                    android.graphics.Color.TRANSPARENT
-                                )
-                            }
+                            statusBarStyle =
+                                if (isDark) {
+                                    SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                                } else {
+                                    SystemBarStyle.light(
+                                        android.graphics.Color.TRANSPARENT,
+                                        android.graphics.Color.TRANSPARENT,
+                                    )
+                                },
+                            navigationBarStyle =
+                                if (isDark) {
+                                    SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+                                } else {
+                                    SystemBarStyle.light(
+                                        android.graphics.Color.TRANSPARENT,
+                                        android.graphics.Color.TRANSPARENT,
+                                    )
+                                },
                         )
                     }
                 }
             }
         }
 
-        splashscreen.setKeepOnScreenCondition {
-            uiState is MainActivityUiState.Loading
-        }
+        splashscreen.setKeepOnScreenCondition { uiState is MainActivityUiState.Loading }
 
         FileKit.init(this)
         val sonnerManager = inAppNotificationsService as SonnerNotificationServiceImpl
@@ -119,9 +120,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                scannerManager.scanRequest.collect {
-                    launchScanner()
-                }
+                scannerManager.scanRequest.collect { launchScanner() }
             }
         }
 
@@ -139,9 +138,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
                     userPreferences = state.userPreferences,
                     analyticsHelper = analyticsHelper,
                 ) {
-                    Navigator(
-                        rootBackStack = rootBackStack,
-                    )
+                    Navigator(rootBackStack = rootBackStack)
 
                     Toaster(
                         state = sonnerManager.sonnerState,
@@ -181,16 +178,13 @@ class MainActivity : ComponentActivity(), KoinComponent {
     }
 
     private fun launchScanner() {
-        scannerClient.getStartScanIntent(this)
+        scannerClient
+            .getStartScanIntent(this)
             .addOnSuccessListener { intentSender ->
-                scannerLauncher.launch(
-                    IntentSenderRequest.Builder(intentSender).build()
-                )
+                scannerLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
             }
             .addOnFailureListener { e ->
-                lifecycleScope.launch {
-                    scannerManager.onScanResult(Result.failure(e))
-                }
+                lifecycleScope.launch { scannerManager.onScanResult(Result.failure(e)) }
             }
     }
 
@@ -201,12 +195,15 @@ class MainActivity : ComponentActivity(), KoinComponent {
         }
     }
 
-    private fun ThemeConfig.shouldUseDarkTheme(context: android.content.Context): Boolean = when (this) {
-        ThemeConfig.FOLLOW_SYSTEM -> {
-            val uiMode = context.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
-            uiMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
+    private fun ThemeConfig.shouldUseDarkTheme(context: android.content.Context): Boolean =
+        when (this) {
+            ThemeConfig.FOLLOW_SYSTEM -> {
+                val uiMode =
+                    context.resources.configuration.uiMode and
+                        android.content.res.Configuration.UI_MODE_NIGHT_MASK
+                uiMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
+            }
+            ThemeConfig.LIGHT -> false
+            ThemeConfig.DARK -> true
         }
-        ThemeConfig.LIGHT -> false
-        ThemeConfig.DARK -> true
-    }
 }

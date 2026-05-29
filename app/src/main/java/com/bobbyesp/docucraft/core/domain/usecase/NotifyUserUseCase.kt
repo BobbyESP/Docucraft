@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
 package com.bobbyesp.docucraft.core.domain.usecase
 
 import androidx.annotation.StringRes
@@ -8,18 +11,15 @@ import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 
 class NotifyUserUseCase(
     private val stringProvider: StringProvider,
-    private val inAppNotificationsService: InAppNotificationsService
+    private val inAppNotificationsService: InAppNotificationsService,
 ) {
     operator fun invoke(
         @StringRes resId: Int,
         vararg formatArgs: Any,
-        type: NotificationType = NotificationType.Normal
+        type: NotificationType = NotificationType.Normal,
     ) {
         inAppNotificationsService.show(
-            InAppNotification(
-                message = stringProvider.get(resId, *formatArgs),
-                type = type,
-            )
+            InAppNotification(message = stringProvider.get(resId, *formatArgs), type = type)
         )
     }
 
@@ -33,11 +33,6 @@ class NotifyUserUseCase(
     }
 
     operator fun invoke(message: String, type: NotificationType = NotificationType.Normal) {
-        inAppNotificationsService.show(
-            InAppNotification(
-                message = message,
-                type = type,
-            )
-        )
+        inAppNotificationsService.show(InAppNotification(message = message, type = type))
     }
 }
