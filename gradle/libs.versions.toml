@@ -13,23 +13,23 @@ androidxAppCompat = "1.7.1"
 androidxCore = "1.18.0"
 androidxCoreSplashscreen = "1.2.0"
 androidxLifecycle = "2.10.0"
-androidxNavigation3 = "1.1.1"
+androidxNavigation3 = "1.1.2"
 androidxProfileInstaller = "1.4.1"
 androidxBaselineProfile = "1.4.1"
 androidxFragment = "1.8.9"
 
 # Jetpack Compose
-composeBom = "2026.04.01"
-composeMaterial3 = "1.5.0-alpha18"
-composeMaterial3Adaptive = "1.3.0-alpha10"
+composeBom = "2026.05.01"
+composeMaterial3 = "1.5.0-alpha20"
+composeMaterial3Adaptive = "1.3.0-beta02"
 
 # Google & Accompanist
-googleFonts = "1.11.0"
+googleFonts = "1.11.2"
 accompanist = "0.37.3"
 glance = "1.1.1"
 
 # Firebase & ML Kit
-firebaseBom = "34.12.0"
+firebaseBom = "34.14.0"
 mlKitDocScanner = "16.0.0"
 mlKitTextRecognition = "19.0.1"
 
@@ -39,28 +39,28 @@ room = "2.8.4"
 datastore = "1.2.1"
 
 # KotlinX
-kotlinxCoroutines = "1.10.2"
-kotlinxDatetime = "0.7.1"
+kotlinxCoroutines = "1.11.0"
+kotlinxDatetime = "0.8.0"
 kotlinxSerialization = "1.11.0"
 kotlinxCollectionsImmutable = "0.4.0"
 
 # UI Libraries
 materialKolor = "5.0.0-alpha07"
-landscapist = "2.9.7"
+landscapist = "2.9.8"
 sonner = "0.3.9"
-filekit = "0.14.0"
+filekit = "0.14.1"
 
 # Utils
 leakcanary = "2.14"
 desugarJdkLibs = "2.1.5"
-stabilityCompiler = "0.7.4"
-spotless = "8.5.1"
+stabilityCompiler = "0.8.0"
+spotless = "8.6.0"
 
 # Testing
 junit = "4.13.2"
 androidxTestExtJunit = "1.3.0"
 androidxEspresso = "3.7.0"
-mockk = "1.14.9"
+mockk = "1.14.11"
 
 [libraries]
 # Build Tools
