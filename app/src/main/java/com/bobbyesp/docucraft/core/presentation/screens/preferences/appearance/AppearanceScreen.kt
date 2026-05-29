@@ -194,7 +194,7 @@ fun AppearanceScreenContent(
                 },
                 colors =
                     TopAppBarDefaults.topAppBarColors(
-                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                        scrolledContainerColor = MaterialTheme.colorScheme.surface
                     ),
                 scrollBehavior = scrollBehavior,
             )
