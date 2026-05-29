@@ -1,4 +1,6 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+import com.diffplug.gradle.spotless.SpotlessExtension
+
+// Top-level build file where you can add configuration options common to all subprojects/modules.
 plugins {
     id(libs.plugins.android.application.get().pluginId) apply false
     id(libs.plugins.android.library.get().pluginId) apply false
@@ -9,7 +11,38 @@ plugins {
     alias(libs.plugins.google.gms) apply false
     alias(libs.plugins.firebase.crashlytics) apply false
     alias(libs.plugins.stability.analyzer) apply false
+    alias(libs.plugins.spotless) apply false
 }
+
+allprojects {
+    val excludedProjects: List<String> = listOf()
+
+    apply(plugin = rootProject.libs.plugins.spotless.get().pluginId)
+    configure<SpotlessExtension> {
+        if (project.path !in excludedProjects) {
+            kotlin {
+                ktfmt().kotlinlangStyle()
+                target("src/**/*.kt")
+                targetExclude("${layout.buildDirectory}/**/*.kt")
+                licenseHeaderFile(rootProject.file("spotless/copyright.txt"))
+            }
+            kotlinGradle {
+                ktfmt().kotlinlangStyle()
+                target("*.kts")
+                targetExclude("${layout.buildDirectory}/**/*.kts")
+                licenseHeaderFile(rootProject.file("spotless/copyright.txt"), "(^(?![\\/ ]\\*).*$)")
+                toggleOffOn()
+            }
+            format("xml") {
+                target("src/**/*.xml")
+                targetExclude("**/build/", ".idea/")
+                trimTrailingWhitespace()
+                endWithNewline()
+            }
+        }
+    }
+}
+
 
 sealed class Version(
     open val major: Int,
