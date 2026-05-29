@@ -28,7 +28,10 @@ class ExportDocumentUseCase {
         val file =
             FileKit.openFileSaver(
                 suggestedName = scannedDocument.title ?: scannedDocument.filename,
-                defaultExtension = "pdf", directory = dir, dialogSettings = FileKitDialogSettings.createDefault())
+                defaultExtension = "pdf",
+                directory = dir,
+                dialogSettings = FileKitDialogSettings.createDefault(),
+            )
                 ?: run {
                     return Result.failure(DocumentExportFailure.Cancelled())
                 }
