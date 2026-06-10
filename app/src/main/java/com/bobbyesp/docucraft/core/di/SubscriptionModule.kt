@@ -12,9 +12,7 @@ import org.koin.dsl.module
 
 val subscriptionModule = module {
     single<SubscriptionRepository> {
-        SubscriptionRepositoryImpl(
-            appScope = get(qualifier = named("AppMainSupervisedScope"))
-        )
+        SubscriptionRepositoryImpl(appScope = get(qualifier = named("AppMainSupervisedScope")))
     }
 
     viewModelOf(::SubscriptionViewModel)

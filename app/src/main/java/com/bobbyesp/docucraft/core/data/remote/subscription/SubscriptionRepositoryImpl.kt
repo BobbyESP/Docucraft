@@ -17,9 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class SubscriptionRepositoryImpl(
-    appScope: CoroutineScope
-) : SubscriptionRepository {
+class SubscriptionRepositoryImpl(appScope: CoroutineScope) : SubscriptionRepository {
 
     private val _isPro: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val isPro: StateFlow<Boolean> = _isPro.asStateFlow()

@@ -26,9 +26,6 @@ fun EntryProviderScope<Route>.SettingsRouting(onNavigate: (Route) -> Unit, onBac
     entry<Route.Settings.Appearance> { AppearanceScreen(onBack = { onBack() }) }
 
     entry<Route.Settings.CustomerCenter> {
-        CustomerCenter(
-            modifier = Modifier.fillMaxSize(),
-            onDismiss = { onBack() }
-        )
+        CustomerCenter(modifier = Modifier.fillMaxSize(), onDismiss = { onBack() })
     }
 }

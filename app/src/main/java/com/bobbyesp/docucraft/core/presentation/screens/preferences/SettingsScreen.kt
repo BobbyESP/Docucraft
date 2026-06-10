@@ -50,7 +50,7 @@ fun SettingsScreen(
     onNavigate: (Route) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    subscriptionViewModel: SubscriptionViewModel = koinViewModel()
+    subscriptionViewModel: SubscriptionViewModel = koinViewModel(),
 ) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val isPro by subscriptionViewModel.isPro.collectAsStateWithLifecycle()
@@ -58,27 +58,27 @@ fun SettingsScreen(
 
     if (showPaywall) {
         PaywallDialog(
-            paywallDialogOptions = PaywallDialogOptions.Builder()
-                .setDismissRequest { showPaywall = false }
-                .build()
+            paywallDialogOptions =
+                PaywallDialogOptions.Builder().setDismissRequest { showPaywall = false }.build()
         )
     }
 
-    val subscriptionItem = if (isPro) {
-        SettingsItem(
-            title = stringResource(R.string.manage_subscription),
-            supportingText = stringResource(R.string.manage_subscription_desc),
-            icon = Icons.Rounded.Star,
-            onClick = { onNavigate(Route.Settings.CustomerCenter) },
-        )
-    } else {
-        SettingsItem(
-            title = stringResource(R.string.upgrade_to_pro),
-            supportingText = stringResource(R.string.upgrade_to_pro_desc),
-            icon = Icons.Rounded.Star,
-            onClick = { showPaywall = true },
-        )
-    }
+    val subscriptionItem =
+        if (isPro) {
+            SettingsItem(
+                title = stringResource(R.string.manage_subscription),
+                supportingText = stringResource(R.string.manage_subscription_desc),
+                icon = Icons.Rounded.Star,
+                onClick = { onNavigate(Route.Settings.CustomerCenter) },
+            )
+        } else {
+            SettingsItem(
+                title = stringResource(R.string.upgrade_to_pro),
+                supportingText = stringResource(R.string.upgrade_to_pro_desc),
+                icon = Icons.Rounded.Star,
+                onClick = { showPaywall = true },
+            )
+        }
 
     val settings: PersistentList<SettingsItem> =
         persistentListOf(
@@ -88,7 +88,7 @@ fun SettingsScreen(
                 supportingText = stringResource(R.string.appearance_desc),
                 icon = Icons.Rounded.ColorLens,
                 onClick = { onNavigate(Route.Settings.Appearance) },
-            )
+            ),
         )
 
     Scaffold(
