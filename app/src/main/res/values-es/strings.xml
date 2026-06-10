@@ -79,4 +79,10 @@
 	<string name="fit_page">Ajustar a la página</string>
 	<string name="fit_mode">Modo de ajuste</string>
 	<string name="page_input_label">Página</string>
+
+    <!-- Subscription -->
+    <string name="upgrade_to_pro">Mejorar a Docucraft Pro</string>
+    <string name="upgrade_to_pro_desc">Desbloquea funciones premium y elimina límites</string>
+    <string name="manage_subscription">Gestionar suscripción</string>
+    <string name="manage_subscription_desc">Ver detalles, cambiar de plan o restaurar compras</string>
 </resources>

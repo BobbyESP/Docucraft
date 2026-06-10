@@ -55,6 +55,7 @@ leakcanary = "2.14"
 desugarJdkLibs = "2.1.5"
 stabilityCompiler = "0.8.0"
 spotless = "8.6.0"
+revenuecat = "10.8.0"
 
 # Testing
 junit = "4.13.2"
@@ -136,6 +137,8 @@ firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 gms-mlkit-docscanner = { group = "com.google.android.gms", name = "play-services-mlkit-document-scanner", version.ref = "mlKitDocScanner" }
 gms-mlkit-text-recognition = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition", version.ref = "mlKitTextRecognition" }
+revenuecat-purchases = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenuecat" }
+revenuecat-purchases-ui = { group = "com.revenuecat.purchases", name = "purchases-ui", version.ref = "revenuecat" }
 
 # File Management
 filekit-core = { group = "io.github.vinceglb", name = "filekit-core", version.ref = "filekit" }

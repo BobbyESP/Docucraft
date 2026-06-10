@@ -155,4 +155,10 @@
     <string name="page_of">%1$s of %2$s</string>
     <string name="settings">Settings</string>
     <string name="general">General</string>
+
+    <!-- Subscription -->
+    <string name="upgrade_to_pro">Upgrade to Docucraft Pro</string>
+    <string name="upgrade_to_pro_desc">Unlock premium features and remove limits</string>
+    <string name="manage_subscription">Manage Subscription</string>
+    <string name="manage_subscription_desc">View details, change plans, or restore purchases</string>
 </resources>

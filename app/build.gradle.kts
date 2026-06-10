@@ -1,3 +1,5 @@
+import java.util.Properties
+
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
@@ -13,6 +15,14 @@ plugins {
     id("copy-apk-plugin")
 }
 
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        file.inputStream().use { load(it) }
+    }
+}
+val revenueCatApiKey = localProperties.getProperty("revenuecat.apikey") ?: ""
+
 android {
     namespace = "com.bobbyesp.docucraft"
 
@@ -22,6 +32,12 @@ android {
 
         versionCode = rootProject.extra["versionCode"] as Int
         versionName = rootProject.extra["versionName"] as String
+
+        buildConfigField("String", "REVENUECAT_API_KEY", "\"$revenueCatApiKey\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {
@@ -102,6 +118,10 @@ dependencies {
     // Firebase
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
+
+    // RevenueCat
+    implementation(libs.revenuecat.purchases)
+    implementation(libs.revenuecat.purchases.ui)
 
     // Performance & Utils
     coreLibraryDesugaring(libs.desugar.jdk.libs)

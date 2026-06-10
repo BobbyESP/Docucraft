@@ -25,6 +25,7 @@ sealed interface Route : NavKey {
             get() = Icons.Rounded.Settings
 
         @Serializable data object Appearance : Route
+        @Serializable data object CustomerCenter : Route
     }
 
     @Serializable data class PdfViewer(val documentInfo: BasicDocument) : Route
