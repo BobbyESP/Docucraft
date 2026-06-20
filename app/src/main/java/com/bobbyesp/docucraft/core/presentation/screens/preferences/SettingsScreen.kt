@@ -82,13 +82,13 @@ fun SettingsScreen(
 
     val settings: PersistentList<SettingsItem> =
         persistentListOf(
-            //subscriptionItem, TODO: Uncomment this when the subscription feature is ready
+            // subscriptionItem, TODO: Uncomment this when the subscription feature is ready
             SettingsItem(
                 title = stringResource(R.string.appearance),
                 supportingText = stringResource(R.string.appearance_desc),
                 icon = Icons.Rounded.ColorLens,
                 onClick = { onNavigate(Route.Settings.Appearance) },
-            ),
+            )
         )
 
     Scaffold(
