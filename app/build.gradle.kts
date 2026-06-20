@@ -124,6 +124,7 @@ dependencies {
     // RevenueCat
     implementation(libs.revenuecat.purchases)
     implementation(libs.revenuecat.purchases.ui)
+    implementation(libs.play.billing)
 
     // Performance & Utils
     coreLibraryDesugaring(libs.desugar.jdk.libs)
