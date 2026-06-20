@@ -82,7 +82,7 @@ fun SettingsScreen(
 
     val settings: PersistentList<SettingsItem> =
         persistentListOf(
-            subscriptionItem,
+            //subscriptionItem, TODO: Uncomment this when the subscription feature is ready
             SettingsItem(
                 title = stringResource(R.string.appearance),
                 supportingText = stringResource(R.string.appearance_desc),
