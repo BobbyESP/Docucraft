@@ -1,9 +1,7 @@
 import com.android.build.api.dsl.CommonExtension
-import com.ncorti.ktfmt.gradle.KtfmtExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalogsExtension
-import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -16,10 +14,7 @@ class AndroidConventionPlugin : Plugin<Project> {
             with(pluginManager) {
                 val composePluginId = libs.findPlugin("compose-compiler").get().get().pluginId
                 apply(composePluginId)
-                apply("com.ncorti.ktfmt.gradle")
             }
-
-            configure<KtfmtExtension> { kotlinLangStyle() }
 
             val extension = extensions.getByType(CommonExtension::class.java)
             configureAndroidCommon(extension)

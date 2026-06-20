@@ -15,7 +15,6 @@ import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
 import com.bobbyesp.docucraft.core.domain.model.ThemeConfig
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
-import com.bobbyesp.docucraft.core.presentation.theme.DEFAULT_SEED_COLOR
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -49,6 +48,7 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
                 }
             }
             .map { preferences ->
+                val defaultPrefs = UserPreferences()
                 val legacyFont =
                     preferences[PreferencesKeys.FONT_CONFIG]?.let {
                         try {
@@ -71,18 +71,23 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
                                     else -> ThemeConfig.FOLLOW_SYSTEM
                                 }
                             }
-                        } ?: ThemeConfig.FOLLOW_SYSTEM,
-                    isHighContrastModeEnabled = preferences[PreferencesKeys.HIGH_CONTRAST] ?: false,
-                    useDynamicColoring = preferences[PreferencesKeys.USE_DYNAMIC_COLORING] ?: true,
-                    themeSeedColor = preferences[PreferencesKeys.THEME_COLOR] ?: DEFAULT_SEED_COLOR,
+                        } ?: defaultPrefs.themeConfig,
+                    isHighContrastModeEnabled =
+                        preferences[PreferencesKeys.HIGH_CONTRAST]
+                            ?: defaultPrefs.isHighContrastModeEnabled,
+                    useDynamicColoring =
+                        preferences[PreferencesKeys.USE_DYNAMIC_COLORING]
+                            ?: defaultPrefs.useDynamicColoring,
+                    themeSeedColor =
+                        preferences[PreferencesKeys.THEME_COLOR] ?: defaultPrefs.themeSeedColor,
                     paletteStyle =
                         preferences[PreferencesKeys.PALETTE_STYLE]?.let {
                             try {
                                 PaletteStyleConfig.valueOf(it)
                             } catch (_: IllegalArgumentException) {
-                                PaletteStyleConfig.Vibrant
+                                defaultPrefs.paletteStyle
                             }
-                        } ?: PaletteStyleConfig.Vibrant,
+                        } ?: defaultPrefs.paletteStyle,
                     displayFont =
                         preferences[PreferencesKeys.DISPLAY_FONT]?.let {
                             try {
@@ -90,7 +95,7 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
                             } catch (_: IllegalArgumentException) {
                                 null
                             }
-                        } ?: legacyFont ?: FontConfig.GoogleSansFlex,
+                        } ?: legacyFont ?: defaultPrefs.displayFont,
                     titleFont =
                         preferences[PreferencesKeys.TITLE_FONT]?.let {
                             try {
@@ -98,7 +103,7 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
                             } catch (_: IllegalArgumentException) {
                                 null
                             }
-                        } ?: legacyFont ?: FontConfig.GoogleSansFlex,
+                        } ?: legacyFont ?: defaultPrefs.titleFont,
                     bodyFont =
                         preferences[PreferencesKeys.BODY_FONT]?.let {
                             try {
@@ -106,7 +111,7 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
                             } catch (_: IllegalArgumentException) {
                                 null
                             }
-                        } ?: legacyFont ?: FontConfig.Roboto,
+                        } ?: legacyFont ?: defaultPrefs.bodyFont,
                     labelFont =
                         preferences[PreferencesKeys.LABEL_FONT]?.let {
                             try {
@@ -114,7 +119,7 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
                             } catch (_: IllegalArgumentException) {
                                 null
                             }
-                        } ?: legacyFont ?: FontConfig.System,
+                        } ?: legacyFont ?: defaultPrefs.labelFont,
                     monospaceFont =
                         preferences[PreferencesKeys.MONOSPACE_FONT]?.let {
                             try {
@@ -122,10 +127,13 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
                             } catch (_: IllegalArgumentException) {
                                 null
                             }
-                        } ?: FontConfig.JetBrainsMono,
+                        } ?: defaultPrefs.monospaceFont,
                     completedOnboarding =
-                        preferences[PreferencesKeys.COMPLETED_ONBOARDING] ?: false,
-                    marqueeTextEnabled = preferences[PreferencesKeys.MARQUEE_TEXT_ENABLED] ?: true,
+                        preferences[PreferencesKeys.COMPLETED_ONBOARDING]
+                            ?: defaultPrefs.completedOnboarding,
+                    marqueeTextEnabled =
+                        preferences[PreferencesKeys.MARQUEE_TEXT_ENABLED]
+                            ?: defaultPrefs.marqueeTextEnabled,
                 )
             }
 
