@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet
 
+import android.content.res.Configuration
 import android.text.format.Formatter.formatFileSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -50,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.common.LocalOrientation
 import com.bobbyesp.docucraft.core.presentation.components.divider.AnimatedWavyDivider
 import com.bobbyesp.docucraft.core.presentation.components.divider.defaults.AnimatedWavyDividerDefaults
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
@@ -96,21 +99,42 @@ fun DocumentActionsContent(
             onDelete = onDelete,
         )
 
-    Column(modifier = modifier) {
-        DocumentHeader(
-            scannedDocument = scannedDocument,
-            modifier = Modifier.padding(horizontal = 16.dp),
-        )
+    val isLandscape = LocalOrientation.current == Configuration.ORIENTATION_LANDSCAPE
 
-        AnimatedWavyDivider(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            strokeWidth = 4.dp,
-            colors =
-                AnimatedWavyDividerDefaults.colors(color = MaterialTheme.colorScheme.outlineVariant),
-        )
+    if (isLandscape) {
+        Row(
+            modifier = modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            DocumentHeader(
+                scannedDocument = scannedDocument,
+                modifier = Modifier.weight(1f).padding(start = 16.dp),
+            )
 
-        Box(modifier = Modifier.heightIn(min = 120.dp)) {
-            DocumentActionsRow(options = options, onOptionSelect = { it() })
+            Box(modifier = Modifier.weight(1f).heightIn(min = 120.dp)) {
+                DocumentActionsRow(options = options, onOptionSelect = { it() })
+            }
+        }
+    } else {
+        Column(modifier = modifier) {
+            DocumentHeader(
+                scannedDocument = scannedDocument,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+
+            AnimatedWavyDivider(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                strokeWidth = 4.dp,
+                colors =
+                    AnimatedWavyDividerDefaults.colors(
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    ),
+            )
+
+            Box(modifier = Modifier.heightIn(min = 120.dp)) {
+                DocumentActionsRow(options = options, onOptionSelect = { it() })
+            }
         }
     }
 }
