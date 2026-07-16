@@ -60,29 +60,28 @@ internal class GestureState(private val scope: CoroutineScope) {
         onEnd: () -> Unit,
     ) {
         flingJob?.cancel()
-        flingJob =
-            scope.launch {
-                val decay = exponentialDecay<Float>(frictionMultiplier = 1.15f)
-                val jx = launch {
-                    var last = 0f
-                    Animatable(0f).animateDecay(velocity.x, decay) {
-                        onDelta(Offset(value - last, 0f))
-                        onVelocityUpdate(Offset(velocity.x, velocity.y))
-                        last = value
-                    }
+        flingJob = scope.launch {
+            val decay = exponentialDecay<Float>(frictionMultiplier = 1.15f)
+            val jx = launch {
+                var last = 0f
+                Animatable(0f).animateDecay(velocity.x, decay) {
+                    onDelta(Offset(value - last, 0f))
+                    onVelocityUpdate(Offset(velocity.x, velocity.y))
+                    last = value
                 }
-                val jy = launch {
-                    var last = 0f
-                    Animatable(0f).animateDecay(velocity.y, decay) {
-                        onDelta(Offset(0f, value - last))
-                        last = value
-                    }
-                }
-                jx.join()
-                jy.join()
-                onVelocityUpdate(Offset.Zero)
-                onEnd()
             }
+            val jy = launch {
+                var last = 0f
+                Animatable(0f).animateDecay(velocity.y, decay) {
+                    onDelta(Offset(0f, value - last))
+                    last = value
+                }
+            }
+            jx.join()
+            jy.join()
+            onVelocityUpdate(Offset.Zero)
+            onEnd()
+        }
     }
 
     /** Runs a spring-interpolated zoom animation. */
@@ -95,11 +94,10 @@ internal class GestureState(private val scope: CoroutineScope) {
         spec: AnimationSpec<Float> = spring(dampingRatio = 0.72f, stiffness = 420f),
     ) {
         animJob?.cancel()
-        animJob =
-            scope.launch {
-                Animatable(from).animateTo(to, spec) { onFrame(value, pivot) }
-                onEnd()
-            }
+        animJob = scope.launch {
+            Animatable(from).animateTo(to, spec) { onFrame(value, pivot) }
+            onEnd()
+        }
     }
 
     /** Smoothly scrolls to a specific pan position. */
@@ -111,15 +109,12 @@ internal class GestureState(private val scope: CoroutineScope) {
         spec: AnimationSpec<Offset> = spring(),
     ) {
         animJob?.cancel()
-        animJob =
-            scope.launch {
-                Animatable(from.x).animateTo(to.x, spring()) {
-                    onFrame(
-                        Offset(value, from.y)
-                    ) // This is a bit simplified, but works for the logic
-                }
-                // Better to use Animatable<Offset, AnimationVector2D> or just two Animatable<Float>
+        animJob = scope.launch {
+            Animatable(from.x).animateTo(to.x, spring()) {
+                onFrame(Offset(value, from.y)) // This is a bit simplified, but works for the logic
             }
+            // Better to use Animatable<Offset, AnimationVector2D> or just two Animatable<Float>
+        }
     }
 
     fun animatePanTo(
@@ -130,14 +125,13 @@ internal class GestureState(private val scope: CoroutineScope) {
         spec: AnimationSpec<Float> = spring(),
     ) {
         animJob?.cancel()
-        animJob =
-            scope.launch {
-                val animX = Animatable(from.x)
-                val animY = Animatable(from.y)
-                launch { animX.animateTo(to.x, spec) { onUpdate(Offset(value, animY.value)) } }
-                launch { animY.animateTo(to.y, spec) { onUpdate(Offset(animX.value, value)) } }
-                onEnd()
-            }
+        animJob = scope.launch {
+            val animX = Animatable(from.x)
+            val animY = Animatable(from.y)
+            launch { animX.animateTo(to.x, spec) { onUpdate(Offset(value, animY.value)) } }
+            launch { animY.animateTo(to.y, spec) { onUpdate(Offset(animX.value, value)) } }
+            onEnd()
+        }
     }
 }
 

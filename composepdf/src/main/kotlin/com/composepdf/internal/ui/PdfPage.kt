@@ -48,11 +48,10 @@ internal fun PdfPage(
     ) {
         if (bitmap != null) {
             // Observe tileRevision to trigger recomposition when the tile cache changes
-            val tiles =
-                state.run {
-                    tileRevision
-                    getImageBitmapTilesForPage(pageIndex)
-                }
+            val tiles = state.run {
+                tileRevision
+                getImageBitmapTilesForPage(pageIndex)
+            }
 
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val zoom = state.zoom

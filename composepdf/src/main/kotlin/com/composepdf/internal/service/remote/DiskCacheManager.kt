@@ -41,34 +41,33 @@ class DiskCacheManager(context: Context, private val cacheDir: File? = null) {
      * @param policy The cache policy to apply
      * @return The cached file if valid, or null
      */
-    suspend fun get(cacheKey: String, policy: DownloadCachePolicy): File? =
-        mutex.withLock {
-            withContext(Dispatchers.IO) {
-                val hashedKey = hashKey(cacheKey)
-                val cacheFile = File(actualCacheDir, "$hashedKey.pdf")
+    suspend fun get(cacheKey: String, policy: DownloadCachePolicy): File? = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            val hashedKey = hashKey(cacheKey)
+            val cacheFile = File(actualCacheDir, "$hashedKey.pdf")
 
-                if (!cacheFile.exists()) {
-                    return@withContext null
-                }
+            if (!cacheFile.exists()) {
+                return@withContext null
+            }
 
-                // Check expiration
-                if (policy.validateOnAccess) {
-                    val age = System.currentTimeMillis() - cacheFile.lastModified()
-                    if (age > policy.maxAge.inWholeMilliseconds) {
-                        // File expired
-                        if (!policy.staleWhileRevalidate) {
-                            cacheFile.delete()
-                            return@withContext null
-                        }
+            // Check expiration
+            if (policy.validateOnAccess) {
+                val age = System.currentTimeMillis() - cacheFile.lastModified()
+                if (age > policy.maxAge.inWholeMilliseconds) {
+                    // File expired
+                    if (!policy.staleWhileRevalidate) {
+                        cacheFile.delete()
+                        return@withContext null
                     }
                 }
-
-                // Update access time for LRU
-                cacheFile.setLastModified(System.currentTimeMillis())
-
-                cacheFile
             }
+
+            // Update access time for LRU
+            cacheFile.setLastModified(System.currentTimeMillis())
+
+            cacheFile
         }
+    }
 
     /**
      * Gets the file path for a cache entry (for writing).
@@ -76,16 +75,15 @@ class DiskCacheManager(context: Context, private val cacheDir: File? = null) {
      * @param cacheKey The cache key (will be hashed)
      * @return The file path where the cached file should be written
      */
-    suspend fun getCacheFile(cacheKey: String): File =
-        mutex.withLock {
-            withContext(Dispatchers.IO) {
-                val hashedKey = hashKey(cacheKey)
-                File(actualCacheDir, "$hashedKey.pdf").also {
-                    // Ensure parent directory exists
-                    it.parentFile?.mkdirs()
-                }
+    suspend fun getCacheFile(cacheKey: String): File = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            val hashedKey = hashKey(cacheKey)
+            File(actualCacheDir, "$hashedKey.pdf").also {
+                // Ensure parent directory exists
+                it.parentFile?.mkdirs()
             }
         }
+    }
 
     /**
      * Marks a cache entry as complete (after successful download).
@@ -94,58 +92,53 @@ class DiskCacheManager(context: Context, private val cacheDir: File? = null) {
      * @param file The downloaded file
      * @param policy The cache policy for cleanup
      */
-    suspend fun put(cacheKey: String, file: File, policy: DownloadCachePolicy) =
-        mutex.withLock {
-            withContext(Dispatchers.IO) {
-                // Update modification time
-                file.setLastModified(System.currentTimeMillis())
+    suspend fun put(cacheKey: String, file: File, policy: DownloadCachePolicy) = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            // Update modification time
+            file.setLastModified(System.currentTimeMillis())
 
-                // Enforce cache size limit
-                enforceSizeLimit(policy.maxSizeBytes)
-            }
+            // Enforce cache size limit
+            enforceSizeLimit(policy.maxSizeBytes)
         }
+    }
 
     /**
      * Removes a specific cache entry.
      *
      * @param cacheKey The cache key to remove
      */
-    suspend fun remove(cacheKey: String) =
-        mutex.withLock {
-            withContext(Dispatchers.IO) {
-                val hashedKey = hashKey(cacheKey)
-                File(actualCacheDir, "$hashedKey.pdf").delete()
-            }
+    suspend fun remove(cacheKey: String) = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            val hashedKey = hashKey(cacheKey)
+            File(actualCacheDir, "$hashedKey.pdf").delete()
         }
+    }
 
     /** Clears all cached files. */
-    suspend fun clear() =
-        mutex.withLock {
-            withContext(Dispatchers.IO) { actualCacheDir.listFiles()?.forEach { it.delete() } }
-        }
+    suspend fun clear() = mutex.withLock {
+        withContext(Dispatchers.IO) { actualCacheDir.listFiles()?.forEach { it.delete() } }
+    }
 
     /** Gets the current cache size in bytes. */
-    suspend fun size(): Long =
-        mutex.withLock {
-            withContext(Dispatchers.IO) { actualCacheDir.listFiles()?.sumOf { it.length() } ?: 0L }
-        }
+    suspend fun size(): Long = mutex.withLock {
+        withContext(Dispatchers.IO) { actualCacheDir.listFiles()?.sumOf { it.length() } ?: 0L }
+    }
 
     /**
      * Cleans up expired cache entries.
      *
      * @param maxAge Maximum age in milliseconds
      */
-    suspend fun cleanExpired(maxAge: Long) =
-        mutex.withLock {
-            withContext(Dispatchers.IO) {
-                val now = System.currentTimeMillis()
-                actualCacheDir.listFiles()?.forEach { file ->
-                    if (now - file.lastModified() > maxAge) {
-                        file.delete()
-                    }
+    suspend fun cleanExpired(maxAge: Long) = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            val now = System.currentTimeMillis()
+            actualCacheDir.listFiles()?.forEach { file ->
+                if (now - file.lastModified() > maxAge) {
+                    file.delete()
                 }
             }
         }
+    }
 
     /**
      * Evicts the oldest cached files (by last-modified time) until the total cache size is at or

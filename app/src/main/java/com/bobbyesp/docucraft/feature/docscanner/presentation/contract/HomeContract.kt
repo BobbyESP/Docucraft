@@ -31,13 +31,12 @@ data class HomeUiState(
 ) {
     val errorMessage: String? = (status as? HomeStatus.Error)?.message
 
-    val hasActiveFilters: Boolean =
-        filterOptions.run {
-            minPageCount != null ||
-                minFileSize != null ||
-                dateRange != null ||
-                sortBy != SortOption.DateDesc
-        }
+    val hasActiveFilters: Boolean = filterOptions.run {
+        minPageCount != null ||
+            minFileSize != null ||
+            dateRange != null ||
+            sortBy != SortOption.DateDesc
+    }
 
     val isEmptyResult: Boolean = visibleDocuments.isEmpty() && hasDocuments
 }

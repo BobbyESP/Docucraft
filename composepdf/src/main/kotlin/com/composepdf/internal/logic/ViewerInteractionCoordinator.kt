@@ -83,21 +83,19 @@ internal class ViewerInteractionCoordinator(
         viewportCoordinator.updateCurrentPageFromViewport()
 
         animatedZoomRenderJob?.cancel()
-        animatedZoomRenderJob =
-            scope.launch {
-                // Animating is very high-churn, increase debounce.
-                debounceDelay(150L)
-                requestRender(RenderTrigger.ANIMATED_ZOOM_SETTLED)
-            }
+        animatedZoomRenderJob = scope.launch {
+            // Animating is very high-churn, increase debounce.
+            debounceDelay(150L)
+            requestRender(RenderTrigger.ANIMATED_ZOOM_SETTLED)
+        }
     }
 
     private fun debounceGestureRender(delayMs: Long) {
         gestureRenderJob?.cancel()
-        gestureRenderJob =
-            scope.launch {
-                debounceDelay(delayMs)
-                requestRender(RenderTrigger.GESTURE_DEBOUNCED)
-            }
+        gestureRenderJob = scope.launch {
+            debounceDelay(delayMs)
+            requestRender(RenderTrigger.GESTURE_DEBOUNCED)
+        }
     }
 
     private fun applyZoomAroundPivot(targetZoom: Float, pivot: Offset): Boolean {

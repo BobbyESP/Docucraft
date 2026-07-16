@@ -216,18 +216,17 @@ internal constructor(
         // Remove base bitmaps for pages that left the prefetch window.
         _renderedPages.update { current -> current.filterKeys { it in activeWindow } }
 
-        val desiredPages =
-            activeWindow.associateWith { pageIndex ->
-                val size = pageSizes[pageIndex]
-                val (targetW, targetH) =
-                    pageRenderer.calculateRenderSize(
-                        size.width,
-                        size.height,
-                        getBaseWidth(pageIndex),
-                        config,
-                    )
-                PageCacheKey(pageIndex, roundedZoom, targetW, targetH)
-            }
+        val desiredPages = activeWindow.associateWith { pageIndex ->
+            val size = pageSizes[pageIndex]
+            val (targetW, targetH) =
+                pageRenderer.calculateRenderSize(
+                    size.width,
+                    size.height,
+                    getBaseWidth(pageIndex),
+                    config,
+                )
+            PageCacheKey(pageIndex, roundedZoom, targetW, targetH)
+        }
         renderWindowTracker.updateDesiredPages(desiredPages)
 
         for (pageIndex in activeWindow) {

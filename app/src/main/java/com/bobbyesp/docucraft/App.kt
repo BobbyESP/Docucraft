@@ -53,12 +53,11 @@ class App : Application() {
                 subscriptionModule,
             )
         }
-        packageInfo =
-            packageManager.run {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
-                    getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
-                else getPackageInfo(packageName, 0)
-            }
+        packageInfo = packageManager.run {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+            else getPackageInfo(packageName, 0)
+        }
     }
 
     companion object {

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
@@ -41,7 +42,9 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
     val goBack: () -> Unit = { backStack.removeLastOrNull() }
 
     // The document currently open in the detail pane, used to highlight it in the list.
-    val openDocumentId = backStack.filterIsInstance<Route.PdfViewer>().lastOrNull()?.document?.uuid
+    val openDocumentId = remember {
+        backStack.filterIsInstance<Route.PdfViewer>().lastOrNull()?.document?.uuid
+    }
 
     NavDisplay(
         backStack = backStack,
@@ -70,10 +73,17 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
                 )
             },
         transitionSpec = {
+            // Slide in from right when navigating forward
             slideInHorizontally(initialOffsetX = { it }) togetherWith
                 slideOutHorizontally(targetOffsetX = { -it })
         },
         popTransitionSpec = {
+            // Slide in from left when navigating back
+            slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                slideOutHorizontally(targetOffsetX = { it })
+        },
+        predictivePopTransitionSpec = {
+            // Slide in from left when navigating back
             slideInHorizontally(initialOffsetX = { -it }) togetherWith
                 slideOutHorizontally(targetOffsetX = { it })
         },
