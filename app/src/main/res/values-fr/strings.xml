@@ -16,6 +16,7 @@
     <string name="delete">Supprimer</string>
     <string name="doc_deleted_successfully">Le document a été supprimé avec succès</string>
     <string name="error_loading_docs">Erreur lors du chargement des documents</string>
+    <string name="select_document_to_preview">Sélectionnez un document pour l\'afficher ici</string>
     <string name="no_scanned_documents">Aucun document numérisé</string>
     <string name="confirm">Confirmer</string>
     <string name="doc_modify_details_description">Mettez à jour le titre et la description du document ci-dessous pour refléter son contenu et ses détails.</string>

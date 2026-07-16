@@ -3,37 +3,26 @@
  */
 package com.bobbyesp.docucraft.core.presentation.navigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import kotlinx.serialization.Serializable
 
+/**
+ * Every destination the user can navigate to. Routes are pure, serializable data: they carry only
+ * the arguments a destination needs, never UI concerns (icons, labels) or behavior.
+ */
 @Serializable
 sealed interface Route : NavKey {
-    @Serializable
-    data object Home : Route, TopLevelRoute {
-        override val icon: ImageVector
-            get() = Icons.Rounded.Home
-    }
+
+    @Serializable data object Home : Route
+
+    @Serializable data class PdfViewer(val document: BasicDocument) : Route
 
     @Serializable
-    data object Settings : Route, TopLevelRoute {
-        override val icon: ImageVector
-            get() = Icons.Rounded.Settings
+    data object Settings : Route {
 
         @Serializable data object Appearance : Route
 
         @Serializable data object CustomerCenter : Route
     }
-
-    @Serializable data class PdfViewer(val documentInfo: BasicDocument) : Route
 }
-
-interface TopLevelRoute {
-    val icon: ImageVector
-}
-
-val TopLevelRoutes = listOf<TopLevelRoute>(Route.Home)

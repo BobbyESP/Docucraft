@@ -16,6 +16,7 @@
     <string name="name">Имя</string>
     <string name="doc_modify_details">Изменить детали документа</string>
     <string name="error_loading_docs">Ошибка загрузки документов</string>
+    <string name="select_document_to_preview">Выберите документ, чтобы просмотреть его здесь</string>
     <string name="search">Поиск</string>
     <string name="doc_share">Поделиться документом</string>
     <string name="retry">Повторить</string>

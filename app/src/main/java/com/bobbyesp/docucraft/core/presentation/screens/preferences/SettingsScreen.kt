@@ -36,7 +36,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsGroup
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsItem
-import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.subscription.SubscriptionViewModel
 import com.revenuecat.purchases.ui.revenuecatui.PaywallDialog
 import com.revenuecat.purchases.ui.revenuecatui.PaywallDialogOptions
@@ -47,7 +46,8 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsScreen(
-    onNavigate: (Route) -> Unit,
+    onOpenAppearance: () -> Unit,
+    onOpenCustomerCenter: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     subscriptionViewModel: SubscriptionViewModel = koinViewModel(),
@@ -69,7 +69,7 @@ fun SettingsScreen(
                 title = stringResource(R.string.manage_subscription),
                 supportingText = stringResource(R.string.manage_subscription_desc),
                 icon = Icons.Rounded.Star,
-                onClick = { onNavigate(Route.Settings.CustomerCenter) },
+                onClick = onOpenCustomerCenter,
             )
         } else {
             SettingsItem(
@@ -87,7 +87,7 @@ fun SettingsScreen(
                 title = stringResource(R.string.appearance),
                 supportingText = stringResource(R.string.appearance_desc),
                 icon = Icons.Rounded.ColorLens,
-                onClick = { onNavigate(Route.Settings.Appearance) },
+                onClick = onOpenAppearance,
             )
         )
 

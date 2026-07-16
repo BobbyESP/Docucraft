@@ -52,6 +52,7 @@
     <string name="off">Spento</string>
     <string name="retry">Riprova</string>
     <string name="error_loading_docs">Errore durante il caricamento dei documenti</string>
+    <string name="select_document_to_preview">Seleziona un documento per visualizzarlo qui</string>
     <string name="doc_scan_error">Si è verificato un errore durante la scansione</string>
     <string name="file_size">Dimensione file</string>
     <string name="on">Attivo</string>

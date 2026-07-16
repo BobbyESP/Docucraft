@@ -68,6 +68,7 @@ fun ScannedDocumentListItem(
     onItemLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     position: ScannedDocumentCardPosition = ScannedDocumentCardPosition.SINGLE,
+    selected: Boolean = false,
 ) {
     val shape =
         when (position) {
@@ -75,6 +76,20 @@ fun ScannedDocumentListItem(
             ScannedDocumentCardPosition.MIDDLE -> DocucraftShapeDefaults.middleListItemShape
             ScannedDocumentCardPosition.BOTTOM -> DocucraftShapeDefaults.bottomListItemShape
             ScannedDocumentCardPosition.SINGLE -> DocucraftShapeDefaults.cardShape
+        }
+
+    val containerColor =
+        if (selected) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceColorAtElevation(DocucraftElevationDefaults.Card)
+        }
+
+    val contentColor =
+        if (selected) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurface
         }
 
     Surface(
@@ -87,7 +102,8 @@ fun ScannedDocumentListItem(
                     onLongClick = onItemLongClick,
                 ),
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceColorAtElevation(DocucraftElevationDefaults.Card),
+        color = containerColor,
+        contentColor = contentColor,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),

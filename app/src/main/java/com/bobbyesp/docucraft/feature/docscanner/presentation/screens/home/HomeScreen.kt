@@ -14,11 +14,11 @@ import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.repository.logScreenView
 import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
-import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentDialogWrapper
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
+import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
@@ -27,40 +27,55 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onNavigate: (Route) -> Unit,
+    onOpenDocument: (BasicDocument) -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel(),
+    selectedDocumentId: String? = null,
 ) {
     val uiState by viewModel.state.collectAsStateWithLifecycle()
 
     HandleHomeUiEffects(
         uiEffectFlow = viewModel.effects,
         uiEventFlow = viewModel.defaultEvents,
-        onNavigate = onNavigate,
+        onOpenDocument = onOpenDocument,
+        onOpenSettings = onOpenSettings,
     )
 
     uiState.sheetState?.let { sheetState ->
         DocumentDialogWrapper(sheetState = sheetState, onHomeIntent = viewModel::onSendIntent)
     }
 
-    HomeContent(modifier = modifier, uiState = uiState, onAction = viewModel::onSendIntent)
+    HomeContent(
+        modifier = modifier,
+        uiState = uiState,
+        onAction = viewModel::onSendIntent,
+        selectedDocumentId = selectedDocumentId,
+    )
 }
 
 @Composable
 private fun HandleHomeUiEffects(
     uiEffectFlow: Flow<HomeEffect>,
     uiEventFlow: Flow<UiEvent>,
-    onNavigate: (Route) -> Unit,
+    onOpenDocument: (BasicDocument) -> Unit,
+    onOpenSettings: () -> Unit,
 ) {
-    val currentOnNavigate by rememberUpdatedState(onNavigate)
+    val currentOnOpenDocument by rememberUpdatedState(onOpenDocument)
+    val currentOnOpenSettings by rememberUpdatedState(onOpenSettings)
     val analyticsHelper = LocalAnalyticsHelper.current
 
     LaunchedEffect(uiEffectFlow) {
         uiEffectFlow.collectLatest { effect ->
             when (effect) {
-                is HomeEffect.Navigate -> {
-                    currentOnNavigate(effect.route)
-                    analyticsHelper.logScreenView(effect.route::class.simpleName.toString())
+                is HomeEffect.OpenDocument -> {
+                    currentOnOpenDocument(effect.document)
+                    analyticsHelper.logScreenView("PdfViewer")
+                }
+
+                HomeEffect.OpenSettings -> {
+                    currentOnOpenSettings()
+                    analyticsHelper.logScreenView("Settings")
                 }
             }
         }

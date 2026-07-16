@@ -17,6 +17,7 @@
     <string name="doc_share">Compartir documento</string>
     <string name="issue_sharing_doc">Ocurrió un problema al intentar compartir el documento</string>
     <string name="error_loading_docs">Error al cargar los documentos</string>
+    <string name="select_document_to_preview">Selecciona un documento para previsualizarlo aquí</string>
     <string name="file_size">Tamaño del archivo</string>
     <string name="page_count">Cantidad de páginas</string>
     <string name="share">Compartir</string>

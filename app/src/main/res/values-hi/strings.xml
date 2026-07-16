@@ -26,6 +26,7 @@
     <string name="no_scanned_documents">कोई स्कैन किए गए दस्तावेज़ नहीं</string>
     <string name="description">विवरण</string>
     <string name="error_loading_docs">दस्तावेज़ लोड करने में त्रुटि</string>
+    <string name="select_document_to_preview">यहाँ पूर्वावलोकन के लिए कोई दस्तावेज़ चुनें</string>
     <string name="doc_scan_to_see_document_list">यहां सूचीबद्ध देखने के लिए अपने दस्तावेज़ों को स्कैन करें।</string>
     <string name="name">नाम</string>
     <string name="doc_deleted_successfully">दस्तावेज़ सफलतापूर्वक हटा दिया गया है</string>

@@ -32,6 +32,7 @@
     <string name="edit_fields">フィールドを編集</string>
     <string name="no_scanned_documents">スキャンされたドキュメントはありません</string>
     <string name="error_loading_docs">ドキュメントのロードエラー</string>
+    <string name="select_document_to_preview">ここでプレビューするドキュメントを選択してください</string>
     <string name="issue_sharing_doc">ドキュメントを共有しようとして問題が発生しました</string>
     <string name="file_size">ファイルサイズ</string>
     <string name="title">タイトル</string>

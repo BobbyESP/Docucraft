@@ -40,6 +40,7 @@
     <string name="cancel">Annuleren</string>
     <string name="follow_system">Systeemvoorkeur</string>
     <string name="error_loading_docs">Fout bij het laden van documenten</string>
+    <string name="select_document_to_preview">Selecteer een document om het hier te bekijken</string>
     <string name="doc_delete_warning_message">U staat op het punt om %1$s te verwijderen van uw apparaat en de app-database.\n\nHet heeft %2$s pagina\'s en is %3$s groot.\n\nWeet u zeker dat u het wilt verwijderen?</string>
     <string name="file_size">Bestandsgrootte</string>
     <string name="edit_fields">Velden bewerken</string>

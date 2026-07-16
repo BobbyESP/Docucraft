@@ -24,6 +24,7 @@
     <string name="follow_system">시스템 설정 따르기</string>
     <string name="doc_share">문서 공유</string>
     <string name="error_loading_docs">문서 로딩 오류</string>
+    <string name="select_document_to_preview">여기에서 미리 볼 문서를 선택하세요</string>
     <string name="sort_descending">내림차순 정렬</string>
     <string name="doc_saved_successfully_to">문서가 %1$s에 성공적으로 저장되었습니다.</string>
     <string name="doc_saved_successfully">문서가 성공적으로 저장되었습니다.</string>

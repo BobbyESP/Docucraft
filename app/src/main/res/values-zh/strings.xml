@@ -35,6 +35,7 @@
     <string name="doc_open_in_viewer">在查看器中打开文档</string>
     <string name="scan_cancelled">扫描过程已取消</string>
     <string name="error_loading_docs">加载文档出错</string>
+    <string name="select_document_to_preview">选择一个文档以在此处预览</string>
     <string name="app_tagline">使用 AI 轻松扫描您的文档</string>
     <string name="search">搜索</string>
     <string name="issue_opening_doc_viewer">尝试打开文档查看器时出现问题</string>

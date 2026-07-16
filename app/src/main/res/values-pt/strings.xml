@@ -39,6 +39,7 @@
     <string name="title">Título</string>
     <string name="app_tagline">Digitalize seus documentos sem esforço com IA</string>
     <string name="error_loading_docs">Erro ao carregar documentos</string>
+    <string name="select_document_to_preview">Selecione um documento para visualizá-lo aqui</string>
     <string name="doc_deleted_successfully">O documento foi excluído com sucesso</string>
     <string name="doc_scan_to_see_document_list">Escanear seus documentos para vê-los listados aqui.</string>
     <string name="doc_saved_successfully_to">Documento salvo com sucesso em %1$s</string>

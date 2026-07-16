@@ -31,8 +31,7 @@ import com.bobbyesp.docucraft.core.presentation.MainActivityUiState
 import com.bobbyesp.docucraft.core.presentation.MainViewModel
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
-import com.bobbyesp.docucraft.core.presentation.navigation.Route
-import com.bobbyesp.docucraft.core.presentation.navigation.backstack.rememberTopLevelBackStack
+import com.bobbyesp.docucraft.core.presentation.navigation.DocucraftApp
 import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannerRepository
@@ -126,7 +125,6 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
         setContent {
             val windowSizeClass = calculateWindowSizeClass(this)
-            val rootBackStack = rememberTopLevelBackStack(startRoute = Route.Home)
 
             val state = uiState
             if (state is MainActivityUiState.Success) {
@@ -138,7 +136,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
                     userPreferences = state.userPreferences,
                     analyticsHelper = analyticsHelper,
                 ) {
-                    Navigator(rootBackStack = rootBackStack)
+                    DocucraftApp()
 
                     Toaster(
                         state = sonnerManager.sonnerState,

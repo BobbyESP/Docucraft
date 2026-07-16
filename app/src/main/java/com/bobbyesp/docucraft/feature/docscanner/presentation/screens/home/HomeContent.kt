@@ -106,6 +106,7 @@ fun HomeContent(
     uiState: HomeUiState,
     onAction: (HomeIntent) -> Unit,
     modifier: Modifier = Modifier,
+    selectedDocumentId: String? = null,
 ) {
     val searchQuery = uiState.searchQuery
     val filterOptions = uiState.filterOptions
@@ -232,6 +233,7 @@ fun HomeContent(
                             onAction = onAction,
                             filterOptions = filterOptions,
                             listState = listState,
+                            selectedDocumentId = selectedDocumentId,
                         )
                     }
                 }
@@ -246,6 +248,7 @@ private fun ScannedDocumentsList(
     filterOptions: FilterOptions,
     onAction: (HomeIntent) -> Unit,
     listState: LazyListState,
+    selectedDocumentId: String? = null,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
 
@@ -310,6 +313,7 @@ private fun ScannedDocumentsList(
                         ),
                 pdf = scannedDocument,
                 position = position,
+                selected = scannedDocument.uuid == selectedDocumentId,
                 onItemClick = { id -> onAction(HomeIntent.ViewDocument(id)) },
                 onItemLongClick = { onAction(HomeIntent.OpenSheet(scannedDocument.uuid)) },
             )

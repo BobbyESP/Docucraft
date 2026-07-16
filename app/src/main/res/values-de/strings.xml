@@ -29,6 +29,7 @@
     <string name="sort_ascending">Aufsteigend sortieren</string>
     <string name="clear_search">Suche löschen</string>
     <string name="error_loading_docs">Fehler beim Laden der Dokumente</string>
+    <string name="select_document_to_preview">Wähle ein Dokument aus, um es hier anzuzeigen</string>
     <string name="edit_fields">Felder bearbeiten</string>
     <string name="doc_scan_to_see_document_list">Scannen Sie Ihre Dokumente, um sie hier aufgelistet zu sehen.</string>
     <string name="doc_saving_cancelled">Der Speichervorgang wurde abgebrochen</string>

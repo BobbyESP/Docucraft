@@ -75,6 +75,7 @@ fun PdfViewerScreen(
     documentInfo: BasicDocument,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    showBackButton: Boolean = true,
 ) {
     val pdfViewerState = rememberPdfViewerState()
     val analyticsHelper = LocalAnalyticsHelper.current
@@ -212,18 +213,20 @@ fun PdfViewerScreen(
                     }
                 },
                 navigationIcon = {
-                    FilledIconButton(
-                        onClick = onBack,
-                        shapes = IconButtonDefaults.shapes(),
-                        colors =
-                            IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                            ),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.cancel),
-                        )
+                    if (showBackButton) {
+                        FilledIconButton(
+                            onClick = onBack,
+                            shapes = IconButtonDefaults.shapes(),
+                            colors =
+                                IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                                ),
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = stringResource(R.string.cancel),
+                            )
+                        }
                     }
                 },
             )

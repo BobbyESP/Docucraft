@@ -13,6 +13,7 @@
     <string name="doc_scan_error">حدث خطأ أثناء المسح الضوئي</string>
     <string name="doc_modify_details_description">قم بتحديث عنوان المستند والوصف أدناه ليعكسا محتواه وتفاصيله.</string>
     <string name="error_loading_docs">خطأ في تحميل المستندات</string>
+    <string name="select_document_to_preview">اختر مستندًا لمعاينته هنا</string>
     <string name="size">الحجم</string>
     <string name="scan_cancelled">تم إلغاء عملية المسح الضوئي</string>
     <string name="doc_save_error_with_reason">حدث خطأ أثناء حفظ المستند: %1$s</string>

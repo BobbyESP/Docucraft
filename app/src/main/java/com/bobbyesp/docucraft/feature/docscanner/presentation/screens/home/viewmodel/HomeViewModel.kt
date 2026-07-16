@@ -9,7 +9,6 @@ import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
-import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
@@ -139,7 +138,7 @@ class HomeViewModel(
             HomeIntent.DismissSheet -> dismissSheet()
 
             is HomeIntent.Sheet -> handleSheet(intent.action)
-            HomeIntent.OpenSettings -> sendEffect(HomeEffect.Navigate(Route.Settings))
+            HomeIntent.OpenSettings -> sendEffect(HomeEffect.OpenSettings)
         }
     }
 
@@ -209,16 +208,13 @@ class HomeViewModel(
         val doc = getDocumentUseCase(uuid)
 
         sendEffect(
-            HomeEffect.Navigate(
-                Route.PdfViewer(
-                    documentInfo =
-                        BasicDocument(
-                            uuid = doc.uuid,
-                            filename = doc.filename,
-                            uri = doc.path.toString(),
-                            title = doc.title,
-                            description = doc.description,
-                        )
+            HomeEffect.OpenDocument(
+                BasicDocument(
+                    uuid = doc.uuid,
+                    filename = doc.filename,
+                    uri = doc.path.toString(),
+                    title = doc.title,
+                    description = doc.description,
                 )
             )
         )

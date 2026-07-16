@@ -67,6 +67,7 @@
     <string name="more_options">More options</string>
     <string name="no_scanned_documents">No scanned documents</string>
     <string name="error_loading_docs">Error loading documents</string>
+    <string name="select_document_to_preview">Select a document to preview it here</string>
 
     <!-- ════════════════════════════════════════════════
          DOCUMENT — Scan
