@@ -3,70 +3,126 @@
  */
 package com.composepdf
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularWavyProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.composepdf.PdfViewerDefaults.DoubleTapZoom
-import com.composepdf.PdfViewerDefaults.MaxZoom
 
 /**
- * Default values for [PdfViewer] configuration and appearance.
+ * Default values and factories for [PdfViewer].
  *
- * Per Compose Component API Guidelines, all default expressions live in a top-level object named
- * `ComponentDefaults`.
- *
- * Example:
- * ```kotlin
- * PdfViewer(
- *     source = source,
- *     config = ViewerConfig(
- *         maxZoom    = PdfViewerDefaults.MaxZoom * 2,
- *         pageSpacing = PdfViewerDefaults.PageSpacing
- *     )
- * )
- * ```
+ * Style defaults are theme-aware: [style] reads the current [MaterialTheme] so the viewer blends
+ * into light and dark hosts without configuration.
  */
 object PdfViewerDefaults {
-
-    /**
-     * Background color of the viewer container (shown around pages and while loading). A dark
-     * neutral gray that provides good contrast for both light and dark pages.
-     */
-    val ViewerBackground: Color = Color(0xFF424242)
 
     /** Default spacing between consecutive pages. */
     val PageSpacing: Dp = 8.dp
 
-    /**
-     * Base oversampling factor for base-page rendering.
-     *
-     * At zoom = 1 the bitmap will be `viewportWidth × RenderQuality` pixels wide. Very large pages
-     * are capped at 2048 px per axis, so this factor is effectively reduced automatically — no OOM
-     * risk.
-     *
-     * 1.5 = 50 % oversampling → sharp on FullHD / QHD screens at zoom = 1.
-     */
+    /** Default base-page oversampling factor. See [PdfRenderSpec.quality]. */
     const val RenderQuality: Float = 1.5f
 
-    /** Minimum zoom level. Pages cannot be zoomed out further than this. */
+    /** Default minimum committed zoom. */
     const val MinZoom: Float = 1f
 
-    /** Maximum zoom level. Pages cannot be zoomed in further than this. */
-    const val MaxZoom: Float = 5f
+    /** Default maximum committed zoom. */
+    const val MaxZoom: Float = 8f
 
-    /**
-     * Zoom level applied on the first double-tap.
-     *
-     * The double-tap gesture cycles through three levels:
-     * 1. fit-page zoom → [DoubleTapZoom]
-     * 2. [DoubleTapZoom] → [MaxZoom]
-     * 3. [MaxZoom] → fit-page zoom
-     */
+    /** Default zoom level reached by a double tap. See [PdfZoomSpec.doubleTapZoom]. */
     const val DoubleTapZoom: Float = 2.5f
 
-    /**
-     * Number of pages to render speculatively beyond the visible range in each direction. Higher
-     * values reduce blank-page flicker during fast scrolling at the cost of memory.
-     */
+    /** Default page prefetch distance. See [PdfRenderSpec.prefetchDistance]. */
     const val PrefetchDistance: Int = 2
+
+    /**
+     * Creates a [PdfViewerStyle] whose colors follow the current Material theme: a subdued
+     * container in light themes, a dark one in dark themes.
+     */
+    @Composable
+    fun style(
+        containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        pageColor: Color = Color.White,
+        pageCornerRadius: Dp = 0.dp,
+        pageShadowColor: Color = Color(0x33000000),
+        nightMode: Boolean = false,
+        scrollIndicator: PdfScrollIndicatorStyle? = scrollIndicator(),
+        showPageLoadingIndicator: Boolean = true,
+    ): PdfViewerStyle =
+        PdfViewerStyle(
+            containerColor = containerColor,
+            pageColor = pageColor,
+            pageCornerRadius = pageCornerRadius,
+            pageShadowColor = pageShadowColor,
+            nightMode = nightMode,
+            scrollIndicator = scrollIndicator,
+            showPageLoadingIndicator = showPageLoadingIndicator,
+        )
+
+    /** Creates a [PdfScrollIndicatorStyle] tinted from the current Material theme. */
+    @Composable
+    fun scrollIndicator(
+        color: Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+        thickness: Dp = 4.dp,
+        padding: Dp = 4.dp,
+        minLength: Dp = 48.dp,
+    ): PdfScrollIndicatorStyle =
+        PdfScrollIndicatorStyle(
+            color = color,
+            thickness = thickness,
+            padding = padding,
+            minLength = minLength,
+        )
+
+    /** Default content shown while the document loads. */
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+    @Composable
+    fun LoadingContent(modifier: Modifier = Modifier) {
+        CircularWavyProgressIndicator(
+            modifier = modifier.size(56.dp),
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
+
+    /** Default content shown when the document fails to load. */
+    @Composable
+    fun ErrorContent(error: Throwable, modifier: Modifier = Modifier) {
+        Column(
+            modifier = modifier.padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = error::class.simpleName ?: "Error",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.error,
+            )
+            Text(
+                text = error.message ?: "The document could not be loaded.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+
+    /** Default indicator centered on pages that have not rendered yet. */
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+    @Composable
+    fun PageLoadingIndicator(modifier: Modifier = Modifier) {
+        CircularWavyProgressIndicator(
+            modifier = modifier.size(40.dp),
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
 }

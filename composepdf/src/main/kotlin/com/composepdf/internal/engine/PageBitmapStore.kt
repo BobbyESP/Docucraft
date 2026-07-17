@@ -5,6 +5,8 @@ package com.composepdf.internal.engine
 
 import android.graphics.Bitmap
 import android.os.SystemClock
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import java.util.ArrayDeque
 import kotlin.math.abs
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +30,10 @@ internal class PageBitmapStore(
         val bitmap: Bitmap,
         val bytes: Int,
         var everPublished: Boolean,
-    )
+    ) {
+        /** Wrapped once here so the UI never allocates while drawing. */
+        val image: ImageBitmap = bitmap.asImageBitmap()
+    }
 
     private val lock = Any()
     private val entries = HashMap<Int, Entry>()
@@ -36,8 +41,8 @@ internal class PageBitmapStore(
     private var lastPlan: RenderPlan = RenderPlan.EMPTY
     private val graveyard = ArrayDeque<Pair<Long, Bitmap>>()
 
-    private val _published = MutableStateFlow<Map<Int, Bitmap>>(emptyMap())
-    val published: StateFlow<Map<Int, Bitmap>> = _published
+    private val _published = MutableStateFlow<Map<Int, ImageBitmap>>(emptyMap())
+    val published: StateFlow<Map<Int, ImageBitmap>> = _published
 
     /** Width of the cached bitmap for [pageIndex], or null when none exists. */
     fun widthOf(pageIndex: Int): Int? = synchronized(lock) { entries[pageIndex]?.width }
@@ -98,9 +103,9 @@ internal class PageBitmapStore(
     }
 
     private fun publishLocked() {
-        val snapshot = HashMap<Int, Bitmap>(entries.size)
+        val snapshot = HashMap<Int, ImageBitmap>(entries.size)
         for ((page, entry) in entries) {
-            snapshot[page] = entry.bitmap
+            snapshot[page] = entry.image
             entry.everPublished = true
         }
         _published.value = snapshot

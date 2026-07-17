@@ -3,7 +3,6 @@
  */
 package com.composepdf
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Stable
@@ -15,28 +14,27 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import com.composepdf.internal.engine.BitmapPool
 import com.composepdf.internal.logic.ViewerController
 import kotlin.math.abs
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 
 /**
- * A hoistable state object that exposes the viewer's UI state and a programmatic navigation API.
+ * A hoistable state object exposing the viewer's interaction state and a programmatic navigation
+ * API.
  *
- * All rendering state (bitmaps, tiles, caches) lives inside the engine; this object only holds what
- * the UI and the host app need to observe and control.
+ * Configuration (layout, zoom limits, style) is owned by the [PdfViewer] call site and flows down
+ * through recomposition; this object only holds what changes through interaction. All animation
+ * commands share one interruption domain with gestures — starting any of them cancels ongoing
+ * motion, and a touch cancels them.
  */
 @Stable
 class PdfViewerState(
     initialPage: Int = 0,
     initialZoom: Float = 1f,
     internal val bitmapPool: BitmapPool = BitmapPool(),
-    internal val scope: CoroutineScope =
-        CoroutineScope(Dispatchers.Main.immediate + SupervisorJob()),
 ) {
-    /** The index of the current page most visible in the viewport. */
+    /** The index of the page most visible in the viewport. */
     var currentPage: Int by mutableIntStateOf(initialPage)
         internal set
 
@@ -44,49 +42,76 @@ class PdfViewerState(
     var pageCount: Int by mutableIntStateOf(0)
         internal set
 
-    /** Current magnification level. 1.0f means fit-to-width. */
+    /** Current magnification. `1f` shows pages at their fitted size. */
     var zoom: Float by mutableFloatStateOf(initialZoom)
         internal set
 
-    /** Horizontal translation offset in screen pixels. */
+    /** Horizontal translation of the document in viewer pixels. */
     var panX: Float by mutableFloatStateOf(0f)
         internal set
 
-    /** Vertical translation offset in screen pixels. */
+    /** Vertical translation of the document in viewer pixels. */
     var panY: Float by mutableFloatStateOf(0f)
         internal set
 
-    /** Current scroll velocity in pixels per second. */
+    /** Current scroll velocity in pixels per second (during drags and flings). */
     var scrollVelocity: Offset by mutableStateOf(Offset.Zero)
         internal set
 
-    /** Indicates if the document is currently being loaded. */
+    /** True while the document is loading. */
     var isLoading: Boolean by mutableStateOf(true)
         internal set
 
-    /** Stores any error encountered during the PDF lifecycle. */
+    /** The error that stopped the document from loading, if any. */
     var error: Throwable? by mutableStateOf(null)
         internal set
 
-    /** True if a user gesture (pinch, pan) is currently active. */
+    /** True while the user's fingers are interacting with the viewer. */
     var isGestureActive: Boolean by mutableStateOf(false)
         internal set
 
-    /** State of the remote document loading if applicable. */
+    /** State of remote document loading, when the source is remote. */
     var remoteState: RemotePdfState by mutableStateOf(RemotePdfState.Idle)
         internal set
 
-    /** True if a document is loaded and ready for interaction. */
+    /** True when a document is loaded and ready for interaction. */
     val isLoaded: Boolean
         get() = !isLoading && error == null && pageCount > 0
 
     internal var controller: ViewerController? = null
 
+    /** The effective minimum committed zoom. */
     val minZoom: Float
-        get() = controller?.viewerConfig?.minZoom ?: 1f
+        get() = controller?.config?.minZoom ?: 1f
 
+    /** The effective maximum committed zoom. */
     val maxZoom: Float
-        get() = controller?.viewerConfig?.maxZoom ?: 5f
+        get() = controller?.config?.maxZoom ?: 8f
+
+    // ------------------------------------------------------------------ geometry queries
+
+    /** Indices of the pages currently intersecting the viewport. */
+    val visiblePages: IntRange
+        get() = controller?.visiblePageIndices() ?: IntRange.EMPTY
+
+    /**
+     * The on-screen bounds of [pageIndex] in viewer coordinates, or `null` when unknown. Reading
+     * this inside a composable keeps custom overlays (highlights, scrubbers, thumbnails) in sync
+     * with panning and zooming.
+     */
+    fun pageRectInViewer(pageIndex: Int): Rect? {
+        val ctrl = controller ?: return null
+        val layout = ctrl.layout()
+        if (layout.isEmpty || pageIndex < 0 || pageIndex >= pageCount) return null
+        val left = layout.pageScreenLeft(pageIndex, panX, zoom)
+        val top = layout.pageScreenTop(pageIndex, panY, zoom)
+        return Rect(
+            left = left,
+            top = top,
+            right = left + layout.pageWidthPx(pageIndex) * zoom,
+            bottom = top + layout.pageHeightPx(pageIndex) * zoom,
+        )
+    }
 
     // ------------------------------------------------------------------ document lifecycle
 
@@ -122,127 +147,76 @@ class PdfViewerState(
         beginDocumentLoad()
     }
 
-    // ------------------------------------------------------------------ programmatic API
+    // ------------------------------------------------------------------ commands
 
-    /** Instantly jumps to [pageIndex] without animation. */
-    fun scrollToPage(pageIndex: Int) {
-        val ctrl = controller ?: return
-        val target = pageIndex.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
-        val (targetPanX, targetPanY) = ctrl.computeCenteredPanForPage(target)
-
-        panX = targetPanX
-        panY = targetPanY
-        currentPage = target
-        ctrl.clampPan()
-        ctrl.requestRenderForVisiblePages()
+    /** Stops any running scroll, zoom or fling animation at its current value. */
+    fun stopAnimations() {
+        controller?.stopAnimations()
     }
 
-    /** Smoothly animates the scroll to [pageIndex]. */
+    /** Instantly jumps to [pageIndex]. */
+    fun scrollToPage(pageIndex: Int) {
+        val ctrl = controller ?: return
+        ctrl.stopAnimations()
+        val target = pageIndex.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
+        val pan = ctrl.centeredPanForPage(target)
+        ctrl.panBy(Offset(pan.x - panX, pan.y - panY))
+        currentPage = target
+    }
+
+    /** Smoothly scrolls to [pageIndex]. */
     suspend fun animateScrollToPage(
         pageIndex: Int,
         animationSpec: AnimationSpec<Float> = spring(),
     ) {
         val ctrl = controller ?: return
         val target = pageIndex.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
-        val (targetPanX, targetPanY) = ctrl.computeCenteredPanForPage(target)
-
-        val startPanX = panX
-        val startPanY = panY
-
+        val pan = ctrl.centeredPanForPage(target)
         currentPage = target
-        Animatable(0f).animateTo(targetValue = 1f, animationSpec = animationSpec) {
-            panX = startPanX + (targetPanX - startPanX) * value
-            panY = startPanY + (targetPanY - startPanY) * value
-            ctrl.clampPan()
-            ctrl.requestRenderForVisiblePages()
-        }
+        ctrl.animatePanTo(pan.x, pan.y, animationSpec)
         currentPage = target
     }
 
-    /** Instantly sets the zoom level centered on the viewport center. */
+    /** Instantly sets the zoom, centered on the viewport. */
     fun setZoom(zoomLevel: Float) {
         val ctrl = controller ?: return
-        val pivot = Offset(ctrl.viewportWidth / 2f, ctrl.viewportHeight / 2f)
-        ctrl.onAnimatedZoomFrame(zoomLevel, pivot)
+        ctrl.stopAnimations()
+        val target = zoomLevel.coerceIn(minZoom, maxZoom)
+        ctrl.zoomTo(target, Offset(ctrl.viewportWidth / 2f, ctrl.viewportHeight / 2f))
     }
 
-    /** Smoothly animates to the given absolute zoom level, centered on the viewport. */
+    /** Smoothly animates to an absolute zoom level, centered on the viewport. */
     suspend fun animateZoomTo(zoomLevel: Float, animationSpec: AnimationSpec<Float> = spring()) {
-        val ctrl = controller ?: return
-        val pivot = Offset(ctrl.viewportWidth / 2f, ctrl.viewportHeight / 2f)
-        val clampedTarget = zoomLevel.coerceIn(ctrl.viewerConfig.minZoom, ctrl.viewerConfig.maxZoom)
-
-        Animatable(zoom).animateTo(targetValue = clampedTarget, animationSpec = animationSpec) {
-            ctrl.onAnimatedZoomFrame(value, pivot)
-        }
+        controller?.animateZoomTo(zoomLevel, pivot = null, animationSpec = animationSpec)
     }
 
-    /** Zooms in by [factor] relative to the current zoom, centered on the viewport. */
+    /** Zooms in by [factor] relative to the current zoom. */
     fun zoomIn(factor: Float = 0.25f) {
         setZoom(zoom * (1f + factor))
     }
 
-    /** Zooms out by [factor] relative to the current zoom, centered on the viewport. */
+    /** Zooms out by [factor] relative to the current zoom. */
     fun zoomOut(factor: Float = 0.25f) {
         setZoom(zoom * (1f - factor))
     }
 
-    /** Resets the zoom to fit the current page in the viewport. */
+    /** Animates back to the current page's fit zoom, re-centering if already fitted. */
     suspend fun animateResetZoom(animationSpec: AnimationSpec<Float> = spring()) {
         val ctrl = controller ?: return
-        val targetZoom = ctrl.computeFitPageZoom(currentPage)
+        val targetZoom = ctrl.fitPageZoom(currentPage)
         val alreadyFit = abs(zoom - targetZoom) / targetZoom < 0.02f
 
         if (alreadyFit) {
-            val (targetPanX, targetPanY) = ctrl.computeCenteredPanForPage(currentPage)
-            val needsX = abs(panX - targetPanX) > 1f
-            val needsY = abs(panY - targetPanY) > 1f
-            if (!needsX && !needsY) return
-
-            val startPanX = panX
-            val startPanY = panY
-
-            Animatable(0f).animateTo(1f, animationSpec) {
-                if (needsX) panX = startPanX + (targetPanX - startPanX) * value
-                if (needsY) panY = startPanY + (targetPanY - startPanY) * value
-                ctrl.clampPan()
-                ctrl.requestRenderForVisiblePages()
-            }
+            val pan = ctrl.centeredPanForPage(currentPage)
+            ctrl.animatePanTo(pan.x, pan.y, animationSpec)
         } else {
-            animateZoomTo(targetZoom, animationSpec)
+            ctrl.animateZoomTo(targetZoom, pivot = null, animationSpec = animationSpec)
         }
     }
 
-    /** Changes the [FitMode] of the viewer at runtime. */
-    fun setFitMode(fitMode: FitMode) {
-        val ctrl = controller ?: return
-        ctrl.updateConfig(ctrl.viewerConfig.copy(fitMode = fitMode))
-    }
-
-    /** Changes the [ScrollDirection] of the viewer at runtime. */
-    fun setScrollDirection(direction: ScrollDirection) {
-        val ctrl = controller ?: return
-        ctrl.updateConfig(ctrl.viewerConfig.copy(scrollDirection = direction))
-    }
-
-    /** Enables or disables night mode (color inversion) at runtime. */
-    fun setNightMode(enabled: Boolean) {
-        val ctrl = controller ?: return
-        ctrl.updateConfig(ctrl.viewerConfig.copy(isNightModeEnabled = enabled))
-    }
-
-    /** Enables or disables page snapping at runtime. */
-    fun setPageSnapping(enabled: Boolean) {
-        val ctrl = controller ?: return
-        ctrl.updateConfig(ctrl.viewerConfig.copy(isPageSnappingEnabled = enabled))
-    }
-
     companion object {
-        /**
-         * Creates a [Saver] for [PdfViewerState]. Note: the [scope] is not saved; a new one must be
-         * provided upon restoration.
-         */
-        fun saver(bitmapPool: BitmapPool, scope: CoroutineScope): Saver<PdfViewerState, *> =
+        /** Creates a [Saver] restoring page, zoom and pan across process recreation. */
+        fun saver(bitmapPool: BitmapPool): Saver<PdfViewerState, *> =
             listSaver(
                 save = { listOf(it.currentPage, it.zoom, it.panX, it.panY) },
                 restore = {
@@ -250,7 +224,6 @@ class PdfViewerState(
                             initialPage = it[0] as Int,
                             initialZoom = it[1] as Float,
                             bitmapPool = bitmapPool,
-                            scope = scope,
                         )
                         .also { s ->
                             s.panX = it[2] as Float

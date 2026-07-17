@@ -9,11 +9,9 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.geometry.Offset
 import com.composepdf.FitMode
 import com.composepdf.PdfViewerState
 import com.composepdf.ScrollDirection
-import com.composepdf.ViewerConfig
 
 /**
  * Manages the spatial and geometric state of the PDF viewer, acting as the bridge between the
@@ -21,7 +19,7 @@ import com.composepdf.ViewerConfig
  */
 internal class ViewerViewportCoordinator(
     private val state: PdfViewerState,
-    private val configProvider: () -> ViewerConfig,
+    private val configProvider: () -> ResolvedViewerConfig,
     private val snapshotFactory:
         (List<Size>, Float, Float, FitMode, Float, ScrollDirection) -> PageLayoutSnapshot =
         PageLayoutSnapshot::build,
@@ -78,25 +76,14 @@ internal class ViewerViewportCoordinator(
         return layoutSnapshot.visiblePageIndices(state.panX, state.panY, state.zoom)
     }
 
-    fun isPointOverPage(point: Offset): Boolean =
-        layoutSnapshot.isPointOverPage(
-            screenX = point.x,
-            screenY = point.y,
-            panX = state.panX,
-            panY = state.panY,
-            zoom = state.zoom,
-        )
-
     fun clampPan() {
         val clampedPan = layoutSnapshot.clampPan(state.panX, state.panY, state.zoom)
         state.panX = clampedPan.x
         state.panY = clampedPan.y
     }
 
-    fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> {
-        val centeredPan = layoutSnapshot.centeredPanForPage(pageIndex, state.zoom)
-        return centeredPan.x to centeredPan.y
-    }
+    fun centeredPanForPage(pageIndex: Int): PanPosition =
+        layoutSnapshot.centeredPanForPage(pageIndex, state.zoom)
 
     fun computeFitDocumentZoom(): Float {
         val config = configProvider()

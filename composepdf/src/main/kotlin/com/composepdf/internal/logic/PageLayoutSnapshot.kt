@@ -77,14 +77,15 @@ internal class PageLayoutSnapshot(
         }
     }
 
-    fun isPointOverPage(
+    /** Index of the page under the given screen point, or `-1` when the point is not on a page. */
+    fun pageAtScreenPoint(
         screenX: Float,
         screenY: Float,
         panX: Float,
         panY: Float,
         zoom: Float,
-    ): Boolean {
-        if (isEmpty || zoom <= 0f) return false
+    ): Int {
+        if (isEmpty || zoom <= 0f) return -1
 
         val docX = (screenX - panX) / zoom
         val docY = (screenY - panY) / zoom
@@ -96,27 +97,45 @@ internal class PageLayoutSnapshot(
                 pageIndexAtDocumentOffset(docX)
             }
 
-        if (pageIndex == -1) return false
+        if (pageIndex == -1) return -1
 
         val pageTop = pageTopDocY(pageIndex)
         val pageLeft = pageLeftDocX(pageIndex)
         val pageWidth = pageWidthPx(pageIndex)
         val pageHeight = pageHeightPx(pageIndex)
 
-        return if (scrollDirection == ScrollDirection.VERTICAL) {
-            val actualPageLeft = panX + (corridorBreadth - pageWidth) * zoom / 2f
-            docY >= pageTop &&
-                docY <= pageTop + pageHeight &&
-                screenX >= actualPageLeft &&
-                screenX <= actualPageLeft + pageWidth * zoom
-        } else {
-            val actualPageTop = panY + (corridorBreadth - pageHeight) * zoom / 2f
-            docX >= pageLeft &&
-                docX <= pageLeft + pageWidth &&
-                screenY >= actualPageTop &&
-                screenY <= actualPageTop + pageHeight * zoom
-        }
+        val over =
+            if (scrollDirection == ScrollDirection.VERTICAL) {
+                val actualPageLeft = panX + (corridorBreadth - pageWidth) * zoom / 2f
+                docY >= pageTop &&
+                    docY <= pageTop + pageHeight &&
+                    screenX >= actualPageLeft &&
+                    screenX <= actualPageLeft + pageWidth * zoom
+            } else {
+                val actualPageTop = panY + (corridorBreadth - pageHeight) * zoom / 2f
+                docX >= pageLeft &&
+                    docX <= pageLeft + pageWidth &&
+                    screenY >= actualPageTop &&
+                    screenY <= actualPageTop + pageHeight * zoom
+            }
+        return if (over) pageIndex else -1
     }
+
+    /** Screen X of the page's left edge, given the current transform. */
+    fun pageScreenLeft(index: Int, panX: Float, zoom: Float): Float =
+        if (scrollDirection == ScrollDirection.VERTICAL) {
+            panX + (corridorBreadth - pageWidthPx(index)) * zoom / 2f
+        } else {
+            pageLeftDocX(index) * zoom + panX
+        }
+
+    /** Screen Y of the page's top edge, given the current transform. */
+    fun pageScreenTop(index: Int, panY: Float, zoom: Float): Float =
+        if (scrollDirection == ScrollDirection.VERTICAL) {
+            pageTopDocY(index) * zoom + panY
+        } else {
+            panY + (corridorBreadth - pageHeightPx(index)) * zoom / 2f
+        }
 
     fun clampPan(panX: Float, panY: Float, zoom: Float): PanPosition {
         if (!viewport.isReady) return PanPosition(panX, panY)

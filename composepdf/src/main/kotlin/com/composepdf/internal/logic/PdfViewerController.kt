@@ -4,15 +4,20 @@
 package com.composepdf.internal.logic
 
 import android.content.Context
-import android.graphics.Bitmap
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.foundation.MutatePriority
+import androidx.compose.foundation.MutatorMutex
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.ImageBitmap
 import com.composepdf.PdfSource
+import com.composepdf.PdfTapEvent
 import com.composepdf.PdfViewerState
-import com.composepdf.ViewerConfig
+import com.composepdf.ScrollDirection
 import com.composepdf.internal.engine.PlanInputs
 import com.composepdf.internal.engine.RenderEngine
 import com.composepdf.internal.engine.TileDraw
@@ -20,29 +25,34 @@ import com.composepdf.internal.service.pdf.PdfDocumentManager
 import com.composepdf.internal.service.pdf.PdfDocumentSession
 import com.composepdf.internal.util.longLivedContext
 import java.io.Closeable
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Orchestrates the viewer: document lifecycle, gesture handling, viewport geometry and the render
+ * Orchestrates the viewer: document lifecycle, transform state, viewport geometry and the render
  * engine. This is the only mutable hub; everything below it is either pure geometry
  * ([ViewerViewportCoordinator]/[PageLayoutSnapshot]) or the self-contained [RenderEngine].
+ *
+ * All animations — programmatic and gesture-driven — funnel through one [MutatorMutex], so a new
+ * animation or an incoming touch always interrupts the previous motion cleanly.
  */
 @Stable
 internal class PdfViewerController(
     sourceContext: Context,
     val state: PdfViewerState,
-    initialConfig: ViewerConfig = ViewerConfig(),
+    initialConfig: ResolvedViewerConfig = ResolvedViewerConfig(),
     val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob()),
 ) : Closeable, ViewerController {
 
     val context: Context = sourceContext.longLivedContext()
 
-    var config by mutableStateOf(initialConfig)
+    override var config by mutableStateOf(initialConfig)
         private set
 
     private val viewportCoordinator =
@@ -58,8 +68,11 @@ internal class PdfViewerController(
             inputsProvider = ::currentPlanInputs,
         )
 
+    private val transformMutex = MutatorMutex()
+    private var transformJob: Job? = null
+
     /** Base page bitmaps, observed by the UI. */
-    val renderedPages: StateFlow<Map<Int, Bitmap>> = engine.baseBitmaps
+    val renderedPages: StateFlow<Map<Int, ImageBitmap>> = engine.baseBitmaps
 
     /** High-resolution tiles per page, observed by the UI. */
     val tiles: StateFlow<Map<Int, List<TileDraw>>> = engine.tiles
@@ -98,10 +111,7 @@ internal class PdfViewerController(
         }
     }
 
-    // ------------------------------------------------------------------ ViewerController
-
-    override val viewerConfig: ViewerConfig
-        get() = config
+    // ------------------------------------------------------------------ geometry
 
     override val viewportWidth: Float
         get() = viewportCoordinator.viewportWidth
@@ -109,35 +119,175 @@ internal class PdfViewerController(
     override val viewportHeight: Float
         get() = viewportCoordinator.viewportHeight
 
-    override fun pageWidthPx(index: Int): Float = viewportCoordinator.pageWidthPx(index)
-
-    override fun pageHeightPx(index: Int): Float = viewportCoordinator.pageHeightPx(index)
-
-    override fun pageTopDocY(index: Int): Float = viewportCoordinator.pageTopDocY(index)
-
-    override fun pageLeftDocX(index: Int): Float = viewportCoordinator.pageLeftDocX(index)
-
-    override fun corridorBreadth(): Float = viewportCoordinator.snapshot().corridorBreadth
+    override fun layout(): PageLayoutSnapshot = viewportCoordinator.snapshot()
 
     override fun visiblePageIndices(): IntRange = viewportCoordinator.visiblePageIndices()
 
-    override fun isPointOverPage(point: Offset): Boolean =
-        viewportCoordinator.isPointOverPage(point)
-
-    override fun computeCenteredPanForPage(pageIndex: Int): Pair<Float, Float> =
-        viewportCoordinator.computeCenteredPanForPage(pageIndex)
-
-    override fun computeFitDocumentZoom(): Float = viewportCoordinator.computeFitDocumentZoom()
-
-    override fun computeFitPageZoom(pageIndex: Int): Float =
+    override fun fitPageZoom(pageIndex: Int): Float =
         viewportCoordinator.computeFitPageZoom(pageIndex)
 
-    override fun clampPan() = viewportCoordinator.clampPan()
+    override fun fitDocumentZoom(): Float = viewportCoordinator.computeFitDocumentZoom()
 
-    override fun requestRenderForVisiblePages() {
+    override fun centeredPanForPage(pageIndex: Int): PanPosition =
+        viewportCoordinator.centeredPanForPage(pageIndex)
+
+    override fun tapEventAt(position: Offset): PdfTapEvent {
+        val snapshot = viewportCoordinator.snapshot()
+        val page =
+            snapshot.pageAtScreenPoint(position.x, position.y, state.panX, state.panY, state.zoom)
+        if (page < 0) return PdfTapEvent(position, null, null)
+
+        val zoom = state.zoom
+        val left = snapshot.pageScreenLeft(page, state.panX, zoom)
+        val top = snapshot.pageScreenTop(page, state.panY, zoom)
+        val width = snapshot.pageWidthPx(page) * zoom
+        val height = snapshot.pageHeightPx(page) * zoom
+        if (width <= 0f || height <= 0f) return PdfTapEvent(position, page, null)
+
+        val fraction =
+            Offset(
+                ((position.x - left) / width).coerceIn(0f, 1f),
+                ((position.y - top) / height).coerceIn(0f, 1f),
+            )
+        return PdfTapEvent(position, page, fraction)
+    }
+
+    override fun snapTargetPage(velocity: Offset): Int? {
+        val currentConfig = config
+        if (!currentConfig.pageSnapping) return null
+        val snapshot = viewportCoordinator.snapshot()
+        if (snapshot.isEmpty) return null
+
+        val zoom = state.zoom
+        val current =
+            snapshot.currentPageAtViewportCenter(state.panX, state.panY, zoom) ?: return null
+
+        val vertical = currentConfig.scrollDirection == ScrollDirection.VERTICAL
+        val pageSpan =
+            (if (vertical) snapshot.pageHeightPx(current) else snapshot.pageWidthPx(current)) * zoom
+        val viewportSpan = if (vertical) viewportHeight else viewportWidth
+        // Snapping is a pager behaviour: it only applies while a whole page fits the viewport.
+        if (pageSpan > viewportSpan * 1.05f) return null
+
+        val axisVelocity = if (vertical) velocity.y else velocity.x
+        val target =
+            when {
+                axisVelocity < -SNAP_FLING_VELOCITY -> current + 1
+                axisVelocity > SNAP_FLING_VELOCITY -> current - 1
+                else -> current
+            }
+        return target.coerceIn(0, snapshot.pageOffsets.lastIndex)
+    }
+
+    // ------------------------------------------------------------------ frame transforms
+
+    override fun panBy(delta: Offset): Offset {
+        if (delta == Offset.Zero) return Offset.Zero
+        val snapshot = viewportCoordinator.snapshot()
+        if (snapshot.isEmpty) return Offset.Zero
+
+        val startX = state.panX
+        val startY = state.panY
+        val clamped = snapshot.clampPan(startX + delta.x, startY + delta.y, state.zoom)
+        state.panX = clamped.x
+        state.panY = clamped.y
+        viewportCoordinator.updateCurrentPageFromViewport()
+        engine.requestPlan()
+        return Offset(clamped.x - startX, clamped.y - startY)
+    }
+
+    override fun zoomTo(zoom: Float, pivot: Offset) {
+        val previousZoom = state.zoom
+        if (zoom != previousZoom && previousZoom > 0f) {
+            val ratio = zoom / previousZoom
+            state.panX = pivot.x + (state.panX - pivot.x) * ratio
+            state.panY = pivot.y + (state.panY - pivot.y) * ratio
+            state.zoom = zoom
+        }
+        clampPanInPlace()
         viewportCoordinator.updateCurrentPageFromViewport()
         engine.requestPlan()
     }
+
+    override fun setVelocity(velocity: Offset) {
+        state.scrollVelocity = velocity
+    }
+
+    private fun clampPanInPlace() {
+        val snapshot = viewportCoordinator.snapshot()
+        if (snapshot.isEmpty) return
+        val clamped = snapshot.clampPan(state.panX, state.panY, state.zoom)
+        state.panX = clamped.x
+        state.panY = clamped.y
+    }
+
+    // ------------------------------------------------------------------ gesture lifecycle
+
+    override fun onGestureStart() {
+        state.isGestureActive = true
+    }
+
+    override fun onGestureEnd() {
+        state.isGestureActive = false
+        clampPanInPlace()
+        viewportCoordinator.updateCurrentPageFromViewport()
+        engine.requestPlan()
+    }
+
+    // ------------------------------------------------------------------ animations
+
+    override suspend fun transform(block: suspend () -> Unit) {
+        transformMutex.mutate { block() }
+    }
+
+    override fun launchTransform(block: suspend () -> Unit): Job {
+        val job = scope.launch { transformMutex.mutate { block() } }
+        transformJob = job
+        return job
+    }
+
+    override fun stopAnimations() {
+        transformJob?.cancel()
+        transformJob = null
+        // Boot any suspend caller (programmatic animation) currently holding the mutex.
+        scope.launch { transformMutex.mutate(MutatePriority.UserInput) {} }
+    }
+
+    override suspend fun animateZoomTo(
+        targetZoom: Float,
+        pivot: Offset?,
+        animationSpec: AnimationSpec<Float>,
+    ) {
+        val currentConfig = config
+        val target = targetZoom.coerceIn(currentConfig.minZoom, currentConfig.maxZoom)
+        val resolvedPivot = pivot ?: Offset(viewportWidth / 2f, viewportHeight / 2f)
+        transform {
+            Animatable(state.zoom).animateTo(target, animationSpec) {
+                zoomTo(value, resolvedPivot)
+            }
+        }
+    }
+
+    override suspend fun animatePanTo(
+        targetX: Float,
+        targetY: Float,
+        animationSpec: AnimationSpec<Float>,
+    ) {
+        val startX = state.panX
+        val startY = state.panY
+        if (abs(targetX - startX) < 0.5f && abs(targetY - startY) < 0.5f) return
+        transform {
+            Animatable(0f).animateTo(1f, animationSpec) {
+                state.panX = startX + (targetX - startX) * value
+                state.panY = startY + (targetY - startY) * value
+                clampPanInPlace()
+                viewportCoordinator.updateCurrentPageFromViewport()
+                engine.requestPlan()
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ environment
 
     override fun onViewportSizeChanged(width: Float, height: Float) {
         val before = viewportCoordinator.snapshot()
@@ -155,7 +305,7 @@ internal class PdfViewerController(
         }
     }
 
-    override fun updateConfig(newConfig: ViewerConfig) {
+    override fun updateConfig(newConfig: ResolvedViewerConfig) {
         if (config == newConfig) return
         val previous = config
         config = newConfig
@@ -174,55 +324,18 @@ internal class PdfViewerController(
         }
     }
 
-    // ------------------------------------------------------------------ gestures
-
-    override fun onGestureStart() {
-        state.isGestureActive = true
-    }
-
-    override fun onGestureEnd() {
-        state.isGestureActive = false
-        viewportCoordinator.clampPan()
-        viewportCoordinator.updateCurrentPageFromViewport()
+    override fun requestPlan() {
         engine.requestPlan()
-    }
-
-    override fun onGestureUpdate(zoomChange: Float, panDelta: Offset, pivot: Offset) {
-        if (viewportCoordinator.viewportWidth == 0f) return
-        val currentConfig = config
-        val nextZoom =
-            (state.zoom * zoomChange).coerceIn(currentConfig.minZoom, currentConfig.maxZoom)
-        applyZoomAroundPivot(nextZoom, pivot)
-
-        state.panX += panDelta.x
-        state.panY += panDelta.y
-        viewportCoordinator.clampPan()
-        viewportCoordinator.updateCurrentPageFromViewport()
-        engine.requestPlan()
-    }
-
-    override fun onAnimatedZoomFrame(targetZoom: Float, pivot: Offset) {
-        val currentConfig = config
-        val nextZoom = targetZoom.coerceIn(currentConfig.minZoom, currentConfig.maxZoom)
-        if (!applyZoomAroundPivot(nextZoom, pivot)) return
-        viewportCoordinator.clampPan()
-        viewportCoordinator.updateCurrentPageFromViewport()
-        engine.requestPlan()
-    }
-
-    private fun applyZoomAroundPivot(targetZoom: Float, pivot: Offset): Boolean {
-        val previousZoom = state.zoom
-        if (targetZoom == previousZoom) return false
-        val ratio = targetZoom / previousZoom
-        state.panX = pivot.x + (state.panX - pivot.x) * ratio
-        state.panY = pivot.y + (state.panY - pivot.y) * ratio
-        state.zoom = targetZoom
-        return true
     }
 
     override fun close() {
         engine.close()
         documentManager.close()
         scope.cancel()
+    }
+
+    companion object {
+        /** Axis velocity (px/s) above which a snap release moves to the adjacent page. */
+        const val SNAP_FLING_VELOCITY = 400f
     }
 }

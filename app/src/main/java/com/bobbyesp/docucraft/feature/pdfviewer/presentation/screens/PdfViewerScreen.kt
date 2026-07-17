@@ -34,20 +34,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.changedToDown
-import androidx.compose.ui.input.pointer.changedToUp
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,18 +51,16 @@ import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.composepdf.FitMode
+import com.composepdf.PdfLayoutSpec
 import com.composepdf.PdfSource
 import com.composepdf.PdfViewer
+import com.composepdf.PdfViewerDefaults
+import com.composepdf.PdfZoomSpec
 import com.composepdf.ScrollDirection
-import com.composepdf.ViewerConfig
 import com.composepdf.rememberPdfViewerState
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-@OptIn(
-    ExperimentalMaterial3ExpressiveApi::class,
-    ExperimentalComposeUiApi::class,
-    ExperimentalMaterial3Api::class,
-)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun PdfViewerScreen(
     documentInfo: BasicDocument,
@@ -86,10 +77,6 @@ fun PdfViewerScreen(
 
     var fitMode by remember { mutableStateOf(FitMode.BOTH) }
     var isNightModeEnabled by remember { mutableStateOf(false) }
-
-    var touchStartX by remember { mutableFloatStateOf(0f) }
-    var touchStartY by remember { mutableFloatStateOf(0f) }
-    val touchSlop = LocalViewConfiguration.current.touchSlop
 
     LaunchedEffect(pdfViewerState) {
         snapshotFlow { pdfViewerState.panY to pdfViewerState.isGestureActive }
@@ -122,57 +109,32 @@ fun PdfViewerScreen(
         PdfViewer(
             source = PdfSource.Uri(documentInfo.uri.toUri()),
             state = pdfViewerState,
-            config =
-                ViewerConfig(
-                    fitMode = fitMode,
-                    isNightModeEnabled = isNightModeEnabled,
-                    scrollDirection = ScrollDirection.VERTICAL,
-                    minZoom = 0.25f,
-                    maxZoom = 10f,
-                ),
+            layout = PdfLayoutSpec(scrollDirection = ScrollDirection.VERTICAL, fitMode = fitMode),
+            zoomSpec = PdfZoomSpec(minZoom = 0.25f, maxZoom = 10f),
+            style = PdfViewerDefaults.style(nightMode = isNightModeEnabled),
+            onTap = {
+                when {
+                    // Top bar + controls both visible → hide both
+                    isTopBarVisible && areControlsVisible -> {
+                        isTopBarVisible = false
+                        areControlsVisible = false
+                    }
+                    // Only controls visible → hide controls
+                    !isTopBarVisible && areControlsVisible -> {
+                        areControlsVisible = false
+                    }
+                    // Everything hidden → show both
+                    else -> {
+                        isTopBarVisible = true
+                        areControlsVisible = true
+                    }
+                }
+            },
             modifier =
                 Modifier.fillMaxSize()
-                    .padding(top = pdfTopPadding.coerceIn(minimumValue = 0.dp, maximumValue = null))
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                val event = awaitPointerEvent(PointerEventPass.Initial)
-                                val change = event.changes.firstOrNull() ?: continue
-
-                                when {
-                                    change.changedToDown() -> {
-                                        touchStartX = change.position.x
-                                        touchStartY = change.position.y
-                                    }
-
-                                    change.changedToUp() -> {
-                                        val dx = kotlin.math.abs(change.position.x - touchStartX)
-                                        val dy = kotlin.math.abs(change.position.y - touchStartY)
-
-                                        // Only react to taps — ignore scrolls and zooms.
-                                        if (dx < touchSlop && dy < touchSlop) {
-                                            when {
-                                                // Top bar + controls both visible → hide both
-                                                isTopBarVisible && areControlsVisible -> {
-                                                    isTopBarVisible = false
-                                                    areControlsVisible = false
-                                                }
-                                                // Only controls visible → hide controls
-                                                !isTopBarVisible && areControlsVisible -> {
-                                                    areControlsVisible = false
-                                                }
-                                                // Everything hidden → show both
-                                                else -> {
-                                                    isTopBarVisible = true
-                                                    areControlsVisible = true
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
+                    .padding(
+                        top = pdfTopPadding.coerceIn(minimumValue = 0.dp, maximumValue = null)
+                    ),
         )
 
         AnimatedVisibility(

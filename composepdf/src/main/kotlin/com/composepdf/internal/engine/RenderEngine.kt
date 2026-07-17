@@ -3,8 +3,8 @@
  */
 package com.composepdf.internal.engine
 
-import android.graphics.Bitmap
 import android.util.Log
+import androidx.compose.ui.graphics.ImageBitmap
 import com.composepdf.internal.service.pdf.PdfDocumentManager
 import java.io.Closeable
 import java.util.concurrent.Executors
@@ -56,7 +56,7 @@ internal class RenderEngine(
     val tileStore = TileStore(pool)
     val pageStore = PageBitmapStore(pool)
 
-    val baseBitmaps: StateFlow<Map<Int, Bitmap>> = pageStore.published
+    val baseBitmaps: StateFlow<Map<Int, ImageBitmap>> = pageStore.published
     val tiles: StateFlow<Map<Int, List<TileDraw>>> = tileStore.published
 
     private val renderDispatcher =

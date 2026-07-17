@@ -3,7 +3,6 @@
  */
 package com.composepdf.internal.engine
 
-import com.composepdf.ScrollDirection
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -153,16 +152,9 @@ internal class PlanComputer(private val tileSize: Int = TILE_SIZE) {
             val pageWidth = layout.pageWidthPx(page)
             val pageHeight = layout.pageHeightPx(page)
 
-            // Screen-space page origin — must match the placement math in PdfLayout.
-            val pageTop: Float
-            val pageLeft: Float
-            if (layout.scrollDirection == ScrollDirection.VERTICAL) {
-                pageTop = layout.pageTopDocY(page) * zoom + inputs.panY
-                pageLeft = inputs.panX + (layout.corridorBreadth - pageWidth) * zoom / 2f
-            } else {
-                pageLeft = layout.pageLeftDocX(page) * zoom + inputs.panX
-                pageTop = inputs.panY + (layout.corridorBreadth - pageHeight) * zoom / 2f
-            }
+            // Screen-space page origin — the same math the UI uses to place pages.
+            val pageTop = layout.pageScreenTop(page, inputs.panY, zoom)
+            val pageLeft = layout.pageScreenLeft(page, inputs.panX, zoom)
             val pageRight = pageLeft + pageWidth * zoom
             val pageBottom = pageTop + pageHeight * zoom
 
