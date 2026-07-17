@@ -3,7 +3,6 @@
  */
 package com.composepdf
 
-import android.graphics.Bitmap
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.spring
@@ -16,20 +15,18 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
-import com.composepdf.internal.logic.PdfViewerStateControllerBridge
-import com.composepdf.internal.logic.PublishedTile
-import com.composepdf.internal.logic.ViewerSessionState
-import com.composepdf.internal.service.cache.bitmap.BitmapPool
+import com.composepdf.internal.engine.BitmapPool
+import com.composepdf.internal.logic.ViewerController
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
 /**
- * A hoistable state object that manages the UI state and navigation for a PDF viewer.
+ * A hoistable state object that exposes the viewer's UI state and a programmatic navigation API.
  *
- * This version enforces strict memory management by requiring a [BitmapPool] and a [CoroutineScope]
- * to handle asynchronous tile eviction and pool returns.
+ * All rendering state (bitmaps, tiles, caches) lives inside the engine; this object only holds what
+ * the UI and the host app need to observe and control.
  */
 @Stable
 class PdfViewerState(
@@ -39,25 +36,16 @@ class PdfViewerState(
     internal val scope: CoroutineScope =
         CoroutineScope(Dispatchers.Main.immediate + SupervisorJob()),
 ) {
-    private val session = ViewerSessionState(scope, bitmapPool)
-
     /** The index of the current page most visible in the viewport. */
     var currentPage: Int by mutableIntStateOf(initialPage)
         internal set
 
     /** Total number of pages in the current document. */
-    var pageCount: Int
-        get() = session.pageCount
-        internal set(value) {
-            session.pageCount = value
-        }
+    var pageCount: Int by mutableIntStateOf(0)
+        internal set
 
     /** Current magnification level. 1.0f means fit-to-width. */
     var zoom: Float by mutableFloatStateOf(initialZoom)
-        internal set
-
-    /** The stepped zoom level currently being rendered and displayed for high-res tiles. */
-    var activeSteppedZoom: Float by mutableFloatStateOf(1f)
         internal set
 
     /** Horizontal translation offset in screen pixels. */
@@ -72,69 +60,27 @@ class PdfViewerState(
     var scrollVelocity: Offset by mutableStateOf(Offset.Zero)
         internal set
 
-    /** Indicates if the document or pages are currently being loaded/rendered. */
-    var isLoading: Boolean
-        get() = session.isLoading
-        internal set(value) {
-            session.isLoading = value
-        }
+    /** Indicates if the document is currently being loaded. */
+    var isLoading: Boolean by mutableStateOf(true)
+        internal set
 
     /** Stores any error encountered during the PDF lifecycle. */
-    var error: Throwable?
-        get() = session.error
-        internal set(value) {
-            session.error = value
-        }
+    var error: Throwable? by mutableStateOf(null)
+        internal set
 
     /** True if a user gesture (pinch, pan) is currently active. */
     var isGestureActive: Boolean by mutableStateOf(false)
         internal set
 
     /** State of the remote document loading if applicable. */
-    var remoteState: RemotePdfState
-        get() = session.remoteState
-        internal set(value) {
-            session.remoteState = value
-        }
-
-    /** Revision counter to notify Compose when the tile cache is updated. */
-    val tileRevision: Int
-        get() = session.tileRevision
-
-    internal fun getTile(key: String): Bitmap? = session.getTile(key)
-
-    internal fun getAllTiles(): Map<String, Bitmap> = session.getAllTiles()
-
-    internal suspend fun putTile(key: String, bitmap: Bitmap) = session.putTile(key, bitmap)
-
-    internal fun getImageBitmapTilesForPage(pageIndex: Int): List<PublishedTile> =
-        session.getImageBitmapTilesForPage(pageIndex)
-
-    internal suspend fun pruneTiles(predicate: (String) -> Boolean) = session.pruneTiles(predicate)
-
-    internal suspend fun clearTiles() = session.clearTiles()
-
-    internal fun beginDocumentLoad() {
-        session.beginDocumentLoad()
-    }
-
-    internal fun updateRemoteDocumentState(state: RemotePdfState) {
-        session.updateRemoteState(state)
-    }
-
-    internal fun completeDocumentLoad(pageCount: Int) {
-        session.completeDocumentLoad(pageCount)
-    }
-
-    internal fun failDocumentLoad(error: Throwable) {
-        session.failDocumentLoad(error)
-    }
+    var remoteState: RemotePdfState by mutableStateOf(RemotePdfState.Idle)
+        internal set
 
     /** True if a document is loaded and ready for interaction. */
     val isLoaded: Boolean
-        get() = session.isLoaded
+        get() = !isLoading && error == null && pageCount > 0
 
-    internal var controller: PdfViewerStateControllerBridge? = null
+    internal var controller: ViewerController? = null
 
     val minZoom: Float
         get() = controller?.viewerConfig?.minZoom ?: 1f
@@ -142,9 +88,41 @@ class PdfViewerState(
     val maxZoom: Float
         get() = controller?.viewerConfig?.maxZoom ?: 5f
 
-    // -------------------------------------------------------------------------
-    // Public Programmatic API
-    // -------------------------------------------------------------------------
+    // ------------------------------------------------------------------ document lifecycle
+
+    internal fun beginDocumentLoad() {
+        pageCount = 0
+        isLoading = true
+        error = null
+        remoteState = RemotePdfState.Idle
+    }
+
+    internal fun updateRemoteDocumentState(state: RemotePdfState) {
+        remoteState = state
+    }
+
+    internal fun completeDocumentLoad(pageCount: Int) {
+        this.pageCount = pageCount
+        isLoading = false
+        error = null
+    }
+
+    internal fun failDocumentLoad(error: Throwable) {
+        this.error = error
+        isLoading = false
+    }
+
+    internal fun reset() {
+        currentPage = 0
+        zoom = 1f
+        panX = 0f
+        panY = 0f
+        scrollVelocity = Offset.Zero
+        isGestureActive = false
+        beginDocumentLoad()
+    }
+
+    // ------------------------------------------------------------------ programmatic API
 
     /** Instantly jumps to [pageIndex] without animation. */
     fun scrollToPage(pageIndex: Int) {
@@ -259,21 +237,9 @@ class PdfViewerState(
         ctrl.updateConfig(ctrl.viewerConfig.copy(isPageSnappingEnabled = enabled))
     }
 
-    internal suspend fun reset() {
-        currentPage = 0
-        zoom = 1f
-        activeSteppedZoom = 1f
-        panX = 0f
-        panY = 0f
-        scrollVelocity = Offset.Zero
-        isGestureActive = false
-        session.beginDocumentLoad()
-        session.clearTiles()
-    }
-
     companion object {
         /**
-         * Creates a [Saver] for [PdfViewerState]. Note: The [scope] is not saved; a new one must be
+         * Creates a [Saver] for [PdfViewerState]. Note: the [scope] is not saved; a new one must be
          * provided upon restoration.
          */
         fun saver(bitmapPool: BitmapPool, scope: CoroutineScope): Saver<PdfViewerState, *> =

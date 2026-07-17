@@ -14,7 +14,6 @@ import com.composepdf.FitMode
 import com.composepdf.PdfViewerState
 import com.composepdf.ScrollDirection
 import com.composepdf.ViewerConfig
-import com.composepdf.internal.logic.tiles.ViewportState
 
 /**
  * Manages the spatial and geometric state of the PDF viewer, acting as the bridge between the
@@ -114,14 +113,6 @@ internal class ViewerViewportCoordinator(
             layoutSnapshot.currentPageAtViewportCenter(state.panX, state.panY, state.zoom) ?: return
         state.currentPage = currentPage.coerceIn(0, (state.pageCount - 1).coerceAtLeast(0))
     }
-
-    fun viewportState(): ViewportState =
-        ViewportState(
-            width = viewportWidth,
-            height = viewportHeight,
-            panX = state.panX,
-            panY = state.panY,
-        )
 
     fun snapshot(): PageLayoutSnapshot = layoutSnapshot
 

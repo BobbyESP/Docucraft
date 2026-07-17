@@ -28,7 +28,7 @@ import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.unit.Velocity
 import com.composepdf.PdfViewerState
 import com.composepdf.ViewerConfig
-import com.composepdf.internal.logic.ViewerGestureController
+import com.composepdf.internal.logic.ViewerController
 import kotlin.math.abs
 import kotlin.math.sqrt
 import kotlinx.coroutines.CoroutineScope
@@ -52,7 +52,10 @@ internal class GestureState(private val scope: CoroutineScope) {
         animJob?.cancel()
     }
 
-    /** Runs an exponential-decay fling animation on both the X and Y axes. */
+    /**
+     * Runs an exponential-decay fling on both axes. [onVelocityUpdate] receives the decaying
+     * velocity so the engine's predictive prefetch tracks the actual motion.
+     */
     fun fling(
         velocity: Velocity,
         onDelta: (Offset) -> Unit,
@@ -62,20 +65,27 @@ internal class GestureState(private val scope: CoroutineScope) {
         flingJob?.cancel()
         flingJob = scope.launch {
             val decay = exponentialDecay<Float>(frictionMultiplier = 1.15f)
+            var currentVx = velocity.x
+            var currentVy = velocity.y
             val jx = launch {
                 var last = 0f
                 Animatable(0f).animateDecay(velocity.x, decay) {
                     onDelta(Offset(value - last, 0f))
-                    onVelocityUpdate(Offset(velocity.x, velocity.y))
                     last = value
+                    currentVx = this.velocity
+                    onVelocityUpdate(Offset(currentVx, currentVy))
                 }
+                currentVx = 0f
             }
             val jy = launch {
                 var last = 0f
                 Animatable(0f).animateDecay(velocity.y, decay) {
                     onDelta(Offset(0f, value - last))
                     last = value
+                    currentVy = this.velocity
+                    onVelocityUpdate(Offset(currentVx, currentVy))
                 }
+                currentVy = 0f
             }
             jx.join()
             jy.join()
@@ -99,40 +109,6 @@ internal class GestureState(private val scope: CoroutineScope) {
             onEnd()
         }
     }
-
-    /** Smoothly scrolls to a specific pan position. */
-    fun animatePan(
-        from: Offset,
-        to: Offset,
-        onFrame: (Offset) -> Unit,
-        onEnd: () -> Unit,
-        spec: AnimationSpec<Offset> = spring(),
-    ) {
-        animJob?.cancel()
-        animJob = scope.launch {
-            Animatable(from.x).animateTo(to.x, spring()) {
-                onFrame(Offset(value, from.y)) // This is a bit simplified, but works for the logic
-            }
-            // Better to use Animatable<Offset, AnimationVector2D> or just two Animatable<Float>
-        }
-    }
-
-    fun animatePanTo(
-        from: Offset,
-        to: Offset,
-        onUpdate: (Offset) -> Unit,
-        onEnd: () -> Unit,
-        spec: AnimationSpec<Float> = spring(),
-    ) {
-        animJob?.cancel()
-        animJob = scope.launch {
-            val animX = Animatable(from.x)
-            val animY = Animatable(from.y)
-            launch { animX.animateTo(to.x, spec) { onUpdate(Offset(value, animY.value)) } }
-            launch { animY.animateTo(to.y, spec) { onUpdate(Offset(animX.value, value)) } }
-            onEnd()
-        }
-    }
 }
 
 /** Creates and remembers a [GestureState] instance across recompositions. */
@@ -146,7 +122,7 @@ internal fun rememberGestureState(): GestureState {
 @Composable
 internal fun Modifier.viewerGestures(
     state: PdfViewerState,
-    controller: ViewerGestureController,
+    controller: ViewerController,
     config: ViewerConfig,
     zoomAnimationSpec: AnimationSpec<Float> = spring(dampingRatio = 0.72f, stiffness = 420f),
     enabled: Boolean = true,
@@ -238,7 +214,7 @@ internal fun Modifier.viewerGestures(
             if (pastSlop) {
                 if (zooming) {
                     state.scrollVelocity = Offset.Zero
-                    handleGestureEnd(state, controller, config, gs, zoomAnimationSpec)
+                    controller.onGestureEnd()
                 } else {
                     val velocity = gs.velocityTracker.calculateVelocity()
                     val maxVelocity = viewConfiguration.maximumFlingVelocity
@@ -257,12 +233,12 @@ internal fun Modifier.viewerGestures(
                             onVelocityUpdate = { state.scrollVelocity = it },
                             onEnd = {
                                 state.scrollVelocity = Offset.Zero
-                                handleGestureEnd(state, controller, config, gs, zoomAnimationSpec)
+                                controller.onGestureEnd()
                             },
                         )
                     } else {
                         state.scrollVelocity = Offset.Zero
-                        handleGestureEnd(state, controller, config, gs, zoomAnimationSpec)
+                        controller.onGestureEnd()
                     }
                 }
             } else {
@@ -271,7 +247,7 @@ internal fun Modifier.viewerGestures(
                 val elapsed = now - firstDownTime
 
                 if (elapsed > 300) {
-                    handleGestureEnd(state, controller, config, gs, zoomAnimationSpec)
+                    controller.onGestureEnd()
                 } else {
                     val remainingTime = doubleTapTimeout - elapsed
                     var secondDown: PointerInputChange? = null
@@ -285,107 +261,42 @@ internal fun Modifier.viewerGestures(
 
                     if (secondDown != null && config.isZoomGesturesEnabled) {
                         val dist = (secondDown.position - firstDownPos).getDistance()
-                        if (dist <= doubleTapRadius) {
-                            if (controller.isPointOverPage(secondDown.position)) {
-                                val fitZoom = controller.computeFitPageZoom(state.currentPage)
-                                val tapZoom = config.doubleTapZoom
-                                val maxZoom = config.maxZoom
-                                val currentZoom = state.zoom
+                        if (
+                            dist <= doubleTapRadius &&
+                                controller.isPointOverPage(secondDown.position)
+                        ) {
+                            val fitZoom = controller.computeFitPageZoom(state.currentPage)
+                            val tapZoom = config.doubleTapZoom
+                            val maxZoom = config.maxZoom
+                            val currentZoom = state.zoom
 
-                                val atFit = currentZoom < tapZoom * 0.85f
-                                val atTap = currentZoom in (tapZoom * 0.85f)..(maxZoom * 0.85f)
+                            val atFit = currentZoom < tapZoom * 0.85f
+                            val atTap = currentZoom in (tapZoom * 0.85f)..(maxZoom * 0.85f)
 
-                                val targetZoom =
-                                    when {
-                                        atFit -> tapZoom
-                                        atTap -> maxZoom
-                                        else -> fitZoom
-                                    }
+                            val targetZoom =
+                                when {
+                                    atFit -> tapZoom
+                                    atTap -> maxZoom
+                                    else -> fitZoom
+                                }
 
-                                gs.animateZoom(
-                                    from = state.zoom,
-                                    to = targetZoom,
-                                    pivot = secondDown.position,
-                                    onFrame = { z, p -> controller.onAnimatedZoomFrame(z, p) },
-                                    onEnd = {
-                                        handleGestureEnd(
-                                            state,
-                                            controller,
-                                            config,
-                                            gs,
-                                            zoomAnimationSpec,
-                                        )
-                                    },
-                                    spec = zoomAnimationSpec,
-                                )
-                                secondDown.consume()
-                            } else {
-                                handleGestureEnd(state, controller, config, gs, zoomAnimationSpec)
-                            }
+                            gs.animateZoom(
+                                from = state.zoom,
+                                to = targetZoom,
+                                pivot = secondDown.position,
+                                onFrame = { z, p -> controller.onAnimatedZoomFrame(z, p) },
+                                onEnd = { controller.onGestureEnd() },
+                                spec = zoomAnimationSpec,
+                            )
+                            secondDown.consume()
                         } else {
-                            handleGestureEnd(state, controller, config, gs, zoomAnimationSpec)
+                            controller.onGestureEnd()
                         }
                     } else {
-                        handleGestureEnd(state, controller, config, gs, zoomAnimationSpec)
+                        controller.onGestureEnd()
                     }
                 }
             }
         }
-    }
-}
-
-private fun handleGestureEnd(
-    state: PdfViewerState,
-    controller: ViewerGestureController,
-    config: ViewerConfig,
-    gs: GestureState,
-    zoomAnimationSpec: AnimationSpec<Float>,
-) {
-    if (config.isPageSnappingEnabled) {
-        val (targetPanX, targetPanY) = controller.computeCenteredPanForPage(state.currentPage)
-        gs.animatePanTo(
-            from = Offset(state.panX, state.panY),
-            to = Offset(targetPanX, targetPanY),
-            onUpdate = {
-                // We need a way to update pan directly if we want it smooth,
-                // but controller.onGestureUpdate(1f, it - lastOffset, ...) could work too.
-                // For now, let's just use the bridge if we can or just call onGestureUpdate with
-                // deltas.
-                // Actually, PdfViewerState's panX/panY are internal set, but we are in the same
-                // package?
-                // No, we are in com.composepdf.gesture.
-                // Let's use controller.onGestureUpdate with deltas.
-            },
-            onEnd = { controller.onGestureEnd() },
-        )
-
-        // Revised: Use a specialized animation to avoid complex delta math
-        val startPan = Offset(state.panX, state.panY)
-        val endPan = Offset(targetPanX, targetPanY)
-
-        gs.animatePanTo(
-            from = startPan,
-            to = endPan,
-            onUpdate = { currentPan ->
-                // Since we don't have direct access to set panX/panY on state from here easily
-                // (they are internal in com.composepdf.state), we can use a trick:
-                // We calculate the delta from the LAST frame.
-                // But wait, we can just call controller.onGestureUpdate with zoom 1f and the delta.
-                // However, GestureModifiers is in com.composepdf.gesture and state properties are
-                // internal.
-                // Actually, PdfViewerState.panX is internal. PdfViewerController.onGestureUpdate is
-                // internal too.
-                // Wait, PdfViewer.kt is in com.composepdf.
-
-                // Let's assume for now we can call onGestureUpdate.
-                // We'll need to keep track of the previous pan in the animation.
-            },
-            onEnd = { controller.onGestureEnd() },
-        )
-
-        // Simpler implementation of snapping for now:
-        controller.onGestureEnd() // This already calls clampPan and updateCurrentPageFromViewport
-    } else {
-        controller.onGestureEnd()
     }
 }

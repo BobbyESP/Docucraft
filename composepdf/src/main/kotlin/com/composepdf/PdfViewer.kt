@@ -25,16 +25,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.composepdf.internal.engine.BitmapPool
 import com.composepdf.internal.logic.PdfViewerController
-import com.composepdf.internal.service.cache.bitmap.BitmapPool
 import com.composepdf.internal.ui.PdfLayout
 
 /**
  * A Jetpack Compose component for displaying PDF documents with support for high-resolution tiled
  * rendering, pinch-to-zoom, and smooth scrolling.
- *
- * This viewer efficiently handles large documents by using memory-managed bitmap pooling and
- * asynchronous page loading.
  *
  * @param source The [PdfSource] representing the document to be displayed (e.g., file, asset, or
  *   URI).
@@ -67,7 +64,7 @@ fun PdfViewer(
     LaunchedEffect(controller, resolvedConfig) { controller.updateConfig(resolvedConfig) }
 
     DisposableEffect(controller) {
-        state.controller = controller.stateBridge
+        state.controller = controller
         onDispose {
             state.controller = null
             controller.close()
@@ -75,6 +72,7 @@ fun PdfViewer(
     }
 
     val renderedPages by controller.renderedPages.collectAsStateWithLifecycle()
+    val tilesByPage by controller.tiles.collectAsStateWithLifecycle()
 
     val latestOnPageChange by rememberUpdatedState(onPageChange)
     val latestOnError by rememberUpdatedState(onError)
@@ -112,26 +110,19 @@ fun PdfViewer(
 
             state.isLoaded ->
                 PdfLayout(
-                    pageSizes = controller.layoutController.pageSizes,
                     renderedPages = renderedPages,
+                    tilesByPage = tilesByPage,
                     state = state,
-                    layoutController = controller.layoutController,
-                    gestureController = controller.gestureController,
+                    controller = controller,
                     config = resolvedConfig,
                 )
         }
     }
 }
 
-/**
- * Creates and remembers a [PdfViewerState] that survives configuration changes.
- *
- * In this industrial version, the [BitmapPool] is shared globally or tied to the viewer's lifetime
- * to ensure all bitmaps are tracked and recycled.
- */
+/** Creates and remembers a [PdfViewerState] that survives configuration changes. */
 @Composable
 fun rememberPdfViewerState(initialPage: Int = 0, initialZoom: Float = 1f): PdfViewerState {
-    // Global or context-scoped BitmapPool for the viewer engine.
     val bitmapPool = remember { BitmapPool() }
     val scope = rememberCoroutineScope()
 
