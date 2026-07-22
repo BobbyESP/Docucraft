@@ -34,6 +34,7 @@ import com.composepdf.internal.logic.ResolvedViewerConfig
 import com.composepdf.internal.ui.PdfDocumentCanvas
 import com.composepdf.internal.ui.PdfPageLoadingOverlay
 import com.composepdf.internal.ui.gesture.pdfViewerGestures
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
@@ -53,7 +54,7 @@ import kotlinx.coroutines.flow.drop
  * @param modifier Modifier applied to the viewer container.
  * @param state Hoisted state object for observing and driving the viewer.
  * @param layout Page arrangement: direction, fit, spacing, snapping.
- * @param zoomSpec Zoom limits and double-tap behaviour.
+ * @param zoomSpec Zoom limits and double-tap behavior.
  * @param gestureSpec Which gestures are enabled.
  * @param renderSpec Rendering quality and prefetch tuning.
  * @param style Colors, page decorations and indicators. Use [PdfViewerDefaults.style] to inherit
@@ -147,7 +148,7 @@ fun PdfViewer(
             .drop(1)
             .collectLatest {
                 indicatorAlpha.animateTo(1f, tween(durationMillis = 100))
-                delay(SCROLL_INDICATOR_HIDE_DELAY_MS)
+                delay(SCROLL_INDICATOR_HIDE_DELAY_MS.milliseconds)
                 indicatorAlpha.animateTo(0f, tween(durationMillis = 450))
             }
     }
