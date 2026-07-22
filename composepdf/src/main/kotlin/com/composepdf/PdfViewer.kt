@@ -16,6 +16,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
@@ -102,8 +103,14 @@ fun PdfViewer(
             )
         }
 
+    // Sourced from composition (via the Recomposer) rather than hand-rolled, so the scope
+    // carries a MonotonicFrameClock — required by every Animatable/animateDecay call the
+    // controller launches on it (fling, quick scale, double-tap zoom, snap/rubber-band settle).
+    val coroutineScope = rememberCoroutineScope()
     val controller =
-        remember(context, state) { PdfViewerController(context, state, resolvedConfig) }
+        remember(context, state) {
+            PdfViewerController(context, state, resolvedConfig, coroutineScope)
+        }
 
     LaunchedEffect(controller, resolvedConfig) { controller.updateConfig(resolvedConfig) }
 

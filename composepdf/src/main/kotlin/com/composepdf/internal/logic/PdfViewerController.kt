@@ -27,9 +27,7 @@ import com.composepdf.internal.util.longLivedContext
 import java.io.Closeable
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -47,7 +45,7 @@ internal class PdfViewerController(
     sourceContext: Context,
     val state: PdfViewerState,
     initialConfig: ResolvedViewerConfig = ResolvedViewerConfig(),
-    val scope: CoroutineScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob()),
+    val scope: CoroutineScope,
 ) : Closeable, ViewerController {
 
     val context: Context = sourceContext.longLivedContext()
