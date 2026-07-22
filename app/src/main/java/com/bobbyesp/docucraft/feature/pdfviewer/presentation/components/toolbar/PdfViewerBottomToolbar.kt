@@ -15,6 +15,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
@@ -36,12 +37,13 @@ import androidx.compose.material.icons.rounded.ZoomIn
 import androidx.compose.material.icons.rounded.ZoomOut
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconToggleButton
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.ripple
@@ -107,18 +109,17 @@ fun PdfViewerBottomToolbar(
     BoxWithConstraints(modifier = modifier.windowInsetsPadding(WindowInsets.ime)) {
         val metrics = remember(maxWidth) { toolbarMetrics(maxWidth) }
 
-        Surface(
+        HorizontalFloatingToolbar(
+            expanded = true,
             modifier = Modifier.height(metrics.containerHeight).animateContentSize(),
-            shape = MaterialTheme.shapes.extraLargeIncreased,
-            color = MaterialTheme.colorScheme.primaryContainer,
-            tonalElevation = 4.dp,
+            colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
+            contentPadding =
+                PaddingValues(
+                    horizontal = metrics.containerHorizontalPadding,
+                    vertical = metrics.containerVerticalPadding,
+                ),
         ) {
             Row(
-                modifier =
-                    Modifier.padding(
-                        horizontal = metrics.containerHorizontalPadding,
-                        vertical = metrics.containerVerticalPadding,
-                    ),
                 horizontalArrangement = Arrangement.spacedBy(metrics.itemSpacing),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

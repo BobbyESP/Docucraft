@@ -9,9 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.displayCutout
@@ -20,16 +18,10 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,15 +32,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.PdfDocumentActions
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.PdfDetailsSheet
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerTopBar
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.composepdf.FitMode
 import com.composepdf.PdfLayoutSpec
@@ -70,13 +62,19 @@ fun PdfViewerScreen(
 ) {
     val pdfViewerState = rememberPdfViewerState()
     val analyticsHelper = LocalAnalyticsHelper.current
+    // Built from the composition's context (the host Activity) — printing requires an Activity.
+    val context = LocalContext.current
+    val documentActions = remember(context) { PdfDocumentActions(context) }
 
     var areControlsVisible by remember { mutableStateOf(true) }
     var isTopBarVisible by remember { mutableStateOf(true) }
     var hasScrolled by remember { mutableStateOf(false) }
+    var showDetails by remember { mutableStateOf(false) }
 
     var fitMode by remember { mutableStateOf(FitMode.BOTH) }
     var isNightModeEnabled by remember { mutableStateOf(false) }
+
+    val jobName = documentInfo.title ?: documentInfo.filename
 
     LaunchedEffect(pdfViewerState) {
         snapshotFlow { pdfViewerState.panY to pdfViewerState.isGestureActive }
@@ -89,14 +87,13 @@ fun PdfViewerScreen(
             }
     }
 
-    val overlayBackground = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
-
     val topInsetDp =
         WindowInsets.statusBars
             .union(WindowInsets.displayCutout)
             .asPaddingValues()
             .calculateTopPadding()
-    val topAppBarHeight = TopAppBarDefaults.TopAppBarExpandedHeight + topInsetDp
+    // Floating pill bar ≈ expanded app-bar height plus its top/bottom floating margins.
+    val topAppBarHeight = TopAppBarDefaults.TopAppBarExpandedHeight + topInsetDp + 16.dp
 
     val pdfTopPadding by
         animateDpAsState(
@@ -112,6 +109,7 @@ fun PdfViewerScreen(
             layout = PdfLayoutSpec(scrollDirection = ScrollDirection.VERTICAL, fitMode = fitMode),
             zoomSpec = PdfZoomSpec(minZoom = 0.25f, maxZoom = 10f),
             style = PdfViewerDefaults.style(nightMode = isNightModeEnabled),
+            loadingContent = { LoadingIndicator(modifier = Modifier.align(Alignment.Center)) },
             onTap = {
                 when {
                     // Top bar + controls both visible → hide both
@@ -153,44 +151,15 @@ fun PdfViewerScreen(
                         targetOffsetY = { -it },
                     ),
         ) {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = overlayBackground),
-                windowInsets = WindowInsets.statusBars.union(WindowInsets.displayCutout),
-                title = {
-                    Column(
-                        horizontalAlignment = Alignment.Start,
-                        verticalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text(
-                            text = documentInfo.title ?: documentInfo.filename,
-                            style = MaterialTheme.typography.titleLargeEmphasized,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Text(
-                            modifier = Modifier.alpha(0.66f),
-                            text =
-                                documentInfo.description ?: stringResource(R.string.no_description),
-                            style = MaterialTheme.typography.bodyMediumEmphasized,
-                        )
-                    }
-                },
-                navigationIcon = {
-                    if (showBackButton) {
-                        FilledIconButton(
-                            onClick = onBack,
-                            shapes = IconButtonDefaults.shapes(),
-                            colors =
-                                IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                                ),
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = stringResource(R.string.cancel),
-                            )
-                        }
-                    }
-                },
+            PdfViewerTopBar(
+                documentInfo = documentInfo,
+                pageCount = pdfViewerState.pageCount,
+                showBackButton = showBackButton,
+                onBack = onBack,
+                onShare = { documentActions.share(documentInfo.uri) },
+                onPrint = { documentActions.print(documentInfo.uri, jobName) },
+                onOpenWith = { documentActions.openWith(documentInfo.uri) },
+                onDetails = { showDetails = true },
             )
         }
 
@@ -260,5 +229,13 @@ fun PdfViewerScreen(
                 },
             )
         }
+    }
+
+    if (showDetails) {
+        PdfDetailsSheet(
+            documentInfo = documentInfo,
+            pageCount = pdfViewerState.pageCount,
+            onDismiss = { showDetails = false },
+        )
     }
 }

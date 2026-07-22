@@ -154,6 +154,11 @@
     <string name="night_mode">Night mode</string>
     <string name="page_input_label">Page</string>
     <string name="page_of">%1$s of %2$s</string>
+    <string name="print">Print</string>
+    <string name="open_with">Open with</string>
+    <string name="document_details">Document details</string>
+    <string name="pages_count">%1$d pages</string>
+    <string name="cannot_open_pdf">Couldn\'t open this document</string>
     <string name="settings">Settings</string>
     <string name="general">General</string>
 
@@ -162,4 +167,5 @@
     <string name="upgrade_to_pro_desc">Unlock premium features and remove limits</string>
     <string name="manage_subscription">Manage Subscription</string>
     <string name="manage_subscription_desc">View details, change plans, or restore purchases</string>
+    <string name="view_document">View document</string>
 </resources>
