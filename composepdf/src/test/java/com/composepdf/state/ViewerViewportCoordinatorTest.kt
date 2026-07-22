@@ -6,8 +6,8 @@ package com.composepdf.state
 import android.util.Size
 import com.composepdf.PdfViewerState
 import com.composepdf.ScrollDirection
-import com.composepdf.ViewerConfig
 import com.composepdf.internal.logic.PageLayoutSnapshot
+import com.composepdf.internal.logic.ResolvedViewerConfig
 import com.composepdf.internal.logic.ViewerViewportCoordinator
 import com.composepdf.internal.logic.ViewportMetrics
 import org.junit.Assert.assertEquals
@@ -28,7 +28,7 @@ class ViewerViewportCoordinatorTest {
         val coordinator =
             ViewerViewportCoordinator(
                 state = state,
-                configProvider = { ViewerConfig() },
+                configProvider = { ResolvedViewerConfig() },
                 snapshotFactory = {
                     pageSizes,
                     viewportWidth,
@@ -68,7 +68,7 @@ class ViewerViewportCoordinatorTest {
         val coordinator =
             ViewerViewportCoordinator(
                 state = state,
-                configProvider = { ViewerConfig() },
+                configProvider = { ResolvedViewerConfig() },
                 snapshotFactory = { _, viewportWidth, viewportHeight, _, _, scrollDirection ->
                     PageLayoutSnapshot(
                         pageSizes = listOf(Size(1, 1), Size(1, 1)),
@@ -96,7 +96,7 @@ class ViewerViewportCoordinatorTest {
     @Test
     fun computeFitZooms_delegateToSnapshotUsingCurrentConfig() {
         val state = PdfViewerState().apply { pageCount = 1 }
-        val config = ViewerConfig(minZoom = 0.5f, maxZoom = 4f)
+        val config = ResolvedViewerConfig(minZoom = 0.5f, maxZoom = 4f)
         val coordinator =
             ViewerViewportCoordinator(
                 state = state,
