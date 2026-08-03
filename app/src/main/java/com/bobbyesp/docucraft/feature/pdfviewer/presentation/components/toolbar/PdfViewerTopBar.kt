@@ -49,8 +49,8 @@ import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
  * Floating "pill" top bar for the PDF viewer, following Material 3 Expressive guidelines.
  *
  * Visually cohesive with [PdfViewerBottomToolbar]: a rounded, tonal [Surface] that floats over the
- * document rather than spanning the screen edge-to-edge. It exposes the document title/subtitle and the
- * document-level actions (share, print, open-with, details).
+ * document rather than spanning the screen edge-to-edge. It exposes the document title/subtitle and
+ * the document-level actions (share, print, open-with, details).
  *
  * @param documentInfo The document currently being viewed.
  * @param pageCount Total page count, used to build the subtitle when no description is available.

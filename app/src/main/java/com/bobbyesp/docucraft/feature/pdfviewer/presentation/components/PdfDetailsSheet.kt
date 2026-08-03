@@ -22,7 +22,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetState
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -40,8 +39,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Modal bottom sheet showing metadata about the document currently open in the viewer: filename, page
- * count, file size and description.
+ * Modal bottom sheet showing metadata about the document currently open in the viewer: filename,
+ * page count, file size and description.
  *
  * @param documentInfo The document being described.
  * @param pageCount Total page count reported by the viewer state.
@@ -56,9 +55,7 @@ fun PdfDetailsSheet(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val sheetState = rememberBottomSheetState(
-        initialValue = SheetValue.Hidden
-    )
+    val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
 
     val fileSize by
         produceState<String?>(initialValue = null, documentInfo.uri) {
@@ -134,14 +131,17 @@ private fun resolveFileSize(context: Context, uriString: String): String? {
                 runCatching {
                         context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                             val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-                            if (sizeIndex >= 0 && cursor.moveToFirst() && !cursor.isNull(sizeIndex)) {
+                            if (
+                                sizeIndex >= 0 && cursor.moveToFirst() && !cursor.isNull(sizeIndex)
+                            ) {
                                 cursor.getLong(sizeIndex)
                             } else null
                         }
                     }
                     .getOrNull()
 
-            else -> runCatching { File(uri.path ?: uriString).length().takeIf { it > 0 } }.getOrNull()
+            else ->
+                runCatching { File(uri.path ?: uriString).length().takeIf { it > 0 } }.getOrNull()
         }
 
     return bytes?.let { Formatter.formatShortFileSize(context, it) }

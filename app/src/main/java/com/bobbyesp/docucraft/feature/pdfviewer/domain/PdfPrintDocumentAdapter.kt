@@ -15,9 +15,9 @@ import android.print.PrintDocumentInfo
 import java.io.FileOutputStream
 
 /**
- * A [PrintDocumentAdapter] that streams an already-rendered PDF (identified by [uri]) straight into the
- * system print spooler. It does not re-render pages — the source is copied byte-for-byte, which is the
- * correct behaviour for printing an existing PDF document.
+ * A [PrintDocumentAdapter] that streams an already-rendered PDF (identified by [uri]) straight into
+ * the system print spooler. It does not re-render pages — the source is copied byte-for-byte, which
+ * is the correct behaviour for printing an existing PDF document.
  *
  * @param context Used to resolve the [uri] through the [android.content.ContentResolver].
  * @param uri The PDF to print. May be a `content://` or `file://` URI.

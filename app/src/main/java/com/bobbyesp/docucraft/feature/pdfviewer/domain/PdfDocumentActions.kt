@@ -21,12 +21,12 @@ private const val PDF_MIME_TYPE = "application/pdf"
  * Document-level actions offered by the PDF viewer top bar: share, open in another app, and print.
  *
  * The viewer can be handed either an internal document (a `file://` URI / raw path pointing at a
- * scanned PDF) or an external one (a `content://` URI granted by another app). [shareableUri] bridges
- * the two: `file://` sources are re-exposed through the app [FileProvider] so they can legally cross a
- * process boundary, while `content://` sources are forwarded as-is.
+ * scanned PDF) or an external one (a `content://` URI granted by another app). [shareableUri]
+ * bridges the two: `file://` sources are re-exposed through the app [FileProvider] so they can
+ * legally cross a process boundary, while `content://` sources are forwarded as-is.
  *
- * [context] must be (or wrap) the host Activity — [print] hands work to [PrintManager], which can only
- * print from an activity. Build this from the composition's `LocalContext`.
+ * [context] must be (or wrap) the host Activity — [print] hands work to [PrintManager], which can
+ * only print from an activity. Build this from the composition's `LocalContext`.
  */
 class PdfDocumentActions(private val context: Context) {
 
@@ -68,8 +68,8 @@ class PdfDocumentActions(private val context: Context) {
 
     /**
      * Returns a URI that can safely be granted to another process. `content://` URIs are returned
-     * unchanged; anything file-based is wrapped through the app [FileProvider]. Returns `null` if the
-     * file cannot be exposed (e.g. it lives outside the configured provider paths).
+     * unchanged; anything file-based is wrapped through the app [FileProvider]. Returns `null` if
+     * the file cannot be exposed (e.g. it lives outside the configured provider paths).
      */
     private fun shareableUri(uriString: String): Uri? {
         val uri = uriString.toUri()
