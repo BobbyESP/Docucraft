@@ -153,6 +153,7 @@
     <string name="fit_page">Fit page</string>
     <string name="fit_proportional">Proportional</string>
     <string name="page_navigation">Page navigation</string>
+    <string name="seek_page">Seek page</string>
     <string name="go_to_page">Go to page</string>
     <string name="previous_page">Previous page</string>
     <string name="next_page">Next page</string>

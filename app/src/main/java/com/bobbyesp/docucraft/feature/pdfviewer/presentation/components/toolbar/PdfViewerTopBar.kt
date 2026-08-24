@@ -16,19 +16,20 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Print
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,66 +38,59 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import com.composepdf.FitMode
 
 /**
- * Floating "pill" top bar for the PDF viewer, following Material 3 Expressive guidelines.
+ * Floating top bar for the PDF viewer.
  *
- * Visually cohesive with [PdfViewerBottomToolbar]: a rounded, tonal [Surface] that floats over the
- * document rather than spanning the screen edge-to-edge. It exposes the document title/subtitle and
- * the document-level actions (share, print, open-with, details).
- *
- * @param documentInfo The document currently being viewed.
- * @param pageCount Total page count, used to build the subtitle when no description is available.
- * @param showBackButton Whether to show the leading back button.
- * @param onBack Invoked when the back button is tapped.
- * @param onShare Invoked to share the document.
- * @param onPrint Invoked to print the document.
- * @param onOpenWith Invoked to open the document in another app.
- * @param onDetails Invoked to show the document details sheet.
- * @param modifier Optional modifier for the bar container.
+ * A rounded surface that floats over the document rather than spanning the screen edge to edge, so
+ * it reads as chrome laid on the page instead of a header the page is pushed beneath. It carries
+ * identity (which document, how far in) and the document-level actions; everything infrequent lives
+ * behind the overflow with a written label, including the fit mode that used to cycle blindly
+ * behind a single unlabelled icon.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PdfViewerTopBar(
     documentInfo: BasicDocument,
+    currentPage: Int,
     pageCount: Int,
     showBackButton: Boolean,
+    fitMode: FitMode,
+    isNightModeEnabled: Boolean,
     onBack: () -> Unit,
     onShare: () -> Unit,
     onPrint: () -> Unit,
     onOpenWith: () -> Unit,
     onDetails: () -> Unit,
+    onFitModeChange: (FitMode) -> Unit,
+    onNightModeToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val subtitle =
-        documentInfo.description
-            ?: if (pageCount > 0) stringResource(R.string.pages_count, pageCount)
-            else stringResource(R.string.no_description)
-
     Surface(
         modifier =
             modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = MaterialTheme.shapes.extraLargeIncreased,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        tonalElevation = 4.dp,
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+        shape = MaterialTheme.shapes.extraLarge,
+        // Neutral rather than primaryContainer: the page is the content, and a slab of primary
+        // across the top competes with it.
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 3.dp,
+        shadowElevation = 3.dp,
     ) {
         Row(
-            modifier = Modifier.padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (showBackButton) {
-                IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
+                IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                         contentDescription = stringResource(R.string.cancel),
@@ -105,44 +99,65 @@ fun PdfViewerTopBar(
             }
 
             Column(
-                modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
+                modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
                     text = documentInfo.title ?: documentInfo.filename,
-                    style = MaterialTheme.typography.titleLargeEmphasized,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    modifier = Modifier.alpha(0.66f),
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMediumEmphasized,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                if (pageCount > 0) {
+                    Text(
+                        text =
+                            stringResource(
+                                R.string.page_of,
+                                (currentPage + 1).toString(),
+                                pageCount.toString(),
+                            ),
+                        style = MaterialTheme.typography.bodySmall,
+                        // A real colour role rather than an alpha multiplier, which used to push
+                        // this below the contrast floor.
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                    )
+                }
             }
 
-            // The single emphasized action on the bar.
-            FilledIconButton(onClick = onShare, shapes = IconButtonDefaults.shapes()) {
+            IconButton(onClick = onShare) {
                 Icon(
                     imageVector = Icons.Rounded.Share,
                     contentDescription = stringResource(R.string.share),
                 )
             }
 
-            OverflowMenu(onPrint = onPrint, onOpenWith = onOpenWith, onDetails = onDetails)
+            ViewerOverflowMenu(
+                fitMode = fitMode,
+                isNightModeEnabled = isNightModeEnabled,
+                onPrint = onPrint,
+                onOpenWith = onOpenWith,
+                onDetails = onDetails,
+                onFitModeChange = onFitModeChange,
+                onNightModeToggle = onNightModeToggle,
+            )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun OverflowMenu(onPrint: () -> Unit, onOpenWith: () -> Unit, onDetails: () -> Unit) {
+private fun ViewerOverflowMenu(
+    fitMode: FitMode,
+    isNightModeEnabled: Boolean,
+    onPrint: () -> Unit,
+    onOpenWith: () -> Unit,
+    onDetails: () -> Unit,
+    onFitModeChange: (FitMode) -> Unit,
+    onNightModeToggle: () -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
 
-    IconButton(onClick = { expanded = true }, shapes = IconButtonDefaults.shapes()) {
+    IconButton(onClick = { expanded = true }) {
         Icon(
             imageVector = Icons.Rounded.MoreVert,
             contentDescription = stringResource(R.string.more_options),
@@ -153,7 +168,7 @@ private fun OverflowMenu(onPrint: () -> Unit, onOpenWith: () -> Unit, onDetails:
         expanded = expanded,
         onDismissRequest = { expanded = false },
         shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         DropdownMenuItem(
             text = { Text(stringResource(R.string.print)) },
@@ -181,5 +196,51 @@ private fun OverflowMenu(onPrint: () -> Unit, onOpenWith: () -> Unit, onDetails:
             },
             leadingIcon = { Icon(Icons.Rounded.Info, contentDescription = null) },
         )
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+        // Night mode stays open so it can be judged against the page behind the menu.
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.night_mode)) },
+            onClick = onNightModeToggle,
+            leadingIcon = { Icon(Icons.Rounded.DarkMode, contentDescription = null) },
+            trailingIcon = {
+                Switch(checked = isNightModeEnabled, onCheckedChange = { onNightModeToggle() })
+            },
+        )
+
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+        Text(
+            text = stringResource(R.string.fit_mode),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 12.dp, top = 8.dp, bottom = 4.dp),
+        )
+
+        FitMode.entries.forEach { mode ->
+            val selected = mode == fitMode
+            DropdownMenuItem(
+                text = { Text(mode.label()) },
+                onClick = {
+                    expanded = false
+                    onFitModeChange(mode)
+                },
+                trailingIcon = {
+                    // A check on the active mode, so the current fit is visible instead of being
+                    // something you infer by cycling.
+                    if (selected) Icon(Icons.Rounded.Check, contentDescription = null)
+                },
+            )
+        }
     }
 }
+
+@Composable
+private fun FitMode.label(): String =
+    when (this) {
+        FitMode.WIDTH -> stringResource(R.string.fit_width)
+        FitMode.HEIGHT -> stringResource(R.string.fit_height)
+        FitMode.BOTH -> stringResource(R.string.fit_page)
+        FitMode.PROPORTIONAL -> stringResource(R.string.fit_proportional)
+    }

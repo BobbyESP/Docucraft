@@ -4,7 +4,6 @@
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -12,24 +11,20 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.union
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -39,7 +34,7 @@ import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.PdfDocumentActions
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.PdfDetailsSheet
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfPageScrubber
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerTopBar
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.composepdf.FitMode
@@ -50,7 +45,13 @@ import com.composepdf.PdfViewerDefaults
 import com.composepdf.PdfZoomSpec
 import com.composepdf.ScrollDirection
 import com.composepdf.rememberPdfViewerState
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.delay
+
+/** How long the scrubber lingers after the document stops moving. */
+private const val SCRUBBER_LINGER_MS = 1_400L
+
+/** Below this the viewer is considered at rest, ignoring the tail of a decaying fling. */
+private const val AT_REST_VELOCITY = 1f
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -60,15 +61,16 @@ fun PdfViewerScreen(
     modifier: Modifier = Modifier,
     showBackButton: Boolean = true,
 ) {
-    val pdfViewerState = rememberPdfViewerState()
+    val state = rememberPdfViewerState()
     val analyticsHelper = LocalAnalyticsHelper.current
     // Built from the composition's context (the host Activity) — printing requires an Activity.
     val context = LocalContext.current
     val documentActions = remember(context) { PdfDocumentActions(context) }
 
-    var areControlsVisible by remember { mutableStateOf(true) }
-    var isTopBarVisible by remember { mutableStateOf(true) }
-    var hasScrolled by remember { mutableStateOf(false) }
+    // One flag for all chrome. The previous three (controls / top bar / a one-way "has scrolled"
+    // latch) could reach states where the bar was visible but the viewer had already given up its
+    // padding, leaving the bar sitting on top of the page for the rest of the session.
+    var chromeVisible by remember { mutableStateOf(true) }
     var showDetails by remember { mutableStateOf(false) }
 
     var fitMode by remember { mutableStateOf(FitMode.BOTH) }
@@ -76,76 +78,61 @@ fun PdfViewerScreen(
 
     val jobName = documentInfo.title ?: documentInfo.filename
 
-    LaunchedEffect(pdfViewerState) {
-        snapshotFlow { pdfViewerState.panY to pdfViewerState.isGestureActive }
-            .distinctUntilChanged()
-            .collect { (_, gestureActive) ->
-                if (gestureActive && pdfViewerState.isLoaded) {
-                    hasScrolled = true
-                    isTopBarVisible = false
-                }
-            }
+    // "The document is moving" covers both the finger and the fling that follows it, so chrome
+    // does not reappear halfway through a decay.
+    val isMoving by remember {
+        derivedStateOf {
+            state.isGestureActive || state.scrollVelocity.getDistance() > AT_REST_VELOCITY
+        }
     }
 
-    val topInsetDp =
-        WindowInsets.statusBars
-            .union(WindowInsets.displayCutout)
-            .asPaddingValues()
-            .calculateTopPadding()
-    // Floating pill bar ≈ expanded app-bar height plus its top/bottom floating margins.
-    val topAppBarHeight = TopAppBarDefaults.TopAppBarExpandedHeight + topInsetDp + 16.dp
+    // Reading gets the screen: any movement takes the chrome away.
+    LaunchedEffect(isMoving) {
+        if (isMoving && state.isLoaded) chromeVisible = false
+    }
 
-    val pdfTopPadding by
-        animateDpAsState(
-            targetValue = if (isTopBarVisible && !hasScrolled) topAppBarHeight else 0.dp,
-            animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
-            label = "pdfTopPadding",
-        )
+    // The scrubber doubles as the position readout, so it stays through a scroll and for a moment
+    // after — that is exactly when "which page am I on" is worth answering.
+    var scrubberLingering by remember { mutableStateOf(false) }
+    LaunchedEffect(isMoving) {
+        if (isMoving) {
+            scrubberLingering = true
+        } else {
+            delay(SCRUBBER_LINGER_MS)
+            scrubberLingering = false
+        }
+    }
+
+    val scrubberVisible = state.isLoaded && (chromeVisible || scrubberLingering)
 
     Box(modifier = modifier.fillMaxSize()) {
+        // Never padded. Insetting the viewer to make room for the bar resized the viewport, which
+        // re-fits the page and makes the document jump every time the chrome appears or leaves.
+        // Chrome floats over the page instead.
         PdfViewer(
             source = PdfSource.Uri(documentInfo.uri.toUri()),
-            state = pdfViewerState,
+            state = state,
             layout = PdfLayoutSpec(scrollDirection = ScrollDirection.VERTICAL, fitMode = fitMode),
             zoomSpec = PdfZoomSpec(minZoom = 0.25f, maxZoom = 10f),
             style = PdfViewerDefaults.style(nightMode = isNightModeEnabled),
             loadingContent = { LoadingIndicator(modifier = Modifier.align(Alignment.Center)) },
-            onTap = {
-                when {
-                    // Top bar + controls both visible → hide both
-                    isTopBarVisible && areControlsVisible -> {
-                        isTopBarVisible = false
-                        areControlsVisible = false
-                    }
-                    // Only controls visible → hide controls
-                    !isTopBarVisible && areControlsVisible -> {
-                        areControlsVisible = false
-                    }
-                    // Everything hidden → show both
-                    else -> {
-                        isTopBarVisible = true
-                        areControlsVisible = true
-                    }
-                }
-            },
-            modifier =
-                Modifier.fillMaxSize()
-                    .padding(
-                        top = pdfTopPadding.coerceIn(minimumValue = 0.dp, maximumValue = null)
-                    ),
+            onTap = { chromeVisible = !chromeVisible },
+            modifier = Modifier.fillMaxSize(),
         )
 
         AnimatedVisibility(
             modifier = Modifier.align(Alignment.TopCenter),
-            visible = isTopBarVisible,
+            visible = chromeVisible,
+            // Fade and slide share one timing family; mixing a slow fade with a fast slide is what
+            // made the bar look like it was sliding out from under its own opacity.
             enter =
-                fadeIn(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
+                fadeIn(MaterialTheme.motionScheme.fastEffectsSpec()) +
                     slideInVertically(
                         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
                         initialOffsetY = { -it },
                     ),
             exit =
-                fadeOut(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
+                fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()) +
                     slideOutVertically(
                         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
                         targetOffsetY = { -it },
@@ -153,13 +140,27 @@ fun PdfViewerScreen(
         ) {
             PdfViewerTopBar(
                 documentInfo = documentInfo,
-                pageCount = pdfViewerState.pageCount,
+                currentPage = state.currentPage,
+                pageCount = state.pageCount,
                 showBackButton = showBackButton,
+                fitMode = fitMode,
+                isNightModeEnabled = isNightModeEnabled,
                 onBack = onBack,
                 onShare = { documentActions.share(documentInfo.uri) },
                 onPrint = { documentActions.print(documentInfo.uri, jobName) },
                 onOpenWith = { documentActions.openWith(documentInfo.uri) },
                 onDetails = { showDetails = true },
+                onFitModeChange = { mode ->
+                    fitMode = mode
+                    analyticsHelper.logSettingChange("fit_mode", mode.name)
+                },
+                onNightModeToggle = {
+                    isNightModeEnabled = !isNightModeEnabled
+                    analyticsHelper.logSettingChange(
+                        "night_mode",
+                        isNightModeEnabled.toString(),
+                    )
+                },
             )
         }
 
@@ -169,64 +170,28 @@ fun PdfViewerScreen(
                     .padding(
                         bottom =
                             WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
-                                16.dp
+                                16.dp,
+                        start = 16.dp,
+                        end = 16.dp,
                     ),
-            visible = areControlsVisible,
+            visible = scrubberVisible,
             enter =
-                fadeIn(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
+                fadeIn(MaterialTheme.motionScheme.fastEffectsSpec()) +
                     slideInVertically(
                         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
                         initialOffsetY = { it },
                     ),
             exit =
-                fadeOut(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
+                fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()) +
                     slideOutVertically(
                         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
                         targetOffsetY = { it },
                     ),
         ) {
-            PdfViewerBottomToolbar(
-                state = pdfViewerState,
-                isNightModeEnabled = isNightModeEnabled,
-                fitMode = fitMode,
-                onFitModeChange = {
-                    fitMode = it
-                    analyticsHelper.logEvent(
-                        AnalyticsEvent(
-                            type = AnalyticsEvent.Types.PDF_VIEWER_SETTING_CHANGED,
-                            extras =
-                                listOf(
-                                    AnalyticsEvent.Param(
-                                        AnalyticsEvent.ParamKeys.SETTING_NAME,
-                                        "fit_mode",
-                                    ),
-                                    AnalyticsEvent.Param(
-                                        AnalyticsEvent.ParamKeys.SETTING_VALUE,
-                                        it.name,
-                                    ),
-                                ),
-                        )
-                    )
-                },
-                onNightModeToggle = {
-                    isNightModeEnabled = !isNightModeEnabled
-                    analyticsHelper.logEvent(
-                        AnalyticsEvent(
-                            type = AnalyticsEvent.Types.PDF_VIEWER_SETTING_CHANGED,
-                            extras =
-                                listOf(
-                                    AnalyticsEvent.Param(
-                                        AnalyticsEvent.ParamKeys.SETTING_NAME,
-                                        "night_mode",
-                                    ),
-                                    AnalyticsEvent.Param(
-                                        AnalyticsEvent.ParamKeys.SETTING_VALUE,
-                                        isNightModeEnabled.toString(),
-                                    ),
-                                ),
-                        )
-                    )
-                },
+            PdfPageScrubber(
+                currentPage = state.currentPage,
+                pageCount = state.pageCount,
+                onSeekToPage = { page -> state.scrollToPage(page) },
             )
         }
     }
@@ -234,8 +199,24 @@ fun PdfViewerScreen(
     if (showDetails) {
         PdfDetailsSheet(
             documentInfo = documentInfo,
-            pageCount = pdfViewerState.pageCount,
+            pageCount = state.pageCount,
             onDismiss = { showDetails = false },
         )
     }
+}
+
+private fun com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper.logSettingChange(
+    name: String,
+    value: String,
+) {
+    logEvent(
+        AnalyticsEvent(
+            type = AnalyticsEvent.Types.PDF_VIEWER_SETTING_CHANGED,
+            extras =
+                listOf(
+                    AnalyticsEvent.Param(AnalyticsEvent.ParamKeys.SETTING_NAME, name),
+                    AnalyticsEvent.Param(AnalyticsEvent.ParamKeys.SETTING_VALUE, value),
+                ),
+        )
+    )
 }
