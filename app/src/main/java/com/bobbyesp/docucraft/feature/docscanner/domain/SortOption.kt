@@ -27,10 +27,6 @@ data class SortOption(val criteria: Criteria, val order: Order) {
                 SIZE -> stringResource(R.string.size)
             }
         }
-
-        companion object {
-            @Composable fun toString(criteria: Criteria): String = criteria.getLocalizedName()
-        }
     }
 
     enum class Order {
@@ -50,15 +46,6 @@ data class SortOption(val criteria: Criteria, val order: Order) {
         return when (order) {
             Order.ASC -> Icons.Rounded.ArrowUpward
             Order.DESC -> Icons.Rounded.ArrowDownward
-        }
-    }
-
-    @Composable
-    fun getName(): String {
-        return when (criteria) {
-            Criteria.DATE -> stringResource(R.string.date)
-            Criteria.NAME -> stringResource(R.string.name)
-            Criteria.SIZE -> stringResource(R.string.size)
         }
     }
 

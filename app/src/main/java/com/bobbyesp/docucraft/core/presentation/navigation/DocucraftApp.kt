@@ -8,8 +8,11 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -39,7 +42,12 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
 @Composable
 fun DocucraftApp(modifier: Modifier = Modifier) {
     val backStack = rememberNavBackStack(Route.Home)
-    val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
+
+    // Computed once and shared: the strategy lays panes out from it, and screens read it through
+    // LocalPaneScaffoldDirective to ask whether they are sharing the window. Two sources for that
+    // answer is how they drift apart.
+    val paneDirective = calculatePaneScaffoldDirective(currentWindowAdaptiveInfoV2())
+    val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>(directive = paneDirective)
 
     val goBack: () -> Unit = { backStack.removeLastOrNull() }
 
@@ -51,46 +59,48 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
         derivedStateOf { (backStack.lastOrNull() as? Route.PdfViewer)?.document?.uuid }
     }
 
-    NavDisplay(
-        backStack = backStack,
-        modifier = modifier.fillMaxSize(),
-        onBack = goBack,
-        entryDecorators =
-            listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            ),
-        sceneStrategies = listOf(listDetailStrategy),
-        entryProvider =
-            entryProvider {
-                homeSection(
-                    selectedDocumentId = openDocumentId,
-                    onOpenDocument = { document -> backStack.add(Route.PdfViewer(document)) },
-                    onOpenSettings = { backStack.add(Route.Settings) },
-                )
+    CompositionLocalProvider(LocalPaneScaffoldDirective provides paneDirective) {
+        NavDisplay(
+            backStack = backStack,
+            modifier = modifier.fillMaxSize(),
+            onBack = goBack,
+            entryDecorators =
+                listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator(),
+                ),
+            sceneStrategies = listOf(listDetailStrategy),
+            entryProvider =
+                entryProvider {
+                    homeSection(
+                        selectedDocumentId = openDocumentId,
+                        onOpenDocument = { document -> backStack.add(Route.PdfViewer(document)) },
+                        onOpenSettings = { backStack.add(Route.Settings) },
+                    )
 
-                pdfViewerSection(onBack = goBack)
+                    pdfViewerSection(onBack = goBack)
 
-                settingsSection(
-                    onOpenAppearance = { backStack.add(Route.Settings.Appearance) },
-                    onOpenCustomerCenter = { backStack.add(Route.Settings.CustomerCenter) },
-                    onBack = goBack,
-                )
+                    settingsSection(
+                        onOpenAppearance = { backStack.add(Route.Settings.Appearance) },
+                        onOpenCustomerCenter = { backStack.add(Route.Settings.CustomerCenter) },
+                        onBack = goBack,
+                    )
+                },
+            // Only runs when the scene itself changes — on expanded windows the list-detail scene
+            // key is constant, so opening a document animates the panes instead of sliding the
+            // whole layout.
+            transitionSpec = {
+                slideInHorizontally(initialOffsetX = { it }) togetherWith
+                    slideOutHorizontally(targetOffsetX = { -it })
             },
-        transitionSpec = {
-            // Slide in from right when navigating forward
-            slideInHorizontally(initialOffsetX = { it }) togetherWith
-                slideOutHorizontally(targetOffsetX = { -it })
-        },
-        popTransitionSpec = {
-            // Slide in from left when navigating back
-            slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                slideOutHorizontally(targetOffsetX = { it })
-        },
-        predictivePopTransitionSpec = {
-            // Slide in from left when navigating back
-            slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                slideOutHorizontally(targetOffsetX = { it })
-        },
-    )
+            popTransitionSpec = {
+                slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                    slideOutHorizontally(targetOffsetX = { it })
+            },
+            predictivePopTransitionSpec = {
+                slideInHorizontally(initialOffsetX = { -it }) togetherWith
+                    slideOutHorizontally(targetOffsetX = { it })
+            },
+        )
+    }
 }
