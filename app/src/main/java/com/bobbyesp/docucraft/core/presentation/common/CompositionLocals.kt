@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -27,7 +26,6 @@ import com.skydoves.landscapist.coil.LocalCoilImageLoader
 
 val LocalDarkTheme = compositionLocalOf<Boolean> { false }
 val LocalOrientation = compositionLocalOf<Int> { error("No orientation provided") }
-val LocalWindowWidthState = staticCompositionLocalOf { WindowWidthSizeClass.Compact }
 
 val LocalSettingsRepository =
     staticCompositionLocalOf<SettingsRepository> { error("No settings repository provided") }
@@ -41,7 +39,6 @@ val LocalAnalyticsHelper =
 @Suppress("ModifierRequired")
 @Composable
 fun AppLocalSettingsProvider(
-    windowWidthSize: WindowWidthSizeClass,
     settingsRepository: SettingsRepository,
     userPreferences: UserPreferences,
     imageLoader: ImageLoader,
@@ -55,7 +52,6 @@ fun AppLocalSettingsProvider(
     CompositionLocalProvider(
         LocalDarkTheme provides isDark,
         LocalSettingsRepository provides settingsRepository,
-        LocalWindowWidthState provides windowWidthSize,
         LocalOrientation provides config.orientation,
         LocalNotificationsService provides inAppNotificationsService,
         LocalAnalyticsHelper provides analyticsHelper,

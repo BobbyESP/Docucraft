@@ -12,14 +12,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
-import com.bobbyesp.docucraft.core.presentation.common.LocalWindowWidthState
+import androidx.window.core.layout.WindowSizeClass
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsContent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentDialog
@@ -27,7 +28,11 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialo
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsSheet
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalMaterial3AdaptiveApi::class,
+)
 @Composable
 fun DocumentDialogWrapper(
     sheetState: DocumentSheetUiState,
@@ -36,8 +41,9 @@ fun DocumentDialogWrapper(
 ) {
     val onAction: (SheetAction) -> Unit = { onHomeIntent(HomeIntent.Sheet(it)) }
 
-    val windowSizeClass = LocalWindowWidthState.current
-    val isCompact = windowSizeClass == WindowWidthSizeClass.Compact
+    val windowSizeClass = currentWindowAdaptiveInfoV2().windowSizeClass
+    val isCompact =
+        !windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(

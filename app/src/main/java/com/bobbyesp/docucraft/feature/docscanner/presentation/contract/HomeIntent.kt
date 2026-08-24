@@ -23,8 +23,6 @@ sealed interface HomeIntent {
 
     data object ClearSearch : HomeIntent
 
-    data class ToggleSearch(val visible: Boolean) : HomeIntent
-
     data class ApplySort(val sort: SortOption) : HomeIntent
 
     data class ApplyFilter(val filter: FilterOptions) : HomeIntent

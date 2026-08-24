@@ -4,11 +4,11 @@
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import com.bobbyesp.docucraft.core.presentation.common.LocalWindowWidthState
+import androidx.window.core.layout.WindowSizeClass
 import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
 
@@ -19,7 +19,9 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerSc
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun EntryProviderScope<NavKey>.pdfViewerSection(onBack: () -> Unit) {
     entry<Route.PdfViewer>(metadata = ListDetailSceneStrategy.detailPane()) { route ->
-        val isCompact = LocalWindowWidthState.current == WindowWidthSizeClass.Compact
+        val windowSizeClass = currentWindowAdaptiveInfoV2().windowSizeClass
+        val isCompact =
+            !windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
         PdfViewerScreen(
             documentInfo = route.document,

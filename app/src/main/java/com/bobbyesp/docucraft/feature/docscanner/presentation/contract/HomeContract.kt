@@ -22,7 +22,6 @@ data class HomeUiState(
     val visibleDocuments: List<ScannedDocument> = emptyList(),
     val hasDocuments: Boolean = false,
     val searchQuery: String = "",
-    val isSearchBarVisible: Boolean = false,
     val filterOptions: FilterOptions = FilterOptions.default,
     val isScanning: Boolean = false,
     val mostRecentScan: RawScanResult? = null,

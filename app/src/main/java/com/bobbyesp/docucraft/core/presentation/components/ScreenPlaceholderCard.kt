@@ -52,12 +52,12 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 fun ScreenPlaceholderCard(
     title: String,
     description: String,
-    actionText: String,
-    onAction: () -> Unit,
     icon: ImageVector,
     modifier: Modifier = Modifier,
     isError: Boolean = false,
+    actionText: String? = null,
     iconAction: ImageVector = Icons.Rounded.CameraAlt,
+    onAction: (() -> Unit)? = null,
 ) {
     val iconSize = 48.dp
     val colorScheme = MaterialTheme.colorScheme
@@ -136,22 +136,24 @@ fun ScreenPlaceholderCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            if (actionText != null && onAction != null) {
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Button(
-                onClick = onAction,
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                shapes = ButtonDefaults.shapes(),
-                colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
-                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
-            ) {
-                Icon(
-                    imageVector = iconAction,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = actionText.uppercase(), style = MaterialTheme.typography.labelLarge)
+                Button(
+                    onClick = onAction,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shapes = ButtonDefaults.shapes(),
+                    colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+                ) {
+                    Icon(
+                        imageVector = iconAction,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = actionText.uppercase(), style = MaterialTheme.typography.labelLarge)
+                }
             }
         }
     }

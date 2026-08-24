@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -41,9 +43,12 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
 
     val goBack: () -> Unit = { backStack.removeLastOrNull() }
 
-    // The document currently open in the detail pane, used to highlight it in the list.
-    val openDocumentId = remember {
-        backStack.filterIsInstance<Route.PdfViewer>().lastOrNull()?.document?.uuid
+    // The document currently open in the detail pane, used to highlight it in the list. Only the
+    // top of the stack counts as "open" — e.g. on expanded windows, pushing Settings on top of a
+    // PdfViewer entry (reachable since Home's app bar stays visible next to the detail pane) should
+    // clear the highlight, not keep pointing at the PdfViewer entry buried underneath it.
+    val openDocumentId by remember {
+        derivedStateOf { (backStack.lastOrNull() as? Route.PdfViewer)?.document?.uuid }
     }
 
     NavDisplay(

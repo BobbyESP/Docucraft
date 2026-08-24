@@ -12,8 +12,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -68,7 +66,6 @@ class MainActivity : ComponentActivity(), KoinComponent {
             }
         }
 
-    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashscreen = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -124,12 +121,9 @@ class MainActivity : ComponentActivity(), KoinComponent {
         }
 
         setContent {
-            val windowSizeClass = calculateWindowSizeClass(this)
-
             val state = uiState
             if (state is MainActivityUiState.Success) {
                 AppLocalSettingsProvider(
-                    windowWidthSize = windowSizeClass.widthSizeClass,
                     inAppNotificationsService = inAppNotificationsService,
                     imageLoader = imageLoader,
                     settingsRepository = settingsRepository,

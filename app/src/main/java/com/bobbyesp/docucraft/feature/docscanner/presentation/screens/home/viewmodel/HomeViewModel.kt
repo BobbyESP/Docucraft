@@ -30,6 +30,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetPage
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -55,6 +56,7 @@ class HomeViewModel(
     private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : BaseViewModel<HomeIntent, HomeUiState, HomeEffect>(initialState = HomeUiState()) {
 
     init {
@@ -68,11 +70,16 @@ class HomeViewModel(
         when (intent) {
             HomeIntent.Load -> observeDocuments()
 
-            HomeIntent.LaunchScanner ->
-                launch {
+            HomeIntent.LaunchScanner -> {
+                if (currentState.isScanning) return
+
+                setState { copy(isScanning = true) }
+
+                launch(onError = { setState { copy(isScanning = false) } }) {
                     analyticsHelper.logEvent(AnalyticsEvent(AnalyticsEvent.Types.SCAN_STARTED))
                     scannerManager.requestScan()
                 }
+            }
 
             is HomeIntent.ScanResult -> processScanResult(intent.result)
 
@@ -97,8 +104,6 @@ class HomeViewModel(
             }
 
             HomeIntent.ClearSearch -> setState { copy(searchQuery = "") }
-
-            is HomeIntent.ToggleSearch -> setState { copy(isSearchBarVisible = intent.visible) }
 
             is HomeIntent.ApplySort -> {
                 analyticsHelper.logEvent(
@@ -155,7 +160,7 @@ class HomeViewModel(
             }
             .mapLatest { (docs, query, filters) ->
                 val processed =
-                    withContext(Dispatchers.Default) {
+                    withContext(defaultDispatcher) {
                         processDocumentsUseCase(docs, query, filters, filters.sortBy)
                     }
 

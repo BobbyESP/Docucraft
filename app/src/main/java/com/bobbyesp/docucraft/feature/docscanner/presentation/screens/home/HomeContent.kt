@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -36,10 +37,10 @@ import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.FileCopy
-import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -47,6 +48,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.motionScheme
 import androidx.compose.material3.Scaffold
@@ -56,7 +58,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -66,7 +67,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -83,6 +83,7 @@ import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.components.selectiongroup.SelectionGroupRow
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftElevationDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscroll
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
@@ -185,12 +186,23 @@ fun HomeContent(
                             text = { Text(text = stringResource(id = R.string.scan)) },
                             expanded = !isSearchFocused,
                             icon = {
-                                Icon(
-                                    imageVector = Icons.Rounded.DocumentScanner,
-                                    contentDescription = stringResource(id = R.string.doc_scan_new),
-                                )
+                                if (uiState.isScanning) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        strokeWidth = 2.dp,
+                                        color = LocalContentColor.current,
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Rounded.DocumentScanner,
+                                        contentDescription =
+                                            stringResource(id = R.string.doc_scan_new),
+                                    )
+                                }
                             },
-                            onClick = { onAction(HomeIntent.LaunchScanner) },
+                            onClick = {
+                                if (!uiState.isScanning) onAction(HomeIntent.LaunchScanner)
+                            },
                         )
                     }
                 }
@@ -212,7 +224,7 @@ fun HomeContent(
 
                 is HomeStatus.Error -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        ErrorContent(errorMessage = targetState.message, onRetry = { /* TODO */ })
+                        ErrorContent(errorMessage = targetState.message)
                     }
                 }
 
@@ -347,7 +359,7 @@ private fun SortOptionsRow(
         )
 
         VerticalDivider(
-            color = MaterialTheme.colorScheme.outline,
+            color = MaterialTheme.colorScheme.outlineVariant,
             modifier = Modifier.height(24.dp).padding(horizontal = 8.dp),
         )
 
@@ -355,7 +367,7 @@ private fun SortOptionsRow(
             modifier = Modifier,
             colors =
                 IconButtonDefaults.iconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
                 ),
             onClick = {
                 onSortOptionChange(
@@ -386,9 +398,10 @@ private fun SearchBar(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.shadow(4.dp, MaterialTheme.shapes.large),
+        modifier = modifier,
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surface,
+        tonalElevation = DocucraftElevationDefaults.Card,
     ) {
         TextField(
             value = query,
@@ -449,15 +462,12 @@ private fun EmptyStateScreen(onScanDocument: () -> Unit, modifier: Modifier = Mo
 }
 
 @Composable
-private fun ErrorContent(errorMessage: String?, onRetry: () -> Unit) {
+private fun ErrorContent(errorMessage: String?) {
     ScreenPlaceholderCard(
         modifier = Modifier.padding(24.dp),
         title = stringResource(id = R.string.unknown_error),
         description = errorMessage ?: stringResource(id = R.string.error_loading_docs),
-        actionText = stringResource(id = R.string.retry),
-        onAction = onRetry,
         icon = Icons.Rounded.Warning,
-        iconAction = Icons.Rounded.Refresh,
         isError = true,
     )
 }
@@ -473,6 +483,36 @@ private fun HomeContentPreview() {
                     hasDocuments = true,
                     visibleDocuments = MockData.Documents.documentsList,
                 ),
+            onAction = {},
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun HomeContentLoadingPreview() {
+    DocucraftTheme {
+        HomeContent(uiState = HomeUiState(status = HomeStatus.Loading), onAction = {})
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun HomeContentErrorPreview() {
+    DocucraftTheme {
+        HomeContent(
+            uiState = HomeUiState(status = HomeStatus.Error("Couldn't reach local storage")),
+            onAction = {},
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun HomeContentEmptyPreview() {
+    DocucraftTheme {
+        HomeContent(
+            uiState = HomeUiState(status = HomeStatus.Idle, hasDocuments = false),
             onAction = {},
         )
     }
