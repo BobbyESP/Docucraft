@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -26,6 +27,7 @@ import androidx.navigation3.ui.NavDisplay
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.homeSection
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
+import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 
 /**
  * The app shell: a single back stack rendered by a single [NavDisplay].
@@ -74,7 +76,7 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
                 entryProvider {
                     homeSection(
                         selectedDocumentId = openDocumentId,
-                        onOpenDocument = { document -> backStack.add(Route.PdfViewer(document)) },
+                        onOpenDocument = backStack::openDocument,
                         onOpenSettings = { backStack.add(Route.Settings) },
                     )
 
@@ -102,5 +104,27 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
                     slideOutHorizontally(targetOffsetX = { it })
             },
         )
+    }
+}
+
+/**
+ * Opens [document] in the detail pane, replacing any document already open.
+ *
+ * The document list is a sibling chooser, not a drill-down. On windows wide enough to keep the list
+ * beside the viewer, picking a second document should swap what the detail pane shows rather than
+ * bury the first one in the stack - otherwise browsing five documents leaves five entries to walk
+ * back through before reaching Home, and back stops meaning "close the document".
+ *
+ * Re-picking the document that is already open is a no-op, so tapping the highlighted row does not
+ * tear down and rebuild the viewer.
+ */
+internal fun NavBackStack<NavKey>.openDocument(document: BasicDocument) {
+    val route = Route.PdfViewer(document)
+    if (lastOrNull() == route) return
+
+    if (lastOrNull() is Route.PdfViewer) {
+        this[lastIndex] = route
+    } else {
+        add(route)
     }
 }
