@@ -65,6 +65,11 @@
     <string name="size">Size</string>
     <string name="no_description">No description</string>
     <string name="more_options">More options</string>
+    <string name="documents">Documents</string>
+    <string name="no_matching_documents">No documents match “%1$s”</string>
+    <string name="no_matching_documents_hint">Try a different word, or check the spelling.</string>
+    <string name="library_summary">%1$s · %2$s</string>
+    <string name="couldnt_load_documents">Couldn’t load your documents</string>
     <string name="no_scanned_documents">No scanned documents</string>
     <string name="error_loading_docs">Error loading documents</string>
     <string name="select_document_to_preview">Select a document to preview it here</string>
