@@ -14,7 +14,8 @@ val documentScannerViewModels = module {
     viewModel {
         HomeViewModel(
             savedStateHandle = get(),
-            scannerManager = get(),
+            documentScanner = get(),
+            scanRequests = get(),
             observeDocumentsUseCase = get(),
             processDocumentsUseCase = get(),
             getDocumentUseCase = get(),

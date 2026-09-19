@@ -15,9 +15,8 @@ import com.bobbyesp.docucraft.core.di.notificationsServiceModule
 import com.bobbyesp.docucraft.core.di.preferencesModule
 import com.bobbyesp.docucraft.core.di.subscriptionModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerDataModule
+import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerViewModels
-import com.bobbyesp.docucraft.feature.docscanner.di.gmsScannerModule
-import com.bobbyesp.docucraft.feature.docscanner.di.mlKitModule
 import com.bobbyesp.docucraft.feature.docscanner.di.scannedDocumentsDatabaseModule
 import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
@@ -45,9 +44,8 @@ class App : Application() {
                 notificationsServiceModule,
                 scannedDocumentsDatabaseModule,
                 documentScannerDataModule,
-                gmsScannerModule,
+                documentScannerModule,
                 documentScannerViewModels,
-                mlKitModule,
                 fileManagementModule,
                 analyticsModule,
                 subscriptionModule,

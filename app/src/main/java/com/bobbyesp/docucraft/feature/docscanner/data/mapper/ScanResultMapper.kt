@@ -3,8 +3,6 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.mapper
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScannerException
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ContentRef
 import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanArtifact
 import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanDraft
@@ -19,8 +17,6 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanOutcome
  * testable on the JVM, which is where the cancellation and empty-result bugs were hiding.
  */
 object ScanResultMapper {
-
-    private const val NO_DOCUMENT = "The scanner returned no document"
 
     /**
      * @param completed Whether the engine reported a finished scan. `false` means the user backed
@@ -57,42 +53,4 @@ object ScanResultMapper {
             ScanOutcome.Completed(ScanDraft(artifacts, capturedAtEpochMillis))
         }
     }
-
-    /**
-     * The same decision, in the shape the pre-[ScanOutcome] path still expects. Delegates rather
-     * than repeating itself, so there is only ever one decision table to reason about.
-     *
-     * Goes away with the rest of the old path in step 6 of the migration plan.
-     */
-    fun map(
-        completed: Boolean,
-        pdfUri: String?,
-        pageCount: Int?,
-        timestamp: Long,
-    ): Result<RawScanResult> =
-        when (
-            val outcome =
-                toOutcome(
-                    completed = completed,
-                    pdfUri = pdfUri,
-                    pageCount = pageCount,
-                    pageUris = null,
-                    capturedAtEpochMillis = timestamp,
-                )
-        ) {
-            ScanOutcome.Cancelled -> Result.failure(ScannerException.ScanCancelled())
-
-            is ScanOutcome.Failed -> Result.failure(ScannerException.ScanFailed(NO_DOCUMENT))
-
-            is ScanOutcome.Completed ->
-                outcome.draft.pdf?.let { pdf ->
-                    Result.success(
-                        RawScanResult(
-                            uri = pdf.content.value,
-                            pageCount = pdf.pageCount,
-                            timestamp = timestamp,
-                        )
-                    )
-                } ?: Result.failure(ScannerException.ScanFailed(NO_DOCUMENT))
-        }
 }

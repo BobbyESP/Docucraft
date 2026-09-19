@@ -10,7 +10,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,15 +26,14 @@ import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.presentation.MainActivityUiState
 import com.bobbyesp.docucraft.core.presentation.MainViewModel
+import com.bobbyesp.docucraft.core.presentation.activityresult.ActivityResultHostImpl
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.navigation.DocucraftApp
 import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
-import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.ScannerRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanRequestBus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.ACTION_SCAN_DOCUMENT
 import com.dokar.sonner.Toaster
-import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init
 import kotlinx.coroutines.launch
@@ -50,20 +48,17 @@ class MainActivity : ComponentActivity(), KoinComponent {
     private val analyticsHelper: AnalyticsHelper by inject()
     private val mainViewModel: MainViewModel by viewModel()
 
-    private val scannerManager: ScannerManager by inject()
-    private val scannerClient: GmsDocumentScanner by inject()
-    private val scannerRepository: ScannerRepository by inject()
+    private val scanRequests: ScanRequestBus by inject()
 
-    private val scannerLauncher =
+    /**
+     * Registered here because only an Activity can, then lent to whoever needs it. This Activity
+     * does not know, and must not know, what is being launched through it.
+     */
+    private val resultHost: ActivityResultHostImpl by inject()
+
+    private val intentSenderLauncher =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-            lifecycleScope.launch {
-                scannerRepository
-                    .processResult(result)
-                    .onSuccess { rawScanResult ->
-                        scannerManager.onScanResult(Result.success(rawScanResult))
-                    }
-                    .onFailure { error -> scannerManager.onScanResult(Result.failure(error)) }
-            }
+            resultHost.deliver(result)
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,13 +107,9 @@ class MainActivity : ComponentActivity(), KoinComponent {
         FileKit.init(this)
         val sonnerManager = inAppNotificationsService as SonnerNotificationServiceImpl
 
-        handleIntent(intent)
+        resultHost.attach(this, intentSenderLauncher)
 
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                scannerManager.scanRequest.collect { launchScanner() }
-            }
-        }
+        handleIntent(intent)
 
         setContent {
             val state = uiState
@@ -152,6 +143,8 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
     override fun onDestroy() {
         super.onDestroy()
+        resultHost.detach(this)
+
         // Fix for FileKit memory leak: Clear the static registry reference if it points to this
         // activity
         try {
@@ -169,20 +162,9 @@ class MainActivity : ComponentActivity(), KoinComponent {
         }
     }
 
-    private fun launchScanner() {
-        scannerClient
-            .getStartScanIntent(this)
-            .addOnSuccessListener { intentSender ->
-                scannerLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
-            }
-            .addOnFailureListener { e ->
-                lifecycleScope.launch { scannerManager.onScanResult(Result.failure(e)) }
-            }
-    }
-
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == ACTION_SCAN_DOCUMENT) {
-            lifecycleScope.launch { scannerManager.requestScan() }
+            lifecycleScope.launch { scanRequests.request() }
             intent.action = null
         }
     }

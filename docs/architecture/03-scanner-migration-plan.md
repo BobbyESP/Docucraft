@@ -21,8 +21,7 @@
 | 2 | Arreglar B1, B2, B3, B4 + extraer mapper puro | Bajo | ✅ Hecho |
 | 3 | Introducir el contrato de dominio | Nulo | ✅ Hecho |
 | 4 | Implementar el motor ML Kit contra el contrato | Nulo | ✅ Hecho |
-| 5 | Cablear el shell (`MainActivity`) | **Medio-alto** | ⏳ Pendiente |
-| 6 | Mover el ViewModel al puerto | Medio | ⏳ Pendiente |
+| 5+6 | Cablear el shell y mover el ViewModel al puerto | **Medio-alto** | ⚠️ Hecho, **sin verificar en dispositivo** |
 | 7 | Limpiar la persistencia | Medio | ⏳ Pendiente |
 | 8 | *(Opcional)* Módulos `:scanner-api` / `:scanner-mlkit` | Bajo | ⏳ Pendiente |
 | 9 | *(Opcional)* Resiliencia a muerte de proceso | Bajo | ⏳ Pendiente |
@@ -112,34 +111,46 @@ El camino viejo sigue vivo y en producción durante todo este paso.
 > parte que sí tiene decisiones —la tabla— está cubierta por `ScanResultMapperTest`, y el resto es
 > fontanería que solo el E2E del paso 5 prueba de verdad.
 
-## Paso 5 · Cablear el shell ⏳ ⚠️ **paso de mayor riesgo**
+## Pasos 5 y 6 · Cablear el shell y mover el ViewModel al puerto ⚠️
 
-- [ ] `MainActivity`: quitar `GmsDocumentScanner` y `ScannerRepository`; registrar el launcher y
-      cedérselo al host.
-- [ ] `ScannerManager` sigue existiendo, pero ahora lo alimenta `MlKitDocumentScanner`.
+> **Los dos pasos se fusionaron durante la implementación.** El paso 5 tal y como estaba escrito no
+> funciona: si `MainActivity` llama al puerto suspendido desde `repeatOnLifecycle(STARTED)`, lanzar
+> el escáner de GMS para la Activity, se cancela el bloque, y con él el escaneo en vuelo. El código
+> anterior no sufría esto porque `launchScanner()` era *fire-and-forget*. La llamada suspendida
+> tiene que vivir en `viewModelScope`, que era el paso 6 — y en medio no quedaría nadie lanzando el
+> escáner. **Es el tipo de fallo que solo aparece al implementar.**
 
-**Verificación — E2E manual obligatoria**:
+- [x] `MainActivity` ya no conoce el escaneo: registra el launcher, se lo presta al
+      `ActivityResultHost` y lo suelta en `onDestroy`.
+- [x] `HomeViewModel` llama a `documentScanner.scan()` en `viewModelScope`, que sobrevive a que el
+      escáner tape la app y a que la Activity se recree debajo.
+- [x] `ScannerManager` (bus bidireccional petición+resultado) se reduce a `ScanRequestBus`: solo la
+      señal de «alguien de fuera de la UI pide un escaneo», que es lo único que el widget necesita.
+- [x] Borrados `ScannerRepository`, `MlKitScannerRepository`, `ScannerException`, `GmsScannerModule`
+      y el camino legacy de `ScanResultMapper`.
+- [x] `gmsScannerModule` + `mlKitModule` → un solo `documentScannerModule`.
+- [x] `HomeViewModelTest` sobre un `FakeDocumentScanner`: los tres desenlaces y la vía del widget,
+      sin GMS ni dispositivo.
+
+**Resultado**: ML Kit vive ahora en **un único archivo**, `data/scanner/MlKitDocumentScanner.kt`.
+
+### ⚠️ Pendiente de verificación en dispositivo
+
+Compila y los 17 tests pasan, pero esto es fontanería de ciclo de vida: los tests no la prueban.
+Antes de fusionar la rama hay que comprobar a mano:
+
 - [ ] Escanear desde el FAB
-- [ ] **Escanear desde el widget**
+- [ ] **Escanear desde el widget** (con la app cerrada y con la app ya abierta)
 - [ ] Cancelar con el botón atrás
-- [ ] Rotar durante el escaneo
+- [ ] **Rotar durante el escaneo** — es el caso que motivó fusionar los pasos
 - [ ] Escanear con la app enviada a segundo plano
+- [ ] Un dispositivo sin Play Services, si hay alguno a mano, para confirmar `EngineUnavailable`
 
-**Riesgo**: medio-alto. Aquí se mueve de verdad la fontanería de lanzar/recibir. Hacerlo en un
-commit aislado y fácil de revertir.
+### B5 · Un fallo al guardar felicitaba al usuario
 
-## Paso 6 · Mover el ViewModel al puerto ⏳
-
-- [ ] `HomeViewModel` pasa de `scannerManager.requestScan()` + `scanResult.collect` a
-      `when (documentScanner.scan(request))`.
-- [ ] Borrar `ScannerManager`, `ScannerRepository`, `MlKitScannerRepository`, `RawScanResult`,
-      `gmsScannerModule`, `mlKitModule`.
-- [ ] `HomeViewModelTest` pasa a usar un **`FakeDocumentScanner`** con desenlaces programables.
-
-> **Cuidado**: preservar el guard de reentrada `isScanning` (`HomeViewModel.kt:74`), que ya tiene
-> test.
-
-**Riesgo**: medio. Los tests existentes cubren los cuatro caminos (lanzar, reentrada, éxito, fallo).
+Encontrado al reescribir `processScanResult`. `SaveScannedDocumentUseCase` devuelve `Result<Uri>`
+en vez de lanzar, y el ViewModel **descartaba el valor**: si la copia o el insert fallaban, el
+usuario veía igualmente «documento guardado correctamente». Arreglado y cubierto por test.
 
 ## Paso 7 · Limpiar la persistencia ⏳
 

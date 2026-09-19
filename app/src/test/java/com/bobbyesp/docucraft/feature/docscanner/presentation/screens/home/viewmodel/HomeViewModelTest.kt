@@ -10,11 +10,19 @@ import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
-import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScannerException
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ContentRef
+import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.DocumentScanner
+import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanArtifact
+import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanDraft
+import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanError
+import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanOutcome
+import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanOutputFormat
+import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanRequest
+import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanRequestBus
+import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScannerCapabilities
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
@@ -30,8 +38,10 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
@@ -49,16 +59,20 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Covers the reactive document pipeline and the scan-launch lifecycle (the
- * [HomeIntent.LaunchScanner] "no in-app feedback while waiting for the system scanner" fix, and its
- * re-entrancy guard).
+ * Covers the reactive document pipeline and the scan lifecycle: the re-entrancy guard, the three
+ * ways a session can end, and the widget entry point.
+ *
+ * Note there is no scanner engine anywhere in here. That is what the [DocumentScanner] port buys:
+ * [FakeDocumentScanner] stands in for one, so every outcome is reachable without a device and
+ * without Play Services.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var scannerManager: ScannerManager
+    private lateinit var documentScanner: FakeDocumentScanner
+    private lateinit var scanRequests: ScanRequestBus
     private lateinit var observeDocumentsUseCase: ObserveDocumentsUseCase
     private lateinit var processDocumentsUseCase: ProcessDocumentsUseCase
     private lateinit var getDocumentUseCase: GetDocumentUseCase
@@ -80,6 +94,32 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
+    /** A scanner whose session ends when the test says so, and however the test says. */
+    private class FakeDocumentScanner : DocumentScanner {
+
+        override val capabilities =
+            ScannerCapabilities(
+                supportedOutputs = setOf(ScanOutputFormat.PDF),
+                supportsGalleryImport = true,
+                maxPages = null,
+                requiresCameraPermission = false,
+            )
+
+        private val session = CompletableDeferred<ScanOutcome>()
+
+        var started = 0
+            private set
+
+        override suspend fun scan(request: ScanRequest): ScanOutcome {
+            started++
+            return session.await()
+        }
+
+        fun finishWith(outcome: ScanOutcome) {
+            session.complete(outcome)
+        }
+    }
+
     private fun fakeDocument(uuid: String = "doc-1") =
         ScannedDocument(
             id = 1,
@@ -94,14 +134,23 @@ class HomeViewModelTest {
             thumbnail = null,
         )
 
+    private fun completedScan(pages: Int = 2) =
+        ScanOutcome.Completed(
+            ScanDraft(
+                artifacts = listOf(ScanArtifact.Pdf(ContentRef("content://scan"), pages)),
+                capturedAtEpochMillis = 1_234L,
+            )
+        )
+
     private fun createViewModel(
-        documents: kotlinx.coroutines.flow.Flow<List<ScannedDocument>> = flowOf(emptyList())
+        documents: Flow<List<ScannedDocument>> = flowOf(emptyList())
     ): HomeViewModel {
-        scannerManager = ScannerManager()
+        documentScanner = FakeDocumentScanner()
+        scanRequests = ScanRequestBus()
         observeDocumentsUseCase = mockk()
         processDocumentsUseCase = mockk()
         getDocumentUseCase = mockk()
-        saveScannedDocumentUseCase = mockk(relaxed = true)
+        saveScannedDocumentUseCase = mockk()
         deleteDocumentUseCase = mockk(relaxed = true)
         shareDocumentUseCase = mockk(relaxed = true)
         exportDocumentUseCase = mockk()
@@ -111,11 +160,15 @@ class HomeViewModelTest {
 
         coEvery { observeDocumentsUseCase() } returns documents
         coEvery { processDocumentsUseCase(any(), any(), any(), any()) } answers { firstArg() }
+        coEvery { saveScannedDocumentUseCase(any()) } returns
+            Result.success(mockk<Uri>(relaxed = true))
         every { stringProvider.getError(any<Throwable>()) } returns "Something went wrong"
+        every { stringProvider.get(any(), *anyVararg()) } returns "Something went wrong"
 
         return HomeViewModel(
             savedStateHandle = SavedStateHandle(),
-            scannerManager = scannerManager,
+            documentScanner = documentScanner,
+            scanRequests = scanRequests,
             observeDocumentsUseCase = observeDocumentsUseCase,
             processDocumentsUseCase = processDocumentsUseCase,
             getDocumentUseCase = getDocumentUseCase,
@@ -129,6 +182,8 @@ class HomeViewModelTest {
             defaultDispatcher = testDispatcher,
         )
     }
+
+    // ---------------- documents ----------------
 
     @Test
     fun `loads documents into Idle state`() =
@@ -179,49 +234,42 @@ class HomeViewModelTest {
             assertEquals(SortOption.NameAsc, viewModel.state.value.filterOptions.sortBy)
         }
 
+    // ---------------- scanning ----------------
+
     @Test
-    fun `LaunchScanner flips isScanning on immediately and requests a scan`() =
+    fun `LaunchScanner flips isScanning on immediately and starts a scan`() =
         runTest(testDispatcher) {
             val viewModel = createViewModel()
             advanceUntilIdle()
 
-            val requests = mutableListOf<Unit>()
-            backgroundScope.launch { scannerManager.scanRequest.toList(requests) }
-
             viewModel.onSendIntent(HomeIntent.LaunchScanner)
 
-            // Set synchronously by the intent handler, before the scan request is even sent.
+            // Set synchronously by the intent handler, before the scanner is even reached.
             assertTrue(viewModel.state.value.isScanning)
 
             advanceUntilIdle()
 
-            assertEquals(1, requests.size)
+            assertEquals(1, documentScanner.started)
             verify(exactly = 1) {
                 analyticsHelper.logEvent(match { it.type == AnalyticsEvent.Types.SCAN_STARTED })
             }
         }
 
     @Test
-    fun `LaunchScanner while already scanning is a no-op`() =
+    fun `LaunchScanner while a scan is in flight is a no-op`() =
         runTest(testDispatcher) {
             val viewModel = createViewModel()
             advanceUntilIdle()
 
-            val requests = mutableListOf<Unit>()
-            backgroundScope.launch { scannerManager.scanRequest.toList(requests) }
-
             viewModel.onSendIntent(HomeIntent.LaunchScanner)
             viewModel.onSendIntent(HomeIntent.LaunchScanner)
             advanceUntilIdle()
 
-            assertEquals(1, requests.size)
-            verify(exactly = 1) {
-                analyticsHelper.logEvent(match { it.type == AnalyticsEvent.Types.SCAN_STARTED })
-            }
+            assertEquals(1, documentScanner.started)
         }
 
     @Test
-    fun `successful scan result clears isScanning and saves the document`() =
+    fun `a completed scan clears isScanning and saves the document`() =
         runTest(testDispatcher) {
             val viewModel = createViewModel()
             advanceUntilIdle()
@@ -232,14 +280,36 @@ class HomeViewModelTest {
             viewModel.onSendIntent(HomeIntent.LaunchScanner)
             advanceUntilIdle()
 
-            val result = RawScanResult(uri = "content://scan", pageCount = 2)
-            scannerManager.onScanResult(Result.success(result))
+            documentScanner.finishWith(completedScan(pages = 2))
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.isScanning)
-            coVerify { saveScannedDocumentUseCase(result) }
+            coVerify { saveScannedDocumentUseCase(RawScanResult("content://scan", 2, 1_234L)) }
             assertTrue(
                 events.any { it is UiEvent.ShowMessage && it.type == NotificationType.Success }
+            )
+        }
+
+    /** The use case reports failure in its Result rather than by throwing, so it has to be read. */
+    @Test
+    fun `a save failure is reported instead of congratulating the user`() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+            coEvery { saveScannedDocumentUseCase(any()) } returns
+                Result.failure(IllegalStateException("disk full"))
+
+            val events = mutableListOf<UiEvent>()
+            backgroundScope.launch { viewModel.defaultEvents.toList(events) }
+
+            viewModel.onSendIntent(HomeIntent.LaunchScanner)
+            advanceUntilIdle()
+            documentScanner.finishWith(completedScan())
+            advanceUntilIdle()
+
+            assertTrue(events.isNotEmpty())
+            assertTrue(
+                events.all { it is UiEvent.ShowMessage && it.type == NotificationType.Error }
             )
         }
 
@@ -255,7 +325,7 @@ class HomeViewModelTest {
             viewModel.onSendIntent(HomeIntent.LaunchScanner)
             advanceUntilIdle()
 
-            scannerManager.onScanResult(Result.failure(ScannerException.ScanCancelled()))
+            documentScanner.finishWith(ScanOutcome.Cancelled)
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.isScanning)
@@ -278,7 +348,7 @@ class HomeViewModelTest {
             viewModel.onSendIntent(HomeIntent.LaunchScanner)
             advanceUntilIdle()
 
-            scannerManager.onScanResult(Result.failure(ScannerException.ScanFailed("boom")))
+            documentScanner.finishWith(ScanOutcome.Failed(ScanError.EngineUnavailable))
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.isScanning)
@@ -292,5 +362,19 @@ class HomeViewModelTest {
             verify(exactly = 0) {
                 analyticsHelper.logEvent(match { it.type == AnalyticsEvent.Types.SCAN_CANCELLED })
             }
+        }
+
+    /** The home screen widget reaches the app as an Intent, not as a UI intent. */
+    @Test
+    fun `an external scan request starts a scan`() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            scanRequests.request()
+            advanceUntilIdle()
+
+            assertEquals(1, documentScanner.started)
+            assertTrue(viewModel.state.value.isScanning)
         }
 }
