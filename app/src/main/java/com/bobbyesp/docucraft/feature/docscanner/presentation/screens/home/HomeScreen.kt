@@ -18,7 +18,6 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentDialogWrapper
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
-import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
@@ -27,7 +26,7 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onOpenDocument: (BasicDocument) -> Unit,
+    onOpenDocument: (String) -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel(),
@@ -58,7 +57,7 @@ fun HomeScreen(
 private fun HandleHomeUiEffects(
     uiEffectFlow: Flow<HomeEffect>,
     uiEventFlow: Flow<UiEvent>,
-    onOpenDocument: (BasicDocument) -> Unit,
+    onOpenDocument: (String) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     val currentOnOpenDocument by rememberUpdatedState(onOpenDocument)
@@ -69,7 +68,7 @@ private fun HandleHomeUiEffects(
         uiEffectFlow.collectLatest { effect ->
             when (effect) {
                 is HomeEffect.OpenDocument -> {
-                    currentOnOpenDocument(effect.document)
+                    currentOnOpenDocument(effect.documentUuid)
                     analyticsHelper.logScreenView("PdfViewer")
                 }
 

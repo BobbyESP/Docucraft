@@ -12,15 +12,15 @@ import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
-import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
+import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
+import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
+import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
+import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.ExportOutcome
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
@@ -29,7 +29,10 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiSta
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentSheetUiState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetPage
-import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import com.bobbyesp.scanner.DocumentScanner
+import com.bobbyesp.scanner.ScanDraft
+import com.bobbyesp.scanner.ScanError
+import com.bobbyesp.scanner.ScanOutcome
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,14 +48,15 @@ import kotlinx.coroutines.withContext
 
 class HomeViewModel(
     private val savedStateHandle: SavedStateHandle,
-    private val scannerManager: ScannerManager,
+    private val documentScanner: DocumentScanner,
+    private val scanRequests: ScanRequestBus,
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
     private val processDocumentsUseCase: ProcessDocumentsUseCase,
     private val getDocumentUseCase: GetDocumentUseCase,
-    private val saveScannedDocumentUseCase: SaveScannedDocumentUseCase,
+    private val saveScanDraftUseCase: SaveScanDraftUseCase,
     private val deleteDocumentUseCase: DeleteDocumentUseCase,
-    private val shareDocumentUseCase: ShareDocumentUseCase,
-    private val exportDocumentUseCase: ExportDocumentUseCase,
+    private val documentSharer: DocumentSharer,
+    private val documentExporter: DocumentExporter,
     private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
@@ -61,7 +65,8 @@ class HomeViewModel(
 
     init {
         observeDocuments()
-        observeScanner()
+        observeExternalScanRequests()
+        resumePendingScan()
     }
 
     // ---------------- INTENTS ----------------
@@ -70,18 +75,7 @@ class HomeViewModel(
         when (intent) {
             HomeIntent.Load -> observeDocuments()
 
-            HomeIntent.LaunchScanner -> {
-                if (currentState.isScanning) return
-
-                setState { copy(isScanning = true) }
-
-                launch(onError = { setState { copy(isScanning = false) } }) {
-                    analyticsHelper.logEvent(AnalyticsEvent(AnalyticsEvent.Types.SCAN_STARTED))
-                    scannerManager.requestScan()
-                }
-            }
-
-            is HomeIntent.ScanResult -> processScanResult(intent.result)
+            HomeIntent.LaunchScanner -> startScan()
 
             is HomeIntent.ViewDocument -> openDocument(intent.id)
 
@@ -185,78 +179,141 @@ class HomeViewModel(
             }
     }
 
-    private fun observeScanner() = launch {
-        scannerManager.scanResult.collect { result ->
-            result
-                .onSuccess { processScanResult(it) }
-                .onFailure {
-                    analyticsHelper.logEvent(
-                        AnalyticsEvent(
-                            type = AnalyticsEvent.Types.SCAN_CANCELLED,
-                            extras =
-                                listOf(
-                                    AnalyticsEvent.Param(
-                                        AnalyticsEvent.ParamKeys.STATUS,
-                                        it.message ?: "unknown",
-                                    )
-                                ),
-                        )
-                    )
-                    setState { copy(isScanning = false) }
-                }
+    /** Entry points outside the UI, such as the home screen widget. */
+    private fun observeExternalScanRequests() = launch {
+        scanRequests.requests.collect { startScan() }
+    }
+
+    // ---------------- SCANNING ----------------
+
+    /**
+     * Runs a scan start to finish. The whole session lives in [viewModelScope], so it survives the
+     * scanner covering the app and the Activity being recreated underneath it.
+     */
+    private fun startScan() {
+        if (currentState.isScanning) return
+
+        beginScan()
+
+        launch(onError = { endScan() }) {
+            analyticsHelper.logEvent(AnalyticsEvent(AnalyticsEvent.Types.SCAN_STARTED))
+
+            val outcome = documentScanner.scan()
+            endScan()
+            handle(outcome)
         }
     }
+
+    /**
+     * Rejoins a scan that was running when this process was killed for memory.
+     *
+     * The scanner runs elsewhere and keeps going, so the user may well have finished a document
+     * that the app then threw away on the way back. The flag rides in [savedStateHandle], which
+     * survives process death; [DocumentScanner.resumePendingScan] returns null when it turns out
+     * nothing was owed after all.
+     */
+    private fun resumePendingScan() {
+        if (savedStateHandle.get<Boolean>(KEY_SCAN_IN_FLIGHT) != true) return
+
+        setState { copy(isScanning = true) }
+
+        launch(onError = { endScan() }) {
+            val outcome = documentScanner.resumePendingScan()
+            endScan()
+            outcome?.let { handle(it) }
+        }
+    }
+
+    private suspend fun handle(outcome: ScanOutcome) {
+        when (outcome) {
+            is ScanOutcome.Completed -> onScanCompleted(outcome.draft)
+            ScanOutcome.Cancelled -> onScanCancelled()
+            is ScanOutcome.Failed -> onScanFailed(outcome.error)
+        }
+    }
+
+    private fun beginScan() {
+        savedStateHandle[KEY_SCAN_IN_FLIGHT] = true
+        setState { copy(isScanning = true) }
+    }
+
+    private fun endScan() {
+        savedStateHandle[KEY_SCAN_IN_FLIGHT] = false
+        setState { copy(isScanning = false) }
+    }
+
+    /**
+     * The use case reports failure through its [Result] rather than by throwing, so the outcome has
+     * to be read: ignoring it used to congratulate the user on a save that never happened.
+     */
+    private suspend fun onScanCompleted(draft: ScanDraft) {
+        if (draft.pdf == null) return onScanFailed(ScanError.NoOutputProduced)
+
+        saveScanDraftUseCase(draft)
+            .onSuccess {
+                analyticsHelper.logEvent(
+                    AnalyticsEvent(
+                        type = AnalyticsEvent.Types.SCAN_COMPLETED,
+                        extras =
+                            listOf(
+                                AnalyticsEvent.Param(
+                                    AnalyticsEvent.ParamKeys.PAGE_COUNT,
+                                    draft.pdf?.pageCount.toString(),
+                                )
+                            ),
+                    )
+                )
+
+                sendUiEvent(
+                    UiEvent.ShowMessage(
+                        stringProvider.get(R.string.doc_saved_successfully),
+                        NotificationType.Success,
+                    )
+                )
+            }
+            .onFailure { error ->
+                sendUiEvent(
+                    UiEvent.ShowMessage(stringProvider.getError(error), NotificationType.Error)
+                )
+            }
+    }
+
+    /** Walking away from the scanner is an ordinary outcome: record it, say nothing. */
+    private fun onScanCancelled() {
+        analyticsHelper.logEvent(AnalyticsEvent(type = AnalyticsEvent.Types.SCAN_CANCELLED))
+    }
+
+    /** A real failure, unlike a cancellation, is worth both an event and a word to the user. */
+    private fun onScanFailed(error: ScanError) {
+        analyticsHelper.logEvent(
+            AnalyticsEvent(
+                type = AnalyticsEvent.Types.SCAN_FAILED,
+                extras =
+                    listOf(AnalyticsEvent.Param(AnalyticsEvent.ParamKeys.STATUS, error.describe())),
+            )
+        )
+
+        val message =
+            when (error) {
+                is ScanError.Engine -> stringProvider.getError(error.cause)
+                else -> stringProvider.get(R.string.unknown_error)
+            }
+
+        sendUiEvent(UiEvent.ShowMessage(message, NotificationType.Error))
+    }
+
+    private fun ScanError.describe(): String =
+        when (this) {
+            ScanError.EngineUnavailable -> "engine_unavailable"
+            ScanError.PermissionDenied -> "permission_denied"
+            ScanError.NoOutputProduced -> "no_output_produced"
+            is ScanError.Engine -> cause.message ?: "engine_error"
+        }
 
     // ---------------- ACTIONS ----------------
 
-    private fun openDocument(uuid: String) = launch {
-        val doc = getDocumentUseCase(uuid)
-
-        sendEffect(
-            HomeEffect.OpenDocument(
-                BasicDocument(
-                    uuid = doc.uuid,
-                    filename = doc.filename,
-                    uri = doc.path.toString(),
-                    title = doc.title,
-                    description = doc.description,
-                )
-            )
-        )
-    }
-
-    private fun processScanResult(result: RawScanResult) =
-        launch(
-            onError = {
-                sendUiEvent(
-                    UiEvent.ShowMessage(stringProvider.getError(it), NotificationType.Error)
-                )
-            }
-        ) {
-            setState { copy(isScanning = false) }
-
-            saveScannedDocumentUseCase(result)
-
-            analyticsHelper.logEvent(
-                AnalyticsEvent(
-                    type = AnalyticsEvent.Types.SCAN_COMPLETED,
-                    extras =
-                        listOf(
-                            AnalyticsEvent.Param(
-                                AnalyticsEvent.ParamKeys.PAGE_COUNT,
-                                result.pageCount.toString(),
-                            )
-                        ),
-                )
-            )
-
-            sendUiEvent(
-                UiEvent.ShowMessage(
-                    stringProvider.get(R.string.doc_saved_successfully),
-                    NotificationType.Success,
-                )
-            )
-        }
+    /** The viewer reads the document itself; all it needs from here is which one. */
+    private fun openDocument(uuid: String) = sendEffect(HomeEffect.OpenDocument(uuid))
 
     // ---------------- SHEET ----------------
 
@@ -320,7 +377,7 @@ class HomeViewModel(
     private fun deleteCurrentDocument() = launch {
         val doc = currentState.sheetState?.activeDocument ?: return@launch
 
-        deleteDocumentUseCase(doc.path)
+        deleteDocumentUseCase(doc)
 
         analyticsHelper.logEvent(AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_DELETED))
 
@@ -338,7 +395,7 @@ class HomeViewModel(
         val doc = currentState.sheetState?.activeDocument ?: return
 
         runCatching {
-                shareDocumentUseCase(doc.path)
+                documentSharer.share(doc.location)
                 analyticsHelper.logEvent(
                     AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_SHARED)
                 )
@@ -356,23 +413,40 @@ class HomeViewModel(
     private fun exportCurrent() = launch {
         val doc = currentState.sheetState?.activeDocument ?: return@launch
 
-        exportDocumentUseCase(doc)
-            .onSuccess { uri ->
+        val outcome =
+            documentExporter.export(
+                document = doc.location,
+                suggestedName = doc.title ?: doc.filename,
+            )
+
+        when (outcome) {
+            is ExportOutcome.Saved -> {
                 analyticsHelper.logEvent(
                     AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_EXPORTED)
                 )
                 sendUiEvent(
                     UiEvent.ShowMessage(
-                        stringProvider.get(R.string.doc_saved_successfully_to, uri),
+                        stringProvider.get(
+                            R.string.doc_saved_successfully_to,
+                            outcome.location.value,
+                        ),
                         NotificationType.Success,
                     )
                 )
             }
-            .onFailure {
+
+            // Choosing not to save anywhere is an answer, not an error. It used to arrive here as
+            // a failure and get shown in red.
+            ExportOutcome.Cancelled -> Unit
+
+            is ExportOutcome.Failed ->
                 sendUiEvent(
-                    UiEvent.ShowMessage(stringProvider.getError(it), NotificationType.Error)
+                    UiEvent.ShowMessage(
+                        stringProvider.getError(outcome.cause),
+                        NotificationType.Error,
+                    )
                 )
-            }
+        }
     }
 
     private fun confirmEdit() = launch {
@@ -393,5 +467,9 @@ class HomeViewModel(
         )
 
         updateSheet { it.copy(pageStack = listOf(SheetPage.Actions)) }
+    }
+
+    private companion object {
+        const val KEY_SCAN_IN_FLIGHT = "scan_in_flight"
     }
 }

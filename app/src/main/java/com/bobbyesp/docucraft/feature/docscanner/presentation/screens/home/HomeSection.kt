@@ -25,7 +25,6 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.navigation.Route
-import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 
 /**
  * Home is the list pane of the app's list-detail layout: on expanded windows it stays visible next
@@ -34,7 +33,7 @@ import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun EntryProviderScope<NavKey>.homeSection(
     selectedDocumentId: String?,
-    onOpenDocument: (BasicDocument) -> Unit,
+    onOpenDocument: (String) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     entry<Route.Home>(

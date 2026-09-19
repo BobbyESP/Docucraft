@@ -355,7 +355,7 @@ private fun SortOptionsRow(
             },
             modifier = Modifier.weight(1f),
             key = { it.name },
-            labelContent = { Text(it.getLocalizedName()) },
+            labelContent = { Text(it.label()) },
         )
 
         VerticalDivider(
@@ -376,7 +376,7 @@ private fun SortOptionsRow(
             },
         ) {
             Icon(
-                imageVector = currentSortOption.getSortIcon(),
+                imageVector = currentSortOption.order.icon(),
                 contentDescription =
                     if (currentSortOption.order == SortOption.Order.ASC) {
                         stringResource(R.string.sort_ascending)

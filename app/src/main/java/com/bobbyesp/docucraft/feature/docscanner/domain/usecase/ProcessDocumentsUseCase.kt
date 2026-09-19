@@ -51,8 +51,8 @@ class ProcessDocumentsUseCase(
         return when (sort.criteria) {
             SortOption.Criteria.DATE ->
                 if (sort.order == SortOption.Order.DESC)
-                    documents.sortedByDescending { it.createdTimestamp }
-                else documents.sortedBy { it.createdTimestamp }
+                    documents.sortedByDescending { it.capturedAtEpochMillis }
+                else documents.sortedBy { it.capturedAtEpochMillis }
 
             SortOption.Criteria.NAME ->
                 if (sort.order == SortOption.Order.DESC)
@@ -61,8 +61,8 @@ class ProcessDocumentsUseCase(
 
             SortOption.Criteria.SIZE ->
                 if (sort.order == SortOption.Order.DESC)
-                    documents.sortedByDescending { it.fileSize }
-                else documents.sortedBy { it.fileSize }
+                    documents.sortedByDescending { it.sizeBytes }
+                else documents.sortedBy { it.sizeBytes }
         }
     }
 
@@ -70,9 +70,8 @@ class ProcessDocumentsUseCase(
         filter.minPageCount?.let { min -> filter { it.pageCount >= min } } ?: this
 
     private fun List<ScannedDocument>.filterBySize(filter: FilterOptions) =
-        filter.minFileSize?.let { min -> filter { it.fileSize >= min } } ?: this
+        filter.minFileSize?.let { min -> filter { it.sizeBytes >= min } } ?: this
 
     private fun List<ScannedDocument>.filterByDate(filter: FilterOptions) =
-        filter.dateRange?.let { (start, end) -> filter { it.createdTimestamp in start..end } }
-            ?: this
+        filter.dateRange?.let { range -> filter { it.capturedAtEpochMillis in range } } ?: this
 }

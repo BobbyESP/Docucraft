@@ -14,6 +14,7 @@ data class AnalyticsEvent(val type: String, val extras: List<Param> = emptyList(
         const val SCAN_STARTED = "scan_started"
         const val SCAN_COMPLETED = "scan_completed"
         const val SCAN_CANCELLED = "scan_cancelled"
+        const val SCAN_FAILED = "scan_failed"
         const val DOCUMENT_DELETED = "document_deleted"
         const val DOCUMENT_SHARED = "document_shared"
         const val DOCUMENT_EXPORTED = "document_exported"

@@ -3,12 +3,13 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.repository
 
-import android.net.Uri
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
-import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toModel
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument.Companion.toModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
+import com.bobbyesp.scanner.ContentRef
 import java.text.Normalizer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +19,7 @@ import kotlinx.coroutines.flow.map
 class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocumentDao) :
     LocalDocumentsRepository {
 
-    override suspend fun observeDocuments(): Flow<List<ScannedDocument>> =
+    override fun observeDocuments(): Flow<List<ScannedDocument>> =
         scannedDocumentDao
             .observeDocuments()
             .map { entities -> entities.map { it.toModel() } }
@@ -35,6 +36,12 @@ class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocume
         return result.map { it.toModel() }
     }
 
+    override fun observeDocument(uuid: String): Flow<ScannedDocument?> =
+        scannedDocumentDao
+            .observeByUuid(uuid)
+            .map { entity -> entity?.toModel() }
+            .flowOn(Dispatchers.Default)
+
     override suspend fun getDocument(uuid: String): ScannedDocument {
         require(uuid.isNotEmpty()) { "Document UUID must not be empty" }
         val entity =
@@ -43,15 +50,8 @@ class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocume
         return entity.toModel()
     }
 
-    override suspend fun getDocument(path: Uri): ScannedDocument {
-        val entity =
-            scannedDocumentDao.getByPath(path.toString())
-                ?: throw NoSuchElementException("No document found with path: $path")
-        return entity.toModel()
-    }
-
-    override suspend fun saveDocument(scannedDocument: ScannedDocumentEntity) {
-        scannedDocumentDao.insert(scannedDocument)
+    override suspend fun saveDocument(document: NewScannedDocument) {
+        scannedDocumentDao.insert(document.toEntity())
     }
 
     override suspend fun modifyFields(uuid: String, title: String?, description: String?) {
@@ -66,12 +66,11 @@ class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocume
         scannedDocumentDao.update(updated)
     }
 
-    override suspend fun deleteDocument(path: Uri) {
-        // First remove from database to maintain referential integrity
-        val deletedCount = scannedDocumentDao.deleteByPath(path.toString())
+    override suspend fun deleteDocument(location: ContentRef) {
+        val deletedCount = scannedDocumentDao.deleteByPath(location.value)
 
         if (deletedCount <= 0) {
-            throw IllegalArgumentException("No document found with path: $path")
+            throw IllegalArgumentException("No document found at: ${location.value}")
         }
     }
 

@@ -3,63 +3,29 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowDownward
-import androidx.compose.material.icons.rounded.ArrowUpward
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
-import com.bobbyesp.docucraft.R
-
-@Immutable
+/**
+ * How the document list is ordered.
+ *
+ * Carries no labels and no icons: what an ordering is called, and which arrow stands for it, are
+ * presentation decisions. See `SortOptionUi` for those.
+ */
 data class SortOption(val criteria: Criteria, val order: Order) {
+
     enum class Criteria {
         DATE,
         NAME,
-        SIZE;
-
-        @Composable
-        fun getLocalizedName(): String {
-            return when (this) {
-                DATE -> stringResource(R.string.date)
-                NAME -> stringResource(R.string.name)
-                SIZE -> stringResource(R.string.size)
-            }
-        }
-
-        companion object {
-            @Composable fun toString(criteria: Criteria): String = criteria.getLocalizedName()
-        }
+        SIZE,
     }
 
     enum class Order {
         ASC,
         DESC;
 
-        fun reverse(): Order {
-            return when (this) {
+        fun reverse(): Order =
+            when (this) {
                 ASC -> DESC
                 DESC -> ASC
             }
-        }
-    }
-
-    @Composable
-    fun getSortIcon(): ImageVector {
-        return when (order) {
-            Order.ASC -> Icons.Rounded.ArrowUpward
-            Order.DESC -> Icons.Rounded.ArrowDownward
-        }
-    }
-
-    @Composable
-    fun getName(): String {
-        return when (criteria) {
-            Criteria.DATE -> stringResource(R.string.date)
-            Criteria.NAME -> stringResource(R.string.name)
-            Criteria.SIZE -> stringResource(R.string.size)
-        }
     }
 
     companion object {

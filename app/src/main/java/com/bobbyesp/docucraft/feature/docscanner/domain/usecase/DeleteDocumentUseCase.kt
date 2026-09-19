@@ -3,59 +3,25 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
-import android.net.Uri
-import android.util.Log
-import com.bobbyesp.docucraft.core.domain.repository.FileRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
-import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.delete
-import io.github.vinceglb.filekit.exists
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 
 /**
- * Use case for deleting a scanned PDF. Handles both database removal and physical file deletion.
+ * Removes a document from the catalogue and from storage.
+ *
+ * The catalogue goes first: a row pointing at a file that is gone is worse than a file nothing
+ * points at, and only the first is visible to the user.
  */
 class DeleteDocumentUseCase(
     private val repository: LocalDocumentsRepository,
-    private val fileRepository: FileRepository,
+    private val storage: DocumentStorage,
 ) {
-    suspend operator fun invoke(documentUri: Uri) =
-        withContext(Dispatchers.IO) {
-            repository.deleteDocument(documentUri)
-            deleteFile(documentUri)
-        }
+    suspend operator fun invoke(document: ScannedDocument) {
+        repository.deleteDocument(document.location)
 
-    private suspend fun deleteFile(documentUri: Uri) {
-        val filePath =
-            when (documentUri.scheme) {
-                "content" -> fileRepository.getFilePathFromUri(documentUri)
-                "file" -> documentUri.path
-                else -> {
-                    Log.w(TAG, "Unsupported URI scheme: ${documentUri.scheme}")
-                    return
-                }
-            }
-
-        if (filePath.isNullOrBlank()) {
-            Log.w(TAG, "Invalid file path from URI: $documentUri")
-            return
-        }
-
-        try {
-            val file = PlatformFile(filePath)
-            if (file.exists()) {
-                file.delete()
-                Log.d(TAG, "Successfully deleted file: $filePath")
-            } else {
-                Log.w(TAG, "File does not exist at path: $filePath")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error deleting file: ${e.message}", e)
-        }
-    }
-
-    companion object {
-        private const val TAG = "DeleteScannedPdfUseCase"
+        storage.delete(document.location)
+        // The preview was never cleaned up before, so previews of deleted documents piled up.
+        document.thumbnail?.let { storage.delete(it) }
     }
 }

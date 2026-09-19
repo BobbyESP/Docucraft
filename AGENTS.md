@@ -1,7 +1,10 @@
 # AGENTS.md
 
 ## Project Snapshot
-- Multi-module Android project: `:app` (product) + `:composepdf` (local PDF engine).
+- Deep-dive architecture docs and stabilization plans: `docs/` (start at `docs/README.md`).
+- Multi-module Android project: `:app` (product), `:composepdf` (local PDF engine),
+  `:scanner-api` (engine-agnostic scanning contract, plain Kotlin), `:scanner-mlkit` (ML Kit
+  implementation of it).
 - Stack in use: Kotlin, Jetpack Compose, Navigation 3 typed routes, Koin DI, Room, ML Kit Document Scanner.
 - Runtime DI entrypoint is `app/src/main/java/com/bobbyesp/docucraft/App.kt` (`startKoin`).
 
@@ -12,21 +15,27 @@
 - Rendering engine internals live in `composepdf/src/main/kotlin/com/composepdf`.
 
 ## Critical Flow (Scan -> Save -> Home)
-- `HomeViewModel` emits scan request through `ScannerManager.requestScan()`.
-- `MainActivity` listens to `scannerManager.scanRequest` and launches `GmsDocumentScanner`.
-- Activity result is mapped by `MlKitScannerRepository.processResult`.
-- Result is returned to ViewModel via `scannerManager.onScanResult(...)`.
-- `SaveScannedDocumentUseCase` persists PDF + thumbnail and inserts Room entity.
+- `HomeViewModel.startScan()` calls `DocumentScanner.scan()` and suspends in `viewModelScope`.
+- `MlKitDocumentScanner` (`:scanner-mlkit`) gets the IntentSender, launches it through
+  `ActivityResultHost` and maps the result to a `ScanOutcome`.
+- `MainActivity` only lends its activity result launcher to the host; it knows nothing about
+  scanning.
+- The widget enters through `ScanRequestBus`, which the ViewModel also collects.
+- `SaveScanDraftUseCase` stores the file via `DocumentStorage` and catalogues it.
+- The scanner outlives this process, so `HomeViewModel` records `scan_in_flight` in its
+  `SavedStateHandle` and rejoins through `DocumentScanner.resumePendingScan()` on restore.
 - Home list comes from `ObserveDocumentsUseCase`; query/filter/sort is finalized in `HomeViewModel.applyFiltersAndSort`.
 
 ## Architecture Rules
-- Keep Android framework boundaries explicit: Activity launches scanner intent; ViewModel stays scanner-API-agnostic via `ScannerManager`.
+- The scanning engine is swapped at one line: the `DocumentScanner` binding in
+  `feature/docscanner/di/DocumentScannerModule.kt`. ML Kit types exist only in `:scanner-mlkit`
+  and cannot be imported from `:app` (enforced by the module graph, not by convention).
 - Add business logic as use cases under `feature/docscanner/domain/usecase`, then inject in `feature/docscanner/di/ScannedDocumentModule.kt`.
 - Navigation is typed (`Route` in `core/presentation/common/Route.kt`), rendered by `Navigator.kt` with Navigation 3 `NavDisplay`.
 - App-wide settings and services should flow via composition locals in `core/presentation/common/CompositionLocals.kt`.
 
 ## Integrations and Sensitive Points
-- ML Kit options are configured in `feature/docscanner/di/GmsScannerModule.kt` (`RESULT_FORMAT_PDF`, `SCANNER_MODE_FULL`).
+- ML Kit options are derived from a `ScanRequest` in `scanner-mlkit`'s `MlKitDocumentScanner`.
 - File sharing relies on `${applicationId}.fileprovider` (`AndroidManifest.xml` + `App.getAuthority`).
 - Firebase Analytics/Crashlytics are enabled (`core/di/AnalyticsModule.kt`, `app/build.gradle.kts`, `google-services.json`).
 - Home widget scan action enters app through `ACTION_SCAN_DOCUMENT` in `MainActivity`.
@@ -34,7 +43,7 @@
 
 ## Build and Validation
 - Debug APK: `./gradlew :app:assembleDebug` (Windows: `.\gradlew.bat :app:assembleDebug`).
-- Unit tests: `./gradlew :app:testDebugUnitTest :composepdf:testDebugUnitTest`.
+- Unit tests: `./gradlew testDebugUnitTest :scanner-api:test` (all modules).
 - Instrumented tests: `./gradlew :app:connectedDebugAndroidTest :composepdf:connectedDebugAndroidTest`.
-- Formatting: `./gradlew ktfmtFormat` (convention plugin applies `ktfmt` to modules).
+- Formatting: `./gradlew spotlessApply` (Spotless applies `ktfmt` to modules; `spotlessCheck` verifies).
 - Custom APK copies are generated under `app/build/outputs/apk_custom/<variant>/` by `buildSrc/CopyApkPlugin.kt`.

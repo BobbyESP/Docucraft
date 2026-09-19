@@ -48,7 +48,7 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
     // PdfViewer entry (reachable since Home's app bar stays visible next to the detail pane) should
     // clear the highlight, not keep pointing at the PdfViewer entry buried underneath it.
     val openDocumentId by remember {
-        derivedStateOf { (backStack.lastOrNull() as? Route.PdfViewer)?.document?.uuid }
+        derivedStateOf { (backStack.lastOrNull() as? Route.PdfViewer)?.documentUuid }
     }
 
     NavDisplay(
@@ -65,7 +65,7 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
             entryProvider {
                 homeSection(
                     selectedDocumentId = openDocumentId,
-                    onOpenDocument = { document -> backStack.add(Route.PdfViewer(document)) },
+                    onOpenDocument = { uuid -> backStack.add(Route.PdfViewer(uuid)) },
                     onOpenSettings = { backStack.add(Route.Settings) },
                 )
 

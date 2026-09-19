@@ -109,8 +109,10 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.datastore.preferences)
 
-    // ML Kit
-    implementation(libs.gms.mlkit.docscanner)
+    // Scanning. The engine lives behind :scanner-api and is only named by the Koin module, so
+    // no ML Kit type is on this module's compile classpath at all.
+    implementation(project(":scanner-api"))
+    implementation(project(":scanner-mlkit"))
 
     // KotlinX
     implementation(libs.kotlinx.collections.immutable)

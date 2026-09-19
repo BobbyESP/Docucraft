@@ -4,7 +4,6 @@
 package com.bobbyesp.docucraft.core.presentation.navigation
 
 import androidx.navigation3.runtime.NavKey
-import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import kotlinx.serialization.Serializable
 
 /**
@@ -16,7 +15,12 @@ sealed interface Route : NavKey {
 
     @Serializable data object Home : Route
 
-    @Serializable data class PdfViewer(val document: BasicDocument) : Route
+    /**
+     * Carries only the document's identity. The viewer reads the document itself from the
+     * catalogue, so an entry sitting in the back stack cannot go stale while the user edits the
+     * document it points at.
+     */
+    @Serializable data class PdfViewer(val documentUuid: String) : Route
 
     @Serializable
     data object Settings : Route {

@@ -178,7 +178,7 @@ private fun rememberDocumentActions(
 @Composable
 private fun DocumentHeader(scannedDocument: ScannedDocument, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        DocumentThumbnail(thumbnail = scannedDocument.thumbnail)
+        DocumentThumbnail(thumbnail = scannedDocument.thumbnail?.value)
         DocumentInfo(scannedDocument = scannedDocument)
     }
 }
@@ -218,9 +218,9 @@ private fun DocumentThumbnail(thumbnail: Any?, modifier: Modifier = Modifier) {
 @Composable
 private fun DocumentInfo(scannedDocument: ScannedDocument, modifier: Modifier = Modifier) {
     val formattedDate =
-        rememberSaveable(scannedDocument.createdTimestamp) {
+        rememberSaveable(scannedDocument.capturedAtEpochMillis) {
             DateTime.formatDate(
-                timestampMillis = scannedDocument.createdTimestamp,
+                timestampMillis = scannedDocument.capturedAtEpochMillis,
                 format = DateTime.DateFormat.LOCALIZED_MEDIUM,
             )
         }
@@ -244,7 +244,7 @@ private fun DocumentInfo(scannedDocument: ScannedDocument, modifier: Modifier = 
         )
 
         DocumentTagsRow(
-            fileSize = scannedDocument.fileSize,
+            sizeBytes = scannedDocument.sizeBytes,
             pageCount = scannedDocument.pageCount,
             formattedDate = formattedDate,
         )
@@ -253,7 +253,7 @@ private fun DocumentInfo(scannedDocument: ScannedDocument, modifier: Modifier = 
 
 @Composable
 private fun DocumentTagsRow(
-    fileSize: Long,
+    sizeBytes: Long,
     pageCount: Int,
     formattedDate: String,
     modifier: Modifier = Modifier,
@@ -270,7 +270,7 @@ private fun DocumentTagsRow(
     ) {
         RoundedTag(
             icon = Icons.Rounded.Storage,
-            text = formatFileSize(context, fileSize),
+            text = formatFileSize(context, sizeBytes),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest),
         )
         RoundedTag(
