@@ -108,6 +108,9 @@ class MainActivity : ComponentActivity(), KoinComponent {
         val sonnerManager = inAppNotificationsService as SonnerNotificationServiceImpl
 
         resultHost.attach(this, intentSenderLauncher)
+        // Rides in the Activity's own Bundle, which is the same thing that preserves the result
+        // registry's pending request, so the two survive — or do not — together.
+        resultHost.restorePendingLaunch(savedInstanceState?.getBoolean(KEY_PENDING_LAUNCH) == true)
 
         handleIntent(intent)
 
@@ -133,6 +136,11 @@ class MainActivity : ComponentActivity(), KoinComponent {
                 }
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(KEY_PENDING_LAUNCH, resultHost.hasPendingLaunch)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -167,6 +175,10 @@ class MainActivity : ComponentActivity(), KoinComponent {
             lifecycleScope.launch { scanRequests.request() }
             intent.action = null
         }
+    }
+
+    private companion object {
+        const val KEY_PENDING_LAUNCH = "pending_activity_result_launch"
     }
 
     private fun ThemeConfig.shouldUseDarkTheme(context: android.content.Context): Boolean =

@@ -27,4 +27,13 @@ interface ActivityResultHost {
      * dismiss whatever is already on screen.
      */
     suspend fun launchIntentSender(request: IntentSenderRequest): ActivityResult
+
+    /**
+     * Claims the result of a launch that outlived whoever started it.
+     *
+     * Suspends if a launch is still unanswered, returns immediately if its answer already arrived,
+     * and returns `null` when there is nothing outstanding — so a caller acting on a stale belief
+     * gets told, rather than waiting forever.
+     */
+    suspend fun awaitPendingResult(): ActivityResult?
 }

@@ -109,9 +109,20 @@ class HomeViewModelTest {
         var started = 0
             private set
 
+        var resumed = 0
+            private set
+
+        /** What a session that outlived the process turns out to have produced. */
+        var pending: ScanOutcome? = null
+
         override suspend fun scan(request: ScanRequest): ScanOutcome {
             started++
             return session.await()
+        }
+
+        override suspend fun resumePendingScan(): ScanOutcome? {
+            resumed++
+            return pending
         }
 
         fun finishWith(outcome: ScanOutcome) {
@@ -144,8 +155,10 @@ class HomeViewModelTest {
     private fun createViewModel(
         documents: Flow<List<ScannedDocument>> = flowOf(emptyList()),
         saveResult: Result<ContentRef> = Result.success(ContentRef("content://stored")),
+        savedState: SavedStateHandle = SavedStateHandle(),
+        pendingScan: ScanOutcome? = null,
     ): HomeViewModel {
-        documentScanner = FakeDocumentScanner()
+        documentScanner = FakeDocumentScanner().apply { pending = pendingScan }
         scanRequests = ScanRequestBus()
         observeDocumentsUseCase = mockk()
         processDocumentsUseCase = mockk()
@@ -165,7 +178,7 @@ class HomeViewModelTest {
         every { stringProvider.get(any(), *anyVararg()) } returns "Something went wrong"
 
         return HomeViewModel(
-            savedStateHandle = SavedStateHandle(),
+            savedStateHandle = savedState,
             documentScanner = documentScanner,
             scanRequests = scanRequests,
             observeDocumentsUseCase = observeDocumentsUseCase,
@@ -374,5 +387,69 @@ class HomeViewModelTest {
 
             assertEquals(1, documentScanner.started)
             assertTrue(viewModel.state.value.isScanning)
+        }
+
+    // ---------------- surviving the process ----------------
+
+    /** The flag is what a rebuilt ViewModel has to go on, so it has to be written. */
+    @Test
+    fun `a scan in flight is remembered where it survives process death`() =
+        runTest(testDispatcher) {
+            val savedState = SavedStateHandle()
+            val viewModel = createViewModel(savedState = savedState)
+            advanceUntilIdle()
+
+            viewModel.onSendIntent(HomeIntent.LaunchScanner)
+            advanceUntilIdle()
+            assertEquals(true, savedState.get<Boolean>("scan_in_flight"))
+
+            documentScanner.finishWith(ScanOutcome.Cancelled)
+            advanceUntilIdle()
+            assertEquals(false, savedState.get<Boolean>("scan_in_flight"))
+        }
+
+    @Test
+    fun `a scan that outlived the process is rejoined and saved`() =
+        runTest(testDispatcher) {
+            val viewModel =
+                createViewModel(
+                    savedState = SavedStateHandle(mapOf("scan_in_flight" to true)),
+                    pendingScan = ScanOutcome.Completed(scannedDraft),
+                )
+
+            // The spinner comes back with the session, before its outcome is known.
+            assertTrue(viewModel.state.value.isScanning)
+
+            advanceUntilIdle()
+
+            assertEquals(1, documentScanner.resumed)
+            assertEquals(0, documentScanner.started)
+            coVerify { saveScanDraftUseCase(scannedDraft, any()) }
+            assertFalse(viewModel.state.value.isScanning)
+        }
+
+    /** The flag can be stale: the process may have died before anything was ever launched. */
+    @Test
+    fun `nothing left to rejoin just stops the spinner`() =
+        runTest(testDispatcher) {
+            val viewModel =
+                createViewModel(
+                    savedState = SavedStateHandle(mapOf("scan_in_flight" to true)),
+                    pendingScan = null,
+                )
+            advanceUntilIdle()
+
+            assertEquals(1, documentScanner.resumed)
+            assertFalse(viewModel.state.value.isScanning)
+            coVerify(exactly = 0) { saveScanDraftUseCase(any(), any()) }
+        }
+
+    @Test
+    fun `a ViewModel with no scan in flight does not go looking for one`() =
+        runTest(testDispatcher) {
+            createViewModel()
+            advanceUntilIdle()
+
+            assertEquals(0, documentScanner.resumed)
         }
 }

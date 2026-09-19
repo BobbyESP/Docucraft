@@ -24,7 +24,7 @@
 | 5+6 | Cablear el shell y mover el ViewModel al puerto | **Medio-alto** | ✅ Hecho y **verificado en dispositivo** |
 | 7 | Limpiar la persistencia | Medio | ✅ Hecho y verificado en dispositivo |
 | 8 | Módulos `:scanner-api` / `:scanner-mlkit` | Bajo | ✅ Hecho |
-| 9 | *(Opcional)* Resiliencia a muerte de proceso | Bajo | ⏳ Pendiente |
+| 9 | Resiliencia a muerte de proceso | Bajo | ⚠️ Hecho, pendiente de verificar en dispositivo |
 
 ---
 
@@ -218,17 +218,51 @@ El plugin de Kotlin ya llega por `buildSrc`, así que `alias(libs.plugins.kotlin
 `id(libs.plugins.kotlin.jvm.get().pluginId)`, que es el idioma que el proyecto ya usa para los
 plugins de AGP.
 
-## Paso 9 *(opcional)* · Resiliencia a muerte de proceso ⏳
+## Paso 9 · Resiliencia a muerte de proceso ⚠️
 
-Hoy, si el sistema mata el proceso durante el escaneo, el `Channel` del `ScannerManager` se pierde.
-Con el puerto suspendido pasa lo mismo (la corrutina vive en `viewModelScope`).
+El escáner corre en el proceso de Play Services y **sigue vivo** aunque el sistema mate el nuestro
+por memoria. Hasta ahora, el usuario terminaba el escaneo y la app tiraba el documento a la basura
+al volver.
 
-> **No es una regresión: es un hueco preexistente.** Se documenta aquí para no confundirlo con un
-> efecto de la migración.
+### Qué sobrevive y qué no
 
-- [ ] Marcar «escaneo en vuelo» en `SavedStateHandle`.
-- [ ] Que el host re-entregue el `ActivityResult` que `registerForActivityResult` **sí** recupera
-      tras la recreación.
+`registerForActivityResult` ya hacía su parte: el *registry* guarda las peticiones pendientes en el
+`Bundle` de la Activity y **re-entrega** el resultado cuando la Activity se recrea. Lo que no puede
+hacer es encontrar la corrutina que esperaba, porque murió con el proceso. Faltaban dos piezas:
+
+- [x] **Que el resultado no se tire.** `ActivityResultHostImpl` guarda el resultado que llega sin
+      nadie esperándolo, en vez de descartarlo.
+- [x] **Que alguien vuelva a por él.** `DocumentScanner.resumePendingScan()` (con implementación por
+      defecto `null`, para motores que no pueden sobrevivir a su llamante) y el flag
+      `scan_in_flight` en el `SavedStateHandle` del `HomeViewModel`.
+
+### El detalle que evita que se cuelgue
+
+Si el flag estuviera obsoleto —el proceso murió *antes* de lanzar nada— esperar un resultado que no
+existe dejaría el spinner girando para siempre. Por eso `hasPendingLaunch` viaja en el **`Bundle` de
+la propia Activity**: es el mismo mecanismo que preserva la petición pendiente del registry, así que
+los dos sobreviven, o dejan de hacerlo, juntos. Si no hay nada pendiente, `awaitPendingResult()`
+devuelve `null` inmediatamente.
+
+También hubo que contemplar la carrera al revés: el registry re-entrega durante el `onCreate`, que
+puede **adelantarse** a que la Activity restaure su flag. Por eso `restorePendingLaunch` no pisa un
+resultado ya recibido. Hay un test por cada orden.
+
+### ⚠️ Pendiente de verificación en dispositivo
+
+Los tests cubren la lógica, pero no la muerte de proceso de verdad:
+
+```
+1. Iniciar un escaneo y dejar el escáner abierto
+2. adb shell am kill com.bobbyesp.docucraft.debug
+3. Terminar el escaneo
+4. La app se reconstruye → el documento debe aparecer guardado
+```
+
+- [ ] Lo anterior
+- [ ] Con «No conservar actividades» activado en Opciones de desarrollador
+- [ ] Matar el proceso **antes** de que aparezca el escáner (el flag obsoleto): el spinner debe
+      apagarse solo, no quedarse girando
 
 ---
 
@@ -276,6 +310,5 @@ en el orden acordado:
 
 | # | Qué | Por qué |
 |---|---|---|
-| 1 | **Paso 9** — resiliencia a muerte de proceso | Hueco preexistente, no una regresión (ver arriba) |
-| 2 | **V7 / V8** — `ShareDocumentUseCase`, `OpenDocumentInViewerUseCase`, `ExportDocumentUseCase` y `DeleteDocumentUseCase` siguen siendo Android puro dentro de `domain/usecase/`; los modelos aún llevan `Uri` y anotaciones de Compose | P3 del análisis. Mismo tratamiento: un puerto y una implementación en `data` |
-| 3 | **Miniaturas `.png` que en realidad son WEBP** | `DocumentStorageImpl` las guarda con extensión `.png` pero `DocumentOperationsService` las codifica en WEBP por defecto. Funciona porque los decodificadores miran el contenido, pero es confuso. **Acordado dejarlo para el final**, porque tocarlo afecta a las miniaturas ya generadas y hace falta decidir si se regeneran o se migran |
+| 1 | **V7 / V8** — `ShareDocumentUseCase`, `OpenDocumentInViewerUseCase`, `ExportDocumentUseCase` y `DeleteDocumentUseCase` siguen siendo Android puro dentro de `domain/usecase/`; los modelos aún llevan `Uri` y anotaciones de Compose | P3 del análisis. Mismo tratamiento: un puerto y una implementación en `data` |
+| 2 | **Miniaturas `.png` que en realidad son WEBP** | `DocumentStorageImpl` las guarda con extensión `.png` pero `DocumentOperationsService` las codifica en WEBP por defecto. Funciona porque los decodificadores miran el contenido, pero es confuso. **Acordado dejarlo para el final**, porque tocarlo afecta a las miniaturas ya generadas y hace falta decidir si se regeneran o se migran |

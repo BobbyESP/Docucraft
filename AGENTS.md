@@ -22,6 +22,8 @@
   scanning.
 - The widget enters through `ScanRequestBus`, which the ViewModel also collects.
 - `SaveScanDraftUseCase` stores the file via `DocumentStorage` and catalogues it.
+- The scanner outlives this process, so `HomeViewModel` records `scan_in_flight` in its
+  `SavedStateHandle` and rejoins through `DocumentScanner.resumePendingScan()` on restore.
 - Home list comes from `ObserveDocumentsUseCase`; query/filter/sort is finalized in `HomeViewModel.applyFiltersAndSort`.
 
 ## Architecture Rules

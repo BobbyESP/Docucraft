@@ -4,6 +4,7 @@
 package com.bobbyesp.scanner.mlkit
 
 import android.app.Activity
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.IntentSenderRequest
 import com.bobbyesp.scanner.DocumentScanner
 import com.bobbyesp.scanner.ScanError
@@ -54,9 +55,20 @@ class MlKitDocumentScanner(
                 return ScanOutcome.Failed(e.toScanError())
             }
 
+        return activityResult.toOutcome()
+    }
+
+    /**
+     * The Play Services scanner keeps running after this process is killed for memory, and the
+     * activity result registry re-delivers once the app is rebuilt. This claims that result so the
+     * scan the user actually finished is not thrown away.
+     */
+    override suspend fun resumePendingScan(): ScanOutcome? = host.awaitPendingResult()?.toOutcome()
+
+    private fun ActivityResult.toOutcome(): ScanOutcome {
         val scan =
             try {
-                GmsDocumentScanningResult.fromActivityResultIntent(activityResult.data)
+                GmsDocumentScanningResult.fromActivityResultIntent(data)
             } catch (e: Exception) {
                 return ScanOutcome.Failed(ScanError.Engine(e))
             }
@@ -64,7 +76,7 @@ class MlKitDocumentScanner(
         // No payload at all means the scanner came back without a scan, which is what backing out
         // of it looks like.
         return ScanResultMapper.toOutcome(
-            completed = activityResult.resultCode == Activity.RESULT_OK && scan != null,
+            completed = resultCode == Activity.RESULT_OK && scan != null,
             pdfUri = scan?.pdf?.uri?.toString(),
             pageCount = scan?.pdf?.pageCount,
             pageUris = scan?.pages?.map { it.imageUri.toString() },

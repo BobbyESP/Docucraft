@@ -23,6 +23,8 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/buildSrc" />
             <option value="$PROJECT_DIR$/composepdf" />
+            <option value="$PROJECT_DIR$/scanner-api" />
+            <option value="$PROJECT_DIR$/scanner-mlkit" />
           </set>
         </option>
       </GradleProjectSettings>

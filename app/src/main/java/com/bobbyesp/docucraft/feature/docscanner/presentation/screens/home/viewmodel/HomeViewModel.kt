@@ -66,6 +66,7 @@ class HomeViewModel(
     init {
         observeDocuments()
         observeExternalScanRequests()
+        resumePendingScan()
     }
 
     // ---------------- INTENTS ----------------
@@ -192,20 +193,53 @@ class HomeViewModel(
     private fun startScan() {
         if (currentState.isScanning) return
 
-        setState { copy(isScanning = true) }
+        beginScan()
 
-        launch(onError = { setState { copy(isScanning = false) } }) {
+        launch(onError = { endScan() }) {
             analyticsHelper.logEvent(AnalyticsEvent(AnalyticsEvent.Types.SCAN_STARTED))
 
             val outcome = documentScanner.scan()
-            setState { copy(isScanning = false) }
-
-            when (outcome) {
-                is ScanOutcome.Completed -> onScanCompleted(outcome.draft)
-                ScanOutcome.Cancelled -> onScanCancelled()
-                is ScanOutcome.Failed -> onScanFailed(outcome.error)
-            }
+            endScan()
+            handle(outcome)
         }
+    }
+
+    /**
+     * Rejoins a scan that was running when this process was killed for memory.
+     *
+     * The scanner runs elsewhere and keeps going, so the user may well have finished a document
+     * that the app then threw away on the way back. The flag rides in [savedStateHandle], which
+     * survives process death; [DocumentScanner.resumePendingScan] returns null when it turns out
+     * nothing was owed after all.
+     */
+    private fun resumePendingScan() {
+        if (savedStateHandle.get<Boolean>(KEY_SCAN_IN_FLIGHT) != true) return
+
+        setState { copy(isScanning = true) }
+
+        launch(onError = { endScan() }) {
+            val outcome = documentScanner.resumePendingScan()
+            endScan()
+            outcome?.let { handle(it) }
+        }
+    }
+
+    private suspend fun handle(outcome: ScanOutcome) {
+        when (outcome) {
+            is ScanOutcome.Completed -> onScanCompleted(outcome.draft)
+            ScanOutcome.Cancelled -> onScanCancelled()
+            is ScanOutcome.Failed -> onScanFailed(outcome.error)
+        }
+    }
+
+    private fun beginScan() {
+        savedStateHandle[KEY_SCAN_IN_FLIGHT] = true
+        setState { copy(isScanning = true) }
+    }
+
+    private fun endScan() {
+        savedStateHandle[KEY_SCAN_IN_FLIGHT] = false
+        setState { copy(isScanning = false) }
     }
 
     /**
@@ -429,5 +463,9 @@ class HomeViewModel(
         )
 
         updateSheet { it.copy(pageStack = listOf(SheetPage.Actions)) }
+    }
+
+    private companion object {
+        const val KEY_SCAN_IN_FLIGHT = "scan_in_flight"
     }
 }

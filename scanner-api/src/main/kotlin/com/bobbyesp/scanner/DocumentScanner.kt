@@ -28,4 +28,16 @@ interface DocumentScanner {
      * @param request What to capture and in which formats.
      */
     suspend fun scan(request: ScanRequest = ScanRequest()): ScanOutcome
+
+    /**
+     * Rejoins a session that outlived the process that started it, if there is one.
+     *
+     * Some engines capture elsewhere — in another process, or another app — and keep going after
+     * the caller is killed for memory. The result of such a session is still owed to somebody, and
+     * this is how it gets claimed.
+     *
+     * @return How the orphaned session ended, or `null` if there was none to rejoin. Engines that
+     *   cannot outlive their caller need not implement this.
+     */
+    suspend fun resumePendingScan(): ScanOutcome? = null
 }
