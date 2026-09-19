@@ -5,7 +5,6 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.contract
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetAction
 
 sealed interface HomeIntent {
@@ -14,8 +13,6 @@ sealed interface HomeIntent {
     data object LaunchScanner : HomeIntent
 
     data object OpenSettings : HomeIntent
-
-    data class ScanResult(val result: RawScanResult) : HomeIntent
 
     data class ViewDocument(val id: String) : HomeIntent
 

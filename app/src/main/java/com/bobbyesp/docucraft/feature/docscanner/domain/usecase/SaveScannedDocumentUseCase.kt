@@ -15,7 +15,6 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentE
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
-import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.filesDir
@@ -49,25 +48,6 @@ class SaveScannedDocumentUseCase(
             timestamp = rawScanResult.timestamp,
         )
     }
-
-    suspend operator fun invoke(rawScanResult: RawScanResult, filename: String): Result<Uri> =
-        saveDocument(
-            sourceUri = rawScanResult.uri.toUri(),
-            filename = filename,
-            pageCount = rawScanResult.pageCount,
-            timestamp = rawScanResult.timestamp,
-        )
-
-    suspend operator fun invoke(
-        scanPdfResult: GmsDocumentScanningResult.Pdf,
-        filename: String,
-    ): Result<Uri> =
-        saveDocument(
-            sourceUri = scanPdfResult.uri,
-            filename = filename,
-            pageCount = scanPdfResult.pageCount,
-            timestamp = System.currentTimeMillis(),
-        )
 
     private suspend fun saveDocument(
         sourceUri: Uri,

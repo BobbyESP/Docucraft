@@ -81,8 +81,6 @@ class HomeViewModel(
                 }
             }
 
-            is HomeIntent.ScanResult -> processScanResult(intent.result)
-
             is HomeIntent.ViewDocument -> openDocument(intent.id)
 
             is HomeIntent.UpdateSearch -> {
