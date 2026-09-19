@@ -19,7 +19,7 @@
 | 0 | Red de seguridad (tests) | Nulo | ✅ Hecho |
 | 1 | Borrar código muerto | Muy bajo | ✅ Hecho |
 | 2 | Arreglar B1, B2, B3, B4 + extraer mapper puro | Bajo | ✅ Hecho |
-| 3 | Introducir el contrato de dominio | Nulo | ⏳ Pendiente |
+| 3 | Introducir el contrato de dominio | Nulo | ✅ Hecho |
 | 4 | Implementar el motor ML Kit contra el contrato | Nulo | ⏳ Pendiente |
 | 5 | Cablear el shell (`MainActivity`) | **Medio-alto** | ⏳ Pendiente |
 | 6 | Mover el ViewModel al puerto | Medio | ⏳ Pendiente |
@@ -78,13 +78,17 @@ Borrar antes de refactorizar: a menudo el código muerto se lleva el acoplamient
 > valor: hasta ahora ese evento incluía los fallos reales. El evento nuevo es `scan_failed`.
 > Conviene avisar antes de desplegar.
 
-## Paso 3 · Introducir el contrato (solo archivos nuevos) ⏳
+## Paso 3 · Introducir el contrato (solo archivos nuevos) ✅
 
-- [ ] Crear `domain/scanner/`: `DocumentScanner`, `ScanRequest`, `ScanOutcome`, `ScanDraft`,
-      `ScanArtifact`, `ScanError`, `ScannerCapabilities`, `ContentRef`.
-- [ ] Nada cableado todavía.
+- [x] Crear `domain/scanner/`: `DocumentScanner`, `ScanRequest` (+ `ScanOutputFormat`),
+      `ScanOutcome` (+ `ScanError`), `ScanDraft`, `ScanArtifact`, `ScannerCapabilities`,
+      `ContentRef`.
+- [x] Nada cableado todavía: el camino viejo sigue intacto y en producción.
 
 **Verificación**: compila. **Riesgo**: nulo.
+
+> El paquete `domain/scanner/` se mantiene autocontenido a propósito: en el paso 8 se convierte en
+> `:scanner-api` con un simple movimiento de directorio.
 
 ## Paso 4 · Implementar el motor ML Kit contra el contrato ⏳
 
