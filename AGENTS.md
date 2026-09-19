@@ -1,6 +1,7 @@
 # AGENTS.md
 
 ## Project Snapshot
+- Deep-dive architecture docs and stabilization plans: `docs/` (start at `docs/README.md`).
 - Multi-module Android project: `:app` (product) + `:composepdf` (local PDF engine).
 - Stack in use: Kotlin, Jetpack Compose, Navigation 3 typed routes, Koin DI, Room, ML Kit Document Scanner.
 - Runtime DI entrypoint is `app/src/main/java/com/bobbyesp/docucraft/App.kt` (`startKoin`).
@@ -36,5 +37,5 @@
 - Debug APK: `./gradlew :app:assembleDebug` (Windows: `.\gradlew.bat :app:assembleDebug`).
 - Unit tests: `./gradlew :app:testDebugUnitTest :composepdf:testDebugUnitTest`.
 - Instrumented tests: `./gradlew :app:connectedDebugAndroidTest :composepdf:connectedDebugAndroidTest`.
-- Formatting: `./gradlew ktfmtFormat` (convention plugin applies `ktfmt` to modules).
+- Formatting: `./gradlew spotlessApply` (Spotless applies `ktfmt` to modules; `spotlessCheck` verifies).
 - Custom APK copies are generated under `app/build/outputs/apk_custom/<variant>/` by `buildSrc/CopyApkPlugin.kt`.

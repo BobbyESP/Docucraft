@@ -1,5 +1,8 @@
 # Docucraft Architecture (Current State)
 
+> In-depth per-subsystem analysis and migration plans live in [`docs/`](docs/README.md).
+> This file stays a compact snapshot of the current state.
+
 ## 1) System Intent
 - Docucraft is a local-first Android scanner: capture documents with ML Kit, persist PDF metadata in Room, and render documents in-app.
 - The codebase is split into two Gradle modules:
