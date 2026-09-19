@@ -4,7 +4,7 @@
 package com.bobbyesp.docucraft.feature.docscanner.domain.repository
 
 import android.net.Uri
-import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import kotlinx.coroutines.flow.Flow
 
@@ -68,20 +68,14 @@ interface LocalDocumentsRepository {
     suspend fun getDocument(path: Uri): ScannedDocument
 
     /**
-     * Persists a new scanned PDF entity to storage.
+     * Adds a freshly stored document to the catalogue.
      *
-     * This function handles the creation of a new record in the database. It interprets the
-     * provided [ScannedDocumentEntity], which contains the raw data structure (path, dimensions,
-     * initial metadata), and commits it to the persistent store.
+     * The document is expected to already exist at [NewScannedDocument.location]; this records it,
+     * assigns it an identity, and causes [observeDocuments] to emit the updated list.
      *
-     * Operations may include:
-     * - Inserting the record into the Room database.
-     * - verifying the physical file existence.
-     * - Triggering the [observeDocuments] flow to emit the new list.
-     *
-     * @param scannedDocument The entity object containing the data to be saved.
+     * @param document The document to catalogue.
      */
-    suspend fun saveDocument(scannedDocument: ScannedDocumentEntity)
+    suspend fun saveDocument(document: NewScannedDocument)
 
     /**
      * Updates specific metadata fields (title and/or description) of an existing document.

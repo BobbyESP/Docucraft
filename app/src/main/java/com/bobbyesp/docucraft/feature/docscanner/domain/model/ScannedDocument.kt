@@ -5,9 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.domain.model
 
 import android.net.Uri
 import androidx.compose.runtime.Immutable
-import androidx.core.net.toUri
 import com.bobbyesp.docucraft.core.util.UriSerializer
-import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
 import kotlinx.serialization.Serializable
 
 /**
@@ -45,30 +43,4 @@ data class ScannedDocument(
     val fileSize: Long,
     val pageCount: Int,
     val thumbnail: String?,
-) {
-    companion object {
-        /**
-         * Extension function to map a `ScannedDocumentEntity` object to a `ScannedDocument` object.
-         *
-         * This function is used to convert a database entity representation of a scanned document
-         * into its domain model representation.
-         *
-         * @return ScannedDocument The domain model representation of the scanned document.
-         * @receiver ScannedDocumentEntity The database entity to be converted.
-         */
-        fun ScannedDocumentEntity.toModel(): ScannedDocument {
-            return ScannedDocument(
-                id = id,
-                uuid = uuid,
-                filename = filename,
-                title = title,
-                description = description,
-                path = path.toUri(),
-                createdTimestamp = createdTimestamp,
-                fileSize = fileSize,
-                pageCount = pageCount,
-                thumbnail = thumbnail,
-            )
-        }
-    }
-}
+)

@@ -21,8 +21,8 @@
 | 2 | Arreglar B1, B2, B3, B4 + extraer mapper puro | Bajo | ✅ Hecho |
 | 3 | Introducir el contrato de dominio | Nulo | ✅ Hecho |
 | 4 | Implementar el motor ML Kit contra el contrato | Nulo | ✅ Hecho |
-| 5+6 | Cablear el shell y mover el ViewModel al puerto | **Medio-alto** | ⚠️ Hecho, **sin verificar en dispositivo** |
-| 7 | Limpiar la persistencia | Medio | ⏳ Pendiente |
+| 5+6 | Cablear el shell y mover el ViewModel al puerto | **Medio-alto** | ✅ Hecho y **verificado en dispositivo** |
+| 7 | Limpiar la persistencia | Medio | ⚠️ Hecho, pendiente de verificar en dispositivo |
 | 8 | *(Opcional)* Módulos `:scanner-api` / `:scanner-mlkit` | Bajo | ⏳ Pendiente |
 | 9 | *(Opcional)* Resiliencia a muerte de proceso | Bajo | ⏳ Pendiente |
 
@@ -134,17 +134,9 @@ El camino viejo sigue vivo y en producción durante todo este paso.
 
 **Resultado**: ML Kit vive ahora en **un único archivo**, `data/scanner/MlKitDocumentScanner.kt`.
 
-### ⚠️ Pendiente de verificación en dispositivo
+### ✅ Verificado en dispositivo (2026-09-19)
 
-Compila y los 17 tests pasan, pero esto es fontanería de ciclo de vida: los tests no la prueban.
-Antes de fusionar la rama hay que comprobar a mano:
-
-- [ ] Escanear desde el FAB
-- [ ] **Escanear desde el widget** (con la app cerrada y con la app ya abierta)
-- [ ] Cancelar con el botón atrás
-- [ ] **Rotar durante el escaneo** — es el caso que motivó fusionar los pasos
-- [ ] Escanear con la app enviada a segundo plano
-- [ ] Un dispositivo sin Play Services, si hay alguno a mano, para confirmar `EngineUnavailable`
+Escaneo desde el FAB, desde el widget, cancelación y rotación durante el escaneo: todo correcto.
 
 ### B5 · Un fallo al guardar felicitaba al usuario
 
@@ -152,19 +144,53 @@ Encontrado al reescribir `processScanResult`. `SaveScannedDocumentUseCase` devue
 en vez de lanzar, y el ViewModel **descartaba el valor**: si la copia o el insert fallaban, el
 usuario veía igualmente «documento guardado correctamente». Arreglado y cubierto por test.
 
-## Paso 7 · Limpiar la persistencia ⏳
+## Paso 7 · Limpiar la persistencia ⚠️
 
-- [ ] `SaveScanDraftUseCase(storage: DocumentStorage, catalog: DocumentCatalog)`: sin `Context`,
-      sin `FileProvider`, sin `App`, sin entidad Room.
-- [ ] `FileProvider` y FileKit pasan a `DocumentStorageImpl` en `data`.
-- [ ] `LocalDocumentsRepository.saveDocument` recibe un modelo de dominio (`NewScannedDocument`) en
-      vez de `ScannedDocumentEntity` (**V5**).
-- [ ] `SaveScanDraftUseCaseTest` con fakes — primer test JVM del paso de persistencia.
+- [x] `SaveScanDraftUseCase(storage, repository)` sustituye a `SaveScannedDocumentUseCase`: recibe
+      un `ScanDraft` y no menciona `Context`, `FileProvider`, `App` ni la entidad Room. Solo
+      contiene el **orden de las operaciones**.
+- [x] Nuevo puerto `DocumentStorage` (+ `StoredDocument`). `DocumentStorageImpl` absorbe
+      `CopyDocumentToFileUseCase`, `GenerateDocumentThumbnailUseCase` y la lógica de `FileProvider`.
+- [x] Nuevo modelo `NewScannedDocument`: el lado de escritura de `ScannedDocument`, sin id porque
+      nadie se lo ha asignado todavía.
+- [x] `LocalDocumentsRepository.saveDocument` recibe dominio, no `ScannedDocumentEntity` (**V5**).
+- [x] `toModel()` sale de `ScannedDocument` a `data/mapper/ScannedDocumentMapper.kt`: el dominio ya
+      no importa `data/db/entity` (**V5**, segunda mitad).
+- [x] Borrados `RawScanResult` y el puente temporal del paso 5+6.
+- [x] `SaveScanDraftUseCaseTest`: **6 tests, los primeros que ha tenido nunca el paso de guardado.**
 
-> **La tabla Room no cambia**: solo cambia el tipo Kotlin en la frontera. Sin migración de esquema.
-> Verificar que `app/schemas/` no genere diff.
+> **La tabla Room no ha cambiado**: solo el tipo Kotlin en la frontera. `app/schemas/` sin diff.
 
-**Riesgo**: medio. Mitigación: el test nuevo se escribe *antes* de mover el código.
+### Bug encontrado al implementar: el spinner no se apagaba al guardar
+
+Al eliminar `processScanResult` se fue con él el `isScanning = false` del camino de éxito. Lo
+detectó el test `a completed scan clears isScanning and saves the document`. Arreglado, y de paso
+mejor estructurado: el spinner refleja «hay una sesión en vuelo», así que ahora se apaga **en un
+solo sitio**, justo donde la sesión termina, en vez de repetirse en cada rama.
+
+### Nota sobre mockk y `Result`
+
+Re-stubear un mock cuyo retorno es `Result<T>` (value class) **no surte efecto**: mockk conserva la
+primera respuesta. Hay que configurar el resultado al construir, no después. Si aparece un test que
+«ignora» su `coEvery`, es esto.
+
+### ⚠️ Pendiente de verificación en dispositivo
+
+Los 23 tests pasan y el dominio del guardado ya es comprobable en JVM, pero el `FileProvider` y las
+rutas reales solo se ejercitan en el dispositivo:
+
+- [ ] Escanear y comprobar que el documento aparece en Home con su miniatura
+- [ ] Abrir el documento en el visor (usa la URI de `FileProvider`)
+- [ ] Compartir y exportar un documento
+- [ ] Borrar un documento y confirmar que el archivo desaparece
+- [ ] Comprobar que los documentos escaneados **antes** de este cambio siguen abriéndose
+
+### Lo que este paso deliberadamente no toca
+
+`ShareDocumentUseCase`, `OpenDocumentInViewerUseCase`, `ExportDocumentUseCase` y
+`DeleteDocumentUseCase` siguen siendo Android puro dentro de `domain/usecase/`, y los modelos
+siguen llevando `Uri` y anotaciones de Compose. Son **V7 y V8** del análisis, priorizados como P3 y
+fuera del alcance del subsistema de escaneo. Merecen su propia fase.
 
 ## Paso 8 *(opcional)* · Módulos Gradle ⏳
 

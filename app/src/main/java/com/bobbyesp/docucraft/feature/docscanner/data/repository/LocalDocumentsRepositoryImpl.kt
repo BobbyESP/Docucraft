@@ -5,9 +5,10 @@ package com.bobbyesp.docucraft.feature.docscanner.data.repository
 
 import android.net.Uri
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
-import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toModel
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument.Companion.toModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
 import java.text.Normalizer
 import kotlinx.coroutines.Dispatchers
@@ -50,8 +51,8 @@ class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocume
         return entity.toModel()
     }
 
-    override suspend fun saveDocument(scannedDocument: ScannedDocumentEntity) {
-        scannedDocumentDao.insert(scannedDocument)
+    override suspend fun saveDocument(document: NewScannedDocument) {
+        scannedDocumentDao.insert(document.toEntity())
     }
 
     override suspend fun modifyFields(uuid: String, title: String?, description: String?) {

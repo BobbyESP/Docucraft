@@ -10,19 +10,19 @@ import com.bobbyesp.docucraft.feature.docscanner.data.search.CompositeSearchStra
 import com.bobbyesp.docucraft.feature.docscanner.data.search.DatabaseSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.data.search.InMemorySearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
+import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentStorageImpl
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.service.DocumentOperationsService
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.CopyDocumentToFileUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GenerateDocumentThumbnailUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import org.koin.android.ext.koin.androidContext
@@ -35,6 +35,10 @@ import org.koin.dsl.module
 val documentScannerDataModule = module {
     // Service layer
     single<DocumentOperationsService> { DocumentOperationsServiceImpl(context = androidContext()) }
+
+    single<DocumentStorage> {
+        DocumentStorageImpl(context = androidContext(), documentOperations = get())
+    }
 
     // Repository layer
     single<LocalDocumentsRepository> {
@@ -51,8 +55,6 @@ val documentScannerDataModule = module {
     factory { ObserveDocumentsUseCase(repository = get()) }
     factory { GetDocumentUseCase(repository = get()) }
     factory { UpdateDocumentFieldsUseCase(repository = get()) }
-    factory { CopyDocumentToFileUseCase(context = androidContext()) }
-    factory { GenerateDocumentThumbnailUseCase(documentOperationsService = get()) }
     factory { OpenDocumentInViewerUseCase(context = androidContext()) }
     factory { ShareDocumentUseCase(context = androidContext()) }
     factory { ExportDocumentUseCase() }
@@ -60,12 +62,5 @@ val documentScannerDataModule = module {
 
     factory { DeleteDocumentUseCase(repository = get(), fileRepository = get<FileRepository>()) }
 
-    factory {
-        SaveScannedDocumentUseCase(
-            context = androidContext(),
-            repository = get(),
-            copyDocumentToFileUseCase = get(),
-            generateDocumentThumbnailUseCase = get(),
-        )
-    }
+    factory { SaveScanDraftUseCase(storage = get(), repository = get()) }
 }

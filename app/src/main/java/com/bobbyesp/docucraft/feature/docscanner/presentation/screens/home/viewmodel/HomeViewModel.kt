@@ -12,7 +12,6 @@ import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.DocumentScanner
 import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanDraft
 import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanError
@@ -23,7 +22,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUs
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeEffect
@@ -54,7 +53,7 @@ class HomeViewModel(
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
     private val processDocumentsUseCase: ProcessDocumentsUseCase,
     private val getDocumentUseCase: GetDocumentUseCase,
-    private val saveScannedDocumentUseCase: SaveScannedDocumentUseCase,
+    private val saveScanDraftUseCase: SaveScanDraftUseCase,
     private val deleteDocumentUseCase: DeleteDocumentUseCase,
     private val shareDocumentUseCase: ShareDocumentUseCase,
     private val exportDocumentUseCase: ExportDocumentUseCase,
@@ -198,7 +197,10 @@ class HomeViewModel(
         launch(onError = { setState { copy(isScanning = false) } }) {
             analyticsHelper.logEvent(AnalyticsEvent(AnalyticsEvent.Types.SCAN_STARTED))
 
-            when (val outcome = documentScanner.scan()) {
+            val outcome = documentScanner.scan()
+            setState { copy(isScanning = false) }
+
+            when (outcome) {
                 is ScanOutcome.Completed -> onScanCompleted(outcome.draft)
                 ScanOutcome.Cancelled -> onScanCancelled()
                 is ScanOutcome.Failed -> onScanFailed(outcome.error)
@@ -206,24 +208,45 @@ class HomeViewModel(
         }
     }
 
+    /**
+     * The use case reports failure through its [Result] rather than by throwing, so the outcome has
+     * to be read: ignoring it used to congratulate the user on a save that never happened.
+     */
     private suspend fun onScanCompleted(draft: ScanDraft) {
-        val pdf = draft.pdf ?: return onScanFailed(ScanError.NoOutputProduced)
+        if (draft.pdf == null) return onScanFailed(ScanError.NoOutputProduced)
 
-        // Step 7 of the migration plan hands the draft straight to the use case; until then it
-        // still speaks RawScanResult.
-        processScanResult(
-            RawScanResult(
-                uri = pdf.content.value,
-                pageCount = pdf.pageCount,
-                timestamp = draft.capturedAtEpochMillis,
-            )
-        )
+        saveScanDraftUseCase(draft)
+            .onSuccess {
+                analyticsHelper.logEvent(
+                    AnalyticsEvent(
+                        type = AnalyticsEvent.Types.SCAN_COMPLETED,
+                        extras =
+                            listOf(
+                                AnalyticsEvent.Param(
+                                    AnalyticsEvent.ParamKeys.PAGE_COUNT,
+                                    draft.pdf?.pageCount.toString(),
+                                )
+                            ),
+                    )
+                )
+
+                sendUiEvent(
+                    UiEvent.ShowMessage(
+                        stringProvider.get(R.string.doc_saved_successfully),
+                        NotificationType.Success,
+                    )
+                )
+            }
+            .onFailure { error ->
+                sendUiEvent(
+                    UiEvent.ShowMessage(stringProvider.getError(error), NotificationType.Error)
+                )
+            }
     }
 
-    /** Walking away from the scanner is an ordinary outcome: stop the spinner, say nothing. */
+    /** Walking away from the scanner is an ordinary outcome: record it, say nothing. */
     private fun onScanCancelled() {
         analyticsHelper.logEvent(AnalyticsEvent(type = AnalyticsEvent.Types.SCAN_CANCELLED))
-        setState { copy(isScanning = false) }
     }
 
     /** A real failure, unlike a cancellation, is worth both an event and a word to the user. */
@@ -235,8 +258,6 @@ class HomeViewModel(
                     listOf(AnalyticsEvent.Param(AnalyticsEvent.ParamKeys.STATUS, error.describe())),
             )
         )
-
-        setState { copy(isScanning = false) }
 
         val message =
             when (error) {
@@ -271,42 +292,6 @@ class HomeViewModel(
                 )
             )
         )
-    }
-
-    /**
-     * The use case reports failure through its [Result] rather than by throwing, so the outcome has
-     * to be read: ignoring it used to congratulate the user on a save that never happened.
-     */
-    private suspend fun processScanResult(result: RawScanResult) {
-        setState { copy(isScanning = false) }
-
-        saveScannedDocumentUseCase(result)
-            .onSuccess {
-                analyticsHelper.logEvent(
-                    AnalyticsEvent(
-                        type = AnalyticsEvent.Types.SCAN_COMPLETED,
-                        extras =
-                            listOf(
-                                AnalyticsEvent.Param(
-                                    AnalyticsEvent.ParamKeys.PAGE_COUNT,
-                                    result.pageCount.toString(),
-                                )
-                            ),
-                    )
-                )
-
-                sendUiEvent(
-                    UiEvent.ShowMessage(
-                        stringProvider.get(R.string.doc_saved_successfully),
-                        NotificationType.Success,
-                    )
-                )
-            }
-            .onFailure { error ->
-                sendUiEvent(
-                    UiEvent.ShowMessage(stringProvider.getError(error), NotificationType.Error)
-                )
-            }
     }
 
     // ---------------- SHEET ----------------

@@ -11,7 +11,6 @@ import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ContentRef
 import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.DocumentScanner
@@ -28,7 +27,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUs
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScannedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
@@ -76,7 +75,7 @@ class HomeViewModelTest {
     private lateinit var observeDocumentsUseCase: ObserveDocumentsUseCase
     private lateinit var processDocumentsUseCase: ProcessDocumentsUseCase
     private lateinit var getDocumentUseCase: GetDocumentUseCase
-    private lateinit var saveScannedDocumentUseCase: SaveScannedDocumentUseCase
+    private lateinit var saveScanDraftUseCase: SaveScanDraftUseCase
     private lateinit var deleteDocumentUseCase: DeleteDocumentUseCase
     private lateinit var shareDocumentUseCase: ShareDocumentUseCase
     private lateinit var exportDocumentUseCase: ExportDocumentUseCase
@@ -134,23 +133,24 @@ class HomeViewModelTest {
             thumbnail = null,
         )
 
-    private fun completedScan(pages: Int = 2) =
-        ScanOutcome.Completed(
-            ScanDraft(
-                artifacts = listOf(ScanArtifact.Pdf(ContentRef("content://scan"), pages)),
-                capturedAtEpochMillis = 1_234L,
-            )
+    private val scannedDraft =
+        ScanDraft(
+            artifacts = listOf(ScanArtifact.Pdf(ContentRef("content://scan"), 2)),
+            capturedAtEpochMillis = 1_234L,
         )
 
+    private fun completedScan() = ScanOutcome.Completed(scannedDraft)
+
     private fun createViewModel(
-        documents: Flow<List<ScannedDocument>> = flowOf(emptyList())
+        documents: Flow<List<ScannedDocument>> = flowOf(emptyList()),
+        saveResult: Result<ContentRef> = Result.success(ContentRef("content://stored")),
     ): HomeViewModel {
         documentScanner = FakeDocumentScanner()
         scanRequests = ScanRequestBus()
         observeDocumentsUseCase = mockk()
         processDocumentsUseCase = mockk()
         getDocumentUseCase = mockk()
-        saveScannedDocumentUseCase = mockk()
+        saveScanDraftUseCase = mockk()
         deleteDocumentUseCase = mockk(relaxed = true)
         shareDocumentUseCase = mockk(relaxed = true)
         exportDocumentUseCase = mockk()
@@ -160,8 +160,7 @@ class HomeViewModelTest {
 
         coEvery { observeDocumentsUseCase() } returns documents
         coEvery { processDocumentsUseCase(any(), any(), any(), any()) } answers { firstArg() }
-        coEvery { saveScannedDocumentUseCase(any()) } returns
-            Result.success(mockk<Uri>(relaxed = true))
+        coEvery { saveScanDraftUseCase(any(), any()) } returns saveResult
         every { stringProvider.getError(any<Throwable>()) } returns "Something went wrong"
         every { stringProvider.get(any(), *anyVararg()) } returns "Something went wrong"
 
@@ -172,7 +171,7 @@ class HomeViewModelTest {
             observeDocumentsUseCase = observeDocumentsUseCase,
             processDocumentsUseCase = processDocumentsUseCase,
             getDocumentUseCase = getDocumentUseCase,
-            saveScannedDocumentUseCase = saveScannedDocumentUseCase,
+            saveScanDraftUseCase = saveScanDraftUseCase,
             deleteDocumentUseCase = deleteDocumentUseCase,
             shareDocumentUseCase = shareDocumentUseCase,
             exportDocumentUseCase = exportDocumentUseCase,
@@ -280,11 +279,11 @@ class HomeViewModelTest {
             viewModel.onSendIntent(HomeIntent.LaunchScanner)
             advanceUntilIdle()
 
-            documentScanner.finishWith(completedScan(pages = 2))
+            documentScanner.finishWith(completedScan())
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.isScanning)
-            coVerify { saveScannedDocumentUseCase(RawScanResult("content://scan", 2, 1_234L)) }
+            coVerify { saveScanDraftUseCase(scannedDraft, any()) }
             assertTrue(
                 events.any { it is UiEvent.ShowMessage && it.type == NotificationType.Success }
             )
@@ -294,10 +293,9 @@ class HomeViewModelTest {
     @Test
     fun `a save failure is reported instead of congratulating the user`() =
         runTest(testDispatcher) {
-            val viewModel = createViewModel()
+            val viewModel =
+                createViewModel(saveResult = Result.failure(IllegalStateException("disk full")))
             advanceUntilIdle()
-            coEvery { saveScannedDocumentUseCase(any()) } returns
-                Result.failure(IllegalStateException("disk full"))
 
             val events = mutableListOf<UiEvent>()
             backgroundScope.launch { viewModel.defaultEvents.toList(events) }
@@ -329,7 +327,7 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.isScanning)
-            coVerify(exactly = 0) { saveScannedDocumentUseCase(any()) }
+            coVerify(exactly = 0) { saveScanDraftUseCase(any(), any()) }
             assertTrue("backing out of the scanner should not nag the user", events.isEmpty())
             verify(exactly = 1) {
                 analyticsHelper.logEvent(match { it.type == AnalyticsEvent.Types.SCAN_CANCELLED })
@@ -352,7 +350,7 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.isScanning)
-            coVerify(exactly = 0) { saveScannedDocumentUseCase(any()) }
+            coVerify(exactly = 0) { saveScanDraftUseCase(any(), any()) }
             assertTrue(
                 events.any { it is UiEvent.ShowMessage && it.type == NotificationType.Error }
             )
