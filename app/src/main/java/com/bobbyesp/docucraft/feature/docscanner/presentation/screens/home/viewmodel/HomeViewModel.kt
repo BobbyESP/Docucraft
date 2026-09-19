@@ -321,7 +321,7 @@ class HomeViewModel(
                 BasicDocument(
                     uuid = doc.uuid,
                     filename = doc.filename,
-                    uri = doc.path.value,
+                    uri = doc.location.value,
                     title = doc.title,
                     description = doc.description,
                 )
@@ -409,7 +409,7 @@ class HomeViewModel(
         val doc = currentState.sheetState?.activeDocument ?: return
 
         runCatching {
-                documentSharer.share(doc.path)
+                documentSharer.share(doc.location)
                 analyticsHelper.logEvent(
                     AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_SHARED)
                 )
@@ -429,7 +429,7 @@ class HomeViewModel(
 
         val outcome =
             documentExporter.export(
-                document = doc.path,
+                document = doc.location,
                 suggestedName = doc.title ?: doc.filename,
             )
 

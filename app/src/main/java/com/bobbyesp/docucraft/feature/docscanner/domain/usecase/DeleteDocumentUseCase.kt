@@ -18,9 +18,9 @@ class DeleteDocumentUseCase(
     private val storage: DocumentStorage,
 ) {
     suspend operator fun invoke(document: ScannedDocument) {
-        repository.deleteDocument(document.path)
+        repository.deleteDocument(document.location)
 
-        storage.delete(document.path)
+        storage.delete(document.location)
         // The preview was never cleaned up before, so previews of deleted documents piled up.
         document.thumbnail?.let { storage.delete(it) }
     }

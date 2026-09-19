@@ -26,14 +26,13 @@ class DeleteDocumentUseCaseTest {
 
     private fun document(thumbnail: ContentRef? = ContentRef("/previews/doc.png")) =
         ScannedDocument(
-            id = 1,
             uuid = "doc-1",
             filename = "doc",
             title = null,
             description = null,
-            path = ContentRef("content://stored/doc.pdf"),
-            createdTimestamp = 1_000L,
-            fileSize = 2_048L,
+            location = ContentRef("content://stored/doc.pdf"),
+            capturedAtEpochMillis = 1_000L,
+            sizeBytes = 2_048L,
             pageCount = 1,
             thumbnail = thumbnail,
         )
@@ -44,7 +43,7 @@ class DeleteDocumentUseCaseTest {
 
         useCase(document)
 
-        coVerify { repository.deleteDocument(document.path) }
+        coVerify { repository.deleteDocument(document.location) }
         assertTrue(ContentRef("content://stored/doc.pdf") in storage.deleted)
     }
 

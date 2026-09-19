@@ -52,8 +52,8 @@ class SaveScanDraftUseCaseTest {
         assertEquals("Invoice", document.filename)
         assertEquals(ContentRef("content://stored/Invoice.pdf"), document.location)
         assertEquals(3, document.pageCount)
-        assertEquals(1_024L, document.fileSizeBytes)
-        assertEquals(1_700_000_000_000L, document.createdTimestamp)
+        assertEquals(1_024L, document.sizeBytes)
+        assertEquals(1_700_000_000_000L, document.capturedAtEpochMillis)
         assertEquals(ContentRef("/previews/scan.png"), document.thumbnail)
     }
 

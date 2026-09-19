@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.map
 class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocumentDao) :
     LocalDocumentsRepository {
 
-    override suspend fun observeDocuments(): Flow<List<ScannedDocument>> =
+    override fun observeDocuments(): Flow<List<ScannedDocument>> =
         scannedDocumentDao
             .observeDocuments()
             .map { entities -> entities.map { it.toModel() } }

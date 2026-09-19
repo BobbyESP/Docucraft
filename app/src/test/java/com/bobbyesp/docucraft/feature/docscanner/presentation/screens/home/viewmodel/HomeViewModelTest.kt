@@ -131,14 +131,13 @@ class HomeViewModelTest {
 
     private fun fakeDocument(uuid: String = "doc-1") =
         ScannedDocument(
-            id = 1,
             uuid = uuid,
             filename = "$uuid.pdf",
             title = "Title $uuid",
             description = null,
-            path = ContentRef("content://stored/$uuid.pdf"),
-            createdTimestamp = 1_000L,
-            fileSize = 2_048L,
+            location = ContentRef("content://stored/$uuid.pdf"),
+            capturedAtEpochMillis = 1_000L,
+            sizeBytes = 2_048L,
             pageCount = 3,
             thumbnail = null,
         )
@@ -170,7 +169,7 @@ class HomeViewModelTest {
         stringProvider = mockk(relaxed = true)
         analyticsHelper = mockk(relaxed = true)
 
-        coEvery { observeDocumentsUseCase() } returns documents
+        every { observeDocumentsUseCase() } returns documents
         coEvery { processDocumentsUseCase(any(), any(), any(), any()) } answers { firstArg() }
         coEvery { saveScanDraftUseCase(any(), any()) } returns saveResult
         every { stringProvider.getError(any<Throwable>()) } returns "Something went wrong"

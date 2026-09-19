@@ -8,85 +8,60 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.scanner.ContentRef
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * The catalogue of scanned documents: what the app knows about them, as opposed to where their
+ * bytes live, which is `DocumentStorage`'s business.
+ */
 interface LocalDocumentsRepository {
 
     /**
-     * Retrieves a reactive stream of all scanned documents currently available in the system.
+     * Every catalogued document, newest first, emitted again on every change — a scan saved, a
+     * document deleted, a title edited.
      *
-     * This function subscribes to the underlying data source (e.g., Room database) and emits a new
-     * list of [ScannedDocument] objects whenever the data set changes. This includes events such as
-     * adding a new scan, deleting a document, or updating a document's metadata.
-     *
-     * The returned [Flow] is infinite and will continue to emit updates until the consumer cancels
-     * the collection.
-     *
-     * @return A [Flow] emitting the complete list of [ScannedDocument]s representing the current
-     *   state.
+     * The flow does not end on its own.
      */
-    suspend fun observeDocuments(): Flow<List<ScannedDocument>>
+    fun observeDocuments(): Flow<List<ScannedDocument>>
 
     /**
-     * Performs a unified search across all text fields of the scanned documents.
+     * Searches filename, title and description at once, so the UI can offer a single search box.
      *
-     * This function simplifies search operations by applying the [query] string against multiple
-     * attributes of the PDF documents simultaneously. Typically, this includes the **file name**,
-     * **user-defined title**, and **description**.
+     * Results come back newest first, not by relevance.
      *
-     * The search is expected to be case-insensitive and allow partial matches (substrings). This
-     * centralization allows the UI to expose a single search bar without requiring the user to
-     * specify which field to filter by.
-     *
-     * @param query The text string to search for.
-     * @return A list of [ScannedDocument] objects where the query matches at least one of the
-     *   searchable fields. Returns an empty list if no matches are found.
+     * @param query Free text. An empty or blank query matches nothing.
+     * @return The matching documents, or an empty list.
      */
     suspend fun searchDocuments(query: String): List<ScannedDocument>
 
     /**
-     * Retrieves a single scanned PDF by its unique identifier.
-     *
-     * Performs a lookup in the persistence layer to find the document with the matching [uuid].
-     * This is useful for opening details screens or performing operations on a specific item.
-     *
-     * @param uuid The unique identifier string of the PDF to retrieve.
-     * @return The [ScannedDocument] domain object corresponding to the ID.
-     * @throws NoSuchElementException If no document is found with the provided ID.
+     * @return The document with this [uuid].
+     * @throws NoSuchElementException If the catalogue holds no such document.
      */
     suspend fun getDocument(uuid: String): ScannedDocument
 
     /**
      * Adds a freshly stored document to the catalogue.
      *
-     * The document is expected to already exist at [NewScannedDocument.location]; this records it,
-     * assigns it an identity, and causes [observeDocuments] to emit the updated list.
-     *
-     * @param document The document to catalogue.
+     * The document is expected to already exist at [NewScannedDocument.location]. This records it,
+     * gives it an identity, and causes [observeDocuments] to emit again.
      */
     suspend fun saveDocument(document: NewScannedDocument)
 
     /**
-     * Updates specific metadata fields (title and/or description) of an existing document.
+     * Replaces the two fields the user can write.
      *
-     * This function offers granular control over updates. Passing `null` for a parameter indicates
-     * that the current value of that field should remain unchanged. This allows for partial updates
-     * (e.g., renaming the file without clearing the description).
+     * Both are replaced outright: passing `null` **clears** that field rather than leaving it
+     * alone, which is what the edit dialog needs when someone empties a box.
      *
-     * @param uuid The unique identifier of the document to update.
-     * @param title The new title to set. If `null`, the existing title is preserved.
-     * @param description The new description to set. If `null`, the existing description is
-     *   preserved.
-     * @throws IllegalArgumentException If the provided [uuid] does not exist.
+     * @throws NoSuchElementException If the catalogue holds no document with this [uuid].
      */
     suspend fun modifyFields(uuid: String, title: String?, description: String?)
 
     /**
-     * Permanently removes a document from the system.
+     * Forgets the document stored at [location].
      *
-     * This operation performs a cleanup that involves: Only the catalogue entry goes; removing the
-     * document itself is storage's job.
+     * Only the catalogue entry goes; removing the document itself is storage's job.
      *
-     * @param location Where the document lives.
-     * @throws IllegalArgumentException If the catalogue holds no such document.
+     * @throws IllegalArgumentException If the catalogue holds no document there.
      */
     suspend fun deleteDocument(location: ContentRef)
 }

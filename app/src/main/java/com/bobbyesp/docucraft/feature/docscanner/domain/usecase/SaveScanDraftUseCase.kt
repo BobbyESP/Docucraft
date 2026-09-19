@@ -42,8 +42,8 @@ class SaveScanDraftUseCase(
                 NewScannedDocument(
                     filename = name,
                     location = stored.location,
-                    createdTimestamp = draft.capturedAtEpochMillis,
-                    fileSizeBytes = stored.sizeBytes,
+                    capturedAtEpochMillis = draft.capturedAtEpochMillis,
+                    sizeBytes = stored.sizeBytes,
                     pageCount = pdf.pageCount,
                     thumbnail = thumbnail,
                 )

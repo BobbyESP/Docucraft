@@ -9,21 +9,20 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.scanner.ContentRef
 
 /**
- * Translates between the Room rows and the domain models.
+ * Where the storage vocabulary meets the domain one.
  *
- * Lives here, rather than on the models, so that the domain never has to know a database is what
- * happens to be behind the catalogue.
+ * Column names are the schema and cannot move without a migration, so the renaming happens here,
+ * which is what a mapper is for. The row id stays behind: nothing above this layer uses it.
  */
 internal fun ScannedDocumentEntity.toModel(): ScannedDocument =
     ScannedDocument(
-        id = id,
         uuid = uuid,
         filename = filename,
         title = title,
         description = description,
-        path = ContentRef(path),
-        createdTimestamp = createdTimestamp,
-        fileSize = fileSize,
+        location = ContentRef(path),
+        capturedAtEpochMillis = createdTimestamp,
+        sizeBytes = fileSize,
         pageCount = pageCount,
         thumbnail = thumbnail?.let(::ContentRef),
     )
@@ -35,8 +34,8 @@ internal fun NewScannedDocument.toEntity(): ScannedDocumentEntity =
         title = null,
         description = null,
         path = location.value,
-        createdTimestamp = createdTimestamp,
-        fileSize = fileSizeBytes,
+        createdTimestamp = capturedAtEpochMillis,
+        fileSize = sizeBytes,
         pageCount = pageCount,
         thumbnail = thumbnail?.value,
     )
