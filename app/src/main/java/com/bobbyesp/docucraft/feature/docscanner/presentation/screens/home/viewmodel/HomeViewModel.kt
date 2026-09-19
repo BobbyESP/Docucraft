@@ -13,6 +13,7 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
+import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScannerException
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
@@ -185,23 +186,37 @@ class HomeViewModel(
 
     private fun observeScanner() = launch {
         scannerManager.scanResult.collect { result ->
-            result
-                .onSuccess { processScanResult(it) }
-                .onFailure {
-                    analyticsHelper.logEvent(
-                        AnalyticsEvent(
-                            type = AnalyticsEvent.Types.SCAN_CANCELLED,
-                            extras =
-                                listOf(
-                                    AnalyticsEvent.Param(
-                                        AnalyticsEvent.ParamKeys.STATUS,
-                                        it.message ?: "unknown",
-                                    )
-                                ),
+            result.onSuccess { processScanResult(it) }.onFailure { onScanFailed(it) }
+        }
+    }
+
+    /**
+     * Backing out of the scanner is a normal outcome: it only stops the spinner. Anything else is a
+     * real failure, so it gets its own analytics event and the user is told about it instead of
+     * being left with a button that silently stopped spinning.
+     */
+    private fun onScanFailed(error: Throwable) {
+        val cancelled = error is ScannerException.ScanCancelled
+
+        analyticsHelper.logEvent(
+            AnalyticsEvent(
+                type =
+                    if (cancelled) AnalyticsEvent.Types.SCAN_CANCELLED
+                    else AnalyticsEvent.Types.SCAN_FAILED,
+                extras =
+                    listOf(
+                        AnalyticsEvent.Param(
+                            AnalyticsEvent.ParamKeys.STATUS,
+                            error.message ?: "unknown",
                         )
-                    )
-                    setState { copy(isScanning = false) }
-                }
+                    ),
+            )
+        )
+
+        setState { copy(isScanning = false) }
+
+        if (!cancelled) {
+            sendUiEvent(UiEvent.ShowMessage(stringProvider.getError(error), NotificationType.Error))
         }
     }
 

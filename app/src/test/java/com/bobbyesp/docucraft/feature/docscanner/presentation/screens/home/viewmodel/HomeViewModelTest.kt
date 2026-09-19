@@ -12,6 +12,7 @@ import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScannerManager
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
+import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScannerException
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RawScanResult
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
@@ -243,18 +244,53 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `failed scan result clears isScanning without saving`() =
+    fun `cancelling the scan is silent and saves nothing`() =
         runTest(testDispatcher) {
             val viewModel = createViewModel()
             advanceUntilIdle()
 
+            val events = mutableListOf<UiEvent>()
+            backgroundScope.launch { viewModel.defaultEvents.toList(events) }
+
             viewModel.onSendIntent(HomeIntent.LaunchScanner)
             advanceUntilIdle()
 
-            scannerManager.onScanResult(Result.failure(RuntimeException("cancelled")))
+            scannerManager.onScanResult(Result.failure(ScannerException.ScanCancelled()))
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.isScanning)
             coVerify(exactly = 0) { saveScannedDocumentUseCase(any()) }
+            assertTrue("backing out of the scanner should not nag the user", events.isEmpty())
+            verify(exactly = 1) {
+                analyticsHelper.logEvent(match { it.type == AnalyticsEvent.Types.SCAN_CANCELLED })
+            }
+        }
+
+    @Test
+    fun `a failed scan tells the user and saves nothing`() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            val events = mutableListOf<UiEvent>()
+            backgroundScope.launch { viewModel.defaultEvents.toList(events) }
+
+            viewModel.onSendIntent(HomeIntent.LaunchScanner)
+            advanceUntilIdle()
+
+            scannerManager.onScanResult(Result.failure(ScannerException.ScanFailed("boom")))
+            advanceUntilIdle()
+
+            assertFalse(viewModel.state.value.isScanning)
+            coVerify(exactly = 0) { saveScannedDocumentUseCase(any()) }
+            assertTrue(
+                events.any { it is UiEvent.ShowMessage && it.type == NotificationType.Error }
+            )
+            verify(exactly = 1) {
+                analyticsHelper.logEvent(match { it.type == AnalyticsEvent.Types.SCAN_FAILED })
+            }
+            verify(exactly = 0) {
+                analyticsHelper.logEvent(match { it.type == AnalyticsEvent.Types.SCAN_CANCELLED })
+            }
         }
 }
