@@ -21,6 +21,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
@@ -56,6 +57,7 @@ val documentScannerDataModule = module {
 
     // Use cases
     factory { ObserveDocumentsUseCase(repository = get()) }
+    factory { ObserveDocumentUseCase(repository = get()) }
     factory { GetDocumentUseCase(repository = get()) }
     factory { UpdateDocumentFieldsUseCase(repository = get()) }
     factory { ProcessDocumentsUseCase(querySearchStrategy = get(), localSearchStrategy = get()) }

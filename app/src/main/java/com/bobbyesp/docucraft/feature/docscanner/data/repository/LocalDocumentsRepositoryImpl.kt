@@ -36,6 +36,12 @@ class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocume
         return result.map { it.toModel() }
     }
 
+    override fun observeDocument(uuid: String): Flow<ScannedDocument?> =
+        scannedDocumentDao
+            .observeByUuid(uuid)
+            .map { entity -> entity?.toModel() }
+            .flowOn(Dispatchers.Default)
+
     override suspend fun getDocument(uuid: String): ScannedDocument {
         require(uuid.isNotEmpty()) { "Document UUID must not be empty" }
         val entity =

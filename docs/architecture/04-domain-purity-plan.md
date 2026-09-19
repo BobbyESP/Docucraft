@@ -202,3 +202,74 @@ Las nuevas son `.webp`.
 > Conviven las dos extensiones y **no hay migración**. Es deliberado: renombrar archivos y reescribir
 > filas de Room añadiría riesgo real a cambio de un beneficio puramente cosmético. Según se vayan
 > borrando documentos antiguos, las `.png` desaparecen solas.
+
+---
+
+## 7. Apéndice · Auditoría de los modelos de documento
+
+Había cinco tipos con forma de «documento». La pregunta era si sobraban.
+
+### Los que se ganan el sitio
+
+| Tipo | Por qué se queda |
+|---|---|
+| `ScannedDocument` | El modelo de lectura |
+| `NewScannedDocument` | El de escritura. Le faltan **exactamente** `uuid`, `title` y `description`: lo que asigna el catálogo o escribe el usuario, nunca lo que produce un escaneo. Fusionarlos obligaría a construir con nulls al guardar |
+| `ScannedDocumentEntity` | Es el esquema de Room. Separarlo del dominio fue V5 |
+| `BasicDocument` | Lo poco que el visor necesita. **No** puede ser `ScannedDocument`: el visor también abre PDFs que la app nunca ha visto, que le pasan otras apps y no tienen entrada en el catálogo |
+| `StoredDocument` | Una tupla de retorno con nombre. Las alternativas son `Pair` (se lee peor) o dos llamadas al puerto (se ejecuta peor) |
+
+### Lo que se eliminó
+
+- `ScannedDocumentEntityWithMatchInfo` y `searchDocumentsWithMatchInfo` — sin llamantes.
+- `ScannedDocument.id` — **nunca se leía**. Todo direcciona por `uuid`; ese `Long` era la clave
+  primaria de Room subiendo al dominio sin un solo lector.
+- DAO: `getWithinTimeRange`, `deleteById`, `clear`. `BaseDao`: `insertAll`, `upsert`, `delete`.
+- El `suspend` de `observeDocuments`, que solo devolvía un `Flow`.
+
+> **Sobre el FTS.** Lo borrado es la mitad del ranking, y era la mitad fácil: `matchinfo()` vuelve
+> como un `ByteArray` que nadie decodifica a puntuación, y eso es lo que faltaba por escribir. El
+> DAO lo dice ahora junto a la consulta de búsqueda, para que quien retome el FTS sepa qué falta.
+
+### Un nombre por concepto
+
+| Concepto | Antes | Ahora (dominio) |
+|---|---|---|
+| dónde vive | `path` · `location` | `location` |
+| tamaño | `fileSize` · `fileSizeBytes` | `sizeBytes` |
+| cuándo | `createdTimestamp` · `capturedAtEpochMillis` | `capturedAtEpochMillis` |
+
+Las **columnas no cambian**: son el esquema. El mapper es donde se traducen los dos vocabularios,
+que es para lo que existe un mapper. Sin migración.
+
+### KDoc: tres afirmaciones que eran falsas
+
+- `modifyFields` decía que pasar `null` **preserva** el campo. Lo **borra** — y es lo correcto, es
+  lo que necesita el diálogo de edición cuando alguien vacía una caja.
+- Anunciaba `IllegalArgumentException` donde la implementación lanza `NoSuchElementException`.
+- Una frase sobre el borrado había quedado rota por una edición mía anterior.
+
+### Navegación por identidad
+
+`Route.PdfViewer` llevaba una **copia** del documento. Ahora lleva su `uuid`, y el visor observa el
+catálogo:
+
+- Una sola fuente de verdad: renombrar un documento **abierto** —posible en pantallas expandidas,
+  donde Home y el visor conviven— ya se refleja al momento, en vez de mostrar el título viejo hasta
+  reabrirlo.
+- Borrar el documento abierto **cierra el panel**, en vez de dejarlo apuntando a un archivo que ya
+  no existe.
+- La clave de navegación pasa de un objeto de cinco campos a un `String`.
+- `BasicDocument` deja de circular por Home, la ruta y el efecto: ya solo se construye dentro de
+  `feature/pdfviewer`, en sus dos puntos de entrada.
+
+El precio es que el visor pasa a conocer `ObserveDocumentUseCase`. Es acoplamiento real, y
+deliberado: la alternativa era seguir arrastrando datos rancios por el back stack.
+
+### ⚠️ Pendiente de verificación en dispositivo
+
+- [ ] Abrir un documento desde Home (compacto y expandido)
+- [ ] **Renombrar un documento con el visor abierto** al lado: el título debe cambiar solo
+- [ ] **Borrar un documento con el visor abierto**: el panel debe cerrarse
+- [ ] Abrir un PDF **desde otra app** (`PdfViewerActivity`, que no pasa por la ruta)
+- [ ] Rotar con el visor abierto, y volver atrás

@@ -29,7 +29,6 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiSta
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentSheetUiState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetPage
-import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.bobbyesp.scanner.DocumentScanner
 import com.bobbyesp.scanner.ScanDraft
 import com.bobbyesp.scanner.ScanError
@@ -313,21 +312,8 @@ class HomeViewModel(
 
     // ---------------- ACTIONS ----------------
 
-    private fun openDocument(uuid: String) = launch {
-        val doc = getDocumentUseCase(uuid)
-
-        sendEffect(
-            HomeEffect.OpenDocument(
-                BasicDocument(
-                    uuid = doc.uuid,
-                    filename = doc.filename,
-                    uri = doc.location.value,
-                    title = doc.title,
-                    description = doc.description,
-                )
-            )
-        )
-    }
+    /** The viewer reads the document itself; all it needs from here is which one. */
+    private fun openDocument(uuid: String) = sendEffect(HomeEffect.OpenDocument(uuid))
 
     // ---------------- SHEET ----------------
 

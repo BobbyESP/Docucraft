@@ -39,6 +39,14 @@ interface LocalDocumentsRepository {
     suspend fun getDocument(uuid: String): ScannedDocument
 
     /**
+     * One document, emitted again whenever it changes, and `null` once it is deleted.
+     *
+     * For screens that outlive an edit: reading once would leave them showing what was true when
+     * they opened.
+     */
+    fun observeDocument(uuid: String): Flow<ScannedDocument?>
+
+    /**
      * Adds a freshly stored document to the catalogue.
      *
      * The document is expected to already exist at [NewScannedDocument.location]. This records it,
