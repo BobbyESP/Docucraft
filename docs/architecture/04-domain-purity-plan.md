@@ -82,8 +82,6 @@ esos modelos causarían recomposiciones de más.
 
 ### Lo que este plan NO toca
 
-- `DocumentOperationsService` sigue codificando WEBP en archivos `.png`. Es el pendiente que
-  acordamos dejar **para el final**, porque afecta a las miniaturas ya generadas.
 - `:composepdf` y `feature/pdfviewer`: son la fase 3.
 
 ---
@@ -160,3 +158,47 @@ Efecto secundario agradable: los tests ya no necesitan `mockk<Uri>()` para const
 > huérfanos que ya dejaron los borrados anteriores siguen ahí: no hay migración que los recoja. Si
 > el espacio importa, hace falta una limpieza puntual que compare `files/scans/pdf` y
 > `files/previews` contra la tabla. Queda anotado, no hecho.
+
+---
+
+## 6. Apéndice · Las miniaturas `.png` que eran WEBP
+
+Guardado para el final a propósito, por si tocaba las miniaturas existentes. Resultó que no hace
+falta.
+
+### Qué pasaba
+
+`DocumentStorageImpl` nombraba el archivo `"$filename.png"` y llamaba al codificador **sin indicar
+formato**, así que se aplicaba el valor por defecto de la firma: `Bitmap.CompressFormat.WEBP`. El
+nombre lo elegía el llamante, el formato se elegía solo, y nada los obligaba a coincidir.
+
+Funcionaba porque los decodificadores miran el contenido, no la extensión. Pero era mentira escrita
+en disco.
+
+### Qué se ha hecho
+
+- Extensión y codificación viven ahora **en el mismo objeto**, `Thumbnail`, con un comentario que
+  explica por qué no pueden separarse.
+- `format` y `quality` **pierden sus valores por defecto** en `saveDocumentPageAsImage`. Ese default
+  era la causa raíz: un parámetro obligatorio no se puede olvidar.
+- `Bitmap.CompressFormat.WEBP` está deprecado. Ahora se usa `WEBP_LOSSY` en API 30+ y el antiguo,
+  con supresión explícita, por debajo. Un aviso menos en el build.
+
+### Dos bugs más, de la misma zona
+
+- **B10 · Se registraban miniaturas que no existían.** `saveDocumentPageAsImage` no lanzaba nada:
+  registraba el error y salía. `storeThumbnail` devolvía igualmente la ruta, así que el catálogo
+  acababa apuntando a un archivo inexistente y la lista mostraba una imagen rota. Ahora devuelve
+  `Boolean` y `storeThumbnail` devuelve `null` si no se escribió nada.
+- **B11 · El KDoc mentía.** Prometía `@throws RuntimeException` e `IllegalArgumentException` para
+  cosas que la implementación se tragaba en silencio. Reescrito para decir lo que hace de verdad.
+
+### Sobre las miniaturas antiguas
+
+Las que ya existen son archivos `.png` con contenido WEBP, y **siguen funcionando**: se cargan
+igual, y al borrar un documento se borra la ruta que tenga registrada, sea cual sea su extensión.
+Las nuevas son `.webp`.
+
+> Conviven las dos extensiones y **no hay migración**. Es deliberado: renombrar archivos y reescribir
+> filas de Room añadiría riesgo real a cambio de un beneficio puramente cosmético. Según se vayan
+> borrando documentos antiguos, las `.png` desaparecen solas.

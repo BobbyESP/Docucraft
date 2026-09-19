@@ -305,10 +305,8 @@ ScannerManager»* como si la regla estuviera cumplida, pero `MainActivity.kt:54`
 
 ## Pendientes tras la migración
 
-Cosas detectadas por el camino que **no** forman parte de este subsistema y merecen su propio turno,
-en el orden acordado:
+Todo cerrado. Lo que quedaba abierto al terminar esta fase se resolvió en la
+[fase 2](04-domain-purity-plan.md):
 
-| # | Qué | Por qué |
-|---|---|---|
-| 1 | **V7 / V8** — `ShareDocumentUseCase`, `OpenDocumentInViewerUseCase`, `ExportDocumentUseCase` y `DeleteDocumentUseCase` siguen siendo Android puro dentro de `domain/usecase/`; los modelos aún llevan `Uri` y anotaciones de Compose | P3 del análisis. Mismo tratamiento: un puerto y una implementación en `data` |
-| 2 | **Miniaturas `.png` que en realidad son WEBP** | `DocumentStorageImpl` las guarda con extensión `.png` pero `DocumentOperationsService` las codifica en WEBP por defecto. Funciona porque los decodificadores miran el contenido, pero es confuso. **Acordado dejarlo para el final**, porque tocarlo afecta a las miniaturas ya generadas y hace falta decidir si se regeneran o se migran |
+- **V7 / V8** — los use cases que eran Android puro y los modelos contaminados. Hecho.
+- **Miniaturas `.png` que en realidad eran WEBP** — hecho, en el apéndice de la fase 2.
