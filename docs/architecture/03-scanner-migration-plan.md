@@ -20,7 +20,7 @@
 | 1 | Borrar código muerto | Muy bajo | ✅ Hecho |
 | 2 | Arreglar B1, B2, B3, B4 + extraer mapper puro | Bajo | ✅ Hecho |
 | 3 | Introducir el contrato de dominio | Nulo | ✅ Hecho |
-| 4 | Implementar el motor ML Kit contra el contrato | Nulo | ⏳ Pendiente |
+| 4 | Implementar el motor ML Kit contra el contrato | Nulo | ✅ Hecho |
 | 5 | Cablear el shell (`MainActivity`) | **Medio-alto** | ⏳ Pendiente |
 | 6 | Mover el ViewModel al puerto | Medio | ⏳ Pendiente |
 | 7 | Limpiar la persistencia | Medio | ⏳ Pendiente |
@@ -90,16 +90,27 @@ Borrar antes de refactorizar: a menudo el código muerto se lleva el acoplamient
 > El paquete `domain/scanner/` se mantiene autocontenido a propósito: en el paso 8 se convierte en
 > `:scanner-api` con un simple movimiento de directorio.
 
-## Paso 4 · Implementar el motor ML Kit contra el contrato ⏳
+## Paso 4 · Implementar el motor ML Kit contra el contrato ✅
 
 El camino viejo sigue vivo y en producción durante todo este paso.
 
-- [ ] `ActivityResultHost` + `ActivityResultHostImpl`.
-- [ ] `MlKitDocumentScanner : DocumentScanner`.
-- [ ] Ampliar `ScanResultMapper` para devolver `ScanOutcome` en vez de `Result<RawScanResult>`.
-- [ ] Tests: `MlKitDocumentScannerTest` con un `FakeActivityResultHost`.
+- [x] `ActivityResultHost` (`core/presentation/activityresult/`) + `ActivityResultHostImpl`.
+- [x] `MlKitDocumentScanner : DocumentScanner` en `data/scanner/`.
+- [x] `ScanResultMapper.toOutcome(...)`; el `map(...)` antiguo **delega** en él, así que solo hay
+      una tabla de decisión que razonar.
+- [x] `kotlinx-coroutines-play-services` declarada explícitamente: ya llegaba transitivamente, pero
+      depender de eso para una API de compilación es frágil.
+- [x] Clasificación de errores: `ApiException` con código de `ConnectionResult` → `EngineUnavailable`
+      (no hay reintento que lo arregle); el resto → `ScanError.Engine`. **Sin verificar en
+      dispositivo**: hay que confirmarlo en el paso 5.
 
 **Riesgo**: nulo (código aún no alcanzable).
+
+> **Desviación**: no se escribió `MlKitDocumentScannerTest` con `FakeActivityResultHost`. Lo poco
+> que aportaría exige mockear las estáticas de GMS (`GmsDocumentScanning.getClient`,
+> `GmsDocumentScanningResult.fromActivityResultIntent`), justo lo que se descartó en el paso 0. La
+> parte que sí tiene decisiones —la tabla— está cubierta por `ScanResultMapperTest`, y el resto es
+> fontanería que solo el E2E del paso 5 prueba de verdad.
 
 ## Paso 5 · Cablear el shell ⏳ ⚠️ **paso de mayor riesgo**
 

@@ -111,6 +111,9 @@ dependencies {
 
     // ML Kit
     implementation(libs.gms.mlkit.docscanner)
+    // Awaiting GMS Tasks as coroutines. Already arrives transitively, declared so the
+    // scanner does not depend on someone else's dependency graph for it.
+    implementation(libs.kotlinx.coroutines.play.services)
 
     // KotlinX
     implementation(libs.kotlinx.collections.immutable)
