@@ -18,10 +18,11 @@ diseña su arquitectura objetivo y lo migra en pasos pequeños y verificables.
 | # | Subsistema | Estado | Documentos |
 |---|---|---|---|
 | 1 | **Escaneo de documentos** | ✅ Completado | [Análisis](architecture/01-scanner-analysis.md) · [Arquitectura objetivo](architecture/02-scanner-target-architecture.md) · [Plan de migración](architecture/03-scanner-migration-plan.md) |
-| 2 | Visor PDF (`:composepdf` + `feature/pdfviewer`) | ⏳ Pendiente | — |
-| 3 | Preferencias y tema | ⏳ Pendiente | — |
-| 4 | Búsqueda y filtrado | ⏳ Pendiente | — |
-| 5 | Suscripciones y analítica | ⏳ Pendiente | — |
+| 2 | **Frontera del dominio** (V7/V8) | ✅ Completado | [Plan y resultado](architecture/04-domain-purity-plan.md) |
+| 3 | Visor PDF (`:composepdf` + `feature/pdfviewer`) | ⏳ Pendiente | — |
+| 4 | Preferencias y tema | ⏳ Pendiente | — |
+| 5 | Búsqueda y filtrado | ⏳ Pendiente | — |
+| 6 | Suscripciones y analítica | ⏳ Pendiente | — |
 
 ## Método
 

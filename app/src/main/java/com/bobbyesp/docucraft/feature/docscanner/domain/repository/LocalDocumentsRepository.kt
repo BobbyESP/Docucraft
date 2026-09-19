@@ -3,9 +3,9 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.repository
 
-import android.net.Uri
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.scanner.ContentRef
 import kotlinx.coroutines.flow.Flow
 
 interface LocalDocumentsRepository {
@@ -82,13 +82,11 @@ interface LocalDocumentsRepository {
     /**
      * Permanently removes a document from the system.
      *
-     * This operation performs a cleanup that involves:
-     * 1. Removing the record from the local database.
-     * 2. (Optional depending on implementation) Deleting the actual physical file from the device
-     *    storage referenced by [path].
+     * This operation performs a cleanup that involves: Only the catalogue entry goes; removing the
+     * document itself is storage's job.
      *
-     * @param path The [Uri] of the document to be deleted.
-     * @throws SecurityException If the app lacks permissions to delete the physical file.
+     * @param location Where the document lives.
+     * @throws IllegalArgumentException If the catalogue holds no such document.
      */
-    suspend fun deleteDocument(path: Uri)
+    suspend fun deleteDocument(location: ContentRef)
 }

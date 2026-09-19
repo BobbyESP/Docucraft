@@ -3,44 +3,31 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.model
 
-import android.net.Uri
-import androidx.compose.runtime.Immutable
-import com.bobbyesp.docucraft.core.util.UriSerializer
-import kotlinx.serialization.Serializable
+import com.bobbyesp.scanner.ContentRef
 
 /**
- * Data class that represents a scanned document.
+ * A document the app has scanned and catalogued.
  *
- * This class is used to model the details of a scanned PDF document, including its metadata and
- * file-related information. It is marked as @Serializable to allow serialization and
- * deserialization, and as @Immutable to ensure immutability for Compose compatibility.
- *
- * @property id The unique identifier for the scanned document in the database.
- * @property uuid A unique identifier for the scanned document.
- * @property filename The name of the document file without extension (e.g.,
- *   "internet_bill_january_2026").
- * @property title The title of the document. This field is optional and can be null.
- * @property description A brief description of the document. This field is optional and can be
- *   null.
- * @property path The Uri representing the location of the file on the device's storage. This
- *   property uses a custom serializer, `UriSerializer`, for proper serialization.
- * @property createdTimestamp The timestamp (in milliseconds) indicating when the file was created.
- * @property fileSize The size of the file in bytes.
- * @property pageCount The total number of pages in the document.
- * @property thumbnail The Uri (as a String) representing the location of the thumbnail image for
- *   the file. This field is optional and can be null.
+ * @property id Row identifier assigned by the catalogue.
+ * @property uuid Stable identifier used to refer to the document across screens.
+ * @property filename Name without extension, e.g. `Scan_20260919_142530`.
+ * @property title User-supplied title, if they gave one.
+ * @property description User-supplied description, if they gave one.
+ * @property path Where the document lives.
+ * @property createdTimestamp When it was captured, in epoch milliseconds.
+ * @property fileSize Size in bytes.
+ * @property pageCount Pages in the document.
+ * @property thumbnail Where its preview image lives, if one could be produced.
  */
-@Serializable
-@Immutable
 data class ScannedDocument(
     val id: Long,
     val uuid: String,
     val filename: String,
     val title: String?,
     val description: String?,
-    @Serializable(with = UriSerializer::class) val path: Uri,
+    val path: ContentRef,
     val createdTimestamp: Long,
     val fileSize: Long,
     val pageCount: Int,
-    val thumbnail: String?,
+    val thumbnail: ContentRef?,
 )

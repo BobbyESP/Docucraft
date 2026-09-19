@@ -3,7 +3,6 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel
 
-import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
@@ -137,7 +136,7 @@ class HomeViewModelTest {
             filename = "$uuid.pdf",
             title = "Title $uuid",
             description = null,
-            path = mockk<Uri>(relaxed = true),
+            path = ContentRef("content://stored/$uuid.pdf"),
             createdTimestamp = 1_000L,
             fileSize = 2_048L,
             pageCount = 3,

@@ -3,10 +3,10 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.mapper
 
-import androidx.core.net.toUri
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.scanner.ContentRef
 
 /**
  * Translates between the Room rows and the domain models.
@@ -21,11 +21,11 @@ internal fun ScannedDocumentEntity.toModel(): ScannedDocument =
         filename = filename,
         title = title,
         description = description,
-        path = path.toUri(),
+        path = ContentRef(path),
         createdTimestamp = createdTimestamp,
         fileSize = fileSize,
         pageCount = pageCount,
-        thumbnail = thumbnail,
+        thumbnail = thumbnail?.let(::ContentRef),
     )
 
 /** A document that has never been catalogued, so it carries no id and no user-supplied fields. */

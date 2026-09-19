@@ -42,7 +42,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
@@ -51,6 +50,7 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
+import com.bobbyesp.scanner.ContentRef
 import java.util.UUID
 
 enum class ScannedDocumentCardPosition {
@@ -127,7 +127,7 @@ fun ScannedDocumentListItem(
                 } else {
                     AsyncImage(
                         modifier = Modifier.fillMaxSize(),
-                        imageModel = pdf.thumbnail,
+                        imageModel = pdf.thumbnail?.value,
                         failure = {
                             Placeholder(
                                 modifier = Modifier.fillMaxSize(),
@@ -189,11 +189,11 @@ private fun ScannedDocumentListItemPreview() {
                     filename = "Document.pdf",
                     title = "Document",
                     description = "This is a sample document",
-                    path = "path".toUri(),
+                    path = ContentRef("path"),
                     createdTimestamp = 1630000000000,
                     fileSize = 1024,
                     pageCount = 5,
-                    thumbnail = "thumbnail",
+                    thumbnail = ContentRef("thumbnail"),
                     uuid = UUID.randomUUID().toString(),
                     id = 1,
                 ),
@@ -213,11 +213,11 @@ private fun ListScannedDocumentListItemPreview() {
                     filename = "Document $it.pdf",
                     title = "Document $it",
                     description = if (it % 2 == 0) "This is a sample document $it" else null,
-                    path = "path".toUri(),
+                    path = ContentRef("path"),
                     createdTimestamp = 1630000000000 + it,
                     fileSize = 1024L * it,
                     pageCount = 5 + it,
-                    thumbnail = if (it % 3 == 0) "thumbnail" else null,
+                    thumbnail = if (it % 3 == 0) ContentRef("thumbnail") else null,
                     uuid = UUID.randomUUID().toString(),
                     id = 2,
                 )

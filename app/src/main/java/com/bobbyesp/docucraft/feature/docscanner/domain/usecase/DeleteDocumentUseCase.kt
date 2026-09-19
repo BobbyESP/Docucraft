@@ -6,7 +6,6 @@ package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
-import com.bobbyesp.scanner.ContentRef
 
 /**
  * Removes a document from the catalogue and from storage.
@@ -21,8 +20,8 @@ class DeleteDocumentUseCase(
     suspend operator fun invoke(document: ScannedDocument) {
         repository.deleteDocument(document.path)
 
-        storage.delete(ContentRef(document.path.toString()))
+        storage.delete(document.path)
         // The preview was never cleaned up before, so previews of deleted documents piled up.
-        document.thumbnail?.let { storage.delete(ContentRef(it)) }
+        document.thumbnail?.let { storage.delete(it) }
     }
 }

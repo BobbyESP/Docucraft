@@ -30,7 +30,6 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetPage
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
-import com.bobbyesp.scanner.ContentRef
 import com.bobbyesp.scanner.DocumentScanner
 import com.bobbyesp.scanner.ScanDraft
 import com.bobbyesp.scanner.ScanError
@@ -322,7 +321,7 @@ class HomeViewModel(
                 BasicDocument(
                     uuid = doc.uuid,
                     filename = doc.filename,
-                    uri = doc.path.toString(),
+                    uri = doc.path.value,
                     title = doc.title,
                     description = doc.description,
                 )
@@ -410,7 +409,7 @@ class HomeViewModel(
         val doc = currentState.sheetState?.activeDocument ?: return
 
         runCatching {
-                documentSharer.share(ContentRef(doc.path.toString()))
+                documentSharer.share(doc.path)
                 analyticsHelper.logEvent(
                     AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_SHARED)
                 )
@@ -430,7 +429,7 @@ class HomeViewModel(
 
         val outcome =
             documentExporter.export(
-                document = ContentRef(doc.path.toString()),
+                document = doc.path,
                 suggestedName = doc.title ?: doc.filename,
             )
 

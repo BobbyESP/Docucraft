@@ -70,7 +70,7 @@ esos modelos causarían recomposiciones de más.
 | 3 | `DocumentSharer` (abrir fuera resultó ser código muerto) | Bajo | ✅ |
 | 4 | `DocumentExporter` + `ExportOutcome` | Bajo | ✅ |
 | 5 | Borrado por el puerto de almacenamiento; muere `FileRepository` | Medio | ✅ |
-| 6 | `ScannedDocument`: `Uri` → `ContentRef` | Medio | ⏳ |
+| 6 | `ScannedDocument`: `Uri` → `ContentRef` | Medio | ✅ |
 
 ### Principios heredados de la fase 1
 
@@ -128,3 +128,35 @@ El borrado ni siquiera lo intentaba con el preview. Cada documento borrado dejab
 - `FileRepository`, `FileRepositoryImpl`, `fileManagementModule` — `readBytesFromUri` no lo llamaba
   nadie y `getFilePathFromUri` solo servía al borrado roto. Módulo entero fuera.
 - `GetDocumentUseCase(Uri)`, `LocalDocumentsRepository.getDocument(Uri)`, `Dao.getByPath`.
+
+## 5. Resultado
+
+`domain/` son 18 archivos, y sus **únicos** imports son:
+
+```
+com.bobbyesp.docucraft.feature.docscanner.domain.*   (él mismo)
+com.bobbyesp.scanner                                 (el contrato de escaneo)
+com.bobbyesp.docucraft.core.util                     (DateTime, que es java.time puro)
+kotlinx.coroutines
+```
+
+Ni Android, ni Compose, ni FileKit, ni la capa de datos. **62 tests**, 0 fallos.
+
+Efecto secundario agradable: los tests ya no necesitan `mockk<Uri>()` para construir un
+`ScannedDocument`. Ese mock existía únicamente porque el modelo llevaba un tipo de Android.
+
+### ⚠️ Pendiente de verificación en dispositivo
+
+| Qué | Por qué importa |
+|---|---|
+| Compartir un documento | Cambió de use case a puerto |
+| Exportar y **cancelar** el diálogo | B7: cancelar ya no debe pintar un error rojo |
+| Exportar de verdad | Ruta y nombre sugerido pasaron por el puerto |
+| **Borrar un documento** | B8/B9: ahora sí debe desaparecer el PDF **y** su miniatura |
+| Ordenar y filtrar la lista | `SortOption` perdió sus métodos `@Composable` |
+| Abrir un documento en el visor | `BasicDocument.uri` ahora viene de `ContentRef` |
+
+> **Nota sobre B8.** El arreglo hace que los borrados **futuros** limpien el disco. Los archivos
+> huérfanos que ya dejaron los borrados anteriores siguen ahí: no hay migración que los recoja. Si
+> el espacio importa, hace falta una limpieza puntual que compare `files/scans/pdf` y
+> `files/previews` contra la tabla. Queda anotado, no hecho.

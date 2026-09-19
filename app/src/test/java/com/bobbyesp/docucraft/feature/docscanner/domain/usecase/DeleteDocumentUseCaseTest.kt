@@ -3,13 +3,11 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
-import android.net.Uri
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
 import com.bobbyesp.scanner.ContentRef
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -26,23 +24,19 @@ class DeleteDocumentUseCaseTest {
     private val repository = mockk<LocalDocumentsRepository>(relaxed = true)
     private val useCase = DeleteDocumentUseCase(repository, storage)
 
-    private fun document(thumbnail: String? = "/previews/doc.png"): ScannedDocument {
-        val path = mockk<Uri>(relaxed = true)
-        every { path.toString() } returns "content://stored/doc.pdf"
-
-        return ScannedDocument(
+    private fun document(thumbnail: ContentRef? = ContentRef("/previews/doc.png")) =
+        ScannedDocument(
             id = 1,
             uuid = "doc-1",
             filename = "doc",
             title = null,
             description = null,
-            path = path,
+            path = ContentRef("content://stored/doc.pdf"),
             createdTimestamp = 1_000L,
             fileSize = 2_048L,
             pageCount = 1,
             thumbnail = thumbnail,
         )
-    }
 
     @Test
     fun `removes the document from the catalogue and from storage`() = runTest {
@@ -57,7 +51,7 @@ class DeleteDocumentUseCaseTest {
     /** Previews of deleted documents used to pile up forever. */
     @Test
     fun `takes the preview with it`() = runTest {
-        useCase(document(thumbnail = "/previews/doc.png"))
+        useCase(document(thumbnail = ContentRef("/previews/doc.png")))
 
         assertEquals(
             listOf(ContentRef("content://stored/doc.pdf"), ContentRef("/previews/doc.png")),

@@ -178,7 +178,7 @@ private fun rememberDocumentActions(
 @Composable
 private fun DocumentHeader(scannedDocument: ScannedDocument, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        DocumentThumbnail(thumbnail = scannedDocument.thumbnail)
+        DocumentThumbnail(thumbnail = scannedDocument.thumbnail?.value)
         DocumentInfo(scannedDocument = scannedDocument)
     }
 }

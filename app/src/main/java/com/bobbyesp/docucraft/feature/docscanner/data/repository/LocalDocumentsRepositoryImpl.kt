@@ -3,13 +3,13 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.repository
 
-import android.net.Uri
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
+import com.bobbyesp.scanner.ContentRef
 import java.text.Normalizer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -60,12 +60,11 @@ class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocume
         scannedDocumentDao.update(updated)
     }
 
-    override suspend fun deleteDocument(path: Uri) {
-        // First remove from database to maintain referential integrity
-        val deletedCount = scannedDocumentDao.deleteByPath(path.toString())
+    override suspend fun deleteDocument(location: ContentRef) {
+        val deletedCount = scannedDocumentDao.deleteByPath(location.value)
 
         if (deletedCount <= 0) {
-            throw IllegalArgumentException("No document found with path: $path")
+            throw IllegalArgumentException("No document found at: ${location.value}")
         }
     }
 
