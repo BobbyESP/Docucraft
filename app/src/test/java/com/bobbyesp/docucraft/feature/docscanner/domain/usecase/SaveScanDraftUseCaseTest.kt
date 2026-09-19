@@ -3,11 +3,10 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
+import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
-import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
-import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredDocument
 import com.bobbyesp.scanner.ContentRef
 import com.bobbyesp.scanner.ScanArtifact
 import com.bobbyesp.scanner.ScanDraft
@@ -26,28 +25,6 @@ import org.junit.Test
  * is nothing Android-shaped left in it, and the interesting cases are all reachable.
  */
 class SaveScanDraftUseCaseTest {
-
-    private class FakeDocumentStorage : DocumentStorage {
-
-        var sizeBytes = 1_024L
-        var thumbnail: ContentRef? = ContentRef("/previews/scan.png")
-        var storeFailure: Exception? = null
-        var thumbnailFailure: Exception? = null
-
-        var usedFilename: String? = null
-            private set
-
-        override suspend fun storeDocument(source: ContentRef, filename: String): StoredDocument {
-            storeFailure?.let { throw it }
-            usedFilename = filename
-            return StoredDocument(ContentRef("content://stored/$filename.pdf"), sizeBytes)
-        }
-
-        override suspend fun storeThumbnail(document: ContentRef, filename: String): ContentRef? {
-            thumbnailFailure?.let { throw it }
-            return thumbnail
-        }
-    }
 
     private val storage = FakeDocumentStorage()
     private val repository = mockk<LocalDocumentsRepository>(relaxed = true)

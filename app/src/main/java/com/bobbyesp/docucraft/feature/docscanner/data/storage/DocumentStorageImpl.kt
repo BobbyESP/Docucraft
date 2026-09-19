@@ -3,15 +3,17 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.storage
 
+import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.App
 import com.bobbyesp.docucraft.core.util.ensure
 import com.bobbyesp.docucraft.core.util.ensureParent
+import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsService
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
-import com.bobbyesp.docucraft.feature.docscanner.domain.service.DocumentOperationsService
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredDocument
 import com.bobbyesp.scanner.ContentRef
@@ -72,6 +74,31 @@ class DocumentStorageImpl(
             ContentRef(target.path)
         }
 
+    /**
+     * Note the `contentResolver.delete`. These are `FileProvider` URIs, and a `FileProvider`
+     * exposes no `_data` column, so resolving one back to a path returns null — which is why the
+     * previous attempt at deleting by path silently left every document on disk. Asking the
+     * provider to delete works, because deleting the underlying file is exactly what it does.
+     */
+    override suspend fun delete(location: ContentRef) {
+        withContext(Dispatchers.IO) {
+            val uri = location.value.toUri()
+
+            try {
+                when (uri.scheme) {
+                    ContentResolver.SCHEME_CONTENT ->
+                        context.contentResolver.delete(uri, null, null)
+                    // Thumbnails are kept as plain paths, which parse with no scheme at all.
+                    ContentResolver.SCHEME_FILE,
+                    null -> uri.path?.let { File(it).delete() }
+                    else -> Log.w(TAG, "Not deleting, unsupported scheme: ${uri.scheme}")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Could not delete ${location.value}", e)
+            }
+        }
+    }
+
     private fun copy(from: Uri, to: PlatformFile) {
         to.ensureParent(mustCreate = true)
 
@@ -95,6 +122,7 @@ class DocumentStorageImpl(
     }
 
     private companion object {
+        const val TAG = "DocumentStorage"
         const val DOCUMENTS_DIR = "scans/pdf"
         const val THUMBNAILS_DIR = "previews"
         const val BUFFER_SIZE = 8192

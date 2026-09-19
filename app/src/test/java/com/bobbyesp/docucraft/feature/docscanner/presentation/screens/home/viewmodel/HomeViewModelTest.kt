@@ -13,13 +13,13 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
+import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
@@ -77,8 +77,8 @@ class HomeViewModelTest {
     private lateinit var getDocumentUseCase: GetDocumentUseCase
     private lateinit var saveScanDraftUseCase: SaveScanDraftUseCase
     private lateinit var deleteDocumentUseCase: DeleteDocumentUseCase
-    private lateinit var shareDocumentUseCase: ShareDocumentUseCase
-    private lateinit var exportDocumentUseCase: ExportDocumentUseCase
+    private lateinit var documentSharer: DocumentSharer
+    private lateinit var documentExporter: DocumentExporter
     private lateinit var updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase
     private lateinit var stringProvider: StringProvider
     private lateinit var analyticsHelper: AnalyticsHelper
@@ -165,8 +165,8 @@ class HomeViewModelTest {
         getDocumentUseCase = mockk()
         saveScanDraftUseCase = mockk()
         deleteDocumentUseCase = mockk(relaxed = true)
-        shareDocumentUseCase = mockk(relaxed = true)
-        exportDocumentUseCase = mockk()
+        documentSharer = mockk(relaxed = true)
+        documentExporter = mockk()
         updateDocumentFieldsUseCase = mockk(relaxed = true)
         stringProvider = mockk(relaxed = true)
         analyticsHelper = mockk(relaxed = true)
@@ -186,8 +186,8 @@ class HomeViewModelTest {
             getDocumentUseCase = getDocumentUseCase,
             saveScanDraftUseCase = saveScanDraftUseCase,
             deleteDocumentUseCase = deleteDocumentUseCase,
-            shareDocumentUseCase = shareDocumentUseCase,
-            exportDocumentUseCase = exportDocumentUseCase,
+            documentSharer = documentSharer,
+            documentExporter = documentExporter,
             updateDocumentFieldsUseCase = updateDocumentFieldsUseCase,
             stringProvider = stringProvider,
             analyticsHelper = analyticsHelper,

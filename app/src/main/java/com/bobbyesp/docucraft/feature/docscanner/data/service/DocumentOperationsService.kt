@@ -1,14 +1,19 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.docscanner.domain.service
+package com.bobbyesp.docucraft.feature.docscanner.data.service
 
 import android.graphics.Bitmap
 import android.net.Uri
 import androidx.annotation.IntRange
 import java.io.File
 
-/** Service interface for document operations. */
+/**
+ * Renders pages of a document as images.
+ *
+ * An implementation detail of [DocumentStorageImpl] rather than a domain concept: it speaks Bitmap
+ * and File, which is exactly why it belongs on this side of the line.
+ */
 interface DocumentOperationsService {
     /**
      * Saves a specific page from a document as an image.

@@ -3,10 +3,8 @@
  */
 package com.bobbyesp.docucraft.feature.shared.domain
 
-import androidx.compose.runtime.Stable
 import kotlinx.serialization.Serializable
 
-@Stable
 @Serializable
 data class BasicDocument(
     val uuid: String,

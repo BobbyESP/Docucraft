@@ -44,13 +44,6 @@ class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocume
         return entity.toModel()
     }
 
-    override suspend fun getDocument(path: Uri): ScannedDocument {
-        val entity =
-            scannedDocumentDao.getByPath(path.toString())
-                ?: throw NoSuchElementException("No document found with path: $path")
-        return entity.toModel()
-    }
-
     override suspend fun saveDocument(document: NewScannedDocument) {
         scannedDocumentDao.insert(document.toEntity())
     }

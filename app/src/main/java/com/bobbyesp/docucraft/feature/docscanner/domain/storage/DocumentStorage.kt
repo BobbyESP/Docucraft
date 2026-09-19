@@ -34,4 +34,10 @@ interface DocumentStorage {
      *   not worth failing a scan over.
      */
     suspend fun storeThumbnail(document: ContentRef, filename: String): ContentRef?
+
+    /**
+     * Removes something this storage put there. Does nothing if it is already gone, since the
+     * caller's intent — that it not be there — is satisfied either way.
+     */
+    suspend fun delete(location: ContentRef)
 }

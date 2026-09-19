@@ -18,9 +18,6 @@ interface ScannedDocumentDao : BaseDao<ScannedDocumentEntity> {
     @Query("SELECT * FROM scanned_documents WHERE uuid = :uuid")
     suspend fun getByUuid(uuid: String): ScannedDocumentEntity?
 
-    @Query("SELECT * FROM scanned_documents WHERE path = :path")
-    suspend fun getByPath(path: String): ScannedDocumentEntity?
-
     @Query("SELECT * FROM scanned_documents ORDER BY createdTimestamp DESC")
     fun observeDocuments(): Flow<List<ScannedDocumentEntity>>
 

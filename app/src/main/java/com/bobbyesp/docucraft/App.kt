@@ -10,7 +10,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import com.bobbyesp.docucraft.core.di.analyticsModule
 import com.bobbyesp.docucraft.core.di.commonModule
-import com.bobbyesp.docucraft.core.di.fileManagementModule
 import com.bobbyesp.docucraft.core.di.notificationsServiceModule
 import com.bobbyesp.docucraft.core.di.preferencesModule
 import com.bobbyesp.docucraft.core.di.subscriptionModule
@@ -46,7 +45,6 @@ class App : Application() {
                 documentScannerDataModule,
                 documentScannerModule,
                 documentScannerViewModels,
-                fileManagementModule,
                 analyticsModule,
                 subscriptionModule,
             )

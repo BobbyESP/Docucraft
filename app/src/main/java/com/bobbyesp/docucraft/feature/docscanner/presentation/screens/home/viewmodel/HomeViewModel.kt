@@ -13,13 +13,14 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
+import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
+import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
+import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.ExportOutcome
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
@@ -29,6 +30,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetPage
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import com.bobbyesp.scanner.ContentRef
 import com.bobbyesp.scanner.DocumentScanner
 import com.bobbyesp.scanner.ScanDraft
 import com.bobbyesp.scanner.ScanError
@@ -55,8 +57,8 @@ class HomeViewModel(
     private val getDocumentUseCase: GetDocumentUseCase,
     private val saveScanDraftUseCase: SaveScanDraftUseCase,
     private val deleteDocumentUseCase: DeleteDocumentUseCase,
-    private val shareDocumentUseCase: ShareDocumentUseCase,
-    private val exportDocumentUseCase: ExportDocumentUseCase,
+    private val documentSharer: DocumentSharer,
+    private val documentExporter: DocumentExporter,
     private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
@@ -390,7 +392,7 @@ class HomeViewModel(
     private fun deleteCurrentDocument() = launch {
         val doc = currentState.sheetState?.activeDocument ?: return@launch
 
-        deleteDocumentUseCase(doc.path)
+        deleteDocumentUseCase(doc)
 
         analyticsHelper.logEvent(AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_DELETED))
 
@@ -408,7 +410,7 @@ class HomeViewModel(
         val doc = currentState.sheetState?.activeDocument ?: return
 
         runCatching {
-                shareDocumentUseCase(doc.path)
+                documentSharer.share(ContentRef(doc.path.toString()))
                 analyticsHelper.logEvent(
                     AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_SHARED)
                 )
@@ -426,23 +428,40 @@ class HomeViewModel(
     private fun exportCurrent() = launch {
         val doc = currentState.sheetState?.activeDocument ?: return@launch
 
-        exportDocumentUseCase(doc)
-            .onSuccess { uri ->
+        val outcome =
+            documentExporter.export(
+                document = ContentRef(doc.path.toString()),
+                suggestedName = doc.title ?: doc.filename,
+            )
+
+        when (outcome) {
+            is ExportOutcome.Saved -> {
                 analyticsHelper.logEvent(
                     AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_EXPORTED)
                 )
                 sendUiEvent(
                     UiEvent.ShowMessage(
-                        stringProvider.get(R.string.doc_saved_successfully_to, uri),
+                        stringProvider.get(
+                            R.string.doc_saved_successfully_to,
+                            outcome.location.value,
+                        ),
                         NotificationType.Success,
                     )
                 )
             }
-            .onFailure {
+
+            // Choosing not to save anywhere is an answer, not an error. It used to arrive here as
+            // a failure and get shown in red.
+            ExportOutcome.Cancelled -> Unit
+
+            is ExportOutcome.Failed ->
                 sendUiEvent(
-                    UiEvent.ShowMessage(stringProvider.getError(it), NotificationType.Error)
+                    UiEvent.ShowMessage(
+                        stringProvider.getError(outcome.cause),
+                        NotificationType.Error,
+                    )
                 )
-            }
+        }
     }
 
     private fun confirmEdit() = launch {

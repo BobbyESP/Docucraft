@@ -3,27 +3,27 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
-import com.bobbyesp.docucraft.core.domain.repository.FileRepository
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.LocalDocumentsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.search.CompositeSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.data.search.DatabaseSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.data.search.InMemorySearchStrategy
+import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsService
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
+import com.bobbyesp.docucraft.feature.docscanner.data.sharing.AndroidDocumentSharer
+import com.bobbyesp.docucraft.feature.docscanner.data.sharing.FileKitDocumentExporter
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentStorageImpl
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrategy
-import com.bobbyesp.docucraft.feature.docscanner.domain.service.DocumentOperationsService
+import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
+import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.OpenDocumentInViewerUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ShareDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -40,6 +40,9 @@ val documentScannerDataModule = module {
         DocumentStorageImpl(context = androidContext(), documentOperations = get())
     }
 
+    single<DocumentSharer> { AndroidDocumentSharer(context = androidContext()) }
+    single<DocumentExporter> { FileKitDocumentExporter() }
+
     // Repository layer
     single<LocalDocumentsRepository> {
         LocalDocumentsRepositoryImpl(scannedDocumentDao = get<ScannedDocumentDao>())
@@ -55,12 +58,9 @@ val documentScannerDataModule = module {
     factory { ObserveDocumentsUseCase(repository = get()) }
     factory { GetDocumentUseCase(repository = get()) }
     factory { UpdateDocumentFieldsUseCase(repository = get()) }
-    factory { OpenDocumentInViewerUseCase(context = androidContext()) }
-    factory { ShareDocumentUseCase(context = androidContext()) }
-    factory { ExportDocumentUseCase() }
     factory { ProcessDocumentsUseCase(querySearchStrategy = get(), localSearchStrategy = get()) }
 
-    factory { DeleteDocumentUseCase(repository = get(), fileRepository = get<FileRepository>()) }
+    factory { DeleteDocumentUseCase(repository = get(), storage = get()) }
 
     factory { SaveScanDraftUseCase(storage = get(), repository = get()) }
 }

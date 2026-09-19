@@ -11,7 +11,6 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.graphics.createBitmap
-import com.bobbyesp.docucraft.feature.docscanner.domain.service.DocumentOperationsService
 import java.io.File
 import java.io.FileOutputStream
 

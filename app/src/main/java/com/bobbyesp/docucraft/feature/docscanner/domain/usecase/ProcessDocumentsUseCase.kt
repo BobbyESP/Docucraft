@@ -73,6 +73,5 @@ class ProcessDocumentsUseCase(
         filter.minFileSize?.let { min -> filter { it.fileSize >= min } } ?: this
 
     private fun List<ScannedDocument>.filterByDate(filter: FilterOptions) =
-        filter.dateRange?.let { (start, end) -> filter { it.createdTimestamp in start..end } }
-            ?: this
+        filter.dateRange?.let { range -> filter { it.createdTimestamp in range } } ?: this
 }

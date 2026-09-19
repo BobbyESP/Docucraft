@@ -55,19 +55,6 @@ interface LocalDocumentsRepository {
     suspend fun getDocument(uuid: String): ScannedDocument
 
     /**
-     * Retrieves a ScannedPdf object based on its file location URI.
-     *
-     * This is useful when the application receives an intent with a file URI or needs to reconcile
-     * a file on disk with its database entry. It may involve reading file metadata from the [path]
-     * if the entry is not fully cached.
-     *
-     * @param path The [Uri] pointing to the PDF file location.
-     * @return A [ScannedDocument] object representing the file at the given path.
-     * @throws IllegalArgumentException If the URI is invalid or the file does not exist.
-     */
-    suspend fun getDocument(path: Uri): ScannedDocument
-
-    /**
      * Adds a freshly stored document to the catalogue.
      *
      * The document is expected to already exist at [NewScannedDocument.location]; this records it,
