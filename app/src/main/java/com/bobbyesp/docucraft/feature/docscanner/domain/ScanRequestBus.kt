@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.docscanner.domain.scanner
+package com.bobbyesp.docucraft.feature.docscanner.domain
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow

@@ -7,6 +7,7 @@ import com.diffplug.gradle.spotless.SpotlessExtension
 plugins {
     id(libs.plugins.android.application.get().pluginId) apply false
     id(libs.plugins.android.library.get().pluginId) apply false
+    id(libs.plugins.kotlin.jvm.get().pluginId) apply false
     alias(libs.plugins.kotlin.serialization) apply false
     id(libs.plugins.kotlin.parcelize.get().pluginId) apply false
     alias(libs.plugins.kotlin.ksp) apply false

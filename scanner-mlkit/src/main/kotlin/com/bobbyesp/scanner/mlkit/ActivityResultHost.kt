@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.core.presentation.activityresult
+package com.bobbyesp.scanner.mlkit
 
 import android.app.Activity
 import androidx.activity.result.ActivityResult

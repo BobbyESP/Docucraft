@@ -3,7 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.storage
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ContentRef
+import com.bobbyesp.scanner.ContentRef
 
 /** A document that now lives in storage the app controls. */
 data class StoredDocument(val location: ContentRef, val sizeBytes: Long)

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.docscanner.domain.scanner
+package com.bobbyesp.scanner
 
 /**
  * What a given scanner engine can do, so callers can adapt without knowing which engine they got.

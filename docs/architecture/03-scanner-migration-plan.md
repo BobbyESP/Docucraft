@@ -22,8 +22,8 @@
 | 3 | Introducir el contrato de dominio | Nulo | ✅ Hecho |
 | 4 | Implementar el motor ML Kit contra el contrato | Nulo | ✅ Hecho |
 | 5+6 | Cablear el shell y mover el ViewModel al puerto | **Medio-alto** | ✅ Hecho y **verificado en dispositivo** |
-| 7 | Limpiar la persistencia | Medio | ⚠️ Hecho, pendiente de verificar en dispositivo |
-| 8 | *(Opcional)* Módulos `:scanner-api` / `:scanner-mlkit` | Bajo | ⏳ Pendiente |
+| 7 | Limpiar la persistencia | Medio | ✅ Hecho y verificado en dispositivo |
+| 8 | Módulos `:scanner-api` / `:scanner-mlkit` | Bajo | ✅ Hecho |
 | 9 | *(Opcional)* Resiliencia a muerte de proceso | Bajo | ⏳ Pendiente |
 
 ---
@@ -174,16 +174,9 @@ Re-stubear un mock cuyo retorno es `Result<T>` (value class) **no surte efecto**
 primera respuesta. Hay que configurar el resultado al construir, no después. Si aparece un test que
 «ignora» su `coEvery`, es esto.
 
-### ⚠️ Pendiente de verificación en dispositivo
+### ✅ Verificado en dispositivo (2026-09-19)
 
-Los 23 tests pasan y el dominio del guardado ya es comprobable en JVM, pero el `FileProvider` y las
-rutas reales solo se ejercitan en el dispositivo:
-
-- [ ] Escanear y comprobar que el documento aparece en Home con su miniatura
-- [ ] Abrir el documento en el visor (usa la URI de `FileProvider`)
-- [ ] Compartir y exportar un documento
-- [ ] Borrar un documento y confirmar que el archivo desaparece
-- [ ] Comprobar que los documentos escaneados **antes** de este cambio siguen abriéndose
+Escaneo, miniatura, visor, compartir, exportar, borrar y documentos antiguos: todo correcto.
 
 ### Lo que este paso deliberadamente no toca
 
@@ -192,13 +185,38 @@ rutas reales solo se ejercitan en el dispositivo:
 siguen llevando `Uri` y anotaciones de Compose. Son **V7 y V8** del análisis, priorizados como P3 y
 fuera del alcance del subsistema de escaneo. Merecen su propia fase.
 
-## Paso 8 *(opcional)* · Módulos Gradle ⏳
+## Paso 8 · Módulos Gradle ✅
 
-- [ ] Extraer `:scanner-api` y `:scanner-mlkit`.
-- [ ] Sacar `libs.gms.mlkit.docscanner` de `app/build.gradle.kts:113`.
-- [ ] *Contract test* compartido que todo motor futuro debe pasar.
+Hasta aquí, «no filtrar ML Kit» era una convención que había que vigilar en cada PR. Ahora es un
+error de compilación.
 
-**Riesgo**: bajo pero ruidoso (muchos imports cambian de paquete).
+- [x] **`:scanner-api`** — Kotlin plano, **sin plugin de Android y sin una sola dependencia**.
+      Contiene `DocumentScanner` y su vocabulario, en `com.bobbyesp.scanner`.
+- [x] **`:scanner-mlkit`** — librería Android con `MlKitDocumentScanner`, `ActivityResultHost` y el
+      mapeo de resultados, en `com.bobbyesp.scanner.mlkit`. La dependencia de GMS es
+      `implementation`, no `api`: por eso no alcanza a `:app`.
+- [x] `:app` pierde `libs.gms.mlkit.docscanner` y depende de los dos módulos.
+- [x] `ScanRequestBus` se queda en `:app`: es una señal de la aplicación, no parte del contrato del
+      motor, y no tenía por qué viajar a la API.
+
+### Verificación: las fronteras tienen dientes
+
+No basta con que compile; hay que comprobar que **impide** lo que debe impedir. Se añadió un archivo
+sonda a cada módulo y se confirmó que el compilador lo rechaza:
+
+| Sonda | Resultado |
+|---|---|
+| `import com.google.mlkit...` en `:app` | `e: Unresolved reference 'mlkit'` ✅ |
+| `import android.net.Uri` en `:scanner-api` | `e: Unresolved reference 'android'` ✅ |
+
+Ambas sondas se eliminaron después. **49 tests** en todos los módulos, 0 fallos.
+
+### Nota de Gradle
+
+El plugin de Kotlin ya llega por `buildSrc`, así que `alias(libs.plugins.kotlin.jvm)` falla con
+«already on the classpath with an unknown version». Hay que usar
+`id(libs.plugins.kotlin.jvm.get().pluginId)`, que es el idioma que el proyecto ya usa para los
+plugins de AGP.
 
 ## Paso 9 *(opcional)* · Resiliencia a muerte de proceso ⏳
 
@@ -244,5 +262,20 @@ Con el puerto suspendido pasa lo mismo (la corrutina vive en `viewModelScope`).
 ScannerManager»* como si la regla estuviera cumplida, pero `MainActivity.kt:54` y
 `SaveScannedDocumentUseCase.kt:18` la incumplían al escribir el análisis.
 
-- [x] El paso 1 elimina el incumplimiento de `SaveScannedDocumentUseCase`.
-- [ ] El paso 5 elimina el de `MainActivity`. **Actualizar ambos documentos al completarlo.**
+- [x] El paso 1 eliminó el incumplimiento de `SaveScannedDocumentUseCase`.
+- [x] El paso 5+6 eliminó el de `MainActivity`.
+- [x] **Ambos documentos actualizados** en el paso 8, con la estructura de cuatro módulos, el flujo
+      real de escaneo y el punto único de intercambio de motor.
+
+---
+
+## Pendientes tras la migración
+
+Cosas detectadas por el camino que **no** forman parte de este subsistema y merecen su propio turno,
+en el orden acordado:
+
+| # | Qué | Por qué |
+|---|---|---|
+| 1 | **Paso 9** — resiliencia a muerte de proceso | Hueco preexistente, no una regresión (ver arriba) |
+| 2 | **V7 / V8** — `ShareDocumentUseCase`, `OpenDocumentInViewerUseCase`, `ExportDocumentUseCase` y `DeleteDocumentUseCase` siguen siendo Android puro dentro de `domain/usecase/`; los modelos aún llevan `Uri` y anotaciones de Compose | P3 del análisis. Mismo tratamiento: un puerto y una implementación en `data` |
+| 3 | **Miniaturas `.png` que en realidad son WEBP** | `DocumentStorageImpl` las guarda con extensión `.png` pero `DocumentOperationsService` las codifica en WEBP por defecto. Funciona porque los decodificadores miran el contenido, pero es confuso. **Acordado dejarlo para el final**, porque tocarlo afecta a las miniaturas ya generadas y hace falta decidir si se regeneran o se migran |

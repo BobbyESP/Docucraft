@@ -109,11 +109,10 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.datastore.preferences)
 
-    // ML Kit
-    implementation(libs.gms.mlkit.docscanner)
-    // Awaiting GMS Tasks as coroutines. Already arrives transitively, declared so the
-    // scanner does not depend on someone else's dependency graph for it.
-    implementation(libs.kotlinx.coroutines.play.services)
+    // Scanning. The engine lives behind :scanner-api and is only named by the Koin module, so
+    // no ML Kit type is on this module's compile classpath at all.
+    implementation(project(":scanner-api"))
+    implementation(project(":scanner-mlkit"))
 
     // KotlinX
     implementation(libs.kotlinx.collections.immutable)

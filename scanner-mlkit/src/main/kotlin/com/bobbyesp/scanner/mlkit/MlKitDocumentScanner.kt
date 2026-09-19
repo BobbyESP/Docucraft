@@ -1,18 +1,16 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.docscanner.data.scanner
+package com.bobbyesp.scanner.mlkit
 
 import android.app.Activity
 import androidx.activity.result.IntentSenderRequest
-import com.bobbyesp.docucraft.core.presentation.activityresult.ActivityResultHost
-import com.bobbyesp.docucraft.feature.docscanner.data.mapper.ScanResultMapper
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.DocumentScanner
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanError
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanOutcome
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanOutputFormat
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanRequest
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScannerCapabilities
+import com.bobbyesp.scanner.DocumentScanner
+import com.bobbyesp.scanner.ScanError
+import com.bobbyesp.scanner.ScanOutcome
+import com.bobbyesp.scanner.ScanOutputFormat
+import com.bobbyesp.scanner.ScanRequest
+import com.bobbyesp.scanner.ScannerCapabilities
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.ApiException
 import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions

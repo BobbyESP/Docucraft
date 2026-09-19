@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.docscanner.domain.scanner
+package com.bobbyesp.scanner
 
 /** Something a scanner engine produced out of a capture session. */
 sealed interface ScanArtifact {

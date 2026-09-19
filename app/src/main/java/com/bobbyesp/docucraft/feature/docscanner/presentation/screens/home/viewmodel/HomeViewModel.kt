@@ -12,11 +12,7 @@ import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.DocumentScanner
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanDraft
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanError
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanOutcome
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanRequestBus
+import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ExportDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
@@ -33,6 +29,10 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetAction
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetPage
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import com.bobbyesp.scanner.DocumentScanner
+import com.bobbyesp.scanner.ScanDraft
+import com.bobbyesp.scanner.ScanError
+import com.bobbyesp.scanner.ScanOutcome
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

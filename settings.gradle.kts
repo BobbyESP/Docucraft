@@ -34,3 +34,7 @@ rootProject.name = "Docucraft"
 include(":app")
 
 include(":composepdf")
+
+include(":scanner-api")
+
+include(":scanner-mlkit")

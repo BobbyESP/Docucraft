@@ -3,11 +3,11 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
-import com.bobbyesp.docucraft.core.presentation.activityresult.ActivityResultHost
-import com.bobbyesp.docucraft.core.presentation.activityresult.ActivityResultHostImpl
-import com.bobbyesp.docucraft.feature.docscanner.data.scanner.MlKitDocumentScanner
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.DocumentScanner
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanRequestBus
+import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
+import com.bobbyesp.scanner.DocumentScanner
+import com.bobbyesp.scanner.mlkit.ActivityResultHost
+import com.bobbyesp.scanner.mlkit.ActivityResultHostImpl
+import com.bobbyesp.scanner.mlkit.MlKitDocumentScanner
 import org.koin.dsl.module
 
 val documentScannerModule = module {

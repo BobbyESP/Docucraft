@@ -3,7 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.model
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ContentRef
+import com.bobbyesp.scanner.ContentRef
 
 /**
  * A document that has been stored but not yet catalogued.

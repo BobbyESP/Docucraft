@@ -6,11 +6,11 @@ package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ContentRef
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanArtifact
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanDraft
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredDocument
+import com.bobbyesp.scanner.ContentRef
+import com.bobbyesp.scanner.ScanArtifact
+import com.bobbyesp.scanner.ScanDraft
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot

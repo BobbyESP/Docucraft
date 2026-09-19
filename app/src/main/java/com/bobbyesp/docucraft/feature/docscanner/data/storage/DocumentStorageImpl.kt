@@ -11,10 +11,10 @@ import com.bobbyesp.docucraft.App
 import com.bobbyesp.docucraft.core.util.ensure
 import com.bobbyesp.docucraft.core.util.ensureParent
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ContentRef
 import com.bobbyesp.docucraft.feature.docscanner.domain.service.DocumentOperationsService
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredDocument
+import com.bobbyesp.scanner.ContentRef
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.filesDir

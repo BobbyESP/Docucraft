@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.docscanner.domain.scanner
+package com.bobbyesp.scanner
 
 /**
  * What a finished capture session produced, before anything is persisted.

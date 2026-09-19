@@ -1,11 +1,11 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.docscanner.data.mapper
+package com.bobbyesp.scanner.mlkit
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanArtifact
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanError
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanOutcome
+import com.bobbyesp.scanner.ScanArtifact
+import com.bobbyesp.scanner.ScanError
+import com.bobbyesp.scanner.ScanOutcome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

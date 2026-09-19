@@ -26,13 +26,13 @@ import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.presentation.MainActivityUiState
 import com.bobbyesp.docucraft.core.presentation.MainViewModel
-import com.bobbyesp.docucraft.core.presentation.activityresult.ActivityResultHostImpl
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.navigation.DocucraftApp
 import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanRequestBus
+import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.ACTION_SCAN_DOCUMENT
+import com.bobbyesp.scanner.mlkit.ActivityResultHostImpl
 import com.dokar.sonner.Toaster
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.init

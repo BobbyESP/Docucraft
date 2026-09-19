@@ -7,9 +7,9 @@ import com.bobbyesp.docucraft.core.util.DateTime
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ContentRef
-import com.bobbyesp.docucraft.feature.docscanner.domain.scanner.ScanDraft
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
+import com.bobbyesp.scanner.ContentRef
+import com.bobbyesp.scanner.ScanDraft
 
 /**
  * Turns a finished scan into a document the app owns and knows about.
