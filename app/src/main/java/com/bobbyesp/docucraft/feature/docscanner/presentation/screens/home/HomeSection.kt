@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.Route
 
 /**
@@ -32,16 +33,15 @@ import com.bobbyesp.docucraft.core.presentation.navigation.Route
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun EntryProviderScope<NavKey>.homeSection(
+    navigator: Navigator,
     selectedDocumentId: String?,
-    onOpenDocument: (String) -> Unit,
-    onOpenSettings: () -> Unit,
 ) {
     entry<Route.Home>(
         metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { NoDocumentOpenPane() })
     ) {
         HomeScreen(
-            onOpenDocument = onOpenDocument,
-            onOpenSettings = onOpenSettings,
+            onOpenDocument = { uuid -> navigator.goTo(Route.PdfViewer(uuid)) },
+            onOpenSettings = { navigator.goTo(Route.Settings) },
             selectedDocumentId = selectedDocumentId,
         )
     }

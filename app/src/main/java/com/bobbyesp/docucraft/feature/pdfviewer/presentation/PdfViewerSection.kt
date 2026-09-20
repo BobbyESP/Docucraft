@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.window.core.layout.WindowSizeClass
+import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
@@ -32,8 +33,10 @@ import org.koin.compose.koinInject
  * document can be renamed, or deleted, while it is open.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
-fun EntryProviderScope<NavKey>.pdfViewerSection(onBack: () -> Unit) {
+fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
     entry<Route.PdfViewer>(metadata = ListDetailSceneStrategy.detailPane()) { route ->
+        val onBack = navigator::goBack
+
         val observeDocument: ObserveDocumentUseCase = koinInject()
 
         val document by

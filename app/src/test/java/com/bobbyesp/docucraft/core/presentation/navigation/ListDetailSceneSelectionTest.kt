@@ -22,13 +22,13 @@ import org.junit.Test
  * symptom until someone opens the app on a tablet.
  *
  * `ListDetailSceneStrategy` is deliberately exercised directly rather than through a rendered
- * `NavDisplay`: the decision it makes is pure, so it can be asserted on a JVM without a device,
- * and every window size can be covered in milliseconds instead of one emulator per breakpoint.
+ * `NavDisplay`: the decision it makes is pure, so it can be asserted on a JVM without a device, and
+ * every window size can be covered in milliseconds instead of one emulator per breakpoint.
  *
  * The rule being pinned, from the strategy's own source, is stricter than it looks: it reads the
- * pane metadata of the **last** entry, and gives up entirely — falling back to a single pane —
- * when that entry has none. Every destination that should keep a neighbour visible therefore has
- * to say so itself.
+ * pane metadata of the **last** entry, and gives up entirely — falling back to a single pane — when
+ * that entry has none. Every destination that should keep a neighbour visible therefore has to say
+ * so itself.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 class ListDetailSceneSelectionTest {
@@ -43,7 +43,11 @@ class ListDetailSceneSelectionTest {
         val scene = calculateScene(expanded, listOf(listEntry(Route.Home)))
 
         assertNotNull("The placeholder should hold the detail pane open", scene)
-        assertEquals("Only Home is a real entry; the placeholder is not one", 1, scene?.entries?.size)
+        assertEquals(
+            "Only Home is a real entry; the placeholder is not one",
+            1,
+            scene?.entries?.size,
+        )
     }
 
     @Test
@@ -55,8 +59,7 @@ class ListDetailSceneSelectionTest {
 
     @Test
     fun `list and detail share one scene on a wide window`() {
-        val scene =
-            calculateScene(expanded, listOf(listEntry(Route.Home), detailEntry(pdfViewer)))
+        val scene = calculateScene(expanded, listOf(listEntry(Route.Home), detailEntry(pdfViewer)))
 
         assertNotNull("Home and the open document should share the window", scene)
         assertEquals(2, scene?.entries?.size)
@@ -70,8 +73,8 @@ class ListDetailSceneSelectionTest {
     }
 
     /**
-     * The gap this refactor is meant to close. Settings declares no pane role, so pushing it on
-     * top of an open document makes the strategy give up on the whole scene — on any window size.
+     * The gap this refactor is meant to close. Settings declares no pane role, so pushing it on top
+     * of an open document makes the strategy give up on the whole scene — on any window size.
      */
     @Test
     fun `a destination without a pane role collapses the scene on a wide window`() {

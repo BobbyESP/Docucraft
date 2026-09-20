@@ -33,15 +33,16 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
  * - The list-detail scene strategy lets Home and the PDF viewer share the screen on expanded
  *   windows; on compact windows they behave as a regular stack. Both emerge from the same back
  *   stack — there is no separate "tablet navigation".
- * - Feature sections contribute their entries via [entryProvider]; screens only emit events.
+ * - Feature sections contribute their entries via [entryProvider] and say where they want to go
+ *   through a [Navigator]. This file therefore no longer knows the shape of the navigation graph: a
+ *   new destination is a new key and a new `entry`, neither of which lives here.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun DocucraftApp(modifier: Modifier = Modifier) {
     val backStack = rememberNavBackStack(Route.Home)
+    val navigator = rememberNavigator(backStack)
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
-
-    val goBack: () -> Unit = { backStack.removeLastOrNull() }
 
     // The document currently open in the detail pane, used to highlight it in the list. Only the
     // top of the stack counts as "open" — e.g. on expanded windows, pushing Settings on top of a
@@ -54,7 +55,7 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
     NavDisplay(
         backStack = backStack,
         modifier = modifier.fillMaxSize(),
-        onBack = goBack,
+        onBack = navigator::goBack,
         entryDecorators =
             listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
@@ -63,19 +64,11 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
         sceneStrategies = listOf(listDetailStrategy),
         entryProvider =
             entryProvider {
-                homeSection(
-                    selectedDocumentId = openDocumentId,
-                    onOpenDocument = { uuid -> backStack.add(Route.PdfViewer(uuid)) },
-                    onOpenSettings = { backStack.add(Route.Settings) },
-                )
+                homeSection(navigator, selectedDocumentId = openDocumentId)
 
-                pdfViewerSection(onBack = goBack)
+                pdfViewerSection(navigator)
 
-                settingsSection(
-                    onOpenAppearance = { backStack.add(Route.Settings.Appearance) },
-                    onOpenCustomerCenter = { backStack.add(Route.Settings.CustomerCenter) },
-                    onBack = goBack,
-                )
+                settingsSection(navigator)
             },
         transitionSpec = {
             // Slide in from right when navigating forward
