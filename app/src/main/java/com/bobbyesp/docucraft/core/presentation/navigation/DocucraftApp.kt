@@ -18,6 +18,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.rememberNavigationMotion
+import com.bobbyesp.docucraft.core.presentation.navigation.overlay.rememberOverlaySceneStrategy
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.paneContextSceneDecorator
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsSection
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
@@ -31,9 +32,10 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
  * - The back stack is the whole navigation state. It survives configuration changes and process
  *   death via [rememberNavBackStack], and back (including the predictive gesture) simply pops it —
  *   an open document is closed, never the app, because the stack is only ever exited at Home.
- * - The list-detail scene strategy lets Home and the PDF viewer share the screen on expanded
- *   windows; on compact windows they behave as a regular stack. Both emerge from the same back
- *   stack — there is no separate "tablet navigation".
+ * - Scene strategies decide how the stack is arranged: overlays first, then the list-detail layout.
+ *   The list-detail one lets Home and the PDF viewer share the screen on expanded windows; on
+ *   compact windows they behave as a regular stack. Everything emerges from the same back stack —
+ *   there is no separate "tablet navigation", and no second stack for sheets.
  * - Feature sections contribute their entries via [entryProvider] and say where they want to go
  *   through a [Navigator]. This file therefore no longer knows the shape of the navigation graph: a
  *   new destination is a new key and a new `entry`, neither of which lives here.
@@ -43,6 +45,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
 fun DocucraftApp(modifier: Modifier = Modifier) {
     val backStack = rememberNavBackStack(Home)
     val navigator = rememberNavigator(backStack)
+    val overlayStrategy = rememberOverlaySceneStrategy<NavKey>()
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
     val motion = rememberNavigationMotion()
 
@@ -63,7 +66,9 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator(),
             ),
-        sceneStrategies = listOf(listDetailStrategy),
+        // Overlays first: the first strategy to claim the topmost entry wins, and a sheet or
+        // dialog has to be recognised before the layout strategies try to give it a pane.
+        sceneStrategies = listOf(overlayStrategy, listDetailStrategy),
         sceneDecoratorStrategies = remember { listOf(paneContextSceneDecorator()) },
         entryProvider =
             entryProvider {

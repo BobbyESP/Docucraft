@@ -8,4 +8,6 @@ sealed interface HomeEffect {
     data class OpenDocument(val documentUuid: String) : HomeEffect
 
     data object OpenSettings : HomeEffect
+
+    data class OpenDocumentActions(val documentUuid: String) : HomeEffect
 }

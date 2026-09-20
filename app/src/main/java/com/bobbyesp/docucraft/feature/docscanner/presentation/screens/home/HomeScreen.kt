@@ -16,7 +16,6 @@ import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeEffect
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentDialogWrapper
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -28,6 +27,7 @@ import org.koin.androidx.compose.koinViewModel
 fun HomeScreen(
     onOpenDocument: (String) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenDocumentActions: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel(),
     selectedDocumentId: String? = null,
@@ -39,11 +39,8 @@ fun HomeScreen(
         uiEventFlow = viewModel.defaultEvents,
         onOpenDocument = onOpenDocument,
         onOpenSettings = onOpenSettings,
+        onOpenDocumentActions = onOpenDocumentActions,
     )
-
-    uiState.sheetState?.let { sheetState ->
-        DocumentDialogWrapper(sheetState = sheetState, onHomeIntent = viewModel::onSendIntent)
-    }
 
     HomeContent(
         modifier = modifier,
@@ -59,9 +56,11 @@ private fun HandleHomeUiEffects(
     uiEventFlow: Flow<UiEvent>,
     onOpenDocument: (String) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenDocumentActions: (String) -> Unit,
 ) {
     val currentOnOpenDocument by rememberUpdatedState(onOpenDocument)
     val currentOnOpenSettings by rememberUpdatedState(onOpenSettings)
+    val currentOnOpenDocumentActions by rememberUpdatedState(onOpenDocumentActions)
     val analyticsHelper = LocalAnalyticsHelper.current
 
     LaunchedEffect(uiEffectFlow) {
@@ -71,6 +70,9 @@ private fun HandleHomeUiEffects(
                     currentOnOpenDocument(effect.documentUuid)
                     analyticsHelper.logScreenView("PdfViewer")
                 }
+
+                is HomeEffect.OpenDocumentActions ->
+                    currentOnOpenDocumentActions(effect.documentUuid)
 
                 HomeEffect.OpenSettings -> {
                     currentOnOpenSettings()

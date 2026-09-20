@@ -7,6 +7,9 @@ import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.SubscriptionSettings
+import com.bobbyesp.docucraft.feature.docscanner.navigation.DeleteDocument
+import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
+import com.bobbyesp.docucraft.feature.docscanner.navigation.EditDocument
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import kotlinx.serialization.InternalSerializationApi
@@ -79,6 +82,9 @@ class NavKeySerializationTest {
             listOf(
                 Home,
                 PdfViewer(documentUuid = "uuid"),
+                DocumentActions(documentUuid = "uuid"),
+                EditDocument(documentUuid = "uuid"),
+                DeleteDocument(documentUuid = "uuid"),
                 Settings,
                 AppearanceSettings,
                 SubscriptionSettings,

@@ -6,6 +6,8 @@ package com.bobbyesp.docucraft.core.presentation.navigation
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
+import com.bobbyesp.docucraft.feature.docscanner.navigation.DeleteDocument
+import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import org.junit.Assert.assertEquals
@@ -70,7 +72,41 @@ class NavigatorTest {
         assertEquals(listOf(Home), stack.toList())
     }
 
+    /**
+     * Deleting a document has to dismiss the confirmation and the menu that opened it, both at
+     * once. Counting `goBack` calls would depend on how the user got there.
+     */
+    @Test
+    fun `going back while a condition holds pops the whole group`() {
+        val stack = backStack(Home, actions, confirmDelete)
+
+        BackStackNavigator(stack).goBackWhile { it is DocumentActions || it is DeleteDocument }
+
+        assertEquals(listOf(Home), stack.toList())
+    }
+
+    @Test
+    fun `going back while a condition holds stops at the first destination it does not match`() {
+        val stack = backStack(Home, document, actions)
+
+        BackStackNavigator(stack).goBackWhile { it is DocumentActions }
+
+        assertEquals(listOf(Home, document), stack.toList())
+    }
+
+    /** Even a predicate that accepts everything must leave the stack standing. */
+    @Test
+    fun `going back while a condition holds never empties the stack`() {
+        val stack = backStack(Home, document, actions)
+
+        BackStackNavigator(stack).goBackWhile { true }
+
+        assertEquals(listOf(Home), stack.toList())
+    }
+
     private companion object {
         val document = PdfViewer(documentUuid = "doc-1")
+        val actions = DocumentActions(documentUuid = "doc-1")
+        val confirmDelete = DeleteDocument(documentUuid = "doc-1")
     }
 }

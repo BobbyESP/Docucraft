@@ -15,4 +15,23 @@ data class EditDocumentUiState(
     val isTitleError: Boolean = false,
     val isDescriptionError: Boolean = false,
     val canConfirm: Boolean = true,
-)
+) {
+    companion object {
+        const val TITLE_MAX_LENGTH = 60
+        const val DESCRIPTION_MAX_LENGTH = 200
+
+        /** Derives the whole state from what has been typed, so the limits live in one place. */
+        fun of(title: String, description: String): EditDocumentUiState {
+            val titleTooLong = title.length > TITLE_MAX_LENGTH
+            val descriptionTooLong = description.length > DESCRIPTION_MAX_LENGTH
+
+            return EditDocumentUiState(
+                title = title,
+                description = description,
+                isTitleError = titleTooLong,
+                isDescriptionError = descriptionTooLong,
+                canConfirm = !titleTooLong && !descriptionTooLong,
+            )
+        }
+    }
+}

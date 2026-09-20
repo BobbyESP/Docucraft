@@ -26,7 +26,9 @@ import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
+import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.documentActionsSection
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 
 /**
@@ -44,9 +46,12 @@ fun EntryProviderScope<NavKey>.homeSection(
         HomeScreen(
             onOpenDocument = { uuid -> navigator.goTo(PdfViewer(uuid)) },
             onOpenSettings = { navigator.goTo(Settings) },
+            onOpenDocumentActions = { uuid -> navigator.goTo(DocumentActions(uuid)) },
             selectedDocumentId = selectedDocumentId,
         )
     }
+
+    documentActionsSection(navigator)
 }
 
 /** Shown in the detail pane on expanded windows while no document is open. */

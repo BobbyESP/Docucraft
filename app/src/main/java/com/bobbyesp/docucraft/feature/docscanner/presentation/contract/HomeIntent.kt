@@ -5,7 +5,6 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.contract
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetAction
 
 sealed interface HomeIntent {
     data object Load : HomeIntent
@@ -26,9 +25,6 @@ sealed interface HomeIntent {
 
     data object ClearFilters : HomeIntent
 
-    data class OpenSheet(val id: String) : HomeIntent
-
-    data object DismissSheet : HomeIntent
-
-    data class Sheet(val action: SheetAction) : HomeIntent
+    /** Acting on a document, which is a destination of its own rather than state held here. */
+    data class OpenActions(val id: String) : HomeIntent
 }

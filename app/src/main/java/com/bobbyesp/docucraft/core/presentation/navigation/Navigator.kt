@@ -33,6 +33,16 @@ interface Navigator {
 
     /** Leaves the current destination. At the last one this does nothing rather than emptying. */
     fun goBack()
+
+    /**
+     * Leaves every destination on top that [predicate] accepts, stopping at the first that it does
+     * not.
+     *
+     * For dismissing a group of related destinations at once — a confirmation and the menu that
+     * opened it, when the thing they were both about has ceased to exist. Doing that with repeated
+     * [goBack] calls would mean counting, and the count depends on how the user got there.
+     */
+    fun goBackWhile(predicate: (NavKey) -> Boolean)
 }
 
 @Composable
@@ -56,5 +66,9 @@ internal class BackStackNavigator(private val backStack: NavBackStack<NavKey>) :
         if (backStack.size <= 1) return
 
         backStack.removeLastOrNull()
+    }
+
+    override fun goBackWhile(predicate: (NavKey) -> Boolean) {
+        while (backStack.size > 1 && predicate(backStack.last())) backStack.removeLastOrNull()
     }
 }

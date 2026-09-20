@@ -327,7 +327,7 @@ private fun ScannedDocumentsList(
                 position = position,
                 selected = scannedDocument.uuid == selectedDocumentId,
                 onItemClick = { id -> onAction(HomeIntent.ViewDocument(id)) },
-                onItemLongClick = { onAction(HomeIntent.OpenSheet(scannedDocument.uuid)) },
+                onItemLongClick = { onAction(HomeIntent.OpenActions(scannedDocument.uuid)) },
             )
         }
 
