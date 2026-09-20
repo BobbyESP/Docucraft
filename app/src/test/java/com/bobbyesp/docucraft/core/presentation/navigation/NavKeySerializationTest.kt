@@ -4,6 +4,11 @@
 package com.bobbyesp.docucraft.core.presentation.navigation
 
 import androidx.navigation3.runtime.NavKey
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.SubscriptionSettings
+import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
@@ -48,9 +53,9 @@ class NavKeySerializationTest {
      */
     @Test
     fun `a key carrying an argument restores that argument`() {
-        val restored = roundTrip(Route.PdfViewer(documentUuid = "a-document-uuid"))
+        val restored = roundTrip(PdfViewer(documentUuid = "a-document-uuid"))
 
-        assertEquals("a-document-uuid", (restored as Route.PdfViewer).documentUuid)
+        assertEquals("a-document-uuid", (restored as PdfViewer).documentUuid)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -72,11 +77,11 @@ class NavKeySerializationTest {
          */
         val allKeys: List<NavKey> =
             listOf(
-                Route.Home,
-                Route.PdfViewer(documentUuid = "uuid"),
-                Route.Settings,
-                Route.Settings.Appearance,
-                Route.Settings.CustomerCenter,
+                Home,
+                PdfViewer(documentUuid = "uuid"),
+                Settings,
+                AppearanceSettings,
+                SubscriptionSettings,
             )
     }
 }

@@ -5,6 +5,9 @@ package com.bobbyesp.docucraft.core.presentation.navigation
 
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
+import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -18,39 +21,39 @@ class NavigatorTest {
 
     @Test
     fun `going somewhere puts it on top, leaving the rest to come back to`() {
-        val stack = backStack(Route.Home)
+        val stack = backStack(Home)
 
         BackStackNavigator(stack).goTo(document)
 
-        assertEquals(listOf(Route.Home, document), stack.toList())
+        assertEquals(listOf(Home, document), stack.toList())
     }
 
     /** A double tap on a list item used to open the same document twice. */
     @Test
     fun `going to the destination already on top does nothing`() {
-        val stack = backStack(Route.Home, document)
+        val stack = backStack(Home, document)
 
         BackStackNavigator(stack).goTo(document)
 
-        assertEquals(listOf(Route.Home, document), stack.toList())
+        assertEquals(listOf(Home, document), stack.toList())
     }
 
     @Test
     fun `the same destination is still reachable from somewhere else`() {
-        val stack = backStack(Route.Home, document, Route.Settings)
+        val stack = backStack(Home, document, Settings)
 
         BackStackNavigator(stack).goTo(document)
 
-        assertEquals(listOf(Route.Home, document, Route.Settings, document), stack.toList())
+        assertEquals(listOf(Home, document, Settings, document), stack.toList())
     }
 
     @Test
     fun `going back leaves the current destination`() {
-        val stack = backStack(Route.Home, document)
+        val stack = backStack(Home, document)
 
         BackStackNavigator(stack).goBack()
 
-        assertEquals(listOf(Route.Home), stack.toList())
+        assertEquals(listOf(Home), stack.toList())
     }
 
     /**
@@ -60,14 +63,14 @@ class NavigatorTest {
      */
     @Test
     fun `going back at the root does nothing rather than emptying the stack`() {
-        val stack = backStack(Route.Home)
+        val stack = backStack(Home)
 
         BackStackNavigator(stack).goBack()
 
-        assertEquals(listOf(Route.Home), stack.toList())
+        assertEquals(listOf(Home), stack.toList())
     }
 
     private companion object {
-        val document = Route.PdfViewer(documentUuid = "doc-1")
+        val document = PdfViewer(documentUuid = "doc-1")
     }
 }

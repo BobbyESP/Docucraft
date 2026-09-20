@@ -25,7 +25,9 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
-import com.bobbyesp.docucraft.core.presentation.navigation.Route
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
+import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 
 /**
  * Home is the list pane of the app's list-detail layout: on expanded windows it stays visible next
@@ -36,12 +38,12 @@ fun EntryProviderScope<NavKey>.homeSection(
     navigator: Navigator,
     selectedDocumentId: String?,
 ) {
-    entry<Route.Home>(
+    entry<Home>(
         metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { NoDocumentOpenPane() })
     ) {
         HomeScreen(
-            onOpenDocument = { uuid -> navigator.goTo(Route.PdfViewer(uuid)) },
-            onOpenSettings = { navigator.goTo(Route.Settings) },
+            onOpenDocument = { uuid -> navigator.goTo(PdfViewer(uuid)) },
+            onOpenSettings = { navigator.goTo(Settings) },
             selectedDocumentId = selectedDocumentId,
         )
     }

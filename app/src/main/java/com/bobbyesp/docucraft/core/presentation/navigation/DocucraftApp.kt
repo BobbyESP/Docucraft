@@ -21,7 +21,9 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsSection
+import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.homeSection
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
 
 /**
@@ -40,7 +42,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun DocucraftApp(modifier: Modifier = Modifier) {
-    val backStack = rememberNavBackStack(Route.Home)
+    val backStack = rememberNavBackStack(Home)
     val navigator = rememberNavigator(backStack)
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
 
@@ -49,7 +51,7 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
     // PdfViewer entry (reachable since Home's app bar stays visible next to the detail pane) should
     // clear the highlight, not keep pointing at the PdfViewer entry buried underneath it.
     val openDocumentId by remember {
-        derivedStateOf { (backStack.lastOrNull() as? Route.PdfViewer)?.documentUuid }
+        derivedStateOf { (backStack.lastOrNull() as? PdfViewer)?.documentUuid }
     }
 
     NavDisplay(

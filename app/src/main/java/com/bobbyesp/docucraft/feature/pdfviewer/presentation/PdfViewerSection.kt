@@ -17,9 +17,9 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.window.core.layout.WindowSizeClass
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
-import com.bobbyesp.docucraft.core.presentation.navigation.Route
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import org.koin.compose.koinInject
@@ -34,7 +34,7 @@ import org.koin.compose.koinInject
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
-    entry<Route.PdfViewer>(metadata = ListDetailSceneStrategy.detailPane()) { route ->
+    entry<PdfViewer>(metadata = ListDetailSceneStrategy.detailPane()) { route ->
         val onBack = navigator::goBack
 
         val observeDocument: ObserveDocumentUseCase = koinInject()

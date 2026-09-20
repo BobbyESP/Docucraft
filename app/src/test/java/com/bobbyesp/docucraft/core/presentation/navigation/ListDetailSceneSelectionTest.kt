@@ -12,6 +12,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.scene.SceneStrategyScope
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
+import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -40,7 +43,7 @@ class ListDetailSceneSelectionTest {
      */
     @Test
     fun `list alone still claims a scene on a wide window, filled by its placeholder`() {
-        val scene = calculateScene(expanded, listOf(listEntry(Route.Home)))
+        val scene = calculateScene(expanded, listOf(listEntry(Home)))
 
         assertNotNull("The placeholder should hold the detail pane open", scene)
         assertEquals(
@@ -52,14 +55,14 @@ class ListDetailSceneSelectionTest {
 
     @Test
     fun `list alone falls back to a single pane on a narrow window`() {
-        val scene = calculateScene(compact, listOf(listEntry(Route.Home)))
+        val scene = calculateScene(compact, listOf(listEntry(Home)))
 
         assertNull("On a phone there is no room for a placeholder pane", scene)
     }
 
     @Test
     fun `list and detail share one scene on a wide window`() {
-        val scene = calculateScene(expanded, listOf(listEntry(Route.Home), detailEntry(pdfViewer)))
+        val scene = calculateScene(expanded, listOf(listEntry(Home), detailEntry(pdfViewer)))
 
         assertNotNull("Home and the open document should share the window", scene)
         assertEquals(2, scene?.entries?.size)
@@ -67,7 +70,7 @@ class ListDetailSceneSelectionTest {
 
     @Test
     fun `list and detail fall back to a single pane on a narrow window`() {
-        val scene = calculateScene(compact, listOf(listEntry(Route.Home), detailEntry(pdfViewer)))
+        val scene = calculateScene(compact, listOf(listEntry(Home), detailEntry(pdfViewer)))
 
         assertNull("On a phone the strategy must defer to the single-pane one", scene)
     }
@@ -81,7 +84,7 @@ class ListDetailSceneSelectionTest {
         val scene =
             calculateScene(
                 expanded,
-                listOf(listEntry(Route.Home), detailEntry(pdfViewer), plainEntry(Route.Settings)),
+                listOf(listEntry(Home), detailEntry(pdfViewer), plainEntry(Settings)),
             )
 
         assertNull("Settings has no pane role, so it takes the whole window", scene)
@@ -97,7 +100,7 @@ class ListDetailSceneSelectionTest {
             calculateScene(
                 expanded,
                 listOf(
-                    listEntry(Route.Home, sceneKey = "documents"),
+                    listEntry(Home, sceneKey = "documents"),
                     detailEntry(pdfViewer, sceneKey = "settings"),
                 ),
             )
@@ -136,7 +139,7 @@ class ListDetailSceneSelectionTest {
     private fun plainEntry(key: NavKey) = NavEntry<NavKey>(key = key) {}
 
     private companion object {
-        val pdfViewer = Route.PdfViewer(documentUuid = "doc-1")
+        val pdfViewer = PdfViewer(documentUuid = "doc-1")
 
         /** One partition across: a phone, or a tablet held in portrait. */
         val compact = directive(maxHorizontalPartitions = 1)
