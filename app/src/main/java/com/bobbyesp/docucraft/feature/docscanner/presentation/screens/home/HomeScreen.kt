@@ -7,7 +7,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
@@ -15,7 +14,6 @@ import com.bobbyesp.docucraft.core.domain.repository.logScreenView
 import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.util.events.UiEvent
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -33,55 +31,35 @@ fun HomeScreen(
     selectedDocumentId: String? = null,
 ) {
     val uiState by viewModel.state.collectAsStateWithLifecycle()
+    val analyticsHelper = LocalAnalyticsHelper.current
 
-    HandleHomeUiEffects(
-        uiEffectFlow = viewModel.effects,
-        uiEventFlow = viewModel.defaultEvents,
-        onOpenDocument = onOpenDocument,
-        onOpenSettings = onOpenSettings,
-        onOpenDocumentActions = onOpenDocumentActions,
-    )
+    HandleHomeMessages(uiEventFlow = viewModel.defaultEvents)
 
     HomeContent(
         modifier = modifier,
         uiState = uiState,
         onAction = viewModel::onSendIntent,
+        // Straight from the tap. Going somewhere is not work for the state holder to do, and
+        // routing it through one only opened a gap between the asking and the going.
+        onOpenDocument = { uuid ->
+            onOpenDocument(uuid)
+            analyticsHelper.logScreenView("PdfViewer")
+        },
+        onOpenSettings = {
+            onOpenSettings()
+            analyticsHelper.logScreenView("Settings")
+        },
+        onOpenDocumentActions = onOpenDocumentActions,
         selectedDocumentId = selectedDocumentId,
     )
 }
 
+/**
+ * Messages do wait for somebody to read them, unlike anything the screen is asked to do: a scan
+ * that finished while the catalogue was off screen still has to say how it went.
+ */
 @Composable
-private fun HandleHomeUiEffects(
-    uiEffectFlow: Flow<HomeEffect>,
-    uiEventFlow: Flow<UiEvent>,
-    onOpenDocument: (String) -> Unit,
-    onOpenSettings: () -> Unit,
-    onOpenDocumentActions: (String) -> Unit,
-) {
-    val currentOnOpenDocument by rememberUpdatedState(onOpenDocument)
-    val currentOnOpenSettings by rememberUpdatedState(onOpenSettings)
-    val currentOnOpenDocumentActions by rememberUpdatedState(onOpenDocumentActions)
-    val analyticsHelper = LocalAnalyticsHelper.current
-
-    LaunchedEffect(uiEffectFlow) {
-        uiEffectFlow.collectLatest { effect ->
-            when (effect) {
-                is HomeEffect.OpenDocument -> {
-                    currentOnOpenDocument(effect.documentUuid)
-                    analyticsHelper.logScreenView("PdfViewer")
-                }
-
-                is HomeEffect.OpenDocumentActions ->
-                    currentOnOpenDocumentActions(effect.documentUuid)
-
-                HomeEffect.OpenSettings -> {
-                    currentOnOpenSettings()
-                    analyticsHelper.logScreenView("Settings")
-                }
-            }
-        }
-    }
-
+private fun HandleHomeMessages(uiEventFlow: Flow<UiEvent>) {
     val notificationsService = LocalNotificationsService.current
 
     LaunchedEffect(uiEventFlow) {

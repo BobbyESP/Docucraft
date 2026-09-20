@@ -16,7 +16,6 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
@@ -47,7 +46,8 @@ class HomeViewModel(
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
-) : BaseViewModel<HomeIntent, HomeUiState, HomeEffect>(initialState = HomeUiState()) {
+) : BaseViewModel<HomeIntent, HomeUiState, Nothing>(initialState = HomeUiState()) {
+    // `Nothing` because this raises no effects: everything it is asked to do, it does.
 
     init {
         observeDocuments()
@@ -62,8 +62,6 @@ class HomeViewModel(
             HomeIntent.Load -> observeDocuments()
 
             HomeIntent.LaunchScanner -> startScan()
-
-            is HomeIntent.ViewDocument -> openDocument(intent.id)
 
             is HomeIntent.UpdateSearch -> {
                 if (intent.query.length >= 3 && intent.query != currentState.searchQuery) {
@@ -118,10 +116,6 @@ class HomeViewModel(
             }
 
             HomeIntent.ClearFilters -> setState { copy(filterOptions = FilterOptions.default) }
-
-            is HomeIntent.OpenActions -> sendEffect(HomeEffect.OpenDocumentActions(intent.id))
-
-            HomeIntent.OpenSettings -> sendEffect(HomeEffect.OpenSettings)
         }
     }
 
@@ -305,8 +299,6 @@ class HomeViewModel(
     // ---------------- ACTIONS ----------------
 
     /** The viewer reads the document itself; all it needs from here is which one. */
-    private fun openDocument(uuid: String) = sendEffect(HomeEffect.OpenDocument(uuid))
-
     private companion object {
         const val KEY_SCAN_IN_FLIGHT = "scan_in_flight"
     }

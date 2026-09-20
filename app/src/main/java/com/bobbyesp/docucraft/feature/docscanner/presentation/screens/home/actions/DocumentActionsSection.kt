@@ -51,7 +51,7 @@ fun EntryProviderScope<NavKey>.documentActionsSection(navigator: Navigator) {
     entry<DocumentActions>(
         metadata = OverlaySceneStrategy.overlay(OverlayPreference.AlwaysSheet)
     ) { key ->
-        val viewModel = documentActionsViewModel(key.documentUuid, navigator)
+        val viewModel = documentActionsViewModel(key, key.documentUuid, navigator)
         val state by viewModel.state.collectAsStateWithLifecycle()
         val document = state.document ?: return@entry
 
@@ -66,7 +66,7 @@ fun EntryProviderScope<NavKey>.documentActionsSection(navigator: Navigator) {
     }
 
     entry<EditDocument>(metadata = OverlaySceneStrategy.overlay()) { key ->
-        val viewModel = documentActionsViewModel(key.documentUuid, navigator)
+        val viewModel = documentActionsViewModel(key, key.documentUuid, navigator)
         val state by viewModel.state.collectAsStateWithLifecycle()
         val document = state.document ?: return@entry
 
@@ -105,7 +105,7 @@ fun EntryProviderScope<NavKey>.documentActionsSection(navigator: Navigator) {
     }
 
     entry<DeleteDocument>(metadata = OverlaySceneStrategy.overlay()) { key ->
-        val viewModel = documentActionsViewModel(key.documentUuid, navigator)
+        val viewModel = documentActionsViewModel(key, key.documentUuid, navigator)
         val state by viewModel.state.collectAsStateWithLifecycle()
         val document = state.document ?: return@entry
 
@@ -136,13 +136,14 @@ fun EntryProviderScope<NavKey>.documentActionsSection(navigator: Navigator) {
  */
 @Composable
 private fun documentActionsViewModel(
+    entry: NavKey,
     documentUuid: String,
     navigator: Navigator,
 ): DocumentActionsViewModel {
     val viewModel: DocumentActionsViewModel =
         koinViewModel(key = documentUuid) { parametersOf(documentUuid) }
 
-    HandleDocumentActionsEffects(viewModel, navigator)
+    HandleDocumentActionsEffects(viewModel, navigator, entry)
 
     return viewModel
 }
@@ -151,6 +152,7 @@ private fun documentActionsViewModel(
 private fun HandleDocumentActionsEffects(
     viewModel: DocumentActionsViewModel,
     navigator: Navigator,
+    entry: NavKey,
 ) {
     val currentNavigator by rememberUpdatedState(navigator)
     val notifications = LocalNotificationsService.current
@@ -158,7 +160,9 @@ private fun HandleDocumentActionsEffects(
     LaunchedEffect(viewModel) {
         viewModel.effects.collectLatest { effect ->
             when (effect) {
-                DocumentActionsEffect.Close -> currentNavigator.goBack()
+                // This overlay, not whatever is on top of the stack. They are the same thing
+                // right up until they are not, and `goBack` cannot tell the difference.
+                DocumentActionsEffect.Close -> currentNavigator.removeDestination(entry)
 
                 // The document is gone, so every overlay standing on it goes with it — the delete
                 // confirmation and, underneath it, the actions grid.

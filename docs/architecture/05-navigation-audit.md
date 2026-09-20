@@ -280,6 +280,17 @@ expandido (`ModalBottomSheet.kt:126-132`). Con contenido que no cabe en la altur
 primer back es peor que inútil: esconde lo que el usuario estaba leyendo. Y contradice el modelo —
 un overlay es *una* entrada del back stack, así que back tiene un solo trabajo: sacarla.
 
+**B7 · Los efectos de navegación se encolaban y se ejecutaban tarde** *(reportado en runtime,
+2026-09-20)*
+`BaseViewModel` entregaba los efectos por un `Channel(BUFFERED)` + `receiveAsFlow()`, y
+`HomeScreen` los colectaba desde dentro de la entrada Home — o sea, solo mientras Home estaba
+compuesta. Un efecto emitido sin colector quedaba en la cola y se entregaba al **siguiente**
+colector: la próxima vez que Home volviera a pantalla. Como los tres `HomeEffect` eran navegación,
+tocar un documento podía abrir ajustes, y al revés.
+
+Tercera aparición del mismo patrón, tras B3 (el `null` inicial del visor) y V7 (el widget que
+esperaba a un lector inexistente): **una señal obsoleta ejecutada tarde**.
+
 **B1 · `AGENTS.md:34` describe una arquitectura que ya no existe** (ver 1.3).
 
 **B2 · `FullScreenLoading` es código muerto** y los paquetes `sheet/` están mal nombrados
@@ -371,6 +382,7 @@ conviene hacerlos juntos. El paso 7 es el único que toca el escáner.
 - [x] B4 — el predictive back deja de espejarse sobre el borde *(2026-09-20)*
 - [x] B5 — el highlight sobrevive a los overlays *(2026-09-20)*
 - [x] B6 — un back cierra el sheet *(2026-09-20)*
+- [x] B7 — la navegación sale del canal de efectos *(2026-09-20)*
 - [x] Paso 7 — V7, widget y destino activo *(2026-09-20)*
 - [x] Paso 8 — B1/B2, limpieza y documentación *(2026-09-20)*
 
@@ -503,3 +515,26 @@ sheet *o* diálogo, así que el paquete mentía; se va junto a quien lo consume,
 `components/sheet/` **se queda como está**, a propósito: `DocumentActionsSheet.kt` es
 `AlwaysSheet` y `DocumentActionSheetSkeleton.kt` solo lo usan las variantes sheet. Ahí el nombre
 dice la verdad, y renombrar por simetría habría sido ruido.
+
+#### B7 corregido — 2026-09-20
+
+Dos cambios, uno local y uno estructural.
+
+**Local.** Los tres `HomeEffect` eran puro reenvío: el ViewModel recibía un intent y emitía el
+efecto equivalente, sin añadir nada. Se borran, junto con los tres `HomeIntent` de navegación.
+`HomeScreen` llama a los callbacks directamente desde el tap, y `HomeViewModel` declara
+`BaseViewModel<HomeIntent, HomeUiState, Nothing>` — no levanta efectos porque todo lo que se le
+pide, lo hace. `DocumentActionsEffect.Close` pasa de `goBack()` a `removeDestination(entry)`, el
+mismo arreglo que B3: quitarse uno mismo no es lo mismo que sacar lo de arriba.
+
+**Estructural.** El canal mezclaba dos cosas con requisitos opuestos. Ahora son dos tuberías con
+semánticas declaradas:
+
+| | Para quién | Si no hay nadie escuchando |
+|---|---|---|
+| `effects` — `MutableSharedFlow(replay = 0, extraBufferCapacity = 1, DROP_OLDEST)` | quien esté en pantalla *ahora* | se descarta |
+| `defaultEvents` — `Channel(BUFFERED)` | el usuario, que quizá aún no mira | espera |
+
+Perder un mensaje es un fallo silencioso; ejecutar una orden obsoleta es una acción equivocada.
+Solo una de las dos merece guardarse. `BaseViewModelTest` (4 tests) fija ambas semánticas,
+incluida la asimetría deliberada.
