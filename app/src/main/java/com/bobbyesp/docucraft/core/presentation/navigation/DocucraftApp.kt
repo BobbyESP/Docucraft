@@ -3,9 +3,6 @@
  */
 package com.bobbyesp.docucraft.core.presentation.navigation
 
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
@@ -20,6 +17,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.bobbyesp.docucraft.core.presentation.navigation.motion.rememberNavigationMotion
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsSection
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.homeSection
@@ -45,6 +43,7 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
     val backStack = rememberNavBackStack(Home)
     val navigator = rememberNavigator(backStack)
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
+    val motion = rememberNavigationMotion()
 
     // The document currently open in the detail pane, used to highlight it in the list. Only the
     // top of the stack counts as "open" — e.g. on expanded windows, pushing Settings on top of a
@@ -72,20 +71,8 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
 
                 settingsSection(navigator)
             },
-        transitionSpec = {
-            // Slide in from right when navigating forward
-            slideInHorizontally(initialOffsetX = { it }) togetherWith
-                slideOutHorizontally(targetOffsetX = { -it })
-        },
-        popTransitionSpec = {
-            // Slide in from left when navigating back
-            slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                slideOutHorizontally(targetOffsetX = { it })
-        },
-        predictivePopTransitionSpec = {
-            // Slide in from left when navigating back
-            slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                slideOutHorizontally(targetOffsetX = { it })
-        },
+        transitionSpec = { motion.forward() },
+        popTransitionSpec = { motion.backward() },
+        predictivePopTransitionSpec = { edge -> motion.predictiveBack(edge) },
     )
 }

@@ -4,9 +4,6 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -21,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass
+import com.bobbyesp.docucraft.core.presentation.navigation.motion.rememberNavigationMotion
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsContent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentDialog
@@ -45,6 +43,7 @@ fun DocumentDialogWrapper(
     val isCompact =
         !windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val motion = rememberNavigationMotion()
 
     ModalBottomSheet(
         onDismissRequest = { onAction(SheetAction.Dismiss) },
@@ -88,18 +87,9 @@ fun DocumentDialogWrapper(
                         )
                     }
                 },
-            transitionSpec = {
-                slideInHorizontally(initialOffsetX = { it }) togetherWith
-                    slideOutHorizontally(targetOffsetX = { -it })
-            },
-            popTransitionSpec = {
-                slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                    slideOutHorizontally(targetOffsetX = { it })
-            },
-            predictivePopTransitionSpec = {
-                slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                    slideOutHorizontally(targetOffsetX = { it })
-            },
+            transitionSpec = { motion.forward() },
+            popTransitionSpec = { motion.backward() },
+            predictivePopTransitionSpec = { edge -> motion.predictiveBack(edge) },
         )
     }
 
