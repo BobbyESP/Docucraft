@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.scene.SceneStrategyScope
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
@@ -112,6 +113,68 @@ class ListDetailSceneSelectionTest {
         )
     }
 
+    /**
+     * Settings is a list with detail screens of its own, and a *different* list from the document
+     * catalogue. Its scene key keeps the two scaffolds apart, so opening settings beside an open
+     * document replaces the documents scene rather than absorbing it.
+     */
+    @Test
+    fun `settings forms its own scene rather than joining the documents one`() {
+        val scene =
+            calculateScene(
+                expanded,
+                listOf(
+                    listEntry(Home, sceneKey = "documents"),
+                    detailEntry(pdfViewer, sceneKey = "documents"),
+                    listEntry(Settings, sceneKey = "settings"),
+                    detailEntry(AppearanceSettings, sceneKey = "settings"),
+                ),
+            )
+
+        assertEquals(
+            "Only the settings pair belongs to this scene",
+            contentKeysOf(Settings, AppearanceSettings),
+            scene?.entries?.contentKeys(),
+        )
+    }
+
+    /** Settings alone on a wide window still gets its second pane, from its own placeholder. */
+    @Test
+    fun `settings alone holds its detail pane open with a placeholder`() {
+        val scene =
+            calculateScene(
+                expanded,
+                listOf(listEntry(Home, sceneKey = "documents"), listEntry(Settings, "settings")),
+            )
+
+        assertNotNull(scene)
+        assertEquals(contentKeysOf(Settings), scene?.entries?.contentKeys())
+    }
+
+    /**
+     * Records what back does from a settings detail on a wide window, which is not obvious: with
+     * `PopUntilScaffoldValueChange` the strategy pops until the layout visibly changes, and both
+     * panes are already on screen. Whatever it resolves to, it must leave something behind rather
+     * than draining the stack — `NavDisplay` throws on an empty one.
+     */
+    @Test
+    fun `back from a settings detail leaves a non-empty stack`() {
+        val entries =
+            listOf(
+                listEntry(Home, sceneKey = "documents"),
+                listEntry(Settings, sceneKey = "settings"),
+                detailEntry(AppearanceSettings, sceneKey = "settings"),
+            )
+
+        val previous = calculateScene(expanded, entries)?.previousEntries.orEmpty()
+
+        assertEquals(
+            "Back should return to the documents scene, not drain the stack",
+            contentKeysOf(Home),
+            previous.contentKeys(),
+        )
+    }
+
     // ---------------- helpers ----------------
 
     private fun calculateScene(directive: PaneScaffoldDirective, entries: List<NavEntry<NavKey>>) =
@@ -137,6 +200,11 @@ class ListDetailSceneSelectionTest {
         NavEntry<NavKey>(key = key, metadata = ListDetailSceneStrategy.detailPane(sceneKey)) {}
 
     private fun plainEntry(key: NavKey) = NavEntry<NavKey>(key = key) {}
+
+    /** `NavEntry.key` is private, so entries are identified by `contentKey` — `key.toString()`. */
+    private fun List<NavEntry<NavKey>>.contentKeys() = map { it.contentKey }
+
+    private fun contentKeysOf(vararg keys: NavKey) = keys.map { it.toString() }
 
     private companion object {
         val pdfViewer = PdfViewer(documentUuid = "doc-1")
