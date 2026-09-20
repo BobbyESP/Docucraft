@@ -18,6 +18,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.rememberNavigationMotion
+import com.bobbyesp.docucraft.core.presentation.navigation.pane.paneContextSceneDecorator
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsSection
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.homeSection
@@ -63,6 +64,7 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
                 rememberViewModelStoreNavEntryDecorator(),
             ),
         sceneStrategies = listOf(listDetailStrategy),
+        sceneDecoratorStrategies = remember { listOf(paneContextSceneDecorator()) },
         entryProvider =
             entryProvider {
                 homeSection(navigator, selectedDocumentId = openDocumentId)

@@ -4,7 +4,6 @@
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,8 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import androidx.window.core.layout.WindowSizeClass
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
+import com.bobbyesp.docucraft.core.presentation.navigation.pane.LocalPaneContext
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
@@ -26,7 +25,8 @@ import org.koin.compose.koinInject
 
 /**
  * The PDF viewer is the detail pane of the list-detail layout: side by side with Home on expanded
- * windows, full screen on compact ones (where it shows its own back button).
+ * windows, full screen on compact ones (where it shows its own back button). Which of the two it
+ * got is read from the scene rather than measured off the window.
  *
  * The route names a document rather than carrying one, so this follows the catalogue instead of
  * reading it once. On expanded windows Home stays on screen next to the viewer, which means the
@@ -52,16 +52,12 @@ fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
         }
 
         document?.let { scannedDocument ->
-            val windowSizeClass = currentWindowAdaptiveInfoV2().windowSizeClass
-            val isCompact =
-                !windowSizeClass.isWidthAtLeastBreakpoint(
-                    WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
-                )
-
             PdfViewerScreen(
                 documentInfo = scannedDocument.toBasicDocument(),
                 onBack = onBack,
-                showBackButton = isCompact,
+                // Beside the list there is already a way back on screen; filling the window there
+                // is not. The scene knows which of the two happened; this does not have to.
+                showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
             )
         }
     }
