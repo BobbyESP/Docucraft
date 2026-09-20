@@ -43,6 +43,17 @@ interface Navigator {
      * [goBack] calls would mean counting, and the count depends on how the user got there.
      */
     fun goBackWhile(predicate: (NavKey) -> Boolean)
+
+    /**
+     * Takes [key] off the stack wherever it sits, for a destination whose subject has ceased to
+     * exist — a document that was deleted while an entry still pointed at it.
+     *
+     * Deliberately not [goBack]. A destination that wants itself gone is not asking to go back: it
+     * may well not be on top, and on a wide window it may not even be the one the user is looking
+     * at. Saying "leave" when it meant "remove me" is how a viewer reacting to its document closed
+     * a settings screen sitting above it.
+     */
+    fun removeDestination(key: NavKey)
 }
 
 @Composable
@@ -70,5 +81,14 @@ internal class BackStackNavigator(private val backStack: NavBackStack<NavKey>) :
 
     override fun goBackWhile(predicate: (NavKey) -> Boolean) {
         while (backStack.size > 1 && predicate(backStack.last())) backStack.removeLastOrNull()
+    }
+
+    /**
+     * Every occurrence, not just the first: the same destination can be reached twice by different
+     * routes, and a document that no longer exists is gone from all of them. The root still cannot
+     * be removed, for the same reason [goBack] will not empty the stack.
+     */
+    override fun removeDestination(key: NavKey) {
+        while (backStack.size > 1 && backStack.contains(key)) backStack.remove(key)
     }
 }

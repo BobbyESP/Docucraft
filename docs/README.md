@@ -23,6 +23,7 @@ diseña su arquitectura objetivo y lo migra en pasos pequeños y verificables.
 | 4 | Preferencias y tema | ⏳ Pendiente | — |
 | 5 | Búsqueda y filtrado | ⏳ Pendiente | — |
 | 6 | Suscripciones y analítica | ⏳ Pendiente | — |
+| 7 | **Navegación** (Navigation 3) | 🔎 Auditado, cierre en curso | [Auditoría y plan de cierre](architecture/05-navigation-audit.md) |
 
 ## Método
 

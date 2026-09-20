@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet
+package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions
 
 /**
  * Represents the UI state for the document editing sheet.

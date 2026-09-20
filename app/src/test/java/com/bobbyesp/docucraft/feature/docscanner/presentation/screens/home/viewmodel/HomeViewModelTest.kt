@@ -145,9 +145,10 @@ class HomeViewModelTest {
         saveResult: Result<ContentRef> = Result.success(ContentRef("content://stored")),
         savedState: SavedStateHandle = SavedStateHandle(),
         pendingScan: ScanOutcome? = null,
+        scanRequests: ScanRequestBus = ScanRequestBus(),
     ): HomeViewModel {
         documentScanner = FakeDocumentScanner().apply { pending = pendingScan }
-        scanRequests = ScanRequestBus()
+        this.scanRequests = scanRequests
         observeDocumentsUseCase = mockk()
         processDocumentsUseCase = mockk()
         saveScanDraftUseCase = mockk()
@@ -363,6 +364,37 @@ class HomeViewModelTest {
             scanRequests.request()
             advanceUntilIdle()
 
+            assertEquals(1, documentScanner.started)
+            assertTrue(viewModel.state.value.isScanning)
+        }
+
+    /**
+     * The catalogue is not always on screen when the widget is pressed. The request stands, and is
+     * honoured once this exists — rather than waiting silently and then firing unasked.
+     */
+    @Test
+    fun `a scan requested before the catalogue existed is honoured when it arrives`() =
+        runTest(testDispatcher) {
+            val alreadyAsked = ScanRequestBus().apply { request() }
+
+            val viewModel = createViewModel(scanRequests = alreadyAsked)
+            advanceUntilIdle()
+
+            assertEquals(1, documentScanner.started)
+            assertTrue(viewModel.state.value.isScanning)
+        }
+
+    /** Taking the request is what stops a second state holder acting on the same one. */
+    @Test
+    fun `an external scan request is only acted on once`() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            scanRequests.request()
+            advanceUntilIdle()
+
+            assertFalse("The request should have been taken", scanRequests.isPending.value)
             assertEquals(1, documentScanner.started)
             assertTrue(viewModel.state.value.isScanning)
         }

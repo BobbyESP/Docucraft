@@ -25,6 +25,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
+import com.bobbyesp.docucraft.core.presentation.navigation.pane.LocalPaneContext
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.appearance.AppearanceScreen
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
@@ -56,17 +57,39 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
         SettingsScreen(
             onOpenAppearance = { navigator.goTo(AppearanceSettings) },
             onOpenCustomerCenter = { navigator.goTo(SubscriptionSettings) },
-            onBack = navigator::goBack,
+            onBack = navigator::leaveSettings,
         )
     }
 
     entry<AppearanceSettings>(metadata = ListDetailSceneStrategy.detailPane(SettingsScene)) {
-        AppearanceScreen(onBack = navigator::goBack)
+        AppearanceScreen(
+            onBack = navigator::goBack,
+            // Beside the settings list there is already a way back on screen; filling the window
+            // there is not. The scene knows which of the two happened; this does not have to.
+            showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
+        )
     }
 
     entry<SubscriptionSettings>(metadata = ListDetailSceneStrategy.detailPane(SettingsScene)) {
         CustomerCenter(modifier = Modifier.fillMaxSize(), onDismiss = navigator::goBack)
     }
+}
+
+/**
+ * Leaves the settings area entirely, however deep into it the user went.
+ *
+ * `goBack` was wrong here in a way only a wide window shows: the settings list and one of its
+ * detail screens are then on screen *at once*, and popping one entry from the list's own back
+ * affordance closes the detail beside it — the pane the user was not pointing at — leaving them
+ * exactly where they already were. Back from the list means out of settings, which on a phone
+ * happens to be one entry and on a tablet is two.
+ *
+ * Internal rather than private so the rule can be asserted without a composition.
+ */
+internal fun Navigator.leaveSettings() {
+    goBackWhile { it is AppearanceSettings || it is SubscriptionSettings }
+
+    goBack()
 }
 
 /**

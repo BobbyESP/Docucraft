@@ -163,9 +163,17 @@ class HomeViewModel(
             }
     }
 
-    /** Entry points outside the UI, such as the home screen widget. */
+    /**
+     * Entry points outside the UI, such as the home screen widget.
+     *
+     * The request stands until taken, so one made while the catalogue was off screen is honoured as
+     * soon as it comes back — which the shell arranges. Taking it is what stops it being acted on
+     * twice.
+     */
     private fun observeExternalScanRequests() = launch {
-        scanRequests.requests.collect { startScan() }
+        scanRequests.isPending.collect { pending ->
+            if (pending && scanRequests.take()) startScan()
+        }
     }
 
     // ---------------- SCANNING ----------------

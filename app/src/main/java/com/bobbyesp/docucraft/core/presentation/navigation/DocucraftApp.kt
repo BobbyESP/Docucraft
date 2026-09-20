@@ -19,9 +19,10 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.rememberNavigationMotion
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.rememberOverlaySceneStrategy
-import com.bobbyesp.docucraft.core.presentation.navigation.pane.paneContextSceneDecorator
+import com.bobbyesp.docucraft.core.presentation.navigation.pane.sharingTheWindow
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsSection
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
+import com.bobbyesp.docucraft.feature.docscanner.navigation.ScanRequestNavigation
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.homeSection
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
@@ -49,13 +50,20 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
     val motion = rememberNavigationMotion()
 
-    // The document currently open in the detail pane, used to highlight it in the list. Only the
-    // top of the stack counts as "open" — e.g. on expanded windows, pushing Settings on top of a
-    // PdfViewer entry (reachable since Home's app bar stays visible next to the detail pane) should
-    // clear the highlight, not keep pointing at the PdfViewer entry buried underneath it.
-    val openDocumentId by remember {
-        derivedStateOf { (backStack.lastOrNull() as? PdfViewer)?.documentUuid }
-    }
+    // Overlays first: the first strategy to claim the topmost entry wins, and a sheet or dialog has
+    // to be recognised before the layout strategies try to give it a pane.
+    //
+    // The list-detail one is wrapped so the destinations it lays out side by side are told so. It
+    // claims the stack only when two panes really fit, so everything it declines falls through to
+    // the single-pane fallback — where `LocalPaneContext`'s default already says the right thing.
+    val sceneStrategies =
+        remember(overlayStrategy, listDetailStrategy) {
+            listOf(overlayStrategy, listDetailStrategy.sharingTheWindow())
+        }
+
+    val openDocumentId by remember { derivedStateOf { backStack.openDocumentId() } }
+
+    ScanRequestNavigation(navigator)
 
     NavDisplay(
         backStack = backStack,
@@ -66,10 +74,7 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator(),
             ),
-        // Overlays first: the first strategy to claim the topmost entry wins, and a sheet or
-        // dialog has to be recognised before the layout strategies try to give it a pane.
-        sceneStrategies = listOf(overlayStrategy, listDetailStrategy),
-        sceneDecoratorStrategies = remember { listOf(paneContextSceneDecorator()) },
+        sceneStrategies = sceneStrategies,
         entryProvider =
             entryProvider {
                 homeSection(navigator, selectedDocumentId = openDocumentId)
@@ -80,6 +85,21 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
             },
         transitionSpec = { motion.forward() },
         popTransitionSpec = { motion.backward() },
-        predictivePopTransitionSpec = { edge -> motion.predictiveBack(edge) },
+        predictivePopTransitionSpec = { motion.predictiveBack() },
     )
 }
+
+/**
+ * The document showing in the detail pane, for the list to mark as selected.
+ *
+ * The topmost viewer entry anywhere in the stack, not the top of the stack itself. Requiring it to
+ * be on top confused "above" with "instead of": opening a document's actions puts an overlay on the
+ * stack, and an overlay floats over the layout rather than replacing it, so the viewer is still on
+ * screen underneath and the list would drop the highlight of the very document the sheet is about.
+ *
+ * Anything that genuinely replaces the layout — settings, which is a scene of its own — takes the
+ * document list off screen with it, so a highlight left pointing at a buried viewer is one nobody
+ * can see, and it is correct again by the time the list comes back.
+ */
+internal fun List<NavKey>.openDocumentId(): String? =
+    filterIsInstance<PdfViewer>().lastOrNull()?.documentUuid

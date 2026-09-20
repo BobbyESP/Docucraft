@@ -104,6 +104,58 @@ class NavigatorTest {
         assertEquals(listOf(Home), stack.toList())
     }
 
+    /**
+     * A destination whose subject has ceased to exist is not asking to go back. The viewer used to
+     * say `goBack` when its document was deleted, which popped whatever was on top — a settings
+     * screen the user had opened above it, say — and left the dead viewer in place underneath.
+     */
+    @Test
+    fun `removing a destination takes it off the stack wherever it sits`() {
+        val stack = backStack(Home, document, Settings)
+
+        BackStackNavigator(stack).removeDestination(document)
+
+        assertEquals(listOf(Home, Settings), stack.toList())
+    }
+
+    @Test
+    fun `removing a destination leaves the rest of the stack alone`() {
+        val stack = backStack(Home, document)
+
+        BackStackNavigator(stack).removeDestination(document)
+
+        assertEquals(listOf(Home), stack.toList())
+    }
+
+    /** The same document can be reached twice, and a deleted one is gone from both routes. */
+    @Test
+    fun `removing a destination removes every occurrence of it`() {
+        val stack = backStack(Home, document, Settings, document)
+
+        BackStackNavigator(stack).removeDestination(document)
+
+        assertEquals(listOf(Home, Settings), stack.toList())
+    }
+
+    @Test
+    fun `removing a destination that is not there changes nothing`() {
+        val stack = backStack(Home, Settings)
+
+        BackStackNavigator(stack).removeDestination(document)
+
+        assertEquals(listOf(Home, Settings), stack.toList())
+    }
+
+    /** Even the root ceasing to exist must leave the stack standing. */
+    @Test
+    fun `removing the only destination does nothing rather than emptying the stack`() {
+        val stack = backStack(document)
+
+        BackStackNavigator(stack).removeDestination(document)
+
+        assertEquals(listOf(document), stack.toList())
+    }
+
     private companion object {
         val document = PdfViewer(documentUuid = "doc-1")
         val actions = DocumentActions(documentUuid = "doc-1")

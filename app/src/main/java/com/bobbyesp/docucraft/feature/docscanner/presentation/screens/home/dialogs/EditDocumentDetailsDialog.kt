@@ -56,7 +56,7 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.LocalMonospaceFontFamily
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionSheetSkeleton
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.EditDocumentUiState
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.EditDocumentUiState
 import com.bobbyesp.docucraft.util.MockData
 
 private const val TITLE_MAX_LENGTH = 60

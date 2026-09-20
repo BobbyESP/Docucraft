@@ -92,13 +92,51 @@ class OverlaySceneSelectionTest {
         assertNull(calculateScene(windowIsWide = false, entries = listOf(deleteOverlay)))
     }
 
+    /**
+     * The layout question the actions grid used to answer for itself, by reading the device's
+     * orientation. It is the container's to answer, and the container is as tall as the window let
+     * it be.
+     */
+    @Test
+    fun `a short window tells its overlays there is no room to stack`() {
+        val tall = sceneFor(actionsOverlay, windowIsWide = false, windowIsShort = false)
+        val short = sceneFor(actionsOverlay, windowIsWide = false, windowIsShort = true)
+
+        assertNotNull(short)
+        assertNotEquals(
+            "An overlay told to stack and one told not to must not share an identity",
+            tall?.key,
+            short?.key,
+        )
+    }
+
+    /**
+     * `NavDisplay` keeps the first overlay scene it sees for a given key and ignores later ones, so
+     * a window that changes shape mid-overlay only reaches the content if the key changed with it.
+     */
+    @Test
+    fun `an unchanged window keeps one identity for the same overlay`() {
+        assertEquals(
+            sceneFor(actionsOverlay, windowIsWide = false, windowIsShort = true)?.key,
+            sceneFor(actionsOverlay, windowIsWide = false, windowIsShort = true)?.key,
+        )
+    }
+
     // ---------------- helpers ----------------
 
-    private fun sceneFor(overlay: NavEntry<NavKey>, windowIsWide: Boolean): Scene<NavKey>? =
-        calculateScene(windowIsWide, listOf(plainEntry(Home), overlay))
+    private fun sceneFor(
+        overlay: NavEntry<NavKey>,
+        windowIsWide: Boolean,
+        windowIsShort: Boolean = false,
+    ): Scene<NavKey>? =
+        calculateScene(windowIsWide, windowIsShort, listOf(plainEntry(Home), overlay))
 
-    private fun calculateScene(windowIsWide: Boolean, entries: List<NavEntry<NavKey>>) =
-        with(OverlaySceneStrategy<NavKey>(windowIsWide)) {
+    private fun calculateScene(
+        windowIsWide: Boolean,
+        windowIsShort: Boolean = false,
+        entries: List<NavEntry<NavKey>>,
+    ) =
+        with(OverlaySceneStrategy<NavKey>(windowIsWide, windowIsShort)) {
             with(SceneStrategyScope<NavKey>()) { calculateScene(entries) }
         }
 

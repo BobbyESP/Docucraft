@@ -7,8 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.scene.Scene
-import androidx.navigation3.scene.SceneDecoratorStrategy
+import androidx.navigation3.scene.SceneStrategy
+import androidx.navigation3.scene.SceneStrategyScope
 import kotlin.reflect.KClass
 
 /**
@@ -20,7 +22,8 @@ import kotlin.reflect.KClass
  * in the wrong place: a destination cannot see whether anything is beside it, only how wide the
  * window is, and the two stop agreeing the moment a destination fills a wide window on its own.
  *
- * The scene knows, because the scene is what put the destination there. So the scene answers.
+ * The strategy knows, because the strategy is what put the destination there. So the strategy
+ * answers — see [sharingTheWindow].
  */
 @Immutable
 class PaneContext
@@ -48,31 +51,57 @@ internal constructor(
 }
 
 /**
- * Defaults to filling the window, which is what a composable rendered outside any scene does —
- * `PdfViewerActivity`, or a preview.
+ * Defaults to filling the window, which is what a destination outside any multi-pane scene does:
+ * the single-pane fallback `NavDisplay` reaches for when no strategy claims the stack, and also
+ * `PdfViewerActivity` or a preview, neither of which has a scene at all.
  */
 val LocalPaneContext = staticCompositionLocalOf { PaneContext(isSolePane = true) }
 
 /**
- * Tells every destination in a scene how that scene is laying it out, so none of them has to guess.
+ * Wraps [this] so the destinations in every scene it produces are told they are sharing the window.
  *
- * Pass to `NavDisplay(sceneDecoratorStrategies = ...)`. Overlay scenes — dialogs, sheets — are
- * never handed to a decorator by `NavDisplay`, so they keep the surrounding value.
+ * Only correct for a strategy that claims the stack **only** when it really does lay destinations
+ * out side by side. `ListDetailSceneStrategy` is such a strategy as long as
+ * `shouldHandleSinglePaneLayout` stays false: it builds its scaffold, then returns null unless
+ * `paneCount` came out above one (`ListDetailSceneStrategy.kt:192-196`). Anything it hands back is
+ * therefore two panes on screen, and anything it declines falls through to the single-pane
+ * fallback, where [LocalPaneContext]'s own default is already the right answer.
+ *
+ * This replaces asking the *scene* how many entries it was rendering, which was a guess and a wrong
+ * one in a case that shows up on every tablet: a list alone on a wide window is one entry inside a
+ * two-pane scaffold, because the second pane is filled by the list's `detailPlaceholder` and a
+ * placeholder is not an entry. Counting entries called that a sole pane. The two library scene
+ * types that would have answered honestly are both `internal`, so the question cannot be asked
+ * after the fact — it has to be asked of whoever made the decision.
  */
-fun <T : Any> paneContextSceneDecorator(): SceneDecoratorStrategy<T> =
-    SceneDecoratorStrategy { scene ->
-        PaneAwareScene(scene)
+fun <T : Any> SceneStrategy<T>.sharingTheWindow(): SceneStrategy<T> =
+    SharedWindowSceneStrategy(this)
+
+internal class SharedWindowSceneStrategy<T : Any>(private val delegate: SceneStrategy<T>) :
+    SceneStrategy<T> {
+
+    override fun SceneStrategyScope<T>.calculateScene(entries: List<NavEntry<T>>): Scene<T>? {
+        val scope = this
+
+        return with(delegate) { scope.calculateScene(entries) }
+            ?.let { PaneAwareScene(it, SharedPane) }
     }
 
+    private companion object {
+        val SharedPane = PaneContext(isSolePane = false)
+    }
+}
+
 /**
- * A scene's identity is `(its class, its key)`, and wrapping would otherwise make every scene in
- * the app the same class — collapsing a single pane and a list-detail pair into one identity, so
+ * A scene's identity is `(its class, its key)`, and wrapping would otherwise make every wrapped
+ * scene the same class — collapsing scenes that differ only by type into one identity, so
  * `NavDisplay` would stop animating between them. Folding the wrapped scene's class into the key
  * keeps identity exactly as precise as it was.
  */
-internal class PaneAwareScene<T : Any>(private val delegate: Scene<T>) : Scene<T> by delegate {
-
-    private val paneContext = PaneContext(isSolePane = delegate.entries.size <= 1)
+internal class PaneAwareScene<T : Any>(
+    private val delegate: Scene<T>,
+    private val paneContext: PaneContext,
+) : Scene<T> by delegate {
 
     /** Exposed for tests: what this scene will tell the destinations it renders. */
     internal val paneContextForTest: PaneContext

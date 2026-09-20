@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.IntOffset
-import androidx.navigationevent.NavigationEvent
 
 /**
  * How Docucraft moves between destinations, in one place.
@@ -44,13 +43,19 @@ class NavigationMotion internal constructor(private val scheme: MotionScheme) {
     fun backward(): ContentTransform = sharedAxisX(reversed = true)
 
     /**
-     * Coming back by gesture, following the finger.
+     * Coming back by gesture: the same motion as [backward], because it is the same journey.
      *
-     * The swipe edge used to be ignored, which meant a back gesture from the right edge played the
-     * animation for one from the left — content sliding away from the finger rather than with it.
+     * This used to mirror itself on the swipe edge, on the theory that content should follow the
+     * finger. It should not. A shared axis describes the *hierarchy* — forward arrives from the
+     * leading edge, back leaves towards it — and mirroring that on the gesture makes a right-edge
+     * swipe play the forward animation exactly: the destination being left behind slides off to the
+     * left while the one being returned to arrives from the right, which is what going somewhere
+     * new looks like. Back then looks like back or like forward depending on which side of the
+     * screen the user happened to swipe from.
+     *
+     * The platform agrees: `defaultPredictivePopTransitionSpec` takes the edge and ignores it.
      */
-    fun predictiveBack(@NavigationEvent.SwipeEdge edge: Int): ContentTransform =
-        sharedAxisX(reversed = edge != NavigationEvent.EDGE_RIGHT)
+    fun predictiveBack(): ContentTransform = backward()
 
     private fun sharedAxisX(reversed: Boolean): ContentTransform {
         val enterFrom = if (reversed) -1 else 1

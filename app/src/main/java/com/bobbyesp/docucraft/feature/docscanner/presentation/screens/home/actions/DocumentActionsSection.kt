@@ -19,7 +19,7 @@ import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
-import com.bobbyesp.docucraft.core.presentation.navigation.overlay.LocalOverlayPresentation
+import com.bobbyesp.docucraft.core.presentation.navigation.overlay.LocalOverlayContext
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPreference
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPresentation
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlaySceneStrategy
@@ -32,7 +32,6 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialo
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentSheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsSheet
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.EditDocumentUiState
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -62,6 +61,7 @@ fun EntryProviderScope<NavKey>.documentActionsSection(navigator: Navigator) {
             onShare = { viewModel.onSendIntent(DocumentActionsIntent.Share) },
             onDelete = { navigator.goTo(DeleteDocument(key.documentUuid)) },
             onModifyFields = { navigator.goTo(EditDocument(key.documentUuid)) },
+            stacked = LocalOverlayContext.current.hasRoomToStack,
         )
     }
 
@@ -82,7 +82,7 @@ fun EntryProviderScope<NavKey>.documentActionsSection(navigator: Navigator) {
             viewModel.onSendIntent(DocumentActionsIntent.ConfirmEdit(title, description))
         }
 
-        when (LocalOverlayPresentation.current) {
+        when (LocalOverlayContext.current.presentation) {
             OverlayPresentation.Sheet ->
                 EditDocumentDetailsSheet(
                     state = form,
@@ -111,7 +111,7 @@ fun EntryProviderScope<NavKey>.documentActionsSection(navigator: Navigator) {
 
         val confirm = { viewModel.onSendIntent(DocumentActionsIntent.ConfirmDelete) }
 
-        when (LocalOverlayPresentation.current) {
+        when (LocalOverlayContext.current.presentation) {
             OverlayPresentation.Sheet ->
                 DeleteDocumentSheet(
                     document = document,

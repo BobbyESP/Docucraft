@@ -14,7 +14,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import coil.ImageLoader
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
@@ -25,7 +24,6 @@ import com.bobbyesp.docucraft.core.presentation.theme.isDarkTheme
 import com.skydoves.landscapist.coil.LocalCoilImageLoader
 
 val LocalDarkTheme = compositionLocalOf<Boolean> { false }
-val LocalOrientation = compositionLocalOf<Int> { error("No orientation provided") }
 
 val LocalSettingsRepository =
     staticCompositionLocalOf<SettingsRepository> { error("No settings repository provided") }
@@ -46,13 +44,11 @@ fun AppLocalSettingsProvider(
     analyticsHelper: AnalyticsHelper,
     content: @Composable () -> Unit,
 ) {
-    val config = LocalConfiguration.current
     val isDark = userPreferences.themeConfig.isDarkTheme()
 
     CompositionLocalProvider(
         LocalDarkTheme provides isDark,
         LocalSettingsRepository provides settingsRepository,
-        LocalOrientation provides config.orientation,
         LocalNotificationsService provides inAppNotificationsService,
         LocalAnalyticsHelper provides analyticsHelper,
         LocalCoilImageLoader provides imageLoader,
