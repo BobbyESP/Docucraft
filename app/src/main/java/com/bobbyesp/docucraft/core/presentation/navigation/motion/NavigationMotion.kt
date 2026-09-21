@@ -4,86 +4,63 @@
 package com.bobbyesp.docucraft.core.presentation.navigation.motion
 
 import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.IntOffset
 
 /**
- * Every `NavDisplay` in the app used to carry its own copy of the same three transitions, written
- * as a full-width slide with whatever spring the animation defaults happened to be. This replaces
- * that with the shared axis along X that Material 3 describes for moving through a hierarchy: a
- * short slide — content is related, so it does not travel the whole window — paired with a fade,
- * timed by the theme's [MotionScheme] rather than by numbers written at the call site.
+ * One destination slides out as the next slides in, locked together like a sliding door: full
+ * width, same timing, no fade.
  *
- * Obtained through [rememberNavigationMotion] because `NavDisplay`'s transition lambdas are not
- * composable: the theme has to be read outside them and carried in.
+ * The full width is not decoration. On a pop `NavDisplay` leaves the outgoing destination on top,
+ * and a faded-out one is invisible but still full size and still hit-testable, so it went on
+ * swallowing taps meant for the screen underneath. One that travels the whole way cannot.
  *
- * Screens contribute nothing to any of this. A destination that genuinely needs to move differently
- * says so in its own `entry` metadata, via `NavDisplay.transitionSpec` and friends, which
- * `NavDisplay` prefers over whatever is configured here.
+ * Screens contribute nothing here; a destination that needs to move differently says so in its own
+ * `entry` metadata, which `NavDisplay` prefers over this.
  */
 @Immutable
-class NavigationMotion internal constructor(private val scheme: MotionScheme) {
+class NavigationMotion internal constructor() {
 
-    /** Going somewhere new: it arrives from the leading edge, the current destination gives way. */
-    fun forward(): ContentTransform = sharedAxisX(reversed = false)
+    /** The new destination arrives from the right, the current one leaves to the left. */
+    fun forward(): ContentTransform = slide(arrivingFromTheRight = true)
 
-    /** Coming back: the reverse journey, so the reverse motion. */
-    fun backward(): ContentTransform = sharedAxisX(reversed = true)
+    /** Coming back: the same door, run the other way. */
+    fun backward(): ContentTransform = slide(arrivingFromTheRight = false)
 
     /**
-     * Coming back by gesture: the same motion as [backward], because it is the same journey.
-     *
-     * This used to mirror itself on the swipe edge, on the theory that content should follow the
-     * finger. It should not. A shared axis describes the *hierarchy* — forward arrives from the
-     * leading edge, back leaves towards it — and mirroring that on the gesture makes a right-edge
-     * swipe play the forward animation exactly: the destination being left behind slides off to the
-     * left while the one being returned to arrives from the right, which is what going somewhere
-     * new looks like. Back then looks like back or like forward depending on which side of the
-     * screen the user happened to swipe from.
-     *
-     * The platform agrees: `defaultPredictivePopTransitionSpec` takes the edge and ignores it.
+     * The same motion as [backward], because it is the same journey. Mirroring it on the swipe edge
+     * makes a right-edge swipe play [forward] exactly; the platform's own default ignores the edge
+     * too.
      */
     fun predictiveBack(): ContentTransform = backward()
 
-    private fun sharedAxisX(reversed: Boolean): ContentTransform {
-        val enterFrom = if (reversed) -1 else 1
-        val exitTowards = -enterFrom
+    private fun slide(arrivingFromTheRight: Boolean): ContentTransform {
+        val arrivesFrom = if (arrivingFromTheRight) 1 else -1
+        val leavesTowards = -arrivesFrom
 
-        return (slideInHorizontally(
-                animationSpec = scheme.defaultSpatialSpec(),
-                initialOffsetX = { width -> enterFrom * (width * TRAVEL).toInt() },
-            ) + fadeIn(animationSpec = scheme.defaultEffectsSpec()))
-            .togetherWith(
-                slideOutHorizontally(
-                    animationSpec = scheme.defaultSpatialSpec(),
-                    targetOffsetX = { width -> exitTowards * (width * TRAVEL).toInt() },
-                ) + fadeOut(animationSpec = scheme.defaultEffectsSpec())
-            )
+        return slideInHorizontally(TRAVEL) { width -> arrivesFrom * width }
+            .togetherWith(slideOutHorizontally(TRAVEL) { width -> leavesTowards * width })
     }
 
     private companion object {
+
         /**
-         * How far across the window a destination travels. A shared axis is a nudge, not a journey:
-         * sliding the full width reads as two unrelated screens swapping places.
+         * A duration, not the theme's spring: `MotionScheme.expressive()` bounces and its tail runs
+         * long after the movement looks over, while `NavDisplay` holds both destinations composed
+         * until it settles. Only a spec that *ends* fixes that. Material's emphasized easing, as
+         * elsewhere in the app.
          */
-        const val TRAVEL = 0.3f
+        val TRAVEL: FiniteAnimationSpec<IntOffset> =
+            tween(durationMillis = 250, easing = CubicBezierEasing(0.2f, 0f, 0f, 1f))
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun rememberNavigationMotion(): NavigationMotion {
-    val scheme = MaterialTheme.motionScheme
-
-    return remember(scheme) { NavigationMotion(scheme) }
-}
+@Composable fun rememberNavigationMotion(): NavigationMotion = remember { NavigationMotion() }
