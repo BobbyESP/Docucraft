@@ -18,8 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.IntOffset
 
 /**
- * How Docucraft moves between destinations, in one place.
- *
  * Every `NavDisplay` in the app used to carry its own copy of the same three transitions, written
  * as a full-width slide with whatever spring the animation defaults happened to be. This replaces
  * that with the shared axis along X that Material 3 describes for moving through a hierarchy: a
@@ -67,7 +65,7 @@ class NavigationMotion internal constructor(private val scheme: MotionScheme) {
             ) + fadeIn(animationSpec = scheme.defaultEffectsSpec()))
             .togetherWith(
                 slideOutHorizontally(
-                    animationSpec = scheme.defaultSpatialSpec<IntOffset>(),
+                    animationSpec = scheme.defaultSpatialSpec(),
                     targetOffsetX = { width -> exitTowards * (width * TRAVEL).toInt() },
                 ) + fadeOut(animationSpec = scheme.defaultEffectsSpec())
             )

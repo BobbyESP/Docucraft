@@ -51,9 +51,9 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
     val motion = rememberNavigationMotion()
 
     // Overlays first: the first strategy to claim the topmost entry wins, and a sheet or dialog has
-    // to be recognised before the layout strategies try to give it a pane.
+    // to be recognized before the layout strategies try to give it a pane.
     //
-    // The list-detail one is wrapped so the destinations it lays out side by side are told so. It
+    // The list-detail one is wrapped so the destinations it "lays out" side by side are told so. It
     // claims the stack only when two panes really fit, so everything it declines falls through to
     // the single-pane fallback — where `LocalPaneContext`'s default already says the right thing.
     val sceneStrategies =
@@ -98,7 +98,7 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
  * screen underneath and the list would drop the highlight of the very document the sheet is about.
  *
  * Anything that genuinely replaces the layout — settings, which is a scene of its own — takes the
- * document list off screen with it, so a highlight left pointing at a buried viewer is one nobody
+ * document list off-screen with it, so a highlight left pointing at a buried viewer is one nobody
  * can see, and it is correct again by the time the list comes back.
  */
 internal fun List<NavKey>.openDocumentId(): String? =
