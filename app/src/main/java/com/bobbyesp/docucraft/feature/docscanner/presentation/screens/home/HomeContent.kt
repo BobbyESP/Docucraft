@@ -94,7 +94,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.Sc
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
-import com.bobbyesp.docucraft.util.MockData
+import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import kotlin.math.roundToInt
 
 @OptIn(
@@ -488,7 +488,7 @@ private fun HomeContentPreview() {
                 HomeUiState(
                     status = HomeStatus.Idle,
                     hasDocuments = true,
-                    visibleDocuments = MockData.Documents.documentsList,
+                    visibleDocuments = DocumentPreviewData.documents,
                 ),
             onAction = {},
             onOpenDocument = {},
