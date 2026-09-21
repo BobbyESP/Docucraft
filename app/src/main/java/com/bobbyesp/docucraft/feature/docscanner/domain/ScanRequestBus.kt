@@ -9,19 +9,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 
 /**
- * Carries "start a scan" from entry points that are not the UI.
+ * Carries "start a scan" from entry points that are not the UI — the widget arrives as an Intent,
+ * so only the Activity sees it, while the state holder that runs scans is elsewhere.
  *
- * The home screen widget reaches the app as an Intent, so the Activity is the only thing that sees
- * it, while the state holder that knows whether a scan is already running is elsewhere. This hands
- * the request over without either side knowing anything about scanning.
- *
- * A standing request rather than a signal, because two different parts of the app have to act on
- * one: the shell has to put the catalogue back on screen, and the catalogue has to run the scan. As
- * a one-shot channel only whoever read it first would learn of it — and worse, the request simply
- * waited when the reader did not exist. Restoring onto an open document meant the widget did
- * nothing at all, and then launched the scanner unasked, later, the moment the user pressed back.
- *
- * The request stands until someone [take]s it, and exactly one caller can.
+ * A standing request rather than a signal, because two parts of the app act on one: the shell puts
+ * the catalogue back on screen, the catalogue runs the scan. As a one-shot channel only the first
+ * reader learnt of it, and it waited when there was no reader at all — so restoring onto an open
+ * document meant the widget did nothing, then scanned unasked when the user pressed back.
  */
 class ScanRequestBus {
 
@@ -35,11 +29,9 @@ class ScanRequestBus {
     }
 
     /**
-     * Takes the standing request, if there is one.
-     *
-     * Returns false when there was nothing to take, so several observers can race for it and only
-     * one will act. Observing [isPending] without taking is how the shell reacts to a request it is
-     * not the one to fulfil.
+     * Takes the standing request, if there is one; false when there was nothing to take, so several
+     * observers can race and only one acts. Watching [isPending] without taking is how the shell
+     * reacts to a request it is not the one to fulfil.
      */
     fun take(): Boolean = pending.getAndUpdate { false }
 }

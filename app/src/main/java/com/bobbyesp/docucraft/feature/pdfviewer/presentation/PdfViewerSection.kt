@@ -63,13 +63,9 @@ fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
  * What the catalogue has said so far about the document this entry points at.
  *
  * Three answers, because two of them used to be the same `null` and the difference between them is
- * the difference between waiting and leaving. Telling them apart by remembering whether a document
- * had ever arrived worked only while the entry stayed in composition — and the entry is composed
- * again, from scratch, every time it is animated back into view. A predictive back gesture does
- * exactly that: `NavDisplay` composes the scene being returned to in order to animate it, so the
- * viewer woke up, saw the flow's initial `null`, concluded its document had been deleted and popped
- * the back stack while the user's finger was still on the screen — before any animation, and past
- * any chance to cancel.
+ * the difference between waiting and leaving. Inferring it from whether a document had ever arrived
+ * held only while the entry stayed in composition — and `NavDisplay` composes a scene afresh to
+ * animate it back into view, so a predictive back woke the viewer on the flow's initial `null`.
  */
 private sealed interface OpenDocument {
 

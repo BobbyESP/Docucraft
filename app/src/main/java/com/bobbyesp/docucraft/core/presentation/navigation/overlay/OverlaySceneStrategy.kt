@@ -44,12 +44,9 @@ enum class OverlayPreference {
 }
 
 /**
- * What an overlay destination is allowed to know about the container it landed in.
- *
- * This is the only thing an overlay needs to know about the window, and it is told rather than left
- * to measure. A destination that reads the window for itself gets a different answer — the device's
- * orientation, say — which stops agreeing with its container the moment the container is not the
- * whole window.
+ * What an overlay destination is allowed to know about the container it landed in — told, not
+ * measured. Reading the window for itself gets a different answer (the device's orientation, say)
+ * that stops agreeing the moment the container is not the whole window.
  */
 @Immutable
 class OverlayContext
@@ -58,11 +55,8 @@ internal constructor(
     val presentation: OverlayPresentation,
 
     /**
-     * Whether the container is tall enough to stack content vertically.
-     *
-     * A sheet is as tall as the window lets it be, so on a short window — a phone held sideways — a
-     * header above a grid of actions leaves neither with room. What matters is the height that was
-     * available, not which way the device is held: the two stop agreeing on anything but a phone.
+     * Whether the container is tall enough to stack content vertically. What matters is the height
+     * available, not which way the device is held — the two only agree on a phone.
      */
     val hasRoomToStack: Boolean,
 ) {
@@ -86,15 +80,11 @@ val LocalOverlayContext = staticCompositionLocalOf {
 
 /**
  * Renders destinations marked with [OverlaySceneStrategy.overlay] above whatever else is on the
- * back stack, as a sheet or a dialog depending on how much room the window has.
+ * back stack, as a sheet or a dialog depending on the window.
  *
- * It replaces a `NavDisplay` that lived inside a `ModalBottomSheet` and drove a private stack held
- * in a ViewModel, with the sheet-versus-dialog choice made by an `if` in the screen that opened it.
- * Both belong here instead: which container a destination gets follows from the window and from the
- * destination, and from nothing about whoever navigated to it.
- *
- * Being a strategy over overlays it must be listed before the layout strategies — the first
- * strategy to claim the topmost entry wins.
+ * Which container a destination gets follows from the window and from the destination, and from
+ * nothing about whoever navigated to it. Must be listed before the layout strategies — the first to
+ * claim the topmost entry wins.
  */
 class OverlaySceneStrategy<T : Any>(
     private val windowIsWide: Boolean,
@@ -138,15 +128,10 @@ class OverlaySceneStrategy<T : Any>(
 }
 
 /**
- * The two window facts an overlay depends on, kept here so it is plain that they are two facts and
- * not one written down twice.
- *
- * Neither is the breakpoint the list-detail layout uses. "Wide enough for a centred dialog" is a
- * different question from "wide enough for a list beside a detail": one column needs the room
- * Material gives at [WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND], two need what
- * `calculatePaneScaffoldDirective` only grants at expanded — 840 dp. Between the two, an overlay is
- * a dialog over a single pane. That is deliberate: a large phone held sideways has room to centre a
- * dialog long before it has room to show two things at once.
+ * Two facts, not one written twice — and neither is the list-detail breakpoint. Room for one
+ * centred dialog ([WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND]) is a different question from room
+ * for a list beside a detail, which `calculatePaneScaffoldDirective` only grants at expanded.
+ * Between them an overlay is a dialog over a single pane, deliberately.
  */
 private object OverlayBreakpoints {
 
@@ -186,11 +171,9 @@ private data class SheetScene<T : Any>(
     override val previousEntries: List<NavEntry<T>> = overlaidEntries
 
     /**
-     * Held so the sheet can be slid away before it is taken out of composition — see [onRemove].
-     *
-     * Assigned from the composition rather than created here because a `SheetState` has to be
-     * remembered, and a scene is a plain object built outside any composition. `lateinit` is what
-     * the platform's own `AnimatedBottomSheetSample` uses for exactly this.
+     * Held so the sheet can be slid away before it leaves composition — see [onRemove]. Assigned
+     * from the composition because a `SheetState` must be remembered and a scene is built outside
+     * one; `lateinit` is what the platform's own `AnimatedBottomSheetSample` does here.
      */
     private lateinit var sheetState: SheetState
 
@@ -210,16 +193,10 @@ private data class SheetScene<T : Any>(
     }
 
     /**
-     * Slides the sheet away before it leaves composition.
-     *
-     * Without this the sheet was only animated when the user dragged it down — because that is
-     * `ModalBottomSheet` animating itself before asking to be dismissed. Every other way out (a
-     * button, system back, an edit that confirmed itself) popped the entry and took the sheet off
-     * screen in one frame. `NavDisplay` keeps a popped overlay composed until this returns
-     * (`NavDisplay.kt:915-918`), which is the whole point of the callback.
-     *
-     * Guarded because a scene can be popped before it ever composed, and `hide` on a sheet the user
-     * already dragged away simply returns.
+     * Slides the sheet away before it leaves composition; `NavDisplay` keeps a popped overlay
+     * composed until this returns. Without it only a drag animated, because that is
+     * `ModalBottomSheet` animating itself — a button or system back took it off screen in one
+     * frame. Guarded because a scene can be popped before it ever composed.
      */
     override suspend fun onRemove() {
         if (::sheetState.isInitialized) sheetState.hide()
@@ -229,15 +206,9 @@ private data class SheetScene<T : Any>(
 
         /**
          * No half-open state: the sheet opens at the height of its content and back closes it.
-         *
-         * `ModalBottomSheet` treats back as "collapse, then dismiss" when a partially expanded
-         * state exists (`ModalBottomSheet.kt:126-132`), which costs the user two presses to leave
-         * one destination — and the first press is worse than wasted when the content did not fit
-         * in the collapsed height to begin with, because it hides what they were reading.
-         *
-         * An overlay here is one entry on the back stack, so back has exactly one job: pop it. A
-         * sheet whose content genuinely needs a draggable half height is a different kind of
-         * destination and would have to say so; none of these is one.
+         * `ModalBottomSheet` otherwise treats back as "collapse, then dismiss", costing two presses
+         * to leave one destination — and the first hides content that did not fit collapsed anyway.
+         * An overlay is one entry, so back has one job.
          */
         val SheetHeights = setOf(SheetValue.Hidden, SheetValue.Expanded)
     }
@@ -265,11 +236,8 @@ private data class DialogScene<T : Any>(
 }
 
 /**
- * Keeps one destination's containers from being mistaken for each other.
- *
- * The whole context, not just the container: `NavDisplay` keeps the first overlay scene it sees for
- * a given key and ignores later ones (`NavDisplay.kt:684-691`), so anything the content is told has
- * to be part of the key or a window that changes shape mid-overlay would keep rendering what it was
- * told before it did.
+ * Keeps one destination's containers from being mistaken for each other — the whole context, not
+ * just the container: `NavDisplay` keeps the first overlay scene it sees for a key, so a window
+ * that changed shape mid-overlay would go on rendering what it was told before.
  */
 private data class OverlaySceneKey(val contentKey: Any, val overlayContext: OverlayContext)

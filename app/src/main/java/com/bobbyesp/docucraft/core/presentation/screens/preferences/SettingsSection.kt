@@ -33,17 +33,12 @@ import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.S
 import com.revenuecat.purchases.ui.revenuecatui.customercenter.CustomerCenter
 
 /**
- * Settings and its sub-screens, laid out as a list-detail pair of their own.
+ * Settings and its sub-screens, as a list-detail pair of their own.
  *
- * These destinations used to declare no pane role at all, which had a consequence nobody could see
- * on a phone: `ListDetailSceneStrategy` reads the pane metadata of the topmost entry and abandons
- * the whole scene when it finds none. Opening settings on a tablet therefore threw away the
- * list-detail layout underneath and took the entire window — with an open document vanishing behind
- * a screen of toggles.
- *
- * Giving them a scene key of their own says what was always true: settings is a list with detail
- * screens hanging off it, and it is a *different* list from the document catalogue. The documents
- * scene is left alone underneath rather than being extended.
+ * They need a pane role at all — `ListDetailSceneStrategy` abandons the whole scene when the
+ * topmost entry has none, so on a tablet settings used to take the entire window and an open
+ * document vanished. And they need their *own* scene key: settings is a different list from the
+ * document catalogue, which is left alone underneath rather than extended.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
@@ -78,13 +73,9 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
 /**
  * Leaves the settings area entirely, however deep into it the user went.
  *
- * `goBack` was wrong here in a way only a wide window shows: the settings list and one of its
- * detail screens are then on screen *at once*, and popping one entry from the list's own back
- * affordance closes the detail beside it — the pane the user was not pointing at — leaving them
- * exactly where they already were. Back from the list means out of settings, which on a phone
- * happens to be one entry and on a tablet is two.
- *
- * Internal rather than private so the rule can be asserted without a composition.
+ * Only a wide window shows why `goBack` is wrong here: the list and a detail are on screen at once,
+ * so popping one entry closes the pane the user was not pointing at and leaves them where they
+ * were. Internal so the rule can be asserted without a composition.
  */
 internal fun Navigator.leaveSettings() {
     goBackWhile { it is AppearanceSettings || it is SubscriptionSettings }
@@ -93,8 +84,7 @@ internal fun Navigator.leaveSettings() {
 }
 
 /**
- * Groups these entries into a scaffold separate from the document catalogue's. Without it both
- * would fold into one scene and settings would appear as the detail pane of the document list.
+ * Without it both fold into one scene and settings becomes the detail pane of the document list.
  */
 private const val SettingsScene = "settings"
 

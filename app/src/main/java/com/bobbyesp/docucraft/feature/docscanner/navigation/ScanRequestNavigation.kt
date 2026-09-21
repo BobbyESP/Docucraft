@@ -15,15 +15,10 @@ import org.koin.compose.koinInject
  * Puts the catalogue back on screen when something outside the UI asks for a scan.
  *
  * Scanning is run by the catalogue's state holder, which exists only while the catalogue is on
- * screen. That was a silent dependency on where the user happened to be: restore the app onto an
- * open document, press the widget, and nothing happened — the request waited for a reader that was
- * not composed, and then started the scanner unasked whenever the user next pressed back.
- *
- * Where a request has to be honoured is a navigation question, so it is answered here rather than
- * by the state holder that cannot see the back stack. Rendered by the shell, which is always in
- * composition; it draws nothing.
- *
- * The request is left standing rather than consumed: the catalogue takes it once it arrives.
+ * screen — a silent dependency on where the user happened to be. Where a request has to be honoured
+ * is a navigation question, so it is answered here rather than by a state holder that cannot see
+ * the back stack. Hosted by the shell; draws nothing, and leaves the request standing for the
+ * catalogue to take.
  */
 @Composable
 fun ScanRequestNavigation(navigator: Navigator) {

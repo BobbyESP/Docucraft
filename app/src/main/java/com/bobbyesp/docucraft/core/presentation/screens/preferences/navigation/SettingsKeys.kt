@@ -7,15 +7,9 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 /**
- * The settings area.
- *
- * Flat siblings rather than a nesting. The two sub-screens used to be declared inside the
- * `Settings` object, which read as a hierarchy but was only a naming device: the back stack is a
- * list, and neither of them is reachable except from [Settings] anyway. Naming them in full says
- * the same thing without implying structure the navigation does not have.
- *
- * Restoration is by reflection over these class names — see `proguard-rules.pro` before moving
- * them.
+ * The settings area, as flat siblings. Nesting the sub-screens inside `Settings` read as a
+ * hierarchy the navigation does not have: the back stack is a list. Restoration is by reflection
+ * over the class names; see `proguard-rules.pro` before moving them.
  */
 @Serializable data object Settings : NavKey
 

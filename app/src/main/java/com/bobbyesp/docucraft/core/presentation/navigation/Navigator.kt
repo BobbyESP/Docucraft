@@ -12,46 +12,30 @@ import androidx.navigation3.runtime.NavKey
 /**
  * The only thing a feature is given of the back stack.
  *
- * Features used to receive one callback per edge of the navigation graph — `onOpenDocument`,
- * `onOpenSettings`, `onOpenAppearance` — which meant the shell had to know every edge, and adding a
- * destination meant editing a file that had nothing to do with it. A feature that can say where it
- * wants to go needs no such wiring.
- *
- * Deliberately not the back stack itself: a feature has no business reading the stack, reordering
- * it, or deciding what sits underneath it. Those are the shell's calls.
+ * Deliberately not the stack itself: a feature has no business reading it, reordering it, or
+ * deciding what sits underneath. Saying where it wants to go is enough, and spares the shell a
+ * callback per edge of the graph.
  */
 @Stable
 interface Navigator {
 
-    /**
-     * Goes to [key], leaving the current destination behind to come back to.
-     *
-     * Asking for the destination that is already on top does nothing, so a double tap on a list
-     * item cannot open the same document twice.
-     */
+    /** Goes to [key]. Asking for the destination already on top does nothing. */
     fun goTo(key: NavKey)
 
     /** Leaves the current destination. At the last one this does nothing rather than emptying. */
     fun goBack()
 
     /**
-     * Leaves every destination on top that [predicate] accepts, stopping at the first that it does
-     * not.
-     *
-     * For dismissing a group of related destinations at once — a confirmation and the menu that
-     * opened it, when the thing they were both about has ceased to exist. Doing that with repeated
-     * [goBack] calls would mean counting, and the count depends on how the user got there.
+     * Leaves every destination on top that [predicate] accepts, for dismissing a related group at
+     * once — a confirmation and the menu that opened it. Counting [goBack] calls instead would
+     * depend on how the user got there.
      */
     fun goBackWhile(predicate: (NavKey) -> Boolean)
 
     /**
      * Takes [key] off the stack wherever it sits, for a destination whose subject has ceased to
-     * exist — a document that was deleted while an entry still pointed at it.
-     *
-     * Deliberately not [goBack]. A destination that wants itself gone is not asking to go back: it
-     * may well not be on top, and on a wide window it may not even be the one the user is looking
-     * at. Saying "leave" when it meant "remove me" is how a viewer reacting to its document closed
-     * a settings screen sitting above it.
+     * exist. Not [goBack]: wanting yourself gone is not asking to pop whatever is on top, which
+     * need not be you.
      */
     fun removeDestination(key: NavKey)
 }
@@ -84,9 +68,8 @@ internal class BackStackNavigator(private val backStack: NavBackStack<NavKey>) :
     }
 
     /**
-     * Every occurrence, not just the first: the same destination can be reached twice by different
-     * routes, and a document that no longer exists is gone from all of them. The root still cannot
-     * be removed, for the same reason [goBack] will not empty the stack.
+     * Every occurrence: one destination can be reached twice, and a deleted document is gone from
+     * both.
      */
     override fun removeDestination(key: NavKey) {
         while (backStack.size > 1 && backStack.contains(key)) backStack.remove(key)
