@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.DocumentActionsViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -18,12 +19,22 @@ val documentScannerViewModels = module {
             scanRequests = get(),
             observeDocumentsUseCase = get(),
             processDocumentsUseCase = get(),
-            getDocumentUseCase = get(),
             saveScanDraftUseCase = get(),
+            stringProvider = get(),
+            analyticsHelper = get(),
+        )
+    }
+
+    // Scoped to the navigation entry acting on the document, so the uuid comes from the key rather
+    // than from a graph binding.
+    viewModel { (documentUuid: String) ->
+        DocumentActionsViewModel(
+            documentUuid = documentUuid,
+            observeDocument = get(),
             deleteDocumentUseCase = get(),
+            updateDocumentFieldsUseCase = get(),
             documentSharer = get(),
             documentExporter = get(),
-            updateDocumentFieldsUseCase = get(),
             stringProvider = get(),
             analyticsHelper = get(),
         )

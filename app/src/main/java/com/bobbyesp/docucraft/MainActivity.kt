@@ -172,7 +172,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
 
     private fun handleIntent(intent: Intent?) {
         if (intent?.action == ACTION_SCAN_DOCUMENT) {
-            lifecycleScope.launch { scanRequests.request() }
+            scanRequests.request()
             intent.action = null
         }
     }

@@ -12,14 +12,9 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
-import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.scanner.ContentRef
@@ -73,12 +68,7 @@ class HomeViewModelTest {
     private lateinit var scanRequests: ScanRequestBus
     private lateinit var observeDocumentsUseCase: ObserveDocumentsUseCase
     private lateinit var processDocumentsUseCase: ProcessDocumentsUseCase
-    private lateinit var getDocumentUseCase: GetDocumentUseCase
     private lateinit var saveScanDraftUseCase: SaveScanDraftUseCase
-    private lateinit var deleteDocumentUseCase: DeleteDocumentUseCase
-    private lateinit var documentSharer: DocumentSharer
-    private lateinit var documentExporter: DocumentExporter
-    private lateinit var updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase
     private lateinit var stringProvider: StringProvider
     private lateinit var analyticsHelper: AnalyticsHelper
 
@@ -155,17 +145,13 @@ class HomeViewModelTest {
         saveResult: Result<ContentRef> = Result.success(ContentRef("content://stored")),
         savedState: SavedStateHandle = SavedStateHandle(),
         pendingScan: ScanOutcome? = null,
+        scanRequests: ScanRequestBus = ScanRequestBus(),
     ): HomeViewModel {
         documentScanner = FakeDocumentScanner().apply { pending = pendingScan }
-        scanRequests = ScanRequestBus()
+        this.scanRequests = scanRequests
         observeDocumentsUseCase = mockk()
         processDocumentsUseCase = mockk()
-        getDocumentUseCase = mockk()
         saveScanDraftUseCase = mockk()
-        deleteDocumentUseCase = mockk(relaxed = true)
-        documentSharer = mockk(relaxed = true)
-        documentExporter = mockk()
-        updateDocumentFieldsUseCase = mockk(relaxed = true)
         stringProvider = mockk(relaxed = true)
         analyticsHelper = mockk(relaxed = true)
 
@@ -181,12 +167,7 @@ class HomeViewModelTest {
             scanRequests = scanRequests,
             observeDocumentsUseCase = observeDocumentsUseCase,
             processDocumentsUseCase = processDocumentsUseCase,
-            getDocumentUseCase = getDocumentUseCase,
             saveScanDraftUseCase = saveScanDraftUseCase,
-            deleteDocumentUseCase = deleteDocumentUseCase,
-            documentSharer = documentSharer,
-            documentExporter = documentExporter,
-            updateDocumentFieldsUseCase = updateDocumentFieldsUseCase,
             stringProvider = stringProvider,
             analyticsHelper = analyticsHelper,
             defaultDispatcher = testDispatcher,
@@ -383,6 +364,37 @@ class HomeViewModelTest {
             scanRequests.request()
             advanceUntilIdle()
 
+            assertEquals(1, documentScanner.started)
+            assertTrue(viewModel.state.value.isScanning)
+        }
+
+    /**
+     * The catalogue is not always on screen when the widget is pressed. The request stands, and is
+     * honoured once this exists — rather than waiting silently and then firing unasked.
+     */
+    @Test
+    fun `a scan requested before the catalogue existed is honoured when it arrives`() =
+        runTest(testDispatcher) {
+            val alreadyAsked = ScanRequestBus().apply { request() }
+
+            val viewModel = createViewModel(scanRequests = alreadyAsked)
+            advanceUntilIdle()
+
+            assertEquals(1, documentScanner.started)
+            assertTrue(viewModel.state.value.isScanning)
+        }
+
+    /** Taking the request is what stops a second state holder acting on the same one. */
+    @Test
+    fun `an external scan request is only acted on once`() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            scanRequests.request()
+            advanceUntilIdle()
+
+            assertFalse("The request should have been taken", scanRequests.isPending.value)
             assertEquals(1, documentScanner.started)
             assertTrue(viewModel.state.value.isScanning)
         }

@@ -9,10 +9,14 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
@@ -31,9 +35,25 @@ abstract class BaseViewModel<Intent : Any, State : Any, Effect : Any>(initialSta
 
     // ---------------- EFFECTS ----------------
 
-    private val _effects = Channel<Effect>(Channel.BUFFERED)
-    val effects: Flow<Effect> = _effects.receiveAsFlow()
+    /**
+     * Things for whoever is on screen *now* to do — close this, go there. Dropped when nobody is
+     * listening: a command nobody took is a command that no longer applies. A queue here meant one
+     * raised off screen was carried out later, against whatever the user was doing by then.
+     */
+    private val _effects =
+        MutableSharedFlow<Effect>(
+            replay = 0,
+            extraBufferCapacity = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        )
 
+    val effects: SharedFlow<Effect> = _effects.asSharedFlow()
+
+    /**
+     * Things to tell the user, which wait until there is somebody to tell — the opposite
+     * requirement, hence the separate pipe. Losing a message is a silent failure; carrying out a
+     * stale command is a wrong action. Only one of the two is worth keeping.
+     */
     private val _defaultUiEvents = Channel<UiEvent>(Channel.BUFFERED)
     val defaultEvents: Flow<UiEvent> = _defaultUiEvents.receiveAsFlow()
 
@@ -53,8 +73,9 @@ abstract class BaseViewModel<Intent : Any, State : Any, Effect : Any>(initialSta
 
     // ---------------- EFFECT EMITTER ----------------
 
+    /** Emits without suspending, in the same breath as whatever caused it. */
     protected fun sendEffect(effect: Effect) {
-        viewModelScope.launch { _effects.send(effect) }
+        _effects.tryEmit(effect)
     }
 
     protected fun sendUiEvent(event: UiEvent) {

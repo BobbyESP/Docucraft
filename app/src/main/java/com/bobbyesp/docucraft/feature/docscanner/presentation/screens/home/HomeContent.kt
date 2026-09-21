@@ -94,7 +94,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.Sc
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
-import com.bobbyesp.docucraft.util.MockData
+import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import kotlin.math.roundToInt
 
 @OptIn(
@@ -106,6 +106,9 @@ import kotlin.math.roundToInt
 fun HomeContent(
     uiState: HomeUiState,
     onAction: (HomeIntent) -> Unit,
+    onOpenDocument: (String) -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenDocumentActions: (String) -> Unit,
     modifier: Modifier = Modifier,
     selectedDocumentId: String? = null,
 ) {
@@ -138,7 +141,7 @@ fun HomeContent(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onAction(HomeIntent.OpenSettings) }) {
+                    IconButton(onClick = onOpenSettings) {
                         Icon(
                             imageVector = Icons.Rounded.Settings,
                             contentDescription = stringResource(id = R.string.settings),
@@ -243,6 +246,8 @@ fun HomeContent(
                         ScannedDocumentsList(
                             scannedDocuments = uiState.visibleDocuments,
                             onAction = onAction,
+                            onOpenDocument = onOpenDocument,
+                            onOpenDocumentActions = onOpenDocumentActions,
                             filterOptions = filterOptions,
                             listState = listState,
                             selectedDocumentId = selectedDocumentId,
@@ -259,6 +264,8 @@ private fun ScannedDocumentsList(
     scannedDocuments: List<ScannedDocument>,
     filterOptions: FilterOptions,
     onAction: (HomeIntent) -> Unit,
+    onOpenDocument: (String) -> Unit,
+    onOpenDocumentActions: (String) -> Unit,
     listState: LazyListState,
     selectedDocumentId: String? = null,
 ) {
@@ -326,8 +333,8 @@ private fun ScannedDocumentsList(
                 pdf = scannedDocument,
                 position = position,
                 selected = scannedDocument.uuid == selectedDocumentId,
-                onItemClick = { id -> onAction(HomeIntent.ViewDocument(id)) },
-                onItemLongClick = { onAction(HomeIntent.OpenSheet(scannedDocument.uuid)) },
+                onItemClick = onOpenDocument,
+                onItemLongClick = { onOpenDocumentActions(scannedDocument.uuid) },
             )
         }
 
@@ -481,9 +488,12 @@ private fun HomeContentPreview() {
                 HomeUiState(
                     status = HomeStatus.Idle,
                     hasDocuments = true,
-                    visibleDocuments = MockData.Documents.documentsList,
+                    visibleDocuments = DocumentPreviewData.documents,
                 ),
             onAction = {},
+            onOpenDocument = {},
+            onOpenSettings = {},
+            onOpenDocumentActions = {},
         )
     }
 }
@@ -492,7 +502,13 @@ private fun HomeContentPreview() {
 @Composable
 private fun HomeContentLoadingPreview() {
     DocucraftTheme {
-        HomeContent(uiState = HomeUiState(status = HomeStatus.Loading), onAction = {})
+        HomeContent(
+            uiState = HomeUiState(status = HomeStatus.Loading),
+            onAction = {},
+            onOpenDocument = {},
+            onOpenSettings = {},
+            onOpenDocumentActions = {},
+        )
     }
 }
 
@@ -503,6 +519,9 @@ private fun HomeContentErrorPreview() {
         HomeContent(
             uiState = HomeUiState(status = HomeStatus.Error("Couldn't reach local storage")),
             onAction = {},
+            onOpenDocument = {},
+            onOpenSettings = {},
+            onOpenDocumentActions = {},
         )
     }
 }
@@ -514,6 +533,9 @@ private fun HomeContentEmptyPreview() {
         HomeContent(
             uiState = HomeUiState(status = HomeStatus.Idle, hasDocuments = false),
             onAction = {},
+            onOpenDocument = {},
+            onOpenSettings = {},
+            onOpenDocumentActions = {},
         )
     }
 }

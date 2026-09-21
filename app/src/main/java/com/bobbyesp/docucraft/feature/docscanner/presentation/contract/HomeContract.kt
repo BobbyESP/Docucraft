@@ -6,7 +6,6 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.contract
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentSheetUiState
 
 sealed interface HomeStatus {
     data object Idle : HomeStatus
@@ -23,8 +22,6 @@ data class HomeUiState(
     val searchQuery: String = "",
     val filterOptions: FilterOptions = FilterOptions.default,
     val isScanning: Boolean = false,
-    /** Null means the sheet/dialog is closed. */
-    val sheetState: DocumentSheetUiState? = null,
 ) {
     val errorMessage: String? = (status as? HomeStatus.Error)?.message
 

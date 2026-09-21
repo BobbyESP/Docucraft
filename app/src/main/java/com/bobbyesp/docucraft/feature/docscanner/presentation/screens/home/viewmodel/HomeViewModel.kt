@@ -13,22 +13,12 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
-import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
-import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
-import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.ExportOutcome
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeEffect
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.DocumentSheetUiState
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetAction
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetPage
 import com.bobbyesp.scanner.DocumentScanner
 import com.bobbyesp.scanner.ScanDraft
 import com.bobbyesp.scanner.ScanError
@@ -52,16 +42,12 @@ class HomeViewModel(
     private val scanRequests: ScanRequestBus,
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
     private val processDocumentsUseCase: ProcessDocumentsUseCase,
-    private val getDocumentUseCase: GetDocumentUseCase,
     private val saveScanDraftUseCase: SaveScanDraftUseCase,
-    private val deleteDocumentUseCase: DeleteDocumentUseCase,
-    private val documentSharer: DocumentSharer,
-    private val documentExporter: DocumentExporter,
-    private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
-) : BaseViewModel<HomeIntent, HomeUiState, HomeEffect>(initialState = HomeUiState()) {
+) : BaseViewModel<HomeIntent, HomeUiState, Nothing>(initialState = HomeUiState()) {
+    // `Nothing` because this raises no effects: everything it is asked to do, it does.
 
     init {
         observeDocuments()
@@ -76,8 +62,6 @@ class HomeViewModel(
             HomeIntent.Load -> observeDocuments()
 
             HomeIntent.LaunchScanner -> startScan()
-
-            is HomeIntent.ViewDocument -> openDocument(intent.id)
 
             is HomeIntent.UpdateSearch -> {
                 if (intent.query.length >= 3 && intent.query != currentState.searchQuery) {
@@ -132,12 +116,6 @@ class HomeViewModel(
             }
 
             HomeIntent.ClearFilters -> setState { copy(filterOptions = FilterOptions.default) }
-
-            is HomeIntent.OpenSheet -> openSheet(intent.id)
-            HomeIntent.DismissSheet -> dismissSheet()
-
-            is HomeIntent.Sheet -> handleSheet(intent.action)
-            HomeIntent.OpenSettings -> sendEffect(HomeEffect.OpenSettings)
         }
     }
 
@@ -179,9 +157,17 @@ class HomeViewModel(
             }
     }
 
-    /** Entry points outside the UI, such as the home screen widget. */
+    /**
+     * Entry points outside the UI, such as the home screen widget.
+     *
+     * The request stands until taken, so one made while the catalogue was off screen is honoured as
+     * soon as it comes back — which the shell arranges. Taking it is what stops it being acted on
+     * twice.
+     */
     private fun observeExternalScanRequests() = launch {
-        scanRequests.requests.collect { startScan() }
+        scanRequests.isPending.collect { pending ->
+            if (pending && scanRequests.take()) startScan()
+        }
     }
 
     // ---------------- SCANNING ----------------
@@ -313,162 +299,6 @@ class HomeViewModel(
     // ---------------- ACTIONS ----------------
 
     /** The viewer reads the document itself; all it needs from here is which one. */
-    private fun openDocument(uuid: String) = sendEffect(HomeEffect.OpenDocument(uuid))
-
-    // ---------------- SHEET ----------------
-
-    private fun handleSheet(action: SheetAction) {
-        when (action) {
-            SheetAction.Dismiss -> dismissSheet()
-
-            SheetAction.Back -> {
-                val stack = currentState.sheetState?.pageStack ?: return
-                if (stack.size <= 1) dismissSheet()
-                else updateSheet { it.copy(pageStack = stack.dropLast(1)) }
-            }
-
-            SheetAction.ConfirmDelete -> deleteCurrentDocument()
-
-            SheetAction.ConfirmEdit -> confirmEdit()
-
-            is SheetAction.Navigate ->
-                updateSheet { it.copy(pageStack = it.pageStack + action.page) }
-
-            SheetAction.RequestSave -> exportCurrent()
-
-            SheetAction.RequestShare -> shareCurrent()
-
-            is SheetAction.UpdateTitle -> updateSheet { it.copy(editTitle = action.value) }
-
-            is SheetAction.UpdateDescription ->
-                updateSheet { it.copy(editDescription = action.value) }
-        }
-    }
-
-    private fun openSheet(uuid: String) = launch {
-        savedStateHandle["active_sheet_doc_id"] = uuid
-
-        val doc = getDocumentUseCase(uuid)
-
-        setState {
-            copy(
-                sheetState =
-                    DocumentSheetUiState(
-                        activeDocument = doc,
-                        pageStack = listOf(SheetPage.Actions),
-                        editTitle = doc.title.orEmpty(),
-                        editDescription = doc.description.orEmpty(),
-                    )
-            )
-        }
-    }
-
-    private fun dismissSheet() {
-        savedStateHandle["active_sheet_doc_id"] = null
-        setState { copy(sheetState = null) }
-    }
-
-    private fun updateSheet(transform: (DocumentSheetUiState) -> DocumentSheetUiState) {
-        setState { copy(sheetState = sheetState?.let(transform)) }
-    }
-
-    // ---------------- DOMAIN OPS ----------------
-
-    private fun deleteCurrentDocument() = launch {
-        val doc = currentState.sheetState?.activeDocument ?: return@launch
-
-        deleteDocumentUseCase(doc)
-
-        analyticsHelper.logEvent(AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_DELETED))
-
-        sendUiEvent(
-            UiEvent.ShowMessage(
-                stringProvider.get(R.string.doc_deleted_successfully),
-                NotificationType.Success,
-            )
-        )
-
-        dismissSheet()
-    }
-
-    private fun shareCurrent() {
-        val doc = currentState.sheetState?.activeDocument ?: return
-
-        runCatching {
-                documentSharer.share(doc.location)
-                analyticsHelper.logEvent(
-                    AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_SHARED)
-                )
-            }
-            .onFailure {
-                sendUiEvent(
-                    UiEvent.ShowMessage(
-                        stringProvider.get(R.string.issue_sharing_doc),
-                        NotificationType.Error,
-                    )
-                )
-            }
-    }
-
-    private fun exportCurrent() = launch {
-        val doc = currentState.sheetState?.activeDocument ?: return@launch
-
-        val outcome =
-            documentExporter.export(
-                document = doc.location,
-                suggestedName = doc.title ?: doc.filename,
-            )
-
-        when (outcome) {
-            is ExportOutcome.Saved -> {
-                analyticsHelper.logEvent(
-                    AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_EXPORTED)
-                )
-                sendUiEvent(
-                    UiEvent.ShowMessage(
-                        stringProvider.get(
-                            R.string.doc_saved_successfully_to,
-                            outcome.location.value,
-                        ),
-                        NotificationType.Success,
-                    )
-                )
-            }
-
-            // Choosing not to save anywhere is an answer, not an error. It used to arrive here as
-            // a failure and get shown in red.
-            ExportOutcome.Cancelled -> Unit
-
-            is ExportOutcome.Failed ->
-                sendUiEvent(
-                    UiEvent.ShowMessage(
-                        stringProvider.getError(outcome.cause),
-                        NotificationType.Error,
-                    )
-                )
-        }
-    }
-
-    private fun confirmEdit() = launch {
-        val sheet = currentState.sheetState ?: return@launch
-        val doc = sheet.activeDocument ?: return@launch
-
-        updateDocumentFieldsUseCase(
-            doc.uuid,
-            sheet.editTitle.trim().ifBlank { null },
-            sheet.editDescription.trim().ifBlank { null },
-        )
-
-        sendUiEvent(
-            UiEvent.ShowMessage(
-                stringProvider.get(R.string.doc_updated_successfully),
-                NotificationType.Success,
-            )
-        )
-
-        updateSheet { it.copy(pageStack = listOf(SheetPage.Actions)) }
-    }
-
     private companion object {
         const val KEY_SCAN_IN_FLIGHT = "scan_in_flight"
     }

@@ -3,7 +3,6 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet
 
-import android.content.res.Configuration
 import android.text.format.Formatter.formatFileSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -52,7 +51,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
-import com.bobbyesp.docucraft.core.presentation.common.LocalOrientation
 import com.bobbyesp.docucraft.core.presentation.components.divider.AnimatedWavyDivider
 import com.bobbyesp.docucraft.core.presentation.components.divider.defaults.AnimatedWavyDividerDefaults
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
@@ -81,6 +79,11 @@ internal data class DocumentAction(
     val action: () -> Unit,
 )
 
+/**
+ * @param stacked whether there is room to put the header above the actions rather than beside them.
+ *   Decided by whoever owns the container — this used to read the device's orientation, which is a
+ *   different question and only happens to give the same answer on a phone.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocumentActionsContent(
@@ -90,6 +93,7 @@ fun DocumentActionsContent(
     onDelete: () -> Unit,
     onModifyFields: () -> Unit,
     modifier: Modifier = Modifier,
+    stacked: Boolean = true,
 ) {
     val options =
         rememberDocumentActions(
@@ -99,24 +103,7 @@ fun DocumentActionsContent(
             onDelete = onDelete,
         )
 
-    val isLandscape = LocalOrientation.current == Configuration.ORIENTATION_LANDSCAPE
-
-    if (isLandscape) {
-        Row(
-            modifier = modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            DocumentHeader(
-                scannedDocument = scannedDocument,
-                modifier = Modifier.weight(1f).padding(start = 16.dp),
-            )
-
-            Box(modifier = Modifier.weight(1f).heightIn(min = 120.dp)) {
-                DocumentActionsRow(options = options, onOptionSelect = { it() })
-            }
-        }
-    } else {
+    if (stacked) {
         Column(modifier = modifier) {
             DocumentHeader(
                 scannedDocument = scannedDocument,
@@ -133,6 +120,21 @@ fun DocumentActionsContent(
             )
 
             Box(modifier = Modifier.heightIn(min = 120.dp)) {
+                DocumentActionsRow(options = options, onOptionSelect = { it() })
+            }
+        }
+    } else {
+        Row(
+            modifier = modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            DocumentHeader(
+                scannedDocument = scannedDocument,
+                modifier = Modifier.weight(1f).padding(start = 16.dp),
+            )
+
+            Box(modifier = Modifier.weight(1f).heightIn(min = 120.dp)) {
                 DocumentActionsRow(options = options, onOptionSelect = { it() })
             }
         }

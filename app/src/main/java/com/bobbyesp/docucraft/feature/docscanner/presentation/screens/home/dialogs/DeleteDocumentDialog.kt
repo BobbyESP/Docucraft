@@ -36,7 +36,7 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionSheetSkeleton
-import com.bobbyesp.docucraft.util.MockData
+import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -170,7 +170,7 @@ private fun DeleteDocumentSheetPreview() {
         Surface {
             DeleteDocumentSheet(
                 modifier = Modifier,
-                document = MockData.Documents.documentsList.first(),
+                document = DocumentPreviewData.documents.first(),
                 onDismiss = {},
                 onConfirm = {},
             )

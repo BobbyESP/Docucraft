@@ -5,16 +5,16 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.contract
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.SheetAction
 
+/**
+ * What the catalogue can be asked to *do*. Going somewhere is not on the list: navigation is not
+ * state this holds, nor work it performs, so routing a tap through here bought nothing and cost a
+ * queue that could replay it later against a screen the user had since left.
+ */
 sealed interface HomeIntent {
     data object Load : HomeIntent
 
     data object LaunchScanner : HomeIntent
-
-    data object OpenSettings : HomeIntent
-
-    data class ViewDocument(val id: String) : HomeIntent
 
     data class UpdateSearch(val query: String) : HomeIntent
 
@@ -25,10 +25,4 @@ sealed interface HomeIntent {
     data class ApplyFilter(val filter: FilterOptions) : HomeIntent
 
     data object ClearFilters : HomeIntent
-
-    data class OpenSheet(val id: String) : HomeIntent
-
-    data object DismissSheet : HomeIntent
-
-    data class Sheet(val action: SheetAction) : HomeIntent
 }

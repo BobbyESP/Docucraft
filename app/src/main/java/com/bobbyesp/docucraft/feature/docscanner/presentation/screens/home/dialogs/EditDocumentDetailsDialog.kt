@@ -56,8 +56,8 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.LocalMonospaceFontFamily
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionSheetSkeleton
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.sheet.EditDocumentUiState
-import com.bobbyesp.docucraft.util.MockData
+import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.EditDocumentUiState
 
 private const val TITLE_MAX_LENGTH = 60
 private const val DESCRIPTION_MAX_LENGTH = 200
@@ -354,7 +354,7 @@ private fun CharacterCounter(
 @PreviewLightDark
 @Composable
 private fun EditDocumentDetailsDialogPreview() {
-    val doc = MockData.Documents.documentsList.first()
+    val doc = DocumentPreviewData.documents.first()
     DocucraftTheme {
         EditDocumentDetailsDialog(
             state =
@@ -373,7 +373,7 @@ private fun EditDocumentDetailsDialogPreview() {
 @PreviewLightDark
 @Composable
 private fun EditDocumentDetailsSheetPreview() {
-    val doc = MockData.Documents.documentsList.first()
+    val doc = DocumentPreviewData.documents.first()
     DocucraftTheme {
         EditDocumentDetailsSheet(
             modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerLow),

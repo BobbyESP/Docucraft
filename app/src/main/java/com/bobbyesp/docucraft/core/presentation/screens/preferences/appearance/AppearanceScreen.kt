@@ -106,6 +106,7 @@ enum class TypographyCategory {
 fun AppearanceScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    showBackButton: Boolean = true,
     viewModel: AppearanceViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -137,6 +138,7 @@ fun AppearanceScreen(
                 AppearanceScreenContent(
                     uiState = state.preferences,
                     onBack = onBack,
+                    showBackButton = showBackButton,
                     modifier = modifier,
                     onThemeConfigChange = viewModel::updateThemeConfig,
                     onDynamicColoringChange = viewModel::updateDynamicColoring,
@@ -174,6 +176,7 @@ fun AppearanceScreenContent(
     onLabelFontChange: (FontConfig) -> Unit,
     onMonospaceFontChange: (FontConfig) -> Unit,
     modifier: Modifier = Modifier,
+    showBackButton: Boolean = true,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val isDark = uiState.themeConfig.isDarkTheme()
@@ -188,8 +191,12 @@ fun AppearanceScreenContent(
                 title = { Text(stringResource(R.string.appearance)) },
                 subtitle = { Text(stringResource(R.string.appearance_desc)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
+                    // Beside the settings list there is already a way back on screen; filling the
+                    // window there is not. The scene knows which of the two happened.
+                    if (showBackButton) {
+                        IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
+                        }
                     }
                 },
                 colors =

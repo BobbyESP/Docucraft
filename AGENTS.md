@@ -31,7 +31,24 @@
   `feature/docscanner/di/DocumentScannerModule.kt`. ML Kit types exist only in `:scanner-mlkit`
   and cannot be imported from `:app` (enforced by the module graph, not by convention).
 - Add business logic as use cases under `feature/docscanner/domain/usecase`, then inject in `feature/docscanner/di/ScannedDocumentModule.kt`.
-- Navigation is typed (`Route` in `core/presentation/common/Route.kt`), rendered by `Navigator.kt` with Navigation 3 `NavDisplay`.
+- Navigation is one back stack rendered by one Navigation 3 `NavDisplay`
+  (`core/presentation/navigation/DocucraftApp.kt`). Keys are typed and `@Serializable`, and each
+  feature owns its own (`feature/*/navigation/*Keys.kt`); `core/presentation/screens/preferences/navigation/SettingsKeys.kt`
+  for settings. Features never touch the stack — they get a `Navigator`
+  (`core/presentation/navigation/Navigator.kt`).
+- **Modal destinations go on that same back stack. Never put a `NavDisplay` inside a sheet or a
+  dialog for them.** A sheet or dialog the user can reach, leave, and come back to is a
+  destination: give it a key and let `OverlaySceneStrategy`
+  (`core/presentation/navigation/overlay/`) choose its container. A nested display is only for a
+  self-contained flow that is discarded whole and survives nothing. See
+  [docs/architecture/05-navigation-audit.md](docs/architecture/05-navigation-audit.md#decisión-un-navdisplay-dentro-de-un-modal)
+  for why — it is the decision that caused the most bugs in this codebase.
+- A destination is told about its surroundings, it never measures them. `LocalPaneContext` says
+  whether it shares the window; `LocalOverlayContext` says which container it landed in and whether
+  there is room to stack. Reading `currentWindowAdaptiveInfo` or the device orientation from a
+  screen is a bug, not a shortcut.
+- Transitions live in one file (`core/presentation/navigation/motion/NavigationMotion.kt`). Screens
+  contribute nothing to them.
 - App-wide settings and services should flow via composition locals in `core/presentation/common/CompositionLocals.kt`.
 
 ## Integrations and Sensitive Points

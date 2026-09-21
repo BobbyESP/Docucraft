@@ -24,7 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.R
-import com.bobbyesp.docucraft.core.presentation.navigation.Route
+import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
+import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
+import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.documentActionsSection
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 
 /**
  * Home is the list pane of the app's list-detail layout: on expanded windows it stays visible next
@@ -32,19 +37,21 @@ import com.bobbyesp.docucraft.core.presentation.navigation.Route
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun EntryProviderScope<NavKey>.homeSection(
+    navigator: Navigator,
     selectedDocumentId: String?,
-    onOpenDocument: (String) -> Unit,
-    onOpenSettings: () -> Unit,
 ) {
-    entry<Route.Home>(
+    entry<Home>(
         metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { NoDocumentOpenPane() })
     ) {
         HomeScreen(
-            onOpenDocument = onOpenDocument,
-            onOpenSettings = onOpenSettings,
+            onOpenDocument = { uuid -> navigator.goTo(PdfViewer(uuid)) },
+            onOpenSettings = { navigator.goTo(Settings) },
+            onOpenDocumentActions = { uuid -> navigator.goTo(DocumentActions(uuid)) },
             selectedDocumentId = selectedDocumentId,
         )
     }
+
+    documentActionsSection(navigator)
 }
 
 /** Shown in the detail pane on expanded windows while no document is open. */
