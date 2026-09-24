@@ -43,6 +43,11 @@ import org.koin.core.parameter.parametersOf
  * incoming URI into a [ViewerDocumentRef.External] and reuses [PdfViewerScreen]. It is
  * intentionally separate from [com.bobbyesp.docucraft.MainActivity] so the main app's single back
  * stack stays untouched — back here simply finishes and returns to the calling app.
+ *
+ * It runs in a task of its own (`taskAffinity=""` in the manifest), so a document opened from
+ * another app never lands on top of the library, and leaving it never touches the library either.
+ * Its card leaves Recents when it finishes. It used to share the app's task and leave through
+ * `finishAffinity()`, which closed the library underneath as well (B5).
  */
 class PdfViewerActivity : ComponentActivity(), KoinComponent {
 
@@ -95,7 +100,7 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
                         PdfViewerScreen(
                             viewModel = viewModel,
                             documentInfo = ready,
-                            onBack = { finishAffinity() },
+                            onBack = ::finish,
                             showBackButton = true,
                         )
                     }

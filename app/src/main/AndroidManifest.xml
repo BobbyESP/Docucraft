@@ -31,7 +31,9 @@
             android:exported="true"
             android:label="@string/view_document"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:autoRemoveFromRecents="true">
             <intent-filter android:label="@string/view_document">
                 <action android:name="android.intent.action.VIEW" />
 
