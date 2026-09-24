@@ -37,7 +37,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | b4 | `PdfViewerViewModel` sin cambio visual (V1, B2, V8) | Bajo | ✅ Done (2026-09-24) |
 | b5 | D2: ajustes por sesión y globales + pantalla de Ajustes | Medio | ✅ Done (2026-09-24) |
 | b6 | D5: pila propia en `PdfViewerActivity` + detalles como destino (V4, V5, B5) | Medio | ✅ Done (2026-09-24) |
-| b7 | Motor E6: `contentPadding` (V9) | **Medio-alto** | ⏳ |
+| b7 | Motor E6: `contentPadding` (V9) | **Medio-alto** | ✅ Done (2026-09-24) |
 | b8 | UI nueva (B3, B4) | Medio | ⏳ |
 | c1 | `:document-content-api` + `TextSelection` | Nulo | ⏳ |
 | c2 | Proveedores nativo y compuesto + DI con OCR a `null` | Bajo | ⏳ |
@@ -488,14 +488,45 @@ Three commits, so moving code, fixing B5 and adding the destination can be rever
 
 ## Paso b7 · Motor E6: `contentPadding` (V9)
 
-- [ ] `PdfLayoutSpec.contentPadding`; `clampPan` y `centeredPanForPage` lo tienen en cuenta.
-- [ ] `PageLayoutSnapshotTest` ampliado.
-- [ ] La pantalla deja de animar el padding del visor.
+- [x] `PdfLayoutSpec.contentPadding`; `clampPan` y `centeredPanForPage` lo tienen en cuenta.
+- [x] `PageLayoutSnapshotTest` ampliado.
+- [x] La pantalla deja de animar el padding del visor.
 
 **Verificación**: la página 1 no queda tapada por la barra; ya no se reconstruye el layout en cada
 frame al mostrar u ocultar barras (Layout Inspector o traza). **Riesgo: medio-alto**, porque toca la
 geometría de clamp. **Es el paso de mayor riesgo de (b)**: va aislado y el resto de (b) no depende de
 él.
+
+### Done — 2026-09-24
+
+**Engine.** `PdfLayoutSpec.contentPadding: PaddingValues` (default zero), with `LazyColumn`
+semantics: pages are fitted to the area inside the padding, the first and last pages stop at it at
+either end of the document, and pages still draw underneath while scrolling.
+- `ViewportMetrics` carries the padding (`ContentPaddingPx`, resolved at composition for density and
+  layout direction) and exposes `contentWidth` / `contentHeight`. The layout fits pages to those, and
+  `clampPan`, `centeredPanForPage`, `currentPageAtViewportCenter`, the fit-zoom helpers and B1's
+  reading anchor all work in the content area. Visibility and tile planning keep the whole viewport,
+  since pages under a bar are still on screen.
+- A padding change counts as a layout change in `PdfViewerController.updateConfig`.
+- With zero padding everything is exactly as before: the 32 existing unit tests pass unchanged.
+
+**App.** The screen measures its bars once (`onSizeChanged`, keeping the last non-zero height while a
+bar is hidden) and passes them as constant `contentPadding`. The animated `padding(top = …)` on the
+viewer, and the `hasScrolled` flag that fed it, are gone (V9).
+
+**Verification.**
+- `PageLayoutSnapshotTest`: 6 new JVM tests (clamp at both ends with bars, centring a small
+  document in the content area, centred page, anchor, current page). `:composepdf` unit tests: 38.
+- `PdfContentPaddingTest` (instrumented, real engine): the first page starts at the top padding;
+  horizontal padding fits pages to the inner width; zero padding changes nothing. `:composepdf`
+  instrumented suite: 22 tests, 0 failures, 1 skipped (the opt-in dump).
+- Emulator: the first page starts right below the top bar; tapping to hide the bars leaves the
+  document where it is (the first line of text stays on pixel row 515; it used to slide up as the
+  padding animated); at the end of the document the last page stops at the bottom bar's edge instead
+  of underneath it.
+
+**Behaviour change, deliberate**: the last page is no longer hidden under the bottom toolbar at the
+end of a document.
 
 ## Paso b8 · UI nueva (B3, B4)
 

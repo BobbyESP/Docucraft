@@ -6,6 +6,7 @@ package com.composepdf.layout
 import android.util.Size
 import com.composepdf.FitMode
 import com.composepdf.ScrollDirection
+import com.composepdf.internal.logic.ContentPaddingPx
 import com.composepdf.internal.logic.PageAnchor
 import com.composepdf.internal.logic.PageLayoutSnapshot
 import com.composepdf.internal.logic.ViewportMetrics
@@ -170,6 +171,81 @@ class PageLayoutSnapshotTest {
         assertEquals(100f, pan.y, 0.001f)
     }
 
+    // ------------------------------------------------------------------ content padding (step b7)
+
+    /** Bars 100 px tall above and 80 px below: 620 px of content area in an 800 px viewport. */
+    private val bars = ContentPaddingPx(top = 100f, bottom = 80f)
+
+    @Test
+    fun clampPan_withPadding_stopsTheFirstPageBelowTheTopBar() {
+        val snapshot = threePages(viewportWidth = 500f, viewportHeight = 800f, padding = bars)
+
+        val clamped = snapshot.clampPan(panX = 0f, panY = 500f, zoom = 1f)
+
+        assertEquals(100f, clamped.y, 0.001f)
+    }
+
+    @Test
+    fun clampPan_withPadding_stopsTheLastPageAboveTheBottomBar() {
+        val snapshot = threePages(viewportWidth = 500f, viewportHeight = 800f, padding = bars)
+
+        val clamped = snapshot.clampPan(panX = 0f, panY = -5_000f, zoom = 1f)
+
+        // The document's bottom edge (1540 px) lands at 800 - 80.
+        assertEquals(720f - 1540f, clamped.y, 0.001f)
+    }
+
+    @Test
+    fun clampPan_withPadding_centresASmallDocumentInTheContentArea() {
+        val snapshot =
+            snapshot(
+                pageCount = 1,
+                pageOffsets = floatArrayOf(0f),
+                pageHeights = floatArrayOf(400f),
+                pageWidths = floatArrayOf(500f),
+                totalDocumentSize = 400f,
+                corridorBreadth = 500f,
+                viewportWidth = 500f,
+                viewportHeight = 800f,
+                pageSpacingPx = 0f,
+                padding = ContentPaddingPx(top = 100f, bottom = 100f),
+            )
+
+        val clamped = snapshot.clampPan(panX = 0f, panY = 0f, zoom = 1f)
+
+        assertEquals(100f + (600f - 400f) / 2f, clamped.y, 0.001f)
+    }
+
+    @Test
+    fun centeredPanForPage_withPadding_centresInTheContentArea() {
+        val snapshot = threePages(viewportWidth = 500f, viewportHeight = 800f, padding = bars)
+
+        val centered = snapshot.centeredPanForPage(pageIndex = 1, zoom = 1f)
+
+        // Centre of the content area: 100 + 620 / 2 = 410; centre of page 1: 520 + 250 = 770.
+        assertEquals(410f - 770f, centered.y, 0.001f)
+    }
+
+    @Test
+    fun anchor_withPadding_isTakenBelowTheTopBar() {
+        val snapshot = threePages(viewportWidth = 500f, viewportHeight = 800f, padding = bars)
+
+        val anchor = snapshot.anchorAtViewportStart(panX = 0f, panY = 100f - 770f, zoom = 1f)!!
+        val pan = snapshot.panForAnchor(anchor, zoom = 1f)
+
+        assertEquals(1, anchor.pageIndex)
+        assertEquals(0.5f, anchor.fraction, 0.001f)
+        assertEquals(100f - 770f, pan.y, 0.001f)
+    }
+
+    @Test
+    fun currentPage_withPadding_isTheOneAtTheCentreOfTheContentArea() {
+        val snapshot = threePages(viewportWidth = 500f, viewportHeight = 800f, padding = bars)
+
+        // Content centre at 410 px on screen; with pan -150 that is document offset 560: page 1.
+        assertEquals(1, snapshot.currentPageAtViewportCenter(panX = 0f, panY = -150f, zoom = 1f))
+    }
+
     @Test
     fun fitDocumentZoom_inHeightMode_usesTotalDocumentHeight() {
         val snapshot =
@@ -193,7 +269,11 @@ class PageLayoutSnapshotTest {
     }
 
     /** Three 500 × 500 pages, 20 px apart, stacked vertically. */
-    private fun threePages(viewportWidth: Float, viewportHeight: Float) =
+    private fun threePages(
+        viewportWidth: Float,
+        viewportHeight: Float,
+        padding: ContentPaddingPx = ContentPaddingPx.Zero,
+    ) =
         snapshot(
             pageCount = 3,
             pageOffsets = floatArrayOf(0f, 520f, 1040f),
@@ -204,6 +284,7 @@ class PageLayoutSnapshotTest {
             viewportWidth = viewportWidth,
             viewportHeight = viewportHeight,
             pageSpacingPx = 20f,
+            padding = padding,
         )
 
     private fun snapshot(
@@ -217,6 +298,7 @@ class PageLayoutSnapshotTest {
         viewportHeight: Float,
         pageSpacingPx: Float,
         scrollDirection: ScrollDirection = ScrollDirection.VERTICAL,
+        padding: ContentPaddingPx = ContentPaddingPx.Zero,
     ) =
         PageLayoutSnapshot(
             pageSizes = List(pageCount) { Size(1, 1) },
@@ -225,7 +307,7 @@ class PageLayoutSnapshotTest {
             pageWidths = pageWidths,
             totalDocumentSize = totalDocumentSize,
             corridorBreadth = corridorBreadth,
-            viewport = ViewportMetrics(viewportWidth, viewportHeight),
+            viewport = ViewportMetrics(viewportWidth, viewportHeight, padding),
             pageSpacingPx = pageSpacingPx,
             scrollDirection = scrollDirection,
         )

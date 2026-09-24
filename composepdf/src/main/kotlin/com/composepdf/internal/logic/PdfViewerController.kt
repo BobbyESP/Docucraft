@@ -336,7 +336,8 @@ internal class PdfViewerController(
         val layoutChanged =
             previous.fitMode != newConfig.fitMode ||
                 previous.pageSpacingPx != newConfig.pageSpacingPx ||
-                previous.scrollDirection != newConfig.scrollDirection
+                previous.scrollDirection != newConfig.scrollDirection ||
+                previous.contentPadding != newConfig.contentPadding
         if (layoutChanged) {
             viewportCoordinator.onLayoutInputsChanged()
             engine.invalidate()

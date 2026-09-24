@@ -27,8 +27,10 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.composepdf.internal.engine.BitmapPool
+import com.composepdf.internal.logic.ContentPaddingPx
 import com.composepdf.internal.logic.PdfViewerController
 import com.composepdf.internal.logic.ResolvedViewerConfig
 import com.composepdf.internal.ui.PdfDocumentCanvas
@@ -94,13 +96,24 @@ fun PdfViewer(
     val context = LocalContext.current
     val density = LocalDensity.current
 
+    val layoutDirection = LocalLayoutDirection.current
     val resolvedConfig =
-        remember(layout, zoomSpec, renderSpec, density) {
+        remember(layout, zoomSpec, renderSpec, density, layoutDirection) {
+            val padding = layout.contentPadding
             ResolvedViewerConfig.from(
                 layout = layout,
                 zoom = zoomSpec,
                 render = renderSpec,
                 pageSpacingPx = with(density) { layout.pageSpacing.toPx() },
+                contentPadding =
+                    with(density) {
+                        ContentPaddingPx(
+                            left = padding.calculateLeftPadding(layoutDirection).toPx(),
+                            top = padding.calculateTopPadding().toPx(),
+                            right = padding.calculateRightPadding(layoutDirection).toPx(),
+                            bottom = padding.calculateBottomPadding().toPx(),
+                        )
+                    },
             )
         }
 

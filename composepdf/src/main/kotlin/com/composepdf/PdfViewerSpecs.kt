@@ -3,8 +3,10 @@
  */
 package com.composepdf
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 /** Direction in which pages are laid out and scrolled. */
 enum class ScrollDirection {
@@ -41,6 +43,10 @@ enum class FitMode {
  * @property pageSpacing Gap between consecutive pages.
  * @property pageSnapping When enabled, releasing a scroll near fit zoom settles on a page boundary
  *   (like a pager). Only applies while a whole page fits the viewport along the scroll axis.
+ * @property contentPadding Space to keep clear at the edges for bars drawn over the viewer, as in a
+ *   `LazyColumn`: pages are fitted to the area inside it, and at either end of the document the
+ *   first and last pages stop at the padding, but while scrolling they pass underneath. Keep it
+ *   constant while the bars show and hide; changing it re-lays out the document.
  */
 @Immutable
 data class PdfLayoutSpec(
@@ -48,6 +54,7 @@ data class PdfLayoutSpec(
     val fitMode: FitMode = FitMode.WIDTH,
     val pageSpacing: Dp = PdfViewerDefaults.PageSpacing,
     val pageSnapping: Boolean = false,
+    val contentPadding: PaddingValues = PaddingValues(0.dp),
 )
 
 /**

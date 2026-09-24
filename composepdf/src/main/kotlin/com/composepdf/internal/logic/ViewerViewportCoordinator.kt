@@ -21,7 +21,7 @@ internal class ViewerViewportCoordinator(
     private val state: PdfViewerState,
     private val configProvider: () -> ResolvedViewerConfig,
     private val snapshotFactory:
-        (List<Size>, Float, Float, FitMode, Float, ScrollDirection) -> PageLayoutSnapshot =
+        (List<Size>, ViewportMetrics, FitMode, Float, ScrollDirection) -> PageLayoutSnapshot =
         PageLayoutSnapshot::build,
 ) {
     var viewportWidth by mutableFloatStateOf(0f)
@@ -108,8 +108,7 @@ internal class ViewerViewportCoordinator(
         layoutSnapshot =
             snapshotFactory(
                 pageSizes,
-                viewportWidth,
-                viewportHeight,
+                ViewportMetrics(viewportWidth, viewportHeight, config.contentPadding),
                 config.fitMode,
                 config.pageSpacingPx,
                 config.scrollDirection,

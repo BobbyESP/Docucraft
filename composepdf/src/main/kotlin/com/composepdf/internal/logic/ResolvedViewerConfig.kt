@@ -23,6 +23,7 @@ internal data class ResolvedViewerConfig(
     val doubleTapZoom: Float = 2.5f,
     val renderQuality: Float = 1.5f,
     val prefetchDistance: Int = 2,
+    val contentPadding: ContentPaddingPx = ContentPaddingPx.Zero,
 ) {
     companion object {
         fun from(
@@ -30,6 +31,7 @@ internal data class ResolvedViewerConfig(
             zoom: PdfZoomSpec,
             render: PdfRenderSpec,
             pageSpacingPx: Float,
+            contentPadding: ContentPaddingPx = ContentPaddingPx.Zero,
         ): ResolvedViewerConfig =
             ResolvedViewerConfig(
                 scrollDirection = layout.scrollDirection,
@@ -41,6 +43,7 @@ internal data class ResolvedViewerConfig(
                 doubleTapZoom = zoom.doubleTapZoom,
                 renderQuality = render.quality,
                 prefetchDistance = render.prefetchDistance,
+                contentPadding = contentPadding,
             )
     }
 }
