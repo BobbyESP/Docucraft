@@ -43,7 +43,6 @@ import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentPrinter
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.PdfViewerViewModel
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.PdfDetailsSheet
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerTopBar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerEffect
@@ -68,6 +67,7 @@ fun PdfViewerScreen(
     viewModel: PdfViewerViewModel,
     documentInfo: BasicDocument,
     onBack: () -> Unit,
+    onOpenDetails: () -> Unit,
     modifier: Modifier = Modifier,
     showBackButton: Boolean = true,
 ) {
@@ -81,7 +81,6 @@ fun PdfViewerScreen(
     var areControlsVisible by remember { mutableStateOf(true) }
     var isTopBarVisible by remember { mutableStateOf(true) }
     var hasScrolled by remember { mutableStateOf(false) }
-    var showDetails by remember { mutableStateOf(false) }
 
     LaunchedEffect(pdfViewerState) {
         snapshotFlow { pdfViewerState.panY to pdfViewerState.isGestureActive }
@@ -174,7 +173,7 @@ fun PdfViewerScreen(
                 onOpenWith =
                     if (state.canHandOff) ({ viewModel.onSendIntent(PdfViewerIntent.OpenWith) })
                     else null,
-                onDetails = { showDetails = true },
+                onDetails = onOpenDetails,
             )
         }
 
@@ -210,14 +209,6 @@ fun PdfViewerScreen(
                 onNightModeToggle = { viewModel.onSendIntent(PdfViewerIntent.ToggleNightMode) },
             )
         }
-    }
-
-    if (showDetails) {
-        PdfDetailsSheet(
-            documentInfo = documentInfo,
-            pageCount = pdfViewerState.pageCount,
-            onDismiss = { showDetails = false },
-        )
     }
 }
 

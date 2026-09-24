@@ -12,6 +12,9 @@ import com.bobbyesp.docucraft.feature.docscanner.navigation.DeleteDocument
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
 import com.bobbyesp.docucraft.feature.docscanner.navigation.EditDocument
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.ExternalPdfViewer
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -83,6 +86,9 @@ class NavKeySerializationTest {
             listOf(
                 Home,
                 PdfViewer(documentUuid = "uuid"),
+                ExternalPdfViewer(uri = "content://media/1", displayName = "a.pdf"),
+                PdfDocumentDetails(ViewerDocumentRef.Catalogued(uuid = "uuid")),
+                PdfDocumentDetails(ViewerDocumentRef.External("content://media/1", "a.pdf")),
                 DocumentActions(documentUuid = "uuid"),
                 EditDocument(documentUuid = "uuid"),
                 DeleteDocument(documentUuid = "uuid"),

@@ -13,8 +13,11 @@ import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.LocalPaneContext
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.ExternalPdfViewer
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.details.pdfDocumentDetailsSection
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -50,10 +53,44 @@ fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
                 viewModel = viewModel,
                 documentInfo = ready,
                 onBack = navigator::goBack,
+                onOpenDetails = {
+                    navigator.goTo(
+                        PdfDocumentDetails(ViewerDocumentRef.Catalogued(route.documentUuid))
+                    )
+                },
                 // Beside the list there is already a way back on screen; filling the window there
                 // is not. The scene knows which of the two happened; this does not have to.
                 showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
             )
         }
     }
+
+    pdfDocumentDetailsSection(navigator)
+}
+
+/**
+ * The root of `PdfViewerActivity`'s own back stack: a document another app handed over. It leaves
+ * through [onClose], since at the root there is nothing to go back to inside the app.
+ */
+fun EntryProviderScope<NavKey>.externalPdfViewerSection(
+    navigator: Navigator,
+    onClose: () -> Unit,
+) {
+    entry<ExternalPdfViewer> { key ->
+        val ref = ViewerDocumentRef.External(uri = key.uri, displayName = key.displayName)
+        val viewModel: PdfViewerViewModel = koinViewModel { parametersOf(ref) }
+        val state by viewModel.state.collectAsStateWithLifecycle()
+
+        state.readyDocument?.let { ready ->
+            PdfViewerScreen(
+                viewModel = viewModel,
+                documentInfo = ready,
+                onBack = onClose,
+                onOpenDetails = { navigator.goTo(PdfDocumentDetails(ref)) },
+                showBackButton = true,
+            )
+        }
+    }
+
+    pdfDocumentDetailsSection(navigator)
 }

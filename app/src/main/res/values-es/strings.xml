@@ -98,4 +98,5 @@
     <string name="fit_mode_proportional">Proporcional</string>
     <string name="night_mode_desc">Invierte los colores de las páginas para leer a oscuras</string>
     <string name="back">Atrás</string>
+    <string name="close">Cerrar</string>
 </resources>

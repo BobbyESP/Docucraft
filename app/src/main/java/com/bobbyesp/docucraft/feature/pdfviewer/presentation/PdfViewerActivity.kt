@@ -11,14 +11,20 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
 import coil.imageLoader
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
@@ -27,14 +33,19 @@ import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.presentation.MainActivityUiState
 import com.bobbyesp.docucraft.core.presentation.MainViewModel
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
+import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
+import com.bobbyesp.docucraft.core.presentation.navigation.DocucraftNavDisplay
+import com.bobbyesp.docucraft.core.presentation.navigation.overlay.rememberOverlaySceneStrategy
+import com.bobbyesp.docucraft.core.presentation.navigation.rememberNavigator
+import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.ExternalPdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
+import com.dokar.sonner.Toaster
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import org.koin.androidx.compose.koinViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.component.KoinComponent
-import org.koin.core.parameter.parametersOf
 
 /**
  * Standalone activity that lets Docucraft act as a system PDF viewer for documents outside the app.
@@ -79,6 +90,8 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
         }
         splashscreen.setKeepOnScreenCondition { uiState is MainActivityUiState.Loading }
 
+        val sonnerManager = inAppNotificationsService as SonnerNotificationServiceImpl
+
         setContent {
             val state = uiState
             val ref = document
@@ -90,20 +103,17 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
                     userPreferences = state.userPreferences,
                     analyticsHelper = analyticsHelper,
                 ) {
-                    // Keyed by the document, so a new one arriving through onNewIntent gets its
-                    // own.
-                    val viewModel: PdfViewerViewModel =
-                        koinViewModel(key = ref.uri) { parametersOf(ref) }
-                    val viewerState by viewModel.state.collectAsStateWithLifecycle()
+                    ExternalViewerHost(document = ref, onClose = ::finish)
 
-                    viewerState.readyDocument?.let { ready ->
-                        PdfViewerScreen(
-                            viewModel = viewModel,
-                            documentInfo = ready,
-                            onBack = ::finish,
-                            showBackButton = true,
-                        )
-                    }
+                    // MainActivity has its own; without this one, messages raised in the external
+                    // viewer were emitted and never shown.
+                    Toaster(
+                        state = sonnerManager.sonnerState,
+                        richColors = true,
+                        showCloseButton = true,
+                        alignment = Alignment.TopCenter,
+                        darkTheme = LocalDarkTheme.current,
+                    )
                 }
             }
         }
@@ -149,4 +159,35 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
             }
             .getOrNull()
     }
+}
+
+/**
+ * The external viewer's own back stack (decision D5): the document at the root, and whatever it
+ * opens on top, such as its details, as ordinary destinations with the same state handling and
+ * motion as the app's shell. Only overlays are laid out here; there is no list to sit beside.
+ */
+@Composable
+private fun ExternalViewerHost(document: ViewerDocumentRef.External, onClose: () -> Unit) {
+    val root = ExternalPdfViewer(uri = document.uri, displayName = document.displayName)
+    val backStack = rememberNavBackStack(root)
+    val navigator = rememberNavigator(backStack)
+    val overlayStrategy = rememberOverlaySceneStrategy<NavKey>()
+    val sceneStrategies = remember(overlayStrategy) { listOf(overlayStrategy) }
+
+    // A different document arriving through onNewIntent replaces the stack, rather than changing
+    // the document underneath a sheet that is still about the previous one. Added before the rest
+    // is removed, because a NavDisplay must never see an empty stack.
+    LaunchedEffect(root) {
+        if (backStack.firstOrNull() != root) {
+            backStack.add(root)
+            backStack.removeAll { it != root }
+        }
+    }
+
+    DocucraftNavDisplay(
+        backStack = backStack,
+        navigator = navigator,
+        sceneStrategies = sceneStrategies,
+        entryProvider = entryProvider { externalPdfViewerSection(navigator, onClose) },
+    )
 }

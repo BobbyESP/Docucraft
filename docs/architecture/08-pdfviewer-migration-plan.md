@@ -36,7 +36,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | b3 | Acciones detrás de puertos (V2, V3) | Bajo | ✅ Done (2026-09-24) |
 | b4 | `PdfViewerViewModel` sin cambio visual (V1, B2, V8) | Bajo | ✅ Done (2026-09-24) |
 | b5 | D2: ajustes por sesión y globales + pantalla de Ajustes | Medio | ✅ Done (2026-09-24) |
-| b6 | D5: pila propia en `PdfViewerActivity` + detalles como destino (V4, V5, B5) | Medio | ⏳ |
+| b6 | D5: pila propia en `PdfViewerActivity` + detalles como destino (V4, V5, B5) | Medio | ✅ Done (2026-09-24) |
 | b7 | Motor E6: `contentPadding` (V9) | **Medio-alto** | ⏳ |
 | b8 | UI nueva (B3, B4) | Medio | ⏳ |
 | c1 | `:document-content-api` + `TextSelection` | Nulo | ⏳ |
@@ -434,18 +434,57 @@ instead of as a whole page (A2).
 
 ## Paso b6 · D5: pila propia + detalles como destino (V4, V5, B5)
 
-- [ ] Extraer del shell los decoradores y estrategias de escena a una función reutilizable, para que
+- [x] Extraer del shell los decoradores y estrategias de escena a una función reutilizable, para que
   ambos hosts se comporten igual.
-- [ ] Keys `ExternalPdfViewer(uri, displayName)` y `PdfDocumentDetails(ref)`; `proguard-rules.pro`.
-- [ ] `PdfViewerActivity` con `NavDisplay` propio; la raíz se reemplaza en `onNewIntent`; atrás en la
+- [x] Keys `ExternalPdfViewer(uri, displayName)` y `PdfDocumentDetails(ref)`; `proguard-rules.pro`.
+- [x] `PdfViewerActivity` con `NavDisplay` propio; la raíz se reemplaza en `onNewIntent`; atrás en la
   raíz hace `finish()`, no `finishAffinity()` (B5).
-- [ ] Detalles como destino, con los datos del catálogo (V5); se borra el `ModalBottomSheet` local.
-- [ ] Tests de navegación: abrir detalles, atrás, rotar con el sheet abierto, restauración de las
+- [x] Detalles como destino, con los datos del catálogo (V5); se borra el `ModalBottomSheet` local.
+- [x] Tests de navegación: abrir detalles, atrás, rotar con el sheet abierto, restauración de las
   keys nuevas.
 
 **Verificación**: en ambos hosts, detalles como sheet en móvil y como diálogo en tablet; back
 predictivo; abrir un PDF externo con Docucraft en segundo plano no cierra la app (B5).
 **Riesgo: medio.**
+
+### Done — 2026-09-24
+
+Three commits, so moving code, fixing B5 and adding the destination can be reverted separately.
+
+1. **`DocucraftNavDisplay`** (refactor, no behaviour change): the entry decorators in the order the
+   library requires, back through a `Navigator`, and the transitions from `NavigationMotion`,
+   extracted from `DocucraftApp` so a second host renders its stack the same way.
+2. **B5** (fix): `PdfViewerActivity` gets `taskAffinity=""`, so it runs in a **task of its own**, as
+   the maintainer decided on 2026-09-24. An external document never lands on top of the library.
+   `autoRemoveFromRecents` drops its card when it finishes, and the back arrow calls `finish()`
+   instead of `finishAffinity()`.
+3. **D5, V4, V5**:
+   - New keys `ExternalPdfViewer(uri, displayName)` and `PdfDocumentDetails(ViewerDocumentRef)`.
+   - `PdfViewerActivity` renders its own back stack through `DocucraftNavDisplay`, with the
+     overlay strategy only. A document arriving through `onNewIntent` replaces the stack (the new
+     root is added before the rest is removed: a `NavDisplay` must never see it empty).
+   - The details are a destination (`pdfDocumentDetailsSection`), registered by both hosts. The
+     overlay strategy picks a sheet or a dialog, back closes it, and it survives recreation.
+     `PdfDetailsSheet` and the screen's `showDetails` flag are gone.
+   - `ObserveViewerDocumentDetailsUseCase`: a catalogued document's details come from the catalogue
+     (V5). An external one's are read once from the file through the `DocumentFactsReader` port
+     (`AndroidDocumentFactsReader`: size from the provider, page count from `PdfRenderer`). No more
+     content-resolver queries from a composable.
+   - The external viewer now has its own `Toaster`, so its in-app messages are shown (a gap noted
+     in b4).
+
+**Verification.**
+- JVM: `ViewerDocumentDetailsTest` (4 tests); the new keys in `NavKeySerializationTest`. `app`: 119
+  unit tests, green.
+- Emulator, B5: with the library in the background, the external viewer opens in a separate task,
+  and its back arrow leaves `MainActivity` alive.
+- Emulator, D5: details open as a sheet (320 pages, 116 kB, from the file); they survive an activity
+  recreation; back closes only the details, then back at the root closes the viewer and removes its
+  Recents card; a second PDF delivered through `onNewIntent` while the details are open replaces the
+  stack.
+- **Not verified on a device**: the details of a *catalogued* document (the emulator has none; the
+  JVM tests cover the mapping) and the external viewer's `Toaster` actually showing a message
+  (nothing easy triggers one).
 
 ## Paso b7 · Motor E6: `contentPadding` (V9)
 
