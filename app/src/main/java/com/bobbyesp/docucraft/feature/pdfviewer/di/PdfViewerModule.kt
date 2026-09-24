@@ -8,7 +8,11 @@ import com.bobbyesp.docucraft.feature.pdfviewer.data.actions.AndroidDocumentOpen
 import com.bobbyesp.docucraft.feature.pdfviewer.data.actions.AndroidDocumentPrinter
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentPrinter
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocumentUseCase
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.PdfViewerViewModel
 import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 /**
@@ -20,4 +24,18 @@ val pdfViewerModule = module {
 
     // Printing needs the screen's activity, so it is built per caller: `parametersOf(activity)`.
     factory<DocumentPrinter> { (activity: Activity) -> AndroidDocumentPrinter(activity) }
+
+    factory { ObserveViewerDocumentUseCase(observeDocument = get()) }
+
+    // Scoped to whoever shows the document, so which one comes from the caller, not the graph.
+    viewModel { (ref: ViewerDocumentRef) ->
+        PdfViewerViewModel(
+            ref = ref,
+            observeDocument = get(),
+            documentSharer = get(),
+            documentOpener = get(),
+            stringProvider = get(),
+            analyticsHelper = get(),
+        )
+    }
 }

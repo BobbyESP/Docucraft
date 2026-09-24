@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import coil.imageLoader
@@ -26,21 +27,23 @@ import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.bobbyesp.docucraft.core.presentation.MainActivityUiState
 import com.bobbyesp.docucraft.core.presentation.MainViewModel
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
-import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
-import java.util.UUID
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import org.koin.androidx.compose.koinViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.component.KoinComponent
+import org.koin.core.parameter.parametersOf
 
 /**
  * Standalone activity that lets Docucraft act as a system PDF viewer for documents outside the app.
  *
  * Registered with `ACTION_VIEW` / `ACTION_SEND` intent-filters for `application/pdf`, it wraps the
- * incoming URI into a synthetic [BasicDocument] and reuses [PdfViewerScreen]. It is intentionally
- * separate from [com.bobbyesp.docucraft.MainActivity] so the main app's single back stack stays
- * untouched — back here simply finishes and returns to the calling app.
+ * incoming URI into a [ViewerDocumentRef.External] and reuses [PdfViewerScreen]. It is
+ * intentionally separate from [com.bobbyesp.docucraft.MainActivity] so the main app's single back
+ * stack stays untouched — back here simply finishes and returns to the calling app.
  */
 class PdfViewerActivity : ComponentActivity(), KoinComponent {
 
@@ -49,7 +52,7 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
     private val analyticsHelper: AnalyticsHelper by inject()
     private val mainViewModel: MainViewModel by viewModel()
 
-    private var document by mutableStateOf<BasicDocument?>(null)
+    private var document by mutableStateOf<ViewerDocumentRef.External?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashscreen = installSplashScreen()
@@ -74,8 +77,8 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
 
         setContent {
             val state = uiState
-            val doc = document
-            if (state is MainActivityUiState.Success && doc != null) {
+            val ref = document
+            if (state is MainActivityUiState.Success && ref != null) {
                 AppLocalSettingsProvider(
                     inAppNotificationsService = inAppNotificationsService,
                     imageLoader = imageLoader,
@@ -83,11 +86,20 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
                     userPreferences = state.userPreferences,
                     analyticsHelper = analyticsHelper,
                 ) {
-                    PdfViewerScreen(
-                        documentInfo = doc,
-                        onBack = { finishAffinity() },
-                        showBackButton = true,
-                    )
+                    // Keyed by the document, so a new one arriving through onNewIntent gets its
+                    // own.
+                    val viewModel: PdfViewerViewModel =
+                        koinViewModel(key = ref.uri) { parametersOf(ref) }
+                    val viewerState by viewModel.state.collectAsStateWithLifecycle()
+
+                    (viewerState.document as? ViewerDocumentState.Open)?.let { open ->
+                        PdfViewerScreen(
+                            viewModel = viewModel,
+                            documentInfo = open.document,
+                            onBack = { finishAffinity() },
+                            showBackButton = true,
+                        )
+                    }
                 }
             }
         }
@@ -99,8 +111,8 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
         resolveDocument(intent)?.let { document = it }
     }
 
-    /** Extracts the incoming PDF URI (from VIEW or SEND) and adapts it into a [BasicDocument]. */
-    private fun resolveDocument(intent: Intent?): BasicDocument? {
+    /** Extracts the incoming PDF URI (from VIEW or SEND) and names it for the viewer. */
+    private fun resolveDocument(intent: Intent?): ViewerDocumentRef.External? {
         val uri: Uri? =
             when (intent?.action) {
                 Intent.ACTION_SEND ->
@@ -118,12 +130,7 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
         }
 
         val displayName = queryDisplayName(uri) ?: uri.lastPathSegment ?: "PDF"
-        return BasicDocument(
-            uuid = UUID.randomUUID().toString(),
-            filename = displayName,
-            uri = uri.toString(),
-            title = displayName,
-        )
+        return ViewerDocumentRef.External(uri = uri.toString(), displayName = displayName)
     }
 
     private fun queryDisplayName(uri: Uri): String? {

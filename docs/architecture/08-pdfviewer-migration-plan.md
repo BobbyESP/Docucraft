@@ -34,7 +34,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | b1 | Motor E1: arreglar B1 | Bajo | ✅ Done (2026-09-24) |
 | b2 | Motor E2: los gestos respetan el consumo | Medio | ✅ Done (2026-09-24) |
 | b3 | Acciones detrás de puertos (V2, V3) | Bajo | ✅ Done (2026-09-24) |
-| b4 | `PdfViewerViewModel` sin cambio visual (V1, B2, V8) | Bajo | ⏳ |
+| b4 | `PdfViewerViewModel` sin cambio visual (V1, B2, V8) | Bajo | ✅ Done (2026-09-24) |
 | b5 | D2: ajustes por sesión y globales + pantalla de Ajustes | Medio | ⏳ |
 | b6 | D5: pila propia en `PdfViewerActivity` + detalles como destino (V4, V5, B5) | Medio | ⏳ |
 | b7 | Motor E6: `contentPadding` (V9) | **Medio-alto** | ⏳ |
@@ -308,11 +308,11 @@ through the same `DocumentSharer` the document actions sheet already uses. Unit 
 
 ## Paso b4 · `PdfViewerViewModel` sin cambio visual (V1, B2, V8)
 
-- [ ] ViewModel con `ViewerDocumentRef` por `parametersOf`; `ObserveViewerDocumentUseCase`.
-- [ ] Estado, analítica y *effects* fuera del composable. La pantalla actual pasa a leer del
+- [x] ViewModel con `ViewerDocumentRef` por `parametersOf`; `ObserveViewerDocumentUseCase`.
+- [x] Estado, analítica y *effects* fuera del composable. La pantalla actual pasa a leer del
   ViewModel **sin cambiar ni un píxel**.
-- [ ] `logScreenView` se registra en la entrada del visor, no en el tap de Home (V8).
-- [ ] Tests JVM del ViewModel.
+- [x] `logScreenView` se registra en la entrada del visor, no en el tap de Home (V8).
+- [x] Tests JVM del ViewModel.
 
 **Verificación**: capturas idénticas a las de referencia; rotar conserva el modo de ajuste y el modo
 noche (B2). **Riesgo: bajo.** **Cambio de comportamiento deliberado**: las aperturas desde
@@ -320,6 +320,46 @@ noche (B2). **Riesgo: bajo.** **Cambio de comportamiento deliberado**: las apert
 
 **Por qué antes de la UI nueva.** Es la prueba de que la lógica se sostiene sola: si algo se rompe
 aquí, es lógica, no diseño.
+
+### Done — 2026-09-24
+
+**What changed.**
+- `PdfViewerViewModel` (`BaseViewModel<PdfViewerIntent, PdfViewerUiState, PdfViewerEffect>`), one per
+  navigation entry, keyed by a `ViewerDocumentRef` passed through `parametersOf`. In
+  `PdfViewerActivity` it lives in the activity's store, keyed by the document's URI, until step b6
+  gives that activity its own back stack.
+- `ViewerDocumentRef` (`Catalogued(uuid)` / `External(uri, displayName)`, serializable for b6's keys)
+  and `ObserveViewerDocumentUseCase` in `feature/pdfviewer/domain/`. An external document is now keyed
+  by its URI instead of a random uuid per intent, which D2 needs.
+- `ViewerFitMode` in `core/domain/model/`: the app's own type, mapped to the engine's `FitMode` only
+  in the screen. Same constant names, so analytics values do not change.
+- The `Loading / Gone / Open` distinction moved from a private type in `PdfViewerSection` into the
+  contract (`ViewerDocumentState`). The section still removes its own entry on `Gone`, as B3 of the
+  navigation audit requires. The state now lives in the ViewModel, which survives the entry being
+  composed afresh.
+- The screen holds no business state: fit mode, night mode, share, open with and print go through
+  intents; analytics is logged by the ViewModel. Printing is an effect, since it needs the activity.
+  What stays in the composition is presentation: chrome visibility, the details sheet flag, and
+  `PdfViewerState`.
+- The screen view is logged by the ViewModel (V8), so documents opened from other apps count too.
+  `HomeScreen` no longer logs it.
+- A failed share or open-with now tells the user (same message as the document actions) instead of
+  failing silently.
+
+**Verification.**
+- `PdfViewerViewModelTest`: 10 JVM tests (loading/gone/open, external documents, settings and their
+  analytics, hand-off and its `file://` refusal, failed share, print effect, screen view).
+- All unit tests: `app` 100, `:composepdf` 32, `scanner-mlkit` 11, green.
+- On the emulator, B2: night mode switched on in the external viewer, then the system theme changed,
+  which recreates the activity (`uiMode` is not in its `configChanges`). It comes back with night
+  mode on; before this step it came back off. The UI is unchanged.
+
+**Not covered yet, on purpose.** After a *process death* the fit mode and night mode still go back to
+their defaults: that is A1, and it belongs to step b5 together with the session memory.
+
+**Pre-existing gap, noted for b6.** In-app messages are shown by the `Toaster` in `MainActivity`
+only. In `PdfViewerActivity` they are emitted but not displayed. b6, which gives that activity its
+own host, adds one.
 
 ## Paso b5 · D2: ajustes por sesión y globales
 

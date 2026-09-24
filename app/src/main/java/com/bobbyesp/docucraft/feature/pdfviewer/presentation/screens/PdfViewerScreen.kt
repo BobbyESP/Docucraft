@@ -35,17 +35,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
-import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
-import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
-import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
-import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
+import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
+import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
+import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentPrinter
-import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.canBeHandedOff
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.PdfViewerViewModel
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.PdfDetailsSheet
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerTopBar
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerEffect
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
-import com.bobbyesp.scanner.ContentRef
 import com.composepdf.FitMode
 import com.composepdf.PdfLayoutSpec
 import com.composepdf.PdfSource
@@ -54,6 +56,7 @@ import com.composepdf.PdfViewerDefaults
 import com.composepdf.PdfZoomSpec
 import com.composepdf.ScrollDirection
 import com.composepdf.rememberPdfViewerState
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
@@ -61,29 +64,21 @@ import org.koin.core.parameter.parametersOf
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun PdfViewerScreen(
+    viewModel: PdfViewerViewModel,
     documentInfo: BasicDocument,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     showBackButton: Boolean = true,
 ) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val pdfViewerState = rememberPdfViewerState()
-    val analyticsHelper = LocalAnalyticsHelper.current
-    val activity = requireNotNull(LocalActivity.current) { "The PDF viewer needs an activity" }
-    val sharer: DocumentSharer = koinInject()
-    val opener: DocumentOpener = koinInject()
-    val printer: DocumentPrinter = koinInject { parametersOf(activity) }
-    val document = ContentRef(documentInfo.uri)
-    val canHandOff = document.canBeHandedOff()
+
+    HandlePdfViewerEffects(viewModel)
 
     var areControlsVisible by remember { mutableStateOf(true) }
     var isTopBarVisible by remember { mutableStateOf(true) }
     var hasScrolled by remember { mutableStateOf(false) }
     var showDetails by remember { mutableStateOf(false) }
-
-    var fitMode by remember { mutableStateOf(FitMode.BOTH) }
-    var isNightModeEnabled by remember { mutableStateOf(false) }
-
-    val jobName = documentInfo.title ?: documentInfo.filename
 
     LaunchedEffect(pdfViewerState) {
         snapshotFlow { pdfViewerState.panY to pdfViewerState.isGestureActive }
@@ -115,9 +110,13 @@ fun PdfViewerScreen(
         PdfViewer(
             source = PdfSource.Uri(documentInfo.uri.toUri()),
             state = pdfViewerState,
-            layout = PdfLayoutSpec(scrollDirection = ScrollDirection.VERTICAL, fitMode = fitMode),
+            layout =
+                PdfLayoutSpec(
+                    scrollDirection = ScrollDirection.VERTICAL,
+                    fitMode = state.fitMode.toEngine(),
+                ),
             zoomSpec = PdfZoomSpec(minZoom = 0.25f, maxZoom = 10f),
-            style = PdfViewerDefaults.style(nightMode = isNightModeEnabled),
+            style = PdfViewerDefaults.style(nightMode = state.isNightModeEnabled),
             loadingContent = { LoadingIndicator(modifier = Modifier.align(Alignment.Center)) },
             onTap = {
                 when {
@@ -165,9 +164,13 @@ fun PdfViewerScreen(
                 pageCount = pdfViewerState.pageCount,
                 showBackButton = showBackButton,
                 onBack = onBack,
-                onShare = if (canHandOff) ({ sharer.share(document) }) else null,
-                onPrint = { printer.print(document, jobName) },
-                onOpenWith = if (canHandOff) ({ opener.openWith(document) }) else null,
+                onShare =
+                    if (state.canHandOff) ({ viewModel.onSendIntent(PdfViewerIntent.Share) })
+                    else null,
+                onPrint = { viewModel.onSendIntent(PdfViewerIntent.Print) },
+                onOpenWith =
+                    if (state.canHandOff) ({ viewModel.onSendIntent(PdfViewerIntent.OpenWith) })
+                    else null,
                 onDetails = { showDetails = true },
             )
         }
@@ -196,46 +199,12 @@ fun PdfViewerScreen(
         ) {
             PdfViewerBottomToolbar(
                 state = pdfViewerState,
-                isNightModeEnabled = isNightModeEnabled,
-                fitMode = fitMode,
+                isNightModeEnabled = state.isNightModeEnabled,
+                fitMode = state.fitMode.toEngine(),
                 onFitModeChange = {
-                    fitMode = it
-                    analyticsHelper.logEvent(
-                        AnalyticsEvent(
-                            type = AnalyticsEvent.Types.PDF_VIEWER_SETTING_CHANGED,
-                            extras =
-                                listOf(
-                                    AnalyticsEvent.Param(
-                                        AnalyticsEvent.ParamKeys.SETTING_NAME,
-                                        "fit_mode",
-                                    ),
-                                    AnalyticsEvent.Param(
-                                        AnalyticsEvent.ParamKeys.SETTING_VALUE,
-                                        it.name,
-                                    ),
-                                ),
-                        )
-                    )
+                    viewModel.onSendIntent(PdfViewerIntent.SetFitMode(it.toViewerFitMode()))
                 },
-                onNightModeToggle = {
-                    isNightModeEnabled = !isNightModeEnabled
-                    analyticsHelper.logEvent(
-                        AnalyticsEvent(
-                            type = AnalyticsEvent.Types.PDF_VIEWER_SETTING_CHANGED,
-                            extras =
-                                listOf(
-                                    AnalyticsEvent.Param(
-                                        AnalyticsEvent.ParamKeys.SETTING_NAME,
-                                        "night_mode",
-                                    ),
-                                    AnalyticsEvent.Param(
-                                        AnalyticsEvent.ParamKeys.SETTING_VALUE,
-                                        isNightModeEnabled.toString(),
-                                    ),
-                                ),
-                        )
-                    )
-                },
+                onNightModeToggle = { viewModel.onSendIntent(PdfViewerIntent.ToggleNightMode) },
             )
         }
     }
@@ -248,3 +217,46 @@ fun PdfViewerScreen(
         )
     }
 }
+
+/** Carries out what the ViewModel cannot, for want of an activity, and shows what it has to say. */
+@Composable
+private fun HandlePdfViewerEffects(viewModel: PdfViewerViewModel) {
+    val activity = requireNotNull(LocalActivity.current) { "The PDF viewer needs an activity" }
+    val printer: DocumentPrinter = koinInject { parametersOf(activity) }
+    val notifications = LocalNotificationsService.current
+
+    LaunchedEffect(viewModel, printer) {
+        viewModel.effects.collectLatest { effect ->
+            when (effect) {
+                is PdfViewerEffect.Print -> printer.print(effect.document, effect.jobName)
+            }
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.defaultEvents.collectLatest { event ->
+            when (event) {
+                is UiEvent.ShowMessage ->
+                    notifications.show(
+                        InAppNotification(message = event.message, type = event.type)
+                    )
+            }
+        }
+    }
+}
+
+private fun ViewerFitMode.toEngine(): FitMode =
+    when (this) {
+        ViewerFitMode.WIDTH -> FitMode.WIDTH
+        ViewerFitMode.HEIGHT -> FitMode.HEIGHT
+        ViewerFitMode.BOTH -> FitMode.BOTH
+        ViewerFitMode.PROPORTIONAL -> FitMode.PROPORTIONAL
+    }
+
+private fun FitMode.toViewerFitMode(): ViewerFitMode =
+    when (this) {
+        FitMode.WIDTH -> ViewerFitMode.WIDTH
+        FitMode.HEIGHT -> ViewerFitMode.HEIGHT
+        FitMode.BOTH -> ViewerFitMode.BOTH
+        FitMode.PROPORTIONAL -> ViewerFitMode.PROPORTIONAL
+    }
