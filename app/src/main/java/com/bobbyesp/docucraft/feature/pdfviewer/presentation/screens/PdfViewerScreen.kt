@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
@@ -32,16 +33,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
-import com.bobbyesp.docucraft.feature.pdfviewer.domain.PdfDocumentActions
+import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentPrinter
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.canBeHandedOff
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.PdfDetailsSheet
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerTopBar
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import com.bobbyesp.scanner.ContentRef
 import com.composepdf.FitMode
 import com.composepdf.PdfLayoutSpec
 import com.composepdf.PdfSource
@@ -51,6 +55,8 @@ import com.composepdf.PdfZoomSpec
 import com.composepdf.ScrollDirection
 import com.composepdf.rememberPdfViewerState
 import kotlinx.coroutines.flow.distinctUntilChanged
+import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -62,9 +68,12 @@ fun PdfViewerScreen(
 ) {
     val pdfViewerState = rememberPdfViewerState()
     val analyticsHelper = LocalAnalyticsHelper.current
-    // Built from the composition's context (the host Activity) — printing requires an Activity.
-    val context = LocalContext.current
-    val documentActions = remember(context) { PdfDocumentActions(context) }
+    val activity = requireNotNull(LocalActivity.current) { "The PDF viewer needs an activity" }
+    val sharer: DocumentSharer = koinInject()
+    val opener: DocumentOpener = koinInject()
+    val printer: DocumentPrinter = koinInject { parametersOf(activity) }
+    val document = ContentRef(documentInfo.uri)
+    val canHandOff = document.canBeHandedOff()
 
     var areControlsVisible by remember { mutableStateOf(true) }
     var isTopBarVisible by remember { mutableStateOf(true) }
@@ -156,9 +165,9 @@ fun PdfViewerScreen(
                 pageCount = pdfViewerState.pageCount,
                 showBackButton = showBackButton,
                 onBack = onBack,
-                onShare = { documentActions.share(documentInfo.uri) },
-                onPrint = { documentActions.print(documentInfo.uri, jobName) },
-                onOpenWith = { documentActions.openWith(documentInfo.uri) },
+                onShare = if (canHandOff) ({ sharer.share(document) }) else null,
+                onPrint = { printer.print(document, jobName) },
+                onOpenWith = if (canHandOff) ({ opener.openWith(document) }) else null,
                 onDetails = { showDetails = true },
             )
         }

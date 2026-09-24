@@ -33,7 +33,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | a | Spike de viabilidad de las APIs de contenido | Nulo | ✅ Hecho: se sigue. Internal links confirmed unavailable (2026-09-24) |
 | b1 | Motor E1: arreglar B1 | Bajo | ✅ Done (2026-09-24) |
 | b2 | Motor E2: los gestos respetan el consumo | Medio | ✅ Done (2026-09-24) |
-| b3 | Acciones detrás de puertos (V2, V3) | Bajo | ⏳ |
+| b3 | Acciones detrás de puertos (V2, V3) | Bajo | ✅ Done (2026-09-24) |
 | b4 | `PdfViewerViewModel` sin cambio visual (V1, B2, V8) | Bajo | ⏳ |
 | b5 | D2: ajustes por sesión y globales + pantalla de Ajustes | Medio | ⏳ |
 | b6 | D5: pila propia en `PdfViewerActivity` + detalles como destino (V4, V5, B5) | Medio | ⏳ |
@@ -276,13 +276,35 @@ groundwork for the selection handles (c4) and the link preview (d3).
 
 ## Paso b3 · Acciones detrás de puertos (V2, V3)
 
-- [ ] `DocumentOpener`, `DocumentPrinter` en dominio; implementaciones en `data/`.
+- [x] `DocumentOpener`, `DocumentPrinter` en dominio; implementaciones en `data/`.
   `PdfPrintDocumentAdapter` sale de `domain/`.
-- [ ] Compartir usa el `DocumentSharer` existente. `PdfDocumentActions` se borra.
-- [ ] Dejar de re-exponer `file://` por `FileProvider` (cambio deliberado, arquitectura §5.3).
+- [x] Compartir usa el `DocumentSharer` existente. `PdfDocumentActions` se borra.
+- [x] Dejar de re-exponer `file://` por `FileProvider` (cambio deliberado, arquitectura §5.3).
 
 **Verificación**: compartir, imprimir y abrir con, desde Home y desde `PdfViewerActivity`.
 **Riesgo: bajo.**
+
+### Done — 2026-09-24
+
+- Ports in `feature/pdfviewer/domain/actions/DocumentHandOff.kt`: `DocumentOpener`, `DocumentPrinter`,
+  and the rule `ContentRef.canBeHandedOff()` (only `content://` leaves the app). Pure Kotlin; the
+  rule has a JVM test (`DocumentHandOffTest`).
+- Implementations in `feature/pdfviewer/data/actions/`: `AndroidDocumentOpener` (a singleton on the
+  application context, like `AndroidDocumentSharer`) and `AndroidDocumentPrinter`, which needs the
+  activity and is therefore a Koin `factory` taking `parametersOf(activity)`.
+  `PdfPrintDocumentAdapter` moved there unchanged.
+- New `pdfViewerModule`, registered in `App.kt`. Sharing reuses the catalogue's `DocumentSharer`
+  binding (V3), so there is one share implementation in the app.
+- `feature/pdfviewer/domain/` now holds no framework code (V2).
+- The screen reads the activity from `LocalActivity` rather than unwrapping `LocalContext`.
+- **Deliberate behaviour change**: for a document that cannot leave the app (`file://`), *Share* and
+  *Open with* are hidden instead of re-exposing the path through the app's `FileProvider`. *Print*
+  stays, since it reads the file itself.
+
+**Verification.** On the emulator, from `PdfViewerActivity` with a `content://` document: *Share*
+and *Open with* open the system chooser; *Print* opens the print spooler. The catalogue path shares
+through the same `DocumentSharer` the document actions sheet already uses. Unit tests: `app` 90,
+`:composepdf` 32, `scanner-mlkit` 11, all green.
 
 ## Paso b4 · `PdfViewerViewModel` sin cambio visual (V1, B2, V8)
 

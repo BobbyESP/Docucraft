@@ -56,9 +56,10 @@ import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
  * @param pageCount Total page count, used to build the subtitle when no description is available.
  * @param showBackButton Whether to show the leading back button.
  * @param onBack Invoked when the back button is tapped.
- * @param onShare Invoked to share the document.
+ * @param onShare Invoked to share the document, or `null` when it cannot leave the app.
  * @param onPrint Invoked to print the document.
- * @param onOpenWith Invoked to open the document in another app.
+ * @param onOpenWith Invoked to open the document in another app, or `null` when it cannot leave the
+ *   app.
  * @param onDetails Invoked to show the document details sheet.
  * @param modifier Optional modifier for the bar container.
  */
@@ -69,9 +70,9 @@ fun PdfViewerTopBar(
     pageCount: Int,
     showBackButton: Boolean,
     onBack: () -> Unit,
-    onShare: () -> Unit,
+    onShare: (() -> Unit)?,
     onPrint: () -> Unit,
-    onOpenWith: () -> Unit,
+    onOpenWith: (() -> Unit)?,
     onDetails: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -125,11 +126,13 @@ fun PdfViewerTopBar(
             }
 
             // The single emphasized action on the bar.
-            FilledIconButton(onClick = onShare, shapes = IconButtonDefaults.shapes()) {
-                Icon(
-                    imageVector = Icons.Rounded.Share,
-                    contentDescription = stringResource(R.string.share),
-                )
+            if (onShare != null) {
+                FilledIconButton(onClick = onShare, shapes = IconButtonDefaults.shapes()) {
+                    Icon(
+                        imageVector = Icons.Rounded.Share,
+                        contentDescription = stringResource(R.string.share),
+                    )
+                }
             }
 
             OverflowMenu(onPrint = onPrint, onOpenWith = onOpenWith, onDetails = onDetails)
@@ -139,7 +142,7 @@ fun PdfViewerTopBar(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun OverflowMenu(onPrint: () -> Unit, onOpenWith: () -> Unit, onDetails: () -> Unit) {
+private fun OverflowMenu(onPrint: () -> Unit, onOpenWith: (() -> Unit)?, onDetails: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
 
     IconButton(onClick = { expanded = true }, shapes = IconButtonDefaults.shapes()) {
@@ -163,16 +166,18 @@ private fun OverflowMenu(onPrint: () -> Unit, onOpenWith: () -> Unit, onDetails:
             },
             leadingIcon = { Icon(Icons.Rounded.Print, contentDescription = null) },
         )
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.open_with)) },
-            onClick = {
-                expanded = false
-                onOpenWith()
-            },
-            leadingIcon = {
-                Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null)
-            },
-        )
+        if (onOpenWith != null) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.open_with)) },
+                onClick = {
+                    expanded = false
+                    onOpenWith()
+                },
+                leadingIcon = {
+                    Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null)
+                },
+            )
+        }
         DropdownMenuItem(
             text = { Text(stringResource(R.string.document_details)) },
             onClick = {

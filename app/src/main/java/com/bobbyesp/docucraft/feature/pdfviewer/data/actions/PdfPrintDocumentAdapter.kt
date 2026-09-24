@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.pdfviewer.domain
+package com.bobbyesp.docucraft.feature.pdfviewer.data.actions
 
 import android.content.Context
 import android.net.Uri
