@@ -32,7 +32,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | 0 | Red de seguridad: PDFs de prueba, test rojo de B1, comprobar S1–S3 | Nulo | ✅ Hecho (pendientes: escaneo neutro, fixtures RTL/CJK) |
 | a | Spike de viabilidad de las APIs de contenido | Nulo | ✅ Hecho: se sigue. Internal links confirmed unavailable (2026-09-24) |
 | b1 | Motor E1: arreglar B1 | Bajo | ✅ Done (2026-09-24) |
-| b2 | Motor E2: los gestos respetan el consumo | Medio | ⏳ |
+| b2 | Motor E2: los gestos respetan el consumo | Medio | ✅ Done (2026-09-24) |
 | b3 | Acciones detrás de puertos (V2, V3) | Bajo | ⏳ |
 | b4 | `PdfViewerViewModel` sin cambio visual (V1, B2, V8) | Bajo | ⏳ |
 | b5 | D2: ajustes por sesión y globales + pantalla de Ajustes | Medio | ⏳ |
@@ -239,13 +239,40 @@ instead of `@Ignore`d, so it can actually be run by hand; the command is in its 
 
 ## Paso b2 · Motor E2: respetar el consumo
 
-- [ ] `PdfGestures`: si un hijo consume el *down*, el visor no inicia el gesto; si consume los
+- [x] `PdfGestures`: si un hijo consume el *down*, el visor no inicia el gesto; si consume los
   arrastres, no hay pan.
 
 **Verificación**: sin overlays interactivos, pan, fling, pinch, doble tap y quick scale se comportan
 igual en dispositivo (hoy no hay ningún overlay que consuma, así que no debería cambiar nada visible).
 Un test de UI con un overlay que consume. **Riesgo: medio**, porque toca la máquina de gestos. Commit
 propio.
+
+### Done — 2026-09-24
+
+**What changed.** Overlay children receive every pointer event before the viewer's gesture layer
+(Compose's main pass runs child-first). The viewer now yields to them in three places:
+
+- **The first touch** is consumed by a child (a button, for instance): the viewer does not start a
+  gesture at all.
+- **Any event before the viewer has decided** what the gesture is (still `UNDECIDED`) is consumed by a
+  child: a drag detector that crossed its own slop first, or a click consuming its release. The
+  viewer abandons the gesture, delivering no pan, tap or long press. Once the viewer has decided
+  (pan or transform), it consumes the pointer itself, so a child can no longer claim it mid-gesture.
+- **The second touch of a would-be double tap** is consumed by a child: it is not a double tap, and
+  the first touch is delivered as a tap.
+
+**Verification.**
+- `PdfGesturesConsumptionTest` (new): a drag kept by an overlay child does not pan; a click on an
+  overlay child does not reach `onTap`; a drag elsewhere still pans (control). The first two were
+  **red before the fix**, the control green.
+- `PdfGesturesTest` (new, the regression net for b2, c3 and d2): tap after the double-tap window,
+  double-tap zoom, pinch zoom, quick scale, long press. All green. Pinch is multi-touch, which
+  `adb input` cannot produce, hence tests rather than a manual check.
+- Real app on the emulator: a slow drag moves from page 1 to 2, a fling to page 11.
+- `:composepdf` instrumented suite: 19 tests, 0 failures, 1 skipped (the opt-in dump).
+
+**No visible change in the app today**: nothing it puts in the overlay consumes pointers yet. This is
+groundwork for the selection handles (c4) and the link preview (d3).
 
 ## Paso b3 · Acciones detrás de puertos (V2, V3)
 

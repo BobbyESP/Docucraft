@@ -136,6 +136,9 @@ private class GestureSession(
 
     suspend fun AwaitPointerEventScope.handleGesture() {
         val down = awaitFirstDown(requireUnconsumed = false)
+        // Children of the overlay see every event before this layer does. One that kept the touch
+        // (a button, a selection handle) owns the gesture, and the pages stay where they are.
+        if (down.isConsumed) return
         controller.stopAnimations()
         controller.setVelocity(Offset.Zero)
         velocityTracker.resetTracking()
@@ -164,6 +167,14 @@ private class GestureSession(
                 continue
             }
             lastUptime = event.changes.first().uptimeMillis
+
+            // Until this layer has decided what the gesture is, a child may still claim it — a
+            // drag detector that crossed its own slop first, or a click consuming its release.
+            // Once decided, the viewer consumes the pointer itself and this can no longer happen.
+            if (mode == GestureMode.UNDECIDED && event.changes.any { it.isConsumed }) {
+                controller.setVelocity(Offset.Zero)
+                return
+            }
 
             trackedId = trackVelocity(event, trackedId)
 
@@ -238,7 +249,8 @@ private class GestureSession(
 
         val secondDown =
             withTimeoutOrNull(doubleTapTimeoutMillis) { awaitFirstDown(requireUnconsumed = false) }
-        if (secondDown == null) {
+        // A second touch kept by an overlay child is not a double tap: the first one was a tap.
+        if (secondDown == null || secondDown.isConsumed) {
             onTap(controller.tapEventAt(firstTapPosition))
             return
         }
