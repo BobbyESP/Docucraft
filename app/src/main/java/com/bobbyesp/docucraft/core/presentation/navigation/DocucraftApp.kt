@@ -3,7 +3,6 @@
  */
 package com.bobbyesp.docucraft.core.presentation.navigation
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.runtime.Composable
@@ -11,13 +10,9 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
-import androidx.navigation3.ui.NavDisplay
-import com.bobbyesp.docucraft.core.presentation.navigation.motion.rememberNavigationMotion
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.rememberOverlaySceneStrategy
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.sharingTheWindow
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsSection
@@ -28,7 +23,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
 
 /**
- * The app shell: a single back stack rendered by a single [NavDisplay].
+ * The app shell: a single back stack rendered by a single `NavDisplay` ([DocucraftNavDisplay]).
  *
  * - The back stack is the whole navigation state. It survives configuration changes and process
  *   death via [rememberNavBackStack], and back (including the predictive gesture) simply pops it —
@@ -48,7 +43,6 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
     val navigator = rememberNavigator(backStack)
     val overlayStrategy = rememberOverlaySceneStrategy<NavKey>()
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
-    val motion = rememberNavigationMotion()
 
     // Overlays first: the first strategy to claim the topmost entry wins, and a sheet or dialog has
     // to be recognized before the layout strategies try to give it a pane.
@@ -65,16 +59,11 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
 
     ScanRequestNavigation(navigator)
 
-    NavDisplay(
+    DocucraftNavDisplay(
         backStack = backStack,
-        modifier = modifier.fillMaxSize(),
-        onBack = navigator::goBack,
-        entryDecorators =
-            listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            ),
+        navigator = navigator,
         sceneStrategies = sceneStrategies,
+        modifier = modifier,
         entryProvider =
             entryProvider {
                 homeSection(navigator, selectedDocumentId = openDocumentId)
@@ -83,9 +72,6 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
 
                 settingsSection(navigator)
             },
-        transitionSpec = { motion.forward() },
-        popTransitionSpec = { motion.backward() },
-        predictivePopTransitionSpec = { motion.predictiveBack() },
     )
 }
 
