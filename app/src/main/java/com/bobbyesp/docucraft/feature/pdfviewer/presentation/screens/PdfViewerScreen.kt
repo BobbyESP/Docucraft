@@ -26,9 +26,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -41,6 +41,7 @@ import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentPrinter
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.PdfViewerViewModel
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.rememberViewerChromeState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerTopBar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerEffect
@@ -55,7 +56,6 @@ import com.composepdf.PdfZoomSpec
 import com.composepdf.ScrollDirection
 import com.composepdf.rememberPdfViewerState
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 
@@ -76,16 +76,7 @@ fun PdfViewerScreen(
 
     HandlePdfViewerEffects(viewModel)
 
-    var areControlsVisible by remember { mutableStateOf(true) }
-    var isTopBarVisible by remember { mutableStateOf(true) }
-
-    LaunchedEffect(pdfViewerState) {
-        snapshotFlow { pdfViewerState.panY to pdfViewerState.isGestureActive }
-            .distinctUntilChanged()
-            .collect { (_, gestureActive) ->
-                if (gestureActive && pdfViewerState.isLoaded) isTopBarVisible = false
-            }
-    }
+    val chrome = rememberViewerChromeState()
 
     // The bars' own measured heights, kept while they are hidden. Handed to the viewer as constant
     // content padding: pages start below the top bar and end above the bottom one, and scroll
@@ -95,7 +86,7 @@ fun PdfViewerScreen(
     var topBarHeight by remember { mutableStateOf(0.dp) }
     var bottomBarHeight by remember { mutableStateOf(0.dp) }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxSize().nestedScroll(chrome.nestedScrollConnection)) {
         PdfViewer(
             source = PdfSource.Uri(documentInfo.uri.toUri()),
             state = pdfViewerState,
@@ -108,24 +99,7 @@ fun PdfViewerScreen(
             zoomSpec = PdfZoomSpec(minZoom = 0.25f, maxZoom = 10f),
             style = PdfViewerDefaults.style(nightMode = display.nightMode),
             loadingContent = { LoadingIndicator(modifier = Modifier.align(Alignment.Center)) },
-            onTap = {
-                when {
-                    // Top bar + controls both visible → hide both
-                    isTopBarVisible && areControlsVisible -> {
-                        isTopBarVisible = false
-                        areControlsVisible = false
-                    }
-                    // Only controls visible → hide controls
-                    !isTopBarVisible && areControlsVisible -> {
-                        areControlsVisible = false
-                    }
-                    // Everything hidden → show both
-                    else -> {
-                        isTopBarVisible = true
-                        areControlsVisible = true
-                    }
-                }
-            },
+            onTap = { chrome.toggle() },
             modifier = Modifier.fillMaxSize(),
         )
 
@@ -134,7 +108,7 @@ fun PdfViewerScreen(
                 Modifier.align(Alignment.TopCenter).onSizeChanged {
                     if (it.height > 0) topBarHeight = with(density) { it.height.toDp() }
                 },
-            visible = isTopBarVisible,
+            visible = chrome.isVisible,
             enter =
                 fadeIn(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
                     slideInVertically(
@@ -149,8 +123,8 @@ fun PdfViewerScreen(
                     ),
         ) {
             PdfViewerTopBar(
-                documentInfo = documentInfo,
-                pageCount = pdfViewerState.pageCount,
+                title = documentInfo.title ?: documentInfo.filename,
+                description = documentInfo.description,
                 showBackButton = showBackButton,
                 onBack = onBack,
                 onShare =
@@ -175,7 +149,7 @@ fun PdfViewerScreen(
                             WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
                                 16.dp
                     ),
-            visible = areControlsVisible,
+            visible = chrome.isVisible,
             enter =
                 fadeIn(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
                     slideInVertically(
