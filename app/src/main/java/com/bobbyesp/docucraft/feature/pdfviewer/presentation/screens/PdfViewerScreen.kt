@@ -25,6 +25,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,12 +41,14 @@ import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentPrinter
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.PdfViewerViewModel
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.rememberViewerChromeState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerTopBar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerEffect
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.ViewerPageRequests
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.composepdf.FitMode
 import com.composepdf.PdfLayoutSpec
@@ -56,6 +59,8 @@ import com.composepdf.PdfZoomSpec
 import com.composepdf.ScrollDirection
 import com.composepdf.rememberPdfViewerState
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 
@@ -63,9 +68,11 @@ import org.koin.core.parameter.parametersOf
 @Composable
 fun PdfViewerScreen(
     viewModel: PdfViewerViewModel,
+    document: ViewerDocumentRef,
     documentInfo: BasicDocument,
     onBack: () -> Unit,
     onOpenDetails: () -> Unit,
+    onGoToPage: (currentPage: Int, pageCount: Int) -> Unit,
     modifier: Modifier = Modifier,
     showBackButton: Boolean = true,
 ) {
@@ -73,6 +80,16 @@ fun PdfViewerScreen(
     // Callers only show the screen once these are known; the factory values are a formality.
     val display = state.display ?: ViewerDisplaySettings.Factory
     val pdfViewerState = rememberPdfViewerState()
+    val scope = rememberCoroutineScope()
+
+    // A page asked for by *Go to page*, which cannot reach this state itself. Taken once scrolled
+    // to.
+    val pageRequests: ViewerPageRequests = koinInject()
+    LaunchedEffect(document, pdfViewerState) {
+        pageRequests.observe(document).filterNotNull().collect { page ->
+            if (pageRequests.consume(document, page)) pdfViewerState.animateScrollToPage(page)
+        }
+    }
 
     HandlePdfViewerEffects(viewModel)
 
@@ -164,12 +181,28 @@ fun PdfViewerScreen(
                     ),
         ) {
             PdfViewerBottomToolbar(
-                state = pdfViewerState,
-                isNightModeEnabled = display.nightMode,
-                fitMode = display.fitMode.toEngine(),
-                onFitModeChange = {
-                    viewModel.onSendIntent(PdfViewerIntent.SetFitMode(it.toViewerFitMode()))
+                currentPage = pdfViewerState.currentPage,
+                pageCount = pdfViewerState.pageCount,
+                zoom = pdfViewerState.zoom,
+                canZoomIn = pdfViewerState.zoom < pdfViewerState.maxZoom,
+                canZoomOut = pdfViewerState.zoom > pdfViewerState.minZoom,
+                fitMode = display.fitMode,
+                nightMode = display.nightMode,
+                onPageClick = {
+                    onGoToPage(pdfViewerState.currentPage, pdfViewerState.pageCount)
                 },
+                onZoomIn = {
+                    scope.launch {
+                        pdfViewerState.animateZoomTo(pdfViewerState.zoom * ZoomStep)
+                    }
+                },
+                onZoomOut = {
+                    scope.launch {
+                        pdfViewerState.animateZoomTo(pdfViewerState.zoom / ZoomStep)
+                    }
+                },
+                onResetZoom = { scope.launch { pdfViewerState.animateResetZoom() } },
+                onFitModeChange = { viewModel.onSendIntent(PdfViewerIntent.SetFitMode(it)) },
                 onNightModeToggle = { viewModel.onSendIntent(PdfViewerIntent.ToggleNightMode) },
             )
         }
@@ -211,10 +244,5 @@ private fun ViewerFitMode.toEngine(): FitMode =
         ViewerFitMode.PROPORTIONAL -> FitMode.PROPORTIONAL
     }
 
-private fun FitMode.toViewerFitMode(): ViewerFitMode =
-    when (this) {
-        FitMode.WIDTH -> ViewerFitMode.WIDTH
-        FitMode.HEIGHT -> ViewerFitMode.HEIGHT
-        FitMode.BOTH -> ViewerFitMode.BOTH
-        FitMode.PROPORTIONAL -> ViewerFitMode.PROPORTIONAL
-    }
+/** Each zoom button press scales by this much, animated. */
+private const val ZoomStep = 1.25f

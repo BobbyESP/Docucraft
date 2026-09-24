@@ -14,6 +14,7 @@ import com.bobbyesp.docucraft.feature.docscanner.navigation.EditDocument
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.ExternalPdfViewer
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.GoToPage
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import kotlinx.serialization.InternalSerializationApi
@@ -89,6 +90,11 @@ class NavKeySerializationTest {
                 ExternalPdfViewer(uri = "content://media/1", displayName = "a.pdf"),
                 PdfDocumentDetails(ViewerDocumentRef.Catalogued(uuid = "uuid")),
                 PdfDocumentDetails(ViewerDocumentRef.External("content://media/1", "a.pdf")),
+                GoToPage(
+                    ViewerDocumentRef.Catalogued(uuid = "uuid"),
+                    currentPage = 2,
+                    pageCount = 12,
+                ),
                 DocumentActions(documentUuid = "uuid"),
                 EditDocument(documentUuid = "uuid"),
                 DeleteDocument(documentUuid = "uuid"),

@@ -25,3 +25,12 @@ import kotlinx.serialization.Serializable
  * sheet the viewer holds, so it survives rotation and process death and back closes it.
  */
 @Serializable data class PdfDocumentDetails(val document: ViewerDocumentRef) : NavKey
+
+/**
+ * *Go to page* for a document open in a viewer. A destination because it is a dialog the user can
+ * open and leave; [currentPage] and [pageCount] travel with it, zero-based and total, so it needs
+ * nothing from the viewer to show itself.
+ */
+@Serializable
+data class GoToPage(val document: ViewerDocumentRef, val currentPage: Int, val pageCount: Int) :
+    NavKey

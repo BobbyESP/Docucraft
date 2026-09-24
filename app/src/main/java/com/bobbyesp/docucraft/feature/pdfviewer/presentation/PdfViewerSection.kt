@@ -14,10 +14,12 @@ import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.LocalPaneContext
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.ExternalPdfViewer
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.GoToPage
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.details.pdfDocumentDetailsSection
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.goToPageSection
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -49,15 +51,14 @@ fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
         }
 
         state.readyDocument?.let { ready ->
+            val ref = ViewerDocumentRef.Catalogued(route.documentUuid)
             PdfViewerScreen(
                 viewModel = viewModel,
+                document = ref,
                 documentInfo = ready,
                 onBack = navigator::goBack,
-                onOpenDetails = {
-                    navigator.goTo(
-                        PdfDocumentDetails(ViewerDocumentRef.Catalogued(route.documentUuid))
-                    )
-                },
+                onOpenDetails = { navigator.goTo(PdfDocumentDetails(ref)) },
+                onGoToPage = { current, count -> navigator.goTo(GoToPage(ref, current, count)) },
                 // Beside the list there is already a way back on screen; filling the window there
                 // is not. The scene knows which of the two happened; this does not have to.
                 showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
@@ -66,6 +67,7 @@ fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
     }
 
     pdfDocumentDetailsSection(navigator)
+    goToPageSection(navigator)
 }
 
 /**
@@ -84,13 +86,16 @@ fun EntryProviderScope<NavKey>.externalPdfViewerSection(
         state.readyDocument?.let { ready ->
             PdfViewerScreen(
                 viewModel = viewModel,
+                document = ref,
                 documentInfo = ready,
                 onBack = onClose,
                 onOpenDetails = { navigator.goTo(PdfDocumentDetails(ref)) },
+                onGoToPage = { current, count -> navigator.goTo(GoToPage(ref, current, count)) },
                 showBackButton = true,
             )
         }
     }
 
     pdfDocumentDetailsSection(navigator)
+    goToPageSection(navigator)
 }

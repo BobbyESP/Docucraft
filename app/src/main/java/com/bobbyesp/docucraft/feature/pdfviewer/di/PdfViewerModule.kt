@@ -19,6 +19,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocu
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.PdfViewerViewModel
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.details.PdfDocumentDetailsViewModel
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.ViewerPageRequests
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -36,6 +37,9 @@ val pdfViewerModule = module {
     // One for the whole process: that is the session D2 remembers settings for, shared by both
     // activities that show documents.
     single<ViewerSessionSettings> { InMemoryViewerSessionSettings() }
+
+    // Where *Go to page* leaves the page for the viewer to take: shared by both hosts.
+    single { ViewerPageRequests() }
 
     factory { ObserveViewerDocumentUseCase(observeDocument = get()) }
     single<DocumentFactsReader> { AndroidDocumentFactsReader(context = androidContext()) }

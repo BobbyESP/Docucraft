@@ -3,471 +3,258 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.FitScreen
-import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material.icons.rounded.ZoomIn
 import androidx.compose.material.icons.rounded.ZoomOut
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledIconToggleButton
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.ripple
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
-import com.composepdf.FitMode
-import com.composepdf.PdfViewerState
-import kotlin.math.max
-import kotlinx.coroutines.launch
+import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.TooltipIconButton
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.WithTooltip
+import kotlin.math.roundToInt
 
 /**
- * Bottom floating toolbar for the PDF viewer.
+ * The viewer's bottom toolbar: the Material 3 Expressive floating toolbar, with the page, zoom, fit
+ * mode and night mode. Design and reasons: `docs/architecture/09-pdfviewer-ui-design.md`.
  *
- * Provides:
- * - Page navigation (previous / editable page field / next)
- * - Zoom controls (zoom out / percentage tap-to-reset / zoom in)
- * - Fit mode cycling button (WIDTH → HEIGHT → BOTH → PROPORTIONAL)
- * - Night mode toggle
+ * The zoom buttons appear only when the toolbar has room for them. Narrower, a zoom chip remains,
+ * and only while the zoom is not the fitted one. That is the toolbar's own width, so it answers
+ * correctly in a list-detail pane too.
  *
- * Designed following Material 3 Expressive guidelines.
- *
- * @param state The hoisted [PdfViewerState].
- * @param isNightModeEnabled Whether night mode is currently active.
- * @param fitMode The currently active [FitMode].
- * @param onNightModeToggle Callback to toggle night mode.
- * @param modifier Optional modifier for the toolbar container.
+ * @param currentPage Zero-based.
+ * @param zoom `1f` is the fitted size.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PdfViewerBottomToolbar(
-    state: PdfViewerState,
-    isNightModeEnabled: Boolean,
-    fitMode: FitMode,
-    onFitModeChange: (FitMode) -> Unit,
+    currentPage: Int,
+    pageCount: Int,
+    zoom: Float,
+    canZoomIn: Boolean,
+    canZoomOut: Boolean,
+    fitMode: ViewerFitMode,
+    nightMode: Boolean,
+    onPageClick: () -> Unit,
+    onZoomIn: () -> Unit,
+    onZoomOut: () -> Unit,
+    onResetZoom: () -> Unit,
+    onFitModeChange: (ViewerFitMode) -> Unit,
     onNightModeToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scope = rememberCoroutineScope()
-
-    BoxWithConstraints(modifier = modifier.windowInsetsPadding(WindowInsets.ime)) {
-        val metrics = remember(maxWidth) { toolbarMetrics(maxWidth) }
+    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+        val roomForZoomButtons = maxWidth >= WideToolbarWidth
 
         HorizontalFloatingToolbar(
             expanded = true,
-            modifier = Modifier.height(metrics.containerHeight).animateContentSize(),
             colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
-            contentPadding =
-                PaddingValues(
-                    horizontal = metrics.containerHorizontalPadding,
-                    vertical = metrics.containerVerticalPadding,
-                ),
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(metrics.itemSpacing),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(
-                    onClick = { state.scrollToPage(state.currentPage - 1) },
-                    enabled = state.currentPage > 0,
-                    shapes = IconButtonDefaults.shapes(),
-                    modifier = Modifier.size(metrics.iconButtonSize),
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.SkipPrevious,
-                        contentDescription = stringResource(R.string.previous_page),
-                    )
-                }
+            PageChip(currentPage = currentPage, pageCount = pageCount, onClick = onPageClick)
 
-                PageInputField(
-                    currentPage = state.currentPage + 1,
-                    pageCount = state.pageCount,
-                    showPageTotal = metrics.showPageTotal,
-                    pageFieldWidth = metrics.pageFieldWidth,
-                    pageFieldHeight = metrics.pageFieldHeight,
-                    onGoToPage = { page -> state.scrollToPage(page - 1) },
+            if (roomForZoomButtons) {
+                TooltipIconButton(
+                    icon = Icons.Rounded.ZoomOut,
+                    label = stringResource(R.string.zoom_out),
+                    onClick = onZoomOut,
+                    enabled = canZoomOut,
+                    tooltipPosition = TooltipAnchorPosition.Above,
                 )
-
-                IconButton(
-                    onClick = { state.scrollToPage(state.currentPage + 1) },
-                    enabled = state.currentPage < state.pageCount - 1,
-                    shapes = IconButtonDefaults.shapes(),
-                    modifier = Modifier.size(metrics.iconButtonSize),
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.SkipNext,
-                        contentDescription = stringResource(R.string.next_page),
-                    )
-                }
-
-                ToolbarDivider(metrics.dividerHeight, metrics.dividerHorizontalPadding)
-
-                IconButton(
-                    onClick = { state.zoomOut(0.25f) },
-                    enabled = state.zoom > state.minZoom,
-                    shapes = IconButtonDefaults.shapes(),
-                    modifier = Modifier.size(metrics.iconButtonSize),
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.ZoomOut,
-                        contentDescription = stringResource(R.string.zoom_out),
-                    )
-                }
-
-                ZoomResetButton(
-                    zoomPercent = "${(state.zoom * 100).toInt()}%",
-                    minWidth = metrics.zoomResetMinWidth,
-                    height = metrics.zoomResetHeight,
-                    horizontalPadding = metrics.zoomResetHorizontalPadding,
-                    onClick = { scope.launch { state.animateResetZoom() } },
-                    onSlideLeft = { state.zoomOut(0.08f) },
-                    onSlideRight = { state.zoomIn(0.08f) },
+                ZoomChip(zoom = zoom, onClick = onResetZoom)
+                TooltipIconButton(
+                    icon = Icons.Rounded.ZoomIn,
+                    label = stringResource(R.string.zoom_in),
+                    onClick = onZoomIn,
+                    enabled = canZoomIn,
+                    tooltipPosition = TooltipAnchorPosition.Above,
                 )
-
-                IconButton(
-                    onClick = { state.zoomIn(0.25f) },
-                    enabled = state.zoom < state.maxZoom,
-                    shapes = IconButtonDefaults.shapes(),
-                    modifier = Modifier.size(metrics.iconButtonSize),
+            } else {
+                AnimatedVisibility(
+                    visible = !zoom.isFitted(),
+                    enter = fadeIn() + expandHorizontally(),
+                    exit = fadeOut() + shrinkHorizontally(),
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.ZoomIn,
-                        contentDescription = stringResource(R.string.zoom_in),
-                    )
+                    ZoomChip(zoom = zoom, onClick = onResetZoom)
                 }
+            }
 
-                ToolbarDivider(metrics.dividerHeight, metrics.dividerHorizontalPadding)
+            FitModeButton(fitMode = fitMode, onFitModeChange = onFitModeChange)
 
-                IconButton(
-                    onClick = { onFitModeChange(fitMode.next()) },
-                    shapes = IconButtonDefaults.shapes(),
-                    modifier = Modifier.size(metrics.iconButtonSize),
-                ) {
-                    Icon(
-                        imageVector = fitMode.icon(),
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        contentDescription = stringResource(R.string.fit_mode),
-                    )
-                }
+            NightModeButton(nightMode = nightMode, onToggle = onNightModeToggle)
+        }
+    }
+}
 
-                FilledIconToggleButton(
-                    checked = isNightModeEnabled,
-                    onCheckedChange = { onNightModeToggle() },
-                    modifier = Modifier.size(metrics.iconButtonSize),
-                ) {
-                    Icon(
-                        imageVector =
-                            if (isNightModeEnabled) Icons.Rounded.DarkMode
-                            else Icons.Rounded.LightMode,
-                        contentDescription = stringResource(R.string.night_mode),
-                    )
-                }
+/** "3 / 12", animating as the page changes. Opens *Go to page*. */
+@Composable
+private fun PageChip(currentPage: Int, pageCount: Int, onClick: () -> Unit) {
+    val description =
+        stringResource(R.string.page_indicator_description, currentPage + 1, pageCount)
+    WithTooltip(
+        label = stringResource(R.string.go_to_page),
+        position = TooltipAnchorPosition.Above,
+    ) {
+        TextButton(
+            onClick = onClick,
+            modifier = Modifier.semantics { contentDescription = description },
+        ) {
+            AnimatedContent(
+                targetState = currentPage + 1,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "page",
+            ) { page ->
+                Text(text = "$page / $pageCount", style = MaterialTheme.typography.labelLarge)
             }
         }
     }
 }
 
-// ── Private sub-components ────────────────────────────────────────────────────
-
+/** The zoom as a percentage; tapping it goes back to the fitted size. */
 @Composable
-private fun PageInputField(
-    currentPage: Int,
-    pageCount: Int,
-    showPageTotal: Boolean,
-    pageFieldWidth: Dp,
-    pageFieldHeight: Dp,
-    onGoToPage: (Int) -> Unit,
-) {
-    val contentColor = LocalContentColor.current
-    val focusManager = LocalFocusManager.current
-    val maxPage = max(pageCount, 1)
-    val maxDigits = maxPage.toString().length
-
-    var isFocused by remember { mutableStateOf(false) }
-    var pageText by remember { mutableStateOf(currentPage.coerceIn(1, maxPage).toString()) }
-
-    LaunchedEffect(currentPage, maxPage, isFocused) {
-        if (!isFocused) {
-            pageText = currentPage.coerceIn(1, maxPage).toString()
+private fun ZoomChip(zoom: Float, onClick: () -> Unit) {
+    val percent = (zoom * 100).roundToInt()
+    val description = stringResource(R.string.zoom_level, percent)
+    WithTooltip(
+        label = stringResource(R.string.reset_zoom),
+        position = TooltipAnchorPosition.Above,
+    ) {
+        TextButton(
+            onClick = onClick,
+            modifier = Modifier.semantics { contentDescription = description },
+        ) {
+            Text(text = "$percent%", style = MaterialTheme.typography.labelLarge)
         }
     }
+}
 
-    fun commitPageChange() {
-        val nextPage = (pageText.toIntOrNull() ?: currentPage).coerceIn(1, maxPage)
-        pageText = nextPage.toString()
-        onGoToPage(nextPage)
-        focusManager.clearFocus()
-    }
+/** An icon for the current fit mode, opening a menu of all four by name. */
+@Composable
+private fun FitModeButton(fitMode: ViewerFitMode, onFitModeChange: (ViewerFitMode) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val label = stringResource(R.string.fit_mode)
+    val current = stringResource(fitMode.label)
 
-    Box(
-        modifier =
-            Modifier.clip(MaterialTheme.shapes.small)
-                .padding(horizontal = pageFieldWidth / 10, vertical = pageFieldHeight / 14),
-        contentAlignment = Alignment.Center,
-    ) {
-        Row(
-            modifier = Modifier.height(pageFieldHeight),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            BasicTextField(
-                value = pageText,
-                onValueChange = { input ->
-                    pageText = input.filter { it.isDigit() }.take(maxDigits)
-                },
-                modifier =
-                    Modifier.height(pageFieldHeight)
-                        .widthIn(min = pageFieldWidth, max = pageFieldWidth * 1.5f)
-                        .clip(MaterialTheme.shapes.small)
-                        .background(MaterialTheme.colorScheme.onPrimaryFixed.copy(alpha = 0.45f))
-                        .border(
-                            width = 2.dp,
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.65f),
-                            shape = MaterialTheme.shapes.small,
-                        )
-                        .padding(horizontal = 8.dp)
-                        .onFocusChanged { focusState ->
-                            isFocused = focusState.isFocused
-                            if (focusState.isFocused) {
-                                pageText = currentPage.coerceIn(1, maxPage).toString()
-                            }
-                        },
-                textStyle =
-                    MaterialTheme.typography.labelLarge.copy(
-                        textAlign = TextAlign.Center,
-                        color = contentColor,
-                    ),
-                cursorBrush = SolidColor(contentColor),
-                keyboardOptions =
-                    KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Go),
-                keyboardActions = KeyboardActions(onGo = { commitPageChange() }),
-                singleLine = true,
-                interactionSource = remember { MutableInteractionSource() },
-                decorationBox = { innerTextField ->
-                    Box(
-                        modifier = Modifier.height(pageFieldHeight),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        innerTextField()
-                    }
-                },
-            )
-
-            if (showPageTotal) {
-                Text(
-                    text = "/ $pageCount",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = contentColor.copy(alpha = 0.74f),
+    Box {
+        TooltipIconButton(
+            icon = fitMode.icon(),
+            label = label,
+            onClick = { expanded = true },
+            modifier = Modifier.semantics { stateDescription = current },
+            tooltipPosition = TooltipAnchorPosition.Above,
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            ViewerFitMode.entries.forEach { mode ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(mode.label)) },
+                    leadingIcon = { Icon(mode.icon(), contentDescription = null) },
+                    trailingIcon = {
+                        if (mode == fitMode) Icon(Icons.Rounded.Check, contentDescription = null)
+                    },
+                    onClick = {
+                        expanded = false
+                        onFitModeChange(mode)
+                    },
                 )
             }
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+/** A toggle, with the Expressive shape change when it is on. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ZoomResetButton(
-    zoomPercent: String,
-    minWidth: Dp,
-    height: Dp,
-    horizontalPadding: Dp,
-    onClick: () -> Unit,
-    onSlideLeft: () -> Unit,
-    onSlideRight: () -> Unit,
-) {
-    val density = LocalDensity.current
-    val dragStepPx = remember(density) { with(density) { 18.dp.toPx() } }
-    var dragAccumulator by remember { mutableFloatStateOf(0f) }
+private fun NightModeButton(nightMode: Boolean, onToggle: () -> Unit) {
+    val label = stringResource(R.string.night_mode)
+    WithTooltip(label = label, position = TooltipAnchorPosition.Above) {
+        FilledTonalIconToggleButton(
+            checked = nightMode,
+            onCheckedChange = { onToggle() },
+            shapes = IconButtonDefaults.toggleableShapes(),
+        ) {
+            Icon(imageVector = Icons.Rounded.DarkMode, contentDescription = label)
+        }
+    }
+}
 
-    Box(
-        modifier =
-            Modifier.height(height)
-                .clip(MaterialTheme.shapes.small)
-                .draggable(
-                    orientation = Orientation.Horizontal,
-                    state =
-                        rememberDraggableState { delta ->
-                            dragAccumulator += delta
-                            while (dragAccumulator >= dragStepPx) {
-                                onSlideRight()
-                                dragAccumulator -= dragStepPx
-                            }
-                            while (dragAccumulator <= -dragStepPx) {
-                                onSlideLeft()
-                                dragAccumulator += dragStepPx
-                            }
-                        },
-                    onDragStarted = { dragAccumulator = 0f },
-                    onDragStopped = { dragAccumulator = 0f },
-                )
-                .combinedClickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = ripple(),
-                    role = Role.Button,
-                    onClick = onClick,
-                )
-                .padding(horizontal = horizontalPadding)
-                .widthIn(min = minWidth),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = zoomPercent,
-            style = MaterialTheme.typography.labelLarge,
-            textAlign = TextAlign.Center,
+private fun Float.isFitted(): Boolean = kotlin.math.abs(this - 1f) < 0.02f
+
+private val ViewerFitMode.label: Int
+    get() =
+        when (this) {
+            ViewerFitMode.WIDTH -> R.string.fit_mode_width
+            ViewerFitMode.HEIGHT -> R.string.fit_mode_height
+            ViewerFitMode.BOTH -> R.string.fit_mode_page
+            ViewerFitMode.PROPORTIONAL -> R.string.fit_mode_proportional
+        }
+
+@Composable
+private fun ViewerFitMode.icon(): ImageVector =
+    when (this) {
+        ViewerFitMode.WIDTH -> ImageVector.vectorResource(R.drawable.fit_page_width)
+        ViewerFitMode.HEIGHT -> ImageVector.vectorResource(R.drawable.fit_page_height)
+        ViewerFitMode.BOTH -> Icons.Rounded.FitScreen
+        ViewerFitMode.PROPORTIONAL -> ImageVector.vectorResource(R.drawable.fit_page)
+    }
+
+/** From here the zoom buttons fit without crowding the rest: Material's medium width. */
+private val WideToolbarWidth = 600.dp
+
+@PreviewLightDark
+@Composable
+private fun PdfViewerBottomToolbarPreview() {
+    DocucraftTheme {
+        PdfViewerBottomToolbar(
+            currentPage = 2,
+            pageCount = 12,
+            zoom = 1.4f,
+            canZoomIn = true,
+            canZoomOut = true,
+            fitMode = ViewerFitMode.WIDTH,
+            nightMode = false,
+            onPageClick = {},
+            onZoomIn = {},
+            onZoomOut = {},
+            onResetZoom = {},
+            onFitModeChange = {},
+            onNightModeToggle = {},
         )
     }
 }
-
-@Composable
-private fun ToolbarDivider(height: Dp, horizontalPadding: Dp) {
-    VerticalDivider(
-        modifier = Modifier.height(height).padding(horizontal = horizontalPadding),
-        color = LocalContentColor.current.copy(alpha = 0.24f),
-    )
-}
-
-private data class ToolbarMetrics(
-    val containerHeight: Dp,
-    val containerHorizontalPadding: Dp,
-    val containerVerticalPadding: Dp,
-    val itemSpacing: Dp,
-    val iconButtonSize: Dp,
-    val pageFieldWidth: Dp,
-    val pageFieldHeight: Dp,
-    val zoomResetMinWidth: Dp,
-    val zoomResetHeight: Dp,
-    val zoomResetHorizontalPadding: Dp,
-    val dividerHeight: Dp,
-    val dividerHorizontalPadding: Dp,
-    val showPageTotal: Boolean,
-)
-
-private fun toolbarMetrics(toolbarWidth: Dp): ToolbarMetrics =
-    when {
-        toolbarWidth < 420.dp ->
-            ToolbarMetrics(
-                containerHeight = 56.dp,
-                containerHorizontalPadding = 8.dp,
-                containerVerticalPadding = 4.dp,
-                itemSpacing = 2.dp,
-                iconButtonSize = 32.dp,
-                pageFieldWidth = 34.dp,
-                pageFieldHeight = 30.dp,
-                zoomResetMinWidth = 46.dp,
-                zoomResetHeight = 30.dp,
-                zoomResetHorizontalPadding = 8.dp,
-                dividerHeight = 18.dp,
-                dividerHorizontalPadding = 0.dp,
-                showPageTotal = false,
-            )
-
-        toolbarWidth < 620.dp ->
-            ToolbarMetrics(
-                containerHeight = 64.dp,
-                containerHorizontalPadding = 10.dp,
-                containerVerticalPadding = 6.dp,
-                itemSpacing = 3.dp,
-                iconButtonSize = 36.dp,
-                pageFieldWidth = 38.dp,
-                pageFieldHeight = 34.dp,
-                zoomResetMinWidth = 54.dp,
-                zoomResetHeight = 34.dp,
-                zoomResetHorizontalPadding = 10.dp,
-                dividerHeight = 22.dp,
-                dividerHorizontalPadding = 1.dp,
-                showPageTotal = true,
-            )
-
-        else ->
-            ToolbarMetrics(
-                containerHeight = 70.dp,
-                containerHorizontalPadding = 12.dp,
-                containerVerticalPadding = 7.dp,
-                itemSpacing = 4.dp,
-                iconButtonSize = 40.dp,
-                pageFieldWidth = 44.dp,
-                pageFieldHeight = 38.dp,
-                zoomResetMinWidth = 62.dp,
-                zoomResetHeight = 38.dp,
-                zoomResetHorizontalPadding = 12.dp,
-                dividerHeight = 24.dp,
-                dividerHorizontalPadding = 2.dp,
-                showPageTotal = true,
-            )
-    }
-
-// ── FitMode helpers ───────────────────────────────────────────────────────────
-
-/** Cycles through fit modes: WIDTH → HEIGHT → BOTH → PROPORTIONAL → WIDTH */
-private fun FitMode.next(): FitMode =
-    when (this) {
-        FitMode.WIDTH -> FitMode.HEIGHT
-        FitMode.HEIGHT -> FitMode.BOTH
-        FitMode.BOTH -> FitMode.PROPORTIONAL
-        FitMode.PROPORTIONAL -> FitMode.WIDTH
-    }
-
-@Composable
-private fun FitMode.icon(): ImageVector =
-    when (this) {
-        FitMode.WIDTH -> ImageVector.vectorResource(R.drawable.fit_page_width)
-        FitMode.HEIGHT -> ImageVector.vectorResource(R.drawable.fit_page_height)
-        FitMode.BOTH -> Icons.Rounded.FitScreen
-        FitMode.PROPORTIONAL -> ImageVector.vectorResource(R.drawable.fit_page)
-    }

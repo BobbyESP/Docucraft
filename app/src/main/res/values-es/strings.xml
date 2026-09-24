@@ -99,4 +99,10 @@
     <string name="night_mode_desc">Invierte los colores de las páginas para leer a oscuras</string>
     <string name="back">Atrás</string>
     <string name="close">Cerrar</string>
+    <string name="go">Ir</string>
+    <string name="page_number">Número de página</string>
+    <string name="page_range">Entre 1 y %1$d</string>
+    <string name="page_indicator_description">Página %1$d de %2$d. Ir a página</string>
+    <string name="reset_zoom">Restablecer zoom</string>
+    <string name="zoom_level">Zoom %1$d%%</string>
 </resources>
