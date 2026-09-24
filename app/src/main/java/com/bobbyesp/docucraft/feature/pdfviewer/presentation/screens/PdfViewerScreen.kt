@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
@@ -71,6 +72,8 @@ fun PdfViewerScreen(
     showBackButton: Boolean = true,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // Callers only show the screen once these are known; the factory values are a formality.
+    val display = state.display ?: ViewerDisplaySettings.Factory
     val pdfViewerState = rememberPdfViewerState()
 
     HandlePdfViewerEffects(viewModel)
@@ -113,10 +116,10 @@ fun PdfViewerScreen(
             layout =
                 PdfLayoutSpec(
                     scrollDirection = ScrollDirection.VERTICAL,
-                    fitMode = state.fitMode.toEngine(),
+                    fitMode = display.fitMode.toEngine(),
                 ),
             zoomSpec = PdfZoomSpec(minZoom = 0.25f, maxZoom = 10f),
-            style = PdfViewerDefaults.style(nightMode = state.isNightModeEnabled),
+            style = PdfViewerDefaults.style(nightMode = display.nightMode),
             loadingContent = { LoadingIndicator(modifier = Modifier.align(Alignment.Center)) },
             onTap = {
                 when {
@@ -199,8 +202,8 @@ fun PdfViewerScreen(
         ) {
             PdfViewerBottomToolbar(
                 state = pdfViewerState,
-                isNightModeEnabled = state.isNightModeEnabled,
-                fitMode = state.fitMode.toEngine(),
+                isNightModeEnabled = display.nightMode,
+                fitMode = display.fitMode.toEngine(),
                 onFitModeChange = {
                     viewModel.onSendIntent(PdfViewerIntent.SetFitMode(it.toViewerFitMode()))
                 },

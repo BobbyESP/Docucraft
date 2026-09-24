@@ -45,10 +45,10 @@ fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
             if (document is ViewerDocumentState.Gone) navigator.removeDestination(route)
         }
 
-        (document as? ViewerDocumentState.Open)?.let { open ->
+        state.readyDocument?.let { ready ->
             PdfViewerScreen(
                 viewModel = viewModel,
-                documentInfo = open.document,
+                documentInfo = ready,
                 onBack = navigator::goBack,
                 // Beside the list there is already a way back on screen; filling the window there
                 // is not. The scene knows which of the two happened; this does not have to.

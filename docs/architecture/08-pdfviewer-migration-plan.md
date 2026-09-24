@@ -35,7 +35,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | b2 | Motor E2: los gestos respetan el consumo | Medio | ✅ Done (2026-09-24) |
 | b3 | Acciones detrás de puertos (V2, V3) | Bajo | ✅ Done (2026-09-24) |
 | b4 | `PdfViewerViewModel` sin cambio visual (V1, B2, V8) | Bajo | ✅ Done (2026-09-24) |
-| b5 | D2: ajustes por sesión y globales + pantalla de Ajustes | Medio | ⏳ |
+| b5 | D2: ajustes por sesión y globales + pantalla de Ajustes | Medio | ✅ Done (2026-09-24) |
 | b6 | D5: pila propia en `PdfViewerActivity` + detalles como destino (V4, V5, B5) | Medio | ⏳ |
 | b7 | Motor E6: `contentPadding` (V9) | **Medio-alto** | ⏳ |
 | b8 | UI nueva (B3, B4) | Medio | ⏳ |
@@ -363,15 +363,15 @@ own host, adds one.
 
 ## Paso b5 · D2: ajustes por sesión y globales
 
-- [ ] `ViewerFitMode` y `ViewerDisplaySettings` en `core/domain/model/`; campos nuevos en
+- [x] `ViewerFitMode` y `ViewerDisplaySettings` en `core/domain/model/`; campos nuevos en
   `UserPreferences` y `SettingsRepository`; claves de DataStore nuevas.
-- [ ] `ViewerSessionSettings` (puerto) + `InMemoryViewerSessionSettings` (`single`).
-- [ ] `ObserveViewerDisplaySettingsUseCase` / `UpdateViewerDisplaySettingsUseCase`, con tests JVM que
+- [x] `ViewerSessionSettings` (puerto) + `InMemoryViewerSessionSettings` (`single`).
+- [x] `ObserveViewerDisplaySettingsUseCase` / `UpdateViewerDisplaySettingsUseCase`, con tests JVM que
   cubren **toda la tabla de D2**.
-- [ ] Siembra desde el `SavedStateHandle` al restaurar (A1: la muerte de proceso es la misma sesión).
-- [ ] Valores de fábrica: `WIDTH` + noche desactivado (A2). La pantalla deja de sobrescribir el
+- [x] Siembra desde el `SavedStateHandle` al restaurar (A1: la muerte de proceso es la misma sesión).
+- [x] Valores de fábrica: `WIDTH` + noche desactivado (A2). La pantalla deja de sobrescribir el
   modo de ajuste del motor con `BOTH`.
-- [ ] Destino `DocumentViewerSettings` en `SettingsKeys.kt` + pantalla + entrada en `SettingsScreen`
+- [x] Destino `DocumentViewerSettings` en `SettingsKeys.kt` + pantalla + entrada en `SettingsScreen`
   + `proguard-rules.pro`.
 
 **Verificación**:
@@ -382,6 +382,55 @@ own host, adds one.
 - con muerte de proceso, el visor abierto conserva sus ajustes (A1).
 
 **Riesgo: medio** (preferencias persistentes nuevas).
+
+### Done — 2026-09-24
+
+**What changed.**
+- `core/domain/model/ViewerDisplaySettings.kt`: `ViewerDisplaySettings` (fit mode + night mode, with
+  `Factory` = fit width, no night mode, per A2) and `ViewerDefaults` (the switch plus the chosen
+  defaults; `effective` resolves which applies). `UserPreferences.viewerDefaults`, three new
+  `SettingsRepository` operations and three DataStore keys (`viewer_defaults_enabled`,
+  `viewer_default_fit_mode`, `viewer_default_night_mode`).
+- `ViewerSessionSettings` (port) and `InMemoryViewerSessionSettings`, a Koin `single`: one per process,
+  shared by `MainActivity` and `PdfViewerActivity`. Keyed by uuid for catalogued documents and by
+  location for external ones.
+- `ObserveViewerDisplaySettingsUseCase` resolves *session choice → defaults if enabled → factory*,
+  as a flow, and reports whether the result was a choice. `UpdateViewerDisplaySettingsUseCase`
+  records one.
+- `PdfViewerViewModel` takes its settings from that flow. `PdfViewerUiState.display` is `null` until
+  known, and the document is only shown once it is (`readyDocument`), so it is never laid out with
+  the factory settings first.
+- **A1**: any *choice* the ViewModel sees is copied to its entry's `SavedStateHandle`, and a handle
+  that has one seeds the session memory on creation. A document left alone keeps nothing, so it
+  goes on following the defaults.
+- Settings → **Document viewer** (`DocumentViewerSettings` key, `DocumentViewerSettingsScreen`,
+  `DocumentViewerSettingsViewModel`): the switch, the fit mode as four labelled radio rows, and night
+  mode. With the switch off, both are shown disabled and the switch explains the factory settings.
+  `SettingSwitch` gained an optional `enabled` parameter. Strings in English and Spanish. No
+  `proguard-rules.pro` change was needed: keys are kept through the `NavKey` interface since the
+  navigation phase.
+
+**Bug found while verifying, fixed before committing.** The first version wrote the settings to
+the saved state only in the entry where the user changed them. Changing night mode, closing the
+viewer and reopening the same document showed the choice (from the session memory), but the new
+entry had nothing saved, so a process death brought the defaults back. The use case now says
+whether a value is a choice, and every entry that sees one keeps it.
+`aReopenedDocumentKeepsTheSessionsChoiceInItsOwnSavedState` reproduces it.
+
+**Verification.**
+- JVM: `ViewerDisplaySettingsTest` covers the D2 table row by row (8 tests); `PdfViewerViewModelTest`
+  adds readiness, per-document memory, saved state, the reopen case, and A1 (15 tests in total);
+  navigation tests cover the new key. `app`: 115 unit tests, green.
+- On the emulator, with the defaults on (whole page, night mode on):
+  1. cold start → night mode on (defaults);
+  2. night mode switched off in the viewer → off;
+  3. viewer closed and reopened in the same session → still off (session memory);
+  4. Home, `am kill`, back → still off (A1);
+  5. app force-stopped and reopened → on again (defaults).
+  With the switch off, a cold start opens without night mode (factory).
+
+**Deliberate behaviour change**: with nothing configured, documents now open fitted to width
+instead of as a whole page (A2).
 
 ## Paso b6 · D5: pila propia + detalles como destino (V4, V5, B5)
 

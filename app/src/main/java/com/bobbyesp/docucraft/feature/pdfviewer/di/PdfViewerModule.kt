@@ -6,10 +6,14 @@ package com.bobbyesp.docucraft.feature.pdfviewer.di
 import android.app.Activity
 import com.bobbyesp.docucraft.feature.pdfviewer.data.actions.AndroidDocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.data.actions.AndroidDocumentPrinter
+import com.bobbyesp.docucraft.feature.pdfviewer.data.settings.InMemoryViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentPrinter
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.settings.ViewerSessionSettings
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocumentUseCase
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.PdfViewerViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -25,13 +29,22 @@ val pdfViewerModule = module {
     // Printing needs the screen's activity, so it is built per caller: `parametersOf(activity)`.
     factory<DocumentPrinter> { (activity: Activity) -> AndroidDocumentPrinter(activity) }
 
+    // One for the whole process: that is the session D2 remembers settings for, shared by both
+    // activities that show documents.
+    single<ViewerSessionSettings> { InMemoryViewerSessionSettings() }
+
     factory { ObserveViewerDocumentUseCase(observeDocument = get()) }
+    factory { ObserveViewerDisplaySettingsUseCase(session = get(), settingsRepository = get()) }
+    factory { UpdateViewerDisplaySettingsUseCase(session = get()) }
 
     // Scoped to whoever shows the document, so which one comes from the caller, not the graph.
     viewModel { (ref: ViewerDocumentRef) ->
         PdfViewerViewModel(
             ref = ref,
+            savedStateHandle = get(),
             observeDocument = get(),
+            observeDisplaySettings = get(),
+            updateDisplaySettings = get(),
             documentSharer = get(),
             documentOpener = get(),
             stringProvider = get(),

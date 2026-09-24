@@ -169,4 +169,16 @@
     <string name="manage_subscription">Manage Subscription</string>
     <string name="manage_subscription_desc">View details, change plans, or restore purchases</string>
     <string name="view_document">View document</string>
+    <string name="document_viewer">Document viewer</string>
+    <string name="document_viewer_desc">How documents open</string>
+    <string name="viewer_use_defaults">Use default settings</string>
+    <string name="viewer_use_defaults_on_desc">Every document opens with the settings below</string>
+    <string name="viewer_use_defaults_off_desc">Documents open fitted to width, without night mode</string>
+    <string name="viewer_session_note">What you change while reading is kept for that document until you close the app.</string>
+    <string name="fit_mode_width">Fit width</string>
+    <string name="fit_mode_height">Fit height</string>
+    <string name="fit_mode_page">Whole page</string>
+    <string name="fit_mode_proportional">Proportional</string>
+    <string name="night_mode_desc">Invert page colours to read in the dark</string>
+    <string name="back">Back</string>
 </resources>

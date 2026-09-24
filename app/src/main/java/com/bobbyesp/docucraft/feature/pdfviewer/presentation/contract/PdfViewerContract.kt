@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract
 
+import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.canBeHandedOff
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
@@ -15,9 +16,16 @@ import com.bobbyesp.scanner.ContentRef
  */
 data class PdfViewerUiState(
     val document: ViewerDocumentState = ViewerDocumentState.Loading,
-    val fitMode: ViewerFitMode = ViewerFitMode.BOTH,
-    val isNightModeEnabled: Boolean = false,
+    /**
+     * `null` until known. They depend on the session and on the stored defaults, and showing the
+     * document before they arrive would lay it out twice.
+     */
+    val display: ViewerDisplaySettings? = null,
 ) {
+    /** The document, once there is everything needed to show it. */
+    val readyDocument: BasicDocument?
+        get() = (document as? ViewerDocumentState.Open)?.document?.takeIf { display != null }
+
     /** Whether Share and Open with are on offer. */
     val canHandOff: Boolean
         get() =

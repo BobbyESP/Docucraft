@@ -28,7 +28,6 @@ import com.bobbyesp.docucraft.core.presentation.MainActivityUiState
 import com.bobbyesp.docucraft.core.presentation.MainViewModel
 import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -92,10 +91,10 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
                         koinViewModel(key = ref.uri) { parametersOf(ref) }
                     val viewerState by viewModel.state.collectAsStateWithLifecycle()
 
-                    (viewerState.document as? ViewerDocumentState.Open)?.let { open ->
+                    viewerState.readyDocument?.let { ready ->
                         PdfViewerScreen(
                             viewModel = viewModel,
-                            documentInfo = open.document,
+                            documentInfo = ready,
                             onBack = { finishAffinity() },
                             showBackButton = true,
                         )

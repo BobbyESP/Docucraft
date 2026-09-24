@@ -3,17 +3,24 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation
 
+import androidx.lifecycle.SavedStateHandle
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
+import com.bobbyesp.docucraft.core.domain.model.UserPreferences
+import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
+import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
+import com.bobbyesp.docucraft.feature.pdfviewer.data.settings.InMemoryViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocumentUseCase
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerEffect
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
@@ -53,6 +60,11 @@ class PdfViewerViewModelTest {
         every { get(any(), *anyVararg()) } returns "message"
     }
     private val analytics = RecordingAnalytics()
+    private val preferences = MutableStateFlow(UserPreferences())
+    private val settingsRepository: SettingsRepository = mockk {
+        every { settings } returns preferences
+    }
+    private var session = InMemoryViewerSessionSettings()
 
     @Before
     fun setUp() {
@@ -107,21 +119,113 @@ class PdfViewerViewModelTest {
     @Test
     fun changingTheFitModeIsKeptAndReported() = runTest {
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+        advanceUntilIdle()
 
         viewModel.onSendIntent(PdfViewerIntent.SetFitMode(ViewerFitMode.WIDTH))
 
-        assertEquals(ViewerFitMode.WIDTH, viewModel.state.value.fitMode)
+        assertEquals(ViewerFitMode.WIDTH, viewModel.state.value.display?.fitMode)
         assertEquals("fit_mode" to "WIDTH", analytics.settingChanges.single())
     }
 
     @Test
     fun togglingNightModeReportsTheNewValue() = runTest {
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+        advanceUntilIdle()
 
         viewModel.onSendIntent(PdfViewerIntent.ToggleNightMode)
 
-        assertTrue(viewModel.state.value.isNightModeEnabled)
+        assertTrue(viewModel.state.value.display!!.nightMode)
         assertEquals("night_mode" to "true", analytics.settingChanges.single())
+    }
+
+    /** Showing the document before its settings are known would lay it out twice. */
+    @Test
+    fun theDocumentIsOnlyReadyOnceItsSettingsAreKnown() = runTest {
+        catalogue.value = scanned()
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+
+        assertEquals(null, viewModel.state.value.readyDocument)
+
+        advanceUntilIdle()
+
+        assertEquals(ViewerDisplaySettings.Factory, viewModel.state.value.display)
+        assertEquals("Invoice", viewModel.state.value.readyDocument?.title)
+    }
+
+    /** D2: the same document opened again in the same session keeps what the user chose. */
+    @Test
+    fun aChangeIsRememberedForTheDocumentForTheSession() = runTest {
+        val first = viewModel(ViewerDocumentRef.Catalogued(UUID))
+        advanceUntilIdle()
+        first.onSendIntent(PdfViewerIntent.SetFitMode(ViewerFitMode.HEIGHT))
+
+        val reopened = viewModel(ViewerDocumentRef.Catalogued(UUID))
+        advanceUntilIdle()
+
+        assertEquals(ViewerFitMode.HEIGHT, reopened.state.value.display?.fitMode)
+    }
+
+    @Test
+    fun aChangeIsAlsoKeptInTheEntrysSavedState() = runTest {
+        val handle = SavedStateHandle()
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID), handle)
+        advanceUntilIdle()
+
+        viewModel.onSendIntent(PdfViewerIntent.ToggleNightMode)
+        advanceUntilIdle()
+
+        assertEquals(true, handle.get<Boolean>("viewer_night_mode"))
+        assertEquals("WIDTH", handle.get<String>("viewer_fit_mode"))
+    }
+
+    /**
+     * Found on the emulator: the document was changed in one entry, closed, and reopened in a new
+     * one, which showed the choice but had nothing in its own saved state — so a process death
+     * brought the defaults back.
+     */
+    @Test
+    fun aReopenedDocumentKeepsTheSessionsChoiceInItsOwnSavedState() = runTest {
+        val first = viewModel(ViewerDocumentRef.Catalogued(UUID))
+        advanceUntilIdle()
+        first.onSendIntent(PdfViewerIntent.ToggleNightMode)
+        advanceUntilIdle()
+
+        val handle = SavedStateHandle()
+        viewModel(ViewerDocumentRef.Catalogued(UUID), handle)
+        advanceUntilIdle()
+
+        assertEquals(true, handle.get<Boolean>("viewer_night_mode"))
+    }
+
+    /** A document left alone follows the defaults, so there is nothing of its own to keep. */
+    @Test
+    fun anUntouchedDocumentKeepsNothingInItsSavedState() = runTest {
+        val handle = SavedStateHandle()
+        viewModel(ViewerDocumentRef.Catalogued(UUID), handle)
+        advanceUntilIdle()
+
+        assertEquals(null, handle.get<Boolean>("viewer_night_mode"))
+    }
+
+    /**
+     * A1: after a process death the session memory is empty, but the restored entry still knows
+     * what its document was showing, and that counts as the same session.
+     */
+    @Test
+    fun afterAProcessDeathTheRestoredEntryKeepsItsSettings() = runTest {
+        session = InMemoryViewerSessionSettings()
+        val restored =
+            SavedStateHandle(
+                mapOf("viewer_fit_mode" to "PROPORTIONAL", "viewer_night_mode" to true)
+            )
+
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID), restored)
+        advanceUntilIdle()
+
+        assertEquals(
+            ViewerDisplaySettings(ViewerFitMode.PROPORTIONAL, nightMode = true),
+            viewModel.state.value.display,
+        )
     }
 
     // ---------------------------------------------------------------------------------- actions
@@ -197,10 +301,14 @@ class PdfViewerViewModelTest {
 
     // ---------------------------------------------------------------------------------- helpers
 
-    private fun viewModel(ref: ViewerDocumentRef) =
+    private fun viewModel(ref: ViewerDocumentRef, handle: SavedStateHandle = SavedStateHandle()) =
         PdfViewerViewModel(
             ref = ref,
+            savedStateHandle = handle,
             observeDocument = ObserveViewerDocumentUseCase(observeDocument),
+            observeDisplaySettings =
+                ObserveViewerDisplaySettingsUseCase(session, settingsRepository),
+            updateDisplaySettings = UpdateViewerDisplaySettingsUseCase(session),
             documentSharer = sharer,
             documentOpener = opener,
             stringProvider = stringProvider,

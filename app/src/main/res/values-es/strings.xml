@@ -86,4 +86,16 @@
     <string name="upgrade_to_pro_desc">Desbloquea funciones premium y elimina límites</string>
     <string name="manage_subscription">Gestionar suscripción</string>
     <string name="manage_subscription_desc">Ver detalles, cambiar de plan o restaurar compras</string>
+    <string name="document_viewer">Visor de documentos</string>
+    <string name="document_viewer_desc">Cómo se abren los documentos</string>
+    <string name="viewer_use_defaults">Usar ajustes predeterminados</string>
+    <string name="viewer_use_defaults_on_desc">Todos los documentos se abren con estos ajustes</string>
+    <string name="viewer_use_defaults_off_desc">Los documentos se abren ajustados al ancho y sin modo nocturno</string>
+    <string name="viewer_session_note">Lo que cambies mientras lees se mantiene en ese documento hasta que cierres la app.</string>
+    <string name="fit_mode_width">Ajustar al ancho</string>
+    <string name="fit_mode_height">Ajustar al alto</string>
+    <string name="fit_mode_page">Página completa</string>
+    <string name="fit_mode_proportional">Proporcional</string>
+    <string name="night_mode_desc">Invierte los colores de las páginas para leer a oscuras</string>
+    <string name="back">Atrás</string>
 </resources>

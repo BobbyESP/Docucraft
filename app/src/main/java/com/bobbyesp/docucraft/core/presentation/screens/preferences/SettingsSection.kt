@@ -28,8 +28,10 @@ import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.LocalPaneContext
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.appearance.AppearanceScreen
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.SubscriptionSettings
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.viewer.DocumentViewerSettingsScreen
 import com.revenuecat.purchases.ui.revenuecatui.customercenter.CustomerCenter
 
 /**
@@ -51,6 +53,7 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
     ) {
         SettingsScreen(
             onOpenAppearance = { navigator.goTo(AppearanceSettings) },
+            onOpenDocumentViewer = { navigator.goTo(DocumentViewerSettings) },
             onOpenCustomerCenter = { navigator.goTo(SubscriptionSettings) },
             onBack = navigator::leaveSettings,
         )
@@ -61,6 +64,13 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
             onBack = navigator::goBack,
             // Beside the settings list there is already a way back on screen; filling the window
             // there is not. The scene knows which of the two happened; this does not have to.
+            showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
+        )
+    }
+
+    entry<DocumentViewerSettings>(metadata = ListDetailSceneStrategy.detailPane(SettingsScene)) {
+        DocumentViewerSettingsScreen(
+            onBack = navigator::goBack,
             showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
         )
     }
@@ -78,7 +88,9 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
  * were. Internal so the rule can be asserted without a composition.
  */
 internal fun Navigator.leaveSettings() {
-    goBackWhile { it is AppearanceSettings || it is SubscriptionSettings }
+    goBackWhile {
+        it is AppearanceSettings || it is DocumentViewerSettings || it is SubscriptionSettings
+    }
 
     goBack()
 }

@@ -18,6 +18,7 @@ import com.bobbyesp.docucraft.core.presentation.MainViewModel
 import com.bobbyesp.docucraft.core.presentation.common.AndroidStringProvider
 import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.appearance.AppearanceViewModel
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.viewer.DocumentViewerSettingsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -55,7 +56,10 @@ val commonModule = module {
     viewModelOf(::MainViewModel)
 }
 
-val preferencesModule = module { viewModelOf(::AppearanceViewModel) }
+val preferencesModule = module {
+    viewModelOf(::AppearanceViewModel)
+    viewModelOf(::DocumentViewerSettingsViewModel)
+}
 
 val notificationsServiceModule = module {
     single<InAppNotificationsService> {

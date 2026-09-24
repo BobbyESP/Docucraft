@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.core.presentation.navigation
 
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.SubscriptionSettings
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DeleteDocument
@@ -87,6 +88,7 @@ class NavKeySerializationTest {
                 DeleteDocument(documentUuid = "uuid"),
                 Settings,
                 AppearanceSettings,
+                DocumentViewerSettings,
                 SubscriptionSettings,
             )
     }
