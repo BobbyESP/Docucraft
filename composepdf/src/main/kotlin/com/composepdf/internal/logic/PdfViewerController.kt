@@ -102,11 +102,35 @@ internal class PdfViewerController(
                 val document = documentSession.open(source, state::updateRemoteDocumentState)
                 viewportCoordinator.updatePageSizes(document.pageSizes)
                 state.completeDocumentLoad(document.pageCount)
+                applyPendingPosition()
                 engine.requestPlan()
             } catch (error: Exception) {
                 state.failDocumentLoad(error)
             }
         }
+    }
+
+    /**
+     * Takes up [PdfViewerState.pendingPosition] once there is something to take it up in: page
+     * sizes from the document and a measured viewport. Either can arrive last, so both call this.
+     * Runs in the same frame the document becomes visible, so page 1 never flashes first.
+     */
+    private fun applyPendingPosition() {
+        val pending = state.pendingPosition ?: return
+        if (!viewportCoordinator.hasLayout || state.pageCount == 0) return
+        state.pendingPosition = null
+
+        val zoom = pending.zoom.coerceIn(config.minZoom, config.maxZoom)
+        val anchor =
+            pending.anchor.copy(
+                pageIndex = pending.anchor.pageIndex.coerceIn(0, state.pageCount - 1)
+            )
+        val pan = viewportCoordinator.snapshot().panForAnchor(anchor, zoom)
+        state.zoom = zoom
+        state.panX = pan.x
+        state.panY = pan.y
+        clampPanInPlace()
+        viewportCoordinator.updateCurrentPageFromViewport()
     }
 
     // ------------------------------------------------------------------ geometry
@@ -290,6 +314,7 @@ internal class PdfViewerController(
     override fun onViewportSizeChanged(width: Float, height: Float) {
         val before = viewportCoordinator.snapshot()
         if (!viewportCoordinator.updateViewport(width, height)) return
+        applyPendingPosition()
         val after = viewportCoordinator.snapshot()
         // Cached bitmaps depend on page layout sizes, not on the viewport itself. Keep them when
         // only the window changed (e.g. animated insets) and rebuild when pages resized.

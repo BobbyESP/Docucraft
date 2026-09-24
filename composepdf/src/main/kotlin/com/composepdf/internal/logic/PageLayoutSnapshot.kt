@@ -186,6 +186,48 @@ internal class PageLayoutSnapshot(
         }
     }
 
+    /**
+     * Where the viewport's leading edge (its top when scrolling vertically, its left otherwise)
+     * falls in the document: on which page, and how far into it along the scroll axis.
+     *
+     * Pan values only mean something for the viewport and layout that produced them; this does not,
+     * which is what lets a reading position survive a rotation or a new fit mode. The leading edge
+     * rather than the centre, because that is the line a reader expects to find where they left it.
+     * [panForAnchor] is the inverse.
+     */
+    fun anchorAtViewportStart(panX: Float, panY: Float, zoom: Float): PageAnchor? {
+        if (isEmpty || zoom <= 0f) return null
+
+        val vertical = scrollDirection == ScrollDirection.VERTICAL
+        val offset = (if (vertical) -panY else -panX) / zoom
+        val page = pageIndexAtDocumentOffset(offset).coerceIn(0, pageOffsets.lastIndex)
+        val length = if (vertical) pageHeightPx(page) else pageWidthPx(page)
+        val fraction =
+            if (length > 0f) ((offset - pageOffsets[page]) / length).coerceIn(0f, 1f) else 0f
+        return PageAnchor(page, fraction)
+    }
+
+    /**
+     * The pan that puts [anchor] at the viewport's leading edge, with the document corridor centred
+     * across the other axis. Not clamped: at the end of the document the caller's clamp decides how
+     * close it can get.
+     */
+    fun panForAnchor(anchor: PageAnchor, zoom: Float): PanPosition {
+        val page = anchor.pageIndex.coerceIn(0, (pageSizes.size - 1).coerceAtLeast(0))
+
+        return if (scrollDirection == ScrollDirection.VERTICAL) {
+            PanPosition(
+                x = (viewport.width / 2f) - (corridorBreadth * zoom / 2f),
+                y = -(pageTopDocY(page) + anchor.fraction * pageHeightPx(page)) * zoom,
+            )
+        } else {
+            PanPosition(
+                x = -(pageLeftDocX(page) + anchor.fraction * pageWidthPx(page)) * zoom,
+                y = (viewport.height / 2f) - (corridorBreadth * zoom / 2f),
+            )
+        }
+    }
+
     fun fitDocumentZoom(fitMode: FitMode, minZoom: Float, maxZoom: Float): Float {
         if (isEmpty) return minZoom
 
@@ -414,3 +456,9 @@ internal data class ViewportMetrics(val width: Float = 0f, val height: Float = 0
 
 /** Simple value object for pan coordinates. */
 internal data class PanPosition(val x: Float, val y: Float)
+
+/**
+ * A reading position that does not depend on the viewport: a page, and a point along it as a
+ * fraction of its length on the scroll axis (0 = leading edge, 1 = trailing edge).
+ */
+internal data class PageAnchor(val pageIndex: Int, val fraction: Float)

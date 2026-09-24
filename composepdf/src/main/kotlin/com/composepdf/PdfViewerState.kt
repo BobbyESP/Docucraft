@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import com.composepdf.internal.engine.BitmapPool
+import com.composepdf.internal.logic.PageAnchor
 import com.composepdf.internal.logic.ViewerController
 import kotlin.math.abs
 
@@ -79,6 +80,19 @@ class PdfViewerState(
         get() = !isLoading && error == null && pageCount > 0
 
     internal var controller: ViewerController? = null
+
+    /**
+     * A position to take up once the document is laid out: the one restored by [saver], or the one
+     * asked for through the constructor. Loading a document starts from zero, so without this both
+     * were overwritten before they could be shown. Consumed by the first load that can apply it; a
+     * later load (a different document) starts from the top as before.
+     */
+    internal var pendingPosition: PendingPosition? =
+        if (initialPage != 0 || initialZoom != 1f) {
+            PendingPosition(PageAnchor(initialPage, 0f), initialZoom)
+        } else {
+            null
+        }
 
     /** The effective minimum committed zoom. */
     val minZoom: Float
@@ -214,22 +228,48 @@ class PdfViewerState(
         }
     }
 
+    /**
+     * What [saver] keeps: a position not yet taken up is kept as it is, since nothing has moved;
+     * otherwise the one on screen, as an anchor, because raw pan values are meaningless for the
+     * viewport a rotation brings.
+     */
+    internal fun positionToSave(): PendingPosition {
+        pendingPosition?.let {
+            return it
+        }
+        val anchor =
+            controller?.layout()?.anchorAtViewportStart(panX, panY, zoom)
+                ?: PageAnchor(currentPage, 0f)
+        return PendingPosition(anchor, zoom)
+    }
+
     companion object {
-        /** Creates a [Saver] restoring page, zoom and pan across process recreation. */
+        /**
+         * Creates a [Saver] restoring the reading position and zoom across recreation. The position
+         * is stored as a point on a page, not as pan, so it lands on the same line even when the
+         * viewport comes back a different shape.
+         */
         fun saver(bitmapPool: BitmapPool): Saver<PdfViewerState, *> =
             listSaver(
-                save = { listOf(it.currentPage, it.zoom, it.panX, it.panY) },
+                save = {
+                    val position = it.positionToSave()
+                    listOf(position.anchor.pageIndex, position.anchor.fraction, position.zoom)
+                },
                 restore = {
-                    PdfViewerState(
-                            initialPage = it[0] as Int,
-                            initialZoom = it[1] as Float,
-                            bitmapPool = bitmapPool,
-                        )
-                        .also { s ->
-                            s.panX = it[2] as Float
-                            s.panY = it[3] as Float
-                        }
+                    PdfViewerState(bitmapPool = bitmapPool).also { state ->
+                        val position =
+                            PendingPosition(
+                                anchor = PageAnchor(it[0] as Int, it[1] as Float),
+                                zoom = it[2] as Float,
+                            )
+                        state.pendingPosition = position
+                        state.currentPage = position.anchor.pageIndex
+                        state.zoom = position.zoom
+                    }
                 },
             )
     }
 }
+
+/** A reading position waiting for a layout to be applied to. */
+internal data class PendingPosition(val anchor: PageAnchor, val zoom: Float)

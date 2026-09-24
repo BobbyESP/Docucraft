@@ -31,7 +31,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 |---|---|---|---|
 | 0 | Red de seguridad: PDFs de prueba, test rojo de B1, comprobar S1–S3 | Nulo | ✅ Hecho (pendientes: escaneo neutro, fixtures RTL/CJK) |
 | a | Spike de viabilidad de las APIs de contenido | Nulo | ✅ Hecho: se sigue; enlaces internos sin verificar con un PDF real |
-| b1 | Motor E1: arreglar B1 | Bajo | ⏳ |
+| b1 | Motor E1: arreglar B1 | Bajo | ✅ Done (2026-09-24) |
 | b2 | Motor E2: los gestos respetan el consumo | Medio | ⏳ |
 | b3 | Acciones detrás de puertos (V2, V3) | Bajo | ⏳ |
 | b4 | `PdfViewerViewModel` sin cambio visual (V1, B2, V8) | Bajo | ⏳ |
@@ -166,12 +166,49 @@ incertidumbre en los enlaces internos (el tercero).
 
 ## Paso b1 · Motor E1: arreglar B1
 
-- [ ] `loadDocument` deja de pisar la posición restaurada: guarda la posición pendiente y la aplica
+- [x] `loadDocument` deja de pisar la posición restaurada: guarda la posición pendiente y la aplica
   cuando el layout está listo.
-- [ ] El test rojo del paso 0 pasa a verde.
+- [x] El test rojo del paso 0 pasa a verde.
 
 **Verificación**: rotar en `MainActivity` y forzar muerte de proceso (`adb shell am kill`) conservan
 página y zoom. **Riesgo: bajo.** Commit propio.
+
+> *From here on, progress notes are written in English (decision of 2026-09-24).*
+
+### Done — 2026-09-24
+
+**What changed.** The position is no longer saved as raw pan, which only means something for the
+viewport that produced it. It is saved as a **reading anchor**: the page under the viewport's
+leading edge (top when vertical, left when horizontal) and how far into it, as a fraction of its
+length along the scroll axis, plus the zoom.
+
+- `PageLayoutSnapshot.anchorAtViewportStart` / `panForAnchor` convert between pan and anchor. They
+  are pure, so they are covered on the JVM (6 new tests in `PageLayoutSnapshotTest`, including the
+  round trip across two different layouts, which is what a rotation is).
+- `PdfViewerState.pendingPosition` holds the restored position, or the one requested through the
+  constructor: `rememberPdfViewerState(initialPage, initialZoom)` was overwritten by the same bug
+  and now works too.
+- `PdfViewerController.applyPendingPosition` takes it up once there are page sizes *and* a measured
+  viewport. Either can arrive last, so both paths call it. It runs in the same frame the document
+  becomes visible, so page 1 never flashes first. The first load consumes it; a later load (a
+  different document) still starts from the top.
+- Leading edge rather than centre, because the line at the top is the one a reader expects to find
+  where they left it.
+
+**Verification.**
+- `PdfViewerStateRestorationTest`: red → **green**. `:composepdf` instrumented suite: 10 tests,
+  0 failures, 1 skipped (the diagnostic dump).
+- `:composepdf:testDebugUnitTest`: 32 tests, 0 failures (26 before).
+- On the emulator, end to end: the external viewer opened on `long-320-pages.pdf`, jump to page 120,
+  Home, `adb shell am kill`, back to the task. It comes back showing *Página 120 de 320* at the same
+  position.
+- Not verified yet: rotation in `MainActivity` on a real device. It needs a build with this change on
+  a device with catalogued documents. The mechanism is the same (a recreation with restored state),
+  and that is what the instrumented test exercises.
+
+**Known limitation, deliberate.** The cross-axis position is not restored: after a recreation, a
+page zoomed in and panned sideways comes back centred across. Restoring it would need a second
+anchor, and it only matters above fit zoom.
 
 ## Paso b2 · Motor E2: respetar el consumo
 
