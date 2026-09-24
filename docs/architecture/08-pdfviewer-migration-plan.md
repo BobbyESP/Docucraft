@@ -206,6 +206,12 @@ length along the scroll axis, plus the zoom.
   a device with catalogued documents. The mechanism is the same (a recreation with restored state),
   and that is what the instrumented test exercises.
 
+**Revised in step b8 (2026-09-24): the anchor is now the centre of the content area, not the
+leading edge.** Anchoring the top line made the *current page* change across a rotation, because the
+current page is read at the centre and `scrollToPage` centres pages: on page 200 of 320, rotating
+showed 199. Anchoring at the centre keeps the page the reader is on. See "Layout changes without a
+recreation" under step b8.
+
 **Known limitation, deliberate.** The cross-axis position is not restored: after a recreation, a
 page zoomed in and panned sideways comes back centred across. Restoring it would need a second
 anchor, and it only matters above fit zoom.

@@ -311,8 +311,35 @@ internal class PdfViewerController(
 
     // ------------------------------------------------------------------ environment
 
+    /**
+     * Where the reader is, in terms that survive the pages changing size: pan is in pixels, and
+     * after a resize or a new fit mode the same pixels are another page. `null` when there is no
+     * layout yet, or a restored position is still waiting to be applied, which takes precedence.
+     */
+    private fun readingAnchor(): PageAnchor? {
+        if (state.pendingPosition != null) return null
+        val snapshot = viewportCoordinator.snapshot()
+        if (snapshot.isEmpty) return null
+        return snapshot.anchorAtContentCenter(state.panX, state.panY, state.zoom)
+    }
+
+    /**
+     * Puts [anchor] back at the centre of the content area after the page layout changed. Only
+     * then: when just the viewport's height changes (the keyboard, say), pan is still right, and
+     * re-anchoring would re-centre a page zoomed in and panned sideways.
+     */
+    private fun returnTo(anchor: PageAnchor?) {
+        if (anchor == null || !viewportCoordinator.hasLayout) return
+        val pan = viewportCoordinator.snapshot().panForAnchor(anchor, state.zoom)
+        state.panX = pan.x
+        state.panY = pan.y
+        clampPanInPlace()
+        viewportCoordinator.updateCurrentPageFromViewport()
+    }
+
     override fun onViewportSizeChanged(width: Float, height: Float) {
         val before = viewportCoordinator.snapshot()
+        val anchor = readingAnchor()
         if (!viewportCoordinator.updateViewport(width, height)) return
         applyPendingPosition()
         val after = viewportCoordinator.snapshot()
@@ -324,6 +351,7 @@ internal class PdfViewerController(
         if (layoutUnchanged) {
             engine.requestPlan()
         } else {
+            returnTo(anchor)
             engine.invalidate()
         }
     }
@@ -339,7 +367,9 @@ internal class PdfViewerController(
                 previous.scrollDirection != newConfig.scrollDirection ||
                 previous.contentPadding != newConfig.contentPadding
         if (layoutChanged) {
+            val anchor = readingAnchor()
             viewportCoordinator.onLayoutInputsChanged()
+            returnTo(anchor)
             engine.invalidate()
         } else if (previous.renderQuality != newConfig.renderQuality) {
             engine.invalidate()

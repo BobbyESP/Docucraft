@@ -89,7 +89,7 @@ class PdfViewerState(
      */
     internal var pendingPosition: PendingPosition? =
         if (initialPage != 0 || initialZoom != 1f) {
-            PendingPosition(PageAnchor(initialPage, 0f), initialZoom)
+            PendingPosition(PageAnchor(initialPage, 0.5f), initialZoom)
         } else {
             null
         }
@@ -238,8 +238,8 @@ class PdfViewerState(
             return it
         }
         val anchor =
-            controller?.layout()?.anchorAtViewportStart(panX, panY, zoom)
-                ?: PageAnchor(currentPage, 0f)
+            controller?.layout()?.anchorAtContentCenter(panX, panY, zoom)
+                ?: PageAnchor(currentPage, 0.5f)
         return PendingPosition(anchor, zoom)
     }
 

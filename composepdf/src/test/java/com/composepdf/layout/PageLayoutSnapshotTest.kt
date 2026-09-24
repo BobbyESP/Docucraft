@@ -79,43 +79,45 @@ class PageLayoutSnapshotTest {
     }
 
     @Test
-    fun anchorAtViewportStart_findsThePageAndHowFarIntoItTheTopEdgeFalls() {
+    fun anchorAtContentCenter_findsThePageAndHowFarIntoItTheCentreFalls() {
         val snapshot = threePages(viewportWidth = 500f, viewportHeight = 500f)
 
-        val anchor = snapshot.anchorAtViewportStart(panX = 0f, panY = -770f, zoom = 1f)!!
+        // Centre at 250 px on screen: document offset 250 + 520 = 770, halfway down page 1.
+        val anchor = snapshot.anchorAtContentCenter(panX = 0f, panY = -520f, zoom = 1f)!!
 
         assertEquals(1, anchor.pageIndex)
         assertEquals(0.5f, anchor.fraction, 0.001f)
     }
 
     @Test
-    fun anchorAtViewportStart_isIndependentOfZoom() {
+    fun anchorAtContentCenter_isIndependentOfZoom() {
         val snapshot = threePages(viewportWidth = 500f, viewportHeight = 500f)
 
-        val anchor = snapshot.anchorAtViewportStart(panX = 0f, panY = -1540f, zoom = 2f)!!
+        // (250 - pan) / 2 = 770.
+        val anchor = snapshot.anchorAtContentCenter(panX = 0f, panY = 250f - 1540f, zoom = 2f)!!
 
         assertEquals(1, anchor.pageIndex)
         assertEquals(0.5f, anchor.fraction, 0.001f)
     }
 
     @Test
-    fun anchorAtViewportStart_beforeTheFirstPage_isItsLeadingEdge() {
+    fun anchorAtContentCenter_beforeTheFirstPage_isItsLeadingEdge() {
         val snapshot = threePages(viewportWidth = 500f, viewportHeight = 500f)
 
-        val anchor = snapshot.anchorAtViewportStart(panX = 0f, panY = 100f, zoom = 1f)!!
+        val anchor = snapshot.anchorAtContentCenter(panX = 0f, panY = 400f, zoom = 1f)!!
 
         assertEquals(0, anchor.pageIndex)
         assertEquals(0f, anchor.fraction, 0.001f)
     }
 
     @Test
-    fun panForAnchor_putsTheAnchorAtTheTopAndCentresTheCorridor() {
+    fun panForAnchor_putsTheAnchorAtTheCentreAndCentresTheCorridor() {
         val snapshot = threePages(viewportWidth = 700f, viewportHeight = 500f)
 
         val pan = snapshot.panForAnchor(PageAnchor(pageIndex = 2, fraction = 0.25f), zoom = 1f)
 
         assertEquals(100f, pan.x, 0.001f)
-        assertEquals(-(1040f + 125f), pan.y, 0.001f)
+        assertEquals(250f - (1040f + 125f), pan.y, 0.001f)
     }
 
     /**
@@ -137,10 +139,11 @@ class PageLayoutSnapshotTest {
                 viewportHeight = 700f,
                 pageSpacingPx = 30f,
             )
-        val anchor = portrait.anchorAtViewportStart(panX = 0f, panY = -650f, zoom = 1f)!!
+        // Centre at 400 px: document offset 650, on page 1.
+        val anchor = portrait.anchorAtContentCenter(panX = 0f, panY = -250f, zoom = 1f)!!
 
         val pan = landscape.panForAnchor(anchor, zoom = 1f)
-        val back = landscape.anchorAtViewportStart(pan.x, pan.y, zoom = 1f)!!
+        val back = landscape.anchorAtContentCenter(pan.x, pan.y, zoom = 1f)!!
 
         assertEquals(anchor.pageIndex, back.pageIndex)
         assertEquals(anchor.fraction, back.fraction, 0.001f)
@@ -162,12 +165,13 @@ class PageLayoutSnapshotTest {
                 scrollDirection = ScrollDirection.HORIZONTAL,
             )
 
-        val anchor = snapshot.anchorAtViewportStart(panX = -520f, panY = 0f, zoom = 1f)!!
+        // Centre at 200 px across: document offset 520, a quarter into page 1.
+        val anchor = snapshot.anchorAtContentCenter(panX = -320f, panY = 0f, zoom = 1f)!!
         val pan = snapshot.panForAnchor(anchor, zoom = 1f)
 
         assertEquals(1, anchor.pageIndex)
         assertEquals(0.25f, anchor.fraction, 0.001f)
-        assertEquals(-520f, pan.x, 0.001f)
+        assertEquals(-320f, pan.x, 0.001f)
         assertEquals(100f, pan.y, 0.001f)
     }
 
@@ -227,15 +231,16 @@ class PageLayoutSnapshotTest {
     }
 
     @Test
-    fun anchor_withPadding_isTakenBelowTheTopBar() {
+    fun anchor_withPadding_isTakenAtTheCentreOfTheContentArea() {
         val snapshot = threePages(viewportWidth = 500f, viewportHeight = 800f, padding = bars)
 
-        val anchor = snapshot.anchorAtViewportStart(panX = 0f, panY = 100f - 770f, zoom = 1f)!!
+        // Content centre at 100 + 620 / 2 = 410 px.
+        val anchor = snapshot.anchorAtContentCenter(panX = 0f, panY = 410f - 770f, zoom = 1f)!!
         val pan = snapshot.panForAnchor(anchor, zoom = 1f)
 
         assertEquals(1, anchor.pageIndex)
         assertEquals(0.5f, anchor.fraction, 0.001f)
-        assertEquals(100f - 770f, pan.y, 0.001f)
+        assertEquals(410f - 770f, pan.y, 0.001f)
     }
 
     @Test

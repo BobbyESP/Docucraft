@@ -197,20 +197,20 @@ internal class PageLayoutSnapshot(
     }
 
     /**
-     * Where the viewport's leading edge (its top when scrolling vertically, its left otherwise)
-     * falls in the document: on which page, and how far into it along the scroll axis.
+     * Where the centre of the content area falls in the document: on which page, and how far into
+     * it along the scroll axis.
      *
      * Pan values only mean something for the viewport and layout that produced them; this does not,
-     * which is what lets a reading position survive a rotation or a new fit mode. The leading edge
-     * rather than the centre, because that is the line a reader expects to find where they left it.
-     * [panForAnchor] is the inverse.
+     * which is what lets a reading position survive a rotation or a new fit mode. The centre,
+     * because that is where [currentPageAtViewportCenter] reads the current page and where
+     * [centeredPanForPage] puts a page: anchoring anywhere else made the current page change across
+     * a rotation. [panForAnchor] is the inverse.
      */
-    fun anchorAtViewportStart(panX: Float, panY: Float, zoom: Float): PageAnchor? {
+    fun anchorAtContentCenter(panX: Float, panY: Float, zoom: Float): PageAnchor? {
         if (isEmpty || zoom <= 0f) return null
 
         val vertical = scrollDirection == ScrollDirection.VERTICAL
-        val offset =
-            (if (vertical) viewport.padding.top - panY else viewport.padding.left - panX) / zoom
+        val offset = (if (vertical) contentCenterY() - panY else contentCenterX() - panX) / zoom
         val page = pageIndexAtDocumentOffset(offset).coerceIn(0, pageOffsets.lastIndex)
         val length = if (vertical) pageHeightPx(page) else pageWidthPx(page)
         val fraction =
@@ -219,9 +219,9 @@ internal class PageLayoutSnapshot(
     }
 
     /**
-     * The pan that puts [anchor] at the viewport's leading edge, with the document corridor centred
-     * across the other axis. Not clamped: at the end of the document the caller's clamp decides how
-     * close it can get.
+     * The pan that puts [anchor] at the centre of the content area, with the document corridor
+     * centred across the other axis. Not clamped: at the end of the document the caller's clamp
+     * decides how close it can get.
      */
     fun panForAnchor(anchor: PageAnchor, zoom: Float): PanPosition {
         val page = anchor.pageIndex.coerceIn(0, (pageSizes.size - 1).coerceAtLeast(0))
@@ -230,13 +230,13 @@ internal class PageLayoutSnapshot(
             PanPosition(
                 x = contentCenterX() - (corridorBreadth * zoom / 2f),
                 y =
-                    viewport.padding.top -
+                    contentCenterY() -
                         (pageTopDocY(page) + anchor.fraction * pageHeightPx(page)) * zoom,
             )
         } else {
             PanPosition(
                 x =
-                    viewport.padding.left -
+                    contentCenterX() -
                         (pageLeftDocX(page) + anchor.fraction * pageWidthPx(page)) * zoom,
                 y = contentCenterY() - (corridorBreadth * zoom / 2f),
             )
