@@ -46,3 +46,17 @@ y que el protegido se rechaza, antes de que ningún otro test se apoye en ellos.
 - **Texto RTL (árabe) y CJK.** Necesitan fuentes incrustadas con su `ToUnicode`, y en árabe además
   *shaping*. Las fuentes de Windows no se pueden redistribuir. Opciones: generarlos con fuentes
   Noto (licencia OFL), o añadir documentos reales cuya licencia lo permita.
+
+## Hand-added fixtures
+
+*(English from here on, per the 2026-09-24 decision.)*
+
+Not produced by the generator and not described in `manifest.json`; tests use them for what the
+generator cannot give: a document written by an independent tool.
+
+| File | Source | What it covers |
+|---|---|---|
+| `prueba_motor_pdf.pdf` | Added by the maintainer, produced with ReportLab (a test script) | 40 pages of real-world content: a table of contents and "back to index / go to cover" links on every section (explicit `/Dest` arrays), external links, typography and special characters (accents, `± × ÷`, `« »`, curly quotes, French and Spanish text), long multi-page text, lists, tables, monospaced code, an image gallery (JPEG, alpha PNG, greyscale, CMYK, 1-bit, text drawn inside an image, which must *not* be copyable) and vector graphics |
+
+It is the evidence behind `PlatformContentTest.internalLinksAreNotReported_revisitIfThisFails`: its
+internal links are ordinary explicit destinations, and the platform still reports none.

@@ -30,7 +30,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | Paso | Descripción | Riesgo | Estado |
 |---|---|---|---|
 | 0 | Red de seguridad: PDFs de prueba, test rojo de B1, comprobar S1–S3 | Nulo | ✅ Hecho (pendientes: escaneo neutro, fixtures RTL/CJK) |
-| a | Spike de viabilidad de las APIs de contenido | Nulo | ✅ Hecho: se sigue; enlaces internos sin verificar con un PDF real |
+| a | Spike de viabilidad de las APIs de contenido | Nulo | ✅ Hecho: se sigue. Internal links confirmed unavailable (2026-09-24) |
 | b1 | Motor E1: arreglar B1 | Bajo | ✅ Done (2026-09-24) |
 | b2 | Motor E2: los gestos respetan el consumo | Medio | ⏳ |
 | b3 | Acciones detrás de puertos (V2, V3) | Bajo | ⏳ |
@@ -209,6 +209,33 @@ length along the scroll axis, plus the zoom.
 **Known limitation, deliberate.** The cross-axis position is not restored: after a recreation, a
 page zoomed in and panned sideways comes back centred across. Restoring it would need a second
 anchor, and it only matters above fit zoom.
+
+**Rotation on a real device — 2026-09-24.** Verified by the maintainer on the Pixel 9 Pro XL with this
+build: the reading position and the zoom survive rotating `MainActivity` into the list-detail layout.
+
+### Internal links: confirmed unavailable from the platform — 2026-09-24
+
+Step *a* left one question open: whether `getGotoLinks()` reported nothing because of how the
+generated fixtures were written. It was settled with `prueba_motor_pdf.pdf`, added by the
+maintainer and produced independently by ReportLab (40 pages; a table of contents and "back to
+index / go to cover" links on every section, all explicit `/Dest` arrays).
+
+- `getGotoLinks()` returns **no internal links on any page** of any fixture.
+- The dump is **byte-for-byte identical** on the emulator and on a real Pixel 9 Pro XL (both API 37,
+  MediaProvider module 17). The test APK was installed on the phone only for the dump and removed
+  right after.
+- External links, text and special characters (accents, `± × ÷`, `« »`, curly quotes) come through
+  correctly.
+
+**Consequence for phase d.** Internal links are **unavailable**, not merely unverified. Unless the
+platform changes, they will not be tappable, which is the same degradation as D1. Alternatives
+(parsing link annotations ourselves, or a bundled PDF library) cost far more than the feature is
+worth today, and are left for the moment a minimum SDK raise or a stable `androidx.pdf` makes them
+cheap. `PlatformContentTest.internalLinksAreNotReported_revisitIfThisFails` is a canary: it fails
+the day the platform starts reporting them.
+
+The platform dump is now opt-in (`-Pandroid.testInstrumentationRunnerArguments.dumpPlatformContent=true`)
+instead of `@Ignore`d, so it can actually be run by hand; the command is in its KDoc.
 
 ## Paso b2 · Motor E2: respetar el consumo
 

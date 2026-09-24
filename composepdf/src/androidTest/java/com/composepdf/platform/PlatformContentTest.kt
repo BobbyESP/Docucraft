@@ -17,7 +17,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -133,21 +133,53 @@ class PlatformContentTest {
     }
 
     /**
+     * A canary, not a requirement. `getGotoLinks()` reports no internal links at all: not for the
+     * four forms written by the fixture generator, and not for `prueba_motor_pdf.pdf`, produced
+     * independently by ReportLab, whose table of contents and "back to index" links are all
+     * explicit `/Dest` arrays. Same result on the emulator and on a Pixel 9 Pro XL (API 37,
+     * MediaProvider module 17).
+     *
+     * The viewer therefore treats internal links as unavailable. If this starts failing, the
+     * platform has begun reporting them: wire them in (plan phase d) and turn this into a real
+     * check.
+     */
+    @Test
+    fun internalLinksAreNotReported_revisitIfThisFails() {
+        for (name in listOf("text-and-links.pdf", "prueba_motor_pdf.pdf")) {
+            open(name).use { renderer ->
+                for (index in 0 until minOf(renderer.pageCount, DUMP_PAGE_LIMIT)) {
+                    renderer.openPage(index).use { page ->
+                        assertEquals("$name p$index", 0, page.gotoLinks.size)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Not a check: dumps everything the content APIs return for every fixture to
      * `files/spike-report.json` in the test app, for re-running step *a* on another platform
-     * version. Run it by hand, keeping the APK installed
-     * (`-Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true`), then `adb shell run-as
-     * com.composepdf.test cat files/spike-report.json`.
+     * version or against a new fixture. Skipped unless asked for, keeping the APK installed:
+     * ```
+     * ./gradlew :composepdf:connectedDebugAndroidTest \
+     *   -Pandroid.testInstrumentationRunnerArguments.class=com.composepdf.platform.PlatformContentTest#dumpPlatformContent \
+     *   -Pandroid.testInstrumentationRunnerArguments.dumpPlatformContent=true \
+     *   -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true
+     * adb shell run-as com.composepdf.test cat files/spike-report.json
+     * ```
      */
-    @Ignore("Diagnostic for step a; run by hand")
     @Test
     fun dumpPlatformContent() {
+        assumeTrue(
+            "Diagnostic; pass dumpPlatformContent=true to run it",
+            InstrumentationRegistry.getArguments().getString("dumpPlatformContent") == "true",
+        )
         val report = JSONObject()
         for (name in context.assets.list("fixtures").orEmpty().filter { it.endsWith(".pdf") }) {
             if ("password" in name) continue
             val pages = JSONArray()
             open(name).use { renderer ->
-                for (index in 0 until minOf(renderer.pageCount, 5)) {
+                for (index in 0 until minOf(renderer.pageCount, DUMP_PAGE_LIMIT)) {
                     renderer.openPage(index).use { page ->
                         pages.put(
                             JSONObject()
@@ -266,6 +298,9 @@ class PlatformContentTest {
 
     private companion object {
         val WORD = Regex("\\S+")
+
+        /** Enough to cover a table of contents and its targets without dumping 320 pages. */
+        const val DUMP_PAGE_LIMIT = 30
 
         /** Link rects come rounded to whole points: about 1 pt of slack on a 595 pt page. */
         const val LINK_TOLERANCE = 0.004f
