@@ -11,7 +11,10 @@ package com.bobbyesp.documentcontent
 interface PageContentProvider {
     val origin: ContentOrigin
 
-    /** Opens [document] for reading. The caller closes the session. */
+    /**
+     * Opens [document] for reading. The caller closes the session. A document that cannot be read
+     * does not throw here: every page of its session comes back [PageContentResult.Failed].
+     */
     suspend fun open(document: DocumentSource): PageContentSession
 }
 
