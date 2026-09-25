@@ -188,4 +188,6 @@
     <string name="page_indicator_description">Page %1$d of %2$d. Go to page</string>
     <string name="reset_zoom">Reset zoom</string>
     <string name="zoom_level">Zoom %1$d%%</string>
+    <string name="page_indicator">%1$d / %2$d</string>
+    <string name="fast_scroller">Page scroller</string>
 </resources>

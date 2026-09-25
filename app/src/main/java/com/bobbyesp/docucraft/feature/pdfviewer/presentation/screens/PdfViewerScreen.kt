@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
@@ -43,6 +45,8 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentPrinter
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.PdfViewerViewModel
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.PageIndicatorPill
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.PdfFastScroller
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.rememberViewerChromeState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerTopBar
@@ -114,10 +118,29 @@ fun PdfViewerScreen(
                     contentPadding = PaddingValues(top = topBarHeight, bottom = bottomBarHeight),
                 ),
             zoomSpec = PdfZoomSpec(minZoom = 0.25f, maxZoom = 10f),
-            style = PdfViewerDefaults.style(nightMode = display.nightMode),
+            // The fast scroller below replaces the engine's passive indicator.
+            style = PdfViewerDefaults.style(nightMode = display.nightMode, scrollIndicator = null),
             loadingContent = { LoadingIndicator(modifier = Modifier.align(Alignment.Center)) },
             onTap = { chrome.toggle() },
             modifier = Modifier.fillMaxSize(),
+        )
+
+        PdfFastScroller(
+            state = pdfViewerState,
+            contentTop = topBarHeight,
+            modifier =
+                Modifier.align(Alignment.TopEnd)
+                    .padding(top = topBarHeight, bottom = bottomBarHeight),
+        )
+
+        PageIndicatorPill(
+            currentPage = pdfViewerState.currentPage,
+            pageCount = pdfViewerState.pageCount,
+            barsVisible = chrome.isVisible,
+            modifier =
+                Modifier.align(Alignment.TopCenter)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(top = 8.dp),
         )
 
         AnimatedVisibility(

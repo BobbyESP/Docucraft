@@ -105,4 +105,6 @@
     <string name="page_indicator_description">Página %1$d de %2$d. Ir a página</string>
     <string name="reset_zoom">Restablecer zoom</string>
     <string name="zoom_level">Zoom %1$d%%</string>
+    <string name="page_indicator">%1$d / %2$d</string>
+    <string name="fast_scroller">Desplazamiento de páginas</string>
 </resources>
