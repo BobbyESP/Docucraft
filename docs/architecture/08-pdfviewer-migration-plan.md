@@ -40,7 +40,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | b7 | Motor E6: `contentPadding` (V9) | **Medio-alto** | ✅ Done (2026-09-24) |
 | b8 | UI nueva (B3, B4) | Medio | ✅ Done (2026-09-25) |
 | c1 | `:document-content-api` + `TextSelection` | Nulo | ✅ Done (2026-09-25) |
-| c2 | Proveedores nativo y compuesto + DI con OCR a `null` | Bajo | ⏳ |
+| c2 | Proveedores nativo y compuesto + DI con OCR a `null` | Bajo | ✅ Done (2026-09-25), plus cross-page selection |
 | c3 | Motor E3 (long press reclamable) + E4 (overlay en coordenadas de página) | **Medio-alto** | ⏳ |
 | c4 | UI de selección, portapapeles y degradación | Medio | ⏳ |
 | d1 | Enlaces en el proveedor + `ResolveLinkUseCase` | Bajo | ⏳ |
@@ -684,17 +684,91 @@ Two small additions: `PageText.isBlank`, which is how a provider recognises `NoT
 `AGENTS.md` lists the module, and its test command now runs these tests too.
 
 **Known limit, deliberate:** a line that mixes directions (bidi) is highlighted as one rectangle
-from its first selected word to its last. Selection is within one page, as §4.4 scopes v1.
+from its first selected word to its last. Selection is within one page, as §4.4 scopes v1 —
+superseded in c2, where selection across pages entered v1 at the maintainer's request.
 
 ## Paso c2 · Proveedores + DI
 
-- [ ] `PlatformPageContentProvider` (API 35+; `Unsupported` por debajo, D1), con `Mutex` y caché
+- [x] `PlatformPageContentProvider` (API 35+; `Unsupported` por debajo, D1), con `Mutex` y caché
   LRU.
-- [ ] `LayeredPageContentProvider(recognized = null)` y `PageContentModule`.
-- [ ] Tests instrumentados con los PDFs de prueba: las coordenadas coinciden con lo que se ve.
+- [x] `LayeredPageContentProvider(recognized = null)` y `PageContentModule`.
+- [x] Tests instrumentados con los PDFs de prueba: las coordenadas coinciden con lo que se ve.
+- [x] *(added 2026-09-25)* Selection across pages in the model (`DocumentSelection`).
 
 **Verificación**: en API < 35, `Unsupported` y sin ninguna llamada a métodos de API 35 sin comprobar
 la versión (lint `NewApi` limpio). **Riesgo: bajo.**
+
+### Done — 2026-09-25
+
+**Selection across pages** (maintainer's request, 2026-09-25; §4.4 had left it for later). It
+lives in `:document-content-api`, like the rest of selection.
+- `TextPosition(page, word)` is ordered by page, then by reading order.
+- `DocumentSelection(start, end)` keeps only its two ends. Each page works out its share from its
+  own `TextSelection` when needed (`rangeOn`): the rest of the first page, all of the middle ones,
+  and the start of the last. A selection over many pages therefore costs nothing until it is drawn,
+  and only the pages on screen are drawn.
+- `text { page -> … }` copies the selection with pages separated by a line break, leaving out pages
+  without text. It asks for every page in the range, so the caller loads them all before copying.
+- 8 JVM tests; the module now has 25.
+
+**Native provider** (`feature/pdfviewer/data/content/PlatformPageContentProvider`), as step *a*
+found it had to work:
+- It opens its own `PdfRenderer` through the content resolver.
+- It splits the page text into lines and words (`splitPageText`, pure, JVM-tested) and measures each
+  word with `selectContent` by character index.
+- It normalizes by the displayed page size and maps external and internal links. The platform
+  reports no internal links, and their position on the target page is left out.
+- A blank page is `NoText`, or `Available(text = null)` when it has links.
+- One `Mutex` per session, since a renderer has one page open at a time, and an LRU of 12 pages.
+  Failures are not cached.
+- `close()` waits for a page being read. Whoever last holds the lock closes, and a closed session
+  answers `Failed`.
+- Below API 35 the session answers `Unsupported` without opening anything. The version check is an
+  `@ChecksSdkIntAtLeast` function over an injectable `sdkInt`, so the fallback can be tested on any
+  device and lint can follow it.
+- A document that cannot be opened (password, missing) gives a session whose pages are all
+  `Failed`: `open` does not throw, as the port now says.
+
+**Layered provider** (`LayeredPageContentProvider`):
+- It uses the document's own text first. Only for a page with none (`NoText`, `Unsupported`, or
+  links only) does it ask `recognized`, which it opens lazily, once per session.
+- Recognized text keeps the document's links.
+- Recognition finding no text beats the platform being unable to look. A failed recognition leaves
+  the document's own answer.
+- With `recognized = null` it returns the embedded session itself.
+
+**DI.** `pageContentModule` binds `PageContentProvider` to
+`LayeredPageContentProvider(PlatformPageContentProvider, recognized = null)`. That is the line text
+recognition will change. `:app` now depends on `:document-content-api`. Nothing in the viewer
+uses the module yet: that is c4.
+
+**Verification.**
+- JVM:
+  - `PageTextSplitterTest`: 5 tests.
+  - `LayeredPageContentProviderTest`: 8 tests, with fake providers.
+  - `:app` unit total: 144.
+- Instrumented, on the emulator: `PlatformPageContentProviderTest`, 10 tests, all green on API 37.
+  The app's `androidTest` reads the engine's fixtures (an extra assets directory), so there is one
+  set of test PDFs. The tests check:
+  - every word of `text-and-links.pdf`'s three pages, in order and where the manifest places it
+    (tolerance 0.01);
+  - the `TARGET` word on rotated and cropped pages;
+  - external links, with their address and bounds (tolerance 0.004);
+  - scanned and mixed pages giving `NoText`;
+  - password-protected and missing documents failing every page;
+  - pages out of range failing;
+  - a page read once per session (the same result instance);
+  - a closed session reading nothing;
+  - the API < 35 fallback;
+  - a selection copied across the real break between pages 1 and 2.
+- Lint: no `NewApi` or `InlinedApi` findings. `lintDebug` does fail, on `MissingTranslation`:
+  - 38 of the 70 errors predate this plan;
+  - 32 are viewer strings this branch added in English and Spanish only;
+  - whether to translate them into the other 12 languages is the maintainer's call.
+
+**Cost, known:** copying a selection over many pages reads every page in it, and measuring words is
+the expensive part (about 0.1 ms a word). If copying long ranges proves slow, the port could offer
+a text-only read for copying. Not needed yet.
 
 ## Paso c3 · Motor E3 (long press) + E4 (overlay en página)
 
@@ -711,6 +785,10 @@ Inspector). **Riesgo: medio-alto**, porque vuelve a tocar los gestos. Commit pro
 - [ ] Extracción perezosa desde el ViewModel (visibles ±1, *debounce* en flings).
 - [ ] Resaltado, tiradores, `LocalTextToolbar` (Copiar, Seleccionar todo), `LocalClipboard`,
   confirmación propia por debajo de API 33.
+- [ ] *(added 2026-09-25)* Selection across pages: a handle dragged onto another page moves the
+  selection's end there (`DocumentSelection`), the document scrolls when a handle nears the top or
+  bottom edge, each visible page highlights its share, and copying loads every page in the range
+  first.
 - [ ] Degradación: `NoText` y `Unsupported` con háptica y un aviso por documento.
 - [ ] «Texto: …» en detalles.
 

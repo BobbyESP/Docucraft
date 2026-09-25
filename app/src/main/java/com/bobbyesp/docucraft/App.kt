@@ -17,6 +17,7 @@ import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerDataModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.scannedDocumentsDatabaseModule
+import com.bobbyesp.docucraft.feature.pdfviewer.di.pageContentModule
 import com.bobbyesp.docucraft.feature.pdfviewer.di.pdfViewerModule
 import com.revenuecat.purchases.Purchases
 import com.revenuecat.purchases.PurchasesConfiguration
@@ -47,6 +48,7 @@ class App : Application() {
                 documentScannerModule,
                 documentScannerViewModels,
                 pdfViewerModule,
+                pageContentModule,
                 analyticsModule,
                 subscriptionModule,
             )
