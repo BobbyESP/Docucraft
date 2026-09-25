@@ -42,6 +42,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.TooltipI
  *
  * @param onShare `null` when the document cannot leave the app; the action is then left out.
  * @param onOpenWith Likewise.
+ * @param onPrint `null` when there is nothing to print: the document did not load.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -51,7 +52,7 @@ fun PdfViewerTopBar(
     showBackButton: Boolean,
     onBack: () -> Unit,
     onShare: (() -> Unit)?,
-    onPrint: () -> Unit,
+    onPrint: (() -> Unit)?,
     onOpenWith: (() -> Unit)?,
     onDetails: () -> Unit,
     modifier: Modifier = Modifier,
@@ -97,11 +98,13 @@ fun PdfViewerTopBar(
                     label = shareLabel,
                 )
             }
-            clickableItem(
-                onClick = onPrint,
-                icon = { Icon(Icons.Rounded.Print, contentDescription = printLabel) },
-                label = printLabel,
-            )
+            if (onPrint != null) {
+                clickableItem(
+                    onClick = onPrint,
+                    icon = { Icon(Icons.Rounded.Print, contentDescription = printLabel) },
+                    label = printLabel,
+                )
+            }
             if (onOpenWith != null) {
                 clickableItem(
                     onClick = onOpenWith,

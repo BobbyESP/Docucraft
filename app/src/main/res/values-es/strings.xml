@@ -107,4 +107,15 @@
     <string name="zoom_level">Zoom %1$d%%</string>
     <string name="page_indicator">%1$d / %2$d</string>
     <string name="fast_scroller">Desplazamiento de páginas</string>
+    <string name="viewer_open_elsewhere">Abrir con otra app</string>
+    <string name="viewer_error_not_found">Este documento ya no está aquí</string>
+    <string name="viewer_error_not_found_desc">Puede que se haya movido o eliminado.</string>
+    <string name="viewer_error_access_denied">Docucraft no puede leer este documento</string>
+    <string name="viewer_error_access_denied_desc">La app que lo compartió no dio permiso o lo ha retirado. Prueba a abrirlo de nuevo desde esa app.</string>
+    <string name="viewer_error_password">Este documento está protegido con contraseña</string>
+    <string name="viewer_error_password_desc">Docucraft aún no puede abrir documentos protegidos. Puede que otra app sí pueda.</string>
+    <string name="viewer_error_damaged">No se puede abrir este documento</string>
+    <string name="viewer_error_damaged_desc">El archivo está dañado o no es un PDF.</string>
+    <string name="viewer_error_unknown">Algo ha fallado</string>
+    <string name="viewer_error_unknown_desc">No se ha podido cargar el documento.</string>
 </resources>

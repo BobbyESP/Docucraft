@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
@@ -47,6 +49,8 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.PdfViewerViewModel
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.PageIndicatorPill
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.PdfFastScroller
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerErrorContent
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerLoadError
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.rememberViewerChromeState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerTopBar
@@ -107,6 +111,15 @@ fun PdfViewerScreen(
     var topBarHeight by remember { mutableStateOf(0.dp) }
     var bottomBarHeight by remember { mutableStateOf(0.dp) }
 
+    // A document that failed cannot be tapped to bring the bars back, and they hold the way out.
+    LaunchedEffect(pdfViewerState.error) { if (pdfViewerState.error != null) chrome.show() }
+
+    // A file this app cannot reach cannot be handed to another one either.
+    val loadError = pdfViewerState.error?.let(ViewerLoadError::of)
+    val canHandOff = state.canHandOff && loadError?.worthOpeningElsewhere != false
+    val openWith: (() -> Unit)? =
+        if (canHandOff) ({ viewModel.onSendIntent(PdfViewerIntent.OpenWith) }) else null
+
     Box(modifier = modifier.fillMaxSize().nestedScroll(chrome.nestedScrollConnection)) {
         PdfViewer(
             source = PdfSource.Uri(documentInfo.uri.toUri()),
@@ -121,6 +134,17 @@ fun PdfViewerScreen(
             // The fast scroller below replaces the engine's passive indicator.
             style = PdfViewerDefaults.style(nightMode = display.nightMode, scrollIndicator = null),
             loadingContent = { LoadingIndicator(modifier = Modifier.align(Alignment.Center)) },
+            errorContent = { error ->
+                ViewerErrorContent(
+                    error = loadError ?: ViewerLoadError.of(error),
+                    onOpenWith = openWith,
+                    onBack = if (showBackButton) onBack else null,
+                    modifier =
+                        Modifier.align(Alignment.Center)
+                            .padding(top = topBarHeight)
+                            .verticalScroll(rememberScrollState()),
+                )
+            },
             onTap = { chrome.toggle() },
             modifier = Modifier.fillMaxSize(),
         )
@@ -168,12 +192,11 @@ fun PdfViewerScreen(
                 showBackButton = showBackButton,
                 onBack = onBack,
                 onShare =
-                    if (state.canHandOff) ({ viewModel.onSendIntent(PdfViewerIntent.Share) })
+                    if (canHandOff) ({ viewModel.onSendIntent(PdfViewerIntent.Share) }) else null,
+                onPrint =
+                    if (pdfViewerState.isLoaded) ({ viewModel.onSendIntent(PdfViewerIntent.Print) })
                     else null,
-                onPrint = { viewModel.onSendIntent(PdfViewerIntent.Print) },
-                onOpenWith =
-                    if (state.canHandOff) ({ viewModel.onSendIntent(PdfViewerIntent.OpenWith) })
-                    else null,
+                onOpenWith = openWith,
                 onDetails = onOpenDetails,
             )
         }
@@ -189,7 +212,10 @@ fun PdfViewerScreen(
                             WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
                                 16.dp
                     ),
-            visible = chrome.isVisible,
+            // Nothing to page through or zoom in a document that failed. Kept while loading: its
+            // height is the content padding, and learning it after the document is laid out would
+            // move a restored position.
+            visible = chrome.isVisible && pdfViewerState.error == null,
             enter =
                 fadeIn(animationSpec = MaterialTheme.motionScheme.slowEffectsSpec()) +
                     slideInVertically(
