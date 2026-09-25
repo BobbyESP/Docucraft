@@ -4,7 +4,8 @@
 - Deep-dive architecture docs and stabilization plans: `docs/` (start at `docs/README.md`).
 - Multi-module Android project: `:app` (product), `:composepdf` (local PDF engine),
   `:scanner-api` (engine-agnostic scanning contract, plain Kotlin), `:scanner-mlkit` (ML Kit
-  implementation of it).
+  implementation of it), `:document-content-api` (what is on a document's pages — text, links —
+  and the pure text-selection logic; plain Kotlin, so a future OCR module can implement it).
 - Stack in use: Kotlin, Jetpack Compose, Navigation 3 typed routes, Koin DI, Room, ML Kit Document Scanner.
 - Runtime DI entrypoint is `app/src/main/java/com/bobbyesp/docucraft/App.kt` (`startKoin`).
 
@@ -60,7 +61,7 @@
 
 ## Build and Validation
 - Debug APK: `./gradlew :app:assembleDebug` (Windows: `.\gradlew.bat :app:assembleDebug`).
-- Unit tests: `./gradlew testDebugUnitTest :scanner-api:test` (all modules).
+- Unit tests: `./gradlew testDebugUnitTest :scanner-api:test :document-content-api:test` (all modules).
 - Instrumented tests: `./gradlew :app:connectedDebugAndroidTest :composepdf:connectedDebugAndroidTest`.
 - Formatting: `./gradlew spotlessApply` (Spotless applies `ktfmt` to modules; `spotlessCheck` verifies).
 - Custom APK copies are generated under `app/build/outputs/apk_custom/<variant>/` by `buildSrc/CopyApkPlugin.kt`.

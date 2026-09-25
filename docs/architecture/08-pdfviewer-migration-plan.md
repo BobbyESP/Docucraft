@@ -39,7 +39,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | b6 | D5: pila propia en `PdfViewerActivity` + detalles como destino (V4, V5, B5) | Medio | ✅ Done (2026-09-24) |
 | b7 | Motor E6: `contentPadding` (V9) | **Medio-alto** | ✅ Done (2026-09-24) |
 | b8 | UI nueva (B3, B4) | Medio | ✅ Done (2026-09-25) |
-| c1 | `:document-content-api` + `TextSelection` | Nulo | ⏳ |
+| c1 | `:document-content-api` + `TextSelection` | Nulo | ✅ Done (2026-09-25) |
 | c2 | Proveedores nativo y compuesto + DI con OCR a `null` | Bajo | ⏳ |
 | c3 | Motor E3 (long press reclamable) + E4 (overlay en coordenadas de página) | **Medio-alto** | ⏳ |
 | c4 | UI de selección, portapapeles y degradación | Medio | ⏳ |
@@ -637,11 +637,54 @@ changes. Both are built only on `PdfViewerState`'s public API.
 
 ## Paso c1 · `:document-content-api` + `TextSelection`
 
-- [ ] Módulo Kotlin puro con los modelos y el puerto (arquitectura §4).
-- [ ] `TextSelection` con tests JVM: palabra bajo un punto, rango entre líneas, orden de lectura,
+- [x] Módulo Kotlin puro con los modelos y el puerto (arquitectura §4).
+- [x] `TextSelection` con tests JVM: palabra bajo un punto, rango entre líneas, orden de lectura,
   saltos de línea en el texto copiado, fusión de rectángulos, `all()`, RTL básico.
 
 **Riesgo: nulo** (no se cablea nada).
+
+### Done — 2026-09-25
+
+**Module.** `:document-content-api`, plain Kotlin like `:scanner-api`, package
+`com.bobbyesp.documentcontent`. It holds the models and the port exactly as in §4.1–4.2 of the
+target architecture:
+- geometry: `NormalizedRect`, `NormalizedPoint`;
+- document and origin: `DocumentSource`, `ContentOrigin`;
+- text: `TextWord`, `TextLine`, `PageText`;
+- links and results: `PageLink`, `PageContentResult`;
+- the port: `PageContentProvider` and `PageContentSession`.
+
+Two small additions: `PageText.isBlank`, which is how a provider recognises `NoText`, and
+`NormalizedRect.union` / `distanceTo`. Nothing depends on the module yet. `:app` picks it up in c2.
+
+**`TextSelection`.**
+- A selection is a `WordRange`: indices into the page's words in *reading order*, as the provider
+  lists them. Geometry only decides which word a finger is on; everything after follows reading
+  order. That is why a backwards drag, a selection across lines and a right-to-left line all copy in
+  the order they are read.
+- `wordAt(point, tolerance)` is for a long press. It returns the word the point is on or, failing
+  that, the closest word within the tolerance (default 0.03 normalized units), or nothing.
+- `nearestWord(point)` is for a dragged handle and always lands on a word. It picks the closest
+  line, then the closest word along it. Past a line's end it is that line's last word on that side,
+  and above or below the text it is the first or last line.
+- `range(anchor, focus)` orders its ends. `text(range)` joins words with a space and lines with
+  `
+`, keeping a blank line where it separates paragraphs. `highlightRects(range)` returns one
+  rectangle per line, gaps between words included. `all()` covers the whole page.
+
+**Verification.** `./gradlew :document-content-api:test`: 17 JVM tests, all green. They cover:
+- the word under a point, including just off a word and far from every word;
+- handles past a line's end, between lines, above and below the text;
+- ranges across lines and backwards drags;
+- copied line breaks and a blank line between paragraphs;
+- one rectangle per line;
+- `all()`, and a page without words;
+- a right-to-left line.
+
+`AGENTS.md` lists the module, and its test command now runs these tests too.
+
+**Known limit, deliberate:** a line that mixes directions (bidi) is highlighted as one rectangle
+from its first selected word to its last. Selection is within one page, as §4.4 scopes v1.
 
 ## Paso c2 · Proveedores + DI
 
