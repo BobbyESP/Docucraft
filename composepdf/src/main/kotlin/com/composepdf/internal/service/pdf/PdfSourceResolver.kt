@@ -11,6 +11,7 @@ import com.composepdf.internal.service.remote.RemotePdfLoader
 import com.composepdf.internal.util.longLivedContext
 import java.io.Closeable
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -72,7 +73,7 @@ class PdfSourceResolver(context: Context) : Closeable {
 
                 is PdfSource.Uri -> {
                     appContext.contentResolver.openFileDescriptor(source.uri, "r")
-                        ?: throw IllegalArgumentException("Cannot open URI: ${source.uri}")
+                        ?: throw FileNotFoundException("Cannot open URI: ${source.uri}")
                 }
 
                 is PdfSource.Remote -> {

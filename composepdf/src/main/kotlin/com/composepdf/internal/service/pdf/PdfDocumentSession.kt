@@ -4,11 +4,13 @@
 package com.composepdf.internal.service.pdf
 
 import android.content.Context
+import com.composepdf.PdfLoadException
 import com.composepdf.PdfSource
 import com.composepdf.RemotePdfState
 import com.composepdf.internal.service.remote.RemotePdfException
 import com.composepdf.internal.service.remote.RemotePdfLoader
 import com.composepdf.internal.util.longLivedContext
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Manages the lifecycle and initialization of a PDF document session: resolves local and remote
@@ -61,7 +63,15 @@ internal class PdfDocumentSession(
     private suspend fun openResolved(source: PdfSource): DocumentResult {
         currentDocumentKey = source.hashCode().toString(16)
         documentManager.open(source)
-        val pageSizes = documentManager.getAllPageSizes()
+        // A document can open and still fail to give its pages' sizes.
+        val pageSizes =
+            try {
+                documentManager.getAllPageSizes()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                throw PdfLoadException.whileParsing(e)
+            }
         return DocumentResult(
             documentKey = currentDocumentKey,
             pageSizes = pageSizes,

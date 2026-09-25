@@ -25,6 +25,7 @@ import com.composepdf.internal.service.pdf.PdfDocumentManager
 import com.composepdf.internal.service.pdf.PdfDocumentSession
 import com.composepdf.internal.util.longLivedContext
 import java.io.Closeable
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -104,6 +105,8 @@ internal class PdfViewerController(
                 state.completeDocumentLoad(document.pageCount)
                 applyPendingPosition()
                 engine.requestPlan()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (error: Exception) {
                 state.failDocumentLoad(error)
             }

@@ -8,11 +8,13 @@ import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import android.util.Size
+import com.composepdf.PdfLoadException
 import com.composepdf.PdfSource
 import com.composepdf.internal.util.longLivedContext
 import java.io.Closeable
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -81,10 +83,22 @@ class PdfDocumentManager(context: Context) : Closeable {
             val resolver = PdfSourceResolver(appContext)
             sourceResolver = resolver
             try {
-                val fd = resolver.resolve(source)
+                val fd =
+                    try {
+                        resolver.resolve(source)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        throw PdfLoadException.whileReading(e)
+                    }
                 masterFd = fd
 
-                val firstRenderer = PdfRenderer(fd)
+                val firstRenderer =
+                    try {
+                        PdfRenderer(fd)
+                    } catch (e: Exception) {
+                        throw PdfLoadException.whileParsing(e)
+                    }
                 _pageCount = firstRenderer.pageCount
                 rendererPool.offer(firstRenderer)
 
