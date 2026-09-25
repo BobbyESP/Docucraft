@@ -38,6 +38,7 @@ import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.composepdf.PdfGestureSpec
+import com.composepdf.PdfInteractionHandler
 import com.composepdf.PdfTapEvent
 import com.composepdf.PdfViewerState
 import com.composepdf.PdfZoomSpec
@@ -53,6 +54,9 @@ import kotlin.math.sqrt
  * (double tap + drag), taps and long presses — one state machine, so gestures hand over to each
  * other without dead frames and any ongoing animation is interrupted by the next touch.
  *
+ * A long press claimed by a [PdfInteractionHandler] takes the finger out of the machine: until it
+ * lifts, its movement goes to the handler and the document stays where it is.
+ *
  * Pan deltas participate in nested scrolling and drive the platform stretch [OverscrollEffect];
  * zoom past the configured limits is allowed with logarithmic resistance and springs back on
  * release.
@@ -66,12 +70,14 @@ internal fun Modifier.pdfViewerGestures(
     overscrollEffect: OverscrollEffect?,
     onTap: ((PdfTapEvent) -> Unit)?,
     onLongPress: ((PdfTapEvent) -> Unit)?,
+    interactionHandler: PdfInteractionHandler?,
     enabled: Boolean,
 ): Modifier {
     val dispatcher = remember { NestedScrollDispatcher() }
     val connection = remember { object : NestedScrollConnection {} }
     val currentOnTap by rememberUpdatedState(onTap)
     val currentOnLongPress by rememberUpdatedState(onLongPress)
+    val currentHandler by rememberUpdatedState(interactionHandler)
 
     return this.nestedScroll(connection, dispatcher).pointerInput(
         controller,
@@ -97,8 +103,14 @@ internal fun Modifier.pdfViewerGestures(
                 minFlingVelocity = viewConfiguration.minimumFlingVelocity,
                 quickScaleDoubleDistance = QUICK_SCALE_DOUBLE_DISTANCE.toPx(),
                 onTap = { event -> currentOnTap?.invoke(event) },
-                onLongPress = { event -> currentOnLongPress?.invoke(event) },
-                hasLongPressListener = { currentOnLongPress != null },
+                onLongPress = { event ->
+                    val claimed = currentHandler?.onLongPress(event) == true
+                    if (!claimed) currentOnLongPress?.invoke(event)
+                    claimed
+                },
+                onClaimedDrag = { event -> currentHandler?.onDrag(event) },
+                onClaimedDragEnd = { currentHandler?.onDragEnd() },
+                hasLongPressListener = { currentOnLongPress != null || currentHandler != null },
             )
         awaitEachGesture { with(session) { handleGesture() } }
     }
@@ -128,7 +140,10 @@ private class GestureSession(
     private val minFlingVelocity: Float,
     private val quickScaleDoubleDistance: Float,
     private val onTap: (PdfTapEvent) -> Unit,
-    private val onLongPress: (PdfTapEvent) -> Unit,
+    /** Returns whether the long press was claimed. */
+    private val onLongPress: (PdfTapEvent) -> Boolean,
+    private val onClaimedDrag: (PdfTapEvent) -> Unit,
+    private val onClaimedDragEnd: () -> Unit,
     private val hasLongPressListener: () -> Boolean,
 ) {
     private val velocityTracker = VelocityTracker()
@@ -163,7 +178,10 @@ private class GestureSession(
 
             if (event == null) {
                 longPressFired = true
-                onLongPress(controller.tapEventAt(down.position))
+                if (onLongPress(controller.tapEventAt(down.position))) {
+                    followClaimedDrag(trackedId)
+                    return
+                }
                 continue
             }
             lastUptime = event.changes.first().uptimeMillis
@@ -232,6 +250,31 @@ private class GestureSession(
             tapCandidate -> handleTapOrDoubleTap(down.position)
 
             else -> controller.setVelocity(Offset.Zero)
+        }
+    }
+
+    // ------------------------------------------------------------------ claimed long press
+
+    /**
+     * Hands [pointer]'s movement to the handler until it lifts. Every change is consumed, so
+     * neither the document nor anything around it (nested scrolling, the bars watching it) sees the
+     * finger move. Other fingers are ignored: a claimed gesture cannot become a pinch.
+     */
+    private suspend fun AwaitPointerEventScope.followClaimedDrag(pointer: PointerId) {
+        controller.setVelocity(Offset.Zero)
+        try {
+            while (true) {
+                val event = awaitPointerEvent()
+                val change = event.changes.firstOrNull { it.id == pointer }
+                // Asked before consuming: a consumed change reports no movement.
+                val moved = change != null && change.pressed && change.positionChanged()
+                event.consumePositionChanges()
+                if (change == null || !change.pressed) return
+                if (moved) onClaimedDrag(controller.tapEventAt(change.position))
+            }
+        } finally {
+            // Also when the gesture is cancelled: the handler must not be left mid-drag.
+            onClaimedDragEnd()
         }
     }
 

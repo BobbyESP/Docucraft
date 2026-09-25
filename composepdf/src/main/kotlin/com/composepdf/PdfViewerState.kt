@@ -127,6 +127,15 @@ class PdfViewerState(
         )
     }
 
+    /**
+     * Resolves [position], in viewer pixels, against the document as a tap there would be: the page
+     * under it and where on that page. For a finger that stays still while the document moves under
+     * it, such as a selection handle held near an edge while the document scrolls.
+     */
+    fun hitTest(position: Offset): PdfTapEvent =
+        controller?.tapEventAt(position)
+            ?: PdfTapEvent(position, pageIndex = null, pagePosition = null)
+
     // ------------------------------------------------------------------ document lifecycle
 
     internal fun beginDocumentLoad() {
@@ -176,6 +185,18 @@ class PdfViewerState(
         val pan = ctrl.centeredPanForPage(target)
         ctrl.panBy(Offset(pan.x - panX, pan.y - panY))
         currentPage = target
+    }
+
+    /**
+     * Moves the document by [delta] pixels at once, as a finger dragging it would: a positive `y`
+     * moves it down, bringing earlier content into view. Stays within the document's bounds, and
+     * returns how far it actually moved. For scrolling while the caller owns the gesture, such as a
+     * selection dragged to an edge.
+     */
+    fun panBy(delta: Offset): Offset {
+        val ctrl = controller ?: return Offset.Zero
+        ctrl.stopAnimations()
+        return ctrl.panBy(delta)
     }
 
     /** Smoothly scrolls to [pageIndex]. */

@@ -41,7 +41,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | b8 | UI nueva (B3, B4) | Medio | ✅ Done (2026-09-25) |
 | c1 | `:document-content-api` + `TextSelection` | Nulo | ✅ Done (2026-09-25) |
 | c2 | Proveedores nativo y compuesto + DI con OCR a `null` | Bajo | ✅ Done (2026-09-25), plus cross-page selection |
-| c3 | Motor E3 (long press reclamable) + E4 (overlay en coordenadas de página) | **Medio-alto** | ⏳ |
+| c3 | Motor E3 (long press reclamable) + E4 (overlay en coordenadas de página) | **Medio-alto** | ✅ Done (2026-09-25) |
 | c4 | UI de selección, portapapeles y degradación | Medio | ⏳ |
 | d1 | Enlaces en el proveedor + `ResolveLinkUseCase` | Bajo | ⏳ |
 | d2 | Motor E3 (tap reclamable) + E5 (`animateScrollTo`) | Medio | ⏳ |
@@ -772,13 +772,74 @@ a text-only read for copying. Not needed yet.
 
 ## Paso c3 · Motor E3 (long press) + E4 (overlay en página)
 
-- [ ] `PdfInteractionHandler`: `onLongPress` devuelve si reclama el gesto; `onDrag` y `onDragEnd`.
-- [ ] `PdfOverlayScope`: dibujo en fase de draw y colocación en fase de layout, en coordenadas de
+- [x] `PdfInteractionHandler`: `onLongPress` devuelve si reclama el gesto; `onDrag` y `onDragEnd`.
+- [x] `PdfOverlayScope`: dibujo en fase de draw y colocación en fase de layout, en coordenadas de
   página.
 
 **Verificación**: sin handler, los gestos no cambian; con el gesto reclamado, arrastrar no desplaza
 el documento; un resaltado sigue a la página durante pinch y fling sin recomposiciones (Layout
 Inspector). **Riesgo: medio-alto**, porque vuelve a tocar los gestos. Commit propio.
+
+### Done — 2026-09-25
+
+**E3 · Claimable long press.** New public `PdfInteractionHandler`, passed as
+`PdfViewer(interactionHandler = …)`.
+- `onLongPress(event): Boolean` returns whether the handler claims the gesture.
+- If claimed, the finger leaves the gesture state machine (`followClaimedDrag`). Its movement
+  comes to `onDrag` with the same hit-test data as a tap. Every change is consumed, so neither the
+  document nor anything watching nested scroll (the app's bars) sees it. Other fingers are ignored,
+  so it cannot turn into a pinch.
+- `onDragEnd()` always runs, from a `finally`, also when the gesture is cancelled.
+- If not claimed, the viewer's own `onLongPress` is called and the finger can still pan, as before.
+- `tapsClaim` is not here: tap claiming is d2.
+
+Two small additions to `PdfViewerState`, which c4's auto-scroll needs:
+- `hitTest(position)`: a viewer point resolved as a tap there would be;
+- `panBy(delta)`: moves the document at once, within bounds, and returns how far it moved. It uses
+  the finger's convention: positive `y` moves the document down. It is deliberately not named
+  `scrollBy`, whose sign is the opposite.
+
+**E4 · `PdfOverlayScope`.** The `overlay` slot's receiver is now a `PdfOverlayScope`, which is a
+`BoxScope` plus:
+- `DrawOnPages { }` is a viewer-sized layer that draws over each visible page, clipped to it. It
+  gets `pageIndex`, `pageBounds` and `toViewer(…)` to map page-normalized points and rectangles.
+- `Modifier.anchorTo(page, position, alignment)` places an element so that its alignment point
+  sits on a page-normalized point. For example, `TopCenter` hangs it below the point.
+
+Both locate pages through `pageRectInViewer`, which reads pan, zoom and the layout snapshot.
+Called inside a draw or placement block, that makes only that block run again when the document
+moves.
+
+The overlay moved inside the overscroll box, so it stretches with the pages at the ends of the
+document. Its alignment is now top-start. Nothing used the slot before, so nothing changes for
+existing callers.
+
+**Bugs found by the tests, before commit:**
+- The claimed drag reported no movement: it consumed the changes before asking whether the finger
+  moved, and a consumed change reports no movement.
+- `anchorTo` loosened the minimum constraints, so an element without content measured 0×0.
+
+**Verification.** `:composepdf` instrumented suite on the emulator: 37 tests, 0 failures, 1 skipped
+(the opt-in dump).
+- `PdfInteractionHandlerTest` (4 tests):
+  - a claimed long press hands over 8 drag events, in order down the page, and 1 end. The document
+    does not move, a nested-scroll watcher around the viewer sees nothing, and the viewer's own
+    callback is not called.
+  - an unclaimed long press still pans;
+  - a second finger cannot pinch a claimed gesture;
+  - removing the viewer mid-drag still ends the drag.
+- `PdfOverlayScopeTest` (6 tests):
+  - an anchored element sits on its page point and follows it after a pan;
+  - its alignment point is what sits on the anchor;
+  - it receives a click where it is drawn, and the pages stay still. This is what selection
+    handles rely on.
+  - drawing reaches every visible page at its on-screen bounds;
+  - ten pans over several pages plus a zoom redraw the overlay without recomposing it. This
+    replaces the Layout Inspector check: the same state paths as pinch and fling, but measured
+    by the test.
+  - `hitTest` and `panBy` work in viewer coordinates.
+- The existing gesture tests (`PdfGesturesTest`, `PdfGesturesConsumptionTest`) pass unchanged. So
+  do the unit tests of both modules.
 
 ## Paso c4 · UI de selección, portapapeles y degradación
 

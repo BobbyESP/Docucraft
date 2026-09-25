@@ -34,6 +34,7 @@ import com.composepdf.internal.logic.ContentPaddingPx
 import com.composepdf.internal.logic.PdfViewerController
 import com.composepdf.internal.logic.ResolvedViewerConfig
 import com.composepdf.internal.ui.PdfDocumentCanvas
+import com.composepdf.internal.ui.PdfOverlayScopeImpl
 import com.composepdf.internal.ui.PdfPageLoadingOverlay
 import com.composepdf.internal.ui.gesture.pdfViewerGestures
 import kotlin.time.Duration.Companion.milliseconds
@@ -62,13 +63,16 @@ import kotlinx.coroutines.flow.drop
  * @param style Colors, page decorations and indicators. Use [PdfViewerDefaults.style] to inherit
  *   the Material theme.
  * @param onTap Called for single taps that are not part of a gesture, with page hit-test info.
- * @param onLongPress Called for long presses, with page hit-test info.
+ * @param onLongPress Called for long presses that [interactionHandler] does not claim, with page
+ *   hit-test info.
+ * @param interactionHandler Takes over gestures the viewer would otherwise use to move the
+ *   document, such as a long press that starts a text selection.
  * @param onPageChange Called when the page most visible in the viewport changes.
  * @param onDocumentLoad Called with the page count once the document is ready.
  * @param onError Called when the document fails to load.
- * @param overlay Content drawn above the pages, in viewer coordinates. Combine with
- *   [PdfViewerState.pageRectInViewer] and [PdfViewerState.visiblePages] to anchor highlights,
- *   scrubbers or annotations to pages.
+ * @param overlay Content above the pages, in viewer coordinates. Its [PdfOverlayScope] draws and
+ *   places things in page coordinates, following pan and zoom without recomposing. It sits with the
+ *   pages, so it stretches with them at the ends of the document.
  * @param loadingContent Shown while the document loads.
  * @param errorContent Shown when loading fails.
  */
@@ -84,10 +88,11 @@ fun PdfViewer(
     style: PdfViewerStyle = PdfViewerDefaults.style(),
     onTap: ((PdfTapEvent) -> Unit)? = null,
     onLongPress: ((PdfTapEvent) -> Unit)? = null,
+    interactionHandler: PdfInteractionHandler? = null,
     onPageChange: ((Int) -> Unit)? = null,
     onDocumentLoad: ((pageCount: Int) -> Unit)? = null,
     onError: ((Throwable) -> Unit)? = null,
-    overlay: (@Composable BoxScope.() -> Unit)? = null,
+    overlay: (@Composable PdfOverlayScope.() -> Unit)? = null,
     loadingContent: @Composable BoxScope.() -> Unit = { PdfViewerDefaults.LoadingContent() },
     errorContent: @Composable BoxScope.(Throwable) -> Unit = {
         PdfViewerDefaults.ErrorContent(it)
@@ -189,6 +194,7 @@ fun PdfViewer(
                     overscrollEffect = overscrollEffect,
                     onTap = onTap,
                     onLongPress = onLongPress,
+                    interactionHandler = interactionHandler,
                     enabled = state.isLoaded,
                 ),
         contentAlignment = Alignment.Center,
@@ -218,8 +224,11 @@ fun PdfViewer(
                             modifier = Modifier.matchParentSize(),
                         )
                     }
+                    if (overlay != null) {
+                        val scope = remember(this, state) { PdfOverlayScopeImpl(this, state) }
+                        scope.overlay()
+                    }
                 }
-                overlay?.invoke(this)
             }
         }
     }
