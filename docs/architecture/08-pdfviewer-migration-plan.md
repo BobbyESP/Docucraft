@@ -38,7 +38,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | b5 | D2: ajustes por sesión y globales + pantalla de Ajustes | Medio | ✅ Done (2026-09-24) |
 | b6 | D5: pila propia en `PdfViewerActivity` + detalles como destino (V4, V5, B5) | Medio | ✅ Done (2026-09-24) |
 | b7 | Motor E6: `contentPadding` (V9) | **Medio-alto** | ✅ Done (2026-09-24) |
-| b8 | UI nueva (B3, B4) | Medio | ⏳ |
+| b8 | UI nueva (B3, B4) | Medio | ✅ Done (2026-09-25) |
 | c1 | `:document-content-api` + `TextSelection` | Nulo | ⏳ |
 | c2 | Proveedores nativo y compuesto + DI con OCR a `null` | Bajo | ⏳ |
 | c3 | Motor E3 (long press reclamable) + E4 (overlay en coordenadas de página) | **Medio-alto** | ⏳ |
@@ -536,13 +536,102 @@ end of a document.
 
 ## Paso b8 · UI nueva (B3, B4)
 
-- [ ] Barra superior, floating toolbar con *exit always*, chips de página y zoom, menú de modo de
+- [x] Barra superior, floating toolbar con *exit always*, chips de página y zoom, menú de modo de
   ajuste, fast scroller, indicador de página.
-- [ ] Destino «Ir a página».
-- [ ] Pantalla de error localizada con acciones (B4); `contentDescription` correcta (B3).
+- [x] Destino «Ir a página».
+- [x] Pantalla de error localizada con acciones (B4); `contentDescription` correcta (B3).
 
 **Verificación**: capturas en la misma matriz que el paso 0; Accessibility Scanner (objetivos
 táctiles de al menos 48 dp, etiquetas); TalkBack recorre las barras. **Riesgo: medio**, solo visual.
+
+### Done — 2026-09-25
+
+The design, and the reasons behind it, are in
+[09-pdfviewer-ui-design.md](09-pdfviewer-ui-design.md), which replaces §7 of the target
+architecture. Five commits:
+
+**8a · Top bar and one visibility for both bars** (`fbd7b7c`). A standard `TopAppBar` in surface
+colours: the document's name, its description as the subtitle, and the actions in an `AppBarRow`.
+Below 600 dp of the bar's own width it shows Share and the overflow menu; wider, all four actions.
+It measures the bar, not the window, so a list-detail pane gets the right answer. Every action has a
+tooltip and a TalkBack label. Back is announced as "Back", no longer as "Cancel" (B3). Both bars
+share one visibility (`ViewerChromeState`): reading forward hides them, scrolling back or a tap
+shows them. The state watches the viewer's nested scroll without consuming it.
+
+**8b · Floating toolbar and *Go to page*** (`0a2fe9d`). The bottom toolbar was rewritten on the
+component's default metrics:
+- a page chip that opens *Go to page*;
+- the zoom group only when the toolbar has 600 dp of its own width; narrower, a zoom chip only while
+  the zoom is not the fitted one, which resets it;
+- a menu with the four fit modes by name;
+- night mode as a toggle button.
+
+*Go to page* is a destination (`GoToPage` key). It shows as a sheet on narrow windows and as a
+dialog on wide ones. It hands the page back through `ViewerPageRequests`, a retained request per
+document that the viewer consumes once it has scrolled there (the `ScanRequestBus` lesson). This
+also removes the text field that raised the keyboard underneath the toolbar.
+
+**Engine fix found here** (`33301dd`). Rotating the external viewer on page 200 of 320 landed on
+page 91. `PdfViewerActivity` handles rotation itself, so nothing is recreated and B1's restore never
+runs, while the pan stays in pixels. The controller now takes the reading anchor before a change of
+page layout (viewport width, fit mode, spacing, padding) and puts it back after. The anchor moved
+from the viewport's leading edge to the centre of the content area, so the page being read is the
+page the reader comes back to. B1's restore uses the same anchor. `PdfLayoutChangeTest` covers a
+resize and a fit-mode change; both failed before the fix.
+
+**8c · Fast scroller and page pill** (`daed9e7`). `PdfFastScroller` sits on the trailing edge,
+inside the content padding, for documents of three or more pages. It shows while the document moves
+and fades 1.2 s after. Dragging its thumb jumps through the document with the page beside it, and
+TalkBack sees it as an adjustable control (`setProgress`). It replaces the engine's passive
+indicator. While the bars are hidden, a "N / total" pill shows for a moment at the top when the page
+changes. Both are built only on `PdfViewerState`'s public API.
+
+**8d · Loading and errors (B4)** (`a3d4ca9`, `1f1facb`).
+- **Engine.** A failed load is now a `PdfLoadException` with a `reason`: `NOT_FOUND`,
+  `ACCESS_DENIED`, `PASSWORD_PROTECTED`, `DAMAGED` or `UNKNOWN`. The platform throws
+  `SecurityException` both for a revoked permission and for an encrypted file. The engine therefore
+  classifies the failure where it still knows which step failed: getting at the bytes, or parsing
+  them. A cancelled load is no longer recorded as an error.
+- **App.** `ViewerErrorContent` shows an icon, a title and a message for each reason, never the
+  exception's name.
+  - *Open with another app* appears only when the document can leave the app and another app could
+    reach the file, so not for "not found" or "access denied".
+  - *Back* appears when the viewer shows a way back.
+  - For a file the app cannot reach, Share and Open with also leave the top bar. Print leaves it
+    until there is a document.
+  - The bottom toolbar hides on error. It stays while loading, because its height is the content
+    padding, and learning it after the layout would move a restored position.
+  - Loading uses the expressive `LoadingIndicator`.
+
+**Verification.**
+- Tests, all green:
+  - `:composepdf` unit: 44, including `PdfLoadExceptionTest`.
+  - `:composepdf` instrumented on the emulator: 27, with 1 skipped (the opt-in dump). They include
+    `PdfLoadErrorTest`, which checks each reason against the real platform: the password fixture,
+    a missing file, and bytes that are not a PDF.
+  - `:app` unit: 131, including `ViewerChromeStateTest`, `ViewerPageRequestsTest` and
+    `ViewerLoadErrorTest`.
+- Checked on the emulator:
+  - the bars and tooltips; *Go to page* 200;
+  - the zoom group in landscape;
+  - page 200 surviving three rotations;
+  - the fast scroller while scrolling and dragging (label beside the thumb, jump to the page), and
+    under the top bar when the bars are shown;
+  - the pill with the bars hidden;
+  - the error screens for a password-protected file, a damaged file, and a document opened without
+    a read grant ("access denied": no *Open with*, no Share);
+  - Back closing the external viewer.
+- **Not done:** an Accessibility Scanner pass and a full TalkBack walk-through. Labels and states
+  were checked through `uiautomator` dumps instead.
+- **Not checked on a device:** "not found". The shell cannot grant a URI that does not exist, so it
+  rests on `PdfLoadErrorTest`.
+
+**Behaviour changes, deliberate.**
+- Both bars hide while reading forward and come back when scrolling back.
+- The fast scroller replaces the passive scroll indicator.
+- The bottom toolbar is gone from a document that failed to load.
+- `PdfViewerState.error` is now a `PdfLoadException` for load failures, with the platform's
+  exception as its `cause`.
 
 ---
 
