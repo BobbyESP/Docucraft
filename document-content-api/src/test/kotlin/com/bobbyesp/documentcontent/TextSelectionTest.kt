@@ -236,7 +236,115 @@ class TextSelectionTest {
         assertClose(0.76f, rtl.startHandle(0)!!.x)
     }
 
+    // ------------------------------------------------------------------ margins and columns
+
+    /**
+     * An invoice-like page, invented, shaped like a real one that broke selection: a margin note
+     * set vertically, reading upwards, delivered as a single line that spans the body's height; a
+     * label column; and a line that runs from a value on to an address a column away.
+     *
+     * margin (x 0.03..0.04): "ACME" y 0.76..0.80, "SA" y 0.72..0.74, read bottom to top line 1 (y
+     * 0.72..0.74): "Invoice:" x 0.10..0.26 line 2 (y 0.72..0.74): "MC123" x 0.30..0.40, then "Main"
+     * x 0.60..0.68 — a column away line 3 (y 0.76..0.78): "Date:" x 0.10..0.20
+     */
+    private val invoice =
+        TextSelection(
+            PageText(
+                lines =
+                    listOf(
+                        TextLine(
+                            listOf(upwards("ACME", bottom = 0.80f), upwards("SA", bottom = 0.74f))
+                        ),
+                        TextLine(listOf(across("Invoice:", left = 0.10f, top = 0.72f))),
+                        TextLine(
+                            listOf(
+                                across("MC123", left = 0.30f, top = 0.72f),
+                                across("Main", left = 0.60f, top = 0.72f),
+                            )
+                        ),
+                        TextLine(listOf(across("Date:", left = 0.10f, top = 0.76f))),
+                    ),
+                origin = ContentOrigin.EMBEDDED,
+            )
+        )
+
+    @Test
+    fun `margin text does not capture a finger on the body`() {
+        // At the height the margin note also covers, over the value column.
+        val caret = invoice.caretAt(NormalizedPoint(0.34f, 0.73f))!!
+        assertEquals("MC", invoice.text.substring(caret - 2, caret))
+    }
+
+    @Test
+    fun `a finger on the margin moves along it, upwards`() {
+        // "ACME" from y 0.80 up to 0.76: A at the bottom. 0.782 is nearest the C|M boundary.
+        val caret = invoice.caretAt(NormalizedPoint(0.035f, 0.782f))!!
+        assertEquals("AC", invoice.text.substring(caret - 2, caret))
+    }
+
+    @Test
+    fun `a line that runs on into another column is two runs`() {
+        val start = invoice.text.indexOf("MC123")
+        val end = invoice.text.indexOf("Main") + 4
+
+        val rects = invoice.highlightRects(TextSpan(start, end))
+
+        // Not one box across the gap between the columns.
+        assertEquals(2, rects.size)
+        assertClose(0.40f, rects[0].right)
+        assertClose(0.60f, rects[1].left)
+    }
+
+    @Test
+    fun `in the gap between columns the nearer column wins`() {
+        val caret = invoice.caretAt(NormalizedPoint(0.45f, 0.73f))!!
+        assertEquals(invoice.text.indexOf("MC123") + 5, caret)
+    }
+
+    @Test
+    fun `vertical text is highlighted along its height, as wide as its run`() {
+        val start = invoice.text.indexOf("ACME")
+
+        val rect = invoice.highlightRects(TextSpan(start, start + 2)).single() // "AC"
+
+        assertClose(0.78f, rect.top)
+        assertClose(0.80f, rect.bottom)
+        assertClose(0.03f, rect.left)
+        assertClose(0.04f, rect.right)
+    }
+
+    @Test
+    fun `a one-letter word reads as the words beside it`() {
+        // "A" alone says nothing; its line reads upwards, so it does too: its box is not split
+        // along x, and a finger below it is before it.
+        val line =
+            TextSelection(
+                PageText(
+                    listOf(
+                        TextLine(
+                            listOf(upwards("ACME", bottom = 0.80f), upwards("A", bottom = 0.75f))
+                        )
+                    ),
+                    ContentOrigin.EMBEDDED,
+                )
+            )
+        assertEquals(line.text.indexOf("A", 1), line.caretAt(NormalizedPoint(0.035f, 0.749f)))
+    }
+
     // ------------------------------------------------------------------ helpers
+
+    /** A word set vertically, reading upwards from [bottom], 0.01 a character, at x 0.03..0.04. */
+    private fun upwards(text: String, bottom: Float): TextWord {
+        val glyphs =
+            text.indices.map { i ->
+                NormalizedRect(0.03f, bottom - (i + 1) * 0.01f, 0.04f, bottom - i * 0.01f)
+            }
+        return TextWord(text, glyphs.reduce(NormalizedRect::union), glyphs)
+    }
+
+    /** A word across the page from [left], 0.02 a character, 0.02 tall. */
+    private fun across(text: String, left: Float, top: Float) =
+        TextWord(text, NormalizedRect(left, top, left + text.length * 0.02f, top + 0.02f))
 
     private fun boundsOf(word: String) = selection.words.first { it.text == word }.bounds
 

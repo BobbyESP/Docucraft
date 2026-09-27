@@ -4,6 +4,8 @@
 package com.bobbyesp.documentcontent
 
 import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * A stretch of a page's [TextSelection.text], from caret [start] to caret [end]. A caret is a
@@ -24,12 +26,18 @@ data class TextSpan(val start: Int, val end: Int) {
  * a dragged handle is at, what to copy and what to highlight. Pure logic over a [PageText],
  * whichever provider made it, so text recognition will reuse it as it is.
  *
- * The page's text is laid out as it will be pasted ([text]): the words of a line separated by a
- * space, lines by a line break, a blank line kept where it separates paragraphs. Selections are
- * spans of that text, so what is copied is exactly what is between the two handles. Positions on
- * the page only decide which caret a finger is at; everything after that follows reading order,
- * which is what makes a backwards drag, a selection over several lines and a right-to-left line
- * come out in the order they are read.
+ * **Text and order.** The page's text is laid out as it will be pasted ([text]): the words of a
+ * line separated by a space, lines by a line break, a blank line kept where it separates
+ * paragraphs. Selections are spans of that text, so what is copied is exactly what is between the
+ * two handles, in the order the provider gives: the document's own reading order. A table stored
+ * column by column is copied column by column, as the reference viewers do.
+ *
+ * **Geometry.** A provider's line is not always a strip of the page: it can run on from one column
+ * to a word in another, and text set along the margin comes as a single line as tall as the page.
+ * So where a finger is, and what to highlight, are worked out on *runs*: words of one line that sit
+ * next to each other and read the same way, left to right, right to left, top to bottom or bottom
+ * to top. A finger picks the run closest across its direction, and within it the nearest boundary
+ * between characters along it.
  *
  * Characters are placed with the provider's glyph boxes ([TextWord.glyphs]) when it gives them, and
  * otherwise by sharing the word's box evenly among its characters, which is exact for a monospaced
@@ -52,16 +60,14 @@ class TextSelection(private val page: PageText) {
     /** The line each word of [words] is on. */
     private val lineOfWord: IntArray
 
-    /** Where each line's words start in [words]. */
-    private val lineFirstWord: IntArray =
-        page.lines.runningFold(0) { start, line -> start + line.words.size }.toIntArray()
+    /** Which way each word reads. */
+    private val flow: List<Flow>
 
-    /** Each line's extent on the page, `null` for a blank line. */
-    private val lineBounds: List<NormalizedRect?> =
-        page.lines.map { line -> line.words.map { it.bounds }.reduceOrNull(NormalizedRect::union) }
-
-    /** Each word's character boxes, one per character of its text. */
+    /** Each word's character boxes, one per character of its text, in reading order. */
     private val glyphs: List<List<NormalizedRect>>
+
+    /** Runs of words that sit together, in reading order; see the class documentation. */
+    private val runs: List<Run>
 
     init {
         val starts = IntArray(words.size)
@@ -81,7 +87,9 @@ class TextSelection(private val page: PageText) {
         text = builder.toString()
         wordStart = starts
         lineOfWord = lines
-        glyphs = words.map { it.glyphBoxes() }
+        flow = flows()
+        glyphs = words.indices.map { words[it].glyphBoxes(flow[it]) }
+        runs = runs()
     }
 
     /**
@@ -102,30 +110,32 @@ class TextSelection(private val page: PageText) {
     }
 
     /**
-     * The caret a dragged handle is at, wherever the finger is: on the closest line, the closest
-     * boundary between characters along it. Between two words it is the edge of the nearer one;
-     * past the end of a line, that line's end; above or below the text, the first or last line.
-     * `null` only on a page with no words.
+     * The caret a dragged handle is at, wherever the finger is: in the run closest across its own
+     * direction (for ordinary lines, the one at the finger's height), the nearest boundary between
+     * characters along it. When several runs are as close, as the columns of a table row are, the
+     * one nearest along its direction wins. Between two words it is the edge of the nearer one;
+     * past the end of a line, that line's end. `null` only on a page with no words.
      */
     fun caretAt(point: NormalizedPoint): Int? {
-        val line =
-            lineBounds.indices
-                .filter { lineBounds[it] != null }
-                .minByOrNull { lineBounds[it]!!.verticalDistanceTo(point.y) } ?: return null
+        if (runs.isEmpty()) return null
+        val closest = runs.minOf { it.across(point) }
+        val run =
+            runs.filter { it.across(point) <= closest + RunTieTolerance }.minBy { it.along(point) }
+        val position = if (run.flow.vertical) point.y else point.x
         var best = -1
         var bestDistance = Float.MAX_VALUE
-        for (word in lineFirstWord[line] until lineFirstWord[line + 1]) {
+        for (word in run.words) {
             val boxes = glyphs[word]
             if (boxes.isEmpty()) continue
             for (boundary in 0..boxes.size) {
-                val distance = abs(boundaryX(word, boundary) - point.x)
+                val distance = abs(boundaryAt(word, boundary) - position)
                 if (distance < bestDistance) {
                     bestDistance = distance
                     best = wordStart[word] + boundary
                 }
             }
         }
-        return best
+        return best.takeIf { it >= 0 }
     }
 
     /** The text of [span], as it should be pasted. */
@@ -136,46 +146,56 @@ class TextSelection(private val page: PageText) {
         if (words.isEmpty()) null else TextSpan(wordStart[0], spanOf(words.lastIndex).end)
 
     /**
-     * What to highlight for [span]: one rectangle per line, from its first selected character to
-     * its last, gaps between words included, and as tall as the line: glyph boxes follow the ink,
-     * so an "o" is shorter than a "d", and a highlight that followed them would jump about.
+     * What to highlight for [span]: one rectangle per run, from its first selected character to its
+     * last, gaps between words included, and as thick as the run: glyph boxes follow the ink, so an
+     * "o" is shorter than a "d", and a highlight that followed them would jump about.
      */
     fun highlightRects(span: TextSpan): List<NormalizedRect> {
         if (span.isEmpty) return emptyList()
-        val byLine = sortedMapOf<Int, NormalizedRect>()
-        for (word in words.indices) {
-            val from = maxOf(span.start, wordStart[word]) - wordStart[word]
-            val to = minOf(span.end, wordStart[word] + words[word].text.length) - wordStart[word]
-            if (from >= to) continue
-            val selected = (from until to).map { glyphs[word][it] }.reduce(NormalizedRect::union)
-            byLine.merge(lineOfWord[word], selected, NormalizedRect::union)
-        }
-        return byLine.map { (line, rect) ->
-            val height = lineBounds[line]!!
-            rect.copy(top = height.top, bottom = height.bottom)
+        return runs.mapNotNull { run ->
+            var selected: NormalizedRect? = null
+            for (word in run.words) {
+                val from = maxOf(span.start, wordStart[word]) - wordStart[word]
+                val to =
+                    minOf(span.end, wordStart[word] + words[word].text.length) - wordStart[word]
+                for (char in from until to) {
+                    val box = glyphs[word][char]
+                    selected = selected?.union(box) ?: box
+                }
+            }
+            selected?.let {
+                if (run.flow.vertical) it.copy(left = run.bounds.left, right = run.bounds.right)
+                else it.copy(top = run.bounds.top, bottom = run.bounds.bottom)
+            }
         }
     }
 
     /**
-     * Where the handle for the start of a selection at [caret] goes: the bottom of the line, at the
-     * leading edge of the first character from there on. `null` when no character follows.
+     * Where the handle for the start of a selection at [caret] goes: at the leading edge of the
+     * first character from there on, below its run. `null` when no character follows.
      */
     fun startHandle(caret: Int): NormalizedPoint? {
         val (word, char) = characterAtOrAfter(caret) ?: return null
-        val box = glyphs[word][char]
-        val x = if (isRightToLeft(word)) box.right else box.left
-        return NormalizedPoint(x, lineBounds[lineOfWord[word]]!!.bottom)
+        return handleAt(word, flow[word].leading(glyphs[word][char]))
     }
 
     /**
-     * Where the handle for the end of a selection at [caret] goes: the bottom of the line, at the
-     * trailing edge of the last character before it. `null` when no character precedes.
+     * Where the handle for the end of a selection at [caret] goes: at the trailing edge of the last
+     * character before it, below its run. `null` when no character precedes.
      */
     fun endHandle(caret: Int): NormalizedPoint? {
         val (word, char) = characterBefore(caret) ?: return null
-        val box = glyphs[word][char]
-        val x = if (isRightToLeft(word)) box.left else box.right
-        return NormalizedPoint(x, lineBounds[lineOfWord[word]]!!.bottom)
+        return handleAt(word, flow[word].trailing(glyphs[word][char]))
+    }
+
+    /**
+     * A handle at [edge] along [word]'s run: below it for a line, and beside it, on the side a
+     * handle hangs, for text set vertically.
+     */
+    private fun handleAt(word: Int, edge: Float): NormalizedPoint {
+        val run = runs.first { word in it.words }
+        return if (run.flow.vertical) NormalizedPoint(run.bounds.right, edge)
+        else NormalizedPoint(edge, run.bounds.bottom)
     }
 
     private fun spanOf(word: Int) =
@@ -202,62 +222,189 @@ class TextSelection(private val page: PageText) {
     }
 
     /**
-     * Where along the line the boundary before character [boundary] of [word] is: the leading edge
+     * Where along its run the boundary before character [boundary] of [word] is: the leading edge
      * of the first character, the trailing edge of the last, and midway between two characters
      * otherwise.
      */
-    private fun boundaryX(word: Int, boundary: Int): Float {
+    private fun boundaryAt(word: Int, boundary: Int): Float {
         val boxes = glyphs[word]
-        val rtl = isRightToLeft(word)
-        fun leading(box: NormalizedRect) = if (rtl) box.right else box.left
-        fun trailing(box: NormalizedRect) = if (rtl) box.left else box.right
+        val direction = flow[word]
         return when (boundary) {
-            0 -> leading(boxes.first())
-            boxes.size -> trailing(boxes.last())
-            else -> (trailing(boxes[boundary - 1]) + leading(boxes[boundary])) / 2f
+            0 -> direction.leading(boxes.first())
+            boxes.size -> direction.trailing(boxes.last())
+            else ->
+                (direction.trailing(boxes[boundary - 1]) + direction.leading(boxes[boundary])) / 2f
         }
     }
 
     /**
-     * Whether [word] runs right to left: from its glyphs when there are several, from its letters
-     * otherwise.
+     * Which way each word reads: from its glyphs when it has several; otherwise as the words beside
+     * it on its line, since a one-letter word says nothing on its own; failing that, from its
+     * letters and its shape.
      */
-    private fun isRightToLeft(word: Int): Boolean {
-        val boxes = glyphs[word]
-        if (words[word].glyphs != null && boxes.size > 1) {
-            return (boxes.last().left + boxes.last().right) <
-                (boxes.first().left + boxes.first().right)
+    private fun flows(): List<Flow> {
+        val measured = words.map { it.measuredFlow() }
+        return words.indices.map { word ->
+            measured[word]
+                ?: neighbours(word).firstNotNullOfOrNull { measured[it] }
+                ?: words[word].guessedFlow()
         }
-        return words[word].text.isRightToLeft()
+    }
+
+    /** The other words of [word]'s line, nearest first. */
+    private fun neighbours(word: Int): List<Int> {
+        val line = lineOfWord[word]
+        return words.indices
+            .filter { it != word && lineOfWord[it] == line }
+            .sortedBy { abs(it - word) }
+    }
+
+    /**
+     * The page's runs: each line cut wherever the next word reads another way, or does not sit next
+     * to the one before (a column away, or on another row).
+     */
+    private fun runs(): List<Run> {
+        val found = mutableListOf<Run>()
+        var first = 0
+        for (word in 1..words.size) {
+            val ends =
+                word == words.size ||
+                    lineOfWord[word] != lineOfWord[word - 1] ||
+                    !continues(word - 1, word)
+            if (ends) {
+                val range = first until word
+                found +=
+                    Run(
+                        words = range,
+                        bounds = range.map { words[it].bounds }.reduce(NormalizedRect::union),
+                        flow = flow[first],
+                    )
+                first = word
+            }
+        }
+        return if (words.isEmpty()) emptyList() else found
+    }
+
+    /** Whether [next] carries on the run of [previous]: same direction, beside it, not far off. */
+    private fun continues(previous: Int, next: Int): Boolean {
+        if (flow[previous].vertical != flow[next].vertical) return false
+        val a = words[previous].bounds
+        val b = words[next].bounds
+        return if (flow[previous].vertical) {
+            val overlap = min(a.right, b.right) - max(a.left, b.left)
+            val gap = max(a.top, b.top) - min(a.bottom, b.bottom)
+            overlap >= RunOverlap * min(a.width, b.width) && gap <= RunGap * max(a.width, b.width)
+        } else {
+            val overlap = min(a.bottom, b.bottom) - max(a.top, b.top)
+            val gap = max(a.left, b.left) - min(a.right, b.right)
+            overlap >= RunOverlap * min(a.height, b.height) &&
+                gap <= RunGap * max(a.height, b.height)
+        }
+    }
+
+    /** Words of one line that sit together and read the same way. */
+    private class Run(val words: IntRange, val bounds: NormalizedRect, val flow: Flow) {
+        /** How far [point] is across the run's direction: for a line, above or below it. */
+        fun across(point: NormalizedPoint): Float =
+            if (flow.vertical) bounds.horizontalDistanceTo(point.x)
+            else bounds.verticalDistanceTo(point.y)
+
+        /** How far [point] is along the run's direction: for a line, before or after it. */
+        fun along(point: NormalizedPoint): Float =
+            if (flow.vertical) bounds.verticalDistanceTo(point.y)
+            else bounds.horizontalDistanceTo(point.x)
     }
 
     companion object {
         /** About a fingertip's width off a word on a phone showing the page's full width. */
         const val DefaultTolerance: Float = 0.03f
+
+        /**
+         * How much closer across a run must be to win outright; within this, runs count as level
+         * and the nearest along wins. Well under a line's spacing, so lines never tie.
+         */
+        private const val RunTieTolerance = 0.004f
+
+        /**
+         * How much two words must share across their direction to be on one run, of the smaller.
+         */
+        private const val RunOverlap = 0.3f
+
+        /** How wide a gap may be, in text heights, before the next word is a column away. */
+        private const val RunGap = 2f
+    }
+}
+
+/** Which way text reads. [vertical] text is set along the page's height, as in a margin note. */
+private enum class Flow(val vertical: Boolean, private val reversed: Boolean) {
+    LeftToRight(vertical = false, reversed = false),
+    RightToLeft(vertical = false, reversed = true),
+    TopToBottom(vertical = true, reversed = false),
+    BottomToTop(vertical = true, reversed = true);
+
+    /** Where a character starts along the text: its left edge in a left-to-right line. */
+    fun leading(box: NormalizedRect): Float =
+        when {
+            vertical -> if (reversed) box.bottom else box.top
+            else -> if (reversed) box.right else box.left
+        }
+
+    /** Where a character ends along the text. */
+    fun trailing(box: NormalizedRect): Float =
+        when {
+            vertical -> if (reversed) box.top else box.bottom
+            else -> if (reversed) box.left else box.right
+        }
+}
+
+/** Which way the word reads from its glyphs, when it has at least two to tell by. */
+private fun TextWord.measuredFlow(): Flow? {
+    val boxes = glyphs?.takeIf { it.size == text.length && it.size >= 2 } ?: return null
+    val dx = (boxes.last().left + boxes.last().right - boxes.first().left - boxes.first().right)
+    val dy = (boxes.last().top + boxes.last().bottom - boxes.first().top - boxes.first().bottom)
+    return when {
+        abs(dy) > abs(dx) -> if (dy < 0) Flow.BottomToTop else Flow.TopToBottom
+        dx < 0 -> Flow.RightToLeft
+        else -> Flow.LeftToRight
     }
 }
 
 /**
- * One box per character: the provider's, or the word's box shared evenly among its characters, in
- * reading order (right to left for a right-to-left word).
+ * Which way a word reads with nothing but itself to go by: along the page's height if it is much
+ * taller than wide (margin text is most often turned to read upwards), else by its letters.
  */
-private fun TextWord.glyphBoxes(): List<NormalizedRect> {
+private fun TextWord.guessedFlow(): Flow =
+    when {
+        text.length > 1 && bounds.height > VerticalShape * bounds.width -> Flow.BottomToTop
+        text.isRightToLeft() -> Flow.RightToLeft
+        else -> Flow.LeftToRight
+    }
+
+/** How much taller than wide a word must be to be taken as set vertically. */
+private const val VerticalShape = 1.5f
+
+/**
+ * One box per character: the provider's, or the word's box shared evenly among its characters, in
+ * the order they are read.
+ */
+private fun TextWord.glyphBoxes(flow: Flow): List<NormalizedRect> {
     glyphs
         ?.takeIf { it.size == text.length }
         ?.let {
             return it
         }
-    val count = text.length.coerceAtLeast(1)
-    val width = bounds.width / count
-    val rtl = text.isRightToLeft()
-    return List(text.length) { i ->
-        val slot = if (rtl) count - 1 - i else i
-        NormalizedRect(
-            left = bounds.left + slot * width,
-            top = bounds.top,
-            right = bounds.left + (slot + 1) * width,
-            bottom = bounds.bottom,
-        )
+    val count = text.length
+    if (count == 0) return emptyList()
+    return List(count) { i ->
+        if (flow.vertical) {
+            val height = bounds.height / count
+            val slot = if (flow == Flow.BottomToTop) count - 1 - i else i
+            bounds.copy(top = bounds.top + slot * height, bottom = bounds.top + (slot + 1) * height)
+        } else {
+            val width = bounds.width / count
+            val slot = if (flow == Flow.RightToLeft) count - 1 - i else i
+            bounds.copy(left = bounds.left + slot * width, right = bounds.left + (slot + 1) * width)
+        }
     }
 }
 

@@ -1009,6 +1009,55 @@ its planned `TextWord.glyphs`.
     exactly `ru`.
   - A long press on "texto" dragged into "enlaces" selected `texto y enl`.
 
+### Fix — margin text and tables (2026-09-27)
+
+**Found with a real document.** The maintainer supplied a phone-company invoice. It is not in the
+repository, because it holds personal data. On it, handles jumped to the wrong place and copying
+failed. The provider's dump showed two things:
+- **The margin note.** The page had a note along the left margin, set vertically and reading
+  upwards. It came as a single platform line, as tall as the page body but only 0.013 wide. A
+  handle picked its line by vertical distance alone, so that line was at distance 0 almost
+  everywhere, won every tie, and took every drag.
+- **The table.** Its text comes in column order: labels first, then values. Some platform lines run
+  on from a value to an address a column away.
+
+**Change (`TextSelection`, geometry only; the public API is unchanged).**
+- Geometry now works on **runs**: the words of one platform line that sit together (they overlap
+  across their direction, and the gap is at most 2 text heights) and read the same way.
+- Each word's direction comes from its glyphs: left to right, right to left, top to bottom or
+  bottom to top. A one-letter word takes the direction of its neighbours, and failing that its
+  shape and letters.
+- A finger picks the run closest **across** that run's direction: height for lines, width for
+  vertical text. Near-ties (within 0.004) go to the run nearest **along** its direction, as for the
+  columns of a table row.
+- Within the run, carets, highlights and handles all work along the run's own axis. A line that
+  runs on into another column is highlighted as two boxes, not one bridging the gap.
+- **Text order is unchanged:** the document's own, as in the reference viewers. Selecting down the
+  invoice's value column therefore also takes in whatever the document stores in between, such as
+  the address block and the total. That is a decision, recorded under "Open question" below.
+
+**Verification.**
+- `:document-content-api`: 33 tests. The 6 new ones use an invented page shaped like the invoice:
+  - a margin note reading upwards does not capture a finger on the body;
+  - a finger on the margin moves along it, upwards;
+  - a line running into another column makes two highlight boxes;
+  - in the gap between columns, the nearer column wins;
+  - vertical text is highlighted along its height;
+  - a one-letter word reads like its neighbours.
+
+  All 6 fail against the previous `TextSelection`, so they do cover the bug.
+- Emulator, on the invoice:
+  - Dragging along a table row stays on the row. Copied and pasted, it gave exactly the selected
+    text.
+  - Selecting down the header's value column follows the document's order. The copy matched the
+    highlight, which was checked at 250% zoom.
+- `PlatformPageContentProviderTest`: 13 tests, still green.
+
+**Open question.**
+- Keep document order, which is what Drive does and what keeps multi-column text right?
+- Or add a visual order for forms and tables: row by row, top to bottom, left to right?
+- Left to the maintainer.
+
 ---
 
 ## Paso d1 · Enlaces en el proveedor + `ResolveLinkUseCase`
