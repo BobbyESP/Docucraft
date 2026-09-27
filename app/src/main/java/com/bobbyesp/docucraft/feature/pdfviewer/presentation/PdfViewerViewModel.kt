@@ -212,9 +212,9 @@ class PdfViewerViewModel(
     private fun selectAll() {
         val selection = currentState.selection ?: return
         launch {
-            val lastWords = selection.pages.associateWith { textOf(it)?.words?.lastIndex }
+            val lengths = selection.pages.associateWith { textOf(it)?.text?.length }
             setState {
-                copy(selection = SelectionInteraction.selectAll(selection) { lastWords[it] })
+                copy(selection = SelectionInteraction.selectAll(selection) { lengths[it] })
             }
         }
     }

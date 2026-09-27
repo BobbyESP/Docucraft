@@ -172,7 +172,8 @@ fun PdfViewerScreen(
                             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                             viewModel.onSendIntent(PdfViewerIntent.Select(outcome.selection))
                             selectionDrag.start(
-                                anchor = outcome.selection.start,
+                                // The pressed word stays selected while the finger drags on.
+                                anchor = outcome.selection,
                                 current = outcome.selection,
                                 at = event.position,
                             )

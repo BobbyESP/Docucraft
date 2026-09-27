@@ -6,7 +6,7 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection
 import com.bobbyesp.documentcontent.DocumentSelection
 import com.bobbyesp.documentcontent.NormalizedPoint
 import com.bobbyesp.documentcontent.PageContentResult
-import com.bobbyesp.documentcontent.TextPosition
+import com.bobbyesp.documentcontent.TextCaret
 import com.bobbyesp.documentcontent.TextSelection
 
 /** What is known about a page's text, as far as selecting it goes. */
@@ -42,7 +42,10 @@ enum class TextUnavailable {
 
 /** What a long press on a page does. */
 sealed interface LongPressOutcome {
-    /** It landed on a word, which becomes the selection. */
+    /**
+     * It landed on a word, which becomes the selection, and stays selected while the finger drags
+     * on from it.
+     */
     data class Select(val selection: DocumentSelection) : LongPressOutcome
 
     /** The page has text, but the press is not on a word: the viewer keeps it. */
@@ -55,18 +58,20 @@ sealed interface LongPressOutcome {
     data object NotReady : LongPressOutcome
 }
 
-/**
- * Where a selection's two handles go: under the start of its first word and the end of its last.
- */
+/** Where a selection's two handles go. */
 data class HandlePositions(val start: PagePoint?, val end: PagePoint?)
 
 /** A point on a page, normalized to it. */
 data class PagePoint(val page: Int, val position: NormalizedPoint)
 
 /**
- * What touches do to a selection, given the pages whose text is known. Pure: the screen asks it
- * synchronously (a long press must be claimed or not at once), and the tests ask it without a
- * device.
+ * What touches do to a selection, given the pages whose text is known. It behaves like the
+ * reference viewers (Google Drive's among them): a long press selects the word under the finger,
+ * and from then on the ends move character by character, whether the same finger drags on or a
+ * handle is dragged later.
+ *
+ * Pure: the screen asks it synchronously (a long press must be claimed or not at once), and the
+ * tests ask it without a device.
  */
 object SelectionInteraction {
 
@@ -81,8 +86,9 @@ object SelectionInteraction {
                 if (word == null) {
                     LongPressOutcome.NoWord
                 } else {
-                    val at = TextPosition(page, word)
-                    LongPressOutcome.Select(DocumentSelection(at, at))
+                    LongPressOutcome.Select(
+                        DocumentSelection(TextCaret(page, word.start), TextCaret(page, word.end))
+                    )
                 }
             }
             PageTextState.NoText -> LongPressOutcome.NoText(TextUnavailable.ImageOnly)
@@ -92,52 +98,47 @@ object SelectionInteraction {
         }
 
     /**
-     * The selection from [anchor], the end that stays put, to the word nearest [point]: where a
-     * dragged handle or finger is. `null` when that page has no text known, so the selection keeps
-     * its last shape rather than jumping.
+     * [anchor] grown to the caret nearest [point]: where a dragged finger or handle is. The anchor
+     * is the word a long press chose, or the caret at the end a handle does not move. `null` when
+     * that page has no text known, or nothing would be selected, so the selection keeps its last
+     * shape rather than jumping or vanishing.
      */
     fun extend(
-        anchor: TextPosition,
+        anchor: DocumentSelection,
         pages: Map<Int, PageTextState>,
         page: Int,
         point: NormalizedPoint,
     ): DocumentSelection? {
         val text = pages[page] as? PageTextState.Text ?: return null
-        val word = text.selection.nearestWord(point) ?: return null
-        return DocumentSelection.between(anchor, TextPosition(page, word))
+        val caret = text.selection.caretAt(point) ?: return null
+        return DocumentSelection.extending(anchor, TextCaret(page, caret)).takeUnless { it.isEmpty }
     }
 
     fun handles(selection: DocumentSelection, pages: Map<Int, PageTextState>): HandlePositions {
-        fun bounds(position: TextPosition) =
-            (pages[position.page] as? PageTextState.Text)
-                ?.selection
-                ?.words
-                ?.getOrNull(position.word)
-                ?.bounds
+        fun text(page: Int) = (pages[page] as? PageTextState.Text)?.selection
         return HandlePositions(
             start =
-                bounds(selection.start)?.let {
-                    PagePoint(selection.start.page, NormalizedPoint(it.left, it.bottom))
+                text(selection.start.page)?.startHandle(selection.start.offset)?.let {
+                    PagePoint(selection.start.page, it)
                 },
             end =
-                bounds(selection.end)?.let {
-                    PagePoint(selection.end.page, NormalizedPoint(it.right, it.bottom))
+                text(selection.end.page)?.endHandle(selection.end.offset)?.let {
+                    PagePoint(selection.end.page, it)
                 },
         )
     }
 
-    /** Every word on the pages the selection touches: what *Select all* means here. */
-    fun selectAll(
-        selection: DocumentSelection,
-        lastWordOf: (page: Int) -> Int?,
-    ): DocumentSelection {
-        val lastPage =
-            selection.pages.reversed().firstOrNull { (lastWordOf(it) ?: -1) >= 0 }
-                ?: return selection
-        val firstPage = selection.pages.first { (lastWordOf(it) ?: -1) >= 0 }
+    /**
+     * Every word on the pages the selection touches: what *Select all* means here.
+     *
+     * @param lengthOf The length of a page's text; `null` or `0` for a page without text.
+     */
+    fun selectAll(selection: DocumentSelection, lengthOf: (page: Int) -> Int?): DocumentSelection {
+        val withText = selection.pages.filter { (lengthOf(it) ?: 0) > 0 }
+        if (withText.isEmpty()) return selection
         return DocumentSelection(
-            TextPosition(firstPage, 0),
-            TextPosition(lastPage, lastWordOf(lastPage)!!),
+            TextCaret(withText.first(), 0),
+            TextCaret(withText.last(), lengthOf(withText.last())!!),
         )
     }
 }

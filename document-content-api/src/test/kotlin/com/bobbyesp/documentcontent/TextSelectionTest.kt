@@ -10,150 +10,205 @@ import org.junit.Test
 
 class TextSelectionTest {
 
-    // Three lines, then a blank one, then a paragraph of one line:
-    //   0 The   1 quick  2 brown           y 0.10..0.14
-    //   3 fox   4 jumps                    y 0.16..0.20
-    //   5 over  6 the    7 lazy            y 0.22..0.26
+    // Monospaced, 0.02 wide a character, 0.02 between words, lines 0.04 tall:
+    //   "The quick brown"      y 0.10..0.14
+    //   "fox jumps"            y 0.16..0.20
+    //   "over the lazy"        y 0.22..0.26
     //   (blank)
-    //   8 Dog.                             y 0.34..0.38
+    //   "Dog."                 y 0.34..0.38
     private val page =
         PageText(
             lines =
                 listOf(
-                    ltrLine(0.10f, "The", "quick", "brown"),
-                    ltrLine(0.16f, "fox", "jumps"),
-                    ltrLine(0.22f, "over", "the", "lazy"),
+                    line(0.10f, "The", "quick", "brown"),
+                    line(0.16f, "fox", "jumps"),
+                    line(0.22f, "over", "the", "lazy"),
                     TextLine(emptyList()),
-                    ltrLine(0.34f, "Dog."),
+                    line(0.34f, "Dog."),
                 ),
             origin = ContentOrigin.EMBEDDED,
         )
     private val selection = TextSelection(page)
 
-    // ------------------------------------------------------------------ word under a point
+    // ------------------------------------------------------------------ the page's text
 
     @Test
-    fun `a point on a word is that word`() {
-        assertEquals(1, selection.wordAt(centerOf(1)))
-        assertEquals(6, selection.wordAt(centerOf(6)))
+    fun `the page text is what would be pasted`() {
+        assertEquals("The quick brown\nfox jumps\nover the lazy\n\nDog.", selection.text)
+    }
+
+    // ------------------------------------------------------------------ long press: a word
+
+    @Test
+    fun `a long press on a word selects the whole word`() {
+        val span = selection.wordAt(centreOf("quick"))!!
+        assertEquals("quick", selection.text(span))
     }
 
     @Test
-    fun `a point just off a word is still that word`() {
-        val quick = selection.words[1].bounds
-        assertEquals(
-            1,
-            selection.wordAt(NormalizedPoint(quick.left + 0.01f, quick.bottom + 0.005f)),
-        )
+    fun `a long press just off a word still finds it`() {
+        val quick = boundsOf("quick")
+        val span = selection.wordAt(NormalizedPoint(quick.left + 0.01f, quick.bottom + 0.005f))!!
+        assertEquals("quick", selection.text(span))
     }
 
     @Test
-    fun `a point far from every word is nothing`() {
+    fun `a long press far from every word finds nothing`() {
         assertNull(selection.wordAt(NormalizedPoint(0.9f, 0.9f)))
     }
 
+    // ------------------------------------------------------------------ carets: characters
+
     @Test
-    fun `a handle past the end of a line is at its last word`() {
-        assertEquals(4, selection.nearestWord(NormalizedPoint(0.95f, 0.18f)))
+    fun `a handle lands between characters, inside a word`() {
+        // "quick" starts at x 0.13: q 0.13-0.15, u 0.15-0.17, i 0.17-0.19. Just left of the u|i
+        // boundary is still the boundary, the nearest one.
+        val caret = selection.caretAt(NormalizedPoint(0.168f, 0.12f))!!
+        assertEquals("The qu", selection.text.substring(0, caret))
     }
 
     @Test
-    fun `a handle between lines is at the closest line`() {
-        // 0.145 is just below line 0 (ends at 0.14) and further from line 1 (starts at 0.16).
-        assertEquals(0, selection.nearestWord(NormalizedPoint(0.0f, 0.145f)))
+    fun `a handle between two words is at the nearer word's edge`() {
+        // "The" ends at 0.11, "quick" starts at 0.13.
+        assertEquals(3, selection.caretAt(NormalizedPoint(0.115f, 0.12f)))
+        assertEquals(4, selection.caretAt(NormalizedPoint(0.126f, 0.12f)))
+    }
+
+    @Test
+    fun `a handle past the end of a line is at its end`() {
+        val caret = selection.caretAt(NormalizedPoint(0.95f, 0.18f))!!
+        assertEquals("fox jumps", selection.text.substring(caret - "fox jumps".length, caret))
+        assertEquals('\n', selection.text[caret])
     }
 
     @Test
     fun `a handle above or below the text is on the first or last line`() {
-        assertEquals(0, selection.nearestWord(NormalizedPoint(0.0f, 0.0f)))
-        assertEquals(8, selection.nearestWord(NormalizedPoint(0.9f, 0.99f)))
-    }
-
-    @Test
-    fun `a handle in a blank line's gap goes to a line with words`() {
-        val index = selection.nearestWord(NormalizedPoint(0.05f, 0.30f))
-        assertTrue(index == 5 || index == 8)
-    }
-
-    // ------------------------------------------------------------------ ranges and reading order
-
-    @Test
-    fun `a range across lines holds every word between its ends`() {
-        val range = selection.range(anchor = 1, focus = 6)
-        assertEquals(WordRange(1, 6), range)
-        assertEquals("quick brown\nfox jumps\nover the", selection.text(range))
-    }
-
-    @Test
-    fun `dragging backwards selects the same words, in reading order`() {
-        assertEquals(selection.range(1, 6), selection.range(anchor = 6, focus = 1))
-        assertEquals("quick brown\nfox jumps\nover the", selection.text(selection.range(6, 1)))
-    }
-
-    @Test
-    fun `a range of one word is that word`() {
-        assertEquals("jumps", selection.text(selection.range(4, 4)))
+        assertEquals(0, selection.caretAt(NormalizedPoint(0f, 0f)))
+        assertEquals(selection.text.length, selection.caretAt(NormalizedPoint(0.9f, 0.99f)))
     }
 
     // ------------------------------------------------------------------ copied text
 
     @Test
-    fun `copied text keeps a blank line between paragraphs`() {
-        assertEquals("lazy\n\nDog.", selection.text(selection.range(7, 8)))
+    fun `a selection can start and end inside words`() {
+        val start = selection.text.indexOf("uick")
+        val end = selection.text.indexOf("ps") // "jum|ps"
+        assertEquals("uick brown\nfox jum", selection.text(TextSpan(start, end)))
     }
 
     @Test
-    fun `all selects the whole page`() {
-        val all = selection.all()
-        assertEquals(WordRange(0, 8), all)
+    fun `copied text keeps a blank line between paragraphs`() {
+        val start = selection.text.indexOf("lazy")
+        assertEquals("lazy\n\nDog.", selection.text(TextSpan(start, selection.text.length)))
+    }
+
+    @Test
+    fun `all covers every word on the page`() {
+        assertEquals(selection.text, selection.text(selection.all()!!))
+    }
+
+    // ------------------------------------------------------------------ highlights and handles
+
+    @Test
+    fun `the highlight runs from the first selected character to the last, one box a line`() {
+        val start = selection.text.indexOf("uick")
+        val end = selection.text.indexOf("ps")
+        val rects = selection.highlightRects(TextSpan(start, end))
+
+        assertEquals(2, rects.size)
+        // From the u of "quick" to the end of "brown".
+        assertClose(0.15f, rects[0].left)
+        assertClose(boundsOf("brown").right, rects[0].right)
+        // From the start of "fox" to the m of "jumps".
+        assertClose(boundsOf("fox").left, rects[1].left)
+        assertClose(boundsOf("jumps").left + 3 * CharWidth, rects[1].right)
+    }
+
+    @Test
+    fun `an empty span highlights nothing`() {
+        assertTrue(selection.highlightRects(TextSpan(5, 5)).isEmpty())
+    }
+
+    @Test
+    fun `handles sit at the leading edge of the first character and the trailing edge of the last`() {
+        val start = selection.text.indexOf("uick")
+        val end = selection.text.indexOf("ps")
+
+        assertEquals(NormalizedPoint(0.15f, 0.14f), selection.startHandle(start)!!.rounded())
         assertEquals(
-            "The quick brown\nfox jumps\nover the lazy\n\nDog.",
-            selection.text(all!!),
+            NormalizedPoint(boundsOf("jumps").left + 3 * CharWidth, 0.20f).rounded(),
+            selection.endHandle(end)!!.rounded(),
         )
     }
 
-    // ------------------------------------------------------------------ highlights
-
     @Test
-    fun `the highlight is one rectangle per line, over the selected words`() {
-        val rects = selection.highlightRects(selection.range(1, 6))
-
-        assertEquals(3, rects.size)
-        // Line 0 from "quick" to the end of "brown", gap included.
-        assertEquals(selection.words[1].bounds.union(selection.words[2].bounds), rects[0])
-        // Line 1 whole.
-        assertEquals(selection.words[3].bounds.union(selection.words[4].bounds), rects[1])
-        // Line 2 up to "the".
-        assertEquals(selection.words[5].bounds.union(selection.words[6].bounds), rects[2])
+    fun `a handle on a space goes to the character beside it`() {
+        // Caret 3 is after "The", before the space: the end handle belongs after "e"; a start
+        // there belongs before the "q" of "quick".
+        assertClose(boundsOf("The").right, selection.endHandle(3)!!.x)
+        assertClose(boundsOf("quick").left, selection.startHandle(3)!!.x)
     }
 
+    // ------------------------------------------------------------------ glyphs
+
     @Test
-    fun `a blank line has nothing to highlight`() {
-        assertEquals(2, selection.highlightRects(selection.range(7, 8)).size)
+    fun `measured glyphs are used where the provider gives them`() {
+        // A proportional word: a wide "m", then a narrow "il".
+        val word =
+            TextWord(
+                "mil",
+                NormalizedRect(0.1f, 0.1f, 0.2f, 0.14f),
+                glyphs =
+                    listOf(
+                        NormalizedRect(0.10f, 0.1f, 0.16f, 0.14f),
+                        NormalizedRect(0.16f, 0.1f, 0.18f, 0.14f),
+                        NormalizedRect(0.18f, 0.1f, 0.20f, 0.14f),
+                    ),
+            )
+        val measured =
+            TextSelection(PageText(listOf(TextLine(listOf(word))), ContentOrigin.EMBEDDED))
+
+        // Evenly shared, 0.155 would be past the m (0.133); measured, it is still inside it.
+        assertEquals(1, measured.caretAt(NormalizedPoint(0.155f, 0.12f)))
+        assertClose(0.16f, measured.endHandle(1)!!.x)
     }
 
-    // ------------------------------------------------------------------ pages without words
+    /** Ink boxes follow the letters: an "o" is shorter than a "d". The highlight must not. */
+    @Test
+    fun `a highlight is as tall as its line, whatever the letters`() {
+        val word =
+            TextWord(
+                "od",
+                NormalizedRect(0.1f, 0.10f, 0.14f, 0.14f),
+                glyphs =
+                    listOf(
+                        NormalizedRect(0.10f, 0.12f, 0.12f, 0.14f), // o: x-height only
+                        NormalizedRect(0.12f, 0.10f, 0.14f, 0.14f), // d: with its ascender
+                    ),
+            )
+        val letters =
+            TextSelection(PageText(listOf(TextLine(listOf(word))), ContentOrigin.EMBEDDED))
+
+        val rect = letters.highlightRects(TextSpan(0, 1)).single()
+
+        assertClose(0.10f, rect.top)
+        assertClose(0.14f, rect.bottom)
+    }
 
     @Test
     fun `a page with no words has nothing to select`() {
         val blank = TextSelection(PageText(listOf(TextLine(emptyList())), ContentOrigin.EMBEDDED))
 
-        assertTrue(blank.words.isEmpty())
         assertNull(blank.all())
         assertNull(blank.wordAt(NormalizedPoint(0.5f, 0.5f)))
-        assertNull(blank.nearestWord(NormalizedPoint(0.5f, 0.5f)))
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun `a range must be of words on the page`() {
-        selection.range(0, 9)
+        assertNull(blank.caretAt(NormalizedPoint(0.5f, 0.5f)))
     }
 
     // ------------------------------------------------------------------ right to left
 
     @Test
-    fun `a right-to-left line is read, copied and dragged in reading order`() {
-        // Reading order: אחת, שתיים, שלוש, laid out from the right edge leftwards.
+    fun `a right-to-left line is read, copied and handled in reading order`() {
+        // Reading order: אחת, שתיים, laid out from the right edge leftwards, evenly shared.
         val rtl =
             TextSelection(
                 PageText(
@@ -161,9 +216,8 @@ class TextSelectionTest {
                         listOf(
                             TextLine(
                                 listOf(
-                                    word("אחת", left = 0.80f, top = 0.1f),
-                                    word("שתיים", left = 0.60f, top = 0.1f),
-                                    word("שלוש", left = 0.40f, top = 0.1f),
+                                    TextWord("אחת", NormalizedRect(0.70f, 0.1f, 0.76f, 0.14f)),
+                                    TextWord("שתיים", NormalizedRect(0.58f, 0.1f, 0.68f, 0.14f)),
                                 )
                             )
                         ),
@@ -171,40 +225,55 @@ class TextSelectionTest {
                 )
             )
 
-        // The rightmost word is the first read.
-        assertEquals(0, rtl.wordAt(NormalizedPoint(0.85f, 0.12f)))
-        // Past the left end of the line is its last word in reading order.
-        assertEquals(2, rtl.nearestWord(NormalizedPoint(0.05f, 0.12f)))
-        // Dragging from left to right on screen still copies in reading order.
-        val range = rtl.range(anchor = 2, focus = 0)
-        assertEquals("אחת שתיים שלוש", rtl.text(range))
-        assertEquals(
-            listOf(NormalizedRect(0.40f, 0.1f, 0.80f + WordWidth, 0.1f + LineHeight)),
-            rtl.highlightRects(range),
-        )
+        assertEquals("אחת שתיים", rtl.text)
+        // The rightmost edge is where reading starts.
+        assertEquals(0, rtl.caretAt(NormalizedPoint(0.80f, 0.12f)))
+        // The leftmost edge is where it ends.
+        assertEquals(rtl.text.length, rtl.caretAt(NormalizedPoint(0.50f, 0.12f)))
+        // One character in from the right: after א.
+        assertEquals(1, rtl.caretAt(NormalizedPoint(0.74f, 0.12f)))
+        // A start handle at the right edge of its first character.
+        assertClose(0.76f, rtl.startHandle(0)!!.x)
     }
 
     // ------------------------------------------------------------------ helpers
 
-    private fun centerOf(index: Int): NormalizedPoint {
-        val b = selection.words[index].bounds
+    private fun boundsOf(word: String) = selection.words.first { it.text == word }.bounds
+
+    private fun centreOf(word: String): NormalizedPoint {
+        val b = boundsOf(word)
         return NormalizedPoint((b.left + b.right) / 2, (b.top + b.bottom) / 2)
     }
 
+    private fun assertClose(expected: Float, actual: Float) =
+        assertEquals(expected, actual, 0.0001f)
+
+    private fun NormalizedPoint.rounded() =
+        NormalizedPoint(Math.round(x * 10_000) / 10_000f, Math.round(y * 10_000) / 10_000f)
+
     private companion object {
-        const val WordWidth = 0.10f
-        const val WordGap = 0.02f
+        const val CharWidth = 0.02f
         const val LineHeight = 0.04f
 
-        /** Words laid out from the left margin, left to right. */
-        fun ltrLine(top: Float, vararg texts: String): TextLine =
-            TextLine(
-                texts.mapIndexed { i, text ->
-                    word(text, left = 0.05f + i * (WordWidth + WordGap), top = top)
+        /** Words laid out from x 0.05, monospaced, one character-width between them. */
+        fun line(top: Float, vararg texts: String): TextLine {
+            var left = 0.05f
+            return TextLine(
+                texts.map { text ->
+                    val word =
+                        TextWord(
+                            text,
+                            NormalizedRect(
+                                left,
+                                top,
+                                left + text.length * CharWidth,
+                                top + LineHeight,
+                            ),
+                        )
+                    left += (text.length + 1) * CharWidth
+                    word
                 }
             )
-
-        fun word(text: String, left: Float, top: Float): TextWord =
-            TextWord(text, NormalizedRect(left, top, left + WordWidth, top + LineHeight))
+        }
     }
 }

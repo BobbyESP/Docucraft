@@ -19,10 +19,17 @@ enum class ContentOrigin {
 }
 
 /**
- * A word and where it is on the page. Words, not characters, are the common ground: text
- * recognition gives words, and word selection is what readers of scanned documents expect.
+ * A word and where it is on the page. Words are the common ground: every provider can give them,
+ * text recognition included, and a long press selects one.
+ *
+ * @param glyphs Where each character is, one box per character of [text], in reading order, when
+ *   the provider knows. Without them, selection shares [bounds] evenly among the characters.
  */
-data class TextWord(val text: String, val bounds: NormalizedRect)
+data class TextWord(
+    val text: String,
+    val bounds: NormalizedRect,
+    val glyphs: List<NormalizedRect>? = null,
+)
 
 /** A line of words, in reading order. A blank line has none; it still separates paragraphs. */
 data class TextLine(val words: List<TextWord>)

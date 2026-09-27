@@ -4,7 +4,9 @@
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.selection
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
@@ -22,7 +24,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -48,7 +50,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextS
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.SelectionInteraction
 import com.bobbyesp.documentcontent.DocumentSelection
 import com.bobbyesp.documentcontent.NormalizedPoint
-import com.bobbyesp.documentcontent.TextPosition
+import com.bobbyesp.documentcontent.TextCaret
 import com.composepdf.PdfOverlayScope
 import com.composepdf.PdfViewerState
 import kotlin.time.Duration.Companion.milliseconds
@@ -84,13 +86,16 @@ internal constructor(
     internal var edgeZone = 0f
     internal var maxSpeed = 0f
 
-    private var anchor: TextPosition? = null
+    private var anchor: DocumentSelection? = null
     private var point = Offset.Zero
     private var last: DocumentSelection? = null
     private var autoScroll: Job? = null
 
-    /** Starts extending [current] from [anchor] towards [at], in viewer pixels. */
-    fun start(anchor: TextPosition, current: DocumentSelection, at: Offset) {
+    /**
+     * Starts growing [anchor] towards [at], in viewer pixels, from [current]. The anchor stays
+     * selected: the word a long press chose, or the caret at the end a handle does not move.
+     */
+    fun start(anchor: DocumentSelection, current: DocumentSelection, at: Offset) {
         this.anchor = anchor
         last = current
         point = at
@@ -229,7 +234,7 @@ fun PdfOverlayScope.TextSelectionLayer(
             at = at,
             label = stringResource(R.string.viewer_selection_start_handle),
             viewer = { viewer },
-            onDragStart = { finger -> drag.start(selection.end, selection, finger) },
+            onDragStart = { finger -> drag.start(caret(selection.end), selection, finger) },
             onDrag = drag::moveTo,
             onDragEnd = drag::end,
         )
@@ -240,7 +245,7 @@ fun PdfOverlayScope.TextSelectionLayer(
             at = at,
             label = stringResource(R.string.viewer_selection_end_handle),
             viewer = { viewer },
-            onDragStart = { finger -> drag.start(selection.start, selection, finger) },
+            onDragStart = { finger -> drag.start(caret(selection.start), selection, finger) },
             onDrag = drag::moveTo,
             onDragEnd = drag::end,
         )
@@ -300,38 +305,48 @@ private fun PdfOverlayScope.SelectionHandle(
             Modifier.anchorTo(
                     pageIndex = at.page,
                     position = Offset(at.position.x, at.position.y),
-                    alignment = Alignment.TopCenter,
+                    alignment = if (isStart) StartHandlePoint else EndHandlePoint,
                 )
                 .size(TouchTarget)
                 .onPlaced { self = it }
                 .semantics { contentDescription = label }
                 .pointerInput(Unit) {
-                    var grab = Offset.Zero
                     fun inViewer(local: Offset): Offset? {
                         val viewerCoordinates = viewer() ?: return null
                         val handle = self ?: return null
                         return viewerCoordinates.localPositionOf(handle, local)
                     }
-                    detectDragGestures(
-                        onDragStart = { local ->
-                            val finger = inViewer(local) ?: return@detectDragGestures
-                            // The handle's point is its top centre; aim a little above it, inside
-                            // the line, so the nearest line is the right one.
-                            val tip =
-                                inViewer(Offset(size.width / 2f, 0f)) ?: return@detectDragGestures
-                            grab = tip - finger - Offset(0f, with(density) { AimAbove.toPx() })
-                            latestOnDragStart(finger + grab)
-                        },
-                        onDragEnd = { latestOnDragEnd() },
-                        onDragCancel = { latestOnDragEnd() },
-                    ) { change, _ ->
-                        change.consume()
-                        inViewer(change.position)?.let { latestOnDrag(it + grab) }
+                    awaitEachGesture {
+                        // Taken at once, with no slop: a handle exists to be dragged, and the
+                        // viewer yields a touch whose down was consumed (E2).
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        down.consume()
+                        val finger = inViewer(down.position) ?: return@awaitEachGesture
+                        // The handle's point is its top centre; aim a little above it, inside
+                        // the line, so the nearest line is the right one. The offset is taken
+                        // from the first touch, so the text point moves exactly as the finger.
+                        val tip =
+                            inViewer(Offset(size.width * tipFraction(isStart), 0f))
+                                ?: return@awaitEachGesture
+                        val grab = tip - finger - Offset(0f, with(density) { AimAbove.toPx() })
+                        var dragging = false
+                        try {
+                            drag(down.id) { change ->
+                                if (!dragging) {
+                                    dragging = true
+                                    latestOnDragStart(finger + grab)
+                                }
+                                change.consume()
+                                inViewer(change.position)?.let { latestOnDrag(it + grab) }
+                            }
+                        } finally {
+                            if (dragging) latestOnDragEnd()
+                        }
                     }
                 }
     ) {
         val radius = DropRadius.toPx()
-        val centreX = size.width / 2f
+        val centreX = size.width * tipFraction(isStart)
         val circle = if (isStart) centreX - radius else centreX + radius
         drawCircle(color = color, radius = radius, center = Offset(circle, radius))
         // The square quarter that turns the circle into a drop pointing at the text.
@@ -422,6 +437,20 @@ private fun selectionInRoot(
     val visible = union?.intersect(screen) ?: return null
     return Rect(viewer.localToRoot(visible.topLeft), viewer.localToRoot(visible.bottomRight))
 }
+
+/**
+ * Where along its touch target a handle's point is. Each handle hangs outward, the start one to the
+ * left of its point and the end one to the right, as in the reference viewers, so that on a short
+ * selection their targets do not sit on top of each other and a touch reaches the one it meant.
+ */
+private fun tipFraction(isStart: Boolean) = if (isStart) 0.75f else 0.25f
+
+/** The alignment point matching [tipFraction], at the top: where a handle meets its text. */
+private val StartHandlePoint = BiasAlignment(horizontalBias = 0.5f, verticalBias = -1f)
+private val EndHandlePoint = BiasAlignment(horizontalBias = -0.5f, verticalBias = -1f)
+
+/** A selection of nothing at [at]: what a handle grows from, the end it does not move. */
+private fun caret(at: TextCaret) = DocumentSelection(at, at)
 
 private const val NightHighlightAlpha = 0.45f
 

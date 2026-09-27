@@ -43,6 +43,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | c2 | Proveedores nativo y compuesto + DI con OCR a `null` | Bajo | ✅ Done (2026-09-25), plus cross-page selection |
 | c3 | Motor E3 (long press reclamable) + E4 (overlay en coordenadas de página) | **Medio-alto** | ✅ Done (2026-09-25) |
 | c4 | UI de selección, portapapeles y degradación | Medio | ✅ Done (2026-09-27) |
+| c5 | Character-by-character selection, as in Google Drive *(added 2026-09-27)* | Medium | ✅ Done (2026-09-27) |
 | d1 | Enlaces en el proveedor + `ResolveLinkUseCase` | Bajo | ⏳ |
 | d2 | Motor E3 (tap reclamable) + E5 (`animateScrollTo`) | Medio | ⏳ |
 | d3 | D3 (aviso con dominio) + D4 (Custom Tabs) + accesibilidad | Medio | ⏳ |
@@ -935,6 +936,78 @@ el aviso una sola vez y sin errores; TalkBack anuncia la selección. **Riesgo: m
   - The "Text copied" notice below API 33: the emulator is API 37.
   - The `Unsupported` path below API 35: covered by the JVM tests and by c2's instrumented test of
     the provider's fallback.
+
+## Step c5 · Character-by-character selection *(added 2026-09-27)*
+
+The maintainer asked for this after c4, before phase d. They wanted selection to behave like the
+reference viewers, Google Drive's among them: c4 moved both ends a whole word at a time.
+
+### Done — 2026-09-27
+
+**Behaviour.**
+- A long press still selects the whole word under the finger.
+- From then on the ends move character by character: the same finger dragging on, and either handle
+  later.
+- After a long press, the pressed word stays selected whichever way the finger goes. This is
+  `DocumentSelection.extending`.
+- What is copied is exactly the characters between the handles. Spaces or line breaks that a handle
+  sitting between words takes in at either end are trimmed.
+
+**Model (`:document-content-api`).** This supersedes §4.1's "words, not characters" and fills in
+its planned `TextWord.glyphs`.
+- `TextWord.glyphs` is optional: one box per character, in reading order.
+- `TextSelection` exposes the page's text as it will be pasted (`text`). Selections are `TextSpan`s,
+  pairs of carets in that text, half-open.
+- `caretAt(point)` finds the nearest character boundary on the nearest line; between words, it
+  takes the edge of the nearer word.
+- `startHandle` and `endHandle` put a handle at the leading edge of the first selected character
+  and the trailing edge of the last.
+- Highlights and handles take their height from the line, not the glyph. Ink boxes follow the
+  letters, so an "o" is shorter than a "d".
+- A word without glyphs has its box shared evenly among its characters, reversed for a
+  right-to-left word. That is exact for monospaced text and close otherwise. It matters for OCR
+  that only gives word boxes.
+- `DocumentSelection` is now two `TextCaret(page, offset)`s, with `spanOn` per page. `WordRange`
+  and `TextPosition` are gone.
+
+**Provider.**
+- `PlatformPageContentProvider` measures each character with `selectContent(k, k + 1)`. The word's
+  box is their union, at no extra cost.
+- If any character of a word cannot be measured, it measures the word whole and leaves its glyphs
+  to the even share-out.
+- **Cost**, on the densest fixture (`prueba_motor_pdf.pdf`, ReportLab, about 2,700 characters a
+  page), on the emulator: 180 ms a page on average and 358 ms at worst, over 10 pages. The visible
+  page is read first, 150 ms after the document settles, so its text is there before a long press
+  fires (500 ms). If denser documents prove slow, glyphs could be measured only for the words at
+  the selection's ends, when a handle reaches them.
+
+**Screen.**
+- Handles take their drag offset from the finger's first touch. `detectDragGestures` reported the
+  finger only after the touch slop, so the handle was losing its first ~8 dp: found on the
+  emulator, where a three-character drag moved one character.
+- A handle's down is consumed at once, so the viewer yields the touch (E2).
+- Each handle hangs outward: the start one to the left of its point, the end one to the right, as
+  in Drive. With both 48 dp targets centred on the text, a short selection put the end handle's
+  target over the start one's, and a touch meant for the start moved the end. Also found on the
+  emulator.
+
+**Verification.**
+- Tests, all green:
+  - `:document-content-api`: 27 tests. `TextSelectionTest` was rewritten for carets and covers
+    boundaries inside a word, the gap between words, measured glyphs against the even share-out,
+    line-height highlights, handles on spaces, and right-to-left.
+  - `:app` unit: 169 tests. `SelectionInteractionTest` was rewritten, and the ViewModel tests copy
+    from inside words.
+  - `PlatformPageContentProviderTest`: 13 instrumented tests on the emulator, 3 of them new. Every
+    character has its own box, inside its word and in reading order. A finger on a real glyph
+    boundary lands on it. A selection across pages runs from inside a word to inside another. The
+    cost is logged.
+- Emulator, `text-and-links.pdf`:
+  - The long press selected "prueba".
+  - Dragging the end handle three characters left left "pru".
+  - Dragging the start handle one character right, then Copy and paste into Settings' search, gave
+    exactly `ru`.
+  - A long press on "texto" dragged into "enlaces" selected `texto y enl`.
 
 ---
 

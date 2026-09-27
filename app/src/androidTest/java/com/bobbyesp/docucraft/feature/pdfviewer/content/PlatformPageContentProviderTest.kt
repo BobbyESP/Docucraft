@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.pdfviewer.content
 
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
@@ -12,10 +13,11 @@ import com.bobbyesp.docucraft.feature.pdfviewer.data.content.PlatformPageContent
 import com.bobbyesp.documentcontent.ContentOrigin
 import com.bobbyesp.documentcontent.DocumentSelection
 import com.bobbyesp.documentcontent.DocumentSource
+import com.bobbyesp.documentcontent.NormalizedPoint
 import com.bobbyesp.documentcontent.NormalizedRect
 import com.bobbyesp.documentcontent.PageContentResult
 import com.bobbyesp.documentcontent.PageLink
-import com.bobbyesp.documentcontent.TextPosition
+import com.bobbyesp.documentcontent.TextCaret
 import com.bobbyesp.documentcontent.TextSelection
 import java.io.File
 import kotlin.math.abs
@@ -166,31 +168,93 @@ class PlatformPageContentProviderTest {
         }
     }
 
-    /** A selection over a page break, from real pages: the words of both, in order. */
+    /**
+     * Every character gets its own box, inside its word's and in reading order: what lets a
+     * selection start and end inside a word, where the reader sees the characters.
+     */
     @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM)
-    fun aSelectionRunsAcrossPages() = runBlocking {
+    fun everyCharacterIsMeasured() = runBlocking {
+        session("text-and-links.pdf").use { session ->
+            val words =
+                (session.page(0) as PageContentResult.Available).text!!.lines.flatMap { it.words }
+            for (word in words) {
+                val glyphs = checkNotNull(word.glyphs) { "no glyphs for '${word.text}'" }
+                assertEquals(word.text, word.text.length, glyphs.size)
+                for (glyph in glyphs) {
+                    assertTrue(
+                        "'${word.text}': $glyph outside ${word.bounds}",
+                        glyph.left >= word.bounds.left - Slack &&
+                            glyph.right <= word.bounds.right + Slack,
+                    )
+                }
+                val lefts = glyphs.map { it.left }
+                assertEquals("'${word.text}' reads left to right", lefts.sorted(), lefts)
+            }
+        }
+    }
+
+    /** A finger on a character boundary is at that boundary: the real glyphs, not a share-out. */
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    fun aCaretLandsOnTheBoundaryUnderTheFinger() = runBlocking {
+        session("text-and-links.pdf").use { session ->
+            val text = TextSelection((session.page(0) as PageContentResult.Available).text!!)
+            val word = text.words.first { it.text == "Docucraft:" }
+            val glyph = word.glyphs!![4] // the second "c"
+            val caret = text.caretAt(NormalizedPoint(glyph.left, (glyph.top + glyph.bottom) / 2))!!
+
+            assertEquals("Docu", text.text.substring(caret - 4, caret))
+        }
+    }
+
+    /** A selection over a page break, from inside a word to inside another, on real pages. */
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    fun aSelectionRunsAcrossPagesFromInsideWords() = runBlocking {
         session("text-and-links.pdf").use { session ->
             val pages =
                 (0..1).associateWith {
                     TextSelection((session.page(it) as PageContentResult.Available).text!!)
                 }
-            val lastOfFirst = pages.getValue(0).words.lastIndex
+            val first = pages.getValue(0).text
+            val second = pages.getValue(1).text
             val selection =
                 DocumentSelection.between(
-                    anchor = TextPosition(page = 1, word = 1),
-                    focus = TextPosition(page = 0, word = lastOfFirst),
+                    anchor = TextCaret(page = 1, offset = 2),
+                    focus = TextCaret(page = 0, offset = first.length - 3),
                 )
 
-            val expected =
-                listOf(expectedWords("text-and-links.pdf", 0).last()) +
-                    expectedWords("text-and-links.pdf", 1).take(2)
-            val copied = selection.text { pages[it] }
-            assertEquals(
-                expected.map { it.getString("text") },
-                copied.split(Regex("\\s+")),
+            assertEquals(first.takeLast(3) + "\n" + second.take(2), selection.text { pages[it] })
+        }
+    }
+
+    /**
+     * Not a check, a measurement: measuring every character costs one platform call each. Logs how
+     * long a page takes on the densest fixture, for the plan to record.
+     */
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    fun measuringCharactersIsAffordable() = runBlocking {
+        session("prueba_motor_pdf.pdf").use { session ->
+            var characters = 0
+            var slowest = 0L
+            val pages = 10
+            val started = System.nanoTime()
+            for (index in 0 until pages) {
+                val pageStarted = System.nanoTime()
+                val page = session.page(index) as? PageContentResult.Available ?: continue
+                slowest = maxOf(slowest, (System.nanoTime() - pageStarted) / 1_000_000)
+                characters +=
+                    page.text?.lines?.sumOf { line -> line.words.sumOf { it.text.length } } ?: 0
+            }
+            val total = (System.nanoTime() - started) / 1_000_000
+            Log.i(
+                "PageContentCost",
+                "$pages pages, $characters characters, ${total}ms total, " +
+                    "${total / pages}ms a page, slowest ${slowest}ms",
             )
-            assertTrue("pages are separated by a line break", '\n' in copied)
+            assertTrue("a page took ${slowest}ms", slowest < 2_000)
         }
     }
 
@@ -245,6 +309,9 @@ class PlatformPageContentProviderTest {
     private companion object {
         /** Words are glyph ink boxes; the manifest uses the font's ascent and descent. */
         const val WordTolerance = 0.01f
+
+        /** Glyph ink boxes may spill a hair past the word's. */
+        const val Slack = 0.002f
 
         /** Link rectangles come rounded to whole points. */
         const val LinkTolerance = 0.004f

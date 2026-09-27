@@ -37,8 +37,8 @@ import com.bobbyesp.documentcontent.PageContentProvider
 import com.bobbyesp.documentcontent.PageContentResult
 import com.bobbyesp.documentcontent.PageContentSession
 import com.bobbyesp.documentcontent.PageText
+import com.bobbyesp.documentcontent.TextCaret
 import com.bobbyesp.documentcontent.TextLine
-import com.bobbyesp.documentcontent.TextPosition
 import com.bobbyesp.documentcontent.TextWord
 import com.bobbyesp.scanner.ContentRef
 import io.mockk.every
@@ -355,25 +355,27 @@ class PdfViewerViewModelTest {
         val collector = launch { viewModel.effects.collect { effects += it } }
         advanceUntilIdle()
 
-        // From "beta" on page 0 to "delta" on page 3, over a scanned page that is left out.
-        viewModel.onSendIntent(PdfViewerIntent.Select(selection(0, 1, 3, 0)))
+        // From "eta" on page 0 to "del" on page 3, inside both words, over a scanned page that is
+        // left out.
+        viewModel.onSendIntent(PdfViewerIntent.Select(selection(0, 7, 3, 3)))
         viewModel.onSendIntent(PdfViewerIntent.CopySelection)
         advanceUntilIdle()
         collector.cancel()
 
-        assertEquals(PdfViewerEffect.CopyText("beta\ngamma\ndelta"), effects.single())
+        assertEquals(PdfViewerEffect.CopyText("eta\ngamma\ndel"), effects.single())
         assertEquals(null, viewModel.state.value.selection)
     }
 
     @Test
     fun selectAllTakesInTheWholeOfEveryPageTheSelectionTouches() = runTest {
         val viewModel = openedExternal()
-        viewModel.onSendIntent(PdfViewerIntent.Select(selection(0, 1, 1, 0)))
+        viewModel.onSendIntent(PdfViewerIntent.Select(selection(0, 7, 1, 2)))
 
         viewModel.onSendIntent(PdfViewerIntent.SelectAll)
         advanceUntilIdle()
 
-        assertEquals(selection(0, 0, 1, 0), viewModel.state.value.selection)
+        // "alpha beta" and "gamma", whole.
+        assertEquals(selection(0, 0, 1, 5), viewModel.state.value.selection)
     }
 
     @Test
@@ -445,8 +447,8 @@ class PdfViewerViewModelTest {
             advanceUntilIdle()
         }
 
-    private fun selection(startPage: Int, startWord: Int, endPage: Int, endWord: Int) =
-        DocumentSelection(TextPosition(startPage, startWord), TextPosition(endPage, endWord))
+    private fun selection(startPage: Int, startOffset: Int, endPage: Int, endOffset: Int) =
+        DocumentSelection(TextCaret(startPage, startOffset), TextCaret(endPage, endOffset))
 
     private fun text(vararg words: String) =
         PageContentResult.Available(

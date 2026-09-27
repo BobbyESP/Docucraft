@@ -10,7 +10,7 @@ import org.junit.Test
 
 class DocumentSelectionTest {
 
-    // Page 0: "Alpha beta" / "gamma"   Page 1: scanned, no text   Page 2: "delta epsilon" / "zeta"
+    // Page 0: "Alpha beta\ngamma"   Page 1: scanned, no text   Page 2: "delta epsilon\nzeta"
     private val pages: Map<Int, TextSelection?> =
         mapOf(
             0 to page(listOf("Alpha", "beta"), listOf("gamma")),
@@ -19,61 +19,72 @@ class DocumentSelectionTest {
         )
 
     @Test
-    fun `positions order by page, then by reading order`() {
-        assertTrue(TextPosition(0, 5) < TextPosition(1, 0))
-        assertTrue(TextPosition(1, 0) < TextPosition(1, 1))
+    fun `carets order by page, then by reading order`() {
+        assertTrue(TextCaret(0, 50) < TextCaret(1, 0))
+        assertTrue(TextCaret(1, 0) < TextCaret(1, 1))
     }
 
     @Test
-    fun `dragging backwards across pages selects the same words`() {
+    fun `dragging backwards across pages selects the same text`() {
         assertEquals(
-            DocumentSelection(TextPosition(0, 1), TextPosition(2, 1)),
-            DocumentSelection.between(anchor = TextPosition(2, 1), focus = TextPosition(0, 1)),
+            DocumentSelection(TextCaret(0, 2), TextCaret(2, 3)),
+            DocumentSelection.between(anchor = TextCaret(2, 3), focus = TextCaret(0, 2)),
         )
     }
 
     @Test
     fun `each page gets its share, the rest of the first, all of the middle, the start of the last`() {
-        val selection = DocumentSelection(TextPosition(0, 1), TextPosition(2, 1))
+        val selection = DocumentSelection(TextCaret(0, 2), TextCaret(2, 3))
 
-        assertEquals(WordRange(1, 2), selection.rangeOn(page = 0, wordCount = 3))
-        assertEquals(WordRange(0, 6), selection.rangeOn(page = 1, wordCount = 7))
-        assertEquals(WordRange(0, 1), selection.rangeOn(page = 2, wordCount = 3))
-        assertNull(selection.rangeOn(page = 3, wordCount = 3))
+        assertEquals(TextSpan(2, 16), selection.spanOn(page = 0, length = 16))
+        assertEquals(TextSpan(0, 7), selection.spanOn(page = 1, length = 7))
+        assertEquals(TextSpan(0, 3), selection.spanOn(page = 2, length = 18))
+        assertNull(selection.spanOn(page = 3, length = 5))
     }
 
     @Test
-    fun `a page without words has no share`() {
-        val selection = DocumentSelection(TextPosition(0, 0), TextPosition(2, 0))
-        assertNull(selection.rangeOn(page = 1, wordCount = 0))
+    fun `copied text runs across pages, inside words, and leaves out a page without text`() {
+        // From "pha" on page 0 to "del" on page 2.
+        val selection = DocumentSelection(TextCaret(0, 2), TextCaret(2, 3))
+        assertEquals("pha beta\ngamma\ndel", selection.text { pages[it] })
     }
 
     @Test
-    fun `copied text runs across pages and leaves out a page without text`() {
-        val selection = DocumentSelection(TextPosition(0, 1), TextPosition(2, 1))
-        assertEquals("beta\ngamma\ndelta epsilon", selection.text { pages[it] })
+    fun `spaces a handle took in at either end are not copied`() {
+        // From the space after "Alpha" to the line break after "beta".
+        val selection = DocumentSelection(TextCaret(0, 5), TextCaret(0, 11))
+        assertEquals("beta", selection.text { pages[it] })
     }
 
     @Test
-    fun `a selection within one page copies like the page's own`() {
-        val selection = DocumentSelection(TextPosition(2, 0), TextPosition(2, 2))
-        assertEquals("delta epsilon\nzeta", selection.text { pages[it] })
+    fun `a long press anchor stays selected whichever way the drag goes`() {
+        val word = DocumentSelection(TextCaret(0, 6), TextCaret(0, 10)) // "beta"
+
+        assertEquals(
+            DocumentSelection(TextCaret(0, 6), TextCaret(2, 3)),
+            DocumentSelection.extending(word, TextCaret(2, 3)),
+        )
+        assertEquals(
+            DocumentSelection(TextCaret(0, 2), TextCaret(0, 10)),
+            DocumentSelection.extending(word, TextCaret(0, 2)),
+        )
+        assertEquals(word, DocumentSelection.extending(word, TextCaret(0, 8)))
     }
 
     @Test
     fun `each page highlights only its share`() {
-        val selection = DocumentSelection(TextPosition(0, 1), TextPosition(2, 0))
+        val selection = DocumentSelection(TextCaret(0, 2), TextCaret(2, 3))
         val first = pages.getValue(0)!!
         val last = pages.getValue(2)!!
 
-        assertEquals(first.highlightRects(WordRange(1, 2)), selection.highlightRects(0, first))
-        assertEquals(last.highlightRects(WordRange(0, 0)), selection.highlightRects(2, last))
+        assertEquals(first.highlightRects(TextSpan(2, 16)), selection.highlightRects(0, first))
+        assertEquals(last.highlightRects(TextSpan(0, 3)), selection.highlightRects(2, last))
         assertEquals(emptyList<NormalizedRect>(), selection.highlightRects(3, last))
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun `a selection cannot end before it starts`() {
-        DocumentSelection(TextPosition(2, 0), TextPosition(0, 0))
+        DocumentSelection(TextCaret(2, 0), TextCaret(0, 0))
     }
 
     private fun page(vararg lines: List<String>): TextSelection =

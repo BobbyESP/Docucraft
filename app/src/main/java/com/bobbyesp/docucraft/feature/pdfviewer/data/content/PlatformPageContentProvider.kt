@@ -171,11 +171,7 @@ private class PlatformSession(private val renderer: PdfRenderer, cacheSize: Int)
         val text = textContents.joinToString("") { it.text }
         val lines =
             splitPageText(text).map { spans ->
-                TextLine(
-                    spans.mapNotNull { span ->
-                        measure(span)?.normalized()?.let { TextWord(span.text, it) }
-                    }
-                )
+                TextLine(spans.mapNotNull { span -> word(span) { it.normalized() } })
             }
         val pageText = PageText(lines, ContentOrigin.EMBEDDED)
 
@@ -187,9 +183,28 @@ private class PlatformSession(private val renderer: PdfRenderer, cacheSize: Int)
         }
     }
 
-    /** The word's ink box, from selecting it by its characters; `null` if nothing was selected. */
-    private fun PdfRenderer.Page.measure(span: WordSpan): RectF? =
-        selectContent(SelectionBoundary(span.start), SelectionBoundary(span.endExclusive))
+    /**
+     * A word with a box for each of its characters, each measured by selecting it alone, so a
+     * selection can start and end inside it. The word's box is their union, which costs nothing
+     * more. When a character cannot be measured, the word is measured whole and its characters are
+     * left to be shared out evenly. `null` if even that selects nothing.
+     */
+    private fun PdfRenderer.Page.word(
+        span: WordSpan,
+        normalize: (RectF) -> NormalizedRect,
+    ): TextWord? {
+        val glyphs = (span.start until span.endExclusive).map { measure(it, it + 1) }
+        if (glyphs.all { it != null }) {
+            val boxes = glyphs.map { normalize(it!!) }
+            return TextWord(span.text, boxes.reduce(NormalizedRect::union), glyphs = boxes)
+        }
+        val whole = measure(span.start, span.endExclusive) ?: return null
+        return TextWord(span.text, normalize(whole))
+    }
+
+    /** The ink box of the characters from [start] to [end]; `null` if nothing was selected. */
+    private fun PdfRenderer.Page.measure(start: Int, end: Int): RectF? =
+        selectContent(SelectionBoundary(start), SelectionBoundary(end))
             ?.selectedTextContents
             ?.flatMap { it.bounds }
             ?.reduceOrNull { union, rect -> RectF(union).apply { union(rect) } }
