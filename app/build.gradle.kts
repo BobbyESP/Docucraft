@@ -1,10 +1,6 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-
-/*
- * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
- */
 plugins {
     id(libs.plugins.android.application.get().pluginId)
     id("docucraft.android.convention")

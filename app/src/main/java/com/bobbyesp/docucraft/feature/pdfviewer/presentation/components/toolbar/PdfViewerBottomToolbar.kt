@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar
 
 import androidx.compose.animation.AnimatedContent
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.rounded.ZoomIn
 import androidx.compose.material.icons.rounded.ZoomOut
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.FloatingToolbarDefaults
