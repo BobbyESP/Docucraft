@@ -1247,13 +1247,37 @@ with a heading.
 
 ## Cierre
 
-- [ ] `AGENTS.md`:
+- [x] `AGENTS.md`:
   - regla «los tipos de `android.graphics.pdf.content` solo en `PlatformPageContentProvider`»;
   - punto único de intercambio del contenido en `PageContentModule`;
   - pila propia de `PdfViewerActivity`.
-- [ ] `docs/README.md`: fase 3 completada.
+- [x] `docs/README.md`: fase 3 completada.
 - [ ] Verificación completa en dispositivo (móvil y tablet) y anotarla aquí.
-- [ ] El análisis 06 **no se reescribe**.
+- [x] El análisis 06 **no se reescribe**.
+
+### Progress — 2026-09-27
+
+**`AGENTS.md` was rewritten whole**, at the maintainer's request, covering the whole app and not
+only the viewer.
+- Every path and claim in it was checked against the code.
+- The previous version had two claims that no longer held:
+  - `HomeViewModel.applyFiltersAndSort` does not exist; filtering and sorting are in
+    `ProcessDocumentsUseCase`.
+  - "ML Kit types cannot be imported from `:app`" needed precision: `:app` does import
+    `ActivityResultHostImpl` from `:scanner-mlkit`, but no ML Kit or GMS type.
+- It adds, among other things:
+  - the rules for layers, ports and results;
+  - the MVI contract, including when effects are dropped and events are kept;
+  - the engine's extension points (`PdfInteractionHandler`, `PdfOverlayScope`);
+  - the link-safety rule;
+  - the external viewer's own task and stack;
+  - a section of known gaps, so they are not mistaken for regressions;
+  - `ANDROID_SERIAL`, for when a phone is attached.
+
+**Found while checking.** `PdfViewerActivity` advertises `http`/`https` PDFs but cannot load them
+(it reads through the `ContentResolver`). This predates this phase, and is recorded as a known gap.
+
+**Still open:** the full check on a phone and a tablet.
 
 ---
 
