@@ -49,16 +49,16 @@ import org.koin.core.parameter.parametersOf
  * The details of an open document, registered by both hosts that show documents: the app's shell
  * and `PdfViewerActivity`.
  *
- * A destination rather than a sheet the viewer keeps in a boolean (V4 in the phase 3 analysis), so
- * [OverlaySceneStrategy] picks a sheet or a dialog for the window, back closes it, and it survives
- * rotation and process death like any other entry.
+ * A destination rather than a sheet the viewer keeps in a boolean, so [OverlaySceneStrategy] picks
+ * a sheet or a dialog for the window, back closes it, and it survives rotation and process death
+ * like any other entry (`docs/navigation.md`).
  */
 fun EntryProviderScope<NavKey>.pdfDocumentDetailsSection(navigator: Navigator) {
     entry<PdfDocumentDetails>(metadata = OverlaySceneStrategy.overlay()) { key ->
         val viewModel: PdfDocumentDetailsViewModel = koinViewModel { parametersOf(key.document) }
         val state by viewModel.state.collectAsStateWithLifecycle()
 
-        // This entry, not whatever is on top: see B3 in the navigation audit.
+        // This entry, not whatever is on top, which need not be this one.
         LaunchedEffect(state, key) {
             if (state is PdfDocumentDetailsState.Gone) navigator.removeDestination(key)
         }

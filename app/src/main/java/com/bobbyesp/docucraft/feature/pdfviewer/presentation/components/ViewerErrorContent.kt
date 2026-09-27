@@ -71,8 +71,8 @@ enum class ViewerLoadError(
 }
 
 /**
- * Shown in place of the pages when the document cannot be loaded (B4): what happened and what the
- * reader can do about it, never the exception's name.
+ * Shown in place of the pages when the document cannot be loaded: what happened and what the reader
+ * can do about it, never the exception's name, which is what used to be shown.
  *
  * @param onOpenWith Hands the document to another app, or `null` when it cannot leave this one.
  * @param onBack Leaves the viewer, or `null` when the viewer shows no way back.

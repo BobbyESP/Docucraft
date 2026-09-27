@@ -38,8 +38,8 @@ import kotlinx.coroutines.withContext
  *
  * `getTextContents()` gives a page's text as one block without geometry, so each word is measured
  * by selecting it by character index (`selectContent`). That costs about 0.1 ms a word, so a page
- * is read once, off the main thread, and kept in a small cache for the session. See step *a* of
- * `docs/architecture/08-pdfviewer-migration-plan.md` for what was verified.
+ * is read once, off the main thread, and kept in a small cache for the session. What the platform
+ * was found to report is summarized in `docs/text-and-links.md`.
  *
  * @param sdkInt The platform version, for tests of the fallback.
  */

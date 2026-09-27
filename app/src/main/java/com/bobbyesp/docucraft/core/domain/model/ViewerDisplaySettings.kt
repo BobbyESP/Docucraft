@@ -9,8 +9,8 @@ data class ViewerDisplaySettings(val fitMode: ViewerFitMode, val nightMode: Bool
     companion object {
         /**
          * What a document opens with when nothing else says otherwise. Fitting the width is the
-         * usual reading mode, and the rendering engine's own default (decision A2 in
-         * `docs/architecture/07-pdfviewer-target-architecture.md`).
+         * usual reading mode, and the rendering engine's own default (decision D2, A2, in
+         * `docs/pdf-viewer.md`).
          */
         val Factory = ViewerDisplaySettings(fitMode = ViewerFitMode.WIDTH, nightMode = false)
     }

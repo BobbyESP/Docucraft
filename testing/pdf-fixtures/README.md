@@ -2,61 +2,48 @@
   Copyright (C) 2026  Gabriel Fontán (BobbyESP)
 -->
 
-# PDFs de prueba del visor
+# PDF test fixtures
 
-Los genera `generate_fixtures.py` (Python 3, **solo biblioteca estándar**) en
-`composepdf/src/androidTest/assets/fixtures/`, junto con `manifest.json`:
+`generate_fixtures.py` writes the viewer's test PDFs, together with a `manifest.json`, to
+`composepdf/src/androidTest/assets/fixtures/`. It needs Python 3 and nothing else.
 
 ```sh
-python testing/pdf-fixtures/generate_fixtures.py            # salida por defecto
-python testing/pdf-fixtures/generate_fixtures.py <carpeta>  # otra salida (p. ej. los tests de :app)
+python testing/pdf-fixtures/generate_fixtures.py            # default output folder
+python testing/pdf-fixtures/generate_fixtures.py <folder>   # somewhere else
 ```
 
-Los PDF se versionan: los tests no ejecutan el script. Si se cambia el script, se regeneran y se
-versionan también los nuevos.
+The PDFs are committed, and tests never run the script. If you change the script, regenerate and
+commit the PDFs too. `:app`'s instrumented tests read the same folder.
 
-## Por qué generados y no descargados
+## Why generated
 
-- **Las posiciones esperadas se calculan, no se miden.** Todo el texto está en Courier (monoespaciada,
-  600/1000 em por carácter), así que el script sabe exactamente dónde cae cada palabra y cada enlace,
-  y lo escribe en `manifest.json` en el sistema de coordenadas del visor: normalizado a la página
-  mostrada, `[0,1] × [0,1]`, origen arriba a la izquierda, con CropBox y `/Rotate` aplicados.
-- **Licencias limpias**: no hay fuentes ni documentos de terceros dentro.
-- **Reproducibles**: mismo script, mismos bytes.
+- **Expected positions are computed, not measured.** All text is Courier: monospaced, 600/1000 em a
+  character. The script therefore knows where every word and link sits, and writes it to
+  `manifest.json` in the viewer's coordinates: normalized to the displayed page, top-left origin,
+  crop box and rotation applied.
+- **No third-party fonts or documents**, so there are no licensing questions.
+- **Reproducible**: same script, same bytes.
 
-## Contenido
+## The fixtures
 
-| Archivo | Qué prueba |
+| File | Covers |
 |---|---|
-| `text-and-links.pdf` | Texto con acentos; enlaces `https`, `http`, `mailto`, `tel` y `javascript:`; internos con posición (`XYZ`), sin ella (`Fit`), con zoom explícito y por acción `/A /GoTo`; un enlace repartido en dos líneas (`QuadPoints`). Página 2: párrafo para la selección entre líneas |
-| `scanned-image-only.pdf` | Páginas que son solo una imagen, sin capa de texto. **Simula** la salida de ML Kit; no es un escaneo real |
-| `mixed-text-and-scanned.pdf` | Página con texto, página escaneada, página con texto: la disponibilidad se decide por página |
-| `long-320-pages.pdf` | Rendimiento de extracción y scroll; también lo usa el test de restauración de B1 |
-| `password-protected.pdf` | RC4 de 40 bits, contraseña de usuario `docucraft`: `PdfRenderer` lo rechaza |
-| `rotated-mixed-sizes.pdf` | A4, A5, A4 apaisado, A4 con `/Rotate 90`, A4 con CropBox. Cada página tiene la palabra `TARGET` con un enlace encima, para comparar el texto, el enlace y la posición esperada |
+| `text-and-links.pdf` | Accented text. Links: `https`, `http`, `mailto`, `tel`, `javascript:`, internal ones in four forms, and one link spread over two lines. Page 2 has a paragraph for multi-line selection. |
+| `scanned-image-only.pdf` | Image-only pages with no text layer. It *simulates* ML Kit's output; it is not a real scan. |
+| `mixed-text-and-scanned.pdf` | Text, scan, text: whether there is text is decided page by page. |
+| `long-320-pages.pdf` | Scrolling, restoration and extraction over many pages. |
+| `password-protected.pdf` | 40-bit RC4, user password `docucraft`. `PdfRenderer` refuses it. |
+| `rotated-mixed-sizes.pdf` | A4, A5, landscape A4, A4 with `/Rotate 90`, A4 with a crop box. Each page has the word `TARGET` with a link over it. |
+| `prueba_motor_pdf.pdf` | *Added by hand*, not described in the manifest. 40 pages produced by ReportLab: a table of contents with internal links, typography, tables, code, images, vector graphics. It is the densest text fixture, and the proof that the platform reports no internal links. |
 
-`PdfFixturesTest` (en `:composepdf`) comprueba que todos abren con el número de páginas del manifiesto
-y que el protegido se rechaza, antes de que ningún otro test se apoye en ellos.
+`PdfFixturesTest` checks that each generated fixture opens with the page count the manifest says,
+and that the protected one is refused, before any other test relies on them.
 
-## Pendientes
+**Never add a document with personal data.** To reproduce a real document's layout, build an
+equivalent with invented content.
 
-- **Un escaneo real de Docucraft** (`docucraft-scan.pdf`). El simulado reproduce «imagen sin texto»,
-  pero no la compresión JPEG ni los metadatos de ML Kit. Hay que escanear en un dispositivo y copiarlo
-  aquí.
-- **Texto RTL (árabe) y CJK.** Necesitan fuentes incrustadas con su `ToUnicode`, y en árabe además
-  *shaping*. Las fuentes de Windows no se pueden redistribuir. Opciones: generarlos con fuentes
-  Noto (licencia OFL), o añadir documentos reales cuya licencia lo permita.
+## Missing
 
-## Hand-added fixtures
-
-*(English from here on, per the 2026-09-24 decision.)*
-
-Not produced by the generator and not described in `manifest.json`; tests use them for what the
-generator cannot give: a document written by an independent tool.
-
-| File | Source | What it covers |
-|---|---|---|
-| `prueba_motor_pdf.pdf` | Added by the maintainer, produced with ReportLab (a test script) | 40 pages of real-world content: a table of contents and "back to index / go to cover" links on every section (explicit `/Dest` arrays), external links, typography and special characters (accents, `± × ÷`, `« »`, curly quotes, French and Spanish text), long multi-page text, lists, tables, monospaced code, an image gallery (JPEG, alpha PNG, greyscale, CMYK, 1-bit, text drawn inside an image, which must *not* be copyable) and vector graphics |
-
-It is the evidence behind `PlatformContentTest.internalLinksAreNotReported_revisitIfThisFails`: its
-internal links are ordinary explicit destinations, and the platform still reports none.
+- **A real Docucraft scan**, with ML Kit's JPEG compression and metadata.
+- **Right-to-left (Arabic) and CJK text.** These need embedded fonts with `ToUnicode` maps, and
+  Arabic also needs shaping. Noto fonts (OFL licence) would do.

@@ -54,7 +54,7 @@ import kotlin.math.roundToInt
 
 /**
  * The viewer's bottom toolbar: the Material 3 Expressive floating toolbar, with the page, zoom, fit
- * mode and night mode. Design and reasons: `docs/architecture/09-pdfviewer-ui-design.md`.
+ * mode and night mode. Design and reasons: `docs/pdf-viewer.md`.
  *
  * The zoom buttons appear only when the toolbar has room for them. Narrower, a zoom chip remains,
  * and only while the zoom is not the fitted one. That is the toolbar's own width, so it answers

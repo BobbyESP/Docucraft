@@ -125,7 +125,7 @@ class PdfViewerViewModelTest {
         assertEquals("Invoice", open.document.title)
     }
 
-    /** Waiting and leaving are different answers; see B3 in the navigation audit. */
+    /** Waiting and leaving are different answers: a deleted document must close, not spin. */
     @Test
     fun aDeletedDocumentIsGoneRatherThanLoading() = runTest {
         catalogue.value = scanned()

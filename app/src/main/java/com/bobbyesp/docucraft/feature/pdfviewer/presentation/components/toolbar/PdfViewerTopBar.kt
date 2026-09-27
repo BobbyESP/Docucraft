@@ -38,7 +38,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.TooltipI
  * The actions go in an [AppBarRow], which shows as many as fit and moves the rest into its overflow
  * menu: a phone shows Share and "more", a wide pane shows them all. The bar adapts to the room it
  * is given without the screen having to measure the window. Design and reasons:
- * `docs/architecture/09-pdfviewer-ui-design.md`.
+ * `docs/pdf-viewer.md`.
  *
  * @param onShare `null` when the document cannot leave the app; the action is then left out.
  * @param onOpenWith Likewise.

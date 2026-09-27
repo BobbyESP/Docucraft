@@ -25,9 +25,9 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * V5 in the phase 3 analysis: the details used to be rebuilt from what the viewer had left — a size
- * recomputed from a composable, a page count borrowed from the rendering engine. A catalogued
- * document's now come from the catalogue; only an external one is read from its file.
+ * The details used to be rebuilt from what the viewer had left: a size recomputed from a
+ * composable, a page count borrowed from the rendering engine. A catalogued document's now come
+ * from the catalogue; only an external one is read from its file.
  */
 class ViewerDocumentDetailsTest {
 

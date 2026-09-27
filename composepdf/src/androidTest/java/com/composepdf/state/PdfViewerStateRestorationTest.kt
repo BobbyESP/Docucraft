@@ -18,11 +18,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * B1 in `docs/architecture/06-pdfviewer-analysis.md`: `rememberPdfViewerState` saves page, zoom and
- * pan, but the reload that follows a recreation calls `state.reset()` and throws them away, so a
- * rotation or a process death lands the user back on page 1.
- *
- * Red until step b1 of the migration plan.
+ * The reading position survives recreation (E1, `docs/pdf-engine.md`). It used not to:
+ * `rememberPdfViewerState` saved page, zoom and pan, but the reload that follows a recreation reset
+ * them, so a rotation or a process death landed the user back on page 1.
  */
 @RunWith(AndroidJUnit4::class)
 class PdfViewerStateRestorationTest {

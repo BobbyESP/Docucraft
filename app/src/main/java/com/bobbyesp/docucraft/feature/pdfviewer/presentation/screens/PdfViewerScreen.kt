@@ -147,7 +147,7 @@ fun PdfViewerScreen(
     // The bars' own measured heights, kept while they are hidden. Handed to the viewer as constant
     // content padding: pages start below the top bar and end above the bottom one, and scroll
     // underneath them. It used to be an animated padding on the viewer itself, which resized the
-    // viewport, and relaid the document out, on every frame the bars moved (V9).
+    // viewport, and relaid the document out, on every frame the bars moved.
     val density = LocalDensity.current
     var topBarHeight by remember { mutableStateOf(0.dp) }
     var bottomBarHeight by remember { mutableStateOf(0.dp) }

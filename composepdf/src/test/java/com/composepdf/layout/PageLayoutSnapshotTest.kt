@@ -176,7 +176,7 @@ class PageLayoutSnapshotTest {
         assertEquals(100f, pan.y, 0.001f)
     }
 
-    // ------------------------------------------------------------------ content padding (step b7)
+    // ------------------------------------------------------------------ content padding (E6)
 
     /** Bars 100 px tall above and 80 px below: 620 px of content area in an 800 px viewport. */
     private val bars = ContentPaddingPx(top = 100f, bottom = 80f)

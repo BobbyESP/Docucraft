@@ -32,9 +32,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Step b2 of `docs/architecture/08-pdfviewer-migration-plan.md`: whatever sits in the viewer's
- * `overlay` — selection handles, a link preview's buttons — must be able to keep a gesture for
- * itself. The viewer used to start its own gesture on every touch, consumed or not.
+ * E2 (`docs/pdf-engine.md`): whatever sits in the viewer's `overlay` — selection handles, a link
+ * preview's buttons — must be able to keep a gesture for itself. The viewer used to start its own
+ * gesture on every touch, consumed or not.
  */
 @RunWith(AndroidJUnit4::class)
 class PdfGesturesConsumptionTest {

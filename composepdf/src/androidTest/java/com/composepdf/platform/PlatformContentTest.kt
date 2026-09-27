@@ -22,9 +22,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * What the native text provider will rely on from `PdfRenderer.Page`'s content APIs, established in
- * step *a* of `docs/architecture/08-pdfviewer-migration-plan.md` and pinned here so a platform
- * change shows up as a failing test rather than as a misplaced highlight.
+ * What the native text provider relies on from `PdfRenderer.Page`'s content APIs (summarized in
+ * `docs/text-and-links.md`), pinned here so that a platform change shows up as a failing test
+ * rather than as a misplaced highlight.
  *
  * Expected geometry comes from `fixtures/manifest.json`, computed by the fixture generator in the
  * viewer's convention: normalized to the displayed page, top-left origin.
@@ -158,7 +158,7 @@ class PlatformContentTest {
 
     /**
      * Not a check: dumps everything the content APIs return for every fixture to
-     * `files/spike-report.json` in the test app, for re-running step *a* on another platform
+     * `files/spike-report.json` in the test app, for re-checking these findings on another platform
      * version or against a new fixture. Skipped unless asked for, keeping the APK installed:
      * ```
      * ./gradlew :composepdf:connectedDebugAndroidTest \

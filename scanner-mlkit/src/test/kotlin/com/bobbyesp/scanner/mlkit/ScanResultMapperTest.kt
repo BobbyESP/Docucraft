@@ -12,8 +12,8 @@ import org.junit.Test
 
 /**
  * The decision table every scanner engine result goes through. Cancellation and the empty result
- * are regression tests for bugs the engine coupling was hiding (see
- * `docs/architecture/01-scanner-analysis.md`).
+ * are regression tests: a cancelled scan used to be shown as an error, and a scan that produced
+ * nothing was taken for a success.
  */
 class ScanResultMapperTest {
 

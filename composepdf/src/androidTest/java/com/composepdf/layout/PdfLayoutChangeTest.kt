@@ -27,7 +27,7 @@ import org.junit.runner.RunWith
  * The reading position across a change of page layout *without* a recreation: the viewer being
  * resized (a rotation in an activity that handles it, a foldable, multi-window, a list-detail pane)
  * or its fit mode changing. Pan is kept in pixels, and pixels mean another page once pages change
- * size — found in step b8, where rotating the external viewer on page 200 of 320 landed on page 91.
+ * size — found when rotating the external viewer on page 200 of 320 landed on page 91.
  */
 @RunWith(AndroidJUnit4::class)
 class PdfLayoutChangeTest {

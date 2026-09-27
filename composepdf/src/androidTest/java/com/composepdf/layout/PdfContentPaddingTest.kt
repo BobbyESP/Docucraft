@@ -24,9 +24,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Step b7 of `docs/architecture/08-pdfviewer-migration-plan.md`: `PdfLayoutSpec.contentPadding`,
- * with the real engine. Pages are fitted to the area inside the padding and start below it; the
- * geometry rules themselves are covered on the JVM in `PageLayoutSnapshotTest`.
+ * `PdfLayoutSpec.contentPadding` (E6, `docs/pdf-engine.md`), with the real engine. Pages are fitted
+ * to the area inside the padding and start below it; the geometry rules themselves are covered on
+ * the JVM in `PageLayoutSnapshotTest`.
  */
 @RunWith(AndroidJUnit4::class)
 class PdfContentPaddingTest {

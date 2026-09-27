@@ -25,9 +25,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * The viewer's own gestures, with nothing in the overlay. A regression net for every step that
- * touches `PdfGestures` (b2, c3, d2 in `docs/architecture/08-pdfviewer-migration-plan.md`); the
- * behaviour with overlay children is in [PdfGesturesConsumptionTest].
+ * The viewer's own gestures, with nothing in the overlay: a regression net for every change to
+ * `PdfGestures`. The behaviour with overlay children is in [PdfGesturesConsumptionTest].
  */
 @RunWith(AndroidJUnit4::class)
 class PdfGesturesTest {

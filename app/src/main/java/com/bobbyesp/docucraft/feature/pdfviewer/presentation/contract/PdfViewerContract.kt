@@ -59,8 +59,9 @@ data class PdfViewerUiState(
 /**
  * What is known so far about the document the viewer points at.
  *
- * Three answers, because two of them used to be the same `null` and the difference between them is
- * the difference between waiting and leaving. See B3 in `docs/architecture/05-navigation-audit.md`.
+ * Three answers, because two of them used to be the same `null`, and the difference between them is
+ * the difference between waiting and leaving: taking "gone" for "not yet" left the screen open on a
+ * deleted document.
  */
 sealed interface ViewerDocumentState {
 

@@ -4,8 +4,8 @@ Docucraft is a local-first Android app: it scans documents to PDF with ML Kit, k
 local catalogue, and reads PDFs — its own and any other app's — in an in-house viewer with text
 selection and safe links. Nothing leaves the device unless the user shares it.
 
-This file is the map and the rules. The reasoning behind them, subsystem by subsystem, is in
-[`docs/`](docs/README.md): read the relevant analysis before changing a subsystem.
+This file is the map and the rules. How each subsystem works, and why, is in
+[`docs/`](docs/README.md): read the relevant document before changing a subsystem.
 
 ---
 
@@ -102,7 +102,7 @@ A new Koin module is registered in `App.kt`.
   choose its container. **Never put a `NavDisplay` inside a sheet or dialog.** A nested display is
   only for a self-contained flow that is discarded whole and survives nothing. This is the decision
   that caused the most bugs in this codebase; see
-  [docs/architecture/05-navigation-audit.md](docs/architecture/05-navigation-audit.md#decisión-un-navdisplay-dentro-de-un-modal).
+  [docs/navigation.md](docs/navigation.md#modal-destinations).
 - **Transient popups anchored to content are not destinations.** A dropdown menu, or a link's
   preview, moves with the page and is closed by any scroll: it is UI state.
 - **A destination is told about its surroundings; it never measures them.**
@@ -258,14 +258,14 @@ A new Koin module is registered in `App.kt`.
 
 - **Documentation**
   - Start at [`docs/README.md`](docs/README.md).
-  - New documents are written in English. The existing Spanish analyses are dated snapshots:
-    they are not rewritten or translated.
-  - Migration plans keep checkboxes, and add a "Done" note per step saying what was verified and
-    how.
-- **Work happens by stabilization phase**, one subsystem at a time: analysis, target
-  architecture, then a migration in small verifiable steps. Each phase has its own branch
+  - Everything is in English, and describes the app as it is now. When code changes, update the
+    document that describes it. History lives in git, not in the docs.
+  - Explain the why next to each decision. Code-level detail belongs in KDoc, not in the docs.
+  - The decisions named in code comments (D1–D5, E1–E6) are listed in `docs/README.md`.
+- **Work happens by stabilization**, one subsystem at a time, following the method in
+  [`docs/README.md`](docs/README.md#how-a-subsystem-is-stabilized). Each one has its own branch
   (`refactor/<subsystem>`), merged through a PR.
 - **Commits** follow `type(scope): summary` (`feat(pdfviewer): …`, `fix(content): …`,
   `docs(pdfviewer): …`). The body explains why.
-- **Comments and KDoc say why**, not what. Public API gets KDoc. Bugs found during an analysis are
-  numbered `B1`, `B2`…, and architecture violations `V1`, `V2`…; both are tracked until fixed.
+- **Comments and KDoc say why**, not what. Public API gets KDoc. A comment about a past bug says
+  what went wrong, in words: no bug numbers that only made sense in a deleted document.

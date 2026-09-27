@@ -21,9 +21,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Decision D2, row by row: the table in `docs/architecture/07-pdfviewer-target-architecture.md`.
- * What a document opens with is whatever was set for it in this session, otherwise the user's
- * defaults if they turned them on, otherwise the factory settings.
+ * Decision D2, case by case (`docs/pdf-viewer.md`). What a document opens with is whatever was set
+ * for it in this session, otherwise the user's defaults if they turned them on, otherwise the
+ * factory settings.
  */
 class ViewerDisplaySettingsTest {
 

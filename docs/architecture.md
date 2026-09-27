@@ -1,0 +1,109 @@
+<!--
+  Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+-->
+
+# Architecture
+
+How the app is put together, and why. Where each piece lives is in [`AGENTS.md`](../AGENTS.md);
+each subsystem has its own document, listed in the [index](README.md).
+
+## Modules
+
+```
+:app ─────────────┬──> :composepdf               PDF engine (Android library)
+                  ├──> :document-content-api     page text and links, selection (plain Kotlin)
+                  ├──> :scanner-api              scanning contract (plain Kotlin)
+                  └──> :scanner-mlkit ──> :scanner-api
+                                  └──> ML Kit (implementation: hidden from :app)
+```
+
+The module graph enforces what conventions would only ask for:
+- **ML Kit is replaceable.** `:scanner-mlkit` depends on ML Kit as `implementation`, so no ML Kit
+  type can appear in `:app`. Swapping the engine means another module and one line of DI.
+- **Text recognition will slot in the same way.** A future `:ocr-mlkit` would implement
+  `:document-content-api` without the viewer knowing.
+- **The engine stays generic.** `:composepdf` knows nothing of the app: no text, no links, no
+  Koin. The viewer extends it through public hooks ([pdf-engine.md](pdf-engine.md)).
+
+## Layers inside a feature
+
+```
+presentation   screen ─ intents ─> ViewModel ─ state/effects ─> screen
+                                       │
+domain         use cases ─ ports (interfaces) ─ models          plain Kotlin
+                                       │
+data           port implementations: Room, DataStore, files, platform APIs, other apps
+```
+
+- **The domain is plain Kotlin.** It imports no Android, no Compose and no data layer. That keeps
+  every rule testable on the JVM. A location is a `ContentRef` (a URI as a string), never an
+  `android.net.Uri`, which cannot even be built in a plain JVM test. Two classes in `core/domain`
+  still carry Compose types (`UserPreferences`, `InAppNotification`); moving them out is part of the
+  preferences stabilization, still pending.
+- **Anything the framework does goes behind a port**: an interface in the domain, implemented in
+  data. Examples: `DocumentStorage`, `DocumentSharer`, `DocumentExporter`, `DocumentOpener`,
+  `DocumentPrinter`, `LinkOpener`, `PageContentProvider`, `DocumentScanner`. Tests use fakes, not
+  mocks of the framework.
+- **A port that needs an `Activity`** (printing, opening a link) is a Koin `factory` given the
+  activity through `parametersOf`. The ViewModel emits an effect, and the screen, which has the
+  activity, calls the port.
+
+### Results, not exceptions
+
+When the user can cause it, or it is simply how things are, the answer is a sealed result. Some
+examples:
+- the user cancels a scan or an export;
+- a page is only an image;
+- the device is too old to read a PDF's text;
+- a link is not safe to open.
+
+`ScanOutcome`, `ExportOutcome`, `PageContentResult` and `LinkAction` are all sealed. A generic
+`Result<T>` would put "the user changed their mind" in the same bucket as "the disk is full", and
+that is how a cancelled scan ended up shown as an error.
+
+## ViewModels (MVI)
+
+Every screen's ViewModel extends `core/util/viewModel/BaseViewModel<Intent, State, Effect>`:
+
+| Channel | For | When nobody is listening |
+|---|---|---|
+| `state` (`StateFlow`) | what the screen shows | always has a value |
+| `effects` (`SharedFlow`, no replay) | commands for whoever is on screen *now*: print, open a link, scroll | **dropped** |
+| `defaultEvents` (buffered `Channel`) | messages for the user | **kept** until shown |
+
+The asymmetry is deliberate. A lost message is a silent failure. A command carried out later,
+against whatever the user is doing by then, is a wrong action.
+
+- ViewModels never hold a `Context`. Text comes from `StringProvider`.
+- UI-only state stays in the composition: scroll, zoom, whether bars show. The viewer's
+  `PdfViewerState` is to a PDF what `LazyListState` is to a list.
+- What must survive process death goes in the entry's `SavedStateHandle`. Navigation 3's entry
+  decorators give each destination its own ViewModel and saved state.
+
+## Dependency injection
+
+Koin, started in `App.kt`. Each feature has its own modules in `feature/*/di`, and core services
+have theirs in `core/di`. A new module is added to the list in `App.kt`.
+
+**Swapping an implementation is always one binding:**
+- the scanner: `DocumentScannerModule.kt`;
+- where page text comes from: `PageContentModule.kt`.
+
+If a swap needs more than one line, the design is not finished.
+
+## App-wide services in the UI
+
+Composition locals in `core/presentation/common/CompositionLocals.kt`:
+- `LocalDarkTheme`;
+- `LocalSettingsRepository`;
+- `LocalNotificationsService`, for in-app notifications;
+- `LocalAnalyticsHelper`.
+
+Screens read them instead of injecting the same services again.
+
+## Integrations
+
+- **Firebase.** Analytics and Crashlytics, behind `AnalyticsHelper` (`core/di/AnalyticsModule.kt`).
+- **RevenueCat.** Subscriptions, configured in `App.kt` only when `local.properties` has
+  `revenuecat.apikey`.
+- **FileProvider.** `${applicationId}.fileprovider`, for every document the app shares.

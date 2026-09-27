@@ -76,7 +76,7 @@ class PdfInteractionHandlerTest {
             }
         }
 
-    // ------------------------------------------------------------------ taps (d2)
+    // ------------------------------------------------------------------ taps (E3)
 
     /** A tap on a link answers at once: no wait for a second tap that would mean zoom. */
     @Test
