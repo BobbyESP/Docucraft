@@ -104,6 +104,4 @@ Screens read them instead of injecting the same services again.
 ## Integrations
 
 - **Firebase.** Analytics and Crashlytics, behind `AnalyticsHelper` (`core/di/AnalyticsModule.kt`).
-- **RevenueCat.** Subscriptions, configured in `App.kt` only when `local.properties` has
-  `revenuecat.apikey`.
 - **FileProvider.** `${applicationId}.fileprovider`, for every document the app shares.

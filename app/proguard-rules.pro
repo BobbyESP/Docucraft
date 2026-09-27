@@ -74,8 +74,3 @@
 
 -dontwarn java.lang.management.ManagementFactory
 -dontwarn java.lang.management.RuntimeMXBean
-# RevenueCat still references Play Billing's QueryPurchaseHistory* API, removed in Billing 9.
-# The call sites are unreachable for us (we never query purchase history), so the references are
-# dead weight R8 would otherwise refuse to shrink around. Pre-existing; unrelated to navigation.
--dontwarn com.android.billingclient.api.QueryPurchaseHistoryParams$Builder
--dontwarn com.android.billingclient.api.QueryPurchaseHistoryParams

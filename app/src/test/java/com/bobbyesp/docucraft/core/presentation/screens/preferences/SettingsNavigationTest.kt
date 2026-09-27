@@ -9,7 +9,6 @@ import com.bobbyesp.docucraft.core.presentation.navigation.BackStackNavigator
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.SubscriptionSettings
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import org.junit.Assert.assertEquals
@@ -49,15 +48,6 @@ class SettingsNavigationTest {
     @Test
     fun `leaving settings works from the document viewer detail too`() {
         val stack = backStack(Home, Settings, DocumentViewerSettings)
-
-        BackStackNavigator(stack).leaveSettings()
-
-        assertEquals(listOf(Home), stack.toList())
-    }
-
-    @Test
-    fun `leaving settings works from the subscription detail too`() {
-        val stack = backStack(Home, Settings, SubscriptionSettings)
 
         BackStackNavigator(stack).leaveSettings()
 

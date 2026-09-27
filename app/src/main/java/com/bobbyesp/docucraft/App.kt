@@ -12,15 +12,12 @@ import com.bobbyesp.docucraft.core.di.analyticsModule
 import com.bobbyesp.docucraft.core.di.commonModule
 import com.bobbyesp.docucraft.core.di.notificationsServiceModule
 import com.bobbyesp.docucraft.core.di.preferencesModule
-import com.bobbyesp.docucraft.core.di.subscriptionModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerDataModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.scannedDocumentsDatabaseModule
 import com.bobbyesp.docucraft.feature.pdfviewer.di.pageContentModule
 import com.bobbyesp.docucraft.feature.pdfviewer.di.pdfViewerModule
-import com.revenuecat.purchases.Purchases
-import com.revenuecat.purchases.PurchasesConfiguration
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
@@ -28,13 +25,6 @@ import org.koin.core.context.GlobalContext.startKoin
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
-
-        // Configure RevenueCat SDK
-        if (BuildConfig.REVENUECAT_API_KEY.isNotEmpty()) {
-            Purchases.configure(
-                PurchasesConfiguration.Builder(this, BuildConfig.REVENUECAT_API_KEY).build()
-            )
-        }
 
         startKoin {
             androidLogger()
@@ -50,7 +40,6 @@ class App : Application() {
                 pdfViewerModule,
                 pageContentModule,
                 analyticsModule,
-                subscriptionModule,
             )
         }
         packageInfo = packageManager.run {
