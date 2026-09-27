@@ -23,9 +23,8 @@ import org.junit.Test
 /**
  * Which container an overlay destination gets, and what it leaves standing underneath.
  *
- * The choice used to be an `if` on the window size inside the screen that opened the sheet. As a
- * property of the strategy it can be asserted for both window sizes on a JVM, rather than needing
- * one emulator per breakpoint.
+ * The choice is the strategy's, not the screen's that opened the sheet, so it can be asserted for
+ * both window sizes on a JVM rather than on one emulator per breakpoint.
  *
  * The scene types are private to the strategy, so what is asserted is the identity it hands to
  * `NavDisplay`: the same destination rendered two ways must be two scenes, and rendered the same
@@ -93,9 +92,8 @@ class OverlaySceneSelectionTest {
     }
 
     /**
-     * The layout question the actions grid used to answer for itself, by reading the device's
-     * orientation. It is the container's to answer, and the container is as tall as the window let
-     * it be.
+     * Whether there is room to stack is the container's to answer, not the screen's, and the
+     * container is as tall as the window lets it be.
      */
     @Test
     fun `a short window tells its overlays there is no room to stack`() {

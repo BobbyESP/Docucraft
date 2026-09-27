@@ -3,16 +3,8 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.displayCutout
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -20,166 +12,172 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Print
 import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.AppBarRow
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarColors
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
-import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.TooltipIconButton
 
 /**
- * Floating "pill" top bar for the PDF viewer, following Material 3 Expressive guidelines.
+ * The viewer's top app bar: a standard Material `TopAppBar`, with the document's name, its
+ * description as the subtitle when it has one, and its actions.
  *
- * Visually cohesive with [PdfViewerBottomToolbar]: a rounded, tonal [Surface] that floats over the
- * document rather than spanning the screen edge-to-edge. It exposes the document title/subtitle and
- * the document-level actions (share, print, open-with, details).
+ * The actions go in an [AppBarRow], which shows as many as fit and moves the rest into its overflow
+ * menu: a phone shows Share and "more", a wide pane shows them all. The bar adapts to the room it
+ * is given without the screen having to measure the window. Design and reasons:
+ * `docs/pdf-viewer.md`.
  *
- * @param documentInfo The document currently being viewed.
- * @param pageCount Total page count, used to build the subtitle when no description is available.
- * @param showBackButton Whether to show the leading back button.
- * @param onBack Invoked when the back button is tapped.
- * @param onShare Invoked to share the document.
- * @param onPrint Invoked to print the document.
- * @param onOpenWith Invoked to open the document in another app.
- * @param onDetails Invoked to show the document details sheet.
- * @param modifier Optional modifier for the bar container.
+ * @param onShare `null` when the document cannot leave the app; the action is then left out.
+ * @param onOpenWith Likewise.
+ * @param onPrint `null` when there is nothing to print: the document did not load.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PdfViewerTopBar(
-    documentInfo: BasicDocument,
-    pageCount: Int,
+    title: String,
+    description: String?,
     showBackButton: Boolean,
     onBack: () -> Unit,
-    onShare: () -> Unit,
-    onPrint: () -> Unit,
-    onOpenWith: () -> Unit,
+    onShare: (() -> Unit)?,
+    onPrint: (() -> Unit)?,
+    onOpenWith: (() -> Unit)?,
     onDetails: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val subtitle =
-        documentInfo.description
-            ?: if (pageCount > 0) stringResource(R.string.pages_count, pageCount)
-            else stringResource(R.string.no_description)
-
-    Surface(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = MaterialTheme.shapes.extraLargeIncreased,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        tonalElevation = 4.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (showBackButton) {
-                IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = stringResource(R.string.cancel),
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Text(
-                    text = documentInfo.title ?: documentInfo.filename,
-                    style = MaterialTheme.typography.titleLargeEmphasized,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    modifier = Modifier.alpha(0.66f),
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMediumEmphasized,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-
-            // The single emphasized action on the bar.
-            FilledIconButton(onClick = onShare, shapes = IconButtonDefaults.shapes()) {
-                Icon(
-                    imageVector = Icons.Rounded.Share,
-                    contentDescription = stringResource(R.string.share),
-                )
-            }
-
-            OverflowMenu(onPrint = onPrint, onOpenWith = onOpenWith, onDetails = onDetails)
+    val colors =
+        TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        )
+    val titleContent: @Composable () -> Unit = {
+        Text(text = title, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+    val navigationIcon: @Composable () -> Unit = {
+        if (showBackButton) {
+            TooltipIconButton(
+                icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                label = stringResource(R.string.back),
+                onClick = onBack,
+            )
         }
+    }
+
+    val shareLabel = stringResource(R.string.share)
+    val printLabel = stringResource(R.string.print)
+    val openWithLabel = stringResource(R.string.open_with)
+    val detailsLabel = stringResource(R.string.document_details)
+    val moreLabel = stringResource(R.string.more_options)
+
+    val actions: @Composable (maxItems: Int) -> Unit = { maxItems ->
+        AppBarRow(
+            maxItemCount = maxItems,
+            overflowIndicator = { menuState ->
+                TooltipIconButton(
+                    icon = Icons.Rounded.MoreVert,
+                    label = moreLabel,
+                    onClick = { menuState.show() },
+                )
+            },
+        ) {
+            if (onShare != null) {
+                clickableItem(
+                    onClick = onShare,
+                    icon = { Icon(Icons.Rounded.Share, contentDescription = shareLabel) },
+                    label = shareLabel,
+                )
+            }
+            if (onPrint != null) {
+                clickableItem(
+                    onClick = onPrint,
+                    icon = { Icon(Icons.Rounded.Print, contentDescription = printLabel) },
+                    label = printLabel,
+                )
+            }
+            if (onOpenWith != null) {
+                clickableItem(
+                    onClick = onOpenWith,
+                    icon = {
+                        Icon(
+                            Icons.AutoMirrored.Rounded.OpenInNew,
+                            contentDescription = openWithLabel,
+                        )
+                    },
+                    label = openWithLabel,
+                )
+            }
+            clickableItem(
+                onClick = onDetails,
+                icon = { Icon(Icons.Rounded.Info, contentDescription = detailsLabel) },
+                label = detailsLabel,
+            )
+        }
+    }
+
+    // The bar's own width, not the window's: in a list-detail layout the viewer is one pane. A
+    // narrow
+    // bar keeps its title legible by showing only Share and the overflow menu.
+    BoxWithConstraints(modifier = modifier) {
+        // The overflow button counts as an item: 2 is Share plus "more".
+        val maxItems = if (maxWidth < WideBarWidth) 2 else Int.MAX_VALUE
+        TopBar(description, titleContent, navigationIcon, { actions(maxItems) }, colors)
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun OverflowMenu(onPrint: () -> Unit, onOpenWith: () -> Unit, onDetails: () -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-
-    IconButton(onClick = { expanded = true }, shapes = IconButtonDefaults.shapes()) {
-        Icon(
-            imageVector = Icons.Rounded.MoreVert,
-            contentDescription = stringResource(R.string.more_options),
+private fun TopBar(
+    description: String?,
+    titleContent: @Composable () -> Unit,
+    navigationIcon: @Composable () -> Unit,
+    actions: @Composable RowScope.() -> Unit,
+    colors: TopAppBarColors,
+) {
+    if (description.isNullOrBlank()) {
+        TopAppBar(
+            title = titleContent,
+            navigationIcon = navigationIcon,
+            actions = actions,
+            colors = colors,
+        )
+    } else {
+        TopAppBar(
+            title = titleContent,
+            subtitle = { Text(text = description, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            navigationIcon = navigationIcon,
+            actions = actions,
+            colors = colors,
         )
     }
+}
 
-    DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = { expanded = false },
-        shape = MaterialTheme.shapes.large,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.print)) },
-            onClick = {
-                expanded = false
-                onPrint()
-            },
-            leadingIcon = { Icon(Icons.Rounded.Print, contentDescription = null) },
-        )
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.open_with)) },
-            onClick = {
-                expanded = false
-                onOpenWith()
-            },
-            leadingIcon = {
-                Icon(Icons.AutoMirrored.Rounded.OpenInNew, contentDescription = null)
-            },
-        )
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.document_details)) },
-            onClick = {
-                expanded = false
-                onDetails()
-            },
-            leadingIcon = { Icon(Icons.Rounded.Info, contentDescription = null) },
+/** Below this, only Share and the overflow menu: the Material compact width. */
+private val WideBarWidth = 600.dp
+
+@PreviewLightDark
+@Composable
+private fun PdfViewerTopBarPreview() {
+    DocucraftTheme {
+        PdfViewerTopBar(
+            title = "Invoice March",
+            description = "Paid on 12/03",
+            showBackButton = true,
+            onBack = {},
+            onShare = {},
+            onPrint = {},
+            onOpenWith = {},
+            onDetails = {},
         )
     }
 }

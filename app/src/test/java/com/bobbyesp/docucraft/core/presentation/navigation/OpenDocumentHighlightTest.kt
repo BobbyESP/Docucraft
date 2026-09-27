@@ -32,7 +32,7 @@ class OpenDocumentHighlightTest {
         assertEquals("doc-1", stack(Home, document).openDocumentId())
     }
 
-    /** The bug: the sheet is *about* that document, and it stopped being highlighted. */
+    /** The sheet is *about* that document, so the document stays highlighted. */
     @Test
     fun `an overlay over the viewer does not clear the selection`() {
         val backStack = stack(Home, document, DocumentActions(documentUuid = "doc-1"))

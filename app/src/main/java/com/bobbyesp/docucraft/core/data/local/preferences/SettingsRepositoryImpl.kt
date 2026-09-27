@@ -14,6 +14,9 @@ import com.bobbyesp.docucraft.core.domain.model.FontConfig
 import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
 import com.bobbyesp.docucraft.core.domain.model.ThemeConfig
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
+import com.bobbyesp.docucraft.core.domain.model.ViewerDefaults
+import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
+import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -36,6 +39,9 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
         val MONOSPACE_FONT = stringPreferencesKey("monospace_font")
         val COMPLETED_ONBOARDING = booleanPreferencesKey("completed_onboarding")
         val MARQUEE_TEXT_ENABLED = booleanPreferencesKey("marquee_text_enabled")
+        val VIEWER_DEFAULTS_ENABLED = booleanPreferencesKey("viewer_defaults_enabled")
+        val VIEWER_DEFAULT_FIT_MODE = stringPreferencesKey("viewer_default_fit_mode")
+        val VIEWER_DEFAULT_NIGHT_MODE = booleanPreferencesKey("viewer_default_night_mode")
     }
 
     override val settings: Flow<UserPreferences> =
@@ -134,6 +140,7 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
                     marqueeTextEnabled =
                         preferences[PreferencesKeys.MARQUEE_TEXT_ENABLED]
                             ?: defaultPrefs.marqueeTextEnabled,
+                    viewerDefaults = preferences.viewerDefaults(defaultPrefs.viewerDefaults),
                 )
             }
 
@@ -198,4 +205,37 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
             preferences[PreferencesKeys.MARQUEE_TEXT_ENABLED] = enabled
         }
     }
+
+    override suspend fun setViewerDefaultsEnabled(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.VIEWER_DEFAULTS_ENABLED] = enabled
+        }
+    }
+
+    override suspend fun updateViewerDefaultFitMode(fitMode: ViewerFitMode) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.VIEWER_DEFAULT_FIT_MODE] = fitMode.name
+        }
+    }
+
+    override suspend fun setViewerDefaultNightMode(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.VIEWER_DEFAULT_NIGHT_MODE] = enabled
+        }
+    }
+
+    private fun Preferences.viewerDefaults(default: ViewerDefaults): ViewerDefaults =
+        ViewerDefaults(
+            enabled = this[PreferencesKeys.VIEWER_DEFAULTS_ENABLED] ?: default.enabled,
+            settings =
+                ViewerDisplaySettings(
+                    fitMode =
+                        this[PreferencesKeys.VIEWER_DEFAULT_FIT_MODE]?.let { name ->
+                            ViewerFitMode.entries.firstOrNull { it.name == name }
+                        } ?: default.settings.fitMode,
+                    nightMode =
+                        this[PreferencesKeys.VIEWER_DEFAULT_NIGHT_MODE]
+                            ?: default.settings.nightMode,
+                ),
+        )
 }

@@ -14,10 +14,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Deleting used to remove the row and quietly leave both files behind, so this covers what is
- * actually meant to disappear.
- */
+/** Deleting a document takes its catalogue row, its file and its preview. */
 class DeleteDocumentUseCaseTest {
 
     private val storage = FakeDocumentStorage()
@@ -47,7 +44,6 @@ class DeleteDocumentUseCaseTest {
         assertTrue(ContentRef("content://stored/doc.pdf") in storage.deleted)
     }
 
-    /** Previews of deleted documents used to pile up forever. */
     @Test
     fun `takes the preview with it`() = runTest {
         useCase(document(thumbnail = ContentRef("/previews/doc.png")))

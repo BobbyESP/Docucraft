@@ -30,9 +30,8 @@ import org.junit.Test
  * An **effect** is for whoever is on screen now. Nobody listening means nobody to act, and the
  * moment has passed. A **message** is for the user, who may not be looking yet.
  *
- * They used to share one buffered channel, so a navigation effect raised while its screen was off
- * screen queued up and was carried out later, against whatever the user was doing by then. That is
- * how tapping a document came to open settings.
+ * A buffered effect would be carried out late: a navigation raised while its screen was off screen
+ * would run when it came back, against whatever the user was doing by then.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class BaseViewModelTest {
@@ -55,7 +54,7 @@ class BaseViewModelTest {
             assertEquals(ProbeEffect.GoSomewhere, delivered.await())
         }
 
-    /** The bug, pinned: a command nobody took is a command that no longer applies. */
+    /** A command nobody took is a command that no longer applies. */
     @Test
     fun `an effect raised with nobody listening is dropped, not kept`() =
         runTest(dispatcher) {

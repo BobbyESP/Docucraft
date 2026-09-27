@@ -20,6 +20,7 @@ data class UserPreferences(
     val monospaceFont: FontConfig = FontConfig.JetBrainsMono,
     val completedOnboarding: Boolean = false,
     val marqueeTextEnabled: Boolean = true,
+    val viewerDefaults: ViewerDefaults = ViewerDefaults(),
 )
 
 enum class ThemeConfig {

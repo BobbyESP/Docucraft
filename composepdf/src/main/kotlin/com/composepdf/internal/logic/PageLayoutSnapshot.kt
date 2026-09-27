@@ -4,6 +4,7 @@
 package com.composepdf.internal.logic
 
 import android.util.Size
+import androidx.compose.ui.geometry.Offset
 import com.composepdf.FitMode
 import com.composepdf.ScrollDirection
 import kotlin.math.min
@@ -137,6 +138,12 @@ internal class PageLayoutSnapshot(
             panY + (corridorBreadth - pageHeightPx(index)) * zoom / 2f
         }
 
+    /** Screen X of the centre of the padded content area. */
+    private fun contentCenterX(): Float = viewport.padding.left + viewport.contentWidth / 2f
+
+    /** Screen Y of the centre of the padded content area. */
+    private fun contentCenterY(): Float = viewport.padding.top + viewport.contentHeight / 2f
+
     fun clampPan(panX: Float, panY: Float, zoom: Float): PanPosition {
         if (!viewport.isReady) return PanPosition(panX, panY)
 
@@ -151,18 +158,22 @@ internal class PageLayoutSnapshot(
             scaledHeight = corridorBreadth * zoom
         }
 
+        // Content settles inside the padded area: at either end the first and last pages stop at
+        // the padding, not at the viewport's edge, and a document smaller than the area is centred
+        // in it. Pages still draw across the whole viewport while scrolling.
+        val padding = viewport.padding
         val clampedX =
-            if (scaledWidth <= viewport.width) {
-                (viewport.width - scaledWidth) / 2f
+            if (scaledWidth <= viewport.contentWidth) {
+                padding.left + (viewport.contentWidth - scaledWidth) / 2f
             } else {
-                panX.coerceIn(-(scaledWidth - viewport.width), 0f)
+                panX.coerceIn(padding.left + viewport.contentWidth - scaledWidth, padding.left)
             }
 
         val clampedY =
-            if (scaledHeight <= viewport.height) {
-                (viewport.height - scaledHeight) / 2f
+            if (scaledHeight <= viewport.contentHeight) {
+                padding.top + (viewport.contentHeight - scaledHeight) / 2f
             } else {
-                panY.coerceIn(viewport.height - scaledHeight, 0f)
+                panY.coerceIn(padding.top + viewport.contentHeight - scaledHeight, padding.top)
             }
 
         return PanPosition(clampedX, clampedY)
@@ -176,13 +187,111 @@ internal class PageLayoutSnapshot(
         val pageLeft = pageLeftDocX(safeIndex)
 
         return if (scrollDirection == ScrollDirection.VERTICAL) {
-            val centeredPanY = (viewport.height / 2f) - (pageTop + pageHeight / 2f) * zoom
-            val centeredPanX = (viewport.width / 2f) - (corridorBreadth * zoom / 2f)
+            val centeredPanY = contentCenterY() - (pageTop + pageHeight / 2f) * zoom
+            val centeredPanX = contentCenterX() - (corridorBreadth * zoom / 2f)
             PanPosition(centeredPanX, centeredPanY)
         } else {
-            val centeredPanX = (viewport.width / 2f) - (pageLeft + pageWidth / 2f) * zoom
-            val centeredPanY = (viewport.height / 2f) - (corridorBreadth * zoom / 2f)
+            val centeredPanX = contentCenterX() - (pageLeft + pageWidth / 2f) * zoom
+            val centeredPanY = contentCenterY() - (corridorBreadth * zoom / 2f)
             PanPosition(centeredPanX, centeredPanY)
+        }
+    }
+
+    /**
+     * The pan that brings [position] on page [pageIndex] (normalized to the page) to the start of
+     * the content area along the scroll axis, just below a top bar: where readers put the target of
+     * a link. Across the other axis the document stays where it is ([panX] and [panY] are the
+     * current pan) unless the point would be off screen, in which case it is centred. Without a
+     * position, the page's start goes to the start of the content area. Not clamped: the caller's
+     * clamp decides how close the end of the document lets it get.
+     */
+    fun panForPagePoint(
+        pageIndex: Int,
+        position: Offset?,
+        panX: Float,
+        panY: Float,
+        zoom: Float,
+    ): PanPosition {
+        val page = pageIndex.coerceIn(0, (pageSizes.size - 1).coerceAtLeast(0))
+        val docX = pageLeftDocX(page) + (position?.x ?: 0f) * pageWidthPx(page)
+        val docY = pageTopDocY(page) + (position?.y ?: 0f) * pageHeightPx(page)
+        val padding = viewport.padding
+
+        fun keepOrCentre(pan: Float, doc: Float, start: Float, length: Float, centre: Float) =
+            if (position == null || (pan + doc * zoom) in start..(start + length)) pan
+            else centre - doc * zoom
+
+        return if (scrollDirection == ScrollDirection.VERTICAL) {
+            PanPosition(
+                x =
+                    keepOrCentre(
+                        panX,
+                        docX,
+                        padding.left,
+                        viewport.contentWidth,
+                        contentCenterX(),
+                    ),
+                y = padding.top - docY * zoom,
+            )
+        } else {
+            PanPosition(
+                x = padding.left - docX * zoom,
+                y =
+                    keepOrCentre(
+                        panY,
+                        docY,
+                        padding.top,
+                        viewport.contentHeight,
+                        contentCenterY(),
+                    ),
+            )
+        }
+    }
+
+    /**
+     * Where the centre of the content area falls in the document: on which page, and how far into
+     * it along the scroll axis.
+     *
+     * Pan values only mean something for the viewport and layout that produced them; this does not,
+     * which is what lets a reading position survive a rotation or a new fit mode. The centre,
+     * because that is where [currentPageAtViewportCenter] reads the current page and where
+     * [centeredPanForPage] puts a page: anchoring anywhere else made the current page change across
+     * a rotation. [panForAnchor] is the inverse.
+     */
+    fun anchorAtContentCenter(panX: Float, panY: Float, zoom: Float): PageAnchor? {
+        if (isEmpty || zoom <= 0f) return null
+
+        val vertical = scrollDirection == ScrollDirection.VERTICAL
+        val offset = (if (vertical) contentCenterY() - panY else contentCenterX() - panX) / zoom
+        val page = pageIndexAtDocumentOffset(offset).coerceIn(0, pageOffsets.lastIndex)
+        val length = if (vertical) pageHeightPx(page) else pageWidthPx(page)
+        val fraction =
+            if (length > 0f) ((offset - pageOffsets[page]) / length).coerceIn(0f, 1f) else 0f
+        return PageAnchor(page, fraction)
+    }
+
+    /**
+     * The pan that puts [anchor] at the centre of the content area, with the document corridor
+     * centred across the other axis. Not clamped: at the end of the document the caller's clamp
+     * decides how close it can get.
+     */
+    fun panForAnchor(anchor: PageAnchor, zoom: Float): PanPosition {
+        val page = anchor.pageIndex.coerceIn(0, (pageSizes.size - 1).coerceAtLeast(0))
+
+        return if (scrollDirection == ScrollDirection.VERTICAL) {
+            PanPosition(
+                x = contentCenterX() - (corridorBreadth * zoom / 2f),
+                y =
+                    contentCenterY() -
+                        (pageTopDocY(page) + anchor.fraction * pageHeightPx(page)) * zoom,
+            )
+        } else {
+            PanPosition(
+                x =
+                    contentCenterX() -
+                        (pageLeftDocX(page) + anchor.fraction * pageWidthPx(page)) * zoom,
+                y = contentCenterY() - (corridorBreadth * zoom / 2f),
+            )
         }
     }
 
@@ -199,9 +308,10 @@ internal class PageLayoutSnapshot(
         val zoom =
             when (fitMode) {
                 FitMode.WIDTH,
-                FitMode.PROPORTIONAL -> viewport.width / docWidth
-                FitMode.HEIGHT -> viewport.height / docHeight
-                FitMode.BOTH -> min(viewport.width / docWidth, viewport.height / docHeight)
+                FitMode.PROPORTIONAL -> viewport.contentWidth / docWidth
+                FitMode.HEIGHT -> viewport.contentHeight / docHeight
+                FitMode.BOTH ->
+                    min(viewport.contentWidth / docWidth, viewport.contentHeight / docHeight)
             }
         return zoom.coerceIn(minZoom, maxZoom)
     }
@@ -216,9 +326,10 @@ internal class PageLayoutSnapshot(
         val zoom =
             when (fitMode) {
                 FitMode.WIDTH,
-                FitMode.PROPORTIONAL -> viewport.width / baseWidth
-                FitMode.HEIGHT -> viewport.height / baseHeight
-                FitMode.BOTH -> min(viewport.width / baseWidth, viewport.height / baseHeight)
+                FitMode.PROPORTIONAL -> viewport.contentWidth / baseWidth
+                FitMode.HEIGHT -> viewport.contentHeight / baseHeight
+                FitMode.BOTH ->
+                    min(viewport.contentWidth / baseWidth, viewport.contentHeight / baseHeight)
             }
         return zoom.coerceIn(minZoom, maxZoom)
     }
@@ -228,9 +339,9 @@ internal class PageLayoutSnapshot(
 
         val centerOffset =
             if (scrollDirection == ScrollDirection.VERTICAL) {
-                (viewport.height / 2f - panY) / zoom
+                (contentCenterY() - panY) / zoom
             } else {
-                (viewport.width / 2f - panX) / zoom
+                (contentCenterX() - panX) / zoom
             }
 
         val pageIndex = pageIndexAtDocumentOffset(centerOffset)
@@ -306,15 +417,14 @@ internal class PageLayoutSnapshot(
                 scrollDirection = ScrollDirection.VERTICAL,
             )
 
+        /** Fits pages to the padded content area, not to the whole viewport. */
         fun build(
             pageSizes: List<Size>,
-            viewportWidth: Float,
-            viewportHeight: Float,
+            viewport: ViewportMetrics,
             fitMode: FitMode,
             pageSpacingPx: Float,
             scrollDirection: ScrollDirection,
         ): PageLayoutSnapshot {
-            val viewport = ViewportMetrics(viewportWidth, viewportHeight)
             if (pageSizes.isEmpty() || !viewport.isReady)
                 return empty(viewport).copy(scrollDirection = scrollDirection)
 
@@ -337,19 +447,25 @@ internal class PageLayoutSnapshot(
 
                 val (baseWidth, baseHeight) =
                     when (fitMode) {
-                        FitMode.WIDTH -> viewport.width to (viewport.width / aspectRatio)
-                        FitMode.HEIGHT -> (viewport.height * aspectRatio) to viewport.height
+                        FitMode.WIDTH ->
+                            viewport.contentWidth to (viewport.contentWidth / aspectRatio)
+                        FitMode.HEIGHT ->
+                            (viewport.contentHeight * aspectRatio) to viewport.contentHeight
                         FitMode.BOTH -> {
-                            val scale = min(viewport.width / pdfWidth, viewport.height / pdfHeight)
+                            val scale =
+                                min(
+                                    viewport.contentWidth / pdfWidth,
+                                    viewport.contentHeight / pdfHeight,
+                                )
                             (pdfWidth * scale) to (pdfHeight * scale)
                         }
 
                         FitMode.PROPORTIONAL -> {
                             if (scrollDirection == ScrollDirection.VERTICAL) {
-                                val scale = viewport.width / maxPdfWidth
+                                val scale = viewport.contentWidth / maxPdfWidth
                                 (pdfWidth * scale) to (pdfHeight * scale)
                             } else {
-                                val scale = viewport.height / maxPdfHeight
+                                val scale = viewport.contentHeight / maxPdfHeight
                                 (pdfWidth * scale) to (pdfHeight * scale)
                             }
                         }
@@ -406,11 +522,46 @@ internal class PageLayoutSnapshot(
         )
 }
 
-/** Viewport metrics used by layout and tile planning. */
-internal data class ViewportMetrics(val width: Float = 0f, val height: Float = 0f) {
+/**
+ * Viewport metrics used by layout and tile planning.
+ *
+ * @property padding Space kept clear at the edges for the host's bars
+ *   (`PdfLayoutSpec.contentPadding`): pages fit and settle inside it, but still draw underneath
+ *   while scrolling.
+ */
+internal data class ViewportMetrics(
+    val width: Float = 0f,
+    val height: Float = 0f,
+    val padding: ContentPaddingPx = ContentPaddingPx.Zero,
+) {
+    /** The part of the viewport pages are fitted to. */
+    val contentWidth: Float
+        get() = (width - padding.left - padding.right).coerceAtLeast(0f)
+
+    val contentHeight: Float
+        get() = (height - padding.top - padding.bottom).coerceAtLeast(0f)
+
     val isReady: Boolean
-        get() = width > 0f && height > 0f
+        get() = contentWidth > 0f && contentHeight > 0f
+}
+
+/** `PdfLayoutSpec.contentPadding`, resolved to pixels for the current density and direction. */
+internal data class ContentPaddingPx(
+    val left: Float = 0f,
+    val top: Float = 0f,
+    val right: Float = 0f,
+    val bottom: Float = 0f,
+) {
+    companion object {
+        val Zero = ContentPaddingPx()
+    }
 }
 
 /** Simple value object for pan coordinates. */
 internal data class PanPosition(val x: Float, val y: Float)
+
+/**
+ * A reading position that does not depend on the viewport: a page, and a point along it as a
+ * fraction of its length on the scroll axis (0 = leading edge, 1 = trailing edge).
+ */
+internal data class PageAnchor(val pageIndex: Int, val fraction: Float)

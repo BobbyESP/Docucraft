@@ -25,6 +25,7 @@ import com.composepdf.internal.service.pdf.PdfDocumentManager
 import com.composepdf.internal.service.pdf.PdfDocumentSession
 import com.composepdf.internal.util.longLivedContext
 import java.io.Closeable
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -102,11 +103,37 @@ internal class PdfViewerController(
                 val document = documentSession.open(source, state::updateRemoteDocumentState)
                 viewportCoordinator.updatePageSizes(document.pageSizes)
                 state.completeDocumentLoad(document.pageCount)
+                applyPendingPosition()
                 engine.requestPlan()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (error: Exception) {
                 state.failDocumentLoad(error)
             }
         }
+    }
+
+    /**
+     * Takes up [PdfViewerState.pendingPosition] once there is something to take it up in: page
+     * sizes from the document and a measured viewport. Either can arrive last, so both call this.
+     * Runs in the same frame the document becomes visible, so page 1 never flashes first.
+     */
+    private fun applyPendingPosition() {
+        val pending = state.pendingPosition ?: return
+        if (!viewportCoordinator.hasLayout || state.pageCount == 0) return
+        state.pendingPosition = null
+
+        val zoom = pending.zoom.coerceIn(config.minZoom, config.maxZoom)
+        val anchor =
+            pending.anchor.copy(
+                pageIndex = pending.anchor.pageIndex.coerceIn(0, state.pageCount - 1)
+            )
+        val pan = viewportCoordinator.snapshot().panForAnchor(anchor, zoom)
+        state.zoom = zoom
+        state.panX = pan.x
+        state.panY = pan.y
+        clampPanInPlace()
+        viewportCoordinator.updateCurrentPageFromViewport()
     }
 
     // ------------------------------------------------------------------ geometry
@@ -125,6 +152,14 @@ internal class PdfViewerController(
         viewportCoordinator.computeFitPageZoom(pageIndex)
 
     override fun fitDocumentZoom(): Float = viewportCoordinator.computeFitDocumentZoom()
+
+    override fun panForPagePoint(pageIndex: Int, position: Offset?): PanPosition {
+        val snapshot = viewportCoordinator.snapshot()
+        if (snapshot.isEmpty) return PanPosition(state.panX, state.panY)
+        val target =
+            snapshot.panForPagePoint(pageIndex, position, state.panX, state.panY, state.zoom)
+        return snapshot.clampPan(target.x, target.y, state.zoom)
+    }
 
     override fun centeredPanForPage(pageIndex: Int): PanPosition =
         viewportCoordinator.centeredPanForPage(pageIndex)
@@ -287,9 +322,37 @@ internal class PdfViewerController(
 
     // ------------------------------------------------------------------ environment
 
+    /**
+     * Where the reader is, in terms that survive the pages changing size: pan is in pixels, and
+     * after a resize or a new fit mode the same pixels are another page. `null` when there is no
+     * layout yet, or a restored position is still waiting to be applied, which takes precedence.
+     */
+    private fun readingAnchor(): PageAnchor? {
+        if (state.pendingPosition != null) return null
+        val snapshot = viewportCoordinator.snapshot()
+        if (snapshot.isEmpty) return null
+        return snapshot.anchorAtContentCenter(state.panX, state.panY, state.zoom)
+    }
+
+    /**
+     * Puts [anchor] back at the centre of the content area after the page layout changed. Only
+     * then: when just the viewport's height changes (the keyboard, say), pan is still right, and
+     * re-anchoring would re-centre a page zoomed in and panned sideways.
+     */
+    private fun returnTo(anchor: PageAnchor?) {
+        if (anchor == null || !viewportCoordinator.hasLayout) return
+        val pan = viewportCoordinator.snapshot().panForAnchor(anchor, state.zoom)
+        state.panX = pan.x
+        state.panY = pan.y
+        clampPanInPlace()
+        viewportCoordinator.updateCurrentPageFromViewport()
+    }
+
     override fun onViewportSizeChanged(width: Float, height: Float) {
         val before = viewportCoordinator.snapshot()
+        val anchor = readingAnchor()
         if (!viewportCoordinator.updateViewport(width, height)) return
+        applyPendingPosition()
         val after = viewportCoordinator.snapshot()
         // Cached bitmaps depend on page layout sizes, not on the viewport itself. Keep them when
         // only the window changed (e.g. animated insets) and rebuild when pages resized.
@@ -299,6 +362,7 @@ internal class PdfViewerController(
         if (layoutUnchanged) {
             engine.requestPlan()
         } else {
+            returnTo(anchor)
             engine.invalidate()
         }
     }
@@ -311,9 +375,12 @@ internal class PdfViewerController(
         val layoutChanged =
             previous.fitMode != newConfig.fitMode ||
                 previous.pageSpacingPx != newConfig.pageSpacingPx ||
-                previous.scrollDirection != newConfig.scrollDirection
+                previous.scrollDirection != newConfig.scrollDirection ||
+                previous.contentPadding != newConfig.contentPadding
         if (layoutChanged) {
+            val anchor = readingAnchor()
             viewportCoordinator.onLayoutInputsChanged()
+            returnTo(anchor)
             engine.invalidate()
         } else if (previous.renderQuality != newConfig.renderQuality) {
             engine.invalidate()

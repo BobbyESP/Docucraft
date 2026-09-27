@@ -65,6 +65,9 @@ android {
     }
 
     androidResources { generateLocaleConfig = true }
+
+    // The test PDFs live with the engine's tests; the viewer's content tests read the same ones.
+    sourceSets.getByName("androidTest").assets.srcDir("../composepdf/src/androidTest/assets")
 }
 
 composeCompiler {
@@ -113,6 +116,12 @@ dependencies {
     // no ML Kit type is on this module's compile classpath at all.
     implementation(project(":scanner-api"))
     implementation(project(":scanner-mlkit"))
+
+    // What is on a document's pages, behind a contract text recognition can implement too.
+    implementation(project(":document-content-api"))
+
+    // Links from documents open in a Custom Tab, which stays in the app's task (D4).
+    implementation(libs.androidx.browser)
 
     // KotlinX
     implementation(libs.kotlinx.collections.immutable)

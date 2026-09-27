@@ -38,3 +38,5 @@ include(":composepdf")
 include(":scanner-api")
 
 include(":scanner-mlkit")
+
+include(":document-content-api")

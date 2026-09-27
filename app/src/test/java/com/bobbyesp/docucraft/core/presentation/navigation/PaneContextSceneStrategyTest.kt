@@ -24,11 +24,11 @@ import org.junit.Test
 /**
  * What a scene tells the destinations inside it, and what wrapping a scene must not cost.
  *
- * The answer comes from the strategy rather than from counting a scene's entries, which was a guess
- * and a wrong one on every tablet: a list alone on a wide window is *one* entry inside a *two*-pane
- * scaffold, because the second pane holds the list's `detailPlaceholder` and a placeholder is not
- * an entry. The two library scene types that could have answered honestly are both `internal`, so
- * the question has to be put to whoever made the layout decision.
+ * The answer comes from the strategy, not from counting a scene's entries, which would be wrong on
+ * every tablet: a list alone on a wide window is *one* entry inside a *two*-pane scaffold, because
+ * the second pane holds the list's `detailPlaceholder` and a placeholder is not an entry. The two
+ * library scene types that could have answered honestly are both `internal`, so the question has to
+ * be put to whoever made the layout decision.
  */
 class PaneContextSceneStrategyTest {
 
@@ -46,8 +46,8 @@ class PaneContextSceneStrategyTest {
     }
 
     /**
-     * The case that used to be got wrong. A scene holding one entry is not evidence of a sole pane:
-     * what makes it one is that no layout strategy claimed the stack at all.
+     * A scene holding one entry is not evidence of a sole pane: what makes it one is that no layout
+     * strategy claimed the stack at all.
      */
     @Test
     fun `one entry in a shared scene is still not a sole pane`() {

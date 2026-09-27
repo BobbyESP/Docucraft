@@ -36,8 +36,9 @@ class ActivityResultHostImplTest {
     @Test
     fun `a kept result is handed over only once`() = runTest {
         host.deliver(result())
+        host.awaitPendingResult()
 
-        assertNull(host.awaitPendingResult().let { host.awaitPendingResult() })
+        assertNull(host.awaitPendingResult())
     }
 
     @Test

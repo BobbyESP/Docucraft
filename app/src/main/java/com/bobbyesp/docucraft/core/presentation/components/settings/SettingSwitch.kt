@@ -18,6 +18,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +36,7 @@ fun SettingSwitch(
     isChecked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     ListItem(
         headlineContent = {
@@ -58,13 +60,16 @@ fun SettingSwitch(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
-        trailingContent = { Switch(checked = isChecked, onCheckedChange = onCheckedChange) },
+        trailingContent = {
+            Switch(checked = isChecked, onCheckedChange = onCheckedChange, enabled = enabled)
+        },
         colors =
             ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         modifier =
-            modifier.clip(DocucraftShapeDefaults.cardShape).clickable {
-                onCheckedChange(!isChecked)
-            },
+            modifier
+                .clip(DocucraftShapeDefaults.cardShape)
+                .clickable(enabled = enabled) { onCheckedChange(!isChecked) }
+                .alpha(if (enabled) 1f else DisabledAlpha),
     )
 }
 
@@ -86,3 +91,6 @@ private fun SettingsSwitchPreview() {
         }
     }
 }
+
+/** Material's opacity for disabled content. */
+private const val DisabledAlpha = 0.38f

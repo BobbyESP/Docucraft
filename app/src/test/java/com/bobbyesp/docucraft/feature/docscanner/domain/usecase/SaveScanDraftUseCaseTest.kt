@@ -20,9 +20,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The save step used to be untestable: it reached for a Context, a FileProvider and the Room entity
- * directly, so nothing below an instrumented test could touch it. With storage behind a port there
- * is nothing Android-shaped left in it, and the interesting cases are all reachable.
+ * Storage sits behind a port, so the save step runs on the JVM and every failure it has to handle
+ * is a field on [FakeDocumentStorage].
  */
 class SaveScanDraftUseCaseTest {
 

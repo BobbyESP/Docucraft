@@ -5,12 +5,17 @@ package com.bobbyesp.docucraft.core.presentation.navigation
 
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.SubscriptionSettings
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DeleteDocument
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
 import com.bobbyesp.docucraft.feature.docscanner.navigation.EditDocument
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.ExternalPdfViewer
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.GoToPage
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -82,11 +87,20 @@ class NavKeySerializationTest {
             listOf(
                 Home,
                 PdfViewer(documentUuid = "uuid"),
+                ExternalPdfViewer(uri = "content://media/1", displayName = "a.pdf"),
+                PdfDocumentDetails(ViewerDocumentRef.Catalogued(uuid = "uuid")),
+                PdfDocumentDetails(ViewerDocumentRef.External("content://media/1", "a.pdf")),
+                GoToPage(
+                    ViewerDocumentRef.Catalogued(uuid = "uuid"),
+                    currentPage = 2,
+                    pageCount = 12,
+                ),
                 DocumentActions(documentUuid = "uuid"),
                 EditDocument(documentUuid = "uuid"),
                 DeleteDocument(documentUuid = "uuid"),
                 Settings,
                 AppearanceSettings,
+                DocumentViewerSettings,
                 SubscriptionSettings,
             )
     }

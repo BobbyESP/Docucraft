@@ -55,6 +55,12 @@ internal interface ViewerController {
     fun centeredPanForPage(pageIndex: Int): PanPosition
 
     /**
+     * The pan, within the document's bounds, that brings [position] on [pageIndex] to the start of
+     * the content area. See [PageLayoutSnapshot.panForPagePoint].
+     */
+    fun panForPagePoint(pageIndex: Int, position: Offset?): PanPosition
+
+    /**
      * The page a released scroll should settle on when page snapping applies, or `null` when
      * snapping is disabled or the zoom level makes it inappropriate.
      */

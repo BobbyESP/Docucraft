@@ -30,7 +30,7 @@ class NavigatorTest {
         assertEquals(listOf(Home, document), stack.toList())
     }
 
-    /** A double tap on a list item used to open the same document twice. */
+    /** A double tap on a list item must not open the same document twice. */
     @Test
     fun `going to the destination already on top does nothing`() {
         val stack = backStack(Home, document)
@@ -105,9 +105,9 @@ class NavigatorTest {
     }
 
     /**
-     * A destination whose subject has ceased to exist is not asking to go back. The viewer used to
-     * say `goBack` when its document was deleted, which popped whatever was on top — a settings
-     * screen the user had opened above it, say — and left the dead viewer in place underneath.
+     * A destination whose subject has ceased to exist is not asking to go back. Going back when its
+     * document is deleted would pop whatever is on top — a settings screen the user opened above
+     * the viewer, say — and leave the dead viewer in place underneath.
      */
     @Test
     fun `removing a destination takes it off the stack wherever it sits`() {

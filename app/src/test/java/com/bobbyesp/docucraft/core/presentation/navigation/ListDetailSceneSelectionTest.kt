@@ -77,8 +77,8 @@ class ListDetailSceneSelectionTest {
     }
 
     /**
-     * The gap this refactor is meant to close. Settings declares no pane role, so pushing it on top
-     * of an open document makes the strategy give up on the whole scene — on any window size.
+     * The strategy reads only the last entry's metadata, so a destination without a pane role on
+     * top of an open document gives up on the whole scene, on any window size.
      */
     @Test
     fun `a destination without a pane role collapses the scene on a wide window`() {
@@ -88,12 +88,12 @@ class ListDetailSceneSelectionTest {
                 listOf(listEntry(Home), detailEntry(pdfViewer), plainEntry(Settings)),
             )
 
-        assertNull("Settings has no pane role, so it takes the whole window", scene)
+        assertNull("Without a pane role, the last destination takes the whole window", scene)
     }
 
     /**
-     * Panes are grouped by `sceneKey`, which is what will let Settings become its own list-detail
-     * scene later without disturbing the documents one.
+     * Panes are grouped by `sceneKey`, which is what lets settings be a list-detail scene of its
+     * own without disturbing the documents one.
      */
     @Test
     fun `panes belonging to different scene keys do not group together`() {

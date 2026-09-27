@@ -7,6 +7,7 @@ import com.bobbyesp.docucraft.core.domain.model.FontConfig
 import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
 import com.bobbyesp.docucraft.core.domain.model.ThemeConfig
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
+import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import kotlinx.coroutines.flow.Flow
 
 interface SettingsRepository {
@@ -35,4 +36,11 @@ interface SettingsRepository {
     suspend fun setCompletedOnboarding(completed: Boolean)
 
     suspend fun setMarqueeTextEnabled(enabled: Boolean)
+
+    /** Whether documents open with the user's viewer defaults rather than the factory ones. */
+    suspend fun setViewerDefaultsEnabled(enabled: Boolean)
+
+    suspend fun updateViewerDefaultFitMode(fitMode: ViewerFitMode)
+
+    suspend fun setViewerDefaultNightMode(enabled: Boolean)
 }

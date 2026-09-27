@@ -2,6 +2,35 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!--
+        The apps a link from a document can open in (D4). Since API 30 an app cannot see others
+        without saying which it looks for: without these, no browser would ever offer Custom Tabs,
+        and "is there an app for this link?" would always be answered "no".
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
+    </queries>
+
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -31,7 +60,9 @@
             android:exported="true"
             android:label="@string/view_document"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:autoRemoveFromRecents="true">
             <intent-filter android:label="@string/view_document">
                 <action android:name="android.intent.action.VIEW" />
 

@@ -1,66 +1,271 @@
 # AGENTS.md
 
-## Project Snapshot
-- Deep-dive architecture docs and stabilization plans: `docs/` (start at `docs/README.md`).
-- Multi-module Android project: `:app` (product), `:composepdf` (local PDF engine),
-  `:scanner-api` (engine-agnostic scanning contract, plain Kotlin), `:scanner-mlkit` (ML Kit
-  implementation of it).
-- Stack in use: Kotlin, Jetpack Compose, Navigation 3 typed routes, Koin DI, Room, ML Kit Document Scanner.
-- Runtime DI entrypoint is `app/src/main/java/com/bobbyesp/docucraft/App.kt` (`startKoin`).
+Docucraft is a local-first Android app: it scans documents to PDF with ML Kit, keeps them in a
+local catalogue, and reads PDFs — its own and any other app's — in an in-house viewer with text
+selection and safe links. Nothing leaves the device unless the user shares it.
 
-## Where to Work
-- Scanner feature lives in `app/src/main/java/com/bobbyesp/docucraft/feature/docscanner` (`data/domain/presentation/di`).
-- Viewer feature lives in `app/src/main/java/com/bobbyesp/docucraft/feature/pdfviewer` and consumes `com.composepdf.PdfViewer`.
-- Shared app services live in `app/src/main/java/com/bobbyesp/docucraft/core` (preferences, notifications, analytics, file ops, navigation helpers).
-- Rendering engine internals live in `composepdf/src/main/kotlin/com/composepdf`.
+This file is the map and the rules. How each subsystem works, and why, is in
+[`docs/`](docs/README.md): read the relevant document before changing a subsystem.
 
-## Critical Flow (Scan -> Save -> Home)
-- `HomeViewModel.startScan()` calls `DocumentScanner.scan()` and suspends in `viewModelScope`.
-- `MlKitDocumentScanner` (`:scanner-mlkit`) gets the IntentSender, launches it through
-  `ActivityResultHost` and maps the result to a `ScanOutcome`.
-- `MainActivity` only lends its activity result launcher to the host; it knows nothing about
-  scanning.
-- The widget enters through `ScanRequestBus`, which the ViewModel also collects.
-- `SaveScanDraftUseCase` stores the file via `DocumentStorage` and catalogues it.
-- The scanner outlives this process, so `HomeViewModel` records `scan_in_flight` in its
-  `SavedStateHandle` and rejoins through `DocumentScanner.resumePendingScan()` on restore.
-- Home list comes from `ObserveDocumentsUseCase`; query/filter/sort is finalized in `HomeViewModel.applyFiltersAndSort`.
+---
 
-## Architecture Rules
-- The scanning engine is swapped at one line: the `DocumentScanner` binding in
-  `feature/docscanner/di/DocumentScannerModule.kt`. ML Kit types exist only in `:scanner-mlkit`
-  and cannot be imported from `:app` (enforced by the module graph, not by convention).
-- Add business logic as use cases under `feature/docscanner/domain/usecase`, then inject in `feature/docscanner/di/ScannedDocumentModule.kt`.
-- Navigation is one back stack rendered by one Navigation 3 `NavDisplay`
-  (`core/presentation/navigation/DocucraftApp.kt`). Keys are typed and `@Serializable`, and each
-  feature owns its own (`feature/*/navigation/*Keys.kt`); `core/presentation/screens/preferences/navigation/SettingsKeys.kt`
-  for settings. Features never touch the stack — they get a `Navigator`
-  (`core/presentation/navigation/Navigator.kt`).
-- **Modal destinations go on that same back stack. Never put a `NavDisplay` inside a sheet or a
-  dialog for them.** A sheet or dialog the user can reach, leave, and come back to is a
-  destination: give it a key and let `OverlaySceneStrategy`
-  (`core/presentation/navigation/overlay/`) choose its container. A nested display is only for a
-  self-contained flow that is discarded whole and survives nothing. See
-  [docs/architecture/05-navigation-audit.md](docs/architecture/05-navigation-audit.md#decisión-un-navdisplay-dentro-de-un-modal)
-  for why — it is the decision that caused the most bugs in this codebase.
-- A destination is told about its surroundings, it never measures them. `LocalPaneContext` says
-  whether it shares the window; `LocalOverlayContext` says which container it landed in and whether
-  there is room to stack. Reading `currentWindowAdaptiveInfo` or the device orientation from a
-  screen is a bug, not a shortcut.
-- Transitions live in one file (`core/presentation/navigation/motion/NavigationMotion.kt`). Screens
-  contribute nothing to them.
-- App-wide settings and services should flow via composition locals in `core/presentation/common/CompositionLocals.kt`.
+## 1. Modules
 
-## Integrations and Sensitive Points
-- ML Kit options are derived from a `ScanRequest` in `scanner-mlkit`'s `MlKitDocumentScanner`.
-- File sharing relies on `${applicationId}.fileprovider` (`AndroidManifest.xml` + `App.getAuthority`).
-- Firebase Analytics/Crashlytics are enabled (`core/di/AnalyticsModule.kt`, `app/build.gradle.kts`, `google-services.json`).
-- Home widget scan action enters app through `ACTION_SCAN_DOCUMENT` in `MainActivity`.
-- Room schema export is active; keep `app/schemas/...` updated when changing DB entities/migrations.
+| Module | What it is | Rule |
+|---|---|---|
+| `:app` | The product: storage, UI, navigation, widget, analytics, purchases. | Depends on everything below; nothing depends on it. |
+| `:composepdf` | The PDF engine: rendering, layout, gestures. Public API in `com.composepdf`, internals in `com.composepdf.internal`. | Generic. It knows pages, pixels and fingers, **never** text or links. |
+| `:scanner-api` | The scanning contract (`DocumentScanner`, `ScanRequest`, `ScanOutcome`, `ContentRef`…). | Plain Kotlin, zero dependencies. |
+| `:scanner-mlkit` | ML Kit's implementation of that contract. | ML Kit is an `implementation` dependency, so no ML Kit type ever reaches `:app`'s classpath. |
+| `:document-content-api` | What is on a document's pages (words with their boxes, links) and the pure text-selection logic. | Plain Kotlin. A future OCR module implements it, as `:scanner-mlkit` implements `:scanner-api`. |
 
-## Build and Validation
-- Debug APK: `./gradlew :app:assembleDebug` (Windows: `.\gradlew.bat :app:assembleDebug`).
-- Unit tests: `./gradlew testDebugUnitTest :scanner-api:test` (all modules).
-- Instrumented tests: `./gradlew :app:connectedDebugAndroidTest :composepdf:connectedDebugAndroidTest`.
-- Formatting: `./gradlew spotlessApply` (Spotless applies `ktfmt` to modules; `spotlessCheck` verifies).
-- Custom APK copies are generated under `app/build/outputs/apk_custom/<variant>/` by `buildSrc/CopyApkPlugin.kt`.
+Build setup:
+- SDKs and JVM target: `buildSrc/src/main/kotlin/ProjectConfig.kt`. Currently minSdk 24,
+  compile/target 37, Java 17.
+- `:app` and `:composepdf` apply `docucraft.android.convention` (`buildSrc`: Compose, SDKs,
+  desugaring). `:scanner-mlkit` has no UI, so it skips it, but reads the same `ProjectConfig`.
+- Library versions: `gradle/libs.versions.toml`. The app's version: root `build.gradle.kts`.
+
+## 2. Where things live in `:app`
+
+```
+App.kt                     composition root: RevenueCat, then startKoin with every module
+MainActivity.kt            Home and everything reached from it; lends its result launcher to the scanner
+core/                      shared by features
+  data/                    DataStore preferences, Firebase analytics, RevenueCat
+  domain/                  SettingsRepository, StringProvider, notifications, shared models
+  presentation/            navigation shell, theme, settings screens, common components
+  util/                    BaseViewModel, UiEvent, date/time
+  di/                      commonModule, preferencesModule, notificationsServiceModule, analyticsModule, subscriptionModule
+feature/docscanner/        scanning, the catalogue (Room), Home, document actions, the widget
+feature/pdfviewer/         the viewer: settings, details, text selection, links, the external-PDF activity
+feature/shared/            what both features need (BasicDocument)
+```
+
+Each feature has the same shape:
+- `domain/`: models, ports, use cases;
+- `data/`: implementations of the ports;
+- `presentation/`: ViewModels, screens, components;
+- `di/`: its Koin modules;
+- `navigation/`: its keys.
+
+A new Koin module is registered in `App.kt`.
+
+---
+
+## 3. Rules
+
+### Layers
+
+- **Feature domains are plain Kotlin.** `feature/*/domain` imports no Android, no Compose and no
+  data layer. Locations are `ContentRef` or URI strings, never `android.net.Uri`. Two known
+  exceptions, in `core/domain`: `UserPreferences` and `InAppNotification` carry Compose types
+  (stabilization phase 4, pending).
+- **Business logic is a use case** in `feature/<feature>/domain/usecase`, registered in that
+  feature's DI module. For the scanner that is `ScannedDocumentModule.kt`; for the viewer,
+  `PdfViewerModule.kt`.
+- **Framework work goes behind a port.** The interface lives in the domain and the implementation
+  in data. Examples: `DocumentStorage`, `DocumentSharer`, `DocumentOpener`, `DocumentPrinter`,
+  `LinkOpener`, `PageContentProvider`. A port that needs an `Activity` is a Koin `factory` taking
+  it through `parametersOf(activity)`. It is called by the screen, in response to an effect from
+  the ViewModel.
+- **What the user can cause is a result, not an exception**: cancelling, a page without text, a
+  refused link. Examples: `ScanOutcome`, `ExportOutcome`, `PageContentResult`, `LinkAction`.
+- **Test a port with a fake**, not with a mock of the framework.
+
+### ViewModels
+
+- Screens use MVI on `core/util/viewModel/BaseViewModel<Intent, State, Effect>`:
+  - `state` is a `StateFlow`;
+  - `effects` are commands for whoever is on screen *now*, and are **dropped** if nobody listens;
+  - `defaultEvents` are messages for the user, and are **buffered** until shown.
+- A ViewModel never holds a `Context`: text comes from `StringProvider`.
+- Pure UI state stays in the composition, not in the ViewModel. Examples: scroll, zoom, and
+  whether the viewer's bars are showing. The viewer's `PdfViewerState` plays the same role as a
+  `LazyListState`.
+- What must survive process death goes in the `SavedStateHandle`. Examples: `scan_in_flight` in
+  `HomeViewModel`, and the viewer's display settings.
+
+### Navigation
+
+- **One back stack, one Navigation 3 `NavDisplay`**: `core/presentation/navigation/DocucraftApp.kt`,
+  rendered by `DocucraftNavDisplay.kt`. `PdfViewerActivity` reuses that display with its own stack.
+- **Keys are typed and `@Serializable`, and each feature owns its own.**
+  - Scanner: `feature/docscanner/navigation/HomeKey.kt` and `DocumentActionKeys.kt`.
+  - Viewer: `feature/pdfviewer/navigation/PdfViewerKey.kt`.
+  - Settings: `core/presentation/screens/preferences/navigation/SettingsKeys.kt`.
+- **Features never touch the stack.** They get a `Navigator`
+  (`core/presentation/navigation/Navigator.kt`: `goTo`, `goBack`, `goBackWhile`,
+  `removeDestination`).
+- **A sheet or dialog the user can reach, leave and come back to is a destination on that same
+  stack.** Give it a key, and let `OverlaySceneStrategy` (`core/presentation/navigation/overlay/`)
+  choose its container. **Never put a `NavDisplay` inside a sheet or dialog.** A nested display is
+  only for a self-contained flow that is discarded whole and survives nothing. This is the decision
+  that caused the most bugs in this codebase; see
+  [docs/navigation.md](docs/navigation.md#modal-destinations).
+- **Transient popups anchored to content are not destinations.** A dropdown menu, or a link's
+  preview, moves with the page and is closed by any scroll: it is UI state.
+- **A destination is told about its surroundings; it never measures them.**
+  - `LocalPaneContext` says whether it shares the window.
+  - `LocalOverlayContext` says which container it landed in, and whether there is room to stack.
+  - Reading `currentWindowAdaptiveInfo` or the device orientation from a screen is a bug.
+- **Transitions live in one file**: `core/presentation/navigation/motion/NavigationMotion.kt`.
+  Screens contribute nothing to them.
+- **App-wide services reach the UI as composition locals**, from
+  `core/presentation/common/CompositionLocals.kt`: `LocalDarkTheme`, `LocalSettingsRepository`,
+  `LocalNotificationsService` and `LocalAnalyticsHelper`.
+
+### Scanner
+
+- **The engine is swapped at one line**: the `DocumentScanner` binding in
+  `feature/docscanner/di/DocumentScannerModule.kt`.
+- ML Kit options are derived from a `ScanRequest` inside `MlKitDocumentScanner`.
+- `:app` sees only the contract and `ActivityResultHostImpl`, the host `MainActivity` lends its
+  launcher to.
+
+### PDF viewer and engine
+
+- **`:composepdf` stays generic.** Features plug into it through two hooks, and never through
+  internals:
+  - **`PdfInteractionHandler`**: claim a long press (then receive the drag) or a tap (delivered at
+    once, without the double-tap wait).
+  - **`PdfOverlayScope`**: draw on pages (`DrawOnPages`), place something at a point on a page
+    (`anchorTo`), or cover an area of a page (`coverArea`). All of it follows pan and zoom in the
+    draw and layout phases, **without recomposing**.
+
+  `PdfViewerState` is the public state, with `hitTest`, `panBy`, `animateScrollTo`,
+  `pageRectInViewer` and more. Keep new engine API generic in the same way.
+- **Page content comes from one binding**, `feature/pdfviewer/di/PageContentModule.kt`:
+  `LayeredPageContentProvider(PlatformPageContentProvider, recognized = null)`.
+  - Text recognition (OCR) will go in as `recognized`, from its own module.
+  - The platform provider needs API 35+. Below that, every page is `Unsupported` and the viewer
+    explains why (decision D1).
+  - The platform's content APIs (`getTextContents`, `selectContent`, `getLinkContents`, the
+    `android.graphics.pdf.models` types) are used **only** in `PlatformPageContentProvider`.
+    Anywhere else, `PdfRenderer` is only for counting pages.
+- **Selection logic is pure and tested; the UI only draws it.**
+  - `TextSelection` and `DocumentSelection`, in `:document-content-api`, work in carets over the
+    page's text, character by character, across pages, and handle vertical and multi-column
+    layouts.
+  - `SelectionInteraction`, in the viewer, decides what a touch does.
+- **Nothing opens from a PDF without `ResolveLinkUseCase`.**
+  - Only `http`, `https`, `mailto` and `tel` are followed.
+  - A web link is shown by the host a browser would really open (WHATWG parsing, punycode).
+  - The preview comes before anything opens (D3).
+  - Opening goes through `LinkOpener`, from the activity: a Custom Tab, then `ACTION_VIEW`, then a
+    message (D4).
+- **Display settings follow decision D2:**
+  - optional app-wide defaults, set in Settings;
+  - otherwise, per-document memory for the session: `ViewerSessionSettings`, plus the
+    `SavedStateHandle` for process death.
+
+  The factory setting is fit to width.
+
+---
+
+## 4. Critical flows
+
+### Scan → save → Home
+
+1. `HomeViewModel.startScan()` calls `DocumentScanner.scan()` and suspends in `viewModelScope`.
+   The Home widget arrives through `ACTION_SCAN_DOCUMENT` in `MainActivity`, then `ScanRequestBus`,
+   which the ViewModel also collects. `ScanRequestNavigation` brings Home to the front first.
+2. `MlKitDocumentScanner` gets the `IntentSender` and launches it through `ActivityResultHost`.
+   `MainActivity` attaches its launcher, and restores a launch that was pending across
+   recreation. The result is mapped to a `ScanOutcome`.
+3. The scanner outlives the process, so `HomeViewModel` records `scan_in_flight` in its
+   `SavedStateHandle`. On restore, it rejoins through `DocumentScanner.resumePendingScan()`.
+4. `SaveScanDraftUseCase` stores the file through `DocumentStorage` (app files, exposed through the
+   `FileProvider`) and catalogues it in Room.
+5. Home observes `ObserveDocumentsUseCase`. `HomeViewModel.observeDocuments` hands each change to
+   `ProcessDocumentsUseCase`, which searches, filters and sorts.
+
+### Opening a document
+
+- **A catalogued document**: the `PdfViewer(uuid)` key, in the main stack. On a wide window it
+  shows beside Home (list-detail).
+- **Another app's PDF**: `PdfViewerActivity` takes `VIEW` and `SEND` for `application/pdf`.
+  - It runs in its own task (`taskAffinity=""`, `autoRemoveFromRecents`) with its own back stack,
+    rooted at `ExternalPdfViewer(uri, displayName)`.
+  - Closing it returns to the calling app, not to Docucraft.
+- Both go through `PdfViewerViewModel`, keyed by `ViewerDocumentRef` (`Catalogued` or `External`).
+
+### Reading a page's text and links
+
+1. The screen reports the visible pages after 150 ms without movement (`VisiblePagesChanged`), so
+   a fling only reads where it stops.
+2. The ViewModel reads those pages ±1 through one content session per document, and keeps their
+   `pageText` and `pageLinks`.
+3. A long press or a tap is decided synchronously from what has already been read.
+
+---
+
+## 5. Integrations and sensitive points
+
+- **File sharing** uses `${applicationId}.fileprovider` (the manifest and `App.getAuthority`). Only
+  `content://` locations are ever handed to another app (`canBeHandedOff`). A `file://` PDF opened
+  from outside is shown, but never re-shared.
+- **Firebase Analytics and Crashlytics** are on (`core/di/AnalyticsModule.kt`,
+  `google-services.json`).
+- **RevenueCat** reads its key from `local.properties` (`revenuecat.apikey`). Without the key it is
+  simply not configured.
+- **Room**:
+  - `DocumentsDatabase` is currently version 4. Migrations are in `DocumentsDatabaseMigrations.kt`.
+  - Schemas are exported to `app/schemas/`. A schema change means: bump the version, add a
+    migration, and commit the new schema JSON.
+- **`<queries>` in the manifest** declares which other apps the viewer may look for: Custom Tabs,
+  browsers, email, dialler. A new intent to another app needs its entry there, or on API 30+ the app
+  will seem not to exist.
+- **Known gaps, so they are not mistaken for regressions:**
+  - `PdfViewerActivity` advertises `http`/`https` PDFs, but loads through the `ContentResolver`,
+    so a remote PDF ends on the error screen. The engine can download (`PdfSource.Remote`); the app
+    does not use it yet.
+  - Internal links inside a PDF are never reported by the platform (`getGotoLinks()` is empty).
+    The code is ready for them.
+  - A link that spans two lines comes as one rectangle that may also cover nearby text.
+  - `./gradlew :app:lintDebug` fails on `MissingTranslation`: most strings exist only in English
+    and Spanish.
+
+---
+
+## 6. Build, test, verify
+
+| What | Command (Windows: `.\gradlew.bat …`) |
+|---|---|
+| Debug APK | `./gradlew :app:assembleDebug` |
+| Unit tests, every module | `./gradlew testDebugUnitTest :scanner-api:test :document-content-api:test` |
+| Instrumented tests | `./gradlew :app:connectedDebugAndroidTest :composepdf:connectedDebugAndroidTest` |
+| Format, then verify | `./gradlew spotlessApply`, then `./gradlew spotlessCheck` |
+
+- **Instrumented tests need a device, and run on every attached device.** A phone connected over
+  wireless ADB counts, even if nothing shows it. The same goes for `installDebug`. To target one,
+  set `ANDROID_SERIAL` (for example `ANDROID_SERIAL=emulator-5554`). Use an emulator unless a real
+  device is really needed.
+- **Test PDFs** live in `composepdf/src/androidTest/assets/fixtures/`, together with a
+  `manifest.json` of what each one contains, down to the position of every word.
+  - `testing/pdf-fixtures/generate_fixtures.py` regenerates them.
+  - `:app`'s instrumented tests read the same folder.
+  - **Never commit a document with personal data** as a fixture. Build an equivalent one with
+    invented content.
+- **Spotless** formats Kotlin with ktfmt (Kotlin-lang style) and adds the license header from
+  `spotless/copyright.txt`. Run it before every commit; `spotlessCheck` fails on anything it would
+  change.
+- Named APK copies go to `app/build/outputs/apk_custom/<variant>/` (`buildSrc/CopyApkPlugin.kt`).
+
+---
+
+## 7. Conventions
+
+- **Documentation**
+  - Start at [`docs/README.md`](docs/README.md).
+  - Everything is in English, and describes the app as it is now. When code changes, update the
+    document that describes it. History lives in git, not in the docs.
+  - Explain the why next to each decision. Code-level detail belongs in KDoc, not in the docs.
+  - The decisions named in code comments (D1–D5, E1–E6) are listed in `docs/README.md`.
+- **Work happens by stabilization**, one subsystem at a time, following the method in
+  [`docs/README.md`](docs/README.md#how-a-subsystem-is-stabilized). Each one has its own branch
+  (`refactor/<subsystem>`), merged through a PR.
+- **Commits** follow `type(scope): summary` (`feat(pdfviewer): …`, `fix(content): …`,
+  `docs(pdfviewer): …`). The body explains why.
+- **Comments and KDoc say why**, not what. Public API gets KDoc. A comment about a past bug says
+  what went wrong, in words: no bug numbers that only made sense in a deleted document.

@@ -9,11 +9,9 @@ import org.junit.Test
 
 /**
  * A scan asked for from outside the UI has to reach the catalogue whatever the user was looking at
- * when they asked, and has to reach it exactly once.
- *
- * It used to be a one-shot channel, which got both halves wrong: only the first reader learnt of a
- * request, and a request made while the catalogue was off screen had no reader at all. It waited —
- * and then started the scanner unasked, later, the moment the catalogue came back.
+ * when they asked, and has to reach it exactly once. A one-shot channel gets both halves wrong:
+ * only the first reader learns of a request, and a request made while the catalogue is off screen
+ * waits, then starts the scanner unasked the moment the catalogue comes back.
  */
 class ScanRequestBusTest {
 
