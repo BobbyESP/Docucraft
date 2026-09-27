@@ -62,9 +62,9 @@ class BitmapPool(private val maxSizeBytes: Int = DEFAULT_POOL_SIZE_BYTES) {
         synchronized(lock) {
             while (currentBytes + size > maxSizeBytes && buckets.isNotEmpty()) {
                 val smallest = buckets.firstEntry()
-                val evicted = smallest.value.pollFirst()
+                val evicted = smallest?.value?.pollFirst()
                 if (evicted != null) currentBytes -= smallest.key
-                if (smallest.value.isEmpty()) buckets.remove(smallest.key)
+                if (smallest?.value?.isEmpty() == true) buckets.remove(smallest.key)
             }
             if (currentBytes + size <= maxSizeBytes) {
                 buckets.getOrPut(size) { ArrayDeque() }.offerLast(bitmap)
