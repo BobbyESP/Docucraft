@@ -4,7 +4,7 @@
 package com.bobbyesp.docucraft.feature.pdfviewer.domain.links
 
 /**
- * Opens what a link leads to outside the app: a web page, a new email, the dialler (D4). Only
+ * Opens what a link leads to outside the app: a web page, a new email, the dialler. Only
  * [LinkAction.OpenWeb], [LinkAction.ComposeEmail] and [LinkAction.Dial] are ever handed to it;
  * [ResolveLinkUseCase] has already refused anything else.
  */
@@ -16,5 +16,5 @@ fun interface LinkOpener {
     fun open(action: LinkAction, look: LinkLook): Boolean
 }
 
-/** The browser bar's colour (ARGB) and whether the app is dark. */
+/** The browser bar's color (ARGB) and whether the app is dark. */
 data class LinkLook(val toolbarColor: Int, val darkTheme: Boolean)

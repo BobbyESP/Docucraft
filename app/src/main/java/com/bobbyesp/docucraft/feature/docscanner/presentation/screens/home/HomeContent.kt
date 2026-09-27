@@ -37,6 +37,7 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.FileCopy
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.ButtonDefaults
@@ -44,6 +45,7 @@ import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -86,6 +88,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
@@ -135,6 +138,7 @@ fun HomeContent(
     onOpenDocumentActions: (String) -> Unit,
     modifier: Modifier = Modifier,
     selectedDocumentId: String? = null,
+    actionsInTopBar: Boolean = false,
 ) {
     val page = uiState.page
     val listState = rememberLazyListState()
@@ -153,17 +157,31 @@ fun HomeContent(
                 isContentScrolled = listState.canScrollBackward,
                 scrollBehavior = scrollBehavior,
                 onOpenSettings = onOpenSettings,
+                documentActions =
+                    if (actionsInTopBar && page == HomePage.Documents) {
+                        {
+                            TopBarDocumentActions(
+                                isScanning = uiState.isScanning,
+                                onOpenSearch = onOpenSearch,
+                                onScan = { onAction(HomeIntent.LaunchScanner) },
+                            )
+                        }
+                    } else {
+                        null
+                    },
             )
         },
         floatingActionButton = {
-            HomeBottomActions(
-                // The empty state carries its own scan button, and there is nothing to search.
-                visible = page == HomePage.Documents,
-                isScanning = uiState.isScanning,
-                isScanButtonExpanded = isScanButtonExpanded,
-                onOpenSearch = onOpenSearch,
-                onScan = { onAction(HomeIntent.LaunchScanner) },
-            )
+            if (!actionsInTopBar) {
+                HomeBottomActions(
+                    // The empty state carries its own scan button, and there is nothing to search.
+                    visible = page == HomePage.Documents,
+                    isScanning = uiState.isScanning,
+                    isScanButtonExpanded = isScanButtonExpanded,
+                    onOpenSearch = onOpenSearch,
+                    onScan = { onAction(HomeIntent.LaunchScanner) },
+                )
+            }
         },
     ) { padding ->
         AnimatedContent(
@@ -202,6 +220,7 @@ fun HomeContent(
                         onOpenDocumentActions = onOpenDocumentActions,
                         listState = listState,
                         selectedDocumentId = selectedDocumentId,
+                        bottomClearance = if (actionsInTopBar) 16.dp else BottomActionsClearance,
                     )
             }
         }
@@ -219,6 +238,7 @@ private fun HomeTopBar(
     scrollBehavior: TopAppBarScrollBehavior,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    documentActions: (@Composable () -> Unit)? = null,
 ) {
     val containerColor by
         animateColorAsState(
@@ -236,6 +256,7 @@ private fun HomeTopBar(
         title = { Text(text = stringResource(id = R.string.app_name)) },
         modifier = modifier,
         actions = {
+            documentActions?.invoke()
             IconButton(onClick = onOpenSettings, shapes = IconButtonDefaults.shapes()) {
                 Icon(
                     imageVector = Icons.Rounded.Settings,
@@ -253,6 +274,38 @@ private fun HomeTopBar(
 }
 
 /**
+ * Search and scan as app bar actions, for when Home shares the window with a document. Floating at
+ * the bottom of a pane that short, they covered most of what little list it showed.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun TopBarDocumentActions(
+    isScanning: Boolean,
+    onOpenSearch: () -> Unit,
+    onScan: () -> Unit,
+) {
+    IconButton(onClick = onOpenSearch, shapes = IconButtonDefaults.shapes()) {
+        Icon(
+            imageVector = Icons.Rounded.Search,
+            contentDescription = stringResource(id = R.string.search_documents),
+        )
+    }
+    FilledIconButton(
+        onClick = { if (!isScanning) onScan() },
+        shapes = IconButtonDefaults.shapes(),
+    ) {
+        if (isScanning) {
+            LoadingIndicator(modifier = Modifier.size(24.dp), color = LocalContentColor.current)
+        } else {
+            Icon(
+                imageVector = Icons.Rounded.DocumentScanner,
+                contentDescription = stringResource(id = R.string.doc_scan_new),
+            )
+        }
+    }
+}
+
+/**
  * Search and scan, side by side at the bottom where the thumb is. The scan button shrinks to its
  * icon while the list is read downwards, and the search bar takes the room it leaves.
  */
@@ -266,10 +319,6 @@ private fun HomeBottomActions(
     onScan: () -> Unit,
 ) {
     Row(
-        // The scaffold places its FAB slot 16dp in from the end, so a row as wide as the slot
-        // lands 16dp past the start: 32dp of start padding leaves 16dp on both sides. The slot is
-        // already clear of a cutout at either side; padding for it again here pushed the row
-        // past it in landscape.
         modifier =
             Modifier.fillMaxWidth()
                 .padding(start = 32.dp)
@@ -315,13 +364,14 @@ private fun DocumentsPage(
     onOpenDocumentActions: (String) -> Unit,
     listState: LazyListState,
     selectedDocumentId: String?,
+    bottomClearance: Dp,
 ) {
     val motionScheme = MaterialTheme.motionScheme
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         state = listState,
-        contentPadding = PaddingValues(top = 8.dp, bottom = BottomActionsClearance),
+        contentPadding = PaddingValues(top = 8.dp, bottom = bottomClearance),
         verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
     ) {
         if (recentDocuments.isNotEmpty()) {
@@ -467,7 +517,7 @@ private fun RecentDocumentsCarousel(
             }
 
             // Over a photo, not a theme surface: white on a dark scrim reads on any page, which no
-            // colour-scheme role can promise.
+            // color-scheme role can promise.
             Text(
                 text = title,
                 modifier =

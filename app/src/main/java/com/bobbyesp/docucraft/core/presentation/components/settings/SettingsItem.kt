@@ -45,8 +45,8 @@ data class SettingsItem(
 
 /**
  * One entry of a settings list, as an expressive segmented list item: its own container, corners
- * that round further while pressed, and colours and type taken from the list tokens rather than set
- * here, so dynamic colour and contrast levels reach it untouched.
+ * that round further while pressed, and colors and type taken from the list tokens rather than set
+ * here, so dynamic color and contrast levels reach it untouched.
  *
  * @param shapes where the item sits in its group; see
  *   [DocucraftShapeDefaults.segmentedListItemShapes].

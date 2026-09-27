@@ -25,6 +25,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
+import com.bobbyesp.docucraft.core.presentation.navigation.pane.LocalPaneContext
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentSearch
@@ -59,6 +60,9 @@ fun EntryProviderScope<NavKey>.homeSection(
             onOpenSearch = { navigator.goTo(DocumentSearch) },
             onOpenDocumentActions = { uuid -> navigator.goTo(DocumentActions(uuid)) },
             selectedDocumentId = selectedDocumentId,
+            // Beside a document, Home is a short pane, and a floating search bar and scan button
+            // cover most of it. The app bar has room for both.
+            actionsInTopBar = !LocalPaneContext.current.isSolePane,
         )
     }
 

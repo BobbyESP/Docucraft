@@ -13,7 +13,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable data object Settings : NavKey
 
-/** Theme, colour and typography. */
+/** Theme, color and typography. */
 @Serializable data object AppearanceSettings : NavKey
 
 /** What documents open with in the viewer. */

@@ -175,7 +175,7 @@ fun rememberSelectionDrag(state: PdfViewerState): SelectionDrag {
  *
  * @param contentTop Where the content area starts, below the top bar.
  * @param contentBottomInset How much of the viewer's bottom the bottom bar covers.
- * @param nightMode Whether the pages are drawn inverted, dark: the usual selection colour, made for
+ * @param nightMode Whether the pages are drawn inverted, dark: the usual selection color, made for
  *   light text fields, hardly shows on them.
  */
 @Composable

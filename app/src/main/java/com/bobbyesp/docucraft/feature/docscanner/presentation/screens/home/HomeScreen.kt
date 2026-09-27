@@ -30,6 +30,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel(),
     selectedDocumentId: String? = null,
+    actionsInTopBar: Boolean = false,
 ) {
     val uiState by viewModel.state.collectAsStateWithLifecycle()
     val analyticsHelper = LocalAnalyticsHelper.current
@@ -48,6 +49,7 @@ fun HomeScreen(
         onOpenSearch = onOpenSearch,
         onOpenDocumentActions = onOpenDocumentActions,
         selectedDocumentId = selectedDocumentId,
+        actionsInTopBar = actionsInTopBar,
     )
 }
 

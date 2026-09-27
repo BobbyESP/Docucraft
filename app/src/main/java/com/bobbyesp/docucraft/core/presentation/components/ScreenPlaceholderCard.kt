@@ -65,7 +65,7 @@ fun ScreenPlaceholderCard(
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
-    // Container and content roles in their pairs, so the icon stays legible under dynamic colour
+    // Container and content roles in their pairs, so the icon stays legible under dynamic color
     // and the higher contrast levels.
     val shapeColor = if (isError) colorScheme.errorContainer else colorScheme.primaryContainer
     val onShapeColor = if (isError) colorScheme.onErrorContainer else colorScheme.onPrimaryContainer
