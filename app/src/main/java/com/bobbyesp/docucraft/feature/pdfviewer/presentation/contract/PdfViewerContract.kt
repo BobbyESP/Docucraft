@@ -10,6 +10,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextS
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.bobbyesp.documentcontent.DocumentSelection
+import com.bobbyesp.documentcontent.PageLink
 import com.bobbyesp.scanner.ContentRef
 
 /**
@@ -29,6 +30,11 @@ data class PdfViewerUiState(
      * lazily, as the reader moves; a page missing here is not known yet.
      */
     val pageText: Map<Int, PageTextState> = emptyMap(),
+    /**
+     * The links of the pages on screen and either side, read with their text. As the document has
+     * them: what following one does is decided when it is tapped (`ResolveLinkUseCase`).
+     */
+    val pageLinks: Map<Int, List<PageLink>> = emptyMap(),
     /** The selected text, which may run over several pages. */
     val selection: DocumentSelection? = null,
 ) {

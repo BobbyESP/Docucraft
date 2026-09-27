@@ -44,7 +44,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | c3 | Motor E3 (long press reclamable) + E4 (overlay en coordenadas de página) | **Medio-alto** | ✅ Done (2026-09-25) |
 | c4 | UI de selección, portapapeles y degradación | Medio | ✅ Done (2026-09-27) |
 | c5 | Character-by-character selection, as in Google Drive *(added 2026-09-27)* | Medium | ✅ Done (2026-09-27) |
-| d1 | Enlaces en el proveedor + `ResolveLinkUseCase` | Bajo | ⏳ |
+| d1 | Enlaces en el proveedor + `ResolveLinkUseCase` | Bajo | ✅ Done (2026-09-27) |
 | d2 | Motor E3 (tap reclamable) + E5 (`animateScrollTo`) | Medio | ⏳ |
 | d3 | D3 (aviso con dominio) + D4 (Custom Tabs) + accesibilidad | Medio | ⏳ |
 | cierre | `AGENTS.md`, `docs/README.md`, verificación en dispositivo | Nulo | ⏳ |
@@ -1062,11 +1062,53 @@ failed. The provider's dump showed two things:
 
 ## Paso d1 · Enlaces en el proveedor + `ResolveLinkUseCase`
 
-- [ ] `getLinkContents()` y `getGotoLinks()` en la misma pasada de extracción.
-- [ ] `ResolveLinkUseCase` con tests JVM: esquemas permitidos y bloqueados, host normalizado
+- [x] `getLinkContents()` y `getGotoLinks()` en la misma pasada de extracción.
+- [x] `ResolveLinkUseCase` con tests JVM: esquemas permitidos y bloqueados, host normalizado
   (userinfo, IDN a punycode), `http` marcado como no seguro, destinos internos fuera de rango.
 
 **Riesgo: bajo.**
+
+### Done — 2026-09-27
+
+**Extraction.** Already in place since c2: the platform provider reads links in the same pass as
+text. d1 adds the rest of the plumbing. The ViewModel now keeps `pageLinks` for the visible pages
+±1, read together with their text and forgotten together with it. So d2 and d3 are UI only.
+
+**`ResolveLinkUseCase`** (`feature/pdfviewer/domain/links/`) turns a `PageLink` into a
+`LinkAction`: `OpenWeb(url, host, secure)`, `ComposeEmail`, `Dial`, `GoTo` or `Blocked(reason)`.
+- **Schemes.** Only four are followed: `http`, `https`, `mailto` and `tel`. Everything else is
+  `Blocked(Scheme)`: `javascript:`, `file:`, `intent:`, `content:`, `data:`, `ftp:`, `market:`…
+  Anything that is not a valid RFC 3986 scheme is `Blocked(Malformed)`.
+- **The host shown is the host a browser opens.** It is parsed by hand, following WHATWG, which is
+  how browsers read URLs:
+  - the userinfo is dropped: `https://mybank.com@elsewhere.com` shows `elsewhere.com`;
+  - a backslash ends the host as a slash does, so `https://mybank.com\@elsewhere.com` shows
+    `mybank.com`, the host Chrome opens;
+  - tabs and line breaks are removed;
+  - the port, case and a trailing dot are dropped;
+  - IPv6 is kept whole;
+  - internationalized names become punycode, so a look-alike such as `аpple.com` with a Cyrillic
+    "а" shows as `xn--pple-43d.com`.
+- **`http`** is `secure = false`, which is what D3's warning will show.
+- **`mailto`** gives the decoded address, and **`tel`** the number without its parameters. With
+  nothing to reach, each is `Blocked(Malformed)`.
+- **A bare `www.` address** is opened as `https`.
+- **Internal links** outside the document are `Blocked(OutsideDocument)`.
+
+**Verification.**
+- `ResolveLinkUseCaseTest`: 18 JVM tests. `:app` unit total: 187.
+- `PlatformPageContentProviderTest`: 14 instrumented tests on the emulator. The new one follows the
+  fixture's links end to end, from the platform through the use case, and checks the exact list:
+  - two `https` links and one `http` link, all to `example.com`, the `http` one flagged;
+  - the email address and the phone number;
+  - `javascript:alert(1)` refused.
+
+  The internal links never arrive, because the platform does not report them.
+
+**Known limit, unchanged since step a.** A link over two lines comes as one rectangle enclosing
+both. On the fixture, that rectangle also covers text before the link on its first line. The
+platform ignores `QuadPoints`, and a PDF does not say which characters a link covers, so this is
+left as it is for now.
 
 ## Paso d2 · Motor E3 (tap reclamable) + E5
 

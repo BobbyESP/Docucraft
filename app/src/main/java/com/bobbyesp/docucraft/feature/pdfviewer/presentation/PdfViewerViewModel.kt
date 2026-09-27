@@ -32,6 +32,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.toTextSta
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.bobbyesp.documentcontent.DocumentSource
 import com.bobbyesp.documentcontent.PageContentProvider
+import com.bobbyesp.documentcontent.PageContentResult
 import com.bobbyesp.documentcontent.PageContentSession
 import com.bobbyesp.documentcontent.TextSelection
 import com.bobbyesp.scanner.ContentRef
@@ -196,14 +197,24 @@ class PdfViewerViewModel(
         loadingPages = launch {
             setState {
                 val keep = wanted + listOfNotNull(selection?.start?.page, selection?.end?.page)
-                copy(pageText = pageText.filterKeys { it in keep })
+                copy(
+                    pageText = pageText.filterKeys { it in keep },
+                    pageLinks = pageLinks.filterKeys { it in wanted },
+                )
             }
             for (page in wanted) {
                 if (page in currentState.pageText) continue
-                val text = session()?.page(page)?.toTextState() ?: return@launch
+                val content = session()?.page(page) ?: return@launch
+                val text = content.toTextState()
                 // A failure is not kept, so it is tried again next time.
                 if (text != PageTextState.Failed) {
-                    setState { copy(pageText = pageText + (page to text)) }
+                    val links = (content as? PageContentResult.Available)?.links.orEmpty()
+                    setState {
+                        copy(
+                            pageText = pageText + (page to text),
+                            pageLinks = pageLinks + (page to links),
+                        )
+                    }
                 }
             }
         }

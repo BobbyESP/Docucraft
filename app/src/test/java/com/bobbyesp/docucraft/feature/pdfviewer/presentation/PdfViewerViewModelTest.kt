@@ -36,6 +36,7 @@ import com.bobbyesp.documentcontent.NormalizedRect
 import com.bobbyesp.documentcontent.PageContentProvider
 import com.bobbyesp.documentcontent.PageContentResult
 import com.bobbyesp.documentcontent.PageContentSession
+import com.bobbyesp.documentcontent.PageLink
 import com.bobbyesp.documentcontent.PageText
 import com.bobbyesp.documentcontent.TextCaret
 import com.bobbyesp.documentcontent.TextLine
@@ -87,7 +88,7 @@ class PdfViewerViewModelTest {
     private val content =
         FakeContent(
             mapOf(
-                0 to text("alpha", "beta"),
+                0 to text("alpha", "beta").copy(links = listOf(LINK)),
                 1 to text("gamma"),
                 2 to PageContentResult.NoText,
                 3 to text("delta", "epsilon"),
@@ -330,6 +331,9 @@ class PdfViewerViewModelTest {
 
         assertEquals(setOf(0, 1, 2), viewModel.state.value.pageText.keys)
         assertEquals(PageTextState.NoText, viewModel.state.value.pageText[2])
+        // Their links come with them, in the same read.
+        assertEquals(setOf(0, 1, 2), viewModel.state.value.pageLinks.keys)
+        assertEquals(listOf(LINK), viewModel.state.value.pageLinks[0])
         assertEquals("one session for the document", 1, content.opened)
     }
 
@@ -529,6 +533,7 @@ class PdfViewerViewModelTest {
 
     private companion object {
         const val UUID = "doc-1"
+        val LINK = PageLink.External(listOf(NormalizedRect(0.1f, 0.1f, 0.2f, 0.12f)), "https://a.b")
         const val LOCATION = "content://com.bobbyesp.docucraft.fileprovider/documents/doc-1.pdf"
         const val EXTERNAL = "content://media/external/downloads/37"
     }

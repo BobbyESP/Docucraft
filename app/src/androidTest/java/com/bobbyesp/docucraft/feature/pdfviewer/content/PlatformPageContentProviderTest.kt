@@ -10,6 +10,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.bobbyesp.docucraft.feature.pdfviewer.data.content.PlatformPageContentProvider
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.BlockReason
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.ResolveLinkUseCase
 import com.bobbyesp.documentcontent.ContentOrigin
 import com.bobbyesp.documentcontent.DocumentSelection
 import com.bobbyesp.documentcontent.DocumentSource
@@ -165,6 +168,35 @@ class PlatformPageContentProviderTest {
         val old = PlatformPageContentProvider(target, sdkInt = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
         old.open(DocumentSource("content://nowhere/missing.pdf")).use {
             assertEquals(PageContentResult.Unsupported, it.page(0))
+        }
+    }
+
+    /**
+     * The fixture's links, as the platform reads them, resolved as a tap would: the web ones by
+     * their host (plain http flagged), mail and phone to their address and number, and the
+     * `javascript:` one refused.
+     */
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    fun theFixturesLinksResolveSafely() = runBlocking {
+        session("text-and-links.pdf").use { session ->
+            val links = (session.page(0) as PageContentResult.Available).links
+            val resolve = ResolveLinkUseCase()
+            val actions = links.map { resolve(it, pageCount = pageCount("text-and-links.pdf")) }
+
+            // The internal ones never arrive: the platform does not report them (see
+            // PlatformContentTest).
+            assertEquals(
+                listOf(
+                    LinkAction.OpenWeb("https://example.com/docucraft?q=1", "example.com", true),
+                    LinkAction.OpenWeb("http://example.com/insecure", "example.com", false),
+                    LinkAction.ComposeEmail("mailto:hola@example.com", "hola@example.com"),
+                    LinkAction.Dial("tel:+34600000000", "+34600000000"),
+                    LinkAction.Blocked("javascript:alert(1)", BlockReason.Scheme),
+                    LinkAction.OpenWeb("https://example.com/two-lines", "example.com", true),
+                ),
+                actions,
+            )
         }
     }
 
