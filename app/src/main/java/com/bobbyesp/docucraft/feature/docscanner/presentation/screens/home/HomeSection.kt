@@ -44,7 +44,15 @@ fun EntryProviderScope<NavKey>.homeSection(
         metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { NoDocumentOpenPane() })
     ) {
         HomeScreen(
-            onOpenDocument = { uuid -> navigator.goTo(PdfViewer(uuid)) },
+            onOpenDocument = { uuid ->
+                // Picking from the list swaps the detail pane rather than stacking on it, or every
+                // tap beside the list becomes a back step that surfaces once the window narrows to
+                // one pane. Decided from the stack at the tap, not from a selection captured at the
+                // last composition. On one pane the list is only tappable at the root, so this pops
+                // nothing there.
+                navigator.goBackWhile { it !is Home }
+                navigator.goTo(PdfViewer(uuid))
+            },
             onOpenSettings = { navigator.goTo(Settings) },
             onOpenDocumentActions = { uuid -> navigator.goTo(DocumentActions(uuid)) },
             selectedDocumentId = selectedDocumentId,

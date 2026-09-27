@@ -64,6 +64,9 @@ Two scene strategies, tried in order. The first to claim the top entry wins.
    two panes really fit (expanded width). It is wrapped by `sharingTheWindow()`, so the
    destinations it lays out learn they share the window through `LocalPaneContext`. Everything it
    declines falls through to a single pane.
+   - Picking a document from the list replaces the open one instead of stacking on it. Otherwise,
+     every document looked at beside the list becomes a back step, and narrowing the window turns
+     them into a trail the user has to back out of.
 
 **Told, not measured.** A destination never reads the window size or the device orientation. In a
 pane, or inside a dialog, those answers stop matching the room it actually has, and a screen that
