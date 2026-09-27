@@ -153,6 +153,14 @@ internal class PdfViewerController(
 
     override fun fitDocumentZoom(): Float = viewportCoordinator.computeFitDocumentZoom()
 
+    override fun panForPagePoint(pageIndex: Int, position: Offset?): PanPosition {
+        val snapshot = viewportCoordinator.snapshot()
+        if (snapshot.isEmpty) return PanPosition(state.panX, state.panY)
+        val target =
+            snapshot.panForPagePoint(pageIndex, position, state.panX, state.panY, state.zoom)
+        return snapshot.clampPan(target.x, target.y, state.zoom)
+    }
+
     override fun centeredPanForPage(pageIndex: Int): PanPosition =
         viewportCoordinator.centeredPanForPage(pageIndex)
 

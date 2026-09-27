@@ -108,6 +108,8 @@ internal fun Modifier.pdfViewerGestures(
                     if (!claimed) currentOnLongPress?.invoke(event)
                     claimed
                 },
+                claimsTap = { event -> currentHandler?.claimsTap(event) == true },
+                onClaimedTap = { event -> currentHandler?.onTap(event) },
                 onClaimedDrag = { event -> currentHandler?.onDrag(event) },
                 onClaimedDragEnd = { currentHandler?.onDragEnd() },
                 hasLongPressListener = { currentOnLongPress != null || currentHandler != null },
@@ -142,6 +144,8 @@ private class GestureSession(
     private val onTap: (PdfTapEvent) -> Unit,
     /** Returns whether the long press was claimed. */
     private val onLongPress: (PdfTapEvent) -> Boolean,
+    private val claimsTap: (PdfTapEvent) -> Boolean,
+    private val onClaimedTap: (PdfTapEvent) -> Unit,
     private val onClaimedDrag: (PdfTapEvent) -> Unit,
     private val onClaimedDragEnd: () -> Unit,
     private val hasLongPressListener: () -> Boolean,
@@ -247,7 +251,17 @@ private class GestureSession(
                 settleOrFling(velocity)
             }
 
-            tapCandidate -> handleTapOrDoubleTap(down.position)
+            tapCandidate -> {
+                // A tap the handler claims (a link) is answered now: waiting to see whether a
+                // second tap follows is only worth it where a double tap means something.
+                val event = controller.tapEventAt(down.position)
+                if (claimsTap(event)) {
+                    controller.setVelocity(Offset.Zero)
+                    onClaimedTap(event)
+                } else {
+                    handleTapOrDoubleTap(down.position)
+                }
+            }
 
             else -> controller.setVelocity(Offset.Zero)
         }

@@ -212,6 +212,23 @@ class PdfViewerState(
         currentPage = target
     }
 
+    /**
+     * Smoothly scrolls to [position] on [pageIndex], normalized to the page, bringing it to the
+     * start of the content area: where a reader expects the target of a link to appear. The zoom
+     * stays as it is. Without a position, the page's start is brought there instead, which unlike
+     * [animateScrollToPage] shows its first lines even when the page is taller than the screen.
+     */
+    suspend fun animateScrollTo(
+        pageIndex: Int,
+        position: Offset? = null,
+        animationSpec: AnimationSpec<Float> = spring(),
+    ) {
+        val ctrl = controller ?: return
+        val target = pageIndex.coerceIn(0, (pageCount - 1).coerceAtLeast(0))
+        val pan = ctrl.panForPagePoint(target, position)
+        ctrl.animatePanTo(pan.x, pan.y, animationSpec)
+    }
+
     /** Instantly sets the zoom, centered on the viewport. */
     fun setZoom(zoomLevel: Float) {
         val ctrl = controller ?: return

@@ -13,6 +13,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.doubleClick
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
@@ -48,6 +50,10 @@ class PdfInteractionHandlerTest {
     private var taps = 0
     private var scrolledAround = Offset.Zero
 
+    /** Which taps the handler claims, as an app claims taps on links. */
+    private var tapClaim: (PdfTapEvent) -> Boolean = { false }
+    private val claimedTaps = mutableListOf<PdfTapEvent>()
+
     private val handler =
         object : PdfInteractionHandler {
             override fun onLongPress(event: PdfTapEvent): Boolean {
@@ -62,7 +68,67 @@ class PdfInteractionHandlerTest {
             override fun onDragEnd() {
                 dragEnds++
             }
+
+            override fun claimsTap(event: PdfTapEvent): Boolean = tapClaim(event)
+
+            override fun onTap(event: PdfTapEvent) {
+                claimedTaps += event
+            }
         }
+
+    // ------------------------------------------------------------------ taps (d2)
+
+    /** A tap on a link answers at once: no wait for a second tap that would mean zoom. */
+    @Test
+    fun aClaimedTapIsDeliveredAtOnce() {
+        tapClaim = { true }
+        show()
+        rule.mainClock.autoAdvance = false
+
+        rule.onRoot().performTouchInput { click(center) }
+        rule.mainClock.advanceTimeByFrame()
+
+        rule.runOnIdle {
+            assertEquals(1, claimedTaps.size)
+            assertTrue(claimedTaps.single().pageIndex != null)
+            assertEquals("the viewer's own tap is not told", 0, taps)
+        }
+    }
+
+    /** The other side of the same coin: an unclaimed tap still waits for the double-tap window. */
+    @Test
+    fun anUnclaimedTapStillWaitsForTheDoubleTapWindow() {
+        show()
+        rule.mainClock.autoAdvance = false
+
+        rule.onRoot().performTouchInput { click(center) }
+        rule.mainClock.advanceTimeByFrame()
+        rule.runOnIdle { assertEquals(0, taps) }
+
+        rule.mainClock.advanceTimeBy(DOUBLE_TAP_WINDOW_MS)
+        rule.runOnIdle {
+            assertEquals(1, taps)
+            assertEquals(0, claimedTaps.size)
+        }
+    }
+
+    /** Only the claimed spot answers at once: a double tap elsewhere still zooms. */
+    @Test
+    fun aDoubleTapWhereNothingIsClaimedStillZooms() {
+        // Only the top tenth of a page is "a link".
+        tapClaim = { (it.pagePosition?.y ?: 1f) < 0.1f }
+        show()
+        val before = rule.runOnIdle { state.zoom }
+
+        rule.onRoot().performTouchInput { doubleClick(center) }
+        rule.mainClock.advanceTimeBy(SETTLE_MS)
+        rule.waitForIdle()
+
+        rule.runOnIdle {
+            assertTrue("expected zoom > $before, was ${state.zoom}", state.zoom > before * 1.2f)
+            assertEquals(0, claimedTaps.size)
+        }
+    }
 
     @Test
     fun aClaimedLongPressHandsTheDragOverAndLeavesTheDocumentStill() {
@@ -196,5 +262,7 @@ class PdfInteractionHandlerTest {
     private companion object {
         /** Past any device's long-press timeout. */
         const val LONG_PRESS_MS = 1_000L
+        const val DOUBLE_TAP_WINDOW_MS = 1_000L
+        const val SETTLE_MS = 2_000L
     }
 }

@@ -4,6 +4,7 @@
 package com.composepdf.layout
 
 import android.util.Size
+import androidx.compose.ui.geometry.Offset
 import com.composepdf.FitMode
 import com.composepdf.ScrollDirection
 import com.composepdf.internal.logic.ContentPaddingPx
@@ -291,6 +292,48 @@ class PageLayoutSnapshotTest {
             pageSpacingPx = 20f,
             padding = padding,
         )
+
+    // ------------------------------------------------------------------ a point on a page (E5)
+
+    /** Three 500×500 pages, 20 apart, in a 500×500 viewer whose top 100 px are under a bar. */
+    private val linked =
+        snapshot(
+            pageCount = 3,
+            pageOffsets = floatArrayOf(0f, 520f, 1040f),
+            pageHeights = floatArrayOf(500f, 500f, 500f),
+            pageWidths = floatArrayOf(500f, 500f, 500f),
+            totalDocumentSize = 1540f,
+            corridorBreadth = 500f,
+            viewportWidth = 500f,
+            viewportHeight = 500f,
+            pageSpacingPx = 20f,
+            padding = ContentPaddingPx(left = 0f, top = 100f, right = 0f, bottom = 0f),
+        )
+
+    @Test
+    fun panForPagePoint_bringsThePointToTheStartOfTheContentArea() {
+        val pan = linked.panForPagePoint(1, Offset(0.5f, 0.4f), panX = 0f, panY = 0f, zoom = 1f)
+
+        // 40 % into page 1 is document y 720; it lands just below the bar, at 100.
+        assertEquals(100f - 720f, pan.y, 0.001f)
+        assertEquals("already on screen across, so left alone", 0f, pan.x, 0.001f)
+    }
+
+    @Test
+    fun panForPagePoint_withoutAPositionBringsThePageStart() {
+        val pan = linked.panForPagePoint(2, position = null, panX = -30f, panY = 0f, zoom = 1f)
+
+        assertEquals(100f - 1040f, pan.y, 0.001f)
+        assertEquals(-30f, pan.x, 0.001f)
+    }
+
+    @Test
+    fun panForPagePoint_centresAPointThatWouldBeOffScreenAcross() {
+        // At zoom 2 the page is 1000 wide; 90 % across is document x 450, screen x 900.
+        val pan = linked.panForPagePoint(0, Offset(0.9f, 0f), panX = 0f, panY = 0f, zoom = 2f)
+
+        assertEquals(250f - 900f, pan.x, 0.001f)
+    }
 
     private fun snapshot(
         pageCount: Int,

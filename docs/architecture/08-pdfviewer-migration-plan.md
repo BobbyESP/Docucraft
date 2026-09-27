@@ -45,7 +45,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | c4 | UI de selección, portapapeles y degradación | Medio | ✅ Done (2026-09-27) |
 | c5 | Character-by-character selection, as in Google Drive *(added 2026-09-27)* | Medium | ✅ Done (2026-09-27) |
 | d1 | Enlaces en el proveedor + `ResolveLinkUseCase` | Bajo | ✅ Done (2026-09-27) |
-| d2 | Motor E3 (tap reclamable) + E5 (`animateScrollTo`) | Medio | ⏳ |
+| d2 | Motor E3 (tap reclamable) + E5 (`animateScrollTo`) | Medio | ✅ Done (2026-09-27) |
 | d3 | D3 (aviso con dominio) + D4 (Custom Tabs) + accesibilidad | Medio | ⏳ |
 | cierre | `AGENTS.md`, `docs/README.md`, verificación en dispositivo | Nulo | ⏳ |
 
@@ -1112,12 +1112,48 @@ left as it is for now.
 
 ## Paso d2 · Motor E3 (tap reclamable) + E5
 
-- [ ] `claimsTap`: el tap sobre un enlace se entrega al momento; fuera de un enlace se mantiene el doble
+- [x] `claimsTap`: el tap sobre un enlace se entrega al momento; fuera de un enlace se mantiene el doble
   tap.
-- [ ] `animateScrollTo(pageIndex, position)`.
+- [x] `animateScrollTo(pageIndex, position)`.
 
 **Verificación**: doble tap para hacer zoom fuera de un enlace sigue funcionando; el tap sobre un
 enlace responde sin retraso apreciable. **Riesgo: medio.**
+
+### Done — 2026-09-27
+
+**E3, the second half: claimable taps.** `PdfInteractionHandler` gains `claimsTap(event)` and
+`onTap(event)`.
+- The engine asks when the finger lifts from a tap, before the double-tap wait. A claimed tap goes
+  to `onTap` at once, and the viewer's own `onTap` is not called for it.
+- Anywhere not claimed, nothing changes: a double tap zooms, and a single tap is delivered after
+  the window.
+- A double tap *on* a claimed spot is two claimed taps: on a link, the first one acts.
+
+**E5: `PdfViewerState.animateScrollTo(pageIndex, position)`.**
+- It brings a page-normalized point to the start of the content area, just below the top bar. That
+  is where readers put a link's target.
+- Across the scroll axis the document stays put unless the point would be off screen; then it is
+  centred.
+- Without a position, the page's start goes there. Unlike `animateScrollToPage`, which centres the
+  page, this shows the first lines of a page taller than the screen.
+- The zoom does not change. The target is clamped before animating, so at the end of the document
+  the animation stops where the document does.
+- The geometry is `PageLayoutSnapshot.panForPagePoint`, pure and JVM-tested.
+
+**Verification.**
+- `:composepdf` unit tests: 47. The 3 new ones check that the point lands under the top padding,
+  that the page start is used without a position, and that the other axis moves only for a point
+  off screen.
+- `:composepdf` instrumented tests on the emulator: 43, with 0 failures and 1 skipped (the opt-in
+  dump). The new ones:
+  - a claimed tap arrives in the first frame, and the viewer's tap is not called;
+  - an unclaimed tap arrives only after the double-tap window, the other side of the same test;
+  - a double tap outside the claimed area still zooms;
+  - `PdfScrollToTest`: a point on page 150 lands at the content start, below a 64 dp bar; page 42's
+    start lands there without a position; the last page stops at the end of the document.
+- The existing gesture tests pass unchanged.
+- **Not yet on a device:** the app does not claim taps until d3 wires the links in. The engine
+  side is covered by the tests above.
 
 ## Paso d3 · D3 + D4 + accesibilidad
 

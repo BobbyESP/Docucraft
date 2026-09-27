@@ -4,6 +4,7 @@
 package com.composepdf.internal.logic
 
 import android.util.Size
+import androidx.compose.ui.geometry.Offset
 import com.composepdf.FitMode
 import com.composepdf.ScrollDirection
 import kotlin.math.min
@@ -193,6 +194,57 @@ internal class PageLayoutSnapshot(
             val centeredPanX = contentCenterX() - (pageLeft + pageWidth / 2f) * zoom
             val centeredPanY = contentCenterY() - (corridorBreadth * zoom / 2f)
             PanPosition(centeredPanX, centeredPanY)
+        }
+    }
+
+    /**
+     * The pan that brings [position] on page [pageIndex] (normalized to the page) to the start of
+     * the content area along the scroll axis, just below a top bar: where readers put the target of
+     * a link. Across the other axis the document stays where it is ([panX] and [panY] are the
+     * current pan) unless the point would be off screen, in which case it is centred. Without a
+     * position, the page's start goes to the start of the content area. Not clamped: the caller's
+     * clamp decides how close the end of the document lets it get.
+     */
+    fun panForPagePoint(
+        pageIndex: Int,
+        position: Offset?,
+        panX: Float,
+        panY: Float,
+        zoom: Float,
+    ): PanPosition {
+        val page = pageIndex.coerceIn(0, (pageSizes.size - 1).coerceAtLeast(0))
+        val docX = pageLeftDocX(page) + (position?.x ?: 0f) * pageWidthPx(page)
+        val docY = pageTopDocY(page) + (position?.y ?: 0f) * pageHeightPx(page)
+        val padding = viewport.padding
+
+        fun keepOrCentre(pan: Float, doc: Float, start: Float, length: Float, centre: Float) =
+            if (position == null || (pan + doc * zoom) in start..(start + length)) pan
+            else centre - doc * zoom
+
+        return if (scrollDirection == ScrollDirection.VERTICAL) {
+            PanPosition(
+                x =
+                    keepOrCentre(
+                        panX,
+                        docX,
+                        padding.left,
+                        viewport.contentWidth,
+                        contentCenterX(),
+                    ),
+                y = padding.top - docY * zoom,
+            )
+        } else {
+            PanPosition(
+                x = padding.left - docX * zoom,
+                y =
+                    keepOrCentre(
+                        panY,
+                        docY,
+                        padding.top,
+                        viewport.contentHeight,
+                        contentCenterY(),
+                    ),
+            )
         }
     }
 
