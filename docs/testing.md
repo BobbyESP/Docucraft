@@ -20,6 +20,20 @@
   delivers gestures, how the engine draws.
 - **A port is tested with a fake**, never with a mock of the framework.
 
+## Conventions
+
+- **A test sits in the package of the class it tests**, so it reaches `internal` code and is found
+  next to it.
+- **Doubles and fixtures shared by several tests** live in one place instead of being copied:
+  - `:app`: `FakeDocumentStorage` (docscanner), `FakePageContentProvider` and `textPage` (pdfviewer);
+  - `:composepdf` JVM: `layoutOf` and `threePages` build a `PageLayoutSnapshot` the way the real
+    layout does;
+  - `:composepdf` on a device: `LongDocument` and `waitUntilLoaded` (`ViewerTestSupport.kt`), and the
+    gesture timings (`GestureTimings.kt`).
+- **Names say the behaviour**: backtick sentences on the JVM; camelCase in device tests, whose
+  names cannot hold spaces, and throughout `:composepdf`, most of whose tests are device tests.
+- **Comments explain why a case matters**, in present tense. The history of a bug belongs in git.
+
 ## Running
 
 ```sh

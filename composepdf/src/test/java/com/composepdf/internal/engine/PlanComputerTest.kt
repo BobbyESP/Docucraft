@@ -1,17 +1,10 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.composepdf.engine
+package com.composepdf.internal.engine
 
-import android.util.Size
-import com.composepdf.ScrollDirection
-import com.composepdf.internal.engine.Band
-import com.composepdf.internal.engine.PlanComputer
-import com.composepdf.internal.engine.PlanInputs
-import com.composepdf.internal.engine.RenderWork
-import com.composepdf.internal.engine.TileId
 import com.composepdf.internal.logic.PageLayoutSnapshot
-import com.composepdf.internal.logic.ViewportMetrics
+import com.composepdf.internal.logic.threePages
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -139,18 +132,7 @@ class PlanComputerTest {
     fun emptyLayout_returnsEmptyPlan() {
         val plan =
             computer.compute(
-                PlanInputs(
-                    layout = PageLayoutSnapshot.empty(),
-                    panX = 0f,
-                    panY = 0f,
-                    zoom = 1f,
-                    viewportWidth = 500f,
-                    viewportHeight = 500f,
-                    velocityX = 0f,
-                    velocityY = 0f,
-                    renderQuality = 1.5f,
-                    prefetchDistance = 2,
-                ),
+                inputs(zoom = 1f, layout = PageLayoutSnapshot.empty()),
                 0,
                 never(),
                 neverBase(),
@@ -174,35 +156,20 @@ class PlanComputerTest {
 
     private fun neverBase(): (Int, Int) -> Boolean = { _, _ -> false }
 
-    /** Three 500x500 pages stacked vertically with 20px spacing in a 500x500 viewport. */
-    private fun layout(): PageLayoutSnapshot =
-        PageLayoutSnapshot(
-            pageSizes = List(3) { Size(1, 1) },
-            pageOffsets = floatArrayOf(0f, 520f, 1040f),
-            pageHeights = floatArrayOf(500f, 500f, 500f),
-            pageWidths = floatArrayOf(500f, 500f, 500f),
-            totalDocumentSize = 1540f,
-            corridorBreadth = 500f,
-            viewport = ViewportMetrics(500f, 500f),
-            pageSpacingPx = 20f,
-            scrollDirection = ScrollDirection.VERTICAL,
-        )
-
+    /** [layout] seen through a 500 × 500 viewport, from the top of the document. */
     private fun inputs(
         zoom: Float,
-        panX: Float = 0f,
-        panY: Float = 0f,
-        velocityX: Float = 0f,
         velocityY: Float = 0f,
+        layout: PageLayoutSnapshot = threePages(),
     ): PlanInputs =
         PlanInputs(
-            layout = layout(),
-            panX = panX,
-            panY = panY,
+            layout = layout,
+            panX = 0f,
+            panY = 0f,
             zoom = zoom,
             viewportWidth = 500f,
             viewportHeight = 500f,
-            velocityX = velocityX,
+            velocityX = 0f,
             velocityY = velocityY,
             renderQuality = 1.5f,
             prefetchDistance = 2,

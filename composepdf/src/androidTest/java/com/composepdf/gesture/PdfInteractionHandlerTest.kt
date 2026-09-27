@@ -19,12 +19,13 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.composepdf.LongDocument
 import com.composepdf.PdfInteractionHandler
-import com.composepdf.PdfSource
 import com.composepdf.PdfTapEvent
 import com.composepdf.PdfViewer
 import com.composepdf.PdfViewerState
 import com.composepdf.rememberPdfViewerState
+import com.composepdf.waitUntilLoaded
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -75,8 +76,6 @@ class PdfInteractionHandlerTest {
                 claimedTaps += event
             }
         }
-
-    // ------------------------------------------------------------------ taps (E3)
 
     /** A tap on a link answers at once: no wait for a second tap that would mean zoom. */
     @Test
@@ -245,7 +244,7 @@ class PdfInteractionHandlerTest {
             Box(Modifier.fillMaxSize().nestedScroll(watcher)) {
                 if (showViewer) {
                     PdfViewer(
-                        source = PdfSource.Asset("fixtures/long-320-pages.pdf"),
+                        source = LongDocument,
                         state = state,
                         modifier = Modifier.fillMaxSize(),
                         onTap = { taps++ },
@@ -255,14 +254,6 @@ class PdfInteractionHandlerTest {
                 }
             }
         }
-        rule.waitUntil(timeoutMillis = 15_000) { state.isLoaded }
-        rule.waitForIdle()
-    }
-
-    private companion object {
-        /** Past any device's long-press timeout. */
-        const val LONG_PRESS_MS = 1_000L
-        const val DOUBLE_TAP_WINDOW_MS = 1_000L
-        const val SETTLE_MS = 2_000L
+        rule.waitUntilLoaded { state }
     }
 }

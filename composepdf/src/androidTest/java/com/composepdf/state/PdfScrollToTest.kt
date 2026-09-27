@@ -11,11 +11,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.composepdf.LongDocument
 import com.composepdf.PdfLayoutSpec
-import com.composepdf.PdfSource
 import com.composepdf.PdfViewer
 import com.composepdf.PdfViewerState
 import com.composepdf.rememberPdfViewerState
+import com.composepdf.waitUntilLoaded
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -91,14 +92,13 @@ class PdfScrollToTest {
             state = rememberPdfViewerState()
             scope = rememberCoroutineScope()
             PdfViewer(
-                source = PdfSource.Asset("fixtures/long-320-pages.pdf"),
+                source = LongDocument,
                 state = state,
                 layout = PdfLayoutSpec(contentPadding = PaddingValues(top = TopBar)),
                 modifier = Modifier.fillMaxSize(),
             )
         }
-        rule.waitUntil(timeoutMillis = 15_000) { state.isLoaded }
-        rule.waitForIdle()
+        rule.waitUntilLoaded { state }
         topPadding = with(rule.density) { TopBar.toPx() }
     }
 

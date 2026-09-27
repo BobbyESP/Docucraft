@@ -14,10 +14,11 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.pinch
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.composepdf.PdfSource
+import com.composepdf.LongDocument
 import com.composepdf.PdfViewer
 import com.composepdf.PdfViewerState
 import com.composepdf.rememberPdfViewerState
+import com.composepdf.waitUntilLoaded
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -123,19 +124,13 @@ class PdfGesturesTest {
         rule.setContent {
             state = rememberPdfViewerState()
             PdfViewer(
-                source = PdfSource.Asset("fixtures/long-320-pages.pdf"),
+                source = LongDocument,
                 state = state,
                 modifier = Modifier.fillMaxSize(),
                 onTap = { taps++ },
                 onLongPress = { longPresses++ },
             )
         }
-        rule.waitUntil(timeoutMillis = 15_000) { state.isLoaded }
-        rule.waitForIdle()
-    }
-
-    private companion object {
-        const val DOUBLE_TAP_WINDOW_MS = 1_000L
-        const val SETTLE_MS = 2_000L
+        rule.waitUntilLoaded { state }
     }
 }

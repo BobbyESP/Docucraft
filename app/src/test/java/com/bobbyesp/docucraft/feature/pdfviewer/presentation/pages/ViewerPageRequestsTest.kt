@@ -1,10 +1,9 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.pdfviewer.presentation
+package com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages
 
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.ViewerPageRequests
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -19,14 +18,14 @@ class ViewerPageRequestsTest {
 
     /** Retained: a request made before anyone listens is still there when the viewer looks. */
     @Test
-    fun aRequestWaitsForTheViewer() = runTest {
+    fun `a request waits for the viewer`() = runTest {
         requests.request(DOC_A, 41)
 
         assertEquals(41, requests.observe(DOC_A).first())
     }
 
     @Test
-    fun aRequestIsTakenOnce() = runTest {
+    fun `a request is taken once`() = runTest {
         requests.request(DOC_A, 41)
 
         assertTrue(requests.consume(DOC_A, 41))
@@ -36,7 +35,7 @@ class ViewerPageRequestsTest {
 
     /** Taking an older page must not swallow a newer request made in the meantime. */
     @Test
-    fun aNewerRequestSurvivesTakingAnOlderOne() = runTest {
+    fun `a newer request survives taking an older one`() = runTest {
         requests.request(DOC_A, 10)
         requests.request(DOC_A, 20)
 
@@ -45,7 +44,7 @@ class ViewerPageRequestsTest {
     }
 
     @Test
-    fun viewersOfOtherDocumentsDoNotSeeIt() = runTest {
+    fun `viewers of other documents do not see it`() = runTest {
         requests.request(DOC_A, 41)
 
         assertNull(requests.observe(DOC_B).first())

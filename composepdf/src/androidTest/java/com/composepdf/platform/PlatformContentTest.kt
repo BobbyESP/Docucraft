@@ -140,8 +140,8 @@ class PlatformContentTest {
      * MediaProvider module 17).
      *
      * The viewer therefore treats internal links as unavailable. If this starts failing, the
-     * platform has begun reporting them: wire them in (plan phase d) and turn this into a real
-     * check.
+     * platform has begun reporting them: wire them into the platform content provider and turn this
+     * into a real check.
      */
     @Test
     fun internalLinksAreNotReported_revisitIfThisFails() {
@@ -158,14 +158,15 @@ class PlatformContentTest {
 
     /**
      * Not a check: dumps everything the content APIs return for every fixture to
-     * `files/spike-report.json` in the test app, for re-checking these findings on another platform
-     * version or against a new fixture. Skipped unless asked for, keeping the APK installed:
+     * `files/platform-content.json` in the test app, for re-checking these findings on another
+     * platform version or against a new fixture. Skipped unless asked for, keeping the APK
+     * installed:
      * ```
      * ./gradlew :composepdf:connectedDebugAndroidTest \
      *   -Pandroid.testInstrumentationRunnerArguments.class=com.composepdf.platform.PlatformContentTest#dumpPlatformContent \
      *   -Pandroid.testInstrumentationRunnerArguments.dumpPlatformContent=true \
      *   -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true
-     * adb shell run-as com.composepdf.test cat files/spike-report.json
+     * adb shell run-as com.composepdf.test cat files/platform-content.json
      * ```
      */
     @Test
@@ -225,7 +226,7 @@ class PlatformContentTest {
             }
             report.put(name, pages)
         }
-        File(context.filesDir, "spike-report.json").writeText(report.toString(2))
+        File(context.filesDir, "platform-content.json").writeText(report.toString(2))
     }
 
     // ---------------------------------------------------------------------------------- helpers

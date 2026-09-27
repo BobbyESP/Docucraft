@@ -239,13 +239,13 @@ class TextSelectionTest {
     // ------------------------------------------------------------------ margins and columns
 
     /**
-     * An invoice-like page, invented, shaped like a real one that broke selection: a margin note
-     * set vertically, reading upwards, delivered as a single line that spans the body's height; a
-     * label column; and a line that runs from a value on to an address a column away.
-     *
-     * margin (x 0.03..0.04): "ACME" y 0.76..0.80, "SA" y 0.72..0.74, read bottom to top line 1 (y
-     * 0.72..0.74): "Invoice:" x 0.10..0.26 line 2 (y 0.72..0.74): "MC123" x 0.30..0.40, then "Main"
-     * x 0.60..0.68 — a column away line 3 (y 0.76..0.78): "Date:" x 0.10..0.20
+     * An invented page shaped like a real invoice: a margin note set vertically, reading upwards,
+     * delivered as a single line that spans the body's height; a label column; and a line that runs
+     * from a value on to an address a column away.
+     * - margin, x 0.03..0.04: "ACME" (y 0.76..0.80) and "SA" (y 0.72..0.74), read bottom to top;
+     * - "Invoice:" at x 0.10..0.26, y 0.72..0.74;
+     * - "MC123" at x 0.30..0.40, then "Main" a column away at x 0.60..0.68, y 0.72..0.74;
+     * - "Date:" at x 0.10..0.20, y 0.76..0.78.
      */
     private val invoice =
         TextSelection(

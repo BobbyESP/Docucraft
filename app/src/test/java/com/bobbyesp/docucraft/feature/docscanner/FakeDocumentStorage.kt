@@ -10,8 +10,8 @@ import com.bobbyesp.scanner.ContentRef
 /**
  * Storage that keeps a ledger instead of files.
  *
- * Shared by everything that exercises the storage port, so the cases that used to need a device —
- * an empty file, a preview that will not render, a delete that fails — are just fields.
+ * Shared by everything that exercises the storage port: the cases a device makes hard to reach — an
+ * empty file, a preview that will not render, a delete that fails — are just fields.
  */
 class FakeDocumentStorage : DocumentStorage {
 

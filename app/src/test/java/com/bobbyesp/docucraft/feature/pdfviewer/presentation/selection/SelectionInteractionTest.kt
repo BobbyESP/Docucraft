@@ -1,14 +1,8 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.pdfviewer.presentation
+package com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection
 
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.LongPressOutcome
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PagePoint
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.SelectionInteraction
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.toTextState
 import com.bobbyesp.documentcontent.ContentOrigin
 import com.bobbyesp.documentcontent.DocumentSelection
 import com.bobbyesp.documentcontent.NormalizedPoint
@@ -23,11 +17,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/** The Drive-like behaviour: a long press selects a word, and the ends then move by character. */
+/** A long press selects a word; the ends of the selection then move by character. */
 class SelectionInteractionTest {
 
-    // Monospaced, 0.02 a character. Page 0: "one two" (text "one two"); page 1: a scan;
-    // page 2: "three".
+    // Monospaced, 0.02 a character. Page 0: "one two"; page 1: a scan; page 2: "three".
     private val pages: Map<Int, PageTextState> =
         mapOf(
             0 to PageTextState.Text(page("one", "two")),
@@ -78,7 +71,7 @@ class SelectionInteractionTest {
     fun `dragging on from a long press moves by character and keeps the pressed word`() {
         val two = at(0, 4)..at(0, 7)
 
-        // Forwards onto page 2, between "th" and "ree": x 0.14 is the t|h|r... boundary after "th".
+        // Forwards onto page 2, between "th" and "ree": x 0.14 is the boundary after "th".
         assertEquals(
             at(0, 4)..at(2, 2),
             SelectionInteraction.extend(two, pages, 2, NormalizedPoint(0.14f, 0.12f)),

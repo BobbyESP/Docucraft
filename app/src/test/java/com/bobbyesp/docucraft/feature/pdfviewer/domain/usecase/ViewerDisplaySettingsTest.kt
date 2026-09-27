@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.pdfviewer.domain
+package com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase
 
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.core.domain.model.ViewerDefaults
@@ -10,8 +10,6 @@ import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.feature.pdfviewer.data.settings.InMemoryViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
-import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDisplaySettingsUseCase
-import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDisplaySettingsUseCase
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,15 +34,14 @@ class ViewerDisplaySettingsTest {
     private val update = UpdateViewerDisplaySettingsUseCase(session)
 
     @Test
-    fun withTheSwitchOff_aNewDocumentOpensWithTheFactorySettings() = runTest {
+    fun `with the switch off, a new document opens with the factory settings`() = runTest {
         preferences.value = UserPreferences(viewerDefaults = ViewerDefaults(false, NIGHT_PAGE))
 
         assertEquals(ViewerDisplaySettings.Factory, observe(DOC_A).first().settings)
     }
 
-    /** Decision A2: the factory settings fit the width, without night mode. */
     @Test
-    fun theFactorySettingsFitTheWidthWithoutNightMode() {
+    fun `the factory settings fit the width, without night mode`() {
         assertEquals(
             ViewerDisplaySettings(ViewerFitMode.WIDTH, nightMode = false),
             ViewerDisplaySettings.Factory,
@@ -52,14 +49,14 @@ class ViewerDisplaySettingsTest {
     }
 
     @Test
-    fun withTheSwitchOn_aNewDocumentOpensWithTheDefaults() = runTest {
+    fun `with the switch on, a new document opens with the defaults`() = runTest {
         preferences.value = UserPreferences(viewerDefaults = ViewerDefaults(true, NIGHT_PAGE))
 
         assertEquals(NIGHT_PAGE, observe(DOC_A).first().settings)
     }
 
     @Test
-    fun whatWasSetForADocumentWinsForThatDocumentOnly() = runTest {
+    fun `what was set for a document wins for that document only`() = runTest {
         preferences.value = UserPreferences(viewerDefaults = ViewerDefaults(true, NIGHT_PAGE))
 
         update(DOC_A, HEIGHT_DAY)
@@ -70,7 +67,7 @@ class ViewerDisplaySettingsTest {
 
     /** A document not touched this session follows the defaults as they change. */
     @Test
-    fun changingTheDefaultsMidSessionSparesDocumentsAlreadyAdjusted() = runTest {
+    fun `changing the defaults mid-session spares documents already adjusted`() = runTest {
         preferences.value = UserPreferences(viewerDefaults = ViewerDefaults(true, NIGHT_PAGE))
         update(DOC_A, HEIGHT_DAY)
 
@@ -81,7 +78,7 @@ class ViewerDisplaySettingsTest {
     }
 
     @Test
-    fun turningTheSwitchOffMidSessionAlsoSparesThem() = runTest {
+    fun `turning the switch off mid-session also spares them`() = runTest {
         preferences.value = UserPreferences(viewerDefaults = ViewerDefaults(true, NIGHT_PAGE))
         update(DOC_A, HEIGHT_DAY)
 
@@ -93,7 +90,7 @@ class ViewerDisplaySettingsTest {
 
     /** Only a choice is worth keeping across a process death; defaults are followed, not kept. */
     @Test
-    fun aChoiceIsReportedAsSuchAndTheDefaultsAreNot() = runTest {
+    fun `a choice is reported as such, and the defaults are not`() = runTest {
         update(DOC_A, HEIGHT_DAY)
 
         assertEquals(true, observe(DOC_A).first().isChosen)
@@ -102,7 +99,7 @@ class ViewerDisplaySettingsTest {
 
     /** External documents are known by their location, whatever the providing app calls them. */
     @Test
-    fun anExternalDocumentIsRememberedByItsLocation() = runTest {
+    fun `an external document is remembered by its location`() = runTest {
         update(ViewerDocumentRef.External(uri = EXTERNAL, displayName = "a.pdf"), HEIGHT_DAY)
 
         val reopened = ViewerDocumentRef.External(uri = EXTERNAL, displayName = "A copy.pdf")

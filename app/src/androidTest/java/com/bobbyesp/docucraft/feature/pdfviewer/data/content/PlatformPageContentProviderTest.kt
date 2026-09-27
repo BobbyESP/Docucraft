@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.pdfviewer.content
+package com.bobbyesp.docucraft.feature.pdfviewer.data.content
 
 import android.net.Uri
 import android.os.Build
@@ -9,7 +9,6 @@ import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
-import com.bobbyesp.docucraft.feature.pdfviewer.data.content.PlatformPageContentProvider
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.BlockReason
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.ResolveLinkUseCase
@@ -262,8 +261,8 @@ class PlatformPageContentProviderTest {
     }
 
     /**
-     * Not a check, a measurement: measuring every character costs one platform call each. Logs how
-     * long a page takes on the densest fixture, for the plan to record.
+     * Mostly a measurement: measuring every character costs one platform call each. Logs how long a
+     * page takes on the densest fixture, and fails only if one takes seconds.
      */
     @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM)

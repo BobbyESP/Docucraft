@@ -1,19 +1,15 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.pdfviewer.data
+package com.bobbyesp.docucraft.feature.pdfviewer.data.content
 
-import com.bobbyesp.docucraft.feature.pdfviewer.data.content.LayeredPageContentProvider
+import com.bobbyesp.docucraft.feature.pdfviewer.FakePageContentProvider
+import com.bobbyesp.docucraft.feature.pdfviewer.textPage
 import com.bobbyesp.documentcontent.ContentOrigin
 import com.bobbyesp.documentcontent.DocumentSource
 import com.bobbyesp.documentcontent.NormalizedRect
-import com.bobbyesp.documentcontent.PageContentProvider
 import com.bobbyesp.documentcontent.PageContentResult
-import com.bobbyesp.documentcontent.PageContentSession
 import com.bobbyesp.documentcontent.PageLink
-import com.bobbyesp.documentcontent.PageText
-import com.bobbyesp.documentcontent.TextLine
-import com.bobbyesp.documentcontent.TextWord
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -24,8 +20,8 @@ class LayeredPageContentProviderTest {
 
     private val document = DocumentSource("content://test/doc.pdf")
     private val link = PageLink.External(listOf(NormalizedRect(0f, 0f, 0.1f, 0.1f)), "https://a.b")
-    private val typed = available(ContentOrigin.EMBEDDED, "typed")
-    private val read = available(ContentOrigin.RECOGNIZED, "read")
+    private val typed = textPage("typed")
+    private val read = textPage("read", origin = ContentOrigin.RECOGNIZED)
 
     @Test
     fun `without recognition the document's own session is used as it is`() = runTest {
@@ -123,43 +119,8 @@ class LayeredPageContentProviderTest {
     }
 
     private fun embedded(vararg pages: Pair<Int, PageContentResult>) =
-        FakeProvider(ContentOrigin.EMBEDDED, pages.toMap())
+        FakePageContentProvider(pages.toMap())
 
     private fun recognized(vararg pages: Pair<Int, PageContentResult>) =
-        FakeProvider(ContentOrigin.RECOGNIZED, pages.toMap())
-
-    private fun available(origin: ContentOrigin, word: String) =
-        PageContentResult.Available(
-            text =
-                PageText(
-                    lines =
-                        listOf(
-                            TextLine(listOf(TextWord(word, NormalizedRect(0f, 0f, 0.2f, 0.05f))))
-                        ),
-                    origin = origin,
-                ),
-            links = emptyList(),
-        )
-
-    private class FakeProvider(
-        override val origin: ContentOrigin,
-        private val pages: Map<Int, PageContentResult>,
-    ) : PageContentProvider {
-        val sessions = mutableListOf<FakeSession>()
-        val opened: Int
-            get() = sessions.size
-
-        override suspend fun open(document: DocumentSource): PageContentSession =
-            FakeSession(pages).also { sessions += it }
-    }
-
-    private class FakeSession(private val pages: Map<Int, PageContentResult>) : PageContentSession {
-        var closed = false
-
-        override suspend fun page(index: Int): PageContentResult = pages.getValue(index)
-
-        override fun close() {
-            closed = true
-        }
-    }
+        FakePageContentProvider(pages.toMap(), ContentOrigin.RECOGNIZED)
 }

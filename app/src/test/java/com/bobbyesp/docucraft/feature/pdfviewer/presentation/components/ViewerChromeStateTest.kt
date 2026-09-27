@@ -1,9 +1,8 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.pdfviewer.presentation
+package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components
 
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerChromeState
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -13,7 +12,7 @@ class ViewerChromeStateTest {
     private val chrome = ViewerChromeState(initiallyVisible = true, thresholdPx = 60f)
 
     @Test
-    fun readingForwardPastTheThresholdHidesTheBars() {
+    fun `reading forward past the threshold hides the bars`() {
         chrome.onScrolled(-30f)
         assertTrue("not yet", chrome.isVisible)
 
@@ -22,7 +21,7 @@ class ViewerChromeStateTest {
     }
 
     @Test
-    fun scrollingBackShowsThemAgain() {
+    fun `scrolling back shows them again`() {
         chrome.onScrolled(-100f)
 
         chrome.onScrolled(70f)
@@ -32,7 +31,7 @@ class ViewerChromeStateTest {
 
     /** A small wobble back and forth must not make the bars flicker. */
     @Test
-    fun changingDirectionStartsTheCountAgain() {
+    fun `changing direction starts the count again`() {
         chrome.onScrolled(-50f)
         chrome.onScrolled(5f)
         chrome.onScrolled(-50f)
@@ -41,7 +40,7 @@ class ViewerChromeStateTest {
     }
 
     @Test
-    fun aTapTogglesTheBars() {
+    fun `a tap toggles the bars`() {
         chrome.toggle()
         assertFalse(chrome.isVisible)
 
@@ -50,7 +49,7 @@ class ViewerChromeStateTest {
     }
 
     @Test
-    fun aTapAfterHidingByScrollShowsThem() {
+    fun `a tap after hiding by scroll shows them`() {
         chrome.onScrolled(-100f)
 
         chrome.toggle()

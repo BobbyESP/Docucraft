@@ -1,9 +1,8 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.composepdf.engine
+package com.composepdf.internal.engine
 
-import com.composepdf.internal.engine.ZoomSteps
 import kotlin.math.sqrt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

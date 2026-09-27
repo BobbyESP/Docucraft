@@ -55,22 +55,18 @@ import org.junit.Test
  * Covers the reactive document pipeline and the scan lifecycle: the re-entrancy guard, the three
  * ways a session can end, and the widget entry point.
  *
- * Note there is no scanner engine anywhere in here. That is what the [DocumentScanner] port buys:
- * [FakeDocumentScanner] stands in for one, so every outcome is reachable without a device and
- * without Play Services.
+ * There is no scanner engine in here: [FakeDocumentScanner] stands in for one through the
+ * [DocumentScanner] port, so every outcome is reachable without a device or Play Services.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var documentScanner: FakeDocumentScanner
-    private lateinit var scanRequests: ScanRequestBus
-    private lateinit var observeDocumentsUseCase: ObserveDocumentsUseCase
-    private lateinit var processDocumentsUseCase: ProcessDocumentsUseCase
-    private lateinit var saveScanDraftUseCase: SaveScanDraftUseCase
-    private lateinit var stringProvider: StringProvider
-    private lateinit var analyticsHelper: AnalyticsHelper
+    private val documentScanner = FakeDocumentScanner()
+    private val scanRequests = ScanRequestBus()
+    private val saveScanDraftUseCase: SaveScanDraftUseCase = mockk()
+    private val analyticsHelper: AnalyticsHelper = mockk(relaxed = true)
 
     @Before
     fun setUp() {
@@ -80,43 +76,6 @@ class HomeViewModelTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
-    }
-
-    /** A scanner whose session ends when the test says so, and however the test says. */
-    private class FakeDocumentScanner : DocumentScanner {
-
-        override val capabilities =
-            ScannerCapabilities(
-                supportedOutputs = setOf(ScanOutputFormat.PDF),
-                supportsGalleryImport = true,
-                maxPages = null,
-                requiresCameraPermission = false,
-            )
-
-        private val session = CompletableDeferred<ScanOutcome>()
-
-        var started = 0
-            private set
-
-        var resumed = 0
-            private set
-
-        /** What a session that outlived the process turns out to have produced. */
-        var pending: ScanOutcome? = null
-
-        override suspend fun scan(request: ScanRequest): ScanOutcome {
-            started++
-            return session.await()
-        }
-
-        override suspend fun resumePendingScan(): ScanOutcome? {
-            resumed++
-            return pending
-        }
-
-        fun finishWith(outcome: ScanOutcome) {
-            session.complete(outcome)
-        }
     }
 
     private fun fakeDocument(uuid: String = "doc-1") =
@@ -145,15 +104,11 @@ class HomeViewModelTest {
         saveResult: Result<ContentRef> = Result.success(ContentRef("content://stored")),
         savedState: SavedStateHandle = SavedStateHandle(),
         pendingScan: ScanOutcome? = null,
-        scanRequests: ScanRequestBus = ScanRequestBus(),
     ): HomeViewModel {
-        documentScanner = FakeDocumentScanner().apply { pending = pendingScan }
-        this.scanRequests = scanRequests
-        observeDocumentsUseCase = mockk()
-        processDocumentsUseCase = mockk()
-        saveScanDraftUseCase = mockk()
-        stringProvider = mockk(relaxed = true)
-        analyticsHelper = mockk(relaxed = true)
+        documentScanner.pending = pendingScan
+        val observeDocumentsUseCase: ObserveDocumentsUseCase = mockk()
+        val processDocumentsUseCase: ProcessDocumentsUseCase = mockk()
+        val stringProvider: StringProvider = mockk(relaxed = true)
 
         every { observeDocumentsUseCase() } returns documents
         coEvery { processDocumentsUseCase(any(), any(), any(), any()) } answers { firstArg() }
@@ -354,9 +309,12 @@ class HomeViewModelTest {
             }
         }
 
-    /** The home screen widget reaches the app as an Intent, not as a UI intent. */
+    /**
+     * The home screen widget reaches the app as an Intent, not as a UI intent. Taking the request
+     * is what stops a second state holder acting on the same one.
+     */
     @Test
-    fun `an external scan request starts a scan`() =
+    fun `an external scan request starts a scan and is taken`() =
         runTest(testDispatcher) {
             val viewModel = createViewModel()
             advanceUntilIdle()
@@ -366,6 +324,7 @@ class HomeViewModelTest {
 
             assertEquals(1, documentScanner.started)
             assertTrue(viewModel.state.value.isScanning)
+            assertFalse("The request should have been taken", scanRequests.isPending.value)
         }
 
     /**
@@ -375,26 +334,11 @@ class HomeViewModelTest {
     @Test
     fun `a scan requested before the catalogue existed is honoured when it arrives`() =
         runTest(testDispatcher) {
-            val alreadyAsked = ScanRequestBus().apply { request() }
+            scanRequests.request()
 
-            val viewModel = createViewModel(scanRequests = alreadyAsked)
-            advanceUntilIdle()
-
-            assertEquals(1, documentScanner.started)
-            assertTrue(viewModel.state.value.isScanning)
-        }
-
-    /** Taking the request is what stops a second state holder acting on the same one. */
-    @Test
-    fun `an external scan request is only acted on once`() =
-        runTest(testDispatcher) {
             val viewModel = createViewModel()
             advanceUntilIdle()
 
-            scanRequests.request()
-            advanceUntilIdle()
-
-            assertFalse("The request should have been taken", scanRequests.isPending.value)
             assertEquals(1, documentScanner.started)
             assertTrue(viewModel.state.value.isScanning)
         }
@@ -462,4 +406,41 @@ class HomeViewModelTest {
 
             assertEquals(0, documentScanner.resumed)
         }
+
+    /** A scanner whose session ends when the test says so, and however the test says. */
+    private class FakeDocumentScanner : DocumentScanner {
+
+        override val capabilities =
+            ScannerCapabilities(
+                supportedOutputs = setOf(ScanOutputFormat.PDF),
+                supportsGalleryImport = true,
+                maxPages = null,
+                requiresCameraPermission = false,
+            )
+
+        private val session = CompletableDeferred<ScanOutcome>()
+
+        var started = 0
+            private set
+
+        var resumed = 0
+            private set
+
+        /** What a session that outlived the process turns out to have produced. */
+        var pending: ScanOutcome? = null
+
+        override suspend fun scan(request: ScanRequest): ScanOutcome {
+            started++
+            return session.await()
+        }
+
+        override suspend fun resumePendingScan(): ScanOutcome? {
+            resumed++
+            return pending
+        }
+
+        fun finishWith(outcome: ScanOutcome) {
+            session.complete(outcome)
+        }
+    }
 }

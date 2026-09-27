@@ -20,10 +20,11 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.composepdf.PdfSource
+import com.composepdf.LongDocument
 import com.composepdf.PdfViewer
 import com.composepdf.PdfViewerState
 import com.composepdf.rememberPdfViewerState
+import com.composepdf.waitUntilLoaded
 import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -137,8 +138,6 @@ class PdfOverlayScopeTest {
         }
     }
 
-    // ------------------------------------------------------------------ d3 additions
-
     @Test
     fun anElementKeptInsideSlidesAlongTheEdgeInsteadOfBeingCutOff() {
         show()
@@ -194,7 +193,7 @@ class PdfOverlayScopeTest {
         rule.setContent {
             state = rememberPdfViewerState()
             PdfViewer(
-                source = PdfSource.Asset("fixtures/long-320-pages.pdf"),
+                source = LongDocument,
                 state = state,
                 modifier = Modifier.fillMaxSize(),
                 overlay = {
@@ -222,8 +221,7 @@ class PdfOverlayScopeTest {
                 },
             )
         }
-        rule.waitUntil(timeoutMillis = 15_000) { state.isLoaded }
-        rule.waitForIdle()
+        rule.waitUntilLoaded { state }
     }
 
     private fun assertAnchoredAt(page: Int, position: Offset, alignment: Alignment) {

@@ -1,11 +1,8 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.pdfviewer.domain
+package com.bobbyesp.docucraft.feature.pdfviewer.domain.links
 
-import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.BlockReason
-import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
-import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.ResolveLinkUseCase
 import com.bobbyesp.documentcontent.NormalizedPoint
 import com.bobbyesp.documentcontent.NormalizedRect
 import com.bobbyesp.documentcontent.PageLink

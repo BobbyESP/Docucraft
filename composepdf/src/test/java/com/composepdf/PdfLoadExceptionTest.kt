@@ -1,9 +1,8 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.composepdf.state
+package com.composepdf
 
-import com.composepdf.PdfLoadException
 import com.composepdf.PdfLoadException.Reason
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -14,7 +13,7 @@ import org.junit.Test
 class PdfLoadExceptionTest {
 
     @Test
-    fun `a security exception is a permission while reading and a password while parsing`() {
+    fun aSecurityExceptionIsAPermissionWhileReadingAndAPasswordWhileParsing() {
         assertEquals(
             Reason.ACCESS_DENIED,
             PdfLoadException.whileReading(SecurityException("Permission Denial")).reason,
@@ -26,7 +25,7 @@ class PdfLoadExceptionTest {
     }
 
     @Test
-    fun `a missing file is not found`() {
+    fun aMissingFileIsNotFound() {
         assertEquals(
             Reason.NOT_FOUND,
             PdfLoadException.whileReading(FileNotFoundException("gone")).reason,
@@ -34,7 +33,7 @@ class PdfLoadExceptionTest {
     }
 
     @Test
-    fun `anything the renderer cannot read is damaged`() {
+    fun anythingTheRendererCannotReadIsDamaged() {
         assertEquals(
             Reason.DAMAGED,
             PdfLoadException.whileParsing(IOException("not in PDF format")).reason,
@@ -46,18 +45,18 @@ class PdfLoadExceptionTest {
     }
 
     @Test
-    fun `other reading failures are unknown`() {
+    fun otherReadingFailuresAreUnknown() {
         assertEquals(Reason.UNKNOWN, PdfLoadException.whileReading(IOException("disk")).reason)
     }
 
     @Test
-    fun `the original failure is kept as the cause`() {
+    fun theOriginalFailureIsKeptAsTheCause() {
         val cause = FileNotFoundException("gone")
         assertSame(cause, PdfLoadException.whileReading(cause).cause)
     }
 
     @Test
-    fun `an already classified failure is not classified again`() {
+    fun anAlreadyClassifiedFailureIsNotClassifiedAgain() {
         val classified = PdfLoadException(Reason.NOT_FOUND)
         assertSame(classified, PdfLoadException.whileParsing(classified))
         assertSame(classified, PdfLoadException.whileReading(classified))

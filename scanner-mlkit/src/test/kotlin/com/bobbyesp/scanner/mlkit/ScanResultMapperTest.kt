@@ -11,9 +11,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The decision table every scanner engine result goes through. Cancellation and the empty result
- * are regression tests: a cancelled scan used to be shown as an error, and a scan that produced
- * nothing was taken for a success.
+ * The decision table every scanner engine result goes through. A cancelled scan is not an error,
+ * and a scan that produced nothing is not a success.
  */
 class ScanResultMapperTest {
 

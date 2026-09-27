@@ -1,15 +1,10 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.composepdf.state
+package com.composepdf.internal.logic
 
 import android.util.Size
 import com.composepdf.PdfViewerState
-import com.composepdf.ScrollDirection
-import com.composepdf.internal.logic.PageLayoutSnapshot
-import com.composepdf.internal.logic.ResolvedViewerConfig
-import com.composepdf.internal.logic.ViewerViewportCoordinator
-import com.composepdf.internal.logic.ViewportMetrics
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -29,15 +24,7 @@ class ViewerViewportCoordinatorTest {
             ViewerViewportCoordinator(
                 state = state,
                 configProvider = { ResolvedViewerConfig() },
-                snapshotFactory = { pageSizes, viewport, _, pageSpacingPx, scrollDirection ->
-                    fakeSnapshot(
-                        pageCount = pageSizes.size,
-                        viewportWidth = viewport.width,
-                        viewportHeight = viewport.height,
-                        pageSpacingPx = pageSpacingPx,
-                        scrollDirection = scrollDirection,
-                    )
-                },
+                snapshotFactory = { _, viewport, _, _, _ -> threePages(viewport) },
             )
 
         coordinator.updatePageSizes(List(3) { Size(1, 1) })
@@ -63,17 +50,12 @@ class ViewerViewportCoordinatorTest {
             ViewerViewportCoordinator(
                 state = state,
                 configProvider = { ResolvedViewerConfig() },
-                snapshotFactory = { _, viewport, _, _, scrollDirection ->
-                    PageLayoutSnapshot(
-                        pageSizes = listOf(Size(1, 1), Size(1, 1)),
-                        pageOffsets = floatArrayOf(0f, 520f),
-                        pageHeights = floatArrayOf(500f, 500f),
-                        pageWidths = floatArrayOf(500f, 500f),
-                        totalDocumentSize = 1020f,
-                        corridorBreadth = 500f,
+                snapshotFactory = { _, viewport, _, _, _ ->
+                    layoutOf(
+                        widths = floatArrayOf(500f, 500f),
+                        heights = floatArrayOf(500f, 500f),
+                        spacing = 20f,
                         viewport = viewport,
-                        pageSpacingPx = 20f,
-                        scrollDirection = scrollDirection,
                     )
                 },
             )
@@ -95,17 +77,12 @@ class ViewerViewportCoordinatorTest {
             ViewerViewportCoordinator(
                 state = state,
                 configProvider = { config },
-                snapshotFactory = { _, viewport, _, _, scrollDirection ->
-                    PageLayoutSnapshot(
-                        pageSizes = listOf(Size(1, 1)),
-                        pageOffsets = floatArrayOf(0f),
-                        pageHeights = floatArrayOf(500f),
-                        pageWidths = floatArrayOf(250f),
-                        totalDocumentSize = 500f,
-                        corridorBreadth = 250f,
+                snapshotFactory = { _, viewport, _, _, _ ->
+                    layoutOf(
+                        widths = floatArrayOf(250f),
+                        heights = floatArrayOf(500f),
+                        spacing = 0f,
                         viewport = viewport,
-                        pageSpacingPx = 0f,
-                        scrollDirection = scrollDirection,
                     )
                 },
             )
@@ -116,23 +93,4 @@ class ViewerViewportCoordinatorTest {
         assertEquals(2f, coordinator.computeFitDocumentZoom(), 0.001f)
         assertEquals(2f, coordinator.computeFitPageZoom(0), 0.001f)
     }
-
-    private fun fakeSnapshot(
-        pageCount: Int,
-        viewportWidth: Float,
-        viewportHeight: Float,
-        pageSpacingPx: Float,
-        scrollDirection: ScrollDirection = ScrollDirection.VERTICAL,
-    ) =
-        PageLayoutSnapshot(
-            pageSizes = List(pageCount) { Size(1, 1) },
-            pageOffsets = floatArrayOf(0f, 520f, 1040f),
-            pageHeights = floatArrayOf(500f, 500f, 500f),
-            pageWidths = floatArrayOf(500f, 500f, 500f),
-            totalDocumentSize = 1540f,
-            corridorBreadth = 500f,
-            viewport = ViewportMetrics(viewportWidth, viewportHeight),
-            pageSpacingPx = pageSpacingPx,
-            scrollDirection = scrollDirection,
-        )
 }

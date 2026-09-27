@@ -13,11 +13,12 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.composepdf.LongDocument
 import com.composepdf.PdfLayoutSpec
-import com.composepdf.PdfSource
 import com.composepdf.PdfViewer
 import com.composepdf.PdfViewerState
 import com.composepdf.rememberPdfViewerState
+import com.composepdf.waitUntilLoaded
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -76,13 +77,12 @@ class PdfContentPaddingTest {
             density = LocalDensity.current
             state = rememberPdfViewerState()
             PdfViewer(
-                source = PdfSource.Asset("fixtures/long-320-pages.pdf"),
+                source = LongDocument,
                 state = state,
                 layout = PdfLayoutSpec(contentPadding = padding),
                 modifier = Modifier.fillMaxSize().onSizeChanged { viewerSize = it },
             )
         }
-        rule.waitUntil(timeoutMillis = 15_000) { state.isLoaded }
-        rule.waitForIdle()
+        rule.waitUntilLoaded { state }
     }
 }

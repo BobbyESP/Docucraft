@@ -1,10 +1,8 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.pdfviewer.data
+package com.bobbyesp.docucraft.feature.pdfviewer.data.content
 
-import com.bobbyesp.docucraft.feature.pdfviewer.data.content.WordSpan
-import com.bobbyesp.docucraft.feature.pdfviewer.data.content.splitPageText
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

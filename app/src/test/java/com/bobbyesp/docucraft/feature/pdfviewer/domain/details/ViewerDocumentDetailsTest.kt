@@ -1,14 +1,10 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.pdfviewer.domain
+package com.bobbyesp.docucraft.feature.pdfviewer.domain.details
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
-import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.DocumentFacts
-import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.DocumentFactsReader
-import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.ObserveViewerDocumentDetailsUseCase
-import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.ViewerDocumentDetails
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.DocumentText
 import com.bobbyesp.documentcontent.DocumentSource
@@ -25,9 +21,8 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * The details used to be rebuilt from what the viewer had left: a size recomputed from a
- * composable, a page count borrowed from the rendering engine. A catalogued document's now come
- * from the catalogue; only an external one is read from its file.
+ * A catalogued document's details come from the catalogue; only an external one's are read from its
+ * file.
  */
 class ViewerDocumentDetailsTest {
 
@@ -48,7 +43,7 @@ class ViewerDocumentDetailsTest {
         }
 
     @Test
-    fun aCataloguedDocumentsDetailsComeFromTheCatalogue() = runTest {
+    fun `a catalogued document's details come from the catalogue`() = runTest {
         val details = observeDetails(ViewerDocumentRef.Catalogued(UUID)).first()
 
         assertEquals(
@@ -59,7 +54,7 @@ class ViewerDocumentDetailsTest {
     }
 
     @Test
-    fun anUntitledDocumentIsNamedByItsFile() = runTest {
+    fun `an untitled document is named by its file`() = runTest {
         catalogue.value = scanned().copy(title = null)
 
         assertEquals(
@@ -69,14 +64,14 @@ class ViewerDocumentDetailsTest {
     }
 
     @Test
-    fun aDeletedDocumentHasNoDetails() = runTest {
+    fun `a deleted document has no details`() = runTest {
         catalogue.value = null
 
         assertNull(observeDetails(ViewerDocumentRef.Catalogued(UUID)).first())
     }
 
     @Test
-    fun anExternalDocumentsDetailsAreReadFromItsFile() = runTest {
+    fun `an external document's details are read from its file`() = runTest {
         val ref = ViewerDocumentRef.External(uri = EXTERNAL, displayName = "a.pdf")
 
         val details = observeDetails(ref).first()
@@ -90,7 +85,7 @@ class ViewerDocumentDetailsTest {
 
     /** Looking for text reads pages, so the details come out first without it, then with it. */
     @Test
-    fun whetherTheDocumentHasTextFollowsTheRestOfTheDetails() = runTest {
+    fun `whether the document has text follows the rest of the details`() = runTest {
         val emitted = observeDetails(ViewerDocumentRef.Catalogued(UUID)).take(2).toList()
 
         assertEquals(listOf(null, DocumentText.Embedded), emitted.map { it?.text })

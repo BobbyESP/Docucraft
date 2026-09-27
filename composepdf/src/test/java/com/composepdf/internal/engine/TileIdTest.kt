@@ -1,9 +1,8 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.composepdf.engine
+package com.composepdf.internal.engine
 
-import com.composepdf.internal.engine.TileId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
@@ -21,7 +20,7 @@ class TileIdTest {
                 intArrayOf(0x3FFFFF, 16, 0x3FFFF, 0x3FFFF),
                 intArrayOf(42, -8, 0, 7),
             )
-        for ((page, level, x, y) in cases.map { it }) {
+        for ((page, level, x, y) in cases) {
             val id = TileId.of(page, level, x, y)
             assertEquals(page, id.pageIndex)
             assertEquals(level, id.level)
@@ -48,12 +47,4 @@ class TileIdTest {
         assertThrows(IllegalArgumentException::class.java) { TileId.of(0, -17, 0, 0) }
         assertThrows(IllegalArgumentException::class.java) { TileId.of(0, 0, 0x40000, 0) }
     }
-
-    private operator fun IntArray.component1() = this[0]
-
-    private operator fun IntArray.component2() = this[1]
-
-    private operator fun IntArray.component3() = this[2]
-
-    private operator fun IntArray.component4() = this[3]
 }

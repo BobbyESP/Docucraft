@@ -18,6 +18,7 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
+import com.bobbyesp.docucraft.feature.pdfviewer.FakePageContentProvider
 import com.bobbyesp.docucraft.feature.pdfviewer.data.settings.InMemoryViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
@@ -31,19 +32,13 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerI
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
-import com.bobbyesp.documentcontent.ContentOrigin
+import com.bobbyesp.docucraft.feature.pdfviewer.textPage
 import com.bobbyesp.documentcontent.DocumentSelection
-import com.bobbyesp.documentcontent.DocumentSource
 import com.bobbyesp.documentcontent.NormalizedPoint
 import com.bobbyesp.documentcontent.NormalizedRect
-import com.bobbyesp.documentcontent.PageContentProvider
 import com.bobbyesp.documentcontent.PageContentResult
-import com.bobbyesp.documentcontent.PageContentSession
 import com.bobbyesp.documentcontent.PageLink
-import com.bobbyesp.documentcontent.PageText
 import com.bobbyesp.documentcontent.TextCaret
-import com.bobbyesp.documentcontent.TextLine
-import com.bobbyesp.documentcontent.TextWord
 import com.bobbyesp.scanner.ContentRef
 import io.mockk.every
 import io.mockk.mockk
@@ -86,17 +81,17 @@ class PdfViewerViewModelTest {
     private val settingsRepository: SettingsRepository = mockk {
         every { settings } returns preferences
     }
-    private var session = InMemoryViewerSessionSettings()
+    private val session = InMemoryViewerSessionSettings()
 
     // Page 0 "alpha beta", 1 "gamma", 2 a scan, 3 "delta epsilon", 4 "zeta".
     private val content =
-        FakeContent(
+        FakePageContentProvider(
             mapOf(
-                0 to text("alpha", "beta").copy(links = listOf(LINK)),
-                1 to text("gamma"),
+                0 to textPage("alpha", "beta").copy(links = listOf(LINK)),
+                1 to textPage("gamma"),
                 2 to PageContentResult.NoText,
-                3 to text("delta", "epsilon"),
-                4 to text("zeta"),
+                3 to textPage("delta", "epsilon"),
+                4 to textPage("zeta"),
             )
         )
 
@@ -113,7 +108,7 @@ class PdfViewerViewModelTest {
     // ---------------------------------------------------------------------------------- document
 
     @Test
-    fun aCataloguedDocumentIsLoadingUntilTheCatalogueAnswers() = runTest {
+    fun `a catalogued document is loading until the catalogue answers`() = runTest {
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
 
         assertEquals(ViewerDocumentState.Loading, viewModel.state.value.document)
@@ -127,7 +122,7 @@ class PdfViewerViewModelTest {
 
     /** Waiting and leaving are different answers: a deleted document must close, not spin. */
     @Test
-    fun aDeletedDocumentIsGoneRatherThanLoading() = runTest {
+    fun `a deleted document is gone rather than loading`() = runTest {
         catalogue.value = scanned()
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
         advanceUntilIdle()
@@ -139,7 +134,7 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun anExternalDocumentOpensStraightAway() = runTest {
+    fun `an external document opens straight away`() = runTest {
         val viewModel = viewModel(ViewerDocumentRef.External(uri = EXTERNAL, displayName = "a.pdf"))
         advanceUntilIdle()
 
@@ -151,7 +146,7 @@ class PdfViewerViewModelTest {
     // --------------------------------------------------------------------------------- settings
 
     @Test
-    fun changingTheFitModeIsKeptAndReported() = runTest {
+    fun `changing the fit mode is kept and reported`() = runTest {
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
         advanceUntilIdle()
 
@@ -162,7 +157,7 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun togglingNightModeReportsTheNewValue() = runTest {
+    fun `toggling night mode reports the new value`() = runTest {
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
         advanceUntilIdle()
 
@@ -174,7 +169,7 @@ class PdfViewerViewModelTest {
 
     /** Showing the document before its settings are known would lay it out twice. */
     @Test
-    fun theDocumentIsOnlyReadyOnceItsSettingsAreKnown() = runTest {
+    fun `the document is only ready once its settings are known`() = runTest {
         catalogue.value = scanned()
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
 
@@ -188,7 +183,7 @@ class PdfViewerViewModelTest {
 
     /** D2: the same document opened again in the same session keeps what the user chose. */
     @Test
-    fun aChangeIsRememberedForTheDocumentForTheSession() = runTest {
+    fun `a change is remembered for the document for the session`() = runTest {
         val first = viewModel(ViewerDocumentRef.Catalogued(UUID))
         advanceUntilIdle()
         first.onSendIntent(PdfViewerIntent.SetFitMode(ViewerFitMode.HEIGHT))
@@ -200,7 +195,7 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun aChangeIsAlsoKeptInTheEntrysSavedState() = runTest {
+    fun `a change is also kept in the entry's saved state`() = runTest {
         val handle = SavedStateHandle()
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID), handle)
         advanceUntilIdle()
@@ -213,12 +208,11 @@ class PdfViewerViewModelTest {
     }
 
     /**
-     * Found on the emulator: the document was changed in one entry, closed, and reopened in a new
-     * one, which showed the choice but had nothing in its own saved state — so a process death
-     * brought the defaults back.
+     * Changed in one entry, closed and reopened in another: the new entry shows the session's
+     * choice, and has to keep it too, or a process death would bring the defaults back.
      */
     @Test
-    fun aReopenedDocumentKeepsTheSessionsChoiceInItsOwnSavedState() = runTest {
+    fun `a reopened document keeps the session's choice in its own saved state`() = runTest {
         val first = viewModel(ViewerDocumentRef.Catalogued(UUID))
         advanceUntilIdle()
         first.onSendIntent(PdfViewerIntent.ToggleNightMode)
@@ -233,7 +227,7 @@ class PdfViewerViewModelTest {
 
     /** A document left alone follows the defaults, so there is nothing of its own to keep. */
     @Test
-    fun anUntouchedDocumentKeepsNothingInItsSavedState() = runTest {
+    fun `an untouched document keeps nothing in its saved state`() = runTest {
         val handle = SavedStateHandle()
         viewModel(ViewerDocumentRef.Catalogued(UUID), handle)
         advanceUntilIdle()
@@ -242,12 +236,11 @@ class PdfViewerViewModelTest {
     }
 
     /**
-     * A1: after a process death the session memory is empty, but the restored entry still knows
-     * what its document was showing, and that counts as the same session.
+     * After a process death the session memory is empty, but the restored entry still knows what
+     * its document was showing, and that counts as the same session.
      */
     @Test
-    fun afterAProcessDeathTheRestoredEntryKeepsItsSettings() = runTest {
-        session = InMemoryViewerSessionSettings()
+    fun `after a process death the restored entry keeps its settings`() = runTest {
         val restored =
             SavedStateHandle(
                 mapOf("viewer_fit_mode" to "PROPORTIONAL", "viewer_night_mode" to true)
@@ -265,7 +258,7 @@ class PdfViewerViewModelTest {
     // ---------------------------------------------------------------------------------- actions
 
     @Test
-    fun shareHandsTheDocumentsLocationToTheSharer() = runTest {
+    fun `share and open with hand the document's location over`() = runTest {
         catalogue.value = scanned()
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
         advanceUntilIdle()
@@ -279,7 +272,7 @@ class PdfViewerViewModelTest {
 
     /** A legacy file:// document is not re-exposed through the app's own provider. */
     @Test
-    fun aDocumentThatCannotLeaveTheAppIsNotHandedOff() = runTest {
+    fun `a document that cannot leave the app is not handed off`() = runTest {
         val viewModel =
             viewModel(
                 ViewerDocumentRef.External(uri = "file:///sdcard/a.pdf", displayName = "a.pdf")
@@ -295,7 +288,7 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun aFailedShareIsToldToTheUser() = runTest {
+    fun `a failed share is told to the user`() = runTest {
         every { sharer.share(any()) } throws IllegalStateException("no chooser")
         catalogue.value = scanned()
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
@@ -309,17 +302,14 @@ class PdfViewerViewModelTest {
 
     /** Printing needs the activity, so it is asked of the screen rather than done here. */
     @Test
-    fun printAsksTheScreenWithTheTitleAsJobName() = runTest {
+    fun `print asks the screen, with the title as job name`() = runTest {
         catalogue.value = scanned()
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
         advanceUntilIdle()
-        val effects = mutableListOf<PdfViewerEffect>()
-        val collector = launch { viewModel.effects.collect { effects += it } }
-        advanceUntilIdle()
+        val effects = collectEffects(viewModel)
 
         viewModel.onSendIntent(PdfViewerIntent.Print)
         advanceUntilIdle()
-        collector.cancel()
 
         assertEquals(PdfViewerEffect.Print(ContentRef(LOCATION), "Invoice"), effects.single())
     }
@@ -327,7 +317,7 @@ class PdfViewerViewModelTest {
     // ---------------------------------------------------------------------------------- text
 
     @Test
-    fun thePagesOnScreenAndEitherSideAreRead() = runTest {
+    fun `the pages on screen and either side are read`() = runTest {
         val viewModel = openedExternal()
 
         viewModel.onSendIntent(PdfViewerIntent.VisiblePagesChanged(1..1))
@@ -342,7 +332,7 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun movingOnForgetsPagesOffScreenButNotWhereTheSelectionEnds() = runTest {
+    fun `moving on forgets pages off screen, but not where the selection ends`() = runTest {
         val viewModel = openedExternal()
         viewModel.onSendIntent(PdfViewerIntent.VisiblePagesChanged(0..0))
         advanceUntilIdle()
@@ -355,27 +345,24 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun copyingReadsEveryPageOfTheSelectionThenLetsGoOfIt() = runTest {
+    fun `copying reads every page of the selection, then lets go of it`() = runTest {
         val viewModel = openedExternal()
         viewModel.onSendIntent(PdfViewerIntent.VisiblePagesChanged(0..0))
         advanceUntilIdle()
-        val effects = mutableListOf<PdfViewerEffect>()
-        val collector = launch { viewModel.effects.collect { effects += it } }
-        advanceUntilIdle()
+        val effects = collectEffects(viewModel)
 
         // From "eta" on page 0 to "del" on page 3, inside both words, over a scanned page that is
         // left out.
         viewModel.onSendIntent(PdfViewerIntent.Select(selection(0, 7, 3, 3)))
         viewModel.onSendIntent(PdfViewerIntent.CopySelection)
         advanceUntilIdle()
-        collector.cancel()
 
         assertEquals(PdfViewerEffect.CopyText("eta\ngamma\ndel"), effects.single())
         assertEquals(null, viewModel.state.value.selection)
     }
 
     @Test
-    fun selectAllTakesInTheWholeOfEveryPageTheSelectionTouches() = runTest {
+    fun `select all takes in the whole of every page the selection touches`() = runTest {
         val viewModel = openedExternal()
         viewModel.onSendIntent(PdfViewerIntent.Select(selection(0, 7, 1, 2)))
 
@@ -387,7 +374,7 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun aPageWithoutTextIsExplainedOnceADocument() = runTest {
+    fun `a page without text is explained once a document`() = runTest {
         val viewModel = openedExternal()
 
         viewModel.onSendIntent(PdfViewerIntent.NothingToSelect(TextUnavailable.ImageOnly))
@@ -403,7 +390,7 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun theContentSessionClosesWithTheViewModel() = runTest {
+    fun `the content session closes with the view model`() = runTest {
         val store = ViewModelStore()
         val viewModel =
             ViewModelProvider(
@@ -427,7 +414,7 @@ class PdfViewerViewModelTest {
     // ---------------------------------------------------------------------------------- links
 
     @Test
-    fun anExternalLinkIsShownBeforeAnythingOpens() = runTest {
+    fun `an external link is shown before anything opens`() = runTest {
         val viewModel = openedExternal()
         val effects = collectEffects(viewModel)
 
@@ -444,7 +431,7 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun openingThePreviewedLinkHandsItToTheScreenAndClosesThePreview() = runTest {
+    fun `opening the previewed link hands it to the screen and closes the preview`() = runTest {
         val viewModel = openedExternal()
         val effects = collectEffects(viewModel)
         viewModel.onSendIntent(PdfViewerIntent.TapLink(0, web("https://example.com"), 3))
@@ -462,7 +449,7 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun copyingTheLinkCopiesWhereItGoes() = runTest {
+    fun `copying the link copies where it goes`() = runTest {
         val viewModel = openedExternal()
         val effects = collectEffects(viewModel)
         viewModel.onSendIntent(PdfViewerIntent.TapLink(0, web("mailto:hola@example.com"), 3))
@@ -474,7 +461,7 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun aRefusedLinkIsShownButNeverOpened() = runTest {
+    fun `a refused link is shown but never opened`() = runTest {
         val viewModel = openedExternal()
         val effects = collectEffects(viewModel)
         viewModel.onSendIntent(PdfViewerIntent.TapLink(0, web("javascript:alert(1)"), 3))
@@ -487,7 +474,7 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun anInternalLinkIsFollowedAtOnceWithTheWayBack() = runTest {
+    fun `an internal link is followed at once, with the way back`() = runTest {
         val viewModel = openedExternal()
         val effects = collectEffects(viewModel)
         val position = NormalizedPoint(0f, 0.3f)
@@ -506,7 +493,7 @@ class PdfViewerViewModelTest {
     }
 
     @Test
-    fun tappingALinkLetsGoOfTheSelection() = runTest {
+    fun `tapping a link lets go of the selection`() = runTest {
         val viewModel = openedExternal()
         viewModel.onSendIntent(PdfViewerIntent.Select(selection(0, 0, 0, 3)))
 
@@ -515,21 +502,10 @@ class PdfViewerViewModelTest {
         assertEquals(null, viewModel.state.value.selection)
     }
 
-    private fun TestScope.collectEffects(viewModel: PdfViewerViewModel): List<PdfViewerEffect> {
-        val effects = mutableListOf<PdfViewerEffect>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.effects.collect { effects += it }
-        }
-        advanceUntilIdle()
-        return effects
-    }
-
-    private fun web(uri: String) = PageLink.External(listOf(AREA), uri)
-
     // ---------------------------------------------------------------------------------- analytics
 
     @Test
-    fun theScreenViewIsLoggedOncePerOpenedDocument() = runTest {
+    fun `the screen view is logged once per opened document`() = runTest {
         viewModel(ViewerDocumentRef.External(uri = EXTERNAL, displayName = "a.pdf"))
 
         assertEquals(1, analytics.screenViews)
@@ -558,51 +534,19 @@ class PdfViewerViewModelTest {
             advanceUntilIdle()
         }
 
+    private fun TestScope.collectEffects(viewModel: PdfViewerViewModel): List<PdfViewerEffect> {
+        val effects = mutableListOf<PdfViewerEffect>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.effects.collect { effects += it }
+        }
+        advanceUntilIdle()
+        return effects
+    }
+
+    private fun web(uri: String) = PageLink.External(listOf(AREA), uri)
+
     private fun selection(startPage: Int, startOffset: Int, endPage: Int, endOffset: Int) =
         DocumentSelection(TextCaret(startPage, startOffset), TextCaret(endPage, endOffset))
-
-    private fun text(vararg words: String) =
-        PageContentResult.Available(
-            text =
-                PageText(
-                    lines =
-                        listOf(
-                            TextLine(
-                                words.mapIndexed { i, word ->
-                                    TextWord(
-                                        word,
-                                        NormalizedRect(0.1f * i, 0.1f, 0.1f * i + 0.08f, 0.14f),
-                                    )
-                                }
-                            )
-                        ),
-                    origin = ContentOrigin.EMBEDDED,
-                ),
-            links = emptyList(),
-        )
-
-    private class FakeContent(private val pages: Map<Int, PageContentResult>) :
-        PageContentProvider {
-        val sessions = mutableListOf<Session>()
-        val opened: Int
-            get() = sessions.size
-
-        override val origin = ContentOrigin.EMBEDDED
-
-        override suspend fun open(document: DocumentSource): PageContentSession =
-            Session(pages).also { sessions += it }
-
-        class Session(private val pages: Map<Int, PageContentResult>) : PageContentSession {
-            var closed = false
-
-            override suspend fun page(index: Int): PageContentResult =
-                pages[index] ?: PageContentResult.Failed(IndexOutOfBoundsException("$index"))
-
-            override fun close() {
-                closed = true
-            }
-        }
-    }
 
     private fun scanned() =
         ScannedDocument(

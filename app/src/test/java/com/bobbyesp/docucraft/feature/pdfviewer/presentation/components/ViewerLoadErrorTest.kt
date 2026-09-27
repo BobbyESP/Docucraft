@@ -1,9 +1,8 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.pdfviewer.presentation
+package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components
 
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerLoadError
 import com.composepdf.PdfLoadException
 import com.composepdf.PdfLoadException.Reason
 import org.junit.Assert.assertEquals
