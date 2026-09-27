@@ -130,4 +130,24 @@
     <string name="document_text_recognized">Reconocido de las imágenes de las páginas</string>
     <string name="document_text_none">Ninguno: las páginas son imágenes</string>
     <string name="document_text_unsupported">No se puede leer en esta versión de Android</string>
+    <string name="link_preview_pane">Enlace</string>
+    <string name="link_open">Abrir</string>
+    <string name="link_copy">Copiar enlace</string>
+    <string name="link_insecure">Conexión no segura</string>
+    <string name="link_email">Escribir un correo</string>
+    <string name="link_email_action">Escribir</string>
+    <string name="link_call">Llamar</string>
+    <string name="link_blocked_title">Docucraft no abre este enlace</string>
+    <string name="link_blocked_scheme">Los enlaces de este tipo pueden ser peligrosos.</string>
+    <string name="link_blocked_malformed">El enlace no es válido.</string>
+    <string name="link_blocked_outside">Lleva a una página que este documento no tiene.</string>
+    <string name="link_no_app">No hay ninguna app para abrir este enlace</string>
+    <string name="link_went_to_page">Página %1$d</string>
+    <string name="link_back_to_page">Volver a la página %1$d</string>
+    <string name="link_a11y_web">Enlace: %1$s</string>
+    <string name="link_a11y_email">Enlace de correo: %1$s</string>
+    <string name="link_a11y_phone">Enlace de teléfono: %1$s</string>
+    <string name="link_a11y_page">Enlace a la página %1$d</string>
+    <string name="link_a11y_blocked">Enlace bloqueado</string>
+    <string name="link_a11y_action">Mostrar enlace</string>
 </resources>

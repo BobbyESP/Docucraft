@@ -137,6 +137,59 @@ class PdfOverlayScopeTest {
         }
     }
 
+    // ------------------------------------------------------------------ d3 additions
+
+    @Test
+    fun anElementKeptInsideSlidesAlongTheEdgeInsteadOfBeingCutOff() {
+        show()
+        rule.runOnIdle {}
+        val bounds = rule.onNodeWithTag("inside").fetchSemanticsNode().boundsInRoot
+        val viewer = rule.onRoot().fetchSemanticsNode().boundsInRoot
+
+        // Centred on the page's right edge, half of it would hang off the screen.
+        assertEquals(viewer.right, bounds.right, 1.5f)
+        assertEquals(with(rule.density) { 120.dp.toPx() }, bounds.width, 1.5f)
+    }
+
+    @Test
+    fun aCoveringElementMatchesItsAreaAndFollowsTheZoom() {
+        show()
+        assertCovers(Rect(0.25f, 0.25f, 0.75f, 0.5f))
+
+        rule.runOnIdle {
+            state.setZoom(2f)
+            // Zoomed in, the area is off screen; bring its page back into view.
+            state.scrollToPage(1)
+        }
+        rule.waitForIdle()
+        assertCovers(Rect(0.25f, 0.25f, 0.75f, 0.5f))
+    }
+
+    private fun assertCovers(area: Rect) {
+        val bounds = rule.onNodeWithTag("covering").fetchSemanticsNode().boundsInRoot
+        val viewer = rule.onRoot().fetchSemanticsNode().boundsInRoot
+        rule.runOnIdle {
+            val page = state.pageRectInViewer(1)!!
+            val expected =
+                Rect(
+                    page.left + area.left * page.width,
+                    page.top + area.top * page.height,
+                    page.left + area.right * page.width,
+                    page.top + area.bottom * page.height,
+                )
+            // Only the on-screen part is reported; compare the part both agree is visible.
+            val visible = expected.intersect(viewer)
+            assertTrue(
+                "expected $visible, covering $bounds",
+                (bounds.topLeft - visible.topLeft).getDistance() <= 1.5f,
+            )
+            assertTrue(
+                "expected $visible, covering $bounds",
+                (bounds.bottomRight - visible.bottomRight).getDistance() <= 1.5f,
+            )
+        }
+    }
+
     private fun show(anchor: Offset = Offset.Zero, alignment: Alignment = Alignment.Center) {
         rule.setContent {
             state = rememberPdfViewerState()
@@ -158,6 +211,14 @@ class PdfOverlayScopeTest {
                             .testTag("anchored")
                             .clickable { anchoredClicks++ }
                     )
+                    // A popup anchored at the page's right edge, kept inside the viewer.
+                    Box(
+                        Modifier.size(120.dp)
+                            .anchorTo(1, Offset(1f, 0.5f), Alignment.TopCenter, stayInside = true)
+                            .testTag("inside")
+                    )
+                    // The page's middle quarter, as a link's area would be covered.
+                    Box(Modifier.coverArea(1, Rect(0.25f, 0.25f, 0.75f, 0.5f)).testTag("covering"))
                 },
             )
         }

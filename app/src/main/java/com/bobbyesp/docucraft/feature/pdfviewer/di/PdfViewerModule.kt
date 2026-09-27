@@ -7,11 +7,14 @@ import android.app.Activity
 import com.bobbyesp.docucraft.feature.pdfviewer.data.actions.AndroidDocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.data.actions.AndroidDocumentPrinter
 import com.bobbyesp.docucraft.feature.pdfviewer.data.details.AndroidDocumentFactsReader
+import com.bobbyesp.docucraft.feature.pdfviewer.data.links.AndroidLinkOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.data.settings.InMemoryViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentPrinter
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.DocumentFactsReader
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.ObserveViewerDocumentDetailsUseCase
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkOpener
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.ResolveLinkUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.settings.ViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.DetectDocumentTextUseCase
@@ -31,6 +34,10 @@ import org.koin.dsl.module
  */
 val pdfViewerModule = module {
     single<DocumentOpener> { AndroidDocumentOpener(context = androidContext()) }
+
+    // Links open from the screen's activity, so that a Custom Tab stays in the app's task (D4).
+    factory<LinkOpener> { (activity: Activity) -> AndroidLinkOpener(activity) }
+    factory { ResolveLinkUseCase() }
 
     // Printing needs the screen's activity, so it is built per caller: `parametersOf(activity)`.
     factory<DocumentPrinter> { (activity: Activity) -> AndroidDocumentPrinter(activity) }
@@ -69,6 +76,7 @@ val pdfViewerModule = module {
             stringProvider = get(),
             analyticsHelper = get(),
             contentProvider = get(),
+            resolveLink = get(),
         )
     }
 

@@ -46,7 +46,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | c5 | Character-by-character selection, as in Google Drive *(added 2026-09-27)* | Medium | ✅ Done (2026-09-27) |
 | d1 | Enlaces en el proveedor + `ResolveLinkUseCase` | Bajo | ✅ Done (2026-09-27) |
 | d2 | Motor E3 (tap reclamable) + E5 (`animateScrollTo`) | Medio | ✅ Done (2026-09-27) |
-| d3 | D3 (aviso con dominio) + D4 (Custom Tabs) + accesibilidad | Medio | ⏳ |
+| d3 | D3 (aviso con dominio) + D4 (Custom Tabs) + accesibilidad | Medio | ✅ Done (2026-09-27) |
 | cierre | `AGENTS.md`, `docs/README.md`, verificación en dispositivo | Nulo | ⏳ |
 
 ---
@@ -1157,12 +1157,12 @@ enlace responde sin retraso apreciable. **Riesgo: medio.**
 
 ## Paso d3 · D3 + D4 + accesibilidad
 
-- [ ] Aviso anclado con el dominio (D3) y las acciones Abrir y Copiar enlace.
-- [ ] Dependencia `androidx.browser`; `CustomTabsLinkOpener` con la cadena Custom Tabs →
+- [x] Aviso anclado con el dominio (D3) y las acciones Abrir y Copiar enlace.
+- [x] Dependencia `androidx.browser`; `CustomTabsLinkOpener` con la cadena Custom Tabs →
   `ACTION_VIEW` → mensaje (D4); colores del `colorScheme`.
-- [ ] `<queries>` en el manifest (D4).
-- [ ] Enlaces internos: salto animado y snackbar «Volver a la página N».
-- [ ] Nodos semánticos virtuales para los enlaces.
+- [x] `<queries>` en el manifest (D4).
+- [x] Enlaces internos: salto animado y snackbar «Volver a la página N».
+- [x] Nodos semánticos virtuales para los enlaces.
 
 **Verificación**:
 - `https` abre una Custom Tab y atrás vuelve al visor;
@@ -1173,6 +1173,75 @@ enlace responde sin retraso apreciable. **Riesgo: medio.**
 - TalkBack llega a los enlaces y abre el aviso.
 
 **Riesgo: medio.**
+
+### Done — 2026-09-27
+
+**Tap → preview (D3).**
+- The screen's `PdfInteractionHandler` claims a tap on a link, using d2's E3, so it answers without
+  the double-tap wait. While text is selected it does not claim: that tap lets go of the selection.
+- The tap goes to the ViewModel (`TapLink`), which resolves it with `ResolveLinkUseCase`.
+  - An **internal link** is followed at once (`GoToPage`). The screen scrolls with
+    `animateScrollTo` and shows "Page N" with a "Back to page M" action. That action returns to
+    the exact point that was at the top of the content area, not just the page.
+  - **Any other link** becomes `linkPreview` in the state, and nothing opens yet.
+- The preview is a card anchored under the link (`anchorTo(stayInside = true)`), with the link's
+  area marked. It shows, depending on the link:
+  - web: the host (in ASCII) as the title, the URL beneath it, "Connection not secure" for `http`,
+    and **Copy link** and **Open**;
+  - email or phone: the address or number, with **Write** or **Call**;
+  - refused: why, with only **Copy link**, and nothing for a page outside the document.
+- Moving the document, tapping elsewhere or pressing Back closes it. Back does this through the
+  same single `NavigationBackHandler` as the selection: the preview first, then the selection.
+
+**Opening (D4).** `LinkOpener` is a domain port, and `AndroidLinkOpener` implements it, built per
+activity like the printer.
+- Web: a Custom Tab from the default browser, or any browser that offers them, with the bar
+  coloured from `colorScheme.surfaceContainer` and light or dark to match. If no browser offers
+  them: `ACTION_VIEW` with `CATEGORY_BROWSABLE`. With nothing at all: "No app can open this link".
+- Email: `ACTION_SENDTO`. Phone: `ACTION_DIAL`, which needs no permission and calls nothing by
+  itself.
+- `androidx.browser` 1.10.0, and `<queries>` for the Custom Tabs service, `VIEW` on `http` and
+  `https`, `SENDTO` on `mailto`, and `DIAL` on `tel`.
+
+**TalkBack.** Each link on the visible pages gets an invisible node over its area, using the new
+`coverArea`: a button described by where it leads ("Link: example.com", "Email link: …", "Phone
+link: …", "Link to page N", "Blocked link"), whose action opens the preview. The card is a pane
+with a heading.
+
+**Engine (E4 additions).**
+- `anchorTo(stayInside = true)` slides an element along the viewer's edge instead of letting it be
+  cut off. It uses the viewer's size from the engine, so it does not depend on the modifier order
+  (found by a test).
+- `Modifier.coverArea(page, area)` sizes and places an element over a page area. It is measured
+  from the page, so it re-measures as the document moves and never recomposes.
+
+**Verification.**
+- Tests, all green:
+  - `:app` unit: 193. The 6 new ViewModel tests cover the preview before anything opens, Open,
+    Copy, a refused link never opening, an internal link followed with the way back, and a link
+    tap letting go of the selection.
+  - `:composepdf` instrumented: 45, 1 skipped. The 2 new ones: an element kept inside slides along
+    the right edge; a covering element matches its area, zoomed or not.
+  - `PlatformPageContentProviderTest`: 14.
+- Emulator, `text-and-links.pdf`:
+  - `https`: preview with `example.com` and the full URL. Open gave a Chrome Custom Tab in the
+    viewer's own task (t110, on top of `PdfViewerActivity`), themed, and Back returned to the
+    viewer.
+  - `http`: "Connection not secure".
+  - `javascript:`: "Docucraft won't open this link", with no Open.
+  - `tel`: the dialler, with +34 600 00 00 00 typed in.
+  - `mailto`: Gmail opened.
+  - With Chrome disabled: "No app can open this link". Chrome was re-enabled afterwards.
+  - The preview closed on a scroll, on a tap elsewhere and on Back, and the viewer stayed open.
+  - TalkBack's nodes: all six links present with their descriptions. The dialler and Gmail checks
+    were driven through those nodes.
+- **Not checked on a device:**
+  - `ACTION_VIEW` with a browser that lacks Custom Tabs: the emulator has none.
+  - Internal links: the platform reports none (see step a). The ViewModel side is tested, and
+    `animateScrollTo` is tested in d2, but the "Back to page" notice has only been seen in code.
+  - A walk-through with TalkBack itself.
+
+**Behaviour change.** A tap on a link no longer shows or hides the bars: it opens the preview.
 
 ---
 

@@ -37,12 +37,25 @@ interface PdfOverlayScope : BoxScope {
      * [Alignment.Center] centres it on the point, [Alignment.TopCenter] hangs it below. For
      * selection handles, or a popup beside a link. It is not placed, so not shown, while the page
      * has no layout.
+     *
+     * @param stayInside Keeps the element within the viewer, sliding it along an edge rather than
+     *   letting it be cut off: for a popup, which must be read whole, and not for a handle, which
+     *   must stay on its point.
      */
     fun Modifier.anchorTo(
         pageIndex: Int,
         position: Offset,
         alignment: Alignment = Alignment.Center,
+        stayInside: Boolean = false,
     ): Modifier
+
+    /**
+     * Sizes and places this element to cover [area] of page [pageIndex], normalized to the page,
+     * following pan and zoom. For what has to match a region of the page rather than sit at a
+     * point: the nodes that let TalkBack reach the links on a page, for instance. Nothing is drawn
+     * or touched by it; the element decides that.
+     */
+    fun Modifier.coverArea(pageIndex: Int, area: Rect): Modifier
 }
 
 /**

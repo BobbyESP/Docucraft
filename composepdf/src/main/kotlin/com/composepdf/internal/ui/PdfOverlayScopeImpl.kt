@@ -14,6 +14,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import com.composepdf.PdfOverlayScope
@@ -47,9 +48,16 @@ internal class PdfOverlayScopeImpl(box: BoxScope, private val state: PdfViewerSt
         pageIndex: Int,
         position: Offset,
         alignment: Alignment,
+        stayInside: Boolean,
     ): Modifier =
         align(Alignment.TopStart).layout { measurable, constraints ->
             val placeable = measurable.measure(constraints)
+            // The viewer's size, from the engine: not from these constraints, which are the
+            // element's own if a size modifier comes before this one in the chain.
+            val room =
+                state.controller?.let {
+                    IntSize(it.viewportWidth.roundToInt(), it.viewportHeight.roundToInt())
+                } ?: IntSize(constraints.maxWidth, constraints.maxHeight)
             layout(placeable.width, placeable.height) {
                 val page = state.pageRectInViewer(pageIndex) ?: return@layout
                 val point =
@@ -65,7 +73,38 @@ internal class PdfOverlayScopeImpl(box: BoxScope, private val state: PdfViewerSt
                         IntSize.Zero,
                         layoutDirection,
                     )
-                placeable.place(point + lead)
+                val at = point + lead
+                placeable.place(
+                    if (stayInside) {
+                        IntOffset(
+                            at.x.coerceIn(0, (room.width - placeable.width).coerceAtLeast(0)),
+                            at.y.coerceIn(0, (room.height - placeable.height).coerceAtLeast(0)),
+                        )
+                    } else {
+                        at
+                    }
+                )
+            }
+        }
+
+    /**
+     * Measured, not only placed, from the page: its size changes with the zoom. Reading the page's
+     * bounds while measuring makes it measure again as the document moves, and never recompose.
+     */
+    override fun Modifier.coverArea(pageIndex: Int, area: Rect): Modifier =
+        align(Alignment.TopStart).layout { measurable, _ ->
+            val page = state.pageRectInViewer(pageIndex)
+            val width = page?.let { (area.width * it.width).roundToInt().coerceAtLeast(0) } ?: 0
+            val height = page?.let { (area.height * it.height).roundToInt().coerceAtLeast(0) } ?: 0
+            val placeable = measurable.measure(Constraints.fixed(width, height))
+            layout(width, height) {
+                if (page == null) return@layout
+                placeable.place(
+                    IntOffset(
+                        (page.left + area.left * page.width).roundToInt(),
+                        (page.top + area.top * page.height).roundToInt(),
+                    )
+                )
             }
         }
 }

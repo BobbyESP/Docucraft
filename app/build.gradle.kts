@@ -120,6 +120,9 @@ dependencies {
     // What is on a document's pages, behind a contract text recognition can implement too.
     implementation(project(":document-content-api"))
 
+    // Links from documents open in a Custom Tab, which stays in the app's task (D4).
+    implementation(libs.androidx.browser)
+
     // KotlinX
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)

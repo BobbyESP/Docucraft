@@ -20,6 +20,8 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.data.settings.InMemoryViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.ResolveLinkUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocumentUseCase
@@ -32,6 +34,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnava
 import com.bobbyesp.documentcontent.ContentOrigin
 import com.bobbyesp.documentcontent.DocumentSelection
 import com.bobbyesp.documentcontent.DocumentSource
+import com.bobbyesp.documentcontent.NormalizedPoint
 import com.bobbyesp.documentcontent.NormalizedRect
 import com.bobbyesp.documentcontent.PageContentProvider
 import com.bobbyesp.documentcontent.PageContentResult
@@ -52,6 +55,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -420,6 +424,108 @@ class PdfViewerViewModelTest {
         assertTrue(content.sessions.single().closed)
     }
 
+    // ---------------------------------------------------------------------------------- links
+
+    @Test
+    fun anExternalLinkIsShownBeforeAnythingOpens() = runTest {
+        val viewModel = openedExternal()
+        val effects = collectEffects(viewModel)
+
+        viewModel.onSendIntent(PdfViewerIntent.TapLink(0, web("https://a.b@example.com/x"), 3))
+        advanceUntilIdle()
+
+        val preview = viewModel.state.value.linkPreview!!
+        assertEquals(0, preview.page)
+        assertEquals(
+            LinkAction.OpenWeb("https://a.b@example.com/x", "example.com", true),
+            preview.action,
+        )
+        assertTrue("nothing opens from the tap itself", effects.isEmpty())
+    }
+
+    @Test
+    fun openingThePreviewedLinkHandsItToTheScreenAndClosesThePreview() = runTest {
+        val viewModel = openedExternal()
+        val effects = collectEffects(viewModel)
+        viewModel.onSendIntent(PdfViewerIntent.TapLink(0, web("https://example.com"), 3))
+
+        viewModel.onSendIntent(PdfViewerIntent.OpenPreviewedLink)
+        advanceUntilIdle()
+
+        assertEquals(
+            PdfViewerEffect.OpenLink(
+                LinkAction.OpenWeb("https://example.com", "example.com", true)
+            ),
+            effects.single(),
+        )
+        assertEquals(null, viewModel.state.value.linkPreview)
+    }
+
+    @Test
+    fun copyingTheLinkCopiesWhereItGoes() = runTest {
+        val viewModel = openedExternal()
+        val effects = collectEffects(viewModel)
+        viewModel.onSendIntent(PdfViewerIntent.TapLink(0, web("mailto:hola@example.com"), 3))
+
+        viewModel.onSendIntent(PdfViewerIntent.CopyPreviewedLink)
+        advanceUntilIdle()
+
+        assertEquals(PdfViewerEffect.CopyText("hola@example.com"), effects.single())
+    }
+
+    @Test
+    fun aRefusedLinkIsShownButNeverOpened() = runTest {
+        val viewModel = openedExternal()
+        val effects = collectEffects(viewModel)
+        viewModel.onSendIntent(PdfViewerIntent.TapLink(0, web("javascript:alert(1)"), 3))
+        assertFalse(viewModel.state.value.linkPreview!!.canOpen)
+
+        viewModel.onSendIntent(PdfViewerIntent.OpenPreviewedLink)
+        advanceUntilIdle()
+
+        assertTrue(effects.isEmpty())
+    }
+
+    @Test
+    fun anInternalLinkIsFollowedAtOnceWithTheWayBack() = runTest {
+        val viewModel = openedExternal()
+        val effects = collectEffects(viewModel)
+        val position = NormalizedPoint(0f, 0.3f)
+
+        viewModel.onSendIntent(
+            PdfViewerIntent.TapLink(
+                0,
+                PageLink.Internal(listOf(AREA), pageIndex = 2, position = position),
+                3,
+            )
+        )
+        advanceUntilIdle()
+
+        assertEquals(PdfViewerEffect.GoToPage(2, position, from = 0), effects.single())
+        assertEquals(null, viewModel.state.value.linkPreview)
+    }
+
+    @Test
+    fun tappingALinkLetsGoOfTheSelection() = runTest {
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.Select(selection(0, 0, 0, 3)))
+
+        viewModel.onSendIntent(PdfViewerIntent.TapLink(0, web("https://example.com"), 3))
+
+        assertEquals(null, viewModel.state.value.selection)
+    }
+
+    private fun TestScope.collectEffects(viewModel: PdfViewerViewModel): List<PdfViewerEffect> {
+        val effects = mutableListOf<PdfViewerEffect>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.effects.collect { effects += it }
+        }
+        advanceUntilIdle()
+        return effects
+    }
+
+    private fun web(uri: String) = PageLink.External(listOf(AREA), uri)
+
     // ---------------------------------------------------------------------------------- analytics
 
     @Test
@@ -444,6 +550,7 @@ class PdfViewerViewModelTest {
             stringProvider = stringProvider,
             analyticsHelper = analytics,
             contentProvider = content,
+            resolveLink = ResolveLinkUseCase(),
         )
 
     private fun TestScope.openedExternal(): PdfViewerViewModel =
@@ -533,6 +640,7 @@ class PdfViewerViewModelTest {
 
     private companion object {
         const val UUID = "doc-1"
+        val AREA = NormalizedRect(0.1f, 0.1f, 0.3f, 0.12f)
         val LINK = PageLink.External(listOf(NormalizedRect(0.1f, 0.1f, 0.2f, 0.12f)), "https://a.b")
         const val LOCATION = "content://com.bobbyesp.docucraft.fileprovider/documents/doc-1.pdf"
         const val EXTERNAL = "content://media/external/downloads/37"

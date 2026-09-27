@@ -213,4 +213,24 @@
     <string name="document_text_recognized">Recognized from the page images</string>
     <string name="document_text_none">None: the pages are images</string>
     <string name="document_text_unsupported">Can\'t be read on this Android version</string>
+    <string name="link_preview_pane">Link</string>
+    <string name="link_open">Open</string>
+    <string name="link_copy">Copy link</string>
+    <string name="link_insecure">Connection not secure</string>
+    <string name="link_email">Write an email</string>
+    <string name="link_email_action">Write</string>
+    <string name="link_call">Call</string>
+    <string name="link_blocked_title">Docucraft won\'t open this link</string>
+    <string name="link_blocked_scheme">Links of this kind can be harmful.</string>
+    <string name="link_blocked_malformed">The link isn\'t valid.</string>
+    <string name="link_blocked_outside">It leads to a page this document doesn\'t have.</string>
+    <string name="link_no_app">No app can open this link</string>
+    <string name="link_went_to_page">Page %1$d</string>
+    <string name="link_back_to_page">Back to page %1$d</string>
+    <string name="link_a11y_web">Link: %1$s</string>
+    <string name="link_a11y_email">Email link: %1$s</string>
+    <string name="link_a11y_phone">Phone link: %1$s</string>
+    <string name="link_a11y_page">Link to page %1$d</string>
+    <string name="link_a11y_blocked">Blocked link</string>
+    <string name="link_a11y_action">Show link</string>
 </resources>

@@ -6,10 +6,14 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.canBeHandedOff
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.BlockReason
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.bobbyesp.documentcontent.DocumentSelection
+import com.bobbyesp.documentcontent.NormalizedPoint
+import com.bobbyesp.documentcontent.NormalizedRect
 import com.bobbyesp.documentcontent.PageLink
 import com.bobbyesp.scanner.ContentRef
 
@@ -37,6 +41,8 @@ data class PdfViewerUiState(
     val pageLinks: Map<Int, List<PageLink>> = emptyMap(),
     /** The selected text, which may run over several pages. */
     val selection: DocumentSelection? = null,
+    /** The link tapped, shown before anything opens (D3); `null` when none is. */
+    val linkPreview: LinkPreview? = null,
 ) {
     /** The document, once there is everything needed to show it. */
     val readyDocument: BasicDocument?
@@ -67,7 +73,45 @@ sealed interface ViewerDocumentState {
     data class Open(val document: BasicDocument) : ViewerDocumentState
 }
 
+/**
+ * A tapped link, waiting for the reader to decide (D3): where it is, to anchor the preview to it,
+ * and what following it would do.
+ */
+data class LinkPreview(val page: Int, val area: NormalizedRect, val action: LinkAction) {
+    /** Whether "Open" is on offer: not for a link that was refused. */
+    val canOpen: Boolean
+        get() =
+            action is LinkAction.OpenWeb ||
+                action is LinkAction.ComposeEmail ||
+                action is LinkAction.Dial
+
+    /** What "Copy link" copies; `null` when there is nothing worth copying. */
+    val copyable: String?
+        get() =
+            when (action) {
+                is LinkAction.OpenWeb -> action.url
+                is LinkAction.ComposeEmail -> action.address
+                is LinkAction.Dial -> action.number
+                is LinkAction.Blocked ->
+                    action.target.takeUnless { action.reason == BlockReason.OutsideDocument }
+                is LinkAction.GoTo -> null
+            }
+}
+
 sealed interface PdfViewerIntent {
+    /**
+     * A link on [page] was tapped: an internal one is followed at once; any other is shown first.
+     *
+     * @param pageCount The document's, to tell an internal link that points past its end.
+     */
+    data class TapLink(val page: Int, val link: PageLink, val pageCount: Int) : PdfViewerIntent
+
+    data object OpenPreviewedLink : PdfViewerIntent
+
+    data object CopyPreviewedLink : PdfViewerIntent
+
+    data object DismissLinkPreview : PdfViewerIntent
+
     /** The pages on screen changed, and their text may be needed. */
     data class VisiblePagesChanged(val pages: IntRange) : PdfViewerIntent
 
@@ -95,6 +139,16 @@ sealed interface PdfViewerIntent {
 }
 
 sealed interface PdfViewerEffect {
+    /** Opening needs the activity (D4). */
+    data class OpenLink(val action: LinkAction) : PdfViewerEffect
+
+    /**
+     * An internal link, followed at once: scroll to [page] (and [position] on it), and offer the
+     * way back to [from], which is why no confirmation is asked.
+     */
+    data class GoToPage(val page: Int, val position: NormalizedPoint?, val from: Int) :
+        PdfViewerEffect
+
     /** The clipboard belongs to the UI. */
     data class CopyText(val text: String) : PdfViewerEffect
 

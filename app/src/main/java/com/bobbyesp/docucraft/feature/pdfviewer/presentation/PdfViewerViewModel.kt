@@ -17,10 +17,13 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.ResolveLinkUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDisplaySettingsUseCase
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.LinkPreview
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerEffect
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerUiState
@@ -31,6 +34,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnava
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.toTextState
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
 import com.bobbyesp.documentcontent.DocumentSource
+import com.bobbyesp.documentcontent.NormalizedRect
 import com.bobbyesp.documentcontent.PageContentProvider
 import com.bobbyesp.documentcontent.PageContentResult
 import com.bobbyesp.documentcontent.PageContentSession
@@ -66,6 +70,7 @@ class PdfViewerViewModel(
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
     private val contentProvider: PageContentProvider,
+    private val resolveLink: ResolveLinkUseCase,
 ) :
     BaseViewModel<PdfViewerIntent, PdfViewerUiState, PdfViewerEffect>(
         initialState = PdfViewerUiState()
@@ -114,6 +119,10 @@ class PdfViewerViewModel(
             PdfViewerIntent.ClearSelection -> setState { copy(selection = null) }
             PdfViewerIntent.CopySelection -> copySelection()
             is PdfViewerIntent.NothingToSelect -> tellOnce(intent.reason)
+            is PdfViewerIntent.TapLink -> tapLink(intent)
+            PdfViewerIntent.OpenPreviewedLink -> openPreviewedLink()
+            PdfViewerIntent.CopyPreviewedLink -> copyPreviewedLink()
+            PdfViewerIntent.DismissLinkPreview -> setState { copy(linkPreview = null) }
             is PdfViewerIntent.SetFitMode -> setFitMode(intent)
             PdfViewerIntent.ToggleNightMode -> toggleNightMode()
             PdfViewerIntent.Share -> handOff { documentSharer.share(it) }
@@ -179,6 +188,40 @@ class PdfViewerViewModel(
                 jobName = document.title ?: document.filename,
             )
         )
+    }
+
+    // ------------------------------------------------------------------ links
+
+    /**
+     * What a tap on a link does (D3). Nothing is opened from a tap: an external link is shown by
+     * its real destination first. An internal one is followed at once, since the way back is
+     * offered with it.
+     */
+    private fun tapLink(intent: PdfViewerIntent.TapLink) {
+        when (val action = resolveLink(intent.link, intent.pageCount)) {
+            is LinkAction.GoTo -> {
+                setState { copy(linkPreview = null) }
+                sendEffect(PdfViewerEffect.GoToPage(action.pageIndex, action.position, intent.page))
+            }
+            else -> {
+                val area = intent.link.bounds.reduce(NormalizedRect::union)
+                setState {
+                    copy(linkPreview = LinkPreview(intent.page, area, action), selection = null)
+                }
+            }
+        }
+    }
+
+    private fun openPreviewedLink() {
+        val preview = currentState.linkPreview ?: return
+        setState { copy(linkPreview = null) }
+        if (preview.canOpen) sendEffect(PdfViewerEffect.OpenLink(preview.action))
+    }
+
+    private fun copyPreviewedLink() {
+        val preview = currentState.linkPreview ?: return
+        setState { copy(linkPreview = null) }
+        preview.copyable?.let { sendEffect(PdfViewerEffect.CopyText(it)) }
     }
 
     // ------------------------------------------------------------------ text
