@@ -6,7 +6,10 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.canBeHandedOff
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import com.bobbyesp.documentcontent.DocumentSelection
 import com.bobbyesp.scanner.ContentRef
 
 /**
@@ -21,6 +24,13 @@ data class PdfViewerUiState(
      * document before they arrive would lay it out twice.
      */
     val display: ViewerDisplaySettings? = null,
+    /**
+     * The text of the pages near what is on screen, and of the pages the selection ends on. Read
+     * lazily, as the reader moves; a page missing here is not known yet.
+     */
+    val pageText: Map<Int, PageTextState> = emptyMap(),
+    /** The selected text, which may run over several pages. */
+    val selection: DocumentSelection? = null,
 ) {
     /** The document, once there is everything needed to show it. */
     val readyDocument: BasicDocument?
@@ -52,6 +62,21 @@ sealed interface ViewerDocumentState {
 }
 
 sealed interface PdfViewerIntent {
+    /** The pages on screen changed, and their text may be needed. */
+    data class VisiblePagesChanged(val pages: IntRange) : PdfViewerIntent
+
+    /** The selection is now [selection]: a long press chose a word, or a handle moved. */
+    data class Select(val selection: DocumentSelection) : PdfViewerIntent
+
+    data object SelectAll : PdfViewerIntent
+
+    data object ClearSelection : PdfViewerIntent
+
+    data object CopySelection : PdfViewerIntent
+
+    /** A long press found no text to select, for [reason]. */
+    data class NothingToSelect(val reason: TextUnavailable) : PdfViewerIntent
+
     data class SetFitMode(val fitMode: ViewerFitMode) : PdfViewerIntent
 
     data object ToggleNightMode : PdfViewerIntent
@@ -64,6 +89,9 @@ sealed interface PdfViewerIntent {
 }
 
 sealed interface PdfViewerEffect {
+    /** The clipboard belongs to the UI. */
+    data class CopyText(val text: String) : PdfViewerEffect
+
     /** Printing needs the activity, which the ViewModel does not hold. */
     data class Print(val document: ContentRef, val jobName: String) : PdfViewerEffect
 }

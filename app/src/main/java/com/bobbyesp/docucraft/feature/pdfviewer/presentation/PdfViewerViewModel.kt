@@ -4,6 +4,7 @@
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
@@ -24,8 +25,19 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerE
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerUiState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.SelectionInteraction
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.toTextState
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import com.bobbyesp.documentcontent.DocumentSource
+import com.bobbyesp.documentcontent.PageContentProvider
+import com.bobbyesp.documentcontent.PageContentSession
+import com.bobbyesp.documentcontent.TextSelection
 import com.bobbyesp.scanner.ContentRef
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 
 /**
  * The viewer's state holder, one per navigation entry (or per external document, in
@@ -37,6 +49,10 @@ import com.bobbyesp.scanner.ContentRef
  * Those settings follow decision D2: remembered per document for the session, in memory. The
  * entry's [SavedStateHandle] keeps a copy, because a process death and restore is still the same
  * session to the user (A1), and the memory does not survive it.
+ *
+ * It also holds what is needed to select and copy text: a content session on the document, opened
+ * on first need and closed with the ViewModel, the text of the pages near what is on screen, and
+ * the selection. Copying may need pages that are not near the screen any more, so it happens here.
  */
 class PdfViewerViewModel(
     private val ref: ViewerDocumentRef,
@@ -48,6 +64,7 @@ class PdfViewerViewModel(
     private val documentOpener: DocumentOpener,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
+    private val contentProvider: PageContentProvider,
 ) :
     BaseViewModel<PdfViewerIntent, PdfViewerUiState, PdfViewerEffect>(
         initialState = PdfViewerUiState()
@@ -81,8 +98,21 @@ class PdfViewerViewModel(
         }
     }
 
+    /** Opened on first need, for the document on screen. */
+    private var contentSession: Deferred<PageContentSession>? = null
+    private var loadingPages: Job? = null
+
+    /** What the reader has been told about pages without text, so they are told once a document. */
+    private val toldAbout = mutableSetOf<TextUnavailable>()
+
     override fun onHandleIntent(intent: PdfViewerIntent) {
         when (intent) {
+            is PdfViewerIntent.VisiblePagesChanged -> loadTextNear(intent.pages)
+            is PdfViewerIntent.Select -> setState { copy(selection = intent.selection) }
+            PdfViewerIntent.SelectAll -> selectAll()
+            PdfViewerIntent.ClearSelection -> setState { copy(selection = null) }
+            PdfViewerIntent.CopySelection -> copySelection()
+            is PdfViewerIntent.NothingToSelect -> tellOnce(intent.reason)
             is PdfViewerIntent.SetFitMode -> setFitMode(intent)
             PdfViewerIntent.ToggleNightMode -> toggleNightMode()
             PdfViewerIntent.Share -> handOff { documentSharer.share(it) }
@@ -148,6 +178,94 @@ class PdfViewerViewModel(
                 jobName = document.title ?: document.filename,
             )
         )
+    }
+
+    // ------------------------------------------------------------------ text
+
+    /**
+     * Reads the text of [visible] and the page either side, visible ones first, and forgets the
+     * rest: only what is on screen can be pressed. The pages the selection ends on are kept, since
+     * its handles sit on them. A newer call cancels an older one, so a fling only reads where it
+     * stops.
+     */
+    private fun loadTextNear(visible: IntRange) {
+        if (visible.isEmpty()) return
+        val wanted =
+            (visible + listOf(visible.first - 1, visible.last + 1)).filter { it >= 0 }.distinct()
+        loadingPages?.cancel()
+        loadingPages = launch {
+            setState {
+                val keep = wanted + listOfNotNull(selection?.start?.page, selection?.end?.page)
+                copy(pageText = pageText.filterKeys { it in keep })
+            }
+            for (page in wanted) {
+                if (page in currentState.pageText) continue
+                val text = session()?.page(page)?.toTextState() ?: return@launch
+                // A failure is not kept, so it is tried again next time.
+                if (text != PageTextState.Failed) {
+                    setState { copy(pageText = pageText + (page to text)) }
+                }
+            }
+        }
+    }
+
+    private fun selectAll() {
+        val selection = currentState.selection ?: return
+        launch {
+            val lastWords = selection.pages.associateWith { textOf(it)?.words?.lastIndex }
+            setState {
+                copy(selection = SelectionInteraction.selectAll(selection) { lastWords[it] })
+            }
+        }
+    }
+
+    /** The selected text, read page by page, which may mean reading pages no longer on screen. */
+    private fun copySelection() {
+        val selection = currentState.selection ?: return
+        launch {
+            val pages = selection.pages.associateWith { textOf(it) }
+            val text = selection.text { pages[it] }
+            if (text.isNotEmpty()) sendEffect(PdfViewerEffect.CopyText(text))
+            setState { copy(selection = null) }
+        }
+    }
+
+    private suspend fun textOf(page: Int): TextSelection? =
+        (currentState.pageText[page] as? PageTextState.Text)?.selection
+            ?: (session()?.page(page)?.toTextState() as? PageTextState.Text)?.selection
+
+    private fun tellOnce(reason: TextUnavailable) {
+        if (!toldAbout.add(reason)) return
+        val message =
+            when (reason) {
+                TextUnavailable.ImageOnly -> R.string.viewer_no_text_image
+                TextUnavailable.UnsupportedDevice -> R.string.viewer_no_text_unsupported
+            }
+        sendUiEvent(UiEvent.ShowMessage(stringProvider.get(message), NotificationType.Info))
+    }
+
+    /** The content session on the document on screen; `null` until there is one. */
+    private suspend fun session(): PageContentSession? {
+        val document = openDocument() ?: return null
+        val session =
+            contentSession
+                ?: viewModelScope
+                    .async {
+                        contentProvider.open(DocumentSource(document.uri)).also {
+                            openedSession = it
+                        }
+                    }
+                    .also { contentSession = it }
+        return session.await()
+    }
+
+    /** The session once open, to close with the ViewModel. */
+    private var openedSession: PageContentSession? = null
+
+    override fun onCleared() {
+        contentSession?.cancel()
+        openedSession?.close()
+        super.onCleared()
     }
 
     private fun openDocument(): BasicDocument? =

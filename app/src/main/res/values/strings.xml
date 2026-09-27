@@ -201,4 +201,16 @@
     <string name="viewer_error_damaged_desc">The file is damaged or isn\'t a PDF.</string>
     <string name="viewer_error_unknown">Something went wrong</string>
     <string name="viewer_error_unknown_desc">The document couldn\'t be loaded.</string>
+    <string name="viewer_no_text_image">This page is an image, such as a scan: it has no text to select.</string>
+    <string name="viewer_no_text_unsupported">Selecting text in PDFs needs Android 15 or later.</string>
+    <string name="viewer_text_copied">Text copied</string>
+    <string name="viewer_selection_announcement">Selected: %1$s</string>
+    <string name="viewer_selection_start_handle">Start of selection</string>
+    <string name="viewer_selection_end_handle">End of selection</string>
+    <string name="document_text">Text</string>
+    <string name="document_text_checking">Checking…</string>
+    <string name="document_text_embedded">Selectable</string>
+    <string name="document_text_recognized">Recognized from the page images</string>
+    <string name="document_text_none">None: the pages are images</string>
+    <string name="document_text_unsupported">Can\'t be read on this Android version</string>
 </resources>

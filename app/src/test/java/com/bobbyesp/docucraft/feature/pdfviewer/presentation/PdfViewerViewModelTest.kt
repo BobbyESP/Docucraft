@@ -4,6 +4,9 @@
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
@@ -24,6 +27,19 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDispl
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerEffect
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
+import com.bobbyesp.documentcontent.ContentOrigin
+import com.bobbyesp.documentcontent.DocumentSelection
+import com.bobbyesp.documentcontent.DocumentSource
+import com.bobbyesp.documentcontent.NormalizedRect
+import com.bobbyesp.documentcontent.PageContentProvider
+import com.bobbyesp.documentcontent.PageContentResult
+import com.bobbyesp.documentcontent.PageContentSession
+import com.bobbyesp.documentcontent.PageText
+import com.bobbyesp.documentcontent.TextLine
+import com.bobbyesp.documentcontent.TextPosition
+import com.bobbyesp.documentcontent.TextWord
 import com.bobbyesp.scanner.ContentRef
 import io.mockk.every
 import io.mockk.mockk
@@ -34,6 +50,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -65,6 +82,18 @@ class PdfViewerViewModelTest {
         every { settings } returns preferences
     }
     private var session = InMemoryViewerSessionSettings()
+
+    // Page 0 "alpha beta", 1 "gamma", 2 a scan, 3 "delta epsilon", 4 "zeta".
+    private val content =
+        FakeContent(
+            mapOf(
+                0 to text("alpha", "beta"),
+                1 to text("gamma"),
+                2 to PageContentResult.NoText,
+                3 to text("delta", "epsilon"),
+                4 to text("zeta"),
+            )
+        )
 
     @Before
     fun setUp() {
@@ -290,6 +319,101 @@ class PdfViewerViewModelTest {
         assertEquals(PdfViewerEffect.Print(ContentRef(LOCATION), "Invoice"), effects.single())
     }
 
+    // ---------------------------------------------------------------------------------- text
+
+    @Test
+    fun thePagesOnScreenAndEitherSideAreRead() = runTest {
+        val viewModel = openedExternal()
+
+        viewModel.onSendIntent(PdfViewerIntent.VisiblePagesChanged(1..1))
+        advanceUntilIdle()
+
+        assertEquals(setOf(0, 1, 2), viewModel.state.value.pageText.keys)
+        assertEquals(PageTextState.NoText, viewModel.state.value.pageText[2])
+        assertEquals("one session for the document", 1, content.opened)
+    }
+
+    @Test
+    fun movingOnForgetsPagesOffScreenButNotWhereTheSelectionEnds() = runTest {
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.VisiblePagesChanged(0..0))
+        advanceUntilIdle()
+        viewModel.onSendIntent(PdfViewerIntent.Select(selection(0, 0, 0, 1)))
+
+        viewModel.onSendIntent(PdfViewerIntent.VisiblePagesChanged(3..3))
+        advanceUntilIdle()
+
+        assertEquals(setOf(0, 2, 3, 4), viewModel.state.value.pageText.keys)
+    }
+
+    @Test
+    fun copyingReadsEveryPageOfTheSelectionThenLetsGoOfIt() = runTest {
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.VisiblePagesChanged(0..0))
+        advanceUntilIdle()
+        val effects = mutableListOf<PdfViewerEffect>()
+        val collector = launch { viewModel.effects.collect { effects += it } }
+        advanceUntilIdle()
+
+        // From "beta" on page 0 to "delta" on page 3, over a scanned page that is left out.
+        viewModel.onSendIntent(PdfViewerIntent.Select(selection(0, 1, 3, 0)))
+        viewModel.onSendIntent(PdfViewerIntent.CopySelection)
+        advanceUntilIdle()
+        collector.cancel()
+
+        assertEquals(PdfViewerEffect.CopyText("beta\ngamma\ndelta"), effects.single())
+        assertEquals(null, viewModel.state.value.selection)
+    }
+
+    @Test
+    fun selectAllTakesInTheWholeOfEveryPageTheSelectionTouches() = runTest {
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.Select(selection(0, 1, 1, 0)))
+
+        viewModel.onSendIntent(PdfViewerIntent.SelectAll)
+        advanceUntilIdle()
+
+        assertEquals(selection(0, 0, 1, 0), viewModel.state.value.selection)
+    }
+
+    @Test
+    fun aPageWithoutTextIsExplainedOnceADocument() = runTest {
+        val viewModel = openedExternal()
+
+        viewModel.onSendIntent(PdfViewerIntent.NothingToSelect(TextUnavailable.ImageOnly))
+        viewModel.onSendIntent(PdfViewerIntent.NothingToSelect(TextUnavailable.ImageOnly))
+        viewModel.onSendIntent(PdfViewerIntent.NothingToSelect(TextUnavailable.UnsupportedDevice))
+        advanceUntilIdle()
+        val events = mutableListOf<UiEvent>()
+        val collector = launch { viewModel.defaultEvents.collect { events += it } }
+        advanceUntilIdle()
+        collector.cancel()
+
+        assertEquals("once for each reason", 2, events.size)
+    }
+
+    @Test
+    fun theContentSessionClosesWithTheViewModel() = runTest {
+        val store = ViewModelStore()
+        val viewModel =
+            ViewModelProvider(
+                store,
+                object : ViewModelProvider.Factory {
+                    @Suppress("UNCHECKED_CAST")
+                    override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                        viewModel(ViewerDocumentRef.External(uri = EXTERNAL, displayName = "a.pdf"))
+                            as T
+                },
+            )[PdfViewerViewModel::class.java]
+        advanceUntilIdle()
+        viewModel.onSendIntent(PdfViewerIntent.VisiblePagesChanged(0..0))
+        advanceUntilIdle()
+
+        store.clear()
+
+        assertTrue(content.sessions.single().closed)
+    }
+
     // ---------------------------------------------------------------------------------- analytics
 
     @Test
@@ -313,7 +437,59 @@ class PdfViewerViewModelTest {
             documentOpener = opener,
             stringProvider = stringProvider,
             analyticsHelper = analytics,
+            contentProvider = content,
         )
+
+    private fun TestScope.openedExternal(): PdfViewerViewModel =
+        viewModel(ViewerDocumentRef.External(uri = EXTERNAL, displayName = "a.pdf")).also {
+            advanceUntilIdle()
+        }
+
+    private fun selection(startPage: Int, startWord: Int, endPage: Int, endWord: Int) =
+        DocumentSelection(TextPosition(startPage, startWord), TextPosition(endPage, endWord))
+
+    private fun text(vararg words: String) =
+        PageContentResult.Available(
+            text =
+                PageText(
+                    lines =
+                        listOf(
+                            TextLine(
+                                words.mapIndexed { i, word ->
+                                    TextWord(
+                                        word,
+                                        NormalizedRect(0.1f * i, 0.1f, 0.1f * i + 0.08f, 0.14f),
+                                    )
+                                }
+                            )
+                        ),
+                    origin = ContentOrigin.EMBEDDED,
+                ),
+            links = emptyList(),
+        )
+
+    private class FakeContent(private val pages: Map<Int, PageContentResult>) :
+        PageContentProvider {
+        val sessions = mutableListOf<Session>()
+        val opened: Int
+            get() = sessions.size
+
+        override val origin = ContentOrigin.EMBEDDED
+
+        override suspend fun open(document: DocumentSource): PageContentSession =
+            Session(pages).also { sessions += it }
+
+        class Session(private val pages: Map<Int, PageContentResult>) : PageContentSession {
+            var closed = false
+
+            override suspend fun page(index: Int): PageContentResult =
+                pages[index] ?: PageContentResult.Failed(IndexOutOfBoundsException("$index"))
+
+            override fun close() {
+                closed = true
+            }
+        }
+    }
 
     private fun scanned() =
         ScannedDocument(

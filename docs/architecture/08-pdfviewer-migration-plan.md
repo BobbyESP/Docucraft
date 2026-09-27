@@ -42,7 +42,7 @@ El orden sugerido —**(a)** viabilidad, **(b)** UI sin funciones nuevas, **(c)*
 | c1 | `:document-content-api` + `TextSelection` | Nulo | ✅ Done (2026-09-25) |
 | c2 | Proveedores nativo y compuesto + DI con OCR a `null` | Bajo | ✅ Done (2026-09-25), plus cross-page selection |
 | c3 | Motor E3 (long press reclamable) + E4 (overlay en coordenadas de página) | **Medio-alto** | ✅ Done (2026-09-25) |
-| c4 | UI de selección, portapapeles y degradación | Medio | ⏳ |
+| c4 | UI de selección, portapapeles y degradación | Medio | ✅ Done (2026-09-27) |
 | d1 | Enlaces en el proveedor + `ResolveLinkUseCase` | Bajo | ⏳ |
 | d2 | Motor E3 (tap reclamable) + E5 (`animateScrollTo`) | Medio | ⏳ |
 | d3 | D3 (aviso con dominio) + D4 (Custom Tabs) + accesibilidad | Medio | ⏳ |
@@ -791,7 +791,7 @@ Inspector). **Riesgo: medio-alto**, porque vuelve a tocar los gestos. Commit pro
   so it cannot turn into a pinch.
 - `onDragEnd()` always runs, from a `finally`, also when the gesture is cancelled.
 - If not claimed, the viewer's own `onLongPress` is called and the finger can still pan, as before.
-- `tapsClaim` is not here: tap claiming is d2.
+- `claimsTap` is not here: tap claiming is d2.
 
 Two small additions to `PdfViewerState`, which c4's auto-scroll needs:
 - `hitTest(position)`: a viewer point resolved as a tap there would be;
@@ -843,18 +843,98 @@ existing callers.
 
 ## Paso c4 · UI de selección, portapapeles y degradación
 
-- [ ] Extracción perezosa desde el ViewModel (visibles ±1, *debounce* en flings).
-- [ ] Resaltado, tiradores, `LocalTextToolbar` (Copiar, Seleccionar todo), `LocalClipboard`,
+- [x] Extracción perezosa desde el ViewModel (visibles ±1, *debounce* en flings).
+- [x] Resaltado, tiradores, `LocalTextToolbar` (Copiar, Seleccionar todo), `LocalClipboard`,
   confirmación propia por debajo de API 33.
-- [ ] *(added 2026-09-25)* Selection across pages: a handle dragged onto another page moves the
+- [x] *(added 2026-09-25)* Selection across pages: a handle dragged onto another page moves the
   selection's end there (`DocumentSelection`), the document scrolls when a handle nears the top or
   bottom edge, each visible page highlights its share, and copying loads every page in the range
   first.
-- [ ] Degradación: `NoText` y `Unsupported` con háptica y un aviso por documento.
-- [ ] «Texto: …» en detalles.
+- [x] Degradación: `NoText` y `Unsupported` con háptica y un aviso por documento.
+- [x] «Texto: …» en detalles.
 
 **Verificación**: copiar del PDF con texto y pegar en otra app; en el escaneado de Docucraft aparece
 el aviso una sola vez y sin errores; TalkBack anuncia la selección. **Riesgo: medio.**
+
+### Done — 2026-09-27
+
+**Where each piece lives.**
+- **Pure logic, JVM-tested.**
+  - `presentation/selection/SelectionInteraction` decides, from the pages whose text is known:
+    - what a long press does: select a word, leave the press to the viewer, say why there is no
+      text, or not claim it yet;
+    - what a drag selects: from the anchor to the nearest word, possibly on another page;
+    - where the handles go;
+    - what *Select all* covers.
+  - `PageTextState` is a page's text as selection sees it.
+- **ViewModel.**
+  - It opens a content session on first need and closes it in `onCleared`.
+  - It keeps the text of the visible pages ±1, plus the pages the selection ends on, and forgets
+    the rest.
+  - It holds the selection, so the selection survives rotation.
+  - It copies, reading pages no longer on screen if the selection runs through them. The text
+    reaches the screen as a `CopyText` effect, because the clipboard is UI.
+  - New intents: `VisiblePagesChanged`, `Select`, `SelectAll`, `ClearSelection`, `CopySelection`,
+    `NothingToSelect`.
+- **Screen.** It reports the visible pages after 150 ms of stillness, so a fling only reads where
+  it stops. It also provides:
+  - the long-press `PdfInteractionHandler` (E3), decided synchronously from the text already read;
+  - `TextSelectionLayer` in the overlay (E4): the highlight, two drop-shaped handles with 48 dp
+    targets, the system `TextToolbar`, and a live region for TalkBack;
+  - `SelectionDrag`, shared by the long-press drag and the handles, which scrolls the document at
+    the top and bottom edges of the content area. The speed grows with depth into a 56 dp zone,
+    up to 1200 dp/s.
+  - Back and a tap both let go of a selection first, through one `NavigationBackHandler` that is
+    enabled only while there is a selection.
+- **Degradation.**
+  - A long press on a page without text gives a rejection haptic and, once per document for each
+    reason, a notice: "This page is an image…" or "Selecting text in PDFs needs Android 15…".
+  - The press is not claimed, so the finger can still pan.
+- **Details.** `DetectDocumentTextUseCase` looks at the first 5 pages. The details come out at once
+  with "Text: Checking…", then with the answer: Selectable, Recognized, None, Unsupported or
+  unknown.
+
+**Decisions taken here.**
+- **Select all** selects the whole of every page the selection touches, not the whole document.
+  Copying a whole long document would mean measuring every word of it, about 0.1 ms a word.
+- Copying lets go of the selection.
+- A long press on a page whose text has not been read yet is not claimed. The visible pages ±1 are
+  read within about 150 ms of the document settling, well inside the long-press timeout, so in
+  practice the text is there.
+- **Night mode** highlights with `inversePrimary` at 45 %. The text-field selection colour is made
+  for light backgrounds and hardly showed on inverted pages, a problem found on the emulator.
+- The handle's drag point aims 4 dp above the handle's tip, inside the line, so the nearest line is
+  the line being pointed at. Handles report the finger in the viewer's coordinates, not their own,
+  which move under the finger as the selection changes.
+
+**Verification.**
+- **JVM tests.** `:app` has 168 unit tests, 24 of them new:
+  - `SelectionInteractionTest`: 11;
+  - `DetectDocumentTextUseCaseTest`: 6;
+  - `PdfViewerViewModelTest`: 6 new tests on the pages read and forgotten, copying across pages
+    past a scanned one, *Select all*, the notice given once, and the session closed with the
+    ViewModel;
+  - `ViewerDocumentDetailsTest`: 1 new test on the text row following the rest of the details.
+- **Emulator (API 37), `text-and-links.pdf`:**
+  - A long press on "prueba" and a drag over three lines gave one highlight per line, handles at
+    both ends, and the toolbar after release.
+  - Copy, then paste into Home's search field, gave exactly
+    `prueba de texto y enlaces.⏎Acentos: canción, año, pingüino.⏎Web segura:`, accents included.
+  - A drag from page 1's last line onto page 2 auto-scrolled once the finger reached the bottom
+    edge zone. The paste was page 1's last line, a line break, then page 2 in reading order.
+  - Dragging the end handle two lines down extended the selection to the aimed word. The toolbar
+    was hidden during the drag, and the document stayed still.
+  - A tap and Back each let go of the selection, and the viewer stayed open.
+  - Night mode: the highlight was readable after the fix.
+  - Details: "Text: Selectable".
+- **Emulator, `scanned-image-only.pdf`:**
+  - The notice appeared on the first long press and not on the second.
+  - Details: "None: the pages are images".
+- **Not checked on a device:**
+  - TalkBack reading the live region aloud: the node exists, but nobody walked it with TalkBack.
+  - The "Text copied" notice below API 33: the emulator is API 37.
+  - The `Unsupported` path below API 35: covered by the JVM tests and by c2's instrumented test of
+    the provider's fallback.
 
 ---
 

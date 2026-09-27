@@ -14,6 +14,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.DocumentFactsRead
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.ObserveViewerDocumentDetailsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.settings.ViewerSessionSettings
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.DetectDocumentTextUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDisplaySettingsUseCase
@@ -43,7 +44,15 @@ val pdfViewerModule = module {
 
     factory { ObserveViewerDocumentUseCase(observeDocument = get()) }
     single<DocumentFactsReader> { AndroidDocumentFactsReader(context = androidContext()) }
-    factory { ObserveViewerDocumentDetailsUseCase(observeDocument = get(), facts = get()) }
+    factory { DetectDocumentTextUseCase(provider = get()) }
+    factory {
+        val detectText: DetectDocumentTextUseCase = get()
+        ObserveViewerDocumentDetailsUseCase(
+            observeDocument = get(),
+            facts = get(),
+            detectText = { detectText(it) },
+        )
+    }
     factory { ObserveViewerDisplaySettingsUseCase(session = get(), settingsRepository = get()) }
     factory { UpdateViewerDisplaySettingsUseCase(session = get()) }
 
@@ -59,6 +68,7 @@ val pdfViewerModule = module {
             documentOpener = get(),
             stringProvider = get(),
             analyticsHelper = get(),
+            contentProvider = get(),
         )
     }
 

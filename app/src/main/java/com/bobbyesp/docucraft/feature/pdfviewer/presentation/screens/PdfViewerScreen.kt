@@ -3,6 +3,8 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens
 
+import android.content.ClipData
+import android.os.Build
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -30,18 +32,30 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
+import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
+import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentPrinter
@@ -52,27 +66,42 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.PdfFastS
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerErrorContent
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerLoadError
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.rememberViewerChromeState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.selection.TextSelectionLayer
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.selection.rememberSelectionDrag
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerTopBar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerEffect
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.ViewerPageRequests
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.LongPressOutcome
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.SelectionInteraction
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import com.bobbyesp.documentcontent.NormalizedPoint
 import com.composepdf.FitMode
+import com.composepdf.PdfInteractionHandler
 import com.composepdf.PdfLayoutSpec
 import com.composepdf.PdfSource
+import com.composepdf.PdfTapEvent
 import com.composepdf.PdfViewer
 import com.composepdf.PdfViewerDefaults
 import com.composepdf.PdfZoomSpec
 import com.composepdf.ScrollDirection
 import com.composepdf.rememberPdfViewerState
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalMaterial3Api::class,
+    FlowPreview::class,
+)
 @Composable
 fun PdfViewerScreen(
     viewModel: PdfViewerViewModel,
@@ -111,6 +140,67 @@ fun PdfViewerScreen(
     var topBarHeight by remember { mutableStateOf(0.dp) }
     var bottomBarHeight by remember { mutableStateOf(0.dp) }
 
+    // ---------------------------------------------------------------- text selection
+
+    // The text of the pages on screen is read as they arrive; a fling only reads where it stops.
+    LaunchedEffect(pdfViewerState) {
+        snapshotFlow { pdfViewerState.visiblePages }
+            .distinctUntilChanged()
+            .debounce(VisiblePagesSettle)
+            .collect { viewModel.onSendIntent(PdfViewerIntent.VisiblePagesChanged(it)) }
+    }
+
+    val selectionDrag = rememberSelectionDrag(pdfViewerState)
+    val haptics = LocalHapticFeedback.current
+    val latestPageText by rememberUpdatedState(state.pageText)
+    val selectionHandler =
+        remember(selectionDrag, viewModel, haptics) {
+            object : PdfInteractionHandler {
+                // Decided at once, from the text already read: a long press cannot wait.
+                override fun onLongPress(event: PdfTapEvent): Boolean {
+                    val page = event.pageIndex ?: return false
+                    val at = event.pagePosition ?: return false
+                    return when (
+                        val outcome =
+                            SelectionInteraction.longPress(
+                                latestPageText,
+                                page,
+                                NormalizedPoint(at.x, at.y),
+                            )
+                    ) {
+                        is LongPressOutcome.Select -> {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            viewModel.onSendIntent(PdfViewerIntent.Select(outcome.selection))
+                            selectionDrag.start(
+                                anchor = outcome.selection.start,
+                                current = outcome.selection,
+                                at = event.position,
+                            )
+                            true
+                        }
+                        is LongPressOutcome.NoText -> {
+                            haptics.performHapticFeedback(HapticFeedbackType.Reject)
+                            viewModel.onSendIntent(PdfViewerIntent.NothingToSelect(outcome.reason))
+                            false
+                        }
+                        LongPressOutcome.NoWord,
+                        LongPressOutcome.NotReady -> false
+                    }
+                }
+
+                override fun onDrag(event: PdfTapEvent) = selectionDrag.moveTo(event.position)
+
+                override fun onDragEnd() = selectionDrag.end()
+            }
+        }
+
+    // Back lets go of the selection before it leaves the viewer.
+    NavigationBackHandler(
+        state = rememberNavigationEventState(currentInfo = NavigationEventInfo.None),
+        isBackEnabled = state.selection != null,
+        onBackCompleted = { viewModel.onSendIntent(PdfViewerIntent.ClearSelection) },
+    )
+
     // A document that failed cannot be tapped to bring the bars back, and they hold the way out.
     LaunchedEffect(pdfViewerState.error) { if (pdfViewerState.error != null) chrome.show() }
 
@@ -145,7 +235,29 @@ fun PdfViewerScreen(
                             .verticalScroll(rememberScrollState()),
                 )
             },
-            onTap = { chrome.toggle() },
+            // A tap lets go of a selection; otherwise it shows or hides the bars.
+            onTap = {
+                if (state.selection != null) {
+                    viewModel.onSendIntent(PdfViewerIntent.ClearSelection)
+                } else {
+                    chrome.toggle()
+                }
+            },
+            interactionHandler = selectionHandler,
+            overlay = {
+                TextSelectionLayer(
+                    state = pdfViewerState,
+                    pages = state.pageText,
+                    selection = state.selection,
+                    drag = selectionDrag,
+                    contentTop = topBarHeight,
+                    contentBottomInset = bottomBarHeight,
+                    nightMode = display.nightMode,
+                    onSelect = { viewModel.onSendIntent(PdfViewerIntent.Select(it)) },
+                    onCopy = { viewModel.onSendIntent(PdfViewerIntent.CopySelection) },
+                    onSelectAll = { viewModel.onSendIntent(PdfViewerIntent.SelectAll) },
+                )
+            },
             modifier = Modifier.fillMaxSize(),
         )
 
@@ -264,11 +376,22 @@ private fun HandlePdfViewerEffects(viewModel: PdfViewerViewModel) {
     val activity = requireNotNull(LocalActivity.current) { "The PDF viewer needs an activity" }
     val printer: DocumentPrinter = koinInject { parametersOf(activity) }
     val notifications = LocalNotificationsService.current
+    val clipboard = LocalClipboard.current
+    val copied = stringResource(R.string.viewer_text_copied)
 
     LaunchedEffect(viewModel, printer) {
         viewModel.effects.collectLatest { effect ->
             when (effect) {
                 is PdfViewerEffect.Print -> printer.print(effect.document, effect.jobName)
+                is PdfViewerEffect.CopyText -> {
+                    clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(copied, effect.text)))
+                    // From Android 13 the system confirms a copy itself.
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                        notifications.show(
+                            InAppNotification(message = copied, type = NotificationType.Success)
+                        )
+                    }
+                }
             }
         }
     }
@@ -292,6 +415,9 @@ private fun ViewerFitMode.toEngine(): FitMode =
         ViewerFitMode.BOTH -> FitMode.BOTH
         ViewerFitMode.PROPORTIONAL -> FitMode.PROPORTIONAL
     }
+
+/** How long the pages on screen must stay put before their text is read. */
+private val VisiblePagesSettle = 150.milliseconds
 
 /** Each zoom button press scales by this much, animated. */
 private const val ZoomStep = 1.25f

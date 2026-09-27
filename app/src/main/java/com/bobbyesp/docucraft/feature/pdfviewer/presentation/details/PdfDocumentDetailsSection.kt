@@ -40,6 +40,7 @@ import com.bobbyesp.docucraft.core.presentation.navigation.overlay.LocalOverlayC
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPresentation
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlaySceneStrategy
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.ViewerDocumentDetails
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.DocumentText
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -136,6 +137,19 @@ private fun DetailRows(details: ViewerDocumentDetails) {
     DetailRow(
         label = stringResource(R.string.file_size),
         value = details.sizeBytes?.let { Formatter.formatShortFileSize(context, it) } ?: unknown,
+    )
+    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+    DetailRow(
+        label = stringResource(R.string.document_text),
+        value =
+            when (details.text) {
+                null -> stringResource(R.string.document_text_checking)
+                DocumentText.Embedded -> stringResource(R.string.document_text_embedded)
+                DocumentText.Recognized -> stringResource(R.string.document_text_recognized)
+                DocumentText.None -> stringResource(R.string.document_text_none)
+                DocumentText.Unsupported -> stringResource(R.string.document_text_unsupported)
+                DocumentText.Unknown -> unknown
+            },
     )
     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
     DetailRow(

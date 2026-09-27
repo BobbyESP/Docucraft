@@ -10,11 +10,15 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.DocumentFactsRead
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.ObserveViewerDocumentDetailsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.ViewerDocumentDetails
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.DocumentText
+import com.bobbyesp.documentcontent.DocumentSource
 import com.bobbyesp.scanner.ContentRef
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -36,7 +40,12 @@ class ViewerDocumentDetailsTest {
         readLocations += location
         DocumentFacts(sizeBytes = 2048L, pageCount = 7)
     }
-    private val observeDetails = ObserveViewerDocumentDetailsUseCase(observeDocument, facts)
+    private val detected = mutableListOf<DocumentSource>()
+    private val observeDetails =
+        ObserveViewerDocumentDetailsUseCase(observeDocument, facts) { document ->
+            detected += document
+            DocumentText.Embedded
+        }
 
     @Test
     fun aCataloguedDocumentsDetailsComeFromTheCatalogue() = runTest {
@@ -77,6 +86,15 @@ class ViewerDocumentDetailsTest {
             details,
         )
         assertEquals(listOf(ContentRef(EXTERNAL)), readLocations)
+    }
+
+    /** Looking for text reads pages, so the details come out first without it, then with it. */
+    @Test
+    fun whetherTheDocumentHasTextFollowsTheRestOfTheDetails() = runTest {
+        val emitted = observeDetails(ViewerDocumentRef.Catalogued(UUID)).take(2).toList()
+
+        assertEquals(listOf(null, DocumentText.Embedded), emitted.map { it?.text })
+        assertEquals(listOf(DocumentSource(scanned().location.value)), detected)
     }
 
     private fun scanned() =
