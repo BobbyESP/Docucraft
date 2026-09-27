@@ -21,7 +21,6 @@
     <string name="doc_deleted_successfully">文档已成功删除</string>
     <string name="confirm">确认</string>
     <string name="title">标题</string>
-    <string name="doc_name_or_description">文档名称或描述</string>
     <string name="share">分享</string>
     <string name="scan">扫描</string>
     <string name="doc_modify_details_description">更新下面的文档标题和描述以反映其内容和详情。</string>

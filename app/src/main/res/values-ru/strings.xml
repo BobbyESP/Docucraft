@@ -8,7 +8,6 @@
     <string name="clear_search">Очистить поиск</string>
     <string name="on">Вкл</string>
     <string name="doc_open_in_viewer">Открыть документ в просмотрщике</string>
-    <string name="doc_name_or_description">Название или описание документа</string>
     <string name="results">Результаты</string>
     <string name="clear_filters">Очистить фильтры</string>
     <string name="file_icon">Значок файла</string>

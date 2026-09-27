@@ -3,4 +3,8 @@
         <item quantity="one">%d página</item>
         <item quantity="other">%d páginas</item>
     </plurals>
+    <plurals name="doc_n_documents">
+        <item quantity="one">%d documento</item>
+        <item quantity="other">%d documentos</item>
+    </plurals>
 </resources>

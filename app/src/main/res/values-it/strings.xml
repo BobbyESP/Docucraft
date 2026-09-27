@@ -25,7 +25,6 @@
     <string name="app_tagline">Scansiona facilmente i tuoi documenti con l\'AI</string>
     <string name="results">Risultati</string>
     <string name="file_icon">Icona file</string>
-    <string name="doc_name_or_description">Nome o descrizione del documento</string>
     <string name="doc_save">Salva documento</string>
     <string name="save">Salva</string>
     <string name="exit_search">Esci dalla ricerca</string>

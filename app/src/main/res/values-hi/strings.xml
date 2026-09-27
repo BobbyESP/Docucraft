@@ -17,7 +17,6 @@
     <string name="filter">फ़िल्टर</string>
     <string name="doc_saved_successfully">दस्तावेज़ सफलतापूर्वक सहेजा गया है</string>
     <string name="doc_delete_warning_message">आप अपने डिवाइस और ऐप डेटाबेस से %1$s को हटाने वाले हैं।\n\nइसमें %2$s पृष्ठ हैं और इसका आकार %3$s है।\n\nक्या आप निश्चित रूप से इसे हटाना चाहते हैं?</string>
-    <string name="doc_name_or_description">दस्तावेज़ का नाम या विवरण</string>
     <string name="date">दिनांक</string>
     <string name="more_options">अधिक विकल्प</string>
     <string name="scan">स्कैन करें</string>

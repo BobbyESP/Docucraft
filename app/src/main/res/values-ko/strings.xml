@@ -8,7 +8,6 @@
     <string name="doc_scan_new">새 문서 스캔</string>
     <string name="date">날짜</string>
     <string name="off">꺼짐</string>
-    <string name="doc_name_or_description">문서 이름 또는 설명</string>
     <string name="page_count">페이지 수</string>
     <string name="issue_sharing_doc">문서를 공유하는 데 문제가 발생했습니다.</string>
     <string name="cancel">취소</string>

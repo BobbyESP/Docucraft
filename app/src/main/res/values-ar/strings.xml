@@ -19,7 +19,6 @@
     <string name="doc_save_error_with_reason">حدث خطأ أثناء حفظ المستند: %1$s</string>
     <string name="delete">حذف</string>
     <string name="exit_search">الخروج من البحث</string>
-    <string name="doc_name_or_description">اسم المستند أو الوصف</string>
     <string name="on">تشغيل</string>
     <string name="sort_ascending">فرز تصاعدي</string>
     <string name="filter">تصفية</string>

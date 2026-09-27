@@ -38,7 +38,6 @@
     <string name="doc_modify_details">Modifier les détails du document</string>
     <string name="scan_cancelled">Processus de numérisation annulé</string>
     <string name="results">Résultats</string>
-    <string name="doc_name_or_description">Nom ou description du document</string>
     <string name="share">Partager</string>
     <string name="doc_scan_new">Scanner un nouveau document</string>
     <string name="date">Date</string>

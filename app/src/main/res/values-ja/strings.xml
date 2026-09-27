@@ -38,7 +38,6 @@
     <string name="title">タイトル</string>
     <string name="scan_cancelled">スキャン処理がキャンセルされました</string>
     <string name="doc_open_in_viewer">ドキュメントをビューアで開く</string>
-    <string name="doc_name_or_description">ドキュメント名または説明</string>
     <string name="doc_saving_cancelled">保存プロセスがキャンセルされました</string>
     <string name="no_description">説明なし</string>
     <string name="description">説明</string>

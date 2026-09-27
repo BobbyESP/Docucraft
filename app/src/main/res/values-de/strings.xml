@@ -25,7 +25,6 @@
     <string name="date">Datum</string>
     <string name="cancel">Abbrechen</string>
     <string name="more_options">Weitere Optionen</string>
-    <string name="doc_name_or_description">Dokumentname oder Beschreibung</string>
     <string name="sort_ascending">Aufsteigend sortieren</string>
     <string name="clear_search">Suche löschen</string>
     <string name="error_loading_docs">Fehler beim Laden der Dokumente</string>

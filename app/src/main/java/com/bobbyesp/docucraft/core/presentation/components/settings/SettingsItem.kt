@@ -48,14 +48,15 @@ data class SettingsItem(
  * that round further while pressed, and colours and type taken from the list tokens rather than set
  * here, so dynamic colour and contrast levels reach it untouched.
  *
- * @param shapes where the item sits in its group; see [settingsItemShapes].
+ * @param shapes where the item sits in its group; see
+ *   [DocucraftShapeDefaults.segmentedListItemShapes].
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsItem(
     item: SettingsItem,
     modifier: Modifier = Modifier,
-    shapes: ListItemShapes = settingsItemShapes(index = 0, count = 1),
+    shapes: ListItemShapes = DocucraftShapeDefaults.segmentedListItemShapes(index = 0, count = 1),
 ) {
     SegmentedListItem(
         onClick = item.onClick,
@@ -90,30 +91,15 @@ fun SettingsGroup(items: ImmutableList<SettingsItem>, modifier: Modifier = Modif
             SettingsItem(
                 item = item,
                 modifier = Modifier.fillMaxWidth(),
-                shapes = settingsItemShapes(index = index, count = items.size),
+                shapes =
+                    DocucraftShapeDefaults.segmentedListItemShapes(
+                        index = index,
+                        count = items.size,
+                    ),
             )
         }
     }
 }
-
-/**
- * The resting shape for the item at [index] of [count], with the list's pressed, focused and
- * hovered shapes on top.
- *
- * Not [ListItemDefaults.segmentedShapes]: its outer corners are the list token's, a step smaller
- * than the [DocucraftShapeDefaults] ones every other grouped list in the app uses.
- */
-@Composable
-fun settingsItemShapes(index: Int, count: Int): ListItemShapes =
-    ListItemDefaults.shapes(
-        shape =
-            when {
-                count == 1 -> DocucraftShapeDefaults.independentListItemShape
-                index == 0 -> DocucraftShapeDefaults.topListItemShape
-                index == count - 1 -> DocucraftShapeDefaults.bottomListItemShape
-                else -> DocucraftShapeDefaults.middleListItemShape
-            }
-    )
 
 /** The icon on a tonal disc, the paired container and content roles keeping it legible. */
 @Composable

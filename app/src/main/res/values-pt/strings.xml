@@ -2,7 +2,6 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
     <string name="date">Data</string>
-    <string name="doc_name_or_description">Nome ou descrição do documento</string>
     <string name="doc_save_error_with_reason">Ocorreu um erro ao salvar o documento: %1$s</string>
     <string name="doc_share">Compartilhar documento</string>
     <string name="no_description">Sem descrição</string>

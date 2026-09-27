@@ -46,7 +46,6 @@
     <string name="edit_fields">Velden bewerken</string>
     <string name="doc_save_error_with_reason">Er is een fout opgetreden bij het opslaan van het document: %1$s</string>
     <string name="unknown_error">Onbekende fout</string>
-    <string name="doc_name_or_description">Documentnaam of beschrijving</string>
     <string name="page_count">Aantal pagina\'s</string>
     <string name="save">Opslaan</string>
     <string name="doc_deleted_successfully">Het document is succesvol verwijderd</string>

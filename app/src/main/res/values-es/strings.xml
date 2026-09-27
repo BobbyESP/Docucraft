@@ -54,7 +54,6 @@
     <string name="sort_descending">Ordenar descendentemente</string>
     <string name="app_tagline">"Escanea fácilmente tus documentos con IA "</string>
     <string name="exit_search">Salir de la búsqeuda</string>
-    <string name="doc_name_or_description">Nombre o descripción del documento</string>
     <string name="results">Resultados</string>
 	<string name="doc_delete_confirmation">¿Está seguro de que desea eliminar el archivo \"%1$s\"?</string>
 	<string name="doc_delete_warning">Esta acción es permanente y no se puede deshacer. Las copias ya exportadas del documento no se verán afectadas.</string>
@@ -145,4 +144,6 @@
     <string name="link_a11y_page">Enlace a la página %1$d</string>
     <string name="link_a11y_blocked">Enlace bloqueado</string>
     <string name="link_a11y_action">Mostrar enlace</string>
+    <string name="doc_no_matches">Ningún documento coincide</string>
+    <string name="doc_no_matches_desc">Nada coincide con «%1$s». Prueba con otro nombre o una palabra de la descripción.</string>
 </resources>

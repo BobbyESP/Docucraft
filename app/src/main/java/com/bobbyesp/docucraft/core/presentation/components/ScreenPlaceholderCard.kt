@@ -10,26 +10,26 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CameraAlt
+import androidx.compose.material.icons.rounded.FileCopy
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
@@ -39,14 +39,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.bobbyesp.docucraft.core.presentation.theme.DocucraftElevationDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 
+/**
+ * What a screen shows instead of its content: nothing there yet, nothing matching, or an error.
+ *
+ * A tonal container and no border or shadow: it sits on the page like any other grouped surface,
+ * and the slowly turning shape behind the icon is what draws the eye, not chrome around it.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ScreenPlaceholderCard(
@@ -59,14 +63,12 @@ fun ScreenPlaceholderCard(
     iconAction: ImageVector = Icons.Rounded.CameraAlt,
     onAction: (() -> Unit)? = null,
 ) {
-    val iconSize = 48.dp
     val colorScheme = MaterialTheme.colorScheme
 
-    val containerColor = if (isError) colorScheme.errorContainer else colorScheme.primaryContainer
-    val onContainerColor = if (isError) colorScheme.onErrorContainer else colorScheme.primary
-    val buttonColor = if (isError) colorScheme.error else colorScheme.primary
-
-    val cardShape = DocucraftShapeDefaults.cardShape
+    // Container and content roles in their pairs, so the icon stays legible under dynamic colour
+    // and the higher contrast levels.
+    val shapeColor = if (isError) colorScheme.errorContainer else colorScheme.primaryContainer
+    val onShapeColor = if (isError) colorScheme.onErrorContainer else colorScheme.onPrimaryContainer
 
     val infiniteTransition = rememberInfiniteTransition(label = "PlaceholderRotation")
     val rotation by
@@ -75,46 +77,35 @@ fun ScreenPlaceholderCard(
             targetValue = 360f,
             animationSpec =
                 infiniteRepeatable(
-                    animation = tween(if (isError) 10000 else 6000, easing = LinearEasing),
+                    animation = tween(if (isError) 20_000 else 12_000, easing = LinearEasing),
                     repeatMode = RepeatMode.Restart,
                 ),
             label = "RotationAngle",
         )
 
-    ElevatedCard(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .border(
-                    width = 1.dp,
-                    color =
-                        if (isError) colorScheme.error.copy(alpha = 0.2f)
-                        else colorScheme.outlineVariant,
-                    shape = cardShape,
-                ),
-        shape = cardShape,
-        colors = CardDefaults.elevatedCardColors(containerColor = colorScheme.surfaceContainerLow),
-        elevation =
-            CardDefaults.elevatedCardElevation(defaultElevation = DocucraftElevationDefaults.Card),
+    Surface(
+        modifier = modifier.widthIn(max = 480.dp).fillMaxWidth(),
+        shape = DocucraftShapeDefaults.cardShape,
+        color = colorScheme.surfaceContainerLow,
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(32.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(modifier = Modifier.size(iconSize * 2), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.size(112.dp), contentAlignment = Alignment.Center) {
                 Box(
                     modifier =
                         Modifier.matchParentSize()
                             .graphicsLayer { rotationZ = rotation }
-                            .clip(MaterialShapes.Cookie6Sided.toShape())
-                            .background(containerColor)
+                            .clip(MaterialShapes.Cookie9Sided.toShape())
+                            .background(shapeColor)
                 )
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    modifier = Modifier.size(iconSize),
-                    tint = onContainerColor,
+                    modifier = Modifier.size(48.dp),
+                    tint = onShapeColor,
                 )
             }
 
@@ -124,35 +115,42 @@ fun ScreenPlaceholderCard(
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineSmallEmphasized,
                     textAlign = TextAlign.Center,
                 )
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     color = colorScheme.onSurfaceVariant,
                 )
             }
 
             if (actionText != null && onAction != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-
+                val buttonHeight = ButtonDefaults.MediumContainerHeight
                 Button(
                     onClick = onAction,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    modifier = Modifier.padding(top = 8.dp).heightIn(min = buttonHeight),
                     shapes = ButtonDefaults.shapes(),
-                    colors = ButtonDefaults.buttonColors(containerColor = buttonColor),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+                    colors =
+                        if (isError) {
+                            ButtonDefaults.buttonColors(
+                                containerColor = colorScheme.error,
+                                contentColor = colorScheme.onError,
+                            )
+                        } else {
+                            ButtonDefaults.buttonColors()
+                        },
+                    contentPadding =
+                        ButtonDefaults.contentPaddingFor(buttonHeight, hasStartIcon = true),
                 ) {
                     Icon(
                         imageVector = iconAction,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(ButtonDefaults.iconSizeFor(buttonHeight)),
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = actionText.uppercase(), style = MaterialTheme.typography.labelLarge)
+                    Spacer(modifier = Modifier.width(ButtonDefaults.iconSpacingFor(buttonHeight)))
+                    Text(text = actionText, style = ButtonDefaults.textStyleFor(buttonHeight))
                 }
             }
         }
@@ -164,11 +162,24 @@ fun ScreenPlaceholderCard(
 private fun ScreenPlaceholderCardPreview() {
     DocucraftTheme {
         ScreenPlaceholderCard(
-            title = "No Documents",
-            description = "You haven't created any documents yet. Start by creating a new one!",
-            actionText = "Create Document",
+            title = "No scanned documents",
+            description = "Scan your first document to see it here.",
+            actionText = "Scan new document",
             onAction = {},
-            icon = Icons.Rounded.CameraAlt,
+            icon = Icons.Rounded.FileCopy,
+        )
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun ScreenPlaceholderCardErrorPreview() {
+    DocucraftTheme {
+        ScreenPlaceholderCard(
+            title = "Unknown error",
+            description = "Couldn't reach local storage",
+            icon = Icons.Rounded.FileCopy,
+            isError = true,
         )
     }
 }
