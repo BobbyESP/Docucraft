@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.DocumentActionsViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.DocumentSearchViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -20,6 +21,17 @@ val documentScannerViewModels = module {
             observeDocumentsUseCase = get(),
             processDocumentsUseCase = get(),
             saveScanDraftUseCase = get(),
+            stringProvider = get(),
+            analyticsHelper = get(),
+        )
+    }
+
+    // Manual for the same reason as HomeViewModel: its dispatcher defaults in Kotlin.
+    viewModel {
+        DocumentSearchViewModel(
+            savedStateHandle = get(),
+            observeDocumentsUseCase = get(),
+            processDocumentsUseCase = get(),
             stringProvider = get(),
             analyticsHelper = get(),
         )

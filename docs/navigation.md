@@ -36,6 +36,7 @@ One back stack, one Navigation 3 `NavDisplay`, typed keys. Code:
   | File | Keys |
   |---|---|
   | `feature/docscanner/navigation/HomeKey.kt` | `Home` |
+  | `feature/docscanner/navigation/DocumentSearchKey.kt` | `DocumentSearch` |
   | `feature/docscanner/navigation/DocumentActionKeys.kt` | `DocumentActions`, `EditDocument`, `DeleteDocument` |
   | `feature/pdfviewer/navigation/PdfViewerKey.kt` | `PdfViewer`, `ExternalPdfViewer`, `PdfDocumentDetails`, `GoToPage` |
   | `core/.../preferences/navigation/SettingsKeys.kt` | `Settings`, `AppearanceSettings`, `DocumentViewerSettings` |
@@ -47,6 +48,15 @@ One back stack, one Navigation 3 `NavDisplay`, typed keys. Code:
     `ViewModelStore`. That is what gives each entry its own ViewModel, and a `SavedStateHandle`
     that works.
   - Transitions come from `NavigationMotion` alone. No screen contributes its own.
+  - The one exception is also defined there. A destination reached *through* an element it shares
+    with the previous one, as search is reached through Home's search bar, cross-fades
+    (`SharedElementMotion`) and lets the element carry the motion. The door slide would drag the
+    whole screen sideways while the bar grows upwards.
+  - Shared elements animate in one `SharedTransitionLayout` around the display. Its scope reaches
+    destinations through `LocalNavSharedTransitionScope`, not through `NavDisplay`'s own parameter:
+    given the scope, the display wraps *every* entry in a shared element, and each destination
+    starts gliding between panes. `Modifier.sharedBoundsAcrossDestinations(key, shape)` marks the
+    two ends.
 
 ## Scenes: how the stack is laid out
 
@@ -64,6 +74,9 @@ Two scene strategies, tried in order. The first to claim the top entry wins.
    two panes really fit (expanded width). It is wrapped by `sharingTheWindow()`, so the
    destinations it lays out learn they share the window through `LocalPaneContext`. Everything it
    declines falls through to a single pane.
+   - Search is a list pane too. On a wide window it takes Home's place beside the open document,
+     so a result opens next to the results. Opening one replaces an open viewer but keeps search
+     on the stack, so back returns to the results.
    - Picking a document from the list replaces the open one instead of stacking on it. Otherwise,
      every document looked at beside the list becomes a back step, and narrowing the window turns
      them into a trail the user has to back out of.

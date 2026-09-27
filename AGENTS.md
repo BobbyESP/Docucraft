@@ -91,7 +91,8 @@ A new Koin module is registered in `App.kt`.
 - **One back stack, one Navigation 3 `NavDisplay`**: `core/presentation/navigation/DocucraftApp.kt`,
   rendered by `DocucraftNavDisplay.kt`. `PdfViewerActivity` reuses that display with its own stack.
 - **Keys are typed and `@Serializable`, and each feature owns its own.**
-  - Scanner: `feature/docscanner/navigation/HomeKey.kt` and `DocumentActionKeys.kt`.
+  - Scanner: `feature/docscanner/navigation/HomeKey.kt`, `DocumentSearchKey.kt` and
+    `DocumentActionKeys.kt`.
   - Viewer: `feature/pdfviewer/navigation/PdfViewerKey.kt`.
   - Settings: `core/presentation/screens/preferences/navigation/SettingsKeys.kt`.
 - **Features never touch the stack.** They get a `Navigator`
@@ -110,7 +111,9 @@ A new Koin module is registered in `App.kt`.
   - `LocalOverlayContext` says which container it landed in, and whether there is room to stack.
   - Reading `currentWindowAdaptiveInfo` or the device orientation from a screen is a bug.
 - **Transitions live in one file**: `core/presentation/navigation/motion/NavigationMotion.kt`.
-  Screens contribute nothing to them.
+  Screens contribute nothing to them. A destination reached through a shared element uses
+  `SharedElementMotion` from that file, and marks the element with
+  `Modifier.sharedBoundsAcrossDestinations`.
 - **App-wide services reach the UI as composition locals**, from
   `core/presentation/common/CompositionLocals.kt`: `LocalDarkTheme`, `LocalSettingsRepository`,
   `LocalNotificationsService` and `LocalAnalyticsHelper`.

@@ -15,11 +15,15 @@ sealed interface HomeStatus {
     data class Error(val message: String) : HomeStatus
 }
 
+/**
+ * @property recentDocuments what the Recents carousel shows; empty when there are too few documents
+ *   for it to add anything the list below does not already show.
+ */
 data class HomeUiState(
     val status: HomeStatus = HomeStatus.Loading,
     val visibleDocuments: List<ScannedDocument> = emptyList(),
+    val recentDocuments: List<ScannedDocument> = emptyList(),
     val hasDocuments: Boolean = false,
-    val searchQuery: String = "",
     val filterOptions: FilterOptions = FilterOptions.default,
     val isScanning: Boolean = false,
 ) {

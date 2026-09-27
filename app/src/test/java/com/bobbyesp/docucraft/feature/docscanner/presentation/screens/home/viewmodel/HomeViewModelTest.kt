@@ -40,6 +40,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -129,6 +131,20 @@ class HomeViewModelTest {
         )
     }
 
+    /**
+     * Collects [viewModel]'s messages into [events] as each one is sent.
+     *
+     * Unconfined, not the test's own dispatcher: `advanceUntilIdle` does not wait for work in the
+     * background scope, so a collector queued there only ran while something else in the ViewModel
+     * kept the scheduler busy. These tests passed on the search debounce's timers until search
+     * moved to its own screen.
+     */
+    private fun TestScope.collectEvents(viewModel: HomeViewModel, events: MutableList<UiEvent>) {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.defaultEvents.toList(events)
+        }
+    }
+
     // ---------------- documents ----------------
 
     @Test
@@ -158,15 +174,34 @@ class HomeViewModelTest {
             assertEquals("Something went wrong", (status as HomeStatus.Error).message)
         }
 
+    /** With a handful of documents, the list already shows them all; a shelf would repeat it. */
     @Test
-    fun `UpdateSearch stores the query in state`() =
+    fun `a small catalogue has no recents`() =
         runTest(testDispatcher) {
-            val viewModel = createViewModel()
+            val documents = List(3) { fakeDocument(uuid = "doc-$it") }
+            val viewModel = createViewModel(documents = flowOf(documents))
+
             advanceUntilIdle()
 
-            viewModel.onSendIntent(HomeIntent.UpdateSearch("invoice"))
+            assertTrue(viewModel.state.value.recentDocuments.isEmpty())
+        }
 
-            assertEquals("invoice", viewModel.state.value.searchQuery)
+    /** Newest first whatever the list is sorted by, and only as many as the shelf shows. */
+    @Test
+    fun `recents are the latest scans, newest first and capped`() =
+        runTest(testDispatcher) {
+            val documents =
+                List(12) {
+                    fakeDocument(uuid = "doc-$it").copy(capturedAtEpochMillis = it * 1_000L)
+                }
+            val viewModel = createViewModel(documents = flowOf(documents.shuffled()))
+
+            advanceUntilIdle()
+
+            assertEquals(
+                (11 downTo 4).map { "doc-$it" },
+                viewModel.state.value.recentDocuments.map { it.uuid },
+            )
         }
 
     @Test
@@ -221,7 +256,7 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             val events = mutableListOf<UiEvent>()
-            backgroundScope.launch { viewModel.defaultEvents.toList(events) }
+            collectEvents(viewModel, events)
 
             viewModel.onSendIntent(HomeIntent.LaunchScanner)
             advanceUntilIdle()
@@ -245,7 +280,7 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             val events = mutableListOf<UiEvent>()
-            backgroundScope.launch { viewModel.defaultEvents.toList(events) }
+            collectEvents(viewModel, events)
 
             viewModel.onSendIntent(HomeIntent.LaunchScanner)
             advanceUntilIdle()
@@ -265,7 +300,7 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             val events = mutableListOf<UiEvent>()
-            backgroundScope.launch { viewModel.defaultEvents.toList(events) }
+            collectEvents(viewModel, events)
 
             viewModel.onSendIntent(HomeIntent.LaunchScanner)
             advanceUntilIdle()
@@ -288,7 +323,7 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             val events = mutableListOf<UiEvent>()
-            backgroundScope.launch { viewModel.defaultEvents.toList(events) }
+            collectEvents(viewModel, events)
 
             viewModel.onSendIntent(HomeIntent.LaunchScanner)
             advanceUntilIdle()

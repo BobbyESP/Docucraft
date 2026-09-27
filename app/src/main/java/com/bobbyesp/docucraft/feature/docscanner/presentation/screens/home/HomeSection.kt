@@ -27,8 +27,10 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
+import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentSearch
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.documentActionsSection
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.documentSearchSection
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 
 /**
@@ -54,17 +56,19 @@ fun EntryProviderScope<NavKey>.homeSection(
                 navigator.goTo(PdfViewer(uuid))
             },
             onOpenSettings = { navigator.goTo(Settings) },
+            onOpenSearch = { navigator.goTo(DocumentSearch) },
             onOpenDocumentActions = { uuid -> navigator.goTo(DocumentActions(uuid)) },
             selectedDocumentId = selectedDocumentId,
         )
     }
 
+    documentSearchSection(navigator, selectedDocumentId)
     documentActionsSection(navigator)
 }
 
 /** Shown in the detail pane on expanded windows while no document is open. */
 @Composable
-private fun NoDocumentOpenPane(modifier: Modifier = Modifier) {
+internal fun NoDocumentOpenPane(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

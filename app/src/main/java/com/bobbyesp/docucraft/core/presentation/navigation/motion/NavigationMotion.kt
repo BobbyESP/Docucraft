@@ -3,17 +3,27 @@
  */
 package com.bobbyesp.docucraft.core.presentation.navigation.motion
 
+import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.IntOffset
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
+import androidx.navigation3.ui.NavDisplay
+import com.bobbyesp.docucraft.core.presentation.navigation.DocucraftNavDisplay
 
 /**
  * One destination slides out as the next slides in, locked together like a sliding door: full
@@ -24,7 +34,8 @@ import androidx.compose.ui.unit.IntOffset
  * swallowing taps meant for the screen underneath. One that travels the whole way cannot.
  *
  * Screens contribute nothing here; a destination that needs to move differently says so in its own
- * `entry` metadata, which `NavDisplay` prefers over this.
+ * `entry` metadata, which `NavDisplay` prefers over this. The one such motion so far,
+ * [SharedElementMotion], is defined in this file too.
  */
 @Immutable
 class NavigationMotion internal constructor() {
@@ -64,3 +75,74 @@ class NavigationMotion internal constructor() {
 }
 
 @Composable fun rememberNavigationMotion(): NavigationMotion = remember { NavigationMotion() }
+
+/**
+ * Moving between two destinations *through* an element they share, such as Home's search bar
+ * growing into the search screen: the element carries the motion, and the destinations around it
+ * only cross-fade.
+ *
+ * The door slide above would fight the element, dragging the whole screen sideways while the bar
+ * morphs upward. Both ends use this, so the element's bounds and the fade share one clock: a shared
+ * element is only drawn in flight while the destinations are still animating, and one that outlived
+ * them would snap to its end.
+ */
+object SharedElementMotion {
+
+    /** Entry metadata for the destination reached through the shared element. */
+    fun metadata(): Map<String, Any> =
+        NavDisplay.transitionSpec { crossFade() } +
+            NavDisplay.popTransitionSpec { crossFade() } +
+            NavDisplay.predictivePopTransitionSpec { crossFade() }
+
+    /** For the element's bounds on both destinations. */
+    val bounds: BoundsTransform = BoundsTransform { _, _ -> tween(DURATION, easing = Emphasized) }
+
+    private fun crossFade(): ContentTransform =
+        fadeIn(tween(DURATION, easing = Emphasized)) togetherWith
+            fadeOut(tween(DURATION, easing = Emphasized))
+
+    private const val DURATION = 350
+    private val Emphasized = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+}
+
+/**
+ * The scope shared elements animate in, one per [DocucraftNavDisplay]. Null outside one, as in a
+ * preview, where [sharedBoundsAcrossDestinations] simply does nothing.
+ */
+val LocalNavSharedTransitionScope = staticCompositionLocalOf<SharedTransitionScope?> { null }
+
+/**
+ * Whether this destination has finished arriving. For work that would fight the transition if it
+ * ran during it, such as raising the keyboard while a shared element is still in flight. Always
+ * true outside a [DocucraftNavDisplay], where nothing arrives.
+ */
+@Composable
+fun isDestinationSettled(): Boolean {
+    if (LocalNavSharedTransitionScope.current == null) return true
+
+    return !LocalNavAnimatedContentScope.current.transition.isRunning
+}
+
+/**
+ * Marks this as the same element as the one under [key] on another destination, so moving between
+ * them morphs one into the other with [SharedElementMotion].
+ *
+ * Bounds rather than a shared element: the two ends look different (a button on one side, a text
+ * field on the other), so each keeps its own content and only the container travels, clipped to
+ * [shape] throughout.
+ */
+@Composable
+fun Modifier.sharedBoundsAcrossDestinations(key: Any, shape: Shape): Modifier {
+    val sharedTransitionScope = LocalNavSharedTransitionScope.current ?: return this
+    val animatedVisibilityScope = LocalNavAnimatedContentScope.current
+
+    return with(sharedTransitionScope) {
+        this@sharedBoundsAcrossDestinations.sharedBounds(
+            sharedContentState = rememberSharedContentState(key),
+            animatedVisibilityScope = animatedVisibilityScope,
+            boundsTransform = SharedElementMotion.bounds,
+            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+            clipInOverlayDuringTransition = OverlayClip(shape),
+        )
+    }
+}

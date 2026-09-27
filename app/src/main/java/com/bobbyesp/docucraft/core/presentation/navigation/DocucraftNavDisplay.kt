@@ -3,8 +3,10 @@
  */
 package com.bobbyesp.docucraft.core.presentation.navigation
 
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -13,6 +15,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.SceneStrategy
 import androidx.navigation3.ui.NavDisplay
+import com.bobbyesp.docucraft.core.presentation.navigation.motion.LocalNavSharedTransitionScope
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.rememberNavigationMotion
 
 /**
@@ -23,6 +26,7 @@ import com.bobbyesp.docucraft.core.presentation.navigation.motion.rememberNaviga
  * - Saveable state before the `ViewModelStore`: the library requires that order for a
  *   `SavedStateHandle` to work, which is what lets ViewModels survive process death.
  * - Transitions come from [rememberNavigationMotion] alone; no destination contributes its own.
+ *   Elements shared between two destinations animate in the one [SharedTransitionLayout] here.
  * - Back pops the stack through [navigator]; at the last entry the display leaves it to the
  *   activity.
  */
@@ -36,19 +40,26 @@ fun DocucraftNavDisplay(
 ) {
     val motion = rememberNavigationMotion()
 
-    NavDisplay(
-        backStack = backStack,
-        modifier = modifier.fillMaxSize(),
-        onBack = navigator::goBack,
-        entryDecorators =
-            listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            ),
-        sceneStrategies = sceneStrategies,
-        entryProvider = entryProvider,
-        transitionSpec = { motion.forward() },
-        popTransitionSpec = { motion.backward() },
-        predictivePopTransitionSpec = { motion.predictiveBack() },
-    )
+    // Handed out through a local rather than to `NavDisplay`: given the scope, the display wraps
+    // every entry in a shared element of its own, and each destination would start gliding between
+    // panes. Only the elements that ask should travel.
+    SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
+        CompositionLocalProvider(LocalNavSharedTransitionScope provides this) {
+            NavDisplay(
+                backStack = backStack,
+                modifier = Modifier.fillMaxSize(),
+                onBack = navigator::goBack,
+                entryDecorators =
+                    listOf(
+                        rememberSaveableStateHolderNavEntryDecorator(),
+                        rememberViewModelStoreNavEntryDecorator(),
+                    ),
+                sceneStrategies = sceneStrategies,
+                entryProvider = entryProvider,
+                transitionSpec = { motion.forward() },
+                popTransitionSpec = { motion.backward() },
+                predictivePopTransitionSpec = { motion.predictiveBack() },
+            )
+        }
+    }
 }

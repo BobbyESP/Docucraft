@@ -13,6 +13,7 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
@@ -26,10 +27,8 @@ import com.bobbyesp.scanner.ScanOutcome
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -62,26 +61,6 @@ class HomeViewModel(
             HomeIntent.Load -> observeDocuments()
 
             HomeIntent.LaunchScanner -> startScan()
-
-            is HomeIntent.UpdateSearch -> {
-                if (intent.query.length >= 3 && intent.query != currentState.searchQuery) {
-                    analyticsHelper.logEvent(
-                        AnalyticsEvent(
-                            type = AnalyticsEvent.Types.SEARCH_PERFORMED,
-                            extras =
-                                listOf(
-                                    AnalyticsEvent.Param(
-                                        AnalyticsEvent.ParamKeys.QUERY_LENGTH,
-                                        intent.query.length.toString(),
-                                    )
-                                ),
-                        )
-                    )
-                }
-                setState { copy(searchQuery = intent.query) }
-            }
-
-            HomeIntent.ClearSearch -> setState { copy(searchQuery = "") }
 
             is HomeIntent.ApplySort -> {
                 analyticsHelper.logEvent(
@@ -121,22 +100,20 @@ class HomeViewModel(
 
     // ---------------- OBSERVE ----------------
 
-    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeDocuments() = launch {
-        combine(
-                observeDocumentsUseCase(),
-                state.map { it.searchQuery }.debounce(150).distinctUntilChanged(),
-                state.map { it.filterOptions }.distinctUntilChanged(),
-            ) { docs, query, filters ->
-                Triple(docs, query, filters)
+        combine(observeDocumentsUseCase(), state.map { it.filterOptions }.distinctUntilChanged()) {
+                docs,
+                filters ->
+                docs to filters
             }
-            .mapLatest { (docs, query, filters) ->
+            .mapLatest { (docs, filters) ->
                 val processed =
                     withContext(defaultDispatcher) {
-                        processDocumentsUseCase(docs, query, filters, filters.sortBy)
+                        processDocumentsUseCase(docs, "", filters, filters.sortBy)
                     }
 
-                processed to docs.isNotEmpty()
+                Triple(processed, recentOf(docs), docs.isNotEmpty())
             }
             .onStart { setState { copy(status = HomeStatus.Loading) } }
             .catch { error ->
@@ -146,16 +123,29 @@ class HomeViewModel(
 
                 sendUiEvent(UiEvent.ShowMessage(message, NotificationType.Error))
             }
-            .collect { (sorted, hasDocuments) ->
+            .collect { (sorted, recent, hasDocuments) ->
                 setState {
                     copy(
                         visibleDocuments = sorted,
+                        recentDocuments = recent,
                         hasDocuments = hasDocuments,
                         status = HomeStatus.Idle,
                     )
                 }
             }
     }
+
+    /**
+     * The latest scans, newest first, whatever order the list below is sorted in.
+     *
+     * Only while the catalogue does not record when a document was last opened: once it does, this
+     * becomes "recently opened", which is what a Recents shelf promises. With [RECENTS_MINIMUM] or
+     * fewer documents, the list shows every one of them at a glance, and the shelf would only
+     * repeat it.
+     */
+    private fun recentOf(documents: List<ScannedDocument>): List<ScannedDocument> =
+        if (documents.size <= RECENTS_MINIMUM) emptyList()
+        else documents.sortedByDescending { it.capturedAtEpochMillis }.take(RECENTS_SHOWN)
 
     /**
      * Entry points outside the UI, such as the home screen widget.
@@ -301,5 +291,7 @@ class HomeViewModel(
     /** The viewer reads the document itself; all it needs from here is which one. */
     private companion object {
         const val KEY_SCAN_IN_FLIGHT = "scan_in_flight"
+        const val RECENTS_MINIMUM = 3
+        const val RECENTS_SHOWN = 8
     }
 }

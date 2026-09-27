@@ -4,52 +4,46 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.CameraAlt
-import androidx.compose.material.icons.rounded.Clear
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.FileCopy
-import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.SearchOff
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuGroup
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -58,49 +52,46 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumExtendedFloatingActionButton
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SelectableDropdownMenuItem
+import androidx.compose.material3.SmallExtendedFloatingActionButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.ToggleButtonDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.animateFloatingActionButton
+import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
+import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
+import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
-import com.bobbyesp.docucraft.core.presentation.utilities.modifier.customOverscroll
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
@@ -108,7 +99,8 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeInten
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
-import kotlin.math.roundToInt
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.DocumentSearchBarButton
+import com.skydoves.landscapist.ImageOptions
 
 /** Which of Home's faces is showing. Its own type so a change between any two of them animates. */
 private enum class HomePage {
@@ -127,10 +119,10 @@ private val HomeUiState.page: HomePage
         }
 
 /**
- * Room for the last document to scroll clear of the scan button: a medium FAB (80dp) and the
- * scaffold's margin under it, plus the list's own gap.
+ * Room for the last document to scroll clear of the search bar and scan button floating over it:
+ * their height (56dp), the scaffold's margin under them, and the list's own gap.
  */
-private val ScanButtonClearance = 112.dp
+private val BottomActionsClearance = 88.dp
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -139,6 +131,7 @@ fun HomeContent(
     onAction: (HomeIntent) -> Unit,
     onOpenDocument: (String) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenSearch: () -> Unit,
     onOpenDocumentActions: (String) -> Unit,
     modifier: Modifier = Modifier,
     selectedDocumentId: String? = null,
@@ -146,10 +139,7 @@ fun HomeContent(
     val page = uiState.page
     val listState = rememberLazyListState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val focusManager = LocalFocusManager.current
     val motionScheme = MaterialTheme.motionScheme
-
-    var isSearchFocused by remember { mutableStateOf(false) }
 
     // Collapsed while the user reads down the list, extended again as soon as they head back up.
     val isScanButtonExpanded by remember {
@@ -157,78 +147,22 @@ fun HomeContent(
     }
 
     Scaffold(
-        modifier =
-            modifier.nestedScroll(scrollBehavior.nestedScrollConnection).pointerInput(Unit) {
-                detectTapGestures(onTap = { focusManager.clearFocus() })
-            },
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             HomeTopBar(
-                documentCount = uiState.visibleDocuments.size.takeIf { page == HomePage.Documents },
                 isContentScrolled = listState.canScrollBackward,
                 scrollBehavior = scrollBehavior,
                 onOpenSettings = onOpenSettings,
-            ) {
-                AnimatedVisibility(
-                    visible = page == HomePage.Documents,
-                    enter =
-                        expandVertically(motionScheme.defaultSpatialSpec()) +
-                            fadeIn(motionScheme.defaultEffectsSpec()),
-                    exit =
-                        shrinkVertically(motionScheme.fastSpatialSpec()) +
-                            fadeOut(motionScheme.fastEffectsSpec()),
-                ) {
-                    Column(
-                        // The app bar keeps clear of a cutout at the side; so must what hangs from
-                        // it, or in landscape the search field runs under the camera.
-                        modifier =
-                            Modifier.windowInsetsPadding(
-                                    TopAppBarDefaults.windowInsets.only(
-                                        WindowInsetsSides.Horizontal
-                                    )
-                                )
-                                .padding(horizontal = 16.dp)
-                                .padding(top = 4.dp, bottom = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        HomeSearchField(
-                            query = uiState.searchQuery,
-                            onQueryChange = { onAction(HomeIntent.UpdateSearch(it)) },
-                            onClear = { onAction(HomeIntent.ClearSearch) },
-                            onFocusChange = { isSearchFocused = it },
-                        )
-                        SortControls(
-                            currentSortOption = uiState.filterOptions.sortBy,
-                            onSortOptionChange = { onAction(HomeIntent.ApplySort(it)) },
-                        )
-                    }
-                }
-            }
+            )
         },
         floatingActionButton = {
-            MediumExtendedFloatingActionButton(
-                text = { Text(text = stringResource(id = R.string.scan)) },
-                icon = {
-                    if (uiState.isScanning) {
-                        LoadingIndicator(
-                            modifier = Modifier.size(28.dp),
-                            color = LocalContentColor.current,
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Rounded.DocumentScanner,
-                            contentDescription = stringResource(id = R.string.doc_scan_new),
-                        )
-                    }
-                },
-                onClick = { if (!uiState.isScanning) onAction(HomeIntent.LaunchScanner) },
-                expanded = isScanButtonExpanded,
-                // The empty state carries its own scan button, and while typing the keyboard is
-                // where the thumb is: in both cases this one would only be in the way.
-                modifier =
-                    Modifier.animateFloatingActionButton(
-                        visible = page == HomePage.Documents && !isSearchFocused,
-                        alignment = Alignment.BottomEnd,
-                    ),
+            HomeBottomActions(
+                // The empty state carries its own scan button, and there is nothing to search.
+                visible = page == HomePage.Documents,
+                isScanning = uiState.isScanning,
+                isScanButtonExpanded = isScanButtonExpanded,
+                onOpenSearch = onOpenSearch,
+                onScan = { onAction(HomeIntent.LaunchScanner) },
             )
         },
     ) { padding ->
@@ -259,10 +193,11 @@ fun HomeContent(
                     }
 
                 HomePage.Documents ->
-                    ScannedDocumentsList(
-                        scannedDocuments = uiState.visibleDocuments,
-                        searchQuery = uiState.searchQuery,
-                        onClearSearch = { onAction(HomeIntent.ClearSearch) },
+                    DocumentsPage(
+                        documents = uiState.visibleDocuments,
+                        recentDocuments = uiState.recentDocuments,
+                        sortOption = uiState.filterOptions.sortBy,
+                        onSortOptionChange = { onAction(HomeIntent.ApplySort(it)) },
                         onOpenDocument = onOpenDocument,
                         onOpenDocumentActions = onOpenDocumentActions,
                         listState = listState,
@@ -274,22 +209,16 @@ fun HomeContent(
 }
 
 /**
- * The expressive large app bar, with search and sorting under it as one block.
- *
- * The whole block takes one tone, and moves to a container tone once the list scrolls beneath it,
- * rather than the app bar alone changing and leaving a seam above the search field.
- *
- * @param documentCount shown as the subtitle, or null when there is no list to count.
+ * The expressive large app bar. It takes a container tone once the list scrolls beneath it, eased
+ * rather than switched.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HomeTopBar(
-    documentCount: Int?,
     isContentScrolled: Boolean,
     scrollBehavior: TopAppBarScrollBehavior,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
-    tools: @Composable () -> Unit,
 ) {
     val containerColor by
         animateColorAsState(
@@ -303,279 +232,373 @@ private fun HomeTopBar(
             label = "HomeTopBarContainer",
         )
 
-    Column(modifier = modifier.background(containerColor)) {
-        LargeFlexibleTopAppBar(
-            title = { Text(text = stringResource(id = R.string.app_name)) },
-            subtitle =
-                documentCount?.let { count ->
-                    { Text(text = pluralStringResource(R.plurals.doc_n_documents, count, count)) }
-                },
-            actions = {
-                IconButton(onClick = onOpenSettings, shapes = IconButtonDefaults.shapes()) {
-                    Icon(
-                        imageVector = Icons.Rounded.Settings,
-                        contentDescription = stringResource(id = R.string.settings),
-                    )
-                }
-            },
-            colors =
-                TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = Color.Transparent,
-                ),
-            scrollBehavior = scrollBehavior,
-        )
-        tools()
-    }
-}
-
-/**
- * A search field in the shape and tone of a Material search bar.
- *
- * Not the `SearchBar` component: that one opens a separate search view to type in, and disables the
- * keyboard in its collapsed form. Here the query filters the list in place, under the field.
- */
-@Composable
-private fun HomeSearchField(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onClear: () -> Unit,
-    onFocusChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val focusManager = LocalFocusManager.current
-    val motionScheme = MaterialTheme.motionScheme
-    val containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-
-    TextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier.fillMaxWidth().onFocusChanged { onFocusChange(it.isFocused) },
-        placeholder = {
-            Text(
-                text = stringResource(R.string.search_documents),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Rounded.Search,
-                contentDescription = stringResource(R.string.search),
-            )
-        },
-        trailingIcon = {
-            AnimatedVisibility(
-                visible = query.isNotEmpty(),
-                enter =
-                    fadeIn(motionScheme.fastEffectsSpec()) +
-                        scaleIn(motionScheme.fastSpatialSpec()),
-                exit =
-                    fadeOut(motionScheme.fastEffectsSpec()) +
-                        scaleOut(motionScheme.fastSpatialSpec()),
-            ) {
-                IconButton(onClick = onClear, shapes = IconButtonDefaults.shapes()) {
-                    Icon(
-                        imageVector = Icons.Rounded.Clear,
-                        contentDescription = stringResource(R.string.clear_search),
-                    )
-                }
+    LargeFlexibleTopAppBar(
+        title = { Text(text = stringResource(id = R.string.app_name)) },
+        modifier = modifier,
+        actions = {
+            IconButton(onClick = onOpenSettings, shapes = IconButtonDefaults.shapes()) {
+                Icon(
+                    imageVector = Icons.Rounded.Settings,
+                    contentDescription = stringResource(id = R.string.settings),
+                )
             }
         },
-        singleLine = true,
-        textStyle = MaterialTheme.typography.bodyLarge,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
-        shape = SearchBarDefaults.inputFieldShape,
         colors =
-            TextFieldDefaults.colors(
-                focusedContainerColor = containerColor,
-                unfocusedContainerColor = containerColor,
-                disabledContainerColor = containerColor,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = containerColor,
+                scrolledContainerColor = containerColor,
             ),
+        scrollBehavior = scrollBehavior,
     )
 }
 
 /**
- * What to sort by, as a connected button group, and which way, as one button whose arrow turns.
- *
- * The criteria are one exclusive choice, which is what a connected group says: its buttons touch,
- * and the chosen one fills and rounds fully. No check icon as well: in a pane beside the viewer, or
- * with a longer translation, the three buttons are narrow enough that it squeezed the label to an
- * ellipsis.
+ * Search and scan, side by side at the bottom where the thumb is. The scan button shrinks to its
+ * icon while the list is read downwards, and the search bar takes the room it leaves.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun SortControls(
+private fun HomeBottomActions(
+    visible: Boolean,
+    isScanning: Boolean,
+    isScanButtonExpanded: Boolean,
+    onOpenSearch: () -> Unit,
+    onScan: () -> Unit,
+) {
+    Row(
+        // The scaffold places its FAB slot 16dp in from the end, so a row as wide as the slot
+        // lands 16dp past the start: 32dp of start padding leaves 16dp on both sides. The slot is
+        // already clear of a cutout at either side; padding for it again here pushed the row
+        // past it in landscape.
+        modifier =
+            Modifier.fillMaxWidth()
+                .padding(start = 32.dp)
+                .animateFloatingActionButton(visible = visible, alignment = Alignment.BottomEnd),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        DocumentSearchBarButton(onClick = onOpenSearch, modifier = Modifier.weight(1f))
+
+        SmallExtendedFloatingActionButton(
+            text = { Text(text = stringResource(id = R.string.scan)) },
+            icon = {
+                if (isScanning) {
+                    LoadingIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = LocalContentColor.current,
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Rounded.DocumentScanner,
+                        contentDescription = stringResource(id = R.string.doc_scan_new),
+                    )
+                }
+            },
+            onClick = { if (!isScanning) onScan() },
+            expanded = isScanButtonExpanded,
+        )
+    }
+}
+
+/**
+ * Recents first, then every document in the chosen order. Categories will sit between the two once
+ * the catalogue has them.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun DocumentsPage(
+    documents: List<ScannedDocument>,
+    recentDocuments: List<ScannedDocument>,
+    sortOption: SortOption,
+    onSortOptionChange: (SortOption) -> Unit,
+    onOpenDocument: (String) -> Unit,
+    onOpenDocumentActions: (String) -> Unit,
+    listState: LazyListState,
+    selectedDocumentId: String?,
+) {
+    val motionScheme = MaterialTheme.motionScheme
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        state = listState,
+        contentPadding = PaddingValues(top = 8.dp, bottom = BottomActionsClearance),
+        verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+    ) {
+        if (recentDocuments.isNotEmpty()) {
+            item(key = "recents-header", contentType = "section-header") {
+                SectionHeader(title = stringResource(R.string.recents))
+            }
+            item(key = "recents", contentType = "recents") {
+                RecentDocumentsCarousel(
+                    documents = recentDocuments,
+                    onOpenDocument = onOpenDocument,
+                    onOpenDocumentActions = onOpenDocumentActions,
+                    modifier = Modifier.padding(bottom = 16.dp),
+                )
+            }
+        }
+
+        item(key = "documents-header", contentType = "section-header") {
+            SectionHeader(
+                title = stringResource(R.string.documents),
+                trailing = {
+                    SortMenu(
+                        currentSortOption = sortOption,
+                        onSortOptionChange = onSortOptionChange,
+                    )
+                },
+            )
+        }
+
+        itemsIndexed(
+            items = documents,
+            key = { _, scannedDocument -> scannedDocument.uuid },
+            contentType = { _, _ -> "document" },
+        ) { index, scannedDocument ->
+            ScannedDocumentListItem(
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .animateItem(
+                            fadeInSpec = motionScheme.defaultEffectsSpec(),
+                            placementSpec = motionScheme.defaultSpatialSpec(),
+                            fadeOutSpec = motionScheme.fastEffectsSpec(),
+                        ),
+                pdf = scannedDocument,
+                shapes =
+                    DocucraftShapeDefaults.segmentedListItemShapes(
+                        index = index,
+                        count = documents.size,
+                    ),
+                selected = scannedDocument.uuid == selectedDocumentId,
+                onItemClick = onOpenDocument,
+                onItemLongClick = { onOpenDocumentActions(scannedDocument.uuid) },
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun SectionHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .padding(start = 20.dp, end = if (trailing != null) 8.dp else 20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMediumEmphasized,
+            modifier = Modifier.weight(1f),
+        )
+        trailing?.invoke()
+    }
+}
+
+/**
+ * The latest documents as their first pages, where a thumbnail tells them apart faster than a
+ * title. A multi-browse carousel: one large, the next ones shrinking, so it reads as more to swipe
+ * through rather than a row that ends at the edge.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@Composable
+private fun RecentDocumentsCarousel(
+    documents: List<ScannedDocument>,
+    onOpenDocument: (String) -> Unit,
+    onOpenDocumentActions: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val carouselState = rememberCarouselState { documents.size }
+    val openLabel = stringResource(R.string.open)
+    val moreOptionsLabel = stringResource(R.string.more_options)
+
+    HorizontalMultiBrowseCarousel(
+        state = carouselState,
+        preferredItemWidth = 160.dp,
+        modifier = modifier.fillMaxWidth().height(224.dp),
+        itemSpacing = 8.dp,
+        contentPadding = PaddingValues(horizontal = 16.dp),
+    ) { index ->
+        val document = documents[index]
+        val title = document.title ?: document.filename
+
+        Box(
+            modifier =
+                Modifier.fillMaxSize()
+                    .maskClip(MaterialTheme.shapes.extraLarge)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    .combinedClickable(
+                        role = Role.Button,
+                        onClickLabel = openLabel,
+                        onLongClickLabel = moreOptionsLabel,
+                        onClick = { onOpenDocument(document.uuid) },
+                        onLongClick = { onOpenDocumentActions(document.uuid) },
+                    )
+                    // The title is faded out on the narrow items, but a screen reader should still
+                    // name every one of them.
+                    .semantics { contentDescription = title }
+        ) {
+            if (LocalInspectionMode.current || document.thumbnail == null) {
+                Icon(
+                    imageVector = Icons.Rounded.Description,
+                    contentDescription = null,
+                    modifier = Modifier.align(Alignment.Center).size(48.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                AsyncImage(
+                    modifier = Modifier.fillMaxSize(),
+                    imageModel = document.thumbnail.value,
+                    shape = RectangleShape,
+                    // A page's heading is at its top, and is what identifies it.
+                    imageOptions =
+                        ImageOptions(
+                            alignment = Alignment.TopCenter,
+                            contentDescription = null,
+                        ),
+                )
+            }
+
+            // Over a photo, not a theme surface: white on a dark scrim reads on any page, which no
+            // colour-scheme role can promise.
+            Text(
+                text = title,
+                modifier =
+                    Modifier.align(Alignment.BottomStart)
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            val info = carouselItemDrawInfo
+                            val range = info.maxSize - info.minSize
+                            alpha =
+                                if (range <= 0f) 1f
+                                else ((info.size - info.minSize) / range).coerceIn(0f, 1f)
+                        }
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.Transparent, Color.Black.copy(alpha = 0.72f))
+                            )
+                        )
+                        .padding(start = 16.dp, top = 32.dp, end = 16.dp, bottom = 16.dp),
+                style = MaterialTheme.typography.titleSmall,
+                color = Color.White,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/**
+ * The current order, named on the button itself, and a menu to change it: criteria in one group,
+ * direction in the other. A transient popup anchored here, not a destination.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun SortMenu(
     currentSortOption: SortOption,
     onSortOptionChange: (SortOption) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
-    val motionScheme = MaterialTheme.motionScheme
+    var expanded by remember { mutableStateOf(false) }
+
+    val ascending = currentSortOption.order == SortOption.Order.ASC
+    val arrowRotation by
+        animateFloatAsState(
+            targetValue = if (ascending) 0f else 180f,
+            animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+            label = "SortOrderArrow",
+        )
+
     val changeSort = { sortOption: SortOption ->
         hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
         onSortOptionChange(sortOption)
+        expanded = false
     }
 
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        val criteria = SortOption.Criteria.entries
+    val sortByLabel = stringResource(R.string.sort_by)
+    val orderLabel =
+        stringResource(if (ascending) R.string.sort_ascending else R.string.sort_descending)
+    val criterionLabel = currentSortOption.criteria.label()
 
-        Row(
-            modifier = Modifier.weight(1f).selectableGroup(),
-            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-        ) {
-            criteria.forEachIndexed { index, criterion ->
-                val checked = criterion == currentSortOption.criteria
-
-                ToggleButton(
-                    checked = checked,
-                    onCheckedChange = { isChecked ->
-                        if (isChecked) changeSort(currentSortOption.copy(criteria = criterion))
-                    },
-                    modifier = Modifier.weight(1f).semantics { role = Role.RadioButton },
-                    // The search field's tone: the default, `surfaceContainer`, is also the top
-                    // bar's once the list scrolls, and the unchosen buttons vanished into it.
-                    colors =
-                        ToggleButtonDefaults.colors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                        ),
-                    shapes =
-                        when (index) {
-                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                            criteria.lastIndex ->
-                                ButtonGroupDefaults.connectedTrailingButtonShapes()
-                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                        },
-                ) {
-                    Text(
-                        text = criterion.label(),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
-
-        val ascending = currentSortOption.order == SortOption.Order.ASC
-        val arrowRotation by
-            animateFloatAsState(
-                targetValue = if (ascending) 0f else 180f,
-                animationSpec = motionScheme.defaultSpatialSpec(),
-                label = "SortOrderArrow",
-            )
-
-        FilledTonalIconButton(
-            onClick = {
-                changeSort(currentSortOption.copy(order = currentSortOption.order.reverse()))
-            },
-            shapes = IconButtonDefaults.shapes(),
+    Box(modifier = modifier) {
+        TextButton(
+            onClick = { expanded = true },
+            shapes = ButtonDefaults.shapes(),
+            modifier =
+                Modifier.semantics {
+                    contentDescription = sortByLabel
+                    stateDescription = "$criterionLabel, $orderLabel"
+                },
         ) {
             Icon(
+                imageVector = Icons.AutoMirrored.Rounded.Sort,
+                contentDescription = null,
+                modifier = Modifier.size(ButtonDefaults.IconSize),
+            )
+            Spacer(modifier = Modifier.width(ButtonDefaults.IconSpacing))
+            Text(text = criterionLabel)
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(
                 imageVector = Icons.Rounded.ArrowUpward,
-                contentDescription =
-                    stringResource(
-                        if (ascending) R.string.sort_ascending else R.string.sort_descending
-                    ),
-                modifier = Modifier.graphicsLayer { rotationZ = arrowRotation },
+                contentDescription = null,
+                modifier =
+                    Modifier.size(ButtonDefaults.IconSize).graphicsLayer {
+                        rotationZ = arrowRotation
+                    },
             )
         }
-    }
-}
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun ScannedDocumentsList(
-    scannedDocuments: List<ScannedDocument>,
-    searchQuery: String,
-    onClearSearch: () -> Unit,
-    onOpenDocument: (String) -> Unit,
-    onOpenDocumentActions: (String) -> Unit,
-    listState: LazyListState,
-    selectedDocumentId: String? = null,
-) {
-    val motionScheme = MaterialTheme.motionScheme
+        DropdownMenuPopup(expanded = expanded, onDismissRequest = { expanded = false }) {
+            val criteria = SortOption.Criteria.entries
 
-    AnimatedContent(
-        targetState = scannedDocuments.isEmpty(),
-        transitionSpec = {
-            fadeIn(motionScheme.defaultEffectsSpec()) togetherWith
-                fadeOut(motionScheme.fastEffectsSpec())
-        },
-        label = "DocumentsOrNoMatches",
-    ) { noMatches ->
-        if (noMatches) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                NoMatchesContent(query = searchQuery, onClearSearch = onClearSearch)
+            DropdownMenuGroup(shapes = MenuDefaults.groupShape(index = 0, count = 2)) {
+                criteria.forEachIndexed { index, criterion ->
+                    SelectableDropdownMenuItem(
+                        selected = criterion == currentSortOption.criteria,
+                        onClick = { changeSort(currentSortOption.copy(criteria = criterion)) },
+                        text = { Text(text = criterion.label()) },
+                        shapes = MenuDefaults.itemShape(index = index, count = criteria.size),
+                        selectedLeadingIcon = {
+                            Icon(Icons.Rounded.Check, contentDescription = null)
+                        },
+                    )
+                }
             }
-        } else {
-            var overscrollOffset by remember { mutableFloatStateOf(0f) }
 
-            LazyColumn(
-                modifier =
-                    Modifier.fillMaxSize()
-                        .customOverscroll(
-                            listState = listState,
-                            onNewOverscrollAmount = { overscrollOffset = it },
-                        )
-                        .offset { IntOffset(0, overscrollOffset.roundToInt()) },
-                state = listState,
-                contentPadding =
-                    PaddingValues(
-                        start = 16.dp,
-                        top = 8.dp,
-                        end = 16.dp,
-                        bottom = ScanButtonClearance,
-                    ),
-                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
-            ) {
-                itemsIndexed(
-                    items = scannedDocuments,
-                    key = { _, scannedDocument -> scannedDocument.uuid },
-                    contentType = { _, _ -> "document" },
-                ) { index, scannedDocument ->
-                    ScannedDocumentListItem(
-                        modifier =
-                            Modifier.fillMaxWidth()
-                                .animateItem(
-                                    fadeInSpec = motionScheme.defaultEffectsSpec(),
-                                    placementSpec = motionScheme.defaultSpatialSpec(),
-                                    fadeOutSpec = motionScheme.fastEffectsSpec(),
-                                ),
-                        pdf = scannedDocument,
-                        shapes =
-                            DocucraftShapeDefaults.segmentedListItemShapes(
-                                index = index,
-                                count = scannedDocuments.size,
-                            ),
-                        selected = scannedDocument.uuid == selectedDocumentId,
-                        onItemClick = onOpenDocument,
-                        onItemLongClick = { onOpenDocumentActions(scannedDocument.uuid) },
+            Spacer(modifier = Modifier.height(MenuDefaults.GroupSpacing))
+
+            DropdownMenuGroup(shapes = MenuDefaults.groupShape(index = 1, count = 2)) {
+                val orders =
+                    listOf(
+                        SortOption.Order.ASC to
+                            (R.string.sort_ascending to Icons.Rounded.ArrowUpward),
+                        SortOption.Order.DESC to
+                            (R.string.sort_descending to Icons.Rounded.ArrowDownward),
+                    )
+                orders.forEachIndexed { index, (order, labelAndIcon) ->
+                    val (label, icon) = labelAndIcon
+                    SelectableDropdownMenuItem(
+                        selected = order == currentSortOption.order,
+                        onClick = { changeSort(currentSortOption.copy(order = order)) },
+                        text = { Text(text = stringResource(label)) },
+                        shapes = MenuDefaults.itemShape(index = index, count = orders.size),
+                        leadingIcon = { Icon(icon, contentDescription = null) },
+                        selectedLeadingIcon = {
+                            Icon(Icons.Rounded.Check, contentDescription = null)
+                        },
                     )
                 }
             }
         }
     }
-}
-
-@Composable
-private fun NoMatchesContent(query: String, onClearSearch: () -> Unit) {
-    ScreenPlaceholderCard(
-        modifier = Modifier.padding(24.dp),
-        title = stringResource(R.string.doc_no_matches),
-        description = stringResource(R.string.doc_no_matches_desc, query),
-        icon = Icons.Rounded.SearchOff,
-        actionText = stringResource(R.string.clear_search).takeIf { query.isNotEmpty() },
-        iconAction = Icons.Rounded.Clear,
-        onAction = onClearSearch,
-    )
 }
 
 @Composable
@@ -612,27 +635,14 @@ private fun HomeContentPreview() {
                     status = HomeStatus.Idle,
                     hasDocuments = true,
                     visibleDocuments = DocumentPreviewData.documents,
+                    recentDocuments = DocumentPreviewData.documents,
                 ),
             onAction = {},
             onOpenDocument = {},
             onOpenSettings = {},
+            onOpenSearch = {},
             onOpenDocumentActions = {},
             selectedDocumentId = DocumentPreviewData.documents.first().uuid,
-        )
-    }
-}
-
-@PreviewLightDark
-@Composable
-private fun HomeContentNoMatchesPreview() {
-    DocucraftTheme {
-        HomeContent(
-            uiState =
-                HomeUiState(status = HomeStatus.Idle, hasDocuments = true, searchQuery = "invoice"),
-            onAction = {},
-            onOpenDocument = {},
-            onOpenSettings = {},
-            onOpenDocumentActions = {},
         )
     }
 }
@@ -646,6 +656,7 @@ private fun HomeContentLoadingPreview() {
             onAction = {},
             onOpenDocument = {},
             onOpenSettings = {},
+            onOpenSearch = {},
             onOpenDocumentActions = {},
         )
     }
@@ -660,6 +671,7 @@ private fun HomeContentErrorPreview() {
             onAction = {},
             onOpenDocument = {},
             onOpenSettings = {},
+            onOpenSearch = {},
             onOpenDocumentActions = {},
         )
     }
@@ -674,6 +686,7 @@ private fun HomeContentEmptyPreview() {
             onAction = {},
             onOpenDocument = {},
             onOpenSettings = {},
+            onOpenSearch = {},
             onOpenDocumentActions = {},
         )
     }

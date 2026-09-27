@@ -25,6 +25,7 @@ import org.koin.androidx.compose.koinViewModel
 fun HomeScreen(
     onOpenDocument: (String) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenSearch: () -> Unit,
     onOpenDocumentActions: (String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = koinViewModel(),
@@ -44,6 +45,7 @@ fun HomeScreen(
             onOpenSettings()
             analyticsHelper.logScreenView("Settings")
         },
+        onOpenSearch = onOpenSearch,
         onOpenDocumentActions = onOpenDocumentActions,
         selectedDocumentId = selectedDocumentId,
     )

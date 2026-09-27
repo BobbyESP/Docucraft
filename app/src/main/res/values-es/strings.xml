@@ -146,4 +146,10 @@
     <string name="link_a11y_action">Mostrar enlace</string>
     <string name="doc_no_matches">Ningún documento coincide</string>
     <string name="doc_no_matches_desc">Nada coincide con «%1$s». Prueba con otro nombre o una palabra de la descripción.</string>
+    <string name="open">Abrir</string>
+    <string name="recents">Recientes</string>
+    <string name="documents">Documentos</string>
+    <string name="sort_by">Ordenar por</string>
+    <string name="search_hint_title">Busca en tus documentos</string>
+    <string name="search_hint_desc">Por nombre, o por cualquier palabra de la descripción.</string>
 </resources>
