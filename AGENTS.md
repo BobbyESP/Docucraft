@@ -13,7 +13,7 @@ This file is the map and the rules. How each subsystem works, and why, is in
 
 | Module | What it is | Rule |
 |---|---|---|
-| `:app` | The product: storage, UI, navigation, widget, analytics, purchases. | Depends on everything below; nothing depends on it. |
+| `:app` | The product: storage, UI, navigation, widget, analytics. | Depends on everything below; nothing depends on it. |
 | `:composepdf` | The PDF engine: rendering, layout, gestures. Public API in `com.composepdf`, internals in `com.composepdf.internal`. | Generic. It knows pages, pixels and fingers, **never** text or links. |
 | `:scanner-api` | The scanning contract (`DocumentScanner`, `ScanRequest`, `ScanOutcome`, `ContentRef`…). | Plain Kotlin, zero dependencies. |
 | `:scanner-mlkit` | ML Kit's implementation of that contract. | ML Kit is an `implementation` dependency, so no ML Kit type ever reaches `:app`'s classpath. |
@@ -29,14 +29,14 @@ Build setup:
 ## 2. Where things live in `:app`
 
 ```
-App.kt                     composition root: RevenueCat, then startKoin with every module
+App.kt                     composition root: startKoin with every module
 MainActivity.kt            Home and everything reached from it; lends its result launcher to the scanner
 core/                      shared by features
-  data/                    DataStore preferences, Firebase analytics, RevenueCat
+  data/                    DataStore preferences, Firebase analytics
   domain/                  SettingsRepository, StringProvider, notifications, shared models
   presentation/            navigation shell, theme, settings screens, common components
   util/                    BaseViewModel, UiEvent, date/time
-  di/                      commonModule, preferencesModule, notificationsServiceModule, analyticsModule, subscriptionModule
+  di/                      commonModule, preferencesModule, notificationsServiceModule, analyticsModule
 feature/docscanner/        scanning, the catalogue (Room), Home, document actions, the widget
 feature/pdfviewer/         the viewer: settings, details, text selection, links, the external-PDF activity
 feature/shared/            what both features need (BasicDocument)
@@ -207,8 +207,6 @@ A new Koin module is registered in `App.kt`.
   from outside is shown, but never re-shared.
 - **Firebase Analytics and Crashlytics** are on (`core/di/AnalyticsModule.kt`,
   `google-services.json`).
-- **RevenueCat** reads its key from `local.properties` (`revenuecat.apikey`). Without the key it is
-  simply not configured.
 - **Room**:
   - `DocumentsDatabase` is currently version 4. Migrations are in `DocumentsDatabaseMigrations.kt`.
   - Schemas are exported to `app/schemas/`. A schema change means: bump the version, add a

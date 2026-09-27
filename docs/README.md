@@ -44,7 +44,7 @@ The app has been through a stabilization, one subsystem at a time.
 | Database | **Next**: rethink the catalogue's schema, motivated by a "Recents" section of opened PDFs. |
 | Preferences and theme | Pending |
 | Search and filtering | Pending |
-| Subscriptions and analytics | Pending |
+| Analytics | Pending |
 
 ## How a subsystem is stabilized
 

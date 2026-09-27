@@ -30,9 +30,7 @@ import com.bobbyesp.docucraft.core.presentation.screens.preferences.appearance.A
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.SubscriptionSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.viewer.DocumentViewerSettingsScreen
-import com.revenuecat.purchases.ui.revenuecatui.customercenter.CustomerCenter
 
 /**
  * Settings and its sub-screens, as a list-detail pair of their own.
@@ -54,7 +52,6 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
         SettingsScreen(
             onOpenAppearance = { navigator.goTo(AppearanceSettings) },
             onOpenDocumentViewer = { navigator.goTo(DocumentViewerSettings) },
-            onOpenCustomerCenter = { navigator.goTo(SubscriptionSettings) },
             onBack = navigator::leaveSettings,
         )
     }
@@ -74,10 +71,6 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
             showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
         )
     }
-
-    entry<SubscriptionSettings>(metadata = ListDetailSceneStrategy.detailPane(SettingsScene)) {
-        CustomerCenter(modifier = Modifier.fillMaxSize(), onDismiss = navigator::goBack)
-    }
 }
 
 /**
@@ -88,9 +81,7 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
  * were. Internal so the rule can be asserted without a composition.
  */
 internal fun Navigator.leaveSettings() {
-    goBackWhile {
-        it is AppearanceSettings || it is DocumentViewerSettings || it is SubscriptionSettings
-    }
+    goBackWhile { it is AppearanceSettings || it is DocumentViewerSettings }
 
     goBack()
 }

@@ -18,6 +18,3 @@ import kotlinx.serialization.Serializable
 
 /** What documents open with in the viewer. */
 @Serializable data object DocumentViewerSettings : NavKey
-
-/** RevenueCat's subscription management screen. */
-@Serializable data object SubscriptionSettings : NavKey

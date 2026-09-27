@@ -38,7 +38,7 @@ One back stack, one Navigation 3 `NavDisplay`, typed keys. Code:
   | `feature/docscanner/navigation/HomeKey.kt` | `Home` |
   | `feature/docscanner/navigation/DocumentActionKeys.kt` | `DocumentActions`, `EditDocument`, `DeleteDocument` |
   | `feature/pdfviewer/navigation/PdfViewerKey.kt` | `PdfViewer`, `ExternalPdfViewer`, `PdfDocumentDetails`, `GoToPage` |
-  | `core/.../preferences/navigation/SettingsKeys.kt` | `Settings`, `AppearanceSettings`, `DocumentViewerSettings`, `SubscriptionSettings` |
+  | `core/.../preferences/navigation/SettingsKeys.kt` | `Settings`, `AppearanceSettings`, `DocumentViewerSettings` |
 
 - **`DocucraftNavDisplay` is the one way a back stack is rendered.** Both `MainActivity`'s shell
   and `PdfViewerActivity`'s own stack use it, so every entry keeps its state and moves the same
