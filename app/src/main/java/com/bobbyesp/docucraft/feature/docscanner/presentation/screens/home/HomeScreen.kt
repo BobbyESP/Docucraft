@@ -39,9 +39,6 @@ fun HomeScreen(
         modifier = modifier,
         uiState = uiState,
         onAction = viewModel::onSendIntent,
-        // Straight from the tap. Going somewhere is not work for the state holder to do, and
-        // routing it through one only opened a gap between the asking and the going.
-        // The viewer logs its own screen view, which also counts documents opened from other apps.
         onOpenDocument = onOpenDocument,
         onOpenSettings = {
             onOpenSettings()
