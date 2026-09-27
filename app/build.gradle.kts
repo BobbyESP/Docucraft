@@ -53,7 +53,7 @@ android {
     androidResources { generateLocaleConfig = true }
 
     // The test PDFs live with the engine's tests; the viewer's content tests read the same ones.
-    sourceSets.getByName("androidTest").assets.srcDir("../composepdf/src/androidTest/assets")
+    sourceSets.getByName("androidTest").assets.directories += "../composepdf/src/androidTest/assets"
 }
 
 composeCompiler {

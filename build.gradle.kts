@@ -116,5 +116,5 @@ sealed class Version(
 
 val currentVersion: Version = Version.Beta(major = 1, minor = 0, patch = 0, build = 19)
 
-val versionCode by extra(currentVersion.toVersionCode())
-val versionName by extra(currentVersion.toVersionName())
+extra.set("versionCode", currentVersion.toVersionCode())
+extra.set("versionName", currentVersion.toVersionName())
