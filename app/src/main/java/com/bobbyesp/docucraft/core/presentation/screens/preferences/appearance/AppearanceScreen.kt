@@ -6,7 +6,6 @@ package com.bobbyesp.docucraft.core.presentation.screens.preferences.appearance
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -366,14 +365,6 @@ private fun CustomColorsSection(
     modifier: Modifier = Modifier,
 ) {
     val seedColorHex = remember(seedColor) { seedColor.toHexString(SeedColorHexFormat) }
-    // Only the swatch eases into a newly picked color. The palettes are generated from the seed,
-    // and generating them on every frame of the fade would be wasted work.
-    val swatchColor by
-        animateColorAsState(
-            targetValue = Color(seedColor),
-            animationSpec = MaterialTheme.motionScheme.slowEffectsSpec(),
-            label = "SeedColorSwatch",
-        )
 
     SettingsCategory(title = stringResource(R.string.custom_colors), modifier = modifier) {
         SegmentedListItem(
@@ -382,7 +373,7 @@ private fun CustomColorsSection(
             modifier = Modifier.fillMaxWidth(),
             supportingContent = { Text(seedColorHex) },
             trailingContent = {
-                Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(swatchColor))
+                Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(seedColor)))
             },
             colors = SettingsItemDefaults.colors(),
         ) {

@@ -42,7 +42,7 @@ The app has been through a stabilization, one subsystem at a time.
 | Navigation | Done. |
 | PDF viewer, text and links | Done. Still to check on a phone and a tablet: the whole viewer, TalkBack end to end, and opening links with a browser without Custom Tabs. |
 | Database | **Next**: rethink the catalogue's schema, motivated by a "Recents" section of opened PDFs. |
-| Preferences and theme | Pending |
+| Preferences and theme | In progress: the theme is done ([architecture.md](architecture.md#theme)); still to check on a phone. Preferences pending. |
 | Search and filtering | Pending |
 | Analytics | Pending |
 

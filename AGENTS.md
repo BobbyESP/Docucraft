@@ -118,6 +118,17 @@ A new Koin module is registered in `App.kt`.
   `core/presentation/common/CompositionLocals.kt`: `LocalDarkTheme`, `LocalSettingsRepository`,
   `LocalNotificationsService` and `LocalAnalyticsHelper`.
 
+### Theme
+
+- **A theme change is one crossfade at the theme**, not an animated color scheme
+  (`core/presentation/theme/ThemeTransition.kt`). Never pass `animate = true` to MaterialKolor or
+  animate `ColorScheme`: every new scheme recomposes the whole tree.
+- **Components animate their own state, never theme colors.** Animate a fraction (pressed, selected,
+  enabled, scrolled) and `lerp` between colors read from `MaterialTheme`; do not
+  `animateColorAsState` to a theme color. See [docs/architecture.md](docs/architecture.md#theme).
+- Color schemes are generated only when their inputs change, off the main thread
+  (`rememberColorScheme` in `Theme.kt`).
+
 ### Scanner
 
 - **The engine is swapped at one line**: the `DocumentScanner` binding in

@@ -3,7 +3,7 @@
  */
 package com.bobbyesp.docucraft.core.presentation.components.settings
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +29,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -122,27 +122,31 @@ object SettingsItemDefaults {
 /**
  * The icon on a tonal disc, the paired container and content roles keeping it legible. Disabled, it
  * takes Material's disabled colors, eased so it fades along with the rest of the item.
+ *
+ * Only the enabled state is animated, and the colors are read from the theme on every frame of it:
+ * a theme change reaches the disc at once, together with the rest of the screen.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsItemIcon(icon: ImageVector, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val colors = MaterialTheme.colorScheme
-    val spec = MaterialTheme.motionScheme.defaultEffectsSpec<Color>()
-    val containerColor by
-        animateColorAsState(
-            targetValue =
-                if (enabled) colors.primaryContainer
-                else colors.onSurface.copy(alpha = DisabledContainerAlpha),
-            animationSpec = spec,
-            label = "SettingsItemIconContainer",
+    val enabledFraction by
+        animateFloatAsState(
+            targetValue = if (enabled) 1f else 0f,
+            animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+            label = "SettingsItemIconEnabled",
         )
-    val contentColor by
-        animateColorAsState(
-            targetValue =
-                if (enabled) colors.onPrimaryContainer
-                else colors.onSurface.copy(alpha = DisabledContentAlpha),
-            animationSpec = spec,
-            label = "SettingsItemIconContent",
+    val containerColor =
+        lerp(
+            colors.onSurface.copy(alpha = DisabledContainerAlpha),
+            colors.primaryContainer,
+            enabledFraction,
+        )
+    val contentColor =
+        lerp(
+            colors.onSurface.copy(alpha = DisabledContentAlpha),
+            colors.onPrimaryContainer,
+            enabledFraction,
         )
 
     Surface(

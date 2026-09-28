@@ -4,7 +4,6 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -73,6 +72,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -225,7 +225,8 @@ fun HomeContent(
 
 /**
  * The expressive large app bar. It takes a container tone once the list scrolls beneath it, eased
- * rather than switched.
+ * rather than switched. Only that change is animated; the tones themselves are read from the theme,
+ * so a theme change reaches the bar with the rest of the screen.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -236,16 +237,17 @@ private fun HomeTopBar(
     modifier: Modifier = Modifier,
     documentActions: (@Composable () -> Unit)? = null,
 ) {
-    val containerColor by
-        animateColorAsState(
-            targetValue =
-                if (isContentScrolled) {
-                    MaterialTheme.colorScheme.surfaceContainer
-                } else {
-                    MaterialTheme.colorScheme.surface
-                },
+    val scrolledFraction by
+        animateFloatAsState(
+            targetValue = if (isContentScrolled) 1f else 0f,
             animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
-            label = "HomeTopBarContainer",
+            label = "HomeTopBarScrolled",
+        )
+    val containerColor =
+        lerp(
+            MaterialTheme.colorScheme.surface,
+            MaterialTheme.colorScheme.surfaceContainer,
+            scrolledFraction,
         )
 
     LargeFlexibleTopAppBar(
@@ -437,11 +439,12 @@ private fun SectionHeader(
     ) {
         Text(
             text = title.uppercase(),
-            style = MaterialTheme.typography.labelLargeEmphasized.copy(
-                letterSpacing = 1.25.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Medium
-            ),
+            style =
+                MaterialTheme.typography.labelLargeEmphasized.copy(
+                    letterSpacing = 1.25.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium,
+                ),
             modifier = Modifier.weight(1f),
         )
         trailing?.invoke()

@@ -53,7 +53,7 @@ fun AppLocalSettingsProvider(
         LocalAnalyticsHelper provides analyticsHelper,
         LocalCoilImageLoader provides imageLoader,
     ) {
-        DocucraftTheme(userPreferences = userPreferences) {
+        DocucraftTheme(userPreferences = userPreferences, isDark = isDark) {
             Box(
                 modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center,
