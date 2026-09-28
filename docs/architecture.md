@@ -135,6 +135,41 @@ selected, enabled, scrolled) and reads its colors from the theme on every frame,
 animate their colors when their target changes; while the frame fades, the theme's motion scheme
 makes those color animations snap, so they do not trail behind the rest of the screen.
 
+### Blur
+
+Material has no blur tokens; `DocucraftBlurDefaults` (`core/presentation/theme/`) is where the app
+decides where it blurs, and by how much. There are two kinds of blur, for two jobs.
+
+**A surface floating over content that moves beneath it is frosted, not shadowed.** What is behind
+it shows through, blurred, under its Material container color made translucent. A shadow's dark
+edge separated the surface from the content; the frost does the same and keeps the content in view.
+It is [Haze](https://github.com/chrisbanes/haze): the content is recorded with `Modifier.hazeSource`,
+and the surface applies `Modifier.frosted` with `DocucraftBlurDefaults.surfaceStyle(containerRole)`,
+built on Haze's Material 3 style. The surface's own container becomes transparent and loses its
+shadow elevation.
+- Home: the app bar once the list scrolls under it, the search bar, and the sort menu.
+- Search: the field, over the results.
+- Viewer: the top bar and the floating toolbar, over the pages.
+
+A few rules keep it working:
+- **The source is a sibling of what frosts it, never an ancestor.** A surface inside its own source
+  would blur itself. A popup is the exception that works: it is another window, so the sort menu
+  frosts the list it was opened from.
+- **Content scrolls beneath the surface, padded rather than inset**, or there is nothing to frost:
+  Home's list takes the scaffold's padding as content padding.
+- **`HazeInput.Sources`**, which also reaches across windows. Haze's native backdrop cannot.
+
+**Content that should be out of focus uses `Modifier.blur` with a `BlurRadiusSpec`** (Compose 1.13),
+whose radius can vary across the layer.
+- Whatever is behind a sheet or a dialog destination blurs as it opens, together with the scrim
+  (see [navigation.md](navigation.md#modal-destinations)).
+- A recent document's thumbnail blurs progressively under its title: a scanned page is mostly text,
+  and a title over sharp text reads as more of it.
+
+**Below Android 12 nothing blurs**, and the app looks as it did before blur: a frosted surface falls
+back to its container color, nearly opaque, and content stays sharp. Varying radii, such as the
+thumbnail's, need Android 13.
+
 ## Integrations
 
 - **Firebase.** Analytics and Crashlytics, behind `AnalyticsHelper` (`core/di/AnalyticsModule.kt`).

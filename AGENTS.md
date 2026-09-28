@@ -20,8 +20,8 @@ This file is the map and the rules. How each subsystem works, and why, is in
 | `:document-content-api` | What is on a document's pages (words with their boxes, links) and the pure text-selection logic. | Plain Kotlin. A future OCR module implements it, as `:scanner-mlkit` implements `:scanner-api`. |
 
 Build setup:
-- SDKs and JVM target: `buildSrc/src/main/kotlin/ProjectConfig.kt`. Currently minSdk 24,
-  compile/target 37, Java 17.
+- SDKs and JVM target: `buildSrc/src/main/kotlin/ProjectConfig.kt`. Currently minSdk 24, compile
+  37.1 (Compose 1.13 requires it), target 37, Java 17.
 - `:app` and `:composepdf` apply `docucraft.android.convention` (`buildSrc`: Compose, SDKs,
   desugaring). `:scanner-mlkit` has no UI, so it skips it, but reads the same `ProjectConfig`.
 - Library versions: `gradle/libs.versions.toml`. The app's version: root `build.gradle.kts`.
@@ -126,6 +126,10 @@ A new Koin module is registered in `App.kt`.
 - **Components animate their own state, never theme colors.** Animate a fraction (pressed, selected,
   enabled, scrolled) and `lerp` between colors read from `MaterialTheme`; do not
   `animateColorAsState` to a theme color. See [docs/architecture.md](docs/architecture.md#theme).
+- **A surface floating over moving content is frosted, not shadowed**: `Modifier.frosted` with
+  `DocucraftBlurDefaults.surfaceStyle(role)`, over content recorded with `Modifier.hazeSource`. The
+  source is never an ancestor of what frosts it. Content taken out of focus uses `Modifier.blur`
+  with a `BlurRadiusSpec`. See [docs/architecture.md](docs/architecture.md#blur).
 - Color schemes are generated only when their inputs change (`rememberColorScheme` in `Theme.kt`).
   Every change is built off the main thread. The one exception is the first scheme, built in
   composition because the first frame needs it.
