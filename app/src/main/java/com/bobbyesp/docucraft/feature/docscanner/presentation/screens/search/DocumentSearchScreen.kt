@@ -78,6 +78,7 @@ import com.bobbyesp.docucraft.core.presentation.navigation.motion.isDestinationS
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.sharedBoundsAcrossDestinations
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
@@ -350,13 +351,7 @@ private fun SearchResults(
             contentType = { _, _ -> "document" },
         ) { index, document ->
             ScannedDocumentListItem(
-                modifier =
-                    Modifier.fillMaxWidth()
-                        .animateItem(
-                            fadeInSpec = motionScheme.defaultEffectsSpec(),
-                            placementSpec = motionScheme.defaultSpatialSpec(),
-                            fadeOutSpec = motionScheme.fastEffectsSpec(),
-                        ),
+                modifier = Modifier.fillMaxWidth().then(animateItemWith(motionScheme)),
                 pdf = document,
                 shapes =
                     DocucraftShapeDefaults.segmentedListItemShapes(

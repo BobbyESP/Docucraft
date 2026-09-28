@@ -22,8 +22,10 @@ fun FontConfig.toFontFamily(): FontFamily? =
     when (this) {
         FontConfig.System -> null
         FontConfig.DMSerifText -> getCachedGoogleFont("DM Serif Text")
+        FontConfig.DMSerifDisplay -> getCachedGoogleFont("DM Serif Display")
         FontConfig.GoogleSansFlex -> getCachedGoogleFont("Google Sans Flex")
         FontConfig.Inter -> getCachedGoogleFont("Inter")
+        FontConfig.DMSans -> getCachedGoogleFont("DM Sans")
         FontConfig.Roboto -> getCachedGoogleFont("Roboto")
         FontConfig.Montserrat -> getCachedGoogleFont("Montserrat")
         FontConfig.JetBrainsMono -> getCachedGoogleFont("JetBrains Mono")

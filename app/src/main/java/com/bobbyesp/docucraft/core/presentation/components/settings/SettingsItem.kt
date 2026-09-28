@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.core.presentation.components.settings
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
@@ -24,8 +26,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -67,10 +71,7 @@ fun SettingsItem(
             Icon(imageVector = Icons.Rounded.ChevronRight, contentDescription = null)
         },
         supportingContent = { Text(text = item.supportingText) },
-        colors =
-            ListItemDefaults.segmentedColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            ),
+        colors = SettingsItemDefaults.colors(),
     ) {
         Text(text = item.title, style = MaterialTheme.typography.bodyLargeEmphasized)
     }
@@ -101,20 +102,64 @@ fun SettingsGroup(items: ImmutableList<SettingsItem>, modifier: Modifier = Modif
     }
 }
 
-/** The icon on a tonal disc, the paired container and content roles keeping it legible. */
+/** What every item of a settings list shares, whatever control it carries. */
+object SettingsItemDefaults {
+
+    /**
+     * The grouped surface's container, kept while disabled: the list's own disabled container is
+     * the page's color, and a disabled item would vanish from its group instead of looking
+     * unavailable.
+     */
+    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+    @Composable
+    fun colors(): ListItemColors =
+        ListItemDefaults.segmentedColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        )
+}
+
+/**
+ * The icon on a tonal disc, the paired container and content roles keeping it legible. Disabled, it
+ * takes Material's disabled colors, eased so it fades along with the rest of the item.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun SettingsItemIcon(icon: ImageVector, modifier: Modifier = Modifier) {
+fun SettingsItemIcon(icon: ImageVector, modifier: Modifier = Modifier, enabled: Boolean = true) {
+    val colors = MaterialTheme.colorScheme
+    val spec = MaterialTheme.motionScheme.defaultEffectsSpec<Color>()
+    val containerColor by
+        animateColorAsState(
+            targetValue =
+                if (enabled) colors.primaryContainer
+                else colors.onSurface.copy(alpha = DisabledContainerAlpha),
+            animationSpec = spec,
+            label = "SettingsItemIconContainer",
+        )
+    val contentColor by
+        animateColorAsState(
+            targetValue =
+                if (enabled) colors.onPrimaryContainer
+                else colors.onSurface.copy(alpha = DisabledContentAlpha),
+            animationSpec = spec,
+            label = "SettingsItemIconContent",
+        )
+
     Surface(
         modifier = modifier.size(40.dp),
         shape = CircleShape,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        color = containerColor,
+        contentColor = contentColor,
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(24.dp))
         }
     }
 }
+
+/** Material's opacities for a disabled component's container and content. */
+private const val DisabledContainerAlpha = 0.12f
+private const val DisabledContentAlpha = 0.38f
 
 @PreviewLightDark
 @Composable

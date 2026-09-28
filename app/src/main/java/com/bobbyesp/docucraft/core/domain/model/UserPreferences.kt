@@ -13,9 +13,9 @@ data class UserPreferences(
     val themeSeedColor: Int = DEFAULT_SEED_COLOR,
     val paletteStyle: PaletteStyleConfig = PaletteStyleConfig.Vibrant,
     val isHighContrastModeEnabled: Boolean = false,
-    val displayFont: FontConfig = FontConfig.DMSerifText,
+    val displayFont: FontConfig = FontConfig.DMSerifDisplay,
     val titleFont: FontConfig = FontConfig.DMSerifText,
-    val bodyFont: FontConfig = FontConfig.Inter,
+    val bodyFont: FontConfig = FontConfig.DMSans,
     val labelFont: FontConfig = FontConfig.Inter,
     val monospaceFont: FontConfig = FontConfig.JetBrainsMono,
     val completedOnboarding: Boolean = false,
@@ -40,8 +40,10 @@ enum class PaletteStyleConfig {
 
 enum class FontConfig {
     System,
+    DMSerifDisplay,
     DMSerifText,
     Inter,
+    DMSans,
     Roboto,
     Montserrat,
     GoogleSansFlex,

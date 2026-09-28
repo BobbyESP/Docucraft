@@ -3,28 +3,23 @@
  */
 package com.bobbyesp.docucraft.core.presentation.screens.preferences.appearance
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -33,29 +28,29 @@ import androidx.compose.material.icons.rounded.Contrast
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.LightMode
 import androidx.compose.material.icons.rounded.SettingsSuggest
-import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,11 +76,15 @@ import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.core.presentation.components.ColorPickerDialog
 import com.bobbyesp.docucraft.core.presentation.components.settings.PaletteStylePicker
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingSwitch
+import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsCategory
+import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsItemDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.isDarkTheme
 import com.bobbyesp.docucraft.core.presentation.theme.isDynamicColoringSupported
 import com.bobbyesp.docucraft.core.presentation.theme.toFontFamily
+import com.bobbyesp.docucraft.core.util.animateItemWith
+import com.bobbyesp.docucraft.core.util.contentRevealTransform
 import org.koin.androidx.compose.koinViewModel
 
 private val SeedColorHexFormat = HexFormat {
@@ -93,12 +92,49 @@ private val SeedColorHexFormat = HexFormat {
     number { prefix = "#" }
 }
 
-enum class TypographyCategory {
-    DISPLAY,
-    TITLE,
-    BODY,
-    LABEL,
-    MONOSPACE,
+/**
+ * The type roles the user can pick a font for, with everything the screen shows about each: its
+ * name, what it is used for, and a sample set in the role's own style.
+ */
+enum class TypographyCategory(
+    @StringRes val title: Int,
+    @StringRes val description: Int,
+    val sampleText: String,
+) {
+    DISPLAY(R.string.typography_display, R.string.typography_display_desc, "Docucraft Scanner"),
+    TITLE(R.string.typography_title, R.string.typography_title_desc, "Scanned Documents"),
+    BODY(
+        R.string.typography_body,
+        R.string.typography_body_desc,
+        "This document was processed using Docucraft with advanced layout intelligence.",
+    ),
+    LABEL(R.string.typography_label, R.string.typography_label_desc, "CONFIRM EDIT"),
+    MONOSPACE(
+        R.string.typography_monospace,
+        R.string.typography_monospace_desc,
+        "ID: 46F1-37FB-AC5A (60 chars)",
+    );
+
+    fun fontIn(preferences: UserPreferences): FontConfig =
+        when (this) {
+            DISPLAY -> preferences.displayFont
+            TITLE -> preferences.titleFont
+            BODY -> preferences.bodyFont
+            LABEL -> preferences.labelFont
+            MONOSPACE -> preferences.monospaceFont
+        }
+
+    val sampleStyle: TextStyle
+        @Composable
+        @ReadOnlyComposable
+        get() =
+            when (this) {
+                DISPLAY -> MaterialTheme.typography.headlineMedium
+                TITLE -> MaterialTheme.typography.titleMedium
+                BODY -> MaterialTheme.typography.bodyMedium
+                LABEL -> MaterialTheme.typography.labelLarge
+                MONOSPACE -> MaterialTheme.typography.bodySmall
+            }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -110,79 +146,66 @@ fun AppearanceScreen(
     viewModel: AppearanceViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    val emphasizedEasing = remember { CubicBezierEasing(0.2f, 0.0f, 0f, 1.0f) }
+    val motionScheme = MaterialTheme.motionScheme
 
     AnimatedContent(
         targetState = uiState,
-        transitionSpec = {
-            (fadeIn(animationSpec = tween(500, easing = emphasizedEasing)) +
-                    scaleIn(
-                        initialScale = 0.92f,
-                        animationSpec = tween(500, easing = emphasizedEasing),
-                    ))
-                .togetherWith(fadeOut(animationSpec = tween(200, easing = emphasizedEasing)))
-        },
-        modifier = Modifier.fillMaxSize(),
-        label = "AppearanceScreenTransition",
+        modifier = modifier.fillMaxSize(),
+        transitionSpec = { motionScheme.contentRevealTransform() },
+        // Only arriving from the loading state is a transition; each preference saved is not.
         contentKey = { it is AppearanceUiState.Success },
+        label = "AppearanceScreen",
     ) { state ->
         when (state) {
-            AppearanceUiState.Loading -> {
+            AppearanceUiState.Loading ->
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     LoadingIndicator(modifier = Modifier.size(64.dp))
                 }
-            }
 
-            is AppearanceUiState.Success -> {
+            is AppearanceUiState.Success ->
                 AppearanceScreenContent(
-                    uiState = state.preferences,
+                    preferences = state.preferences,
                     onBack = onBack,
                     showBackButton = showBackButton,
-                    modifier = modifier,
                     onThemeConfigChange = viewModel::updateThemeConfig,
                     onDynamicColoringChange = viewModel::updateDynamicColoring,
                     onThemeSeedColorChange = viewModel::updateThemeSeedColor,
                     onPaletteStyleChange = viewModel::updatePaletteStyle,
                     onHighContrastModeChange = viewModel::updateHighContrastMode,
-                    onDisplayFontChange = viewModel::updateDisplayFont,
-                    onTitleFontChange = viewModel::updateTitleFont,
-                    onBodyFontChange = viewModel::updateBodyFont,
-                    onLabelFontChange = viewModel::updateLabelFont,
-                    onMonospaceFontChange = viewModel::updateMonospaceFont,
+                    onFontChange = { category, font ->
+                        when (category) {
+                            TypographyCategory.DISPLAY -> viewModel.updateDisplayFont(font)
+                            TypographyCategory.TITLE -> viewModel.updateTitleFont(font)
+                            TypographyCategory.BODY -> viewModel.updateBodyFont(font)
+                            TypographyCategory.LABEL -> viewModel.updateLabelFont(font)
+                            TypographyCategory.MONOSPACE -> viewModel.updateMonospaceFont(font)
+                        }
+                    },
                 )
-            }
         }
     }
 }
 
-@OptIn(
-    ExperimentalMaterial3Api::class,
-    ExperimentalMaterial3ExpressiveApi::class,
-    ExperimentalLayoutApi::class,
-)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppearanceScreenContent(
-    uiState: UserPreferences,
+    preferences: UserPreferences,
     onBack: () -> Unit,
     onThemeConfigChange: (ThemeConfig) -> Unit,
     onDynamicColoringChange: (Boolean) -> Unit,
     onThemeSeedColorChange: (Int) -> Unit,
     onPaletteStyleChange: (PaletteStyleConfig) -> Unit,
     onHighContrastModeChange: (Boolean) -> Unit,
-    onDisplayFontChange: (FontConfig) -> Unit,
-    onTitleFontChange: (FontConfig) -> Unit,
-    onBodyFontChange: (FontConfig) -> Unit,
-    onLabelFontChange: (FontConfig) -> Unit,
-    onMonospaceFontChange: (FontConfig) -> Unit,
+    onFontChange: (TypographyCategory, FontConfig) -> Unit,
     modifier: Modifier = Modifier,
     showBackButton: Boolean = true,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val isDark = uiState.themeConfig.isDarkTheme()
+    val motionScheme = MaterialTheme.motionScheme
+    val showsCustomColors = !preferences.useDynamicColoring || !isDynamicColoringSupported()
 
     var showColorPicker by rememberSaveable { mutableStateOf(false) }
-    var activeTypographyCategory by rememberSaveable { mutableStateOf<TypographyCategory?>(null) }
+    var editedCategory by rememberSaveable { mutableStateOf<TypographyCategory?>(null) }
 
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -191,11 +214,12 @@ fun AppearanceScreenContent(
                 title = { Text(stringResource(R.string.appearance)) },
                 subtitle = { Text(stringResource(R.string.appearance_desc)) },
                 navigationIcon = {
-                    // Beside the settings list there is already a way back on screen; filling the
-                    // window there is not. The scene knows which of the two happened.
                     if (showBackButton) {
                         IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = null)
+                            Icon(
+                                Icons.AutoMirrored.Rounded.ArrowBack,
+                                contentDescription = stringResource(R.string.back),
+                            )
                         }
                     }
                 },
@@ -207,575 +231,447 @@ fun AppearanceScreenContent(
             )
         },
     ) { paddingValues ->
+        // Switching dynamic color on or off adds or removes whole sections: they fade, and the
+        // ones below glide to their new place rather than jump.
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(paddingValues),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // Theme Selection
-            item(key = "theme_selection", contentType = "settings_section") {
-                AppearanceSection(title = stringResource(R.string.theme)) {
-                    val systemLabel = stringResource(R.string.system)
-                    val lightLabel = stringResource(R.string.light)
-                    val darkLabel = stringResource(R.string.dark)
-
-                    ButtonGroup(
-                        overflowIndicator = {},
-                        horizontalArrangement =
-                            Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
-                        modifier =
-                            Modifier.fillMaxWidth()
-                                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                    ) {
-                        ThemeConfig.entries.forEach { config ->
-                            val isSelected = uiState.themeConfig == config
-                            val label =
-                                when (config) {
-                                    ThemeConfig.FOLLOW_SYSTEM -> systemLabel
-                                    ThemeConfig.LIGHT -> lightLabel
-                                    ThemeConfig.DARK -> darkLabel
-                                }
-                            val imageVector =
-                                when (config) {
-                                    ThemeConfig.FOLLOW_SYSTEM -> Icons.Rounded.SettingsSuggest
-                                    ThemeConfig.LIGHT -> Icons.Rounded.LightMode
-                                    ThemeConfig.DARK -> Icons.Rounded.DarkMode
-                                }
-
-                            toggleableItem(
-                                checked = isSelected,
-                                onCheckedChange = { if (it) onThemeConfigChange(config) },
-                                label = label,
-                                icon = {
-                                    Icon(
-                                        imageVector = imageVector,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp),
-                                    )
-                                },
-                                weight = 1f,
-                            )
-                        }
-                    }
-                }
+            item(key = "theme", contentType = "settings_section") {
+                ThemeSection(
+                    selected = preferences.themeConfig,
+                    onSelect = onThemeConfigChange,
+                    modifier = animateItemWith(motionScheme),
+                )
             }
 
-            // Dynamic Coloring
             if (isDynamicColoringSupported()) {
                 item(key = "dynamic_coloring", contentType = "settings_item") {
                     SettingSwitch(
                         title = stringResource(R.string.dynamic_coloring),
                         supportingText = stringResource(R.string.dynamic_coloring_desc),
                         icon = Icons.Rounded.ColorLens,
-                        isChecked = uiState.useDynamicColoring,
+                        isChecked = preferences.useDynamicColoring,
                         onCheckedChange = onDynamicColoringChange,
+                        modifier = animateItemWith(motionScheme),
                     )
                 }
             }
 
-            // Custom Color Settings (if dynamic coloring is disabled or not supported)
-            if (!uiState.useDynamicColoring || !isDynamicColoringSupported()) {
+            if (showsCustomColors) {
                 item(key = "custom_colors", contentType = "settings_section") {
-                    val seedColorHex =
-                        remember(uiState.themeSeedColor) {
-                            uiState.themeSeedColor.toHexString(SeedColorHexFormat)
-                        }
-
-                    val seedColor =
-                        remember(uiState.themeSeedColor) { Color(uiState.themeSeedColor) }
-
-                    AppearanceSection(title = stringResource(R.string.custom_colors)) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            // Seed Color
-                            ListItem(
-                                modifier =
-                                    Modifier.fillMaxWidth()
-                                        .clip(DocucraftShapeDefaults.topListItemShape)
-                                        .clickable { showColorPicker = true },
-                                headlineContent = {
-                                    Text(
-                                        text = stringResource(R.string.seed_color),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
-                                },
-                                supportingContent = {
-                                    Text(seedColorHex, style = MaterialTheme.typography.bodyMedium)
-                                },
-                                colors =
-                                    ListItemDefaults.colors(containerColor = Color.Transparent),
-                                trailingContent = {
-                                    Box(
-                                        modifier =
-                                            Modifier.size(40.dp)
-                                                .clip(CircleShape)
-                                                .background(seedColor)
-                                                .clickable { showColorPicker = true }
-                                    )
-                                },
-                            )
-
-                            HorizontalDivider(
-                                modifier = Modifier.fillMaxWidth(),
-                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Palette Style
-                            Text(
-                                text = stringResource(R.string.palette_style),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            PaletteStylePicker(
-                                selectedStyle = uiState.paletteStyle,
-                                seedColor = seedColor,
-                                isDark = isDark,
-                                isAmoled = uiState.isHighContrastModeEnabled,
-                                onStyleSelect = onPaletteStyleChange,
-                                modifier =
-                                    Modifier.fillMaxWidth()
-                                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                            )
-                        }
-                    }
-                }
-
-                item(key = "high_contrast", contentType = "settings_item") {
-                    SettingSwitch(
-                        title = stringResource(R.string.high_contrast),
-                        supportingText = stringResource(R.string.high_contrast_desc),
-                        icon = Icons.Rounded.Contrast,
-                        isChecked = uiState.isHighContrastModeEnabled,
-                        onCheckedChange = onHighContrastModeChange,
+                    CustomColorsSection(
+                        seedColor = preferences.themeSeedColor,
+                        paletteStyle = preferences.paletteStyle,
+                        isDark = preferences.themeConfig.isDarkTheme(),
+                        isHighContrast = preferences.isHighContrastModeEnabled,
+                        onSeedColorClick = { showColorPicker = true },
+                        onPaletteStyleChange = onPaletteStyleChange,
+                        onHighContrastChange = onHighContrastModeChange,
+                        modifier = animateItemWith(motionScheme),
                     )
                 }
             }
 
-            // Typography Selection (Redesigned)
-            item(key = "typography_selection", contentType = "settings_section") {
-                AppearanceSection(title = stringResource(R.string.typography)) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        TypographyCategoryRow(
-                            categoryName = stringResource(R.string.typography_display),
-                            categoryDesc = stringResource(R.string.typography_display_desc),
-                            selectedFont = uiState.displayFont,
-                            onClick = { activeTypographyCategory = TypographyCategory.DISPLAY },
-                            modifier = Modifier.clip(DocucraftShapeDefaults.topListItemShape),
-                        )
-
-                        HorizontalDivider(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                        )
-
-                        TypographyCategoryRow(
-                            categoryName = stringResource(R.string.typography_title),
-                            categoryDesc = stringResource(R.string.typography_title_desc),
-                            selectedFont = uiState.titleFont,
-                            onClick = { activeTypographyCategory = TypographyCategory.TITLE },
-                            modifier = Modifier.clip(DocucraftShapeDefaults.middleListItemShape),
-                        )
-
-                        HorizontalDivider(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                        )
-
-                        TypographyCategoryRow(
-                            categoryName = stringResource(R.string.typography_body),
-                            categoryDesc = stringResource(R.string.typography_body_desc),
-                            selectedFont = uiState.bodyFont,
-                            onClick = { activeTypographyCategory = TypographyCategory.BODY },
-                            modifier = Modifier.clip(DocucraftShapeDefaults.middleListItemShape),
-                        )
-
-                        HorizontalDivider(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                        )
-
-                        TypographyCategoryRow(
-                            categoryName = stringResource(R.string.typography_label),
-                            categoryDesc = stringResource(R.string.typography_label_desc),
-                            selectedFont = uiState.labelFont,
-                            onClick = { activeTypographyCategory = TypographyCategory.LABEL },
-                            modifier = Modifier.clip(DocucraftShapeDefaults.middleListItemShape),
-                        )
-
-                        HorizontalDivider(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                        )
-
-                        TypographyCategoryRow(
-                            categoryName = stringResource(R.string.typography_monospace),
-                            categoryDesc = stringResource(R.string.typography_monospace_desc),
-                            selectedFont = uiState.monospaceFont,
-                            onClick = { activeTypographyCategory = TypographyCategory.MONOSPACE },
-                            modifier = Modifier.clip(DocucraftShapeDefaults.bottomListItemShape),
-                        )
-                    }
-                }
+            item(key = "typography", contentType = "settings_section") {
+                TypographySection(
+                    preferences = preferences,
+                    onCategoryClick = { editedCategory = it },
+                    modifier = animateItemWith(motionScheme),
+                )
             }
         }
     }
 
     if (showColorPicker) {
         ColorPickerDialog(
-            initialColor = Color(uiState.themeSeedColor),
+            initialColor = Color(preferences.themeSeedColor),
             onColorSelected = { onThemeSeedColorChange(it.toArgb()) },
             onDismiss = { showColorPicker = false },
         )
     }
 
-    activeTypographyCategory?.let { category ->
-        val title =
-            when (category) {
-                TypographyCategory.DISPLAY -> stringResource(R.string.typography_display)
-                TypographyCategory.TITLE -> stringResource(R.string.typography_title)
-                TypographyCategory.BODY -> stringResource(R.string.typography_body)
-                TypographyCategory.LABEL -> stringResource(R.string.typography_label)
-                TypographyCategory.MONOSPACE -> stringResource(R.string.typography_monospace)
-            }
-        val desc =
-            when (category) {
-                TypographyCategory.DISPLAY -> stringResource(R.string.typography_display_desc)
-                TypographyCategory.TITLE -> stringResource(R.string.typography_title_desc)
-                TypographyCategory.BODY -> stringResource(R.string.typography_body_desc)
-                TypographyCategory.LABEL -> stringResource(R.string.typography_label_desc)
-                TypographyCategory.MONOSPACE -> stringResource(R.string.typography_monospace_desc)
-            }
-        val selectedFont =
-            when (category) {
-                TypographyCategory.DISPLAY -> uiState.displayFont
-                TypographyCategory.TITLE -> uiState.titleFont
-                TypographyCategory.BODY -> uiState.bodyFont
-                TypographyCategory.LABEL -> uiState.labelFont
-                TypographyCategory.MONOSPACE -> uiState.monospaceFont
-            }
-        val onFontSelect: (FontConfig) -> Unit = { font ->
-            when (category) {
-                TypographyCategory.DISPLAY -> onDisplayFontChange(font)
-                TypographyCategory.TITLE -> onTitleFontChange(font)
-                TypographyCategory.BODY -> onBodyFontChange(font)
-                TypographyCategory.LABEL -> onLabelFontChange(font)
-                TypographyCategory.MONOSPACE -> onMonospaceFontChange(font)
-            }
-        }
-        val previewText =
-            when (category) {
-                TypographyCategory.DISPLAY -> "Docucraft Scanner"
-                TypographyCategory.TITLE -> "Scanned Documents"
-                TypographyCategory.BODY ->
-                    "This document was processed using Docucraft with advanced layout intelligence."
-                TypographyCategory.LABEL -> "CONFIRM EDIT"
-                TypographyCategory.MONOSPACE -> "ID: 46F1-37FB-AC5A (60 chars)"
-            }
-        val previewStyle =
-            when (category) {
-                TypographyCategory.DISPLAY -> MaterialTheme.typography.headlineMedium
-                TypographyCategory.TITLE -> MaterialTheme.typography.titleMedium
-                TypographyCategory.BODY -> MaterialTheme.typography.bodyMedium
-                TypographyCategory.LABEL -> MaterialTheme.typography.labelLarge
-                TypographyCategory.MONOSPACE -> MaterialTheme.typography.bodySmall
-            }
-
+    editedCategory?.let { category ->
         FontSelectionDialog(
-            title = title,
-            description = desc,
-            selectedFont = selectedFont,
-            onFontSelect = onFontSelect,
-            previewText = previewText,
-            previewStyle = previewStyle,
-            onDismiss = { activeTypographyCategory = null },
+            category = category,
+            selectedFont = category.fontIn(preferences),
+            onFontSelect = { onFontChange(category, it) },
+            onDismiss = { editedCategory = null },
         )
     }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun AppearanceSection(
-    title: String,
+private fun ThemeSection(
+    selected: ThemeConfig,
+    onSelect: (ThemeConfig) -> Unit,
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
 ) {
-    Column(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .clip(DocucraftShapeDefaults.cardShape)
-                .background(MaterialTheme.colorScheme.surfaceContainerLow),
-        verticalArrangement = Arrangement.spacedBy(0.dp),
+    val labels =
+        mapOf(
+            ThemeConfig.FOLLOW_SYSTEM to stringResource(R.string.system),
+            ThemeConfig.LIGHT to stringResource(R.string.light),
+            ThemeConfig.DARK to stringResource(R.string.dark),
+        )
+
+    SettingsCategory(title = stringResource(R.string.theme), modifier = modifier) {
+        // The connected group morphs the pressed and the checked button on its own.
+        ButtonGroup(
+            overflowIndicator = {},
+            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            ThemeConfig.entries.forEach { config ->
+                val icon =
+                    when (config) {
+                        ThemeConfig.FOLLOW_SYSTEM -> Icons.Rounded.SettingsSuggest
+                        ThemeConfig.LIGHT -> Icons.Rounded.LightMode
+                        ThemeConfig.DARK -> Icons.Rounded.DarkMode
+                    }
+
+                toggleableItem(
+                    checked = selected == config,
+                    onCheckedChange = { if (it) onSelect(config) },
+                    label = labels.getValue(config),
+                    icon = {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                    weight = 1f,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The seed color, the palette built from it and its high-contrast variant, as one segmented group:
+ * the seed opens the picker, and the palettes preview what each style makes of it.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun CustomColorsSection(
+    seedColor: Int,
+    paletteStyle: PaletteStyleConfig,
+    isDark: Boolean,
+    isHighContrast: Boolean,
+    onSeedColorClick: () -> Unit,
+    onPaletteStyleChange: (PaletteStyleConfig) -> Unit,
+    onHighContrastChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val seedColorHex = remember(seedColor) { seedColor.toHexString(SeedColorHexFormat) }
+    // Only the swatch eases into a newly picked color. The palettes are generated from the seed,
+    // and generating them on every frame of the fade would be wasted work.
+    val swatchColor by
+        animateColorAsState(
+            targetValue = Color(seedColor),
+            animationSpec = MaterialTheme.motionScheme.slowEffectsSpec(),
+            label = "SeedColorSwatch",
+        )
+
+    SettingsCategory(title = stringResource(R.string.custom_colors), modifier = modifier) {
+        SegmentedListItem(
+            onClick = onSeedColorClick,
+            shapes = DocucraftShapeDefaults.segmentedListItemShapes(index = 0, count = 3),
+            modifier = Modifier.fillMaxWidth(),
+            supportingContent = { Text(seedColorHex) },
+            trailingContent = {
+                Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(swatchColor))
+            },
+            colors = SettingsItemDefaults.colors(),
+        ) {
+            Text(
+                text = stringResource(R.string.seed_color),
+                style = MaterialTheme.typography.bodyLargeEmphasized,
+            )
+        }
+
+        // Not a list item: it holds its own targets, and a clickable row around them would claim
+        // their touches.
+        Surface(
+            shape = DocucraftShapeDefaults.middleListItemShape,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.palette_style),
+                    style = MaterialTheme.typography.bodyLargeEmphasized,
+                )
+                PaletteStylePicker(
+                    selectedStyle = paletteStyle,
+                    seedColor = Color(seedColor),
+                    isDark = isDark,
+                    isAmoled = isHighContrast,
+                    onStyleSelect = onPaletteStyleChange,
+                )
+            }
+        }
+
+        SettingSwitch(
+            title = stringResource(R.string.high_contrast),
+            supportingText = stringResource(R.string.high_contrast_desc),
+            icon = Icons.Rounded.Contrast,
+            isChecked = isHighContrast,
+            onCheckedChange = onHighContrastChange,
+            shapes = DocucraftShapeDefaults.segmentedListItemShapes(index = 2, count = 3),
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun TypographySection(
+    preferences: UserPreferences,
+    onCategoryClick: (TypographyCategory) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val categories = TypographyCategory.entries
+
+    SettingsCategory(title = stringResource(R.string.typography), modifier = modifier) {
+        categories.forEachIndexed { index, category ->
+            TypographyCategoryItem(
+                category = category,
+                font = category.fontIn(preferences),
+                shapes =
+                    DocucraftShapeDefaults.segmentedListItemShapes(
+                        index = index,
+                        count = categories.size,
+                    ),
+                onClick = { onCategoryClick(category) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+/** One type role, led by a sample of its current font. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun TypographyCategoryItem(
+    category: TypographyCategory,
+    font: FontConfig,
+    shapes: ListItemShapes,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SegmentedListItem(
+        onClick = onClick,
+        shapes = shapes,
+        modifier = modifier,
+        leadingContent = { FontSample(font) },
+        supportingContent = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(text = stringResource(category.description))
+                Text(
+                    text = stringResource(R.string.active_font, font.name),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        },
+        colors = SettingsItemDefaults.colors(),
     ) {
         Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp),
+            text = stringResource(category.title),
+            style = MaterialTheme.typography.bodyLargeEmphasized,
         )
-        content()
+    }
+}
+
+/**
+ * "Aa" in [font] on a tonal disc, the same disc the settings list puts its icons on. A new font
+ * grows in over the old one, so the change is seen even behind the dialog's scrim.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun FontSample(font: FontConfig, modifier: Modifier = Modifier) {
+    val motionScheme = MaterialTheme.motionScheme
+
+    Surface(
+        modifier = modifier.size(40.dp),
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    ) {
+        AnimatedContent(
+            targetState = font,
+            transitionSpec = { motionScheme.contentRevealTransform() },
+            contentAlignment = Alignment.Center,
+            label = "FontSample",
+        ) { shownFont ->
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = "Aa",
+                    fontFamily = remember(shownFont) { shownFont.toFontFamily() },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun FontSelectionDialog(
+    category: TypographyCategory,
+    selectedFont: FontConfig,
+    onFontSelect: (FontConfig) -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val fonts = FontConfig.entries
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes()) {
+                Text(stringResource(R.string.confirm))
+            }
+        },
+        title = { Text(stringResource(category.title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(stringResource(category.description))
+
+                FontPreview(category = category, font = selectedFont)
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 280.dp).selectableGroup(),
+                    verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+                ) {
+                    itemsIndexed(fonts, key = { _, font -> font.name }) { index, font ->
+                        FontOption(
+                            font = font,
+                            selected = font == selectedFont,
+                            shapes =
+                                DocucraftShapeDefaults.segmentedListItemShapes(
+                                    index = index,
+                                    count = fonts.size,
+                                ),
+                            onClick = { onFontSelect(font) },
+                        )
+                    }
+                }
+            }
+        },
+        modifier = modifier,
+    )
+}
+
+/**
+ * The category's sample in [font]. Picking another font grows the new sample in over the old one,
+ * and the card follows the text's new size instead of snapping to it.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun FontPreview(
+    category: TypographyCategory,
+    font: FontConfig,
+    modifier: Modifier = Modifier,
+) {
+    val motionScheme = MaterialTheme.motionScheme
+    val sampleStyle = category.sampleStyle
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.font_preview),
+                style = MaterialTheme.typography.labelSmallEmphasized,
+            )
+
+            AnimatedContent(
+                targetState = font,
+                transitionSpec = {
+                    motionScheme.contentRevealTransform() using
+                        SizeTransform(
+                            sizeAnimationSpec = { _, _ -> motionScheme.defaultSpatialSpec() }
+                        )
+                },
+                label = "FontPreview",
+            ) { shownFont ->
+                Text(
+                    text = category.sampleText,
+                    style =
+                        sampleStyle.copy(
+                            fontFamily = remember(shownFont) { shownFont.toFontFamily() }
+                        ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A font to pick, named in itself. The selected one takes the list's selected color and shape, both
+ * animated by the item.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun FontOption(
+    font: FontConfig,
+    selected: Boolean,
+    shapes: ListItemShapes,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    SegmentedListItem(
+        selected = selected,
+        onClick = onClick,
+        shapes = shapes,
+        modifier = modifier.fillMaxWidth(),
+        // The item is the radio button to accessibility services; this one only shows it.
+        trailingContent = { RadioButton(selected = selected, onClick = null) },
+        colors =
+            ListItemDefaults.segmentedColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+            ),
+    ) {
+        Text(text = font.name, fontFamily = remember(font) { font.toFontFamily() })
     }
 }
 
 @PreviewLightDark
 @Composable
 private fun AppearanceScreenPreview() {
-    DocucraftTheme {
-        AppearanceScreenContent(
-            uiState = UserPreferences(),
-            onBack = {},
-            onThemeConfigChange = {},
-            onDynamicColoringChange = {},
-            onThemeSeedColorChange = {},
-            onPaletteStyleChange = {},
-            onHighContrastModeChange = {},
-            onDisplayFontChange = {},
-            onTitleFontChange = {},
-            onBodyFontChange = {},
-            onLabelFontChange = {},
-            onMonospaceFontChange = {},
-        )
-    }
+    DocucraftTheme { AppearanceScreenPreviewContent(UserPreferences()) }
 }
 
 @PreviewLightDark
 @Composable
 private fun AppearanceScreenNoDynamicColorPreview() {
-    DocucraftTheme {
-        AppearanceScreenContent(
-            uiState = UserPreferences(useDynamicColoring = false),
-            onBack = {},
-            onThemeConfigChange = {},
-            onDynamicColoringChange = {},
-            onThemeSeedColorChange = {},
-            onPaletteStyleChange = {},
-            onHighContrastModeChange = {},
-            onDisplayFontChange = {},
-            onTitleFontChange = {},
-            onBodyFontChange = {},
-            onLabelFontChange = {},
-            onMonospaceFontChange = {},
-        )
-    }
+    DocucraftTheme { AppearanceScreenPreviewContent(UserPreferences(useDynamicColoring = false)) }
 }
 
 @Composable
-fun TypographyCategoryRow(
-    categoryName: String,
-    categoryDesc: String,
-    selectedFont: FontConfig,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val fontFamily = remember(selectedFont) { selectedFont.toFontFamily() }
-
-    ListItem(
-        modifier = modifier.clickable(onClick = onClick),
-        headlineContent = {
-            Text(
-                text = categoryName,
-                fontWeight = FontWeight.SemiBold,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        },
-        supportingContent = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = categoryDesc,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = "Active: ${selectedFont.name}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium,
-                )
-            }
-        },
-        leadingContent = {
-            Box(
-                modifier =
-                    Modifier.size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.TextFields,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(22.dp),
-                )
-            }
-        },
-        trailingContent = {
-            Box(
-                modifier =
-                    Modifier.clip(MaterialTheme.shapes.medium)
-                        .background(MaterialTheme.colorScheme.surfaceContainer)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Aa",
-                    fontFamily = fontFamily,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun FontSelectionDialog(
-    title: String,
-    description: String,
-    selectedFont: FontConfig,
-    onFontSelect: (FontConfig) -> Unit,
-    previewText: String,
-    previewStyle: TextStyle,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.confirm)) }
-        },
-        title = {
-            Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                // Live preview card at the top
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer
-                        ),
-                    shape = MaterialTheme.shapes.large,
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Text(
-                            text = "PREVIEW",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-
-                        val fontFamily = remember(selectedFont) { selectedFont.toFontFamily() }
-                        Text(
-                            text = previewText,
-                            style = previewStyle.copy(fontFamily = fontFamily),
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                }
-
-                // Scrollable list of fonts below
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth().height(280.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(FontConfig.entries) { fontConfig ->
-                        val isSelected = selectedFont == fontConfig
-                        val fontFamily = remember(fontConfig) { fontConfig.toFontFamily() }
-
-                        ListItem(
-                            modifier =
-                                Modifier.clip(MaterialTheme.shapes.medium).clickable {
-                                    onFontSelect(fontConfig)
-                                },
-                            headlineContent = {
-                                Text(
-                                    text = fontConfig.name,
-                                    fontFamily = fontFamily,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight =
-                                        if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                )
-                            },
-                            leadingContent = {
-                                Box(
-                                    modifier =
-                                        Modifier.size(36.dp)
-                                            .clip(CircleShape)
-                                            .background(
-                                                if (isSelected)
-                                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                                else MaterialTheme.colorScheme.surfaceVariant
-                                            ),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        text = "Aa",
-                                        fontFamily = fontFamily,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color =
-                                            if (isSelected)
-                                                MaterialTheme.colorScheme.primaryContainer
-                                            else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            },
-                            trailingContent = {
-                                RadioButton(
-                                    selected = isSelected,
-                                    onClick = { onFontSelect(fontConfig) },
-                                )
-                            },
-                            colors =
-                                ListItemDefaults.colors(
-                                    containerColor =
-                                        if (isSelected) {
-                                            MaterialTheme.colorScheme.primaryContainer
-                                        } else {
-                                            Color.Transparent
-                                        },
-                                    headlineColor =
-                                        if (isSelected) {
-                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface
-                                        },
-                                ),
-                        )
-                    }
-                }
-            }
-        },
-        shape = MaterialTheme.shapes.extraLarge,
-        modifier = modifier,
+private fun AppearanceScreenPreviewContent(preferences: UserPreferences) {
+    AppearanceScreenContent(
+        preferences = preferences,
+        onBack = {},
+        onThemeConfigChange = {},
+        onDynamicColoringChange = {},
+        onThemeSeedColorChange = {},
+        onPaletteStyleChange = {},
+        onHighContrastModeChange = {},
+        onFontChange = { _, _ -> },
     )
 }

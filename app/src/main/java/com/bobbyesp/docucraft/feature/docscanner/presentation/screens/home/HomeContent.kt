@@ -6,10 +6,6 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -95,6 +91,8 @@ import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.util.animateItemWith
+import com.bobbyesp.docucraft.core.util.contentRevealTransform
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
@@ -187,11 +185,7 @@ fun HomeContent(
         AnimatedContent(
             modifier = Modifier.padding(padding),
             targetState = page,
-            transitionSpec = {
-                (fadeIn(motionScheme.defaultEffectsSpec()) +
-                    scaleIn(motionScheme.defaultSpatialSpec(), initialScale = 0.92f)) togetherWith
-                    fadeOut(motionScheme.fastEffectsSpec())
-            },
+            transitionSpec = { motionScheme.contentRevealTransform() },
             label = "HomePage",
         ) { targetPage ->
             when (targetPage) {
@@ -409,11 +403,7 @@ private fun DocumentsPage(
                 modifier =
                     Modifier.fillMaxWidth()
                         .padding(horizontal = 16.dp)
-                        .animateItem(
-                            fadeInSpec = motionScheme.defaultEffectsSpec(),
-                            placementSpec = motionScheme.defaultSpatialSpec(),
-                            fadeOutSpec = motionScheme.fastEffectsSpec(),
-                        ),
+                        .then(animateItemWith(motionScheme)),
                 pdf = scannedDocument,
                 shapes =
                     DocucraftShapeDefaults.segmentedListItemShapes(

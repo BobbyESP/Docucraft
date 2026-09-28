@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -25,26 +24,22 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,7 +47,9 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.model.ViewerDefaults
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingSwitch
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.appearance.AppearanceSection
+import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsCategory
+import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsItemDefaults
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -178,47 +175,53 @@ fun DocumentViewerSettingsContent(
     }
 }
 
+/**
+ * One selectable item per fit mode. The chosen one takes the list's selected color and shape,
+ * animated by the item; disabled, each keeps its container and dims its content, so the choice that
+ * would apply stays readable.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FitModeSection(
     selected: ViewerFitMode,
     enabled: Boolean,
     onSelect: (ViewerFitMode) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    AppearanceSection(
-        title = stringResource(R.string.fit_mode),
-        modifier = Modifier.alpha(if (enabled) 1f else DisabledAlpha),
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().selectableGroup()) {
-            ViewerFitMode.entries.forEach { fitMode ->
+    val fitModes = ViewerFitMode.entries
+
+    SettingsCategory(title = stringResource(R.string.fit_mode), modifier = modifier) {
+        Column(
+            modifier = Modifier.selectableGroup(),
+            verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+        ) {
+            fitModes.forEachIndexed { index, fitMode ->
                 val isSelected = fitMode == selected
-                ListItem(
-                    modifier =
-                        Modifier.selectable(
-                            selected = isSelected,
-                            enabled = enabled,
-                            role = Role.RadioButton,
-                            onClick = { onSelect(fitMode) },
+                SegmentedListItem(
+                    selected = isSelected,
+                    onClick = { onSelect(fitMode) },
+                    shapes =
+                        DocucraftShapeDefaults.segmentedListItemShapes(
+                            index = index,
+                            count = fitModes.size,
                         ),
-                    headlineContent = {
-                        Text(
-                            text = stringResource(fitMode.label),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = enabled,
                     leadingContent = {
-                        Icon(
-                            imageVector = fitMode.icon(),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Icon(imageVector = fitMode.icon(), contentDescription = null)
                     },
-                    // The row is the control; the radio only shows its state.
+                    // The item is the radio button to accessibility services; this one only shows
+                    // its state.
                     trailingContent = {
                         RadioButton(selected = isSelected, onClick = null, enabled = enabled)
                     },
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                )
+                    colors = SettingsItemDefaults.colors(),
+                ) {
+                    Text(
+                        text = stringResource(fitMode.label),
+                        style = MaterialTheme.typography.bodyLargeEmphasized,
+                    )
+                }
             }
         }
     }
@@ -241,9 +244,6 @@ private fun ViewerFitMode.icon(): ImageVector =
         ViewerFitMode.BOTH -> Icons.Rounded.FitScreen
         ViewerFitMode.PROPORTIONAL -> ImageVector.vectorResource(R.drawable.fit_page)
     }
-
-/** Material's opacity for disabled content. */
-private const val DisabledAlpha = 0.38f
 
 @PreviewLightDark
 @Composable
