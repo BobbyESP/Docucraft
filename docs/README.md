@@ -35,16 +35,16 @@ Comments in the code cite these by name. Each is explained where it lives.
 
 The app has been through a stabilization, one subsystem at a time.
 
-| Subsystem | State |
-|---|---|
-| Scanning and the catalogue | Done. The process-death paths are still to be checked on a device ([scanning.md](scanning.md#not-yet-verified-on-a-device)). |
-| Domain boundaries | Done in the features. `core/domain` keeps two Compose types, which is pending with preferences. |
-| Navigation | Done. |
+| Subsystem | State                                                                                                                                      |
+|---|--------------------------------------------------------------------------------------------------------------------------------------------|
+| Scanning and the catalogue | Done. The process-death paths are still to be checked on a device ([scanning.md](scanning.md#not-yet-verified-on-a-device)).               |
+| Domain boundaries | Done in the features. `core/domain` keeps two Compose types, which is pending with preferences.                                            |
+| Navigation | Done.                                                                                                                                      |
 | PDF viewer, text and links | Done. Still to check on a phone and a tablet: the whole viewer, TalkBack end to end, and opening links with a browser without Custom Tabs. |
-| Database | **Next**: rethink the catalogue's schema, motivated by a "Recents" section of opened PDFs. |
-| Preferences and theme | In progress: the theme is done ([architecture.md](architecture.md#theme)); still to check on a phone. Preferences pending. |
-| Search and filtering | Pending |
-| Analytics | Pending |
+| Database | **Next**: rethink the catalogue's schema, motivated by a "Recents" section of opened PDFs.                                                 |
+| Preferences and theme | Done. The theme changes smoothly with the tradeoff of "screenshotting" the app                                                             |
+| Search and filtering | Pending                                                                                                                                    |
+| Analytics | Pending                                                                                                                                    |
 
 ## How a subsystem is stabilized
 
