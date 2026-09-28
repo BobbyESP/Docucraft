@@ -140,7 +140,7 @@ class ResolveLinkUseCase {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             URLDecoder.decode(text.replace("+", "%2B"), StandardCharsets.UTF_8)
         } else {
-            //For versions lower than TIRAMISU, use the deprecated method
+            // For versions lower than TIRAMISU, use the deprecated method
             URLDecoder.decode(text.replace("+", "%2B"), "UTF-8")
         }
     }
