@@ -123,6 +123,13 @@ class OverlaySceneStrategy<T : Any>(
             preference: OverlayPreference = OverlayPreference.SheetOrDialog
         ): Map<String, Any> = metadata { put(OverlayKey, preference) }
 
+        /**
+         * Whether [top], the last of [stackSize] entries, is shown as an overlay: the answer
+         * [calculateScene] gives, for whoever draws what is behind it.
+         */
+        fun isShownAsOverlay(top: NavEntry<*>, stackSize: Int): Boolean =
+            stackSize > 1 && top.metadata[OverlayKey] != null
+
         internal object OverlayKey : NavMetadataKey<OverlayPreference>
     }
 }
