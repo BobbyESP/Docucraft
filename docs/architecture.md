@@ -110,16 +110,14 @@ The rest of the app reads `MaterialTheme` as usual.
 **A color scheme is built only when its inputs change**, and away from the main thread. MaterialKolor
 takes several milliseconds per scheme, too much for the frame that switches the theme. Only the
 first scheme is built in place, because the first frame needs it. The last few are cached, so
-switching back to a previous theme builds nothing. The seed schemes use MaterialKolor's default spec
-(2021): the 2025 spec costs several times more to generate.
+switching back to a previous theme builds nothing.
 
 **A theme change is one crossfade, drawn at the theme** (`ThemeTransition.kt`). Material provides
 the color scheme through a static composition local, so any new scheme recomposes the whole tree.
 Animating the scheme itself (MaterialKolor's `animate = true`) hands the tree a new scheme on every
-frame, which measured as over twenty full recompositions per switch. Instead, the last frame drawn
-with the old scheme is kept as an image, the new scheme is applied once, and the image fades out on
-top; the fade only redraws one node. What another window draws, such as a dialog, switches without
-the fade.
+frame. Instead, the last frame drawn with the old scheme is kept as an image, the new scheme is
+applied once, and the image fades out on top; the fade only redraws one node. What another window
+draws, such as a dialog, switches without the fade.
 
 **Components never animate colors for a theme change.** A component animates its own state (pressed,
 selected, enabled, scrolled) and reads its colors from the theme on every frame, as

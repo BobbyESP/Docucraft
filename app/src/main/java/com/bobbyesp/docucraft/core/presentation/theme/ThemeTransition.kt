@@ -29,17 +29,11 @@ import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.unit.IntSize
 
 /**
- * Takes the app from one color scheme to the next with a single crossfade drawn over the whole
- * tree.
+ * Takes the app from one color scheme to the next with a single crossfade.
  *
- * Material provides the color scheme through a static composition local, so each new scheme
- * recomposes everything below the theme. Animating the scheme itself, as MaterialKolor's `animate =
- * true` does, hands the tree a new scheme on every frame, and the whole screen recomposes some
- * twenty times per theme change. Here it recomposes once: the last frame drawn with the old scheme
- * is kept as an image, the new scheme is applied, and the image fades out on top. The fade is read
- * only while drawing, so each of its frames costs a redraw of one node and nothing else.
- *
- * What is drawn in another window, such as a dialog, switches without the fade.
+ * A new color scheme recomposes the whole tree, so it is applied once: the last frame drawn with
+ * the old scheme is kept as an image and fades out on top, read only while drawing. What another
+ * window draws, such as a dialog, switches without the fade.
  */
 @Stable
 internal class ThemeTransitionState(initialScheme: ColorScheme, private val layer: GraphicsLayer) {
@@ -52,11 +46,8 @@ internal class ThemeTransitionState(initialScheme: ColorScheme, private val laye
     private val outgoingAlpha = Animatable(0f)
 
     /**
-     * The motion scheme to give Material: [base], except that color animations starting while a
-     * frame fades snap.
-     *
-     * It is the same object for the same [base], and asks whether a frame is fading only when an
-     * animation starts, so neither the start nor the end of a fade recomposes anything.
+     * [base], except that color animations starting during a fade snap, so components do not trail
+     * behind it. The same object for the same [base], so a fade recomposes nothing.
      */
     fun motionScheme(base: MotionScheme): MotionScheme =
         motionSchemes?.takeIf { it.base === base }
@@ -68,16 +59,14 @@ internal class ThemeTransitionState(initialScheme: ColorScheme, private val laye
 
     internal suspend fun transitionTo(target: ColorScheme, animationSpec: AnimationSpec<Float>) {
         if (target == colorScheme) return
-        // Nothing drawn yet (the first frame, a window not shown), so there is nothing to fade.
+        // Nothing drawn yet, so nothing to fade.
         if (layer.isReleased || layer.size == IntSize.Zero) {
             colorScheme = target
             return
         }
-        // The layer holds the image still fading, if any, so a change made during another one
-        // continues from what is on screen instead of jumping.
+        // Includes any image still fading, so back-to-back changes continue from the screen.
         val lastFrame = layer.toImageBitmap()
         outgoingAlpha.snapTo(1f)
-        // Set together, so the frame that shows the new scheme is the one that starts covering it.
         outgoingFrame = lastFrame
         colorScheme = target
         outgoingAlpha.animateTo(0f, animationSpec)
@@ -111,11 +100,8 @@ internal fun Modifier.themeTransition(state: ThemeTransitionState): Modifier =
     with(state) { drawTransition() }
 
 /**
- * [base], with its effects specs snapping colors whenever [isFading].
- *
- * The type argument is erased, so a color is told apart by its vector: colors animate as four
- * channels, while the rest of what an effects spec drives (an alpha, for instance) is one value and
- * keeps [base]'s motion, as do all spatial specs.
+ * [base], with its effects specs snapping colors whenever [isFading]. The type argument is erased,
+ * so colors are told apart by their four-channel vector; alphas and spatial specs keep [base].
  */
 private class ThemeTransitionMotionScheme(val base: MotionScheme, val isFading: () -> Boolean) :
     MotionScheme by base {
@@ -129,7 +115,7 @@ private class ThemeTransitionMotionScheme(val base: MotionScheme, val isFading: 
         SnapColorsWhileFading(base.slowEffectsSpec(), isFading)
 }
 
-/** Decided once per animation, as it starts: that is when a spec is vectorized. */
+/** Decided once per animation, when it starts and the spec is vectorized. */
 private class SnapColorsWhileFading<T>(
     private val base: FiniteAnimationSpec<T>,
     private val isFading: () -> Boolean,

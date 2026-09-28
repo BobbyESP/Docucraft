@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftColorSpec
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.toPaletteStyle
 import com.materialkolor.rememberDynamicColorScheme
@@ -56,6 +57,7 @@ fun PaletteStylePicker(
                     isDark = isDark,
                     isAmoled = isAmoled,
                     style = style,
+                    specVersion = DocucraftColorSpec,
                 )
 
             val colorList =

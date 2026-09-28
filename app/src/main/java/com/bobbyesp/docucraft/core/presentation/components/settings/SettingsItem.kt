@@ -122,9 +122,6 @@ object SettingsItemDefaults {
 /**
  * The icon on a tonal disc, the paired container and content roles keeping it legible. Disabled, it
  * takes Material's disabled colors, eased so it fades along with the rest of the item.
- *
- * Only the enabled state is animated, and the colors are read from the theme on every frame of it:
- * a theme change reaches the disc at once, together with the rest of the screen.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

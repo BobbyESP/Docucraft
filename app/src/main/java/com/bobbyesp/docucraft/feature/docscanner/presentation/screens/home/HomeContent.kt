@@ -225,8 +225,7 @@ fun HomeContent(
 
 /**
  * The expressive large app bar. It takes a container tone once the list scrolls beneath it, eased
- * rather than switched. Only that change is animated; the tones themselves are read from the theme,
- * so a theme change reaches the bar with the rest of the screen.
+ * rather than switched.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable

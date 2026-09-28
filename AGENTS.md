@@ -126,8 +126,9 @@ A new Koin module is registered in `App.kt`.
 - **Components animate their own state, never theme colors.** Animate a fraction (pressed, selected,
   enabled, scrolled) and `lerp` between colors read from `MaterialTheme`; do not
   `animateColorAsState` to a theme color. See [docs/architecture.md](docs/architecture.md#theme).
-- Color schemes are generated only when their inputs change, off the main thread
-  (`rememberColorScheme` in `Theme.kt`).
+- Color schemes are generated only when their inputs change (`rememberColorScheme` in `Theme.kt`).
+  Every change is built off the main thread. The one exception is the first scheme, built in
+  composition because the first frame needs it.
 
 ### Scanner
 
