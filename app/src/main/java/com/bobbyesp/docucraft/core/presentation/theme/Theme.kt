@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,11 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFontFamilyResolver
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.createFontFamilyResolver
-import androidx.compose.ui.unit.sp
 import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.materialkolor.dynamicColorScheme
@@ -38,23 +36,15 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-@Immutable
-data class DocucraftCustomTypography(
-    val monospaceCode: TextStyle =
-        TextStyle(
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Normal,
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
-        )
-)
+/** The type roles Material's [androidx.compose.material3.Typography] has no slot for. */
+@Immutable data class DocucraftTypography(val monospace: FontFamily = FontFamily.Monospace)
 
-val LocalMonospaceFontFamily = staticCompositionLocalOf<FontFamily> { FontFamily.Monospace }
-val LocalDocucraftCustomTypography = staticCompositionLocalOf { DocucraftCustomTypography() }
+private val LocalDocucraftTypography = staticCompositionLocalOf { DocucraftTypography() }
 
+/** The app's additions to [androidx.compose.material3.MaterialTheme], read the same way. */
 object DocucraftTheme {
-    val customTypography: DocucraftCustomTypography
-        @Composable get() = LocalDocucraftCustomTypography.current
+    val typography: DocucraftTypography
+        @Composable @ReadOnlyComposable get() = LocalDocucraftTypography.current
 }
 
 /**
@@ -112,23 +102,11 @@ fun DocucraftTheme(
                 labelFont = labelFont,
             )
         }
-    val customTypography =
-        remember(monospaceFont) {
-            DocucraftCustomTypography(
-                monospaceCode =
-                    TextStyle(
-                        fontFamily = monospaceFont,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp,
-                    )
-            )
-        }
+    val docucraftTypography = remember(monospaceFont) { DocucraftTypography(monospaceFont) }
 
     CompositionLocalProvider(
         LocalFontFamilyResolver provides fontFamilyResolver,
-        LocalMonospaceFontFamily provides monospaceFont,
-        LocalDocucraftCustomTypography provides customTypography,
+        LocalDocucraftTypography provides docucraftTypography,
     ) {
         MaterialExpressiveTheme(
             colorScheme = transition.colorScheme,

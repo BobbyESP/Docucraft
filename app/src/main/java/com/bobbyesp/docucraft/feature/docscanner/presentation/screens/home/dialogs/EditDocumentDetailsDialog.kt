@@ -54,7 +54,6 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
-import com.bobbyesp.docucraft.core.presentation.theme.LocalMonospaceFontFamily
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionSheetSkeleton
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.EditDocumentUiState
@@ -336,7 +335,7 @@ private fun CharacterCounter(
                 Text(
                     text = c.toString(),
                     style = MaterialTheme.typography.labelSmall,
-                    fontFamily = LocalMonospaceFontFamily.current,
+                    fontFamily = DocucraftTheme.typography.monospace,
                     fontWeight = if (isError) FontWeight.Bold else FontWeight.Normal,
                     color = color,
                 )
@@ -345,7 +344,7 @@ private fun CharacterCounter(
         Text(
             text = " / $max",
             style = MaterialTheme.typography.labelSmall,
-            fontFamily = LocalMonospaceFontFamily.current,
+            fontFamily = DocucraftTheme.typography.monospace,
             color = color,
         )
     }

@@ -8,10 +8,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-/**
- * Creates a [Typography] object applying the given [fontFamily] to all text styles. If [fontFamily]
- * is null, the system default font is used.
- */
+/** Material's type scale, each group in its own font; a null font is the system's. */
 fun createTypography(
     displayFont: FontFamily?,
     titleFont: FontFamily?,
