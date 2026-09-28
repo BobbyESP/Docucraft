@@ -9,7 +9,7 @@ import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.ui.text.googlefonts.GoogleFont
 import com.bobbyesp.docucraft.R
 
-val GoogleFontsProvider =
+private val GoogleFontsProvider =
     GoogleFont.Provider(
         providerAuthority = "com.google.android.gms.fonts",
         providerPackage = "com.google.android.gms",

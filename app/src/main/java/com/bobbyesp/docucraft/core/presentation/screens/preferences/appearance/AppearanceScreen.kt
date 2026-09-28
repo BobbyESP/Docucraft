@@ -6,7 +6,6 @@ package com.bobbyesp.docucraft.core.presentation.screens.preferences.appearance
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -99,20 +98,28 @@ private val SeedColorHexFormat = HexFormat {
 enum class TypographyCategory(
     @StringRes val title: Int,
     @StringRes val description: Int,
-    val sampleText: String,
+    @StringRes val sampleText: Int,
 ) {
-    DISPLAY(R.string.typography_display, R.string.typography_display_desc, "Docucraft Scanner"),
-    TITLE(R.string.typography_title, R.string.typography_title_desc, "Scanned Documents"),
-    BODY(
-        R.string.typography_body,
-        R.string.typography_body_desc,
-        "This document was processed using Docucraft with advanced layout intelligence.",
+    DISPLAY(
+        R.string.typography_display,
+        R.string.typography_display_desc,
+        R.string.typography_display_sample,
     ),
-    LABEL(R.string.typography_label, R.string.typography_label_desc, "CONFIRM EDIT"),
+    TITLE(
+        R.string.typography_title,
+        R.string.typography_title_desc,
+        R.string.typography_title_sample,
+    ),
+    BODY(R.string.typography_body, R.string.typography_body_desc, R.string.typography_body_sample),
+    LABEL(
+        R.string.typography_label,
+        R.string.typography_label_desc,
+        R.string.typography_label_sample,
+    ),
     MONOSPACE(
         R.string.typography_monospace,
         R.string.typography_monospace_desc,
-        "ID: 46F1-37FB-AC5A (60 chars)",
+        R.string.typography_monospace_sample,
     );
 
     fun fontIn(preferences: UserPreferences): FontConfig =
@@ -366,14 +373,6 @@ private fun CustomColorsSection(
     modifier: Modifier = Modifier,
 ) {
     val seedColorHex = remember(seedColor) { seedColor.toHexString(SeedColorHexFormat) }
-    // Only the swatch eases into a newly picked color. The palettes are generated from the seed,
-    // and generating them on every frame of the fade would be wasted work.
-    val swatchColor by
-        animateColorAsState(
-            targetValue = Color(seedColor),
-            animationSpec = MaterialTheme.motionScheme.slowEffectsSpec(),
-            label = "SeedColorSwatch",
-        )
 
     SettingsCategory(title = stringResource(R.string.custom_colors), modifier = modifier) {
         SegmentedListItem(
@@ -382,7 +381,7 @@ private fun CustomColorsSection(
             modifier = Modifier.fillMaxWidth(),
             supportingContent = { Text(seedColorHex) },
             trailingContent = {
-                Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(swatchColor))
+                Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(seedColor)))
             },
             colors = SettingsItemDefaults.colors(),
         ) {
@@ -473,7 +472,7 @@ private fun TypographyCategoryItem(
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(text = stringResource(category.description))
                 Text(
-                    text = stringResource(R.string.active_font, font.name),
+                    text = stringResource(R.string.active_font, font.displayName()),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -609,7 +608,7 @@ private fun FontPreview(
                 label = "FontPreview",
             ) { shownFont ->
                 Text(
-                    text = category.sampleText,
+                    text = stringResource(category.sampleText),
                     style =
                         sampleStyle.copy(
                             fontFamily = remember(shownFont) { shownFont.toFontFamily() }
@@ -646,9 +645,18 @@ private fun FontOption(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
             ),
     ) {
-        Text(text = font.name, fontFamily = remember(font) { font.toFontFamily() })
+        Text(text = font.displayName(), fontFamily = remember(font) { font.toFontFamily() })
     }
 }
+
+/**
+ * What the user sees a font called. The others are proper names and read the same in every
+ * language; only the system's default is a description, so only it is translated.
+ */
+@Composable
+@ReadOnlyComposable
+private fun FontConfig.displayName(): String =
+    if (this == FontConfig.System) stringResource(R.string.font_system) else name
 
 @PreviewLightDark
 @Composable

@@ -237,4 +237,10 @@
     <string name="search_hint_desc">By name, or by anything in the description.</string>
     <string name="active_font">Active: %1$s</string>
     <string name="font_preview">Preview</string>
+    <string name="font_system">System default</string>
+    <string name="typography_display_sample">Docucraft Scanner</string>
+    <string name="typography_title_sample">Scanned Documents</string>
+    <string name="typography_body_sample">This document was processed using Docucraft with advanced layout intelligence.</string>
+    <string name="typography_label_sample">CONFIRM EDIT</string>
+    <string name="typography_monospace_sample">ID: 46F1-37FB-AC5A (60 chars)</string>
 </resources>
