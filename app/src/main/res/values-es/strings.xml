@@ -152,4 +152,41 @@
     <string name="sort_by">Ordenar por</string>
     <string name="search_hint_title">Busca en tus documentos</string>
     <string name="search_hint_desc">Por nombre, o por cualquier palabra de la descripción.</string>
+
+    <!-- Ajustes -->
+    <string name="settings">Ajustes</string>
+    <string name="general">General</string>
+    <string name="select_setting_to_open">Selecciona un ajuste para abrirlo aquí</string>
+    <string name="appearance">Apariencia</string>
+    <string name="appearance_desc">Tema, colores y tipografía</string>
+    <string name="theme">Tema</string>
+    <string name="system">Sistema</string>
+    <string name="light">Claro</string>
+    <string name="dark">Oscuro</string>
+    <string name="dynamic_coloring">Color dinámico</string>
+    <string name="dynamic_coloring_desc">Usa los colores del fondo de pantalla en el tema de la app</string>
+    <string name="custom_colors">Colores personalizados</string>
+    <string name="seed_color">Color base</string>
+    <string name="palette_style">Estilo de paleta</string>
+    <string name="high_contrast">Alto contraste</string>
+    <string name="high_contrast_desc">Optimizado para pantallas AMOLED</string>
+    <string name="typography">Tipografía</string>
+    <string name="typography_display">Titulares y cabeceras</string>
+    <string name="typography_display_desc">Para las cabeceras grandes, los recuentos y las secciones destacadas.</string>
+    <string name="typography_title">Títulos y encabezados</string>
+    <string name="typography_title_desc">Para los encabezados de listas, los títulos de tarjetas y los diálogos.</string>
+    <string name="typography_body">Cuerpo y contenido</string>
+    <string name="typography_body_desc">Para las descripciones y los detalles de los documentos, y el texto de lectura en general.</string>
+    <string name="typography_label">Etiquetas y texto de interfaz</string>
+    <string name="typography_label_desc">Para los botones, las opciones de ajustes y las etiquetas pequeñas.</string>
+    <string name="typography_monospace">Monoespaciada y técnica</string>
+    <string name="typography_monospace_desc">Para los detalles técnicos, los recuentos de caracteres y las fechas.</string>
+    <string name="active_font">Activa: %1$s</string>
+    <string name="font_preview">Vista previa</string>
+    <string name="font_system">Predeterminada del sistema</string>
+    <string name="typography_display_sample">Escáner Docucraft</string>
+    <string name="typography_title_sample">Documentos escaneados</string>
+    <string name="typography_body_sample">Este documento se ha procesado con Docucraft y su análisis avanzado del diseño.</string>
+    <string name="typography_label_sample">CONFIRMAR CAMBIOS</string>
+    <string name="typography_monospace_sample">ID: 46F1-37FB-AC5A (60 caracteres)</string>
 </resources>
