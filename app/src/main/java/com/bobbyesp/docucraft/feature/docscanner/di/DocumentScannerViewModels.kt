@@ -6,7 +6,7 @@ package com.bobbyesp.docucraft.feature.docscanner.di
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.DocumentActionsViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.DocumentSearchViewModel
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 // A manual `viewModel { }` lambda instead of `viewModelOf(::HomeViewModel)` so HomeViewModel's

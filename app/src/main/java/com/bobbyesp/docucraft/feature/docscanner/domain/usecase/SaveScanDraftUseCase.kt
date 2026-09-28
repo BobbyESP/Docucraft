@@ -35,8 +35,10 @@ class SaveScanDraftUseCase(
             if (stored.sizeBytes <= 0) throw ScanSaveException.OutputFileEmpty()
 
             // A document without a preview is still a document, so this must not fail the save.
-            val thumbnail =
-                runCatching { storage.storeThumbnail(stored.location, name) }.getOrNull()
+            val thumbnail = runCatching {
+                storage.storeThumbnail(stored.location, name)
+            }
+                .getOrNull()
 
             repository.saveDocument(
                 NewScannedDocument(

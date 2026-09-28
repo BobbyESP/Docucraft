@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.domain.links
 
+import android.os.Build
 import com.bobbyesp.documentcontent.NormalizedPoint
 import com.bobbyesp.documentcontent.PageLink
 import java.net.IDN
@@ -135,9 +136,15 @@ class ResolveLinkUseCase {
         else LinkAction.Blocked(uri, BlockReason.Malformed)
     }
 
-    private fun decode(text: String): String =
-        runCatching { URLDecoder.decode(text.replace("+", "%2B"), StandardCharsets.UTF_8) }
-            .getOrDefault(text)
+    private fun decode(text: String): String = runCatching {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            URLDecoder.decode(text.replace("+", "%2B"), StandardCharsets.UTF_8)
+        } else {
+            //For versions lower than TIRAMISU, use the deprecated method
+            URLDecoder.decode(text.replace("+", "%2B"), "UTF-8")
+        }
+    }
+        .getOrDefault(text)
 
     /** RFC 3986: a letter, then letters, digits, `+`, `-` or `.`. */
     private fun String.isValidScheme(): Boolean =

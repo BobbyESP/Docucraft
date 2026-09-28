@@ -109,6 +109,14 @@ The rest of the app reads `MaterialTheme` as usual. Type roles Material has no s
 user's monospace font, are in `DocucraftTheme.typography`, read the same way; a new one is a field
 there.
 
+**The default fonts are packaged in `res/font` and never downloaded** (`ThemeMapper.kt`,
+`FontDefinitions.kt`). A downloadable font loads asynchronously, so the first frames are drawn in a
+fallback and the text visibly swaps once it arrives; for the fonts every user sees on every start,
+that swap is not acceptable. Every preset that is packaged resolves to its local files, whatever
+role it is chosen for. Only the others go to Google Fonts, and while they load they show a packaged
+font of the same kind (Inter for sans-serif, JetBrains Mono for monospace), so the swap is between
+similar shapes. A new preset has to choose one path in the exhaustive mapping.
+
 **A color scheme is built only when its inputs change**, and away from the main thread. MaterialKolor
 takes several milliseconds per scheme, too much for the frame that switches the theme. Only the
 first scheme is built in place, because the first frame needs it. The last few are cached, so

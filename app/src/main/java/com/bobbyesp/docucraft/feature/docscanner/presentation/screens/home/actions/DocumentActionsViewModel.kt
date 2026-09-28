@@ -71,11 +71,9 @@ class DocumentActionsViewModel(
         val document = currentState.document ?: return
 
         runCatching {
-                documentSharer.share(document.location)
-                analyticsHelper.logEvent(
-                    AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_SHARED)
-                )
-            }
+            documentSharer.share(document.location)
+            analyticsHelper.logEvent(AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_SHARED))
+        }
             .onFailure {
                 sendUiEvent(
                     UiEvent.ShowMessage(

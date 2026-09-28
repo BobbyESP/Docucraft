@@ -55,8 +55,8 @@ import java.util.UUID
  * A catalogued document, as one segment of Home's grouped list.
  *
  * Built on the expressive [SegmentedListItem], so pressing, selecting and focusing it morph its
- * corners and colors the way every other list in the app does, instead of a surface of our own
- * that had to fake each state.
+ * corners and colors the way every other list in the app does, instead of a surface of our own that
+ * had to fake each state.
  *
  * @param shapes where the item sits in the list; see
  *   [DocucraftShapeDefaults.segmentedListItemShapes].

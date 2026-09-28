@@ -31,12 +31,12 @@ class ProcessDocumentsUseCase(
         if (query.isBlank()) return documents
 
         return runCatching {
-                val queryResults = querySearchStrategy.search(query)
-                if (queryResults.isEmpty()) throw NoSuchElementException("No results found")
+            val queryResults = querySearchStrategy.search(query)
+            if (queryResults.isEmpty()) throw NoSuchElementException("No results found")
 
-                val ids = queryResults.map { it.uuid }.toSet()
-                documents.filter { it.uuid in ids }
-            }
+            val ids = queryResults.map { it.uuid }.toSet()
+            documents.filter { it.uuid in ids }
+        }
             .getOrElse { localSearchStrategy.search(documents, query) }
     }
 

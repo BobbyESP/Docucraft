@@ -25,7 +25,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.PdfViewerViewModel
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.details.PdfDocumentDetailsViewModel
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.ViewerPageRequests
 import org.koin.android.ext.koin.androidContext
-import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**

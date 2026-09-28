@@ -151,13 +151,13 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
     private fun queryDisplayName(uri: Uri): String? {
         if (uri.scheme != "content") return null
         return runCatching {
-                contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-                    val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    if (index >= 0 && cursor.moveToFirst() && !cursor.isNull(index)) {
-                        cursor.getString(index)
-                    } else null
-                }
+            contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (index >= 0 && cursor.moveToFirst() && !cursor.isNull(index)) {
+                    cursor.getString(index)
+                } else null
             }
+        }
             .getOrNull()
     }
 }
