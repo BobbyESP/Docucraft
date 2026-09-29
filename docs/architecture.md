@@ -159,6 +159,24 @@ A few rules keep it working:
   Home's list takes the scaffold's padding as content padding.
 - **`HazeInput.Sources`**, which also reaches across windows. Haze's native backdrop cannot.
 
+**An element floating over content is lifted by a blur halo, not a shadow** (`Modifier.blurHalo`,
+`BlurHalo.kt`). The content around it goes out of focus, most at its edge, and is sharp again
+`HaloSpread` away; a faint veil of the surface color fades with the blur, so the element still has
+a soft rim over a flat area. The halo is a Haze blur on an area grown around the element, without
+changing its layout. Its radius really decreases with distance: a small shader gives Haze the
+intensity at each point, from the signed distance to the element's own shape, eased with a
+smoothstep. A blurred copy fading over a sharp one would show a double image in between.
+- Home: one halo around the search bar and the scan button together. Two side by side would each
+  blur over the other's button, and one follows the pair as the button changes width. It fades with
+  them on its own, because inside their show and hide animation it would be cut to their bounds.
+- The sort menu (`HaloDropdownMenuPopup`). A popup's window ends at its content, so the halo takes
+  room inside it. The menu is still placed where Material would place it, and a tap on the halo
+  closes it, as a tap outside would.
+- Search: the field.
+
+The halo needs Android 13, where Haze can vary the radius (`DocucraftBlurDefaults.isHaloSupported`).
+Below that, the FAB, the search bar and the menu keep Material's shadows.
+
 **Content that should be out of focus uses `Modifier.blur` with a `BlurRadiusSpec`** (Compose 1.13),
 whose radius can vary across the layer.
 - Whatever is behind a sheet or a dialog destination blurs as it opens, together with the scrim

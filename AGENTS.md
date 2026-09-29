@@ -128,8 +128,10 @@ A new Koin module is registered in `App.kt`.
   `animateColorAsState` to a theme color. See [docs/architecture.md](docs/architecture.md#theme).
 - **A surface floating over moving content is frosted, not shadowed**: `Modifier.frosted` with
   `DocucraftBlurDefaults.surfaceStyle(role)`, over content recorded with `Modifier.hazeSource`. The
-  source is never an ancestor of what frosts it. Content taken out of focus uses `Modifier.blur`
-  with a `BlurRadiusSpec`. See [docs/architecture.md](docs/architecture.md#blur).
+  source is never an ancestor of what frosts it. An element floating over content is lifted by
+  `Modifier.blurHalo` instead of a shadow (a menu: `HaloDropdownMenuPopup`), keeping the shadow
+  where the halo is not supported. Content taken out of focus uses `Modifier.blur` with a
+  `BlurRadiusSpec`. See [docs/architecture.md](docs/architecture.md#blur).
 - Color schemes are generated only when their inputs change (`rememberColorScheme` in `Theme.kt`).
   Every change is built off the main thread. The one exception is the first scheme, built in
   composition because the first frame needs it.
