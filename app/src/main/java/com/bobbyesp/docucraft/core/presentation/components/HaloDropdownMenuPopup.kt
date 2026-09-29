@@ -3,14 +3,17 @@
  */
 package com.bobbyesp.docucraft.core.presentation.components
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.DropdownMenuPopupPositionProvider
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorPosition
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -42,6 +45,7 @@ import dev.chrisbanes.haze.HazeState
  * @param hazeState Where the content the menu opens over is recorded.
  * @param shape The outline of the menu as a whole, which the halo follows.
  */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HaloDropdownMenuPopup(
     expanded: Boolean,
@@ -60,33 +64,51 @@ fun HaloDropdownMenuPopup(
         remember(menuPosition, marginPx) { HaloMarginPositionProvider(menuPosition, marginPx) }
     val dismiss by rememberUpdatedState(onDismissRequest)
 
+    // The halo comes into focus on its own, not inside Material's open animation: in there it was
+    // scaled by the menu's spring, overshoot included, and cut to the menu's bounds while the menu
+    // faded. The scheme's effects specs never overshoot; on the way in, the default one, so the
+    // halo settles just after the menu lands rather than jumping with it.
+    val haloStrength = remember { Animatable(0f) }
+    val enterSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
+    val exitSpec = MaterialTheme.motionScheme.fastEffectsSpec<Float>()
+    LaunchedEffect(expanded) {
+        if (expanded) {
+            haloStrength.snapTo(0f)
+            haloStrength.animateTo(1f, enterSpec)
+        } else {
+            haloStrength.animateTo(0f, exitSpec)
+        }
+    }
+
     DropdownMenuPopup(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
+        // Material applies this outside its own scale and fade, which only the menu then goes
+        // through.
+        modifier =
+            modifier
+                .pointerInput(marginPx) {
+                    detectTapGestures { tap ->
+                        val menu =
+                            IntRect(
+                                left = marginPx,
+                                top = marginPx,
+                                right = size.width - marginPx,
+                                bottom = size.height - marginPx,
+                            )
+                        if (!menu.contains(IntOffset(tap.x.toInt(), tap.y.toInt()))) dismiss()
+                    }
+                }
+                .blurHalo(
+                    state = hazeState,
+                    shape = shape,
+                    strength = haloStrength.value,
+                    reserveSpace = true,
+                ),
         popupPositionProvider = positionProvider,
         properties = HaloMenuProperties,
-    ) {
-        Column(
-            modifier =
-                modifier
-                    .pointerInput(marginPx) {
-                        detectTapGestures { tap ->
-                            val menu =
-                                IntRect(
-                                    left = marginPx,
-                                    top = marginPx,
-                                    right = size.width - marginPx,
-                                    bottom = size.height - marginPx,
-                                )
-                            if (!menu.contains(IntOffset(tap.x.toInt(), tap.y.toInt()))) dismiss()
-                        }
-                    }
-                    // Inside Material's own open and close animation, so the halo grows and fades
-                    // with the menu, and within the bounds that animation draws to.
-                    .blurHalo(state = hazeState, shape = shape, reserveSpace = true),
-            content = content,
-        )
-    }
+        content = content,
+    )
 }
 
 /**

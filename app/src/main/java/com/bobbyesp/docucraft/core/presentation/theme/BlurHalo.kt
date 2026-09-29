@@ -42,14 +42,19 @@ import dev.chrisbanes.haze.blur.material3.Material3
  * Android 13 and up, where Haze can vary the radius. Elsewhere this does nothing: check
  * [DocucraftBlurDefaults.isHaloSupported] and keep the element's shadow there.
  *
- * @param alpha How much of the halo shows, for an element that fades in and out on its own.
+ * Keep it out of the element's own enter and exit animation, and animate [strength] instead: in a
+ * scaled or fading layer the halo would spring with the element and be cut to its bounds.
+ *
+ * @param strength How far the halo has come into focus, from 0 (none) to 1. It scales the blur
+ *   radius and the halo's opacity together, so the content around the element blurs progressively
+ *   rather than a full blur fading in over it. At 0 the halo still keeps its place in the layout.
  */
 @Composable
 fun Modifier.blurHalo(
     state: HazeState,
     shape: Shape,
     spread: Dp = DocucraftBlurDefaults.HaloSpread,
-    alpha: Float = 1f,
+    strength: Float = 1f,
     reserveSpace: Boolean = false,
 ): Modifier {
     if (!DocucraftBlurDefaults.isHaloSupported) return this
@@ -58,7 +63,11 @@ fun Modifier.blurHalo(
     val geometry = remember { HaloGeometry() }
     val progressive = remember(geometry) { HazeProgressive.forShader { geometry.shader(it) } }
     val style =
-        DocucraftBlurDefaults.haloStyle(MaterialTheme.colorScheme.surface, progressive, alpha)
+        DocucraftBlurDefaults.haloStyle(
+            surface = MaterialTheme.colorScheme.surface,
+            progressive = progressive,
+            strength = strength.coerceIn(0f, 1f),
+        )
 
     return this
         // Outer: the halo's area, the element grown by the spread on every side. Reported to the
@@ -187,17 +196,20 @@ half4 main(float2 position) {
 }
 """
 
-/** The halo's look: blur, grain and a faint veil of the surface, all fading with the intensity. */
+/**
+ * The halo's look: blur, grain and a faint veil of the surface, all fading with the intensity, and
+ * all scaled by [strength] while the halo comes into focus.
+ */
 @Composable
 internal fun DocucraftBlurDefaults.haloStyle(
     surface: Color,
     progressive: HazeProgressive,
-    alpha: Float,
+    strength: Float,
 ): HazeBlurStyle =
     HazeBlurStyle.Material3(surface) {
-        blurRadius(HaloRadius)
+        blurRadius(HaloRadius * strength)
         noiseFactor(HaloNoiseFactor)
         colorEffects(listOf(HazeColorEffect.tint(surface.copy(alpha = HaloVeilOpacity))))
         progressive(progressive)
-        alpha(alpha)
+        alpha(strength)
     }

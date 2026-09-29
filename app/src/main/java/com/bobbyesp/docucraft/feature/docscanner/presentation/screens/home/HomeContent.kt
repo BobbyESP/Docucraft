@@ -347,8 +347,8 @@ private fun TopBarDocumentActions(
  *
  * Lifted off the list by one blur halo around the pair, not a shadow under each: two halos side by
  * side would each blur over the other's button, and one follows the pair as the scan button changes
- * width. The halo fades with them rather than inside their animation, which would clip it to their
- * bounds while it ran.
+ * width. The halo comes into focus with them rather than inside their animation, which would scale
+ * it with their spring and clip it to their bounds while it ran.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -360,7 +360,7 @@ private fun HomeBottomActions(
     onScan: () -> Unit,
     hazeState: HazeState,
 ) {
-    val haloAlpha by
+    val haloStrength by
         animateFloatAsState(
             targetValue = if (visible) 1f else 0f,
             animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
@@ -371,7 +371,7 @@ private fun HomeBottomActions(
         modifier =
             Modifier.fillMaxWidth()
                 .padding(start = 32.dp)
-                .blurHalo(state = hazeState, shape = CircleShape, alpha = haloAlpha)
+                .blurHalo(state = hazeState, shape = CircleShape, strength = haloStrength)
                 .animateFloatingActionButton(visible = visible, alignment = Alignment.BottomEnd),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
