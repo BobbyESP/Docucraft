@@ -60,16 +60,20 @@ object DocucraftBlurDefaults {
      * How far a [blurHalo] reaches past its element. Wider than the shadow it replaces: a shadow
      * shows over any background, a blur only over detail, so it needs the room to be seen.
      */
-    val HaloSpread: Dp = 48.dp
+    val HaloSpread: Dp = 32.dp
 
     /**
      * A menu's halo: wider than [HaloSpread], because a menu opens over more of the content, and
      * its halo is all that separates the two.
      */
-    val MenuHaloSpread: Dp = 56.dp
+    val MenuHaloSpread: Dp = 36.dp
 
-    /** The halo's blur at the element's edge, easing to none at the end of its spread. */
-    val HaloRadius: Dp = 24.dp
+    /**
+     * The halo's blur at the element's edge, easing to none at the end of its spread. Enough to
+     * soften what is beside the element, not to smear it: past this the halo stops reading as depth
+     * and starts reading as an effect.
+     */
+    val HaloRadius: Dp = 12.dp
 
     /**
      * How much further below its element the halo reaches than above it, as a fraction of its
