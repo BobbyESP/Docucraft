@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.core.presentation.theme
 
+import android.os.Build
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Modifier
@@ -15,6 +16,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.blur.HazeBlurDefaults
 import dev.chrisbanes.haze.blur.HazeBlurStyle
 import dev.chrisbanes.haze.blur.HazeColorEffect
 import dev.chrisbanes.haze.blur.hazeBlur
@@ -26,9 +28,11 @@ import dev.chrisbanes.haze.blur.material3.Material3
  * tells the two apart better than a shadow, and keeps the content's colors in view. The surface
  * keeps its Material color role, only translucent.
  *
- * Two kinds of blur, for two jobs:
+ * Three kinds of blur, for three jobs:
  * - **Frosted surfaces** ([surfaceStyle] and [frosted], on Haze): a bar, a search field or a menu,
  *   over content recorded with `Modifier.hazeSource`.
+ * - **Halos** ([blurHalo], on Haze): the content around a floating element out of focus, where a
+ *   shadow would darken it.
  * - **Content out of focus** (`Modifier.blur` with a `BlurRadiusSpec`): the screen behind a sheet
  *   or a dialog, or a thumbnail behind its title.
  *
@@ -51,6 +55,32 @@ object DocucraftBlurDefaults {
 
     /** A thumbnail under its title, at the bottom edge, where the text sits. */
     val BehindTitleRadius: Dp = 16.dp
+
+    /**
+     * How far a [blurHalo] reaches past its element: about what Material's level 3 shadow spreads,
+     * the elevation of a FAB or a menu, which the halo stands in for.
+     */
+    val HaloSpread: Dp = 24.dp
+
+    /** The halo's blur at the element's edge, easing to none at the end of its spread. */
+    val HaloRadius: Dp = 12.dp
+
+    /**
+     * A breath of the surface color over the halo's blur, fading with it: over a flat area, where
+     * blur alone changes nothing, the element still has a soft rim of light around it.
+     */
+    internal const val HaloVeilOpacity = 0.32f
+
+    /** The halo's grain: the same reason as [NoiseFactor], over a narrower blur. */
+    internal const val HaloNoiseFactor = 0.04f
+
+    /**
+     * Whether [blurHalo] draws: its radius varies with distance, which Haze does from Android 13.
+     * Where it does not, an element keeps the shadow the halo replaces.
+     */
+    val isHaloSupported: Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            HazeBlurDefaults.isBlurEnabledByDefault()
 
     /**
      * How much of the container color covers the blur. Enough for the content colors on it to keep

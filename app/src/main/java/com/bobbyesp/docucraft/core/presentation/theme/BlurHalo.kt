@@ -1,0 +1,203 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
+package com.bobbyesp.docucraft.core.presentation.theme
+
+import android.graphics.RuntimeShader
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.offset
+import dev.chrisbanes.haze.HazeInput
+import dev.chrisbanes.haze.HazeProgressive
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.blur.HazeBlurStyle
+import dev.chrisbanes.haze.blur.HazeColorEffect
+import dev.chrisbanes.haze.blur.hazeBlur
+import dev.chrisbanes.haze.blur.material3.Material3
+
+/**
+ * Lifts this element off the content beneath it with blur instead of a shadow: the content around
+ * it goes out of focus, most at its edge, and is sharp again [spread] away. Where a shadow darkens,
+ * this softens, so the element reads as floating without a dark rim.
+ *
+ * The halo follows [shape], the element's own, and its blur radius truly decreases with distance
+ * rather than a blurred copy fading over a sharp one, so there is no double image in between. It
+ * blurs what [state] records, which must not contain this element.
+ *
+ * Drawn behind everything this modifier's element draws, and outside its bounds without changing
+ * its layout. In a popup, whose window ends at its content, pass [reserveSpace]: the halo then
+ * takes room around the element, and whoever places the popup must make up for it.
+ *
+ * Android 13 and up, where Haze can vary the radius. Elsewhere this does nothing: check
+ * [DocucraftBlurDefaults.isHaloSupported] and keep the element's shadow there.
+ *
+ * @param alpha How much of the halo shows, for an element that fades in and out on its own.
+ */
+@Composable
+fun Modifier.blurHalo(
+    state: HazeState,
+    shape: Shape,
+    spread: Dp = DocucraftBlurDefaults.HaloSpread,
+    alpha: Float = 1f,
+    reserveSpace: Boolean = false,
+): Modifier {
+    if (!DocucraftBlurDefaults.isHaloSupported) return this
+
+    val spreadPx = with(LocalDensity.current) { spread.roundToPx() }
+    val geometry = remember { HaloGeometry() }
+    val progressive = remember(geometry) { HazeProgressive.forShader { geometry.shader(it) } }
+    val style =
+        DocucraftBlurDefaults.haloStyle(MaterialTheme.colorScheme.surface, progressive, alpha)
+
+    return this
+        // Outer: the halo's area, the element grown by the spread on every side. Reported to the
+        // parent as the element alone unless the room is reserved.
+        .layout { measurable, constraints ->
+            val grow = 2 * spreadPx
+            // Room that is reserved is already in the constraints: the element gets what is left.
+            val placeable =
+                measurable.measure(
+                    if (reserveSpace) constraints else constraints.offset(grow, grow)
+                )
+            val element =
+                Size(
+                    (placeable.width - grow).toFloat(),
+                    (placeable.height - grow).toFloat(),
+                )
+            geometry.update(
+                nodeWidth = placeable.width.toFloat(),
+                spread = spreadPx.toFloat(),
+                outline = shape.createOutline(element, layoutDirection, this),
+            )
+            if (reserveSpace) {
+                layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+            } else {
+                layout(placeable.width - grow, placeable.height - grow) {
+                    placeable.place(-spreadPx, -spreadPx)
+                }
+            }
+        }
+        // The halo's own intensity reaches zero at its edge, so it never needs the extra room Haze
+        // would otherwise blur beyond it.
+        .hazeBlur(input = HazeInput.Sources(state), style = style, expandLayerBounds = false)
+        // Inner: the element, back at its own size, in the middle of the halo.
+        .layout { measurable, constraints ->
+            val grow = 2 * spreadPx
+            val placeable = measurable.measure(constraints.offset(-grow, -grow))
+            layout(placeable.width + grow, placeable.height + grow) {
+                placeable.place(spreadPx, spreadPx)
+            }
+        }
+}
+
+/**
+ * Where the halo is, read by the shader when Haze builds the effect. Written from layout and read
+ * in draw, never in composition, so a moving element does not recompose anything.
+ */
+private class HaloGeometry {
+    private var nodeWidth = 1f
+    private var spread = 0f
+
+    /** The element's corners, clockwise from the top-left, in the halo's pixels. */
+    private val radii = FloatArray(4)
+
+    private var shader: RuntimeShader? = null
+
+    fun update(nodeWidth: Float, spread: Float, outline: Outline) {
+        this.nodeWidth = nodeWidth.coerceAtLeast(1f)
+        this.spread = spread
+        when (outline) {
+            is Outline.Rounded -> {
+                val rect = outline.roundRect
+                radii[0] = rect.topLeftCornerRadius.x
+                radii[1] = rect.topRightCornerRadius.x
+                radii[2] = rect.bottomRightCornerRadius.x
+                radii[3] = rect.bottomLeftCornerRadius.x
+            }
+            // A rectangle, or a path the distance cannot follow: its bounds, square.
+            else -> radii.fill(0f)
+        }
+    }
+
+    /**
+     * Haze asks at the size it blurs at, which is smaller than the layout when it samples down, so
+     * every length is scaled to it.
+     */
+    fun shader(size: Size): RuntimeShader {
+        // Only reached where isHaloSupported, which is Android 13 and up.
+        @Suppress("NewApi") val shader = shader ?: haloShader().also { shader = it }
+        val scale = size.width / nodeWidth
+        shader.setFloatUniform("size", size.width, size.height)
+        shader.setFloatUniform("spread", (spread * scale).coerceAtLeast(1f))
+        shader.setFloatUniform(
+            "radii",
+            radii[0] * scale,
+            radii[1] * scale,
+            radii[2] * scale,
+            radii[3] * scale,
+        )
+        return shader
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+private fun haloShader(): RuntimeShader = RuntimeShader(HaloShaderSource)
+
+/**
+ * The halo's intensity at each point: the signed distance to the element's rounded rectangle, which
+ * sits `spread` in from every edge, eased from 1 at its edge to 0 at the halo's. Inside the element
+ * it is 1; the element covers it anyway.
+ *
+ * The ease is a smoothstep: flat at both ends, so the blur neither starts with a step at the
+ * element's edge nor stops with one at the halo's.
+ */
+private const val HaloShaderSource =
+    """
+uniform float2 size;
+uniform float spread;
+uniform float4 radii;
+
+half4 main(float2 position) {
+    float2 center = size * 0.5;
+    float2 halfExtent = max(center - spread, float2(0.0));
+    float2 fromCenter = position - center;
+
+    float radius = fromCenter.x < 0.0
+        ? (fromCenter.y < 0.0 ? radii.x : radii.w)
+        : (fromCenter.y < 0.0 ? radii.y : radii.z);
+    radius = min(radius, min(halfExtent.x, halfExtent.y));
+
+    float2 q = abs(fromCenter) - halfExtent + radius;
+    float distance = min(max(q.x, q.y), 0.0) + length(max(q, float2(0.0))) - radius;
+
+    float t = clamp(distance / spread, 0.0, 1.0);
+    float intensity = 1.0 - t * t * (3.0 - 2.0 * t);
+    return half4(0.0, 0.0, 0.0, intensity);
+}
+"""
+
+/** The halo's look: blur, grain and a faint veil of the surface, all fading with the intensity. */
+@Composable
+internal fun DocucraftBlurDefaults.haloStyle(
+    surface: Color,
+    progressive: HazeProgressive,
+    alpha: Float,
+): HazeBlurStyle =
+    HazeBlurStyle.Material3(surface) {
+        blurRadius(HaloRadius)
+        noiseFactor(HaloNoiseFactor)
+        colorEffects(listOf(HazeColorEffect.tint(surface.copy(alpha = HaloVeilOpacity))))
+        progressive(progressive)
+        alpha(alpha)
+    }

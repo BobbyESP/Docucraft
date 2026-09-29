@@ -83,6 +83,7 @@ import com.bobbyesp.docucraft.core.presentation.navigation.motion.sharedBoundsAc
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.presentation.theme.blurHalo
 import com.bobbyesp.docucraft.core.presentation.theme.frosted
 import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
@@ -115,8 +116,9 @@ private object SearchBarElement {
  * the search screen, which this grows into.
  *
  * Kept at the bottom beside the scan button, where the thumb already is, and floating over the list
- * like it. Frosted rather than shadowed: the documents scrolling beneath show through it, blurred,
- * which sets it apart from them without a shadow's dark edge.
+ * like it. Frosted rather than shadowed: the documents scrolling beneath show through it, blurred.
+ * What lifts it is the blur halo its caller draws around it and the scan button together; where
+ * there is none, the shadow it used to have.
  *
  * @param hazeState Where the content it floats over is recorded.
  */
@@ -139,6 +141,7 @@ fun DocumentSearchBarButton(
                 ),
         shape = SearchBarElement.Shape,
         color = Color.Transparent,
+        shadowElevation = if (DocucraftBlurDefaults.isHaloSupported) 0.dp else 6.dp,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp),
@@ -309,6 +312,9 @@ private fun SearchField(
         modifier =
             modifier
                 .fillMaxWidth()
+                // Outside the shared bounds: the halo stays behind with this screen while the
+                // field flies back to Home, instead of being cut to the field's shape in flight.
+                .blurHalo(state = hazeState, shape = SearchBarElement.Shape)
                 .sharedBoundsAcrossDestinations(SearchBarElement.KEY, SearchBarElement.Shape)
                 .frosted(
                     state = hazeState,

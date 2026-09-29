@@ -26,6 +26,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.ArrowDownward
@@ -40,10 +41,10 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuGroup
-import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -97,11 +98,13 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.HaloDropdownMenuPopup
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.presentation.theme.blurHalo
 import com.bobbyesp.docucraft.core.presentation.theme.frosted
 import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.core.util.contentRevealTransform
@@ -341,6 +344,11 @@ private fun TopBarDocumentActions(
 /**
  * Search and scan, side by side at the bottom where the thumb is. The scan button shrinks to its
  * icon while the list is read downwards, and the search bar takes the room it leaves.
+ *
+ * Lifted off the list by one blur halo around the pair, not a shadow under each: two halos side by
+ * side would each blur over the other's button, and one follows the pair as the scan button changes
+ * width. The halo fades with them rather than inside their animation, which would clip it to their
+ * bounds while it ran.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -352,10 +360,18 @@ private fun HomeBottomActions(
     onScan: () -> Unit,
     hazeState: HazeState,
 ) {
+    val haloAlpha by
+        animateFloatAsState(
+            targetValue = if (visible) 1f else 0f,
+            animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+            label = "HomeBottomActionsHalo",
+        )
+
     Row(
         modifier =
             Modifier.fillMaxWidth()
                 .padding(start = 32.dp)
+                .blurHalo(state = hazeState, shape = CircleShape, alpha = haloAlpha)
                 .animateFloatingActionButton(visible = visible, alignment = Alignment.BottomEnd),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -383,9 +399,23 @@ private fun HomeBottomActions(
             },
             onClick = { if (!isScanning) onScan() },
             expanded = isScanButtonExpanded,
+            elevation =
+                if (DocucraftBlurDefaults.isHaloSupported) FlatFabElevation
+                else FloatingActionButtonDefaults.elevation(),
         )
     }
 }
+
+/** A FAB the halo lifts instead, at rest and when pressed alike. */
+private val FlatFabElevation
+    @Composable
+    get() =
+        FloatingActionButtonDefaults.elevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp,
+        )
 
 /**
  * Recents first, then every document in the chosen order. Categories will sit between the two once
@@ -620,7 +650,8 @@ private fun titleBackdropBlur(titleVisibility: Float): BlurRadiusSpec =
 /**
  * The current order, named on the button itself, and a menu to change it: criteria in one group,
  * direction in the other. A transient popup anchored here, not a destination. Its groups are
- * frosted over the list they open on, where Material would give them a shadow.
+ * frosted over the list they open on, and a blur halo lifts the menu where Material would give it a
+ * shadow.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -680,7 +711,13 @@ private fun SortMenu(
             )
         }
 
-        DropdownMenuPopup(expanded = expanded, onDismissRequest = { expanded = false }) {
+        HaloDropdownMenuPopup(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            hazeState = hazeState,
+            // The two groups read as one menu: the halo follows their outer corners.
+            shape = MenuDefaults.groupShape(index = 0, count = 1).shape,
+        ) {
             val criteria = SortOption.Criteria.entries
 
             FrostedMenuGroup(
@@ -732,7 +769,8 @@ private fun SortMenu(
 }
 
 /**
- * A menu group frosted over [hazeState]'s content instead of lifted by a shadow.
+ * A menu group frosted over [hazeState]'s content. Its shadow is left to the menu's halo, or kept
+ * where there is none.
  *
  * The frost goes around the group, because the group's own modifier lands inside its container. It
  * keeps one shape, hovered or not, so that the frost, clipped to it, always matches.
@@ -757,7 +795,8 @@ private fun FrostedMenuGroup(
         DropdownMenuGroup(
             shapes = MenuGroupShapes(shape = shape, inactiveShape = shape),
             containerColor = Color.Transparent,
-            shadowElevation = 0.dp,
+            shadowElevation =
+                if (DocucraftBlurDefaults.isHaloSupported) 0.dp else MenuDefaults.ShadowElevation,
             content = content,
         )
     }
