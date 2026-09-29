@@ -57,19 +57,38 @@ object DocucraftBlurDefaults {
     val BehindTitleRadius: Dp = 16.dp
 
     /**
-     * How far a [blurHalo] reaches past its element: about what Material's level 3 shadow spreads,
-     * the elevation of a FAB or a menu, which the halo stands in for.
+     * How far a [blurHalo] reaches past its element. Wider than the shadow it replaces: a shadow
+     * shows over any background, a blur only over detail, so it needs the room to be seen.
      */
-    val HaloSpread: Dp = 24.dp
+    val HaloSpread: Dp = 48.dp
+
+    /**
+     * A menu's halo: wider than [HaloSpread], because a menu opens over more of the content, and
+     * its halo is all that separates the two.
+     */
+    val MenuHaloSpread: Dp = 56.dp
 
     /** The halo's blur at the element's edge, easing to none at the end of its spread. */
-    val HaloRadius: Dp = 12.dp
+    val HaloRadius: Dp = 24.dp
+
+    /**
+     * How much further below its element the halo reaches than above it, as a fraction of its
+     * spread: Material's key light casts its shadows downwards, and the halo keeps that direction.
+     */
+    private const val HaloDropFraction = 0.25f
+
+    /** How far down a halo of [spread] is moved; see [HaloDropFraction]. */
+    fun haloDrop(spread: Dp): Dp = spread * HaloDropFraction
+
+    /** The room a halo of [spread] needs on every side of its element. */
+    fun haloMargin(spread: Dp = HaloSpread): Dp = spread + haloDrop(spread)
 
     /**
      * A breath of the surface color over the halo's blur, fading with it: over a flat area, where
-     * blur alone changes nothing, the element still has a soft rim of light around it.
+     * blur alone changes nothing, the element still has a faint rim around it. Kept low, or the rim
+     * reads as a band with an edge of its own.
      */
-    internal const val HaloVeilOpacity = 0.32f
+    internal const val HaloVeilOpacity = 0.18f
 
     /** The halo's grain: the same reason as [NoiseFactor], over a narrower blur. */
     internal const val HaloNoiseFactor = 0.04f

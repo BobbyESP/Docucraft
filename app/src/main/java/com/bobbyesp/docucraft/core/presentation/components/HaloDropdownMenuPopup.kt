@@ -55,8 +55,10 @@ fun HaloDropdownMenuPopup(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val spread = DocucraftBlurDefaults.MenuHaloSpread
     val margin =
-        if (DocucraftBlurDefaults.isHaloSupported) DocucraftBlurDefaults.HaloSpread else 0.dp
+        if (DocucraftBlurDefaults.isHaloSupported) DocucraftBlurDefaults.haloMargin(spread)
+        else 0.dp
     val marginPx = with(LocalDensity.current) { margin.roundToPx() }
     val menuPosition =
         MenuDefaults.rememberDropdownMenuPopupPositionProvider(MenuAnchorPosition.Below)
@@ -102,6 +104,7 @@ fun HaloDropdownMenuPopup(
                 .blurHalo(
                     state = hazeState,
                     shape = shape,
+                    spread = spread,
                     strength = haloStrength.value,
                     reserveSpace = true,
                 ),

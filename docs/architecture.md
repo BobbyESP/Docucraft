@@ -161,14 +161,24 @@ A few rules keep it working:
 
 **An element floating over content is lifted by a blur halo, not a shadow** (`Modifier.blurHalo`,
 `BlurHalo.kt`). The content around it goes out of focus, most at its edge, and is sharp again
-`HaloSpread` away; a faint veil of the surface color fades with the blur, so the element still has
-a soft rim over a flat area. The halo is a Haze blur on an area grown around the element, without
-changing its layout. Its radius really decreases with distance: a small shader gives Haze the
-intensity at each point, from the signed distance to the element's own shape, eased with a
-smoothstep. A blurred copy fading over a sharp one would show a double image in between.
+`HaloSpread` away (a menu's, `MenuHaloSpread`); a faint veil of the surface color fades with the
+blur, so the element still has a soft rim over a flat area. The halo is a Haze blur on an area grown
+around the element, without changing its layout. Its radius really decreases with distance: a small
+shader gives Haze the intensity at each point, from the signed distance to the element's own shape.
+A blurred copy fading over a sharp one would show a double image in between.
+- **The radius decays exponentially.** Text only visibly changes while the blur is a few pixels
+  wide, so a curve that stays high and drops at the end, such as a smoothstep, reads as a cut. A
+  decay spends the same distance on each halving of the radius, and the content eases back into
+  focus.
+- **It reaches further below the element than above**, as Material's key light casts shadows
+  downwards (`haloDrop`), and blurs less of whatever the element was opened from.
+- **It comes into focus on its own**, its strength scaling the radius and the opacity together,
+  never inside the element's enter animation: in there it was scaled by the element's spring and
+  cut to its bounds while it faded.
+
+Where it is used:
 - Home: one halo around the search bar and the scan button together. Two side by side would each
-  blur over the other's button, and one follows the pair as the button changes width. It fades with
-  them on its own, because inside their show and hide animation it would be cut to their bounds.
+  blur over the other's button, and one follows the pair as the button changes width.
 - The sort menu (`HaloDropdownMenuPopup`). A popup's window ends at its content, so the halo takes
   room inside it. The menu is still placed where Material would place it, and a tap on the halo
   closes it, as a tap outside would.
