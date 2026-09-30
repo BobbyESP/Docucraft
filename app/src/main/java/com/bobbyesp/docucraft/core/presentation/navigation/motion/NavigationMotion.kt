@@ -8,22 +8,31 @@ import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.blur.BlurRadiusSpec
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import com.bobbyesp.docucraft.core.presentation.navigation.DocucraftNavDisplay
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 
 /**
  * One destination slides out as the next slides in, locked together like a sliding door: full
@@ -145,4 +154,31 @@ fun Modifier.sharedBoundsAcrossDestinations(key: Any, shape: Shape): Modifier {
             clipInOverlayDuringTransition = OverlayClip(shape),
         )
     }
+}
+
+/**
+ * Takes what is behind a sheet or a dialog out of focus while it is open: it blurs as the overlay
+ * arrives and sharpens as it leaves, together with the scrim its container dims it with.
+ *
+ * A blur of this window's content, not a frosted overlay: the overlay is a window of its own, which
+ * nothing drawn here reaches, and it stays a solid Material surface. Below Android 12 it does
+ * nothing, and the scrim alone sets the overlay apart, as it always did.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun Modifier.outOfFocusBehindOverlay(overlayShowing: Boolean): Modifier {
+    // An effect, not a movement: the scheme's effects spec, which never overshoots. A radius that
+    // bounced would sharpen the screen again for a moment.
+    val blurRadius =
+        animateDpAsState(
+            targetValue = if (overlayShowing) DocucraftBlurDefaults.BehindOverlayRadius else 0.dp,
+            animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+            label = "OutOfFocusBehindOverlay",
+        )
+
+    // Only while there is a blur to draw: it puts everything under it in a layer of its own, which
+    // nothing needs otherwise. Read in the blur's own block, the radius animates without
+    // recomposing.
+    val blurring by remember { derivedStateOf { blurRadius.value > 0.dp } }
+    return if (blurring) blur { radius = BlurRadiusSpec.uniform(blurRadius.value) } else this
 }

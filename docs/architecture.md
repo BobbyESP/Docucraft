@@ -135,6 +135,69 @@ selected, enabled, scrolled) and reads its colors from the theme on every frame,
 animate their colors when their target changes; while the frame fades, the theme's motion scheme
 makes those color animations snap, so they do not trail behind the rest of the screen.
 
+### Blur
+
+Material has no blur tokens; `DocucraftBlurDefaults` (`core/presentation/theme/`) is where the app
+decides where it blurs, and by how much. There are two kinds of blur, for two jobs.
+
+**A surface floating over content that moves beneath it is frosted, not shadowed.** What is behind
+it shows through, blurred, under its Material container color made translucent. A shadow's dark
+edge separated the surface from the content; the frost does the same and keeps the content in view.
+It is [Haze](https://github.com/chrisbanes/haze): the content is recorded with `Modifier.hazeSource`,
+and the surface applies `Modifier.frosted` with `DocucraftBlurDefaults.surfaceStyle(containerRole)`,
+built on Haze's Material 3 style. The surface's own container becomes transparent and loses its
+shadow elevation.
+- Home: the app bar once the list scrolls under it, the search bar, and the sort menu.
+- Search: the field, over the results.
+- Viewer: the top bar and the floating toolbar, over the pages.
+
+A few rules keep it working:
+- **The source is a sibling of what frosts it, never an ancestor.** A surface inside its own source
+  would blur itself. A popup is the exception that works: it is another window, so the sort menu
+  frosts the list it was opened from.
+- **Content scrolls beneath the surface, padded rather than inset**, or there is nothing to frost:
+  Home's list takes the scaffold's padding as content padding.
+- **`HazeInput.Sources`**, which also reaches across windows. Haze's native backdrop cannot.
+
+**An element floating over content is lifted by a blur halo, not a shadow** (`Modifier.blurHalo`,
+`BlurHalo.kt`). The content around it goes out of focus, most at its edge, and is sharp again
+`HaloSpread` away (a menu's, `MenuHaloSpread`); a faint veil of the surface color fades with the
+blur, so the element still has a soft rim over a flat area. The halo is a Haze blur on an area grown
+around the element, without changing its layout. Its radius really decreases with distance: a small
+shader gives Haze the intensity at each point, from the signed distance to the element's own shape.
+A blurred copy fading over a sharp one would show a double image in between.
+- **The radius decays exponentially.** Text only visibly changes while the blur is a few pixels
+  wide, so a curve that stays high and drops at the end, such as a smoothstep, reads as a cut. A
+  decay spends the same distance on each halving of the radius, and the content eases back into
+  focus.
+- **It reaches further below the element than above**, as Material's key light casts shadows
+  downwards (`haloDrop`), and blurs less of whatever the element was opened from.
+- **It comes into focus on its own**, its strength scaling the radius and the opacity together,
+  never inside the element's enter animation: in there it was scaled by the element's spring and
+  cut to its bounds while it faded.
+
+Where it is used:
+- Home: one halo around the search bar and the scan button together. Two side by side would each
+  blur over the other's button, and one follows the pair as the button changes width.
+- The sort menu (`HaloDropdownMenuPopup`). A popup's window ends at its content, so the halo takes
+  room inside it. The menu is still placed where Material would place it, and a tap on the halo
+  closes it, as a tap outside would.
+- Search: the field.
+
+The halo needs Android 13, where Haze can vary the radius (`DocucraftBlurDefaults.isHaloSupported`).
+Below that, the FAB, the search bar and the menu keep Material's shadows.
+
+**Content that should be out of focus uses `Modifier.blur` with a `BlurRadiusSpec`** (Compose 1.13),
+whose radius can vary across the layer.
+- Whatever is behind a sheet or a dialog destination blurs as it opens, together with the scrim
+  (see [navigation.md](navigation.md#modal-destinations)).
+- A recent document's thumbnail blurs progressively under its title: a scanned page is mostly text,
+  and a title over sharp text reads as more of it.
+
+**Below Android 12 nothing blurs**, and the app looks as it did before blur: a frosted surface falls
+back to its container color, nearly opaque, and content stays sharp. Varying radii, such as the
+thumbnail's, need Android 13.
+
 ## Integrations
 
 - **Firebase.** Analytics and Crashlytics, behind `AnalyticsHelper` (`core/di/AnalyticsModule.kt`).

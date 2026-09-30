@@ -99,6 +99,8 @@ import com.composepdf.PdfViewerState
 import com.composepdf.PdfZoomSpec
 import com.composepdf.ScrollDirection
 import com.composepdf.rememberPdfViewerState
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
@@ -151,6 +153,10 @@ fun PdfViewerScreen(
     val density = LocalDensity.current
     var topBarHeight by remember { mutableStateOf(0.dp) }
     var bottomBarHeight by remember { mutableStateOf(0.dp) }
+
+    // The document, recorded for the bars that float over it to frost: they are its siblings, never
+    // inside it, so a bar never blurs itself.
+    val hazeState = rememberHazeState()
 
     HandlePdfViewerEffects(
         viewModel = viewModel,
@@ -333,7 +339,7 @@ fun PdfViewerScreen(
                     onCopy = { viewModel.onSendIntent(PdfViewerIntent.CopyPreviewedLink) },
                 )
             },
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().hazeSource(hazeState),
         )
 
         PdfFastScroller(
@@ -385,6 +391,7 @@ fun PdfViewerScreen(
                     else null,
                 onOpenWith = openWith,
                 onDetails = onOpenDetails,
+                hazeState = hazeState,
             )
         }
 
@@ -440,6 +447,7 @@ fun PdfViewerScreen(
                 onResetZoom = { scope.launch { pdfViewerState.animateResetZoom() } },
                 onFitModeChange = { viewModel.onSendIntent(PdfViewerIntent.SetFitMode(it)) },
                 onNightModeToggle = { viewModel.onSendIntent(PdfViewerIntent.ToggleNightMode) },
+                hazeState = hazeState,
             )
         }
     }

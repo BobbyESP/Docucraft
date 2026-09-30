@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -50,9 +51,13 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.presentation.theme.frosted
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.TooltipIconButton
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.WithTooltip
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.rememberHazeState
 import kotlin.math.roundToInt
 
 /**
@@ -63,8 +68,12 @@ import kotlin.math.roundToInt
  * and only while the zoom is not the fitted one. That is the toolbar's own width, so it answers
  * correctly in a list-detail pane too.
  *
+ * Frosted in its vibrant color over the pages instead of lifted from them by a shadow: they scroll
+ * on beneath it, blurred.
+ *
  * @param currentPage Zero-based.
  * @param zoom `1f` is the fitted size.
+ * @param hazeState Where the pages are recorded.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -82,14 +91,31 @@ fun PdfViewerBottomToolbar(
     onResetZoom: () -> Unit,
     onFitModeChange: (ViewerFitMode) -> Unit,
     onNightModeToggle: () -> Unit,
+    hazeState: HazeState,
     modifier: Modifier = Modifier,
 ) {
+    val vibrantContainer =
+        FloatingToolbarDefaults.vibrantFloatingToolbarColors().toolbarContainerColor
+    val shape = FloatingToolbarDefaults.ContainerShape
+
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
         val roomForZoomButtons = maxWidth >= WideToolbarWidth
 
         HorizontalFloatingToolbar(
             expanded = true,
-            colors = FloatingToolbarDefaults.vibrantFloatingToolbarColors(),
+            modifier =
+                Modifier.frosted(
+                    state = hazeState,
+                    style = DocucraftBlurDefaults.surfaceStyle(vibrantContainer),
+                    shape = shape,
+                ),
+            colors =
+                FloatingToolbarDefaults.vibrantFloatingToolbarColors(
+                    toolbarContainerColor = Color.Transparent
+                ),
+            shape = shape,
+            expandedShadowElevation = 0.dp,
+            collapsedShadowElevation = 0.dp,
         ) {
             PageChip(currentPage = currentPage, pageCount = pageCount, onClick = onPageClick)
 
@@ -258,6 +284,7 @@ private fun PdfViewerBottomToolbarPreview() {
             onResetZoom = {},
             onFitModeChange = {},
             onNightModeToggle = {},
+            hazeState = rememberHazeState(),
         )
     }
 }

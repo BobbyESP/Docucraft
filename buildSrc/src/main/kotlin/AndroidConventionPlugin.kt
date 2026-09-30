@@ -25,6 +25,7 @@ class AndroidConventionPlugin : Plugin<Project> {
     private fun Project.configureAndroidCommon(extension: CommonExtension) {
         extension.apply {
             compileSdk = ProjectConfig.compileSdk
+            compileSdkMinor = ProjectConfig.compileSdkMinor
 
             defaultConfig.apply {
                 minSdk = ProjectConfig.minSdk

@@ -77,10 +77,13 @@ Phone                                     Tablet / wide pane
   - Print is left out until there is a document.
 - **Back** is shown only when the pane does not already offer a way back.
 - Every icon button has a tooltip, and a label for TalkBack.
+- **Frosted** over the pages, which scroll beneath it (see
+  [architecture.md](architecture.md#blur)).
 
 ### Bottom toolbar (`PdfViewerBottomToolbar`)
 
-A vibrant `HorizontalFloatingToolbar`:
+A vibrant `HorizontalFloatingToolbar`, frosted in its vibrant color over the pages instead of
+shadowed:
 - **Page chip** ("3 / 12"): opens *Go to page*.
 - **Zoom.** The − / % / + group appears only when the toolbar has at least 600 dp of its own width,
   such as on a tablet. Narrower, a zoom chip shows only while the zoom is not the fitted one, and

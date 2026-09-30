@@ -10,9 +10,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,6 +26,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.ArrowDownward
@@ -37,10 +41,10 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuGroup
-import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -50,6 +54,7 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.MenuGroupShapes
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDropdownMenuItem
 import androidx.compose.material3.SmallExtendedFloatingActionButton
@@ -58,6 +63,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.animateFloatingActionButton
+import androidx.compose.material3.carousel.CarouselItemScope
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
@@ -68,15 +74,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.blur.BlurRadiusSpec
+import androidx.compose.ui.graphics.blur.BlurStop
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -85,14 +95,17 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.HaloDropdownMenuPopup
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.presentation.theme.blurHalo
+import com.bobbyesp.docucraft.core.presentation.theme.frosted
 import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.core.util.contentRevealTransform
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
@@ -104,6 +117,9 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiSta
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.DocumentSearchBarButton
 import com.skydoves.landscapist.ImageOptions
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 
 /** Which of Home's faces is showing. Its own type so a change between any two of them animates. */
 private enum class HomePage {
@@ -144,6 +160,11 @@ fun HomeContent(
     val listState = rememberLazyListState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val motionScheme = MaterialTheme.motionScheme
+    val layoutDirection = LocalLayoutDirection.current
+
+    // Home's content, recorded for what floats over it to frost: the app bar, the search bar and
+    // the sort menu. It fills the whole scaffold and scrolls beneath them, padded, not inset.
+    val hazeState = rememberHazeState()
 
     // Collapsed while the user reads down the list, extended again as soon as they head back up.
     val isScanButtonExpanded by remember {
@@ -156,6 +177,7 @@ fun HomeContent(
             HomeTopBar(
                 isContentScrolled = listState.canScrollBackward,
                 scrollBehavior = scrollBehavior,
+                hazeState = hazeState,
                 onOpenSettings = onOpenSettings,
                 documentActions =
                     if (actionsInTopBar && page == HomePage.Documents) {
@@ -180,33 +202,36 @@ fun HomeContent(
                     isScanButtonExpanded = isScanButtonExpanded,
                     onOpenSearch = onOpenSearch,
                     onScan = { onAction(HomeIntent.LaunchScanner) },
+                    hazeState = hazeState,
                 )
             }
         },
     ) { padding ->
         AnimatedContent(
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.fillMaxSize().hazeSource(hazeState),
             targetState = page,
             transitionSpec = { motionScheme.contentRevealTransform() },
             label = "HomePage",
         ) { targetPage ->
+            val centered = Modifier.fillMaxSize().padding(padding)
             when (targetPage) {
                 HomePage.Loading ->
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(modifier = centered, contentAlignment = Alignment.Center) {
                         LoadingIndicator()
                     }
 
                 HomePage.Error ->
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(modifier = centered, contentAlignment = Alignment.Center) {
                         ErrorContent(errorMessage = uiState.errorMessage)
                     }
 
                 HomePage.Empty ->
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(modifier = centered, contentAlignment = Alignment.Center) {
                         EmptyStateScreen(onScanDocument = { onAction(HomeIntent.LaunchScanner) })
                     }
 
-                HomePage.Documents ->
+                HomePage.Documents -> {
+                    val bottomClearance = if (actionsInTopBar) 16.dp else BottomActionsClearance
                     DocumentsPage(
                         documents = uiState.visibleDocuments,
                         recentDocuments = uiState.recentDocuments,
@@ -216,8 +241,16 @@ fun HomeContent(
                         onOpenDocumentActions = onOpenDocumentActions,
                         listState = listState,
                         selectedDocumentId = selectedDocumentId,
-                        bottomClearance = if (actionsInTopBar) 16.dp else BottomActionsClearance,
+                        contentPadding =
+                            PaddingValues(
+                                start = padding.calculateStartPadding(layoutDirection),
+                                top = padding.calculateTopPadding() + 8.dp,
+                                end = padding.calculateEndPadding(layoutDirection),
+                                bottom = padding.calculateBottomPadding() + bottomClearance,
+                            ),
+                        hazeState = hazeState,
                     )
+                }
             }
         }
     }
@@ -225,13 +258,15 @@ fun HomeContent(
 
 /**
  * The expressive large app bar. It takes a container tone once the list scrolls beneath it, eased
- * rather than switched.
+ * rather than switched, and is frosted in it: the documents passing under it stay in view, blurred.
+ * Until then nothing is beneath it, and it is the page's own surface.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HomeTopBar(
     isContentScrolled: Boolean,
     scrollBehavior: TopAppBarScrollBehavior,
+    hazeState: HazeState,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     documentActions: (@Composable () -> Unit)? = null,
@@ -251,7 +286,11 @@ private fun HomeTopBar(
 
     LargeFlexibleTopAppBar(
         title = { Text(text = stringResource(id = R.string.app_name)) },
-        modifier = modifier,
+        modifier =
+            modifier.frosted(
+                state = hazeState,
+                style = DocucraftBlurDefaults.surfaceStyle(containerColor),
+            ),
         actions = {
             documentActions?.invoke()
             IconButton(onClick = onOpenSettings, shapes = IconButtonDefaults.shapes()) {
@@ -263,8 +302,8 @@ private fun HomeTopBar(
         },
         colors =
             TopAppBarDefaults.topAppBarColors(
-                containerColor = containerColor,
-                scrolledContainerColor = containerColor,
+                containerColor = Color.Transparent,
+                scrolledContainerColor = Color.Transparent,
             ),
         scrollBehavior = scrollBehavior,
     )
@@ -305,6 +344,11 @@ private fun TopBarDocumentActions(
 /**
  * Search and scan, side by side at the bottom where the thumb is. The scan button shrinks to its
  * icon while the list is read downwards, and the search bar takes the room it leaves.
+ *
+ * Lifted off the list by one blur halo around the pair, not a shadow under each: two halos side by
+ * side would each blur over the other's button, and one follows the pair as the scan button changes
+ * width. The halo comes into focus with them rather than inside their animation, which would scale
+ * it with their spring and clip it to their bounds while it ran.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -314,16 +358,29 @@ private fun HomeBottomActions(
     isScanButtonExpanded: Boolean,
     onOpenSearch: () -> Unit,
     onScan: () -> Unit,
+    hazeState: HazeState,
 ) {
+    val haloStrength by
+        animateFloatAsState(
+            targetValue = if (visible) 1f else 0f,
+            animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
+            label = "HomeBottomActionsHalo",
+        )
+
     Row(
         modifier =
             Modifier.fillMaxWidth()
                 .padding(start = 32.dp)
+                .blurHalo(state = hazeState, shape = CircleShape, strength = haloStrength)
                 .animateFloatingActionButton(visible = visible, alignment = Alignment.BottomEnd),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        DocumentSearchBarButton(onClick = onOpenSearch, modifier = Modifier.weight(1f))
+        DocumentSearchBarButton(
+            onClick = onOpenSearch,
+            hazeState = hazeState,
+            modifier = Modifier.weight(1f),
+        )
 
         SmallExtendedFloatingActionButton(
             text = { Text(text = stringResource(id = R.string.scan)) },
@@ -342,9 +399,23 @@ private fun HomeBottomActions(
             },
             onClick = { if (!isScanning) onScan() },
             expanded = isScanButtonExpanded,
+            elevation =
+                if (DocucraftBlurDefaults.isHaloSupported) FlatFabElevation
+                else FloatingActionButtonDefaults.elevation(),
         )
     }
 }
+
+/** A FAB the halo lifts instead, at rest and when pressed alike. */
+private val FlatFabElevation
+    @Composable
+    get() =
+        FloatingActionButtonDefaults.elevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp,
+        )
 
 /**
  * Recents first, then every document in the chosen order. Categories will sit between the two once
@@ -361,14 +432,15 @@ private fun DocumentsPage(
     onOpenDocumentActions: (String) -> Unit,
     listState: LazyListState,
     selectedDocumentId: String?,
-    bottomClearance: Dp,
+    contentPadding: PaddingValues,
+    hazeState: HazeState,
 ) {
     val motionScheme = MaterialTheme.motionScheme
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         state = listState,
-        contentPadding = PaddingValues(top = 8.dp, bottom = bottomClearance),
+        contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
     ) {
         if (recentDocuments.isNotEmpty()) {
@@ -392,6 +464,7 @@ private fun DocumentsPage(
                     SortMenu(
                         currentSortOption = sortOption,
                         onSortOptionChange = onSortOptionChange,
+                        hazeState = hazeState,
                     )
                 },
             )
@@ -502,7 +575,10 @@ private fun RecentDocumentsCarousel(
                 )
             } else {
                 AsyncImage(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier =
+                        Modifier.fillMaxSize().blur {
+                            radius = titleBackdropBlur(titleVisibility = titleVisibility)
+                        },
                     imageModel = document.thumbnail.value,
                     shape = RectangleShape,
                     // A page's heading is at its top, and is what identifies it.
@@ -521,13 +597,7 @@ private fun RecentDocumentsCarousel(
                 modifier =
                     Modifier.align(Alignment.BottomStart)
                         .fillMaxWidth()
-                        .graphicsLayer {
-                            val info = carouselItemDrawInfo
-                            val range = info.maxSize - info.minSize
-                            alpha =
-                                if (range <= 0f) 1f
-                                else ((info.size - info.minSize) / range).coerceIn(0f, 1f)
-                        }
+                        .graphicsLayer { alpha = titleVisibility }
                         .background(
                             Brush.verticalGradient(
                                 listOf(Color.Transparent, Color.Black.copy(alpha = 0.72f))
@@ -544,14 +614,51 @@ private fun RecentDocumentsCarousel(
 }
 
 /**
+ * How much of an item's title shows: all of it on the large item, none on the narrowest, which is
+ * too narrow to read one. Read in draw and layer blocks, so it follows the carousel's scroll there.
+ */
+private val CarouselItemScope.titleVisibility: Float
+    get() {
+        val info = carouselItemDrawInfo
+        val range = info.maxSize - info.minSize
+        return if (range <= 0f) 1f else ((info.size - info.minSize) / range).coerceIn(0f, 1f)
+    }
+
+/** Where, from the top of a thumbnail, it starts going out of focus: just above its title. */
+private const val TitleBackdropStart = 0.5f
+
+/**
+ * The bottom of a thumbnail out of focus under its title. A scanned page is mostly text, and a
+ * title over sharp text reads as more of it; blurred, the page's lines stop competing with it. It
+ * fades with the title, so the narrow items, which show none, stay sharp.
+ *
+ * Android 13 and up, as every spatially varying blur is. Below, the page stays sharp and the dark
+ * gradient under the title keeps it legible on its own, as it always did.
+ */
+private fun titleBackdropBlur(titleVisibility: Float): BlurRadiusSpec =
+    BlurRadiusSpec.verticalGradient(
+        listOf(
+            BlurStop(fraction = 0f, radius = 0.dp),
+            BlurStop(fraction = TitleBackdropStart, radius = 0.dp),
+            BlurStop(
+                fraction = 1f,
+                radius = DocucraftBlurDefaults.BehindTitleRadius * titleVisibility,
+            ),
+        )
+    )
+
+/**
  * The current order, named on the button itself, and a menu to change it: criteria in one group,
- * direction in the other. A transient popup anchored here, not a destination.
+ * direction in the other. A transient popup anchored here, not a destination. Its groups are
+ * frosted over the list they open on, and a blur halo lifts the menu where Material would give it a
+ * shadow.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SortMenu(
     currentSortOption: SortOption,
     onSortOptionChange: (SortOption) -> Unit,
+    hazeState: HazeState,
     modifier: Modifier = Modifier,
 ) {
     val hapticFeedback = LocalHapticFeedback.current
@@ -604,10 +711,19 @@ private fun SortMenu(
             )
         }
 
-        DropdownMenuPopup(expanded = expanded, onDismissRequest = { expanded = false }) {
+        HaloDropdownMenuPopup(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            hazeState = hazeState,
+            // The two groups read as one menu: the halo follows their outer corners.
+            shape = MenuDefaults.groupShape(index = 0, count = 1).shape,
+        ) {
             val criteria = SortOption.Criteria.entries
 
-            DropdownMenuGroup(shapes = MenuDefaults.groupShape(index = 0, count = 2)) {
+            FrostedMenuGroup(
+                shapes = MenuDefaults.groupShape(index = 0, count = 2),
+                hazeState = hazeState,
+            ) {
                 criteria.forEachIndexed { index, criterion ->
                     SelectableDropdownMenuItem(
                         selected = criterion == currentSortOption.criteria,
@@ -623,7 +739,10 @@ private fun SortMenu(
 
             Spacer(modifier = Modifier.height(MenuDefaults.GroupSpacing))
 
-            DropdownMenuGroup(shapes = MenuDefaults.groupShape(index = 1, count = 2)) {
+            FrostedMenuGroup(
+                shapes = MenuDefaults.groupShape(index = 1, count = 2),
+                hazeState = hazeState,
+            ) {
                 val orders =
                     listOf(
                         SortOption.Order.ASC to
@@ -646,6 +765,40 @@ private fun SortMenu(
                 }
             }
         }
+    }
+}
+
+/**
+ * A menu group frosted over [hazeState]'s content. Its shadow is left to the menu's halo, or kept
+ * where there is none.
+ *
+ * The frost goes around the group, because the group's own modifier lands inside its container. It
+ * keeps one shape, hovered or not, so that the frost, clipped to it, always matches.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun FrostedMenuGroup(
+    shapes: MenuGroupShapes,
+    hazeState: HazeState,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val shape = shapes.shape
+    Box(
+        modifier =
+            Modifier.frosted(
+                state = hazeState,
+                style =
+                    DocucraftBlurDefaults.surfaceStyle(MenuDefaults.groupStandardContainerColor),
+                shape = shape,
+            )
+    ) {
+        DropdownMenuGroup(
+            shapes = MenuGroupShapes(shape = shape, inactiveShape = shape),
+            containerColor = Color.Transparent,
+            shadowElevation =
+                if (DocucraftBlurDefaults.isHaloSupported) 0.dp else MenuDefaults.ShadowElevation,
+            content = content,
+        )
     }
 }
 

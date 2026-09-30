@@ -54,6 +54,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,24 +65,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.isDestinationSettled
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.sharedBoundsAcrossDestinations
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.presentation.theme.blurHalo
+import com.bobbyesp.docucraft.core.presentation.theme.frosted
 import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.blur.HazeBlurStyle
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -92,26 +103,45 @@ private object SearchBarElement {
     const val KEY = "document-search-bar"
     val Shape = CircleShape
     val Height = 56.dp
+
+    /** Frosted on both ends too, so the container that travels does not change material halfway. */
+    @Composable
+    @ReadOnlyComposable
+    fun frostedStyle(): HazeBlurStyle =
+        DocucraftBlurDefaults.surfaceStyle(MaterialTheme.colorScheme.surfaceContainerHigh)
 }
 
 /**
  * Home's way into search: looks like the search bar it becomes, and is not one. Typing happens on
  * the search screen, which this grows into.
  *
- * Kept at the bottom beside the scan button, where the thumb already is, and floating like it, with
- * the same resting elevation.
+ * Kept at the bottom beside the scan button, where the thumb already is, and floating over the list
+ * like it. Frosted rather than shadowed: the documents scrolling beneath show through it, blurred.
+ * What lifts it is the blur halo its caller draws around it and the scan button together; where
+ * there is none, the shadow it used to have.
+ *
+ * @param hazeState Where the content it floats over is recorded.
  */
 @Composable
-fun DocumentSearchBarButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun DocumentSearchBarButton(
+    onClick: () -> Unit,
+    hazeState: HazeState,
+    modifier: Modifier = Modifier,
+) {
     Surface(
         onClick = onClick,
         modifier =
             modifier
                 .sharedBoundsAcrossDestinations(SearchBarElement.KEY, SearchBarElement.Shape)
-                .height(SearchBarElement.Height),
+                .height(SearchBarElement.Height)
+                .frosted(
+                    state = hazeState,
+                    style = SearchBarElement.frostedStyle(),
+                    shape = SearchBarElement.Shape,
+                ),
         shape = SearchBarElement.Shape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shadowElevation = 6.dp,
+        color = Color.Transparent,
+        shadowElevation = if (DocucraftBlurDefaults.isHaloSupported) 0.dp else 6.dp,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp),
@@ -156,6 +186,9 @@ fun DocumentSearchScreen(
 /**
  * Results above, the field at the bottom: the field stays where Home's button was, just above the
  * keyboard, so the thumb that opened search types in it without reaching.
+ *
+ * The field floats, frosted, over the results rather than below them, as Home's button floats over
+ * the list: they scroll beneath it, and the room it takes is added to their padding.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -170,52 +203,57 @@ fun DocumentSearchContent(
     selectedDocumentId: String? = null,
 ) {
     val motionScheme = MaterialTheme.motionScheme
+    val density = LocalDensity.current
+    val hazeState = rememberHazeState()
+
+    // The field's height with the keyboard and its margins: everything the results must clear.
+    var fieldHeight by remember { mutableStateOf(0.dp) }
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-        Column(
+        Box(
             modifier =
                 Modifier.fillMaxSize()
                     .windowInsetsPadding(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
                     )
         ) {
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                AnimatedContent(
-                    targetState =
-                        when {
-                            uiState.query.isBlank() -> SearchPage.Hint
-                            uiState.hasNoMatches -> SearchPage.NoMatches
-                            else -> SearchPage.Results
-                        },
-                    transitionSpec = {
-                        fadeIn(motionScheme.defaultEffectsSpec()) togetherWith
-                            fadeOut(motionScheme.fastEffectsSpec())
+            AnimatedContent(
+                targetState =
+                    when {
+                        uiState.query.isBlank() -> SearchPage.Hint
+                        uiState.hasNoMatches -> SearchPage.NoMatches
+                        else -> SearchPage.Results
                     },
-                    label = "SearchPage",
-                ) { page ->
-                    when (page) {
-                        SearchPage.Hint -> SearchHint()
-                        SearchPage.NoMatches ->
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                ScreenPlaceholderCard(
-                                    modifier = Modifier.padding(24.dp),
-                                    title = stringResource(R.string.doc_no_matches),
-                                    description =
-                                        stringResource(R.string.doc_no_matches_desc, uiState.query),
-                                    icon = Icons.Rounded.SearchOff,
-                                )
-                            }
-                        SearchPage.Results ->
-                            SearchResults(
-                                results = uiState.results,
-                                selectedDocumentId = selectedDocumentId,
-                                onOpenDocument = onOpenDocument,
-                                onOpenDocumentActions = onOpenDocumentActions,
+                modifier = Modifier.fillMaxSize().hazeSource(hazeState),
+                transitionSpec = {
+                    fadeIn(motionScheme.defaultEffectsSpec()) togetherWith
+                        fadeOut(motionScheme.fastEffectsSpec())
+                },
+                label = "SearchPage",
+            ) { page ->
+                when (page) {
+                    SearchPage.Hint -> SearchHint(Modifier.padding(bottom = fieldHeight))
+                    SearchPage.NoMatches ->
+                        Box(
+                            modifier = Modifier.fillMaxSize().padding(bottom = fieldHeight),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            ScreenPlaceholderCard(
+                                modifier = Modifier.padding(24.dp),
+                                title = stringResource(R.string.doc_no_matches),
+                                description =
+                                    stringResource(R.string.doc_no_matches_desc, uiState.query),
+                                icon = Icons.Rounded.SearchOff,
                             )
-                    }
+                        }
+                    SearchPage.Results ->
+                        SearchResults(
+                            results = uiState.results,
+                            selectedDocumentId = selectedDocumentId,
+                            onOpenDocument = onOpenDocument,
+                            onOpenDocumentActions = onOpenDocumentActions,
+                            bottomClearance = fieldHeight,
+                        )
                 }
             }
 
@@ -224,10 +262,11 @@ fun DocumentSearchContent(
                 onQueryChange = onQueryChange,
                 onClearQuery = onClearQuery,
                 onBack = onBack,
+                hazeState = hazeState,
                 modifier =
-                    Modifier.windowInsetsPadding(
-                            WindowInsets.ime.union(WindowInsets.navigationBars)
-                        )
+                    Modifier.align(Alignment.BottomCenter)
+                        .onSizeChanged { fieldHeight = with(density) { it.height.toDp() } }
+                        .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
                         .padding(16.dp),
             )
         }
@@ -246,12 +285,14 @@ private fun SearchField(
     onQueryChange: (String) -> Unit,
     onClearQuery: () -> Unit,
     onBack: () -> Unit,
+    hazeState: HazeState,
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     val motionScheme = MaterialTheme.motionScheme
-    val containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    // The frost is the container; the field's own stays clear so it does not cover it.
+    val containerColor = Color.Transparent
 
     // The keyboard comes up once the bar has landed, not while it is still growing: both at once
     // made the field chase its own target. Only the first time, too: coming back from a document
@@ -271,7 +312,15 @@ private fun SearchField(
         modifier =
             modifier
                 .fillMaxWidth()
+                // Outside the shared bounds: the halo stays behind with this screen while the
+                // field flies back to Home, instead of being cut to the field's shape in flight.
+                .blurHalo(state = hazeState, shape = SearchBarElement.Shape)
                 .sharedBoundsAcrossDestinations(SearchBarElement.KEY, SearchBarElement.Shape)
+                .frosted(
+                    state = hazeState,
+                    style = SearchBarElement.frostedStyle(),
+                    shape = SearchBarElement.Shape,
+                )
                 .focusRequester(focusRequester),
         placeholder = {
             Text(
@@ -330,6 +379,7 @@ private fun SearchResults(
     selectedDocumentId: String?,
     onOpenDocument: (String) -> Unit,
     onOpenDocumentActions: (String) -> Unit,
+    bottomClearance: Dp,
 ) {
     val motionScheme = MaterialTheme.motionScheme
     val statusBar = WindowInsets.statusBars.asPaddingValues()
@@ -341,7 +391,7 @@ private fun SearchResults(
                 start = 16.dp,
                 top = statusBar.calculateTopPadding() + 16.dp,
                 end = 16.dp,
-                bottom = 8.dp,
+                bottom = bottomClearance,
             ),
         verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
     ) {
@@ -432,5 +482,11 @@ private fun DocumentSearchHintPreview() {
 @PreviewLightDark
 @Composable
 private fun DocumentSearchBarButtonPreview() {
-    DocucraftTheme { DocumentSearchBarButton(onClick = {}, modifier = Modifier.fillMaxWidth()) }
+    DocucraftTheme {
+        DocumentSearchBarButton(
+            onClick = {},
+            hazeState = rememberHazeState(),
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
 }

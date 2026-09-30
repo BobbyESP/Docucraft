@@ -114,6 +114,15 @@ the same surface, a destination is missing, or a state is one too many. The shee
 follows this too: it only allows `Hidden` and `Expanded`, because a half-expanded state made the
 first back press collapse the sheet instead of closing it.
 
+**What is behind a modal destination goes out of focus.** While the top entry is shown as an
+overlay, `DocucraftNavDisplay` blurs everything it draws (`outOfFocusBehindOverlay`, in
+`NavigationMotion.kt`), on the motion scheme's effects spec, together with the scrim the container
+draws. It asks the entry the same question the overlay strategy does
+(`OverlaySceneStrategy.isShownAsOverlay`), so the two cannot disagree. The overlay is a window of its
+own, so the blur never reaches it, and the sheet or dialog stays a solid surface. A dialog a screen
+shows for itself, outside the back stack, blurs nothing: the appearance dialog is meant to show the
+theme changing behind it.
+
 **Transient popups anchored to content are not destinations.** A dropdown menu, or a link's
 preview in the viewer, is attached to a spot on the screen, closed by any scroll, and meaningless
 after a process death. It is UI state, not an entry.

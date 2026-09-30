@@ -86,6 +86,7 @@ dependencies {
     implementation(libs.landscapist.coil)
     implementation(libs.landscapist.placeholder)
     implementation(libs.sonner)
+    implementation(libs.bundles.haze)
 
     // Storage
     implementation(libs.room.runtime)
