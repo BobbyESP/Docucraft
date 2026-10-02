@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import coil.ImageLoader
+import coil.ImageLoaderFactory
 import com.bobbyesp.docucraft.core.di.analyticsModule
 import com.bobbyesp.docucraft.core.di.commonModule
 import com.bobbyesp.docucraft.core.di.notificationsServiceModule
@@ -18,11 +20,12 @@ import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.scannedDocumentsDatabaseModule
 import com.bobbyesp.docucraft.feature.pdfviewer.di.pageContentModule
 import com.bobbyesp.docucraft.feature.pdfviewer.di.pdfViewerModule
+import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
 
-class App : Application() {
+class App : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
 
@@ -48,6 +51,13 @@ class App : Application() {
             else getPackageInfo(packageName, 0)
         }
     }
+
+    /**
+     * The image loader every image in the app is loaded with: the one the graph configures. Coil
+     * asks for it here the first time an image is requested. Without this the app ran on Coil's
+     * default loader, and the configured one, with its caches, was built for nobody.
+     */
+    override fun newImageLoader(): ImageLoader = get()
 
     companion object {
         lateinit var packageInfo: PackageInfo
