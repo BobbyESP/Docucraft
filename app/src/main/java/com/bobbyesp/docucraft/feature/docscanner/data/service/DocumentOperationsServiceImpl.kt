@@ -18,14 +18,33 @@ import java.io.FileOutputStream
 /** Renders with the platform's own [PdfRenderer]. */
 class DocumentOperationsServiceImpl(private val context: Context) : DocumentOperationsService {
 
-    override fun pageCount(document: File): Int? =
-        try {
+    override fun pageCount(document: File): Int? {
+        // Asked of the file before the renderer is. On Android 7, a renderer that fails to open a
+        // file leaves the platform's PDF library unusable for the rest of the process, and the
+        // next page rendered crashes it. A file that is plainly not a PDF never gets that far.
+        if (!document.startsAsAPdf()) return null
+
+        return try {
             ParcelFileDescriptor.open(document, ParcelFileDescriptor.MODE_READ_ONLY).use {
                 PdfRenderer(it).use { renderer -> renderer.pageCount }
             }
         } catch (e: Exception) {
             Log.w(TAG, "Could not count the pages of ${document.name}", e)
             null
+        }
+    }
+
+    /** A PDF says so near its beginning: `%PDF-`, within its first kilobyte. */
+    private fun File.startsAsAPdf(): Boolean =
+        try {
+            inputStream().use { input ->
+                val head = ByteArray(PDF_HEADER_WINDOW)
+                val read = input.read(head)
+                read > 0 && String(head, 0, read, Charsets.ISO_8859_1).contains(PDF_HEADER)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not read $name", e)
+            false
         }
 
     override fun saveDocumentPageAsImage(
@@ -100,5 +119,7 @@ class DocumentOperationsServiceImpl(private val context: Context) : DocumentOper
 
     private companion object {
         const val TAG = "DocumentOperations"
+        const val PDF_HEADER = "%PDF-"
+        const val PDF_HEADER_WINDOW = 1024
     }
 }
