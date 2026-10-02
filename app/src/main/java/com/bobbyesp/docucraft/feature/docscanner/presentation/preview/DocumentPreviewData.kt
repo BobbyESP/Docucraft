@@ -21,7 +21,7 @@ object DocumentPreviewData {
                 capturedAtEpochMillis = System.currentTimeMillis(),
                 sizeBytes = 1024,
                 pageCount = 10,
-                thumbnail = ContentRef("content://com.example.thumbnails/thumbnail/1"),
+                contentUpdatedAtEpochMillis = 0,
             ),
             Document(
                 uuid = "2asd",
@@ -34,7 +34,7 @@ object DocumentPreviewData {
                 capturedAtEpochMillis = System.currentTimeMillis(),
                 sizeBytes = 2048,
                 pageCount = 20,
-                thumbnail = ContentRef("content://com.example.thumbnails/thumbnail/2"),
+                contentUpdatedAtEpochMillis = 0,
             ),
         )
 }

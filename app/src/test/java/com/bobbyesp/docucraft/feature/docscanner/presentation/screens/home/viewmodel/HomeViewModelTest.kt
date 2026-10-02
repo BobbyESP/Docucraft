@@ -17,6 +17,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocuments
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
+import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import com.bobbyesp.scanner.ContentRef
 import com.bobbyesp.scanner.DocumentScanner
 import com.bobbyesp.scanner.ScanArtifact
@@ -81,17 +82,7 @@ class HomeViewModelTest {
     }
 
     private fun fakeDocument(uuid: String = "doc-1") =
-        Document(
-            uuid = uuid,
-            filename = "$uuid.pdf",
-            title = "Title $uuid",
-            description = null,
-            location = ContentRef("content://stored/$uuid.pdf"),
-            capturedAtEpochMillis = 1_000L,
-            sizeBytes = 2_048L,
-            pageCount = 3,
-            thumbnail = null,
-        )
+        testDocument(uuid = uuid, filename = "$uuid.pdf", title = "Title $uuid", pageCount = 3)
 
     private val scannedDraft =
         ScanDraft(

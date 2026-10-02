@@ -19,7 +19,7 @@ import com.bobbyesp.scanner.ContentRef
  * @property capturedAtEpochMillis When it was scanned.
  * @property sizeBytes Size of the document.
  * @property pageCount Pages in the document.
- * @property thumbnail Where its preview image lives, if one could be produced.
+ * @property contentUpdatedAtEpochMillis When the document's content last changed.
  */
 data class Document(
     val uuid: String,
@@ -30,5 +30,9 @@ data class Document(
     val capturedAtEpochMillis: Long,
     val sizeBytes: Long,
     val pageCount: Int,
-    val thumbnail: ContentRef?,
-)
+    val contentUpdatedAtEpochMillis: Long,
+) {
+    /** Its preview, which is drawn from its content and so changes when the content does. */
+    val thumbnail: DocumentThumbnail
+        get() = DocumentThumbnail(uuid, contentUpdatedAtEpochMillis)
+}

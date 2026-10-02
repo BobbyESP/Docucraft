@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
+import com.bobbyesp.docucraft.core.data.image.ImageLoaderComponent
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.DocumentsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.search.CompositeSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.data.search.DatabaseSearchStrategy
@@ -13,12 +14,15 @@ import com.bobbyesp.docucraft.feature.docscanner.data.sharing.AndroidDocumentSha
 import com.bobbyesp.docucraft.feature.docscanner.data.sharing.FileKitDocumentExporter
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentStorageImpl
+import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.CachedDocumentThumbnails
+import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.DocumentThumbnailComponent
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
+import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
@@ -27,6 +31,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocuments
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 /**
@@ -37,8 +42,19 @@ val documentScannerDataModule = module {
     // Service layer
     single<DocumentOperationsService> { DocumentOperationsServiceImpl(context = androidContext()) }
 
-    single<DocumentStorage> {
-        DocumentStorageImpl(context = androidContext(), documentOperations = get())
+    single<DocumentStorage> { DocumentStorageImpl(context = androidContext()) }
+
+    single<DocumentThumbnails> {
+        CachedDocumentThumbnails(
+            context = androidContext(),
+            documentDao = get(),
+            documentOperations = get(),
+        )
+    }
+
+    // How the image loader, which core builds, learns to show a document's preview.
+    single<ImageLoaderComponent>(named("documentThumbnails")) {
+        DocumentThumbnailComponent(thumbnails = get())
     }
 
     single<DocumentSharer> { AndroidDocumentSharer(context = androidContext()) }
@@ -64,7 +80,7 @@ val documentScannerDataModule = module {
     factory { UpdateDocumentFieldsUseCase(repository = get()) }
     factory { ProcessDocumentsUseCase(querySearchStrategy = get(), localSearchStrategy = get()) }
 
-    factory { DeleteDocumentUseCase(repository = get(), storage = get()) }
+    factory { DeleteDocumentUseCase(repository = get(), storage = get(), thumbnails = get()) }
 
     factory { SaveScanDraftUseCase(storage = get(), repository = get()) }
 }

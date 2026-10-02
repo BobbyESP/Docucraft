@@ -67,6 +67,7 @@ import androidx.compose.material3.carousel.CarouselItemScope
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -566,20 +567,20 @@ private fun RecentDocumentsCarousel(
                     // name every one of them.
                     .semantics { contentDescription = title }
         ) {
-            if (LocalInspectionMode.current || document.thumbnail == null) {
-                Icon(
-                    imageVector = Icons.Rounded.Description,
-                    contentDescription = null,
-                    modifier = Modifier.align(Alignment.Center).size(48.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
+            // Outside the image, which goes out of focus towards its bottom: an icon is not a page,
+            // and blurred it reads as a rendering fault.
+            var hasNoPreview by remember(document.thumbnail) { mutableStateOf(false) }
+            if (LocalInspectionMode.current || hasNoPreview) {
+                PreviewPlaceholder(modifier = Modifier.align(Alignment.Center))
+            }
+
+            if (!LocalInspectionMode.current) {
                 AsyncImage(
                     modifier =
                         Modifier.fillMaxSize().blur {
                             radius = titleBackdropBlur(titleVisibility = titleVisibility)
                         },
-                    imageModel = document.thumbnail.value,
+                    imageModel = document.thumbnail,
                     shape = RectangleShape,
                     // A page's heading is at its top, and is what identifies it.
                     imageOptions =
@@ -587,6 +588,8 @@ private fun RecentDocumentsCarousel(
                             alignment = Alignment.TopCenter,
                             contentDescription = null,
                         ),
+                    // A document whose preview cannot be drawn, such as one whose file is gone.
+                    failure = { SideEffect { hasNoPreview = true } },
                 )
             }
 
@@ -611,6 +614,17 @@ private fun RecentDocumentsCarousel(
             )
         }
     }
+}
+
+/** What a recent document shows where its preview would be, when there is none to show. */
+@Composable
+private fun PreviewPlaceholder(modifier: Modifier = Modifier) {
+    Icon(
+        imageVector = Icons.Rounded.Description,
+        contentDescription = null,
+        modifier = modifier.size(48.dp),
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 /**

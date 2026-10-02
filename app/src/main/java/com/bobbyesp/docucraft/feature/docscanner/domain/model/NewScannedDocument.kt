@@ -17,7 +17,6 @@ import com.bobbyesp.scanner.ContentRef
  * @property capturedAtEpochMillis When it was scanned.
  * @property sizeBytes Size of the stored document.
  * @property pageCount Pages in the document.
- * @property thumbnail Where its preview image lives, if one could be produced.
  */
 data class NewScannedDocument(
     val filename: String,
@@ -25,5 +24,4 @@ data class NewScannedDocument(
     val capturedAtEpochMillis: Long,
     val sizeBytes: Long,
     val pageCount: Int,
-    val thumbnail: ContentRef?,
 )

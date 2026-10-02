@@ -18,6 +18,7 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import com.bobbyesp.docucraft.feature.pdfviewer.FakePageContentProvider
 import com.bobbyesp.docucraft.feature.pdfviewer.data.settings.InMemoryViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
@@ -549,16 +550,14 @@ class PdfViewerViewModelTest {
         DocumentSelection(TextCaret(startPage, startOffset), TextCaret(endPage, endOffset))
 
     private fun scanned() =
-        Document(
+        testDocument(
             uuid = UUID,
             filename = "Scan_20260924_101500",
             title = "Invoice",
-            description = null,
             location = ContentRef(LOCATION),
             capturedAtEpochMillis = 0L,
             sizeBytes = 1024L,
             pageCount = 2,
-            thumbnail = null,
         )
 
     private class RecordingAnalytics : AnalyticsHelper {

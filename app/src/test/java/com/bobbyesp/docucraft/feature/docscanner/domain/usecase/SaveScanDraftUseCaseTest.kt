@@ -15,7 +15,6 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -53,7 +52,6 @@ class SaveScanDraftUseCaseTest {
         assertEquals(3, document.pageCount)
         assertEquals(1_024L, document.sizeBytes)
         assertEquals(1_700_000_000_000L, document.capturedAtEpochMillis)
-        assertEquals(ContentRef("/previews/scan.png"), document.thumbnail)
     }
 
     @Test
@@ -65,17 +63,6 @@ class SaveScanDraftUseCaseTest {
         assertTrue(name, name.startsWith("Scan_"))
         assertEquals("Scan_yyyyMMdd_HHmmss".length, name.length)
         assertEquals(name, catalogued().filename)
-    }
-
-    /** A document without a preview is still a document. */
-    @Test
-    fun `a thumbnail failure does not fail the save`() = runTest {
-        storage.thumbnailFailure = IllegalStateException("cannot render")
-
-        val result = useCase(draft())
-
-        assertTrue(result.isSuccess)
-        assertNull(catalogued().thumbnail)
     }
 
     @Test

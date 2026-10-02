@@ -14,9 +14,9 @@ import com.bobbyesp.scanner.ScanDraft
 /**
  * Turns a finished scan into a document the app owns and knows about.
  *
- * Only the order of operations lives here: store the file, confirm it is real, try for a preview,
- * then catalogue it. Where the file goes and how the preview is rendered are [DocumentStorage]'s
- * problem, and nothing in this class names a framework, a file system or a database.
+ * Only the order of operations lives here: store the file, confirm it is real, then catalogue it.
+ * Where the file goes is [DocumentStorage]'s problem, and nothing in this class names a framework,
+ * a file system or a database.
  */
 class SaveScanDraftUseCase(
     private val storage: DocumentStorage,
@@ -34,12 +34,6 @@ class SaveScanDraftUseCase(
             val stored = storage.storeDocument(source = pdf.content, filename = name)
             if (stored.sizeBytes <= 0) throw ScanSaveException.OutputFileEmpty()
 
-            // A document without a preview is still a document, so this must not fail the save.
-            val thumbnail = runCatching {
-                storage.storeThumbnail(stored.location, name)
-            }
-                .getOrNull()
-
             repository.saveDocument(
                 NewScannedDocument(
                     filename = name,
@@ -47,7 +41,6 @@ class SaveScanDraftUseCase(
                     capturedAtEpochMillis = draft.capturedAtEpochMillis,
                     sizeBytes = stored.sizeBytes,
                     pageCount = pdf.pageCount,
-                    thumbnail = thumbnail,
                 )
             )
 

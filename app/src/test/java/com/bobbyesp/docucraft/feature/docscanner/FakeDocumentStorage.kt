@@ -11,14 +11,12 @@ import com.bobbyesp.scanner.ContentRef
  * Storage that keeps a ledger instead of files.
  *
  * Shared by everything that exercises the storage port: the cases a device makes hard to reach — an
- * empty file, a preview that will not render, a delete that fails — are just fields.
+ * empty file, a delete that fails — are just fields.
  */
 class FakeDocumentStorage : DocumentStorage {
 
     var sizeBytes = 1_024L
-    var thumbnail: ContentRef? = ContentRef("/previews/scan.png")
     var storeFailure: Exception? = null
-    var thumbnailFailure: Exception? = null
     var deleteFailure: Exception? = null
 
     var usedFilename: String? = null
@@ -30,11 +28,6 @@ class FakeDocumentStorage : DocumentStorage {
         storeFailure?.let { throw it }
         usedFilename = filename
         return StoredDocument(ContentRef("content://stored/$filename.pdf"), sizeBytes)
-    }
-
-    override suspend fun storeThumbnail(document: ContentRef, filename: String): ContentRef? {
-        thumbnailFailure?.let { throw it }
-        return thumbnail
     }
 
     override suspend fun delete(location: ContentRef) {

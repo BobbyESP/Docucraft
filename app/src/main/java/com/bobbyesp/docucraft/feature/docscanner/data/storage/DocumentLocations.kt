@@ -47,17 +47,4 @@ class DocumentLocations(private val context: Context) {
         if (uri.scheme != ContentResolver.SCHEME_FILE) return null
         return uri.path?.let(::File)?.relativeToOrNull(context.filesDir)?.invariantSeparatorsPath
     }
-
-    /**
-     * The preview of the document saved as [originalName], if one was rendered. Previews are named
-     * after the document.
-     */
-    fun previewOf(originalName: String): ContentRef? {
-        val preview =
-            File(
-                File(context.filesDir, DocumentStorageImpl.THUMBNAILS_DIR),
-                "$originalName.${DocumentStorageImpl.THUMBNAIL_EXTENSION}",
-            )
-        return if (preview.exists()) ContentRef(preview.path) else null
-    }
 }

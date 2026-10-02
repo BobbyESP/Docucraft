@@ -5,9 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.data.storage
 
 import android.content.ContentResolver
 import android.content.Context
-import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Build
 import android.util.Log
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
@@ -15,7 +13,6 @@ import com.bobbyesp.docucraft.App
 import com.bobbyesp.docucraft.core.util.ensure
 import com.bobbyesp.docucraft.core.util.ensureParent
 import com.bobbyesp.docucraft.feature.docscanner.data.db.LegacyDocumentPath
-import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsService
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredDocument
@@ -35,10 +32,7 @@ import kotlinx.io.buffered
  * Keeps documents in the app's private files directory and hands them out as `FileProvider` URIs,
  * which is what makes them shareable with the viewer and with other apps.
  */
-class DocumentStorageImpl(
-    private val context: Context,
-    private val documentOperations: DocumentOperationsService,
-) : DocumentStorage {
+class DocumentStorageImpl(private val context: Context) : DocumentStorage {
 
     override suspend fun storeDocument(source: ContentRef, filename: String): StoredDocument =
         withContext(Dispatchers.IO) {
@@ -61,26 +55,6 @@ class DocumentStorageImpl(
             )
         }
 
-    override suspend fun storeThumbnail(document: ContentRef, filename: String): ContentRef? =
-        withContext(Dispatchers.IO) {
-            val directory =
-                PlatformFile(FileKit.filesDir, THUMBNAILS_DIR).apply { ensure(mustCreate = true) }
-            val target = PlatformFile(directory, "$filename.$THUMBNAIL_EXTENSION")
-
-            val written =
-                documentOperations.saveDocumentPageAsImage(
-                    documentUri = document.value.toUri(),
-                    outputFile = File(target.path),
-                    pageIndex = 0,
-                    format = Thumbnail.format,
-                    quality = Thumbnail.QUALITY,
-                )
-
-            // Reporting a location for a preview that was never written leaves the catalogue
-            // pointing at a file that is not there, and the list showing a broken image.
-            if (written) ContentRef(target.path) else null
-        }
-
     /**
      * Note the `contentResolver.delete`. These are `FileProvider` URIs, and a `FileProvider`
      * exposes no `_data` column, so resolving one back to a path returns null — which is why the
@@ -95,9 +69,8 @@ class DocumentStorageImpl(
                 when (uri.scheme) {
                     ContentResolver.SCHEME_CONTENT ->
                         context.contentResolver.delete(uri, null, null)
-                    // Thumbnails are kept as plain paths, which parse with no scheme at all.
-                    ContentResolver.SCHEME_FILE,
-                    null -> uri.path?.let { File(it).delete() }
+                    // A document whose file the provider does not serve is known by its path.
+                    ContentResolver.SCHEME_FILE -> uri.path?.let { File(it).delete() }
                     else -> Log.w(TAG, "Not deleting, unsupported scheme: ${uri.scheme}")
                 }
             } catch (e: Exception) {
@@ -128,30 +101,9 @@ class DocumentStorageImpl(
         }
     }
 
-    /**
-     * Encoding and file extension in one place, so they cannot drift apart again. Previews used to
-     * be named `.png` while being encoded as WEBP, which worked only because decoders sniff the
-     * content rather than trusting the name.
-     */
-    private object Thumbnail {
-        const val QUALITY = 65
-
-        val format: Bitmap.CompressFormat
-            get() =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Bitmap.CompressFormat.WEBP_LOSSY
-                } else {
-                    @Suppress("DEPRECATION") Bitmap.CompressFormat.WEBP
-                }
-    }
-
-    internal companion object {
-        private const val TAG = "DocumentStorage"
-        private const val DOCUMENTS_DIR = LegacyDocumentPath.DIRECTORY
-        private const val BUFFER_SIZE = 8192
-
-        /** Where previews are, and how they are named: `DocumentLocations` finds them by it. */
-        const val THUMBNAILS_DIR = "previews"
-        const val THUMBNAIL_EXTENSION = "webp"
+    private companion object {
+        const val TAG = "DocumentStorage"
+        const val DOCUMENTS_DIR = LegacyDocumentPath.DIRECTORY
+        const val BUFFER_SIZE = 8192
     }
 }

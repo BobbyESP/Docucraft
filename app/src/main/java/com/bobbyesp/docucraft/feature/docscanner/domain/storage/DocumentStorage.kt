@@ -12,9 +12,8 @@ data class StoredDocument(val location: ContentRef, val sizeBytes: Long)
  * Where scanned documents are kept.
  *
  * Scanners hand back locations in their own short-lived storage, so a document has to be copied
- * somewhere durable before it is any use. Which directory that is, how the file is addressed
- * afterwards and how a preview gets rendered are all storage concerns, and none of them belong in
- * the rules about what saving a scan means.
+ * somewhere durable before it is any use. Which directory that is and how the file is addressed
+ * afterwards are storage concerns, and neither belongs in the rules about what saving a scan means.
  */
 interface DocumentStorage {
 
@@ -26,14 +25,6 @@ interface DocumentStorage {
      * @throws Exception if the document could not be read or written.
      */
     suspend fun storeDocument(source: ContentRef, filename: String): StoredDocument
-
-    /**
-     * Renders the first page of [document] as a preview image and stores it.
-     *
-     * @return Where the preview lives, or `null` if one could not be produced. A missing preview is
-     *   not worth failing a scan over.
-     */
-    suspend fun storeThumbnail(document: ContentRef, filename: String): ContentRef?
 
     /**
      * Removes something this storage put there. Does nothing if it is already gone, since the

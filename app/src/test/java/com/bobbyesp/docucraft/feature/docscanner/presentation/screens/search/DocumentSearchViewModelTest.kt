@@ -10,7 +10,7 @@ import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
-import com.bobbyesp.scanner.ContentRef
+import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -63,17 +63,7 @@ class DocumentSearchViewModelTest {
     }
 
     private fun document(title: String) =
-        Document(
-            uuid = title.lowercase(),
-            filename = "$title.pdf",
-            title = title,
-            description = null,
-            location = ContentRef("content://stored/$title.pdf"),
-            capturedAtEpochMillis = 1_000L,
-            sizeBytes = 2_048L,
-            pageCount = 1,
-            thumbnail = null,
-        )
+        testDocument(uuid = title.lowercase(), filename = "$title.pdf", title = title)
 
     private fun createViewModel(savedState: SavedStateHandle = SavedStateHandle()) =
         DocumentSearchViewModel(

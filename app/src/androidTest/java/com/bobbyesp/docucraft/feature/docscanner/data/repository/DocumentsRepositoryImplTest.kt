@@ -229,7 +229,6 @@ class DocumentsRepositoryImplTest {
                 capturedAtEpochMillis = capturedAt,
                 sizeBytes = 1,
                 pageCount = pageCount,
-                thumbnail = null,
             )
         )
     }

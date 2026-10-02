@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.pdfviewer.domain.details
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.DocumentText
 import com.bobbyesp.documentcontent.DocumentSource
@@ -93,7 +94,7 @@ class ViewerDocumentDetailsTest {
     }
 
     private fun scanned() =
-        Document(
+        testDocument(
             uuid = UUID,
             filename = "Scan_20260924_101500",
             title = "Invoice",
@@ -103,7 +104,6 @@ class ViewerDocumentDetailsTest {
             capturedAtEpochMillis = 0L,
             sizeBytes = 1024L,
             pageCount = 3,
-            thumbnail = null,
         )
 
     private companion object {

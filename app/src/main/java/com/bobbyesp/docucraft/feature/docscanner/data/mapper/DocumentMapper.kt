@@ -15,9 +15,8 @@ import com.bobbyesp.scanner.ContentRef
 /**
  * Where the storage vocabulary meets the domain one.
  *
- * The catalogue keeps a relative path and no preview; the domain's document carries a location to
- * open and where its preview is, so both are worked out here through [locations]. The row id stays
- * behind: nothing above this layer uses it.
+ * The catalogue keeps a relative path; the domain's document carries a location to open, which is
+ * worked out here through [locations]. The row id stays behind: nothing above this layer uses it.
  */
 internal fun DocumentEntity.toModel(locations: DocumentLocations): Document =
     Document(
@@ -32,7 +31,7 @@ internal fun DocumentEntity.toModel(locations: DocumentLocations): Document =
         // Unknown is 0 in the domain's document, which is what its readers already take it for.
         sizeBytes = sizeBytes ?: 0,
         pageCount = pageCount ?: 0,
-        thumbnail = locations.previewOf(originalName),
+        contentUpdatedAtEpochMillis = contentUpdatedAt,
     )
 
 /**

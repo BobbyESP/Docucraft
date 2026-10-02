@@ -47,6 +47,7 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.util.DateTime
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentThumbnail
 import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
 import com.bobbyesp.scanner.ContentRef
 import java.util.UUID
@@ -149,7 +150,7 @@ private fun DocumentSummary(pdf: Document, modifier: Modifier = Modifier) {
  * rounded rectangle: a morphing shape would crop the page it is supposed to show.
  */
 @Composable
-private fun DocumentThumbnail(thumbnail: ContentRef?, modifier: Modifier = Modifier) {
+private fun DocumentThumbnail(thumbnail: DocumentThumbnail, modifier: Modifier = Modifier) {
     Box(
         modifier =
             modifier
@@ -169,7 +170,7 @@ private fun DocumentThumbnail(thumbnail: ContentRef?, modifier: Modifier = Modif
         } else {
             AsyncImage(
                 modifier = Modifier.fillMaxSize(),
-                imageModel = thumbnail?.value,
+                imageModel = thumbnail,
                 failure = {
                     Placeholder(
                         modifier = Modifier.fillMaxSize(),
@@ -237,6 +238,6 @@ private fun previewDocument(index: Int, description: String?) =
         capturedAtEpochMillis = 1_758_290_000_000 + index,
         sizeBytes = 184_320L * (index + 1),
         pageCount = 1 + index,
-        thumbnail = null,
+        contentUpdatedAtEpochMillis = 1_758_290_000_000 + index,
         uuid = UUID.nameUUIDFromBytes("doc-$index".toByteArray()).toString(),
     )

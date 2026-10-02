@@ -24,6 +24,10 @@ abstract class DocumentDao {
     @Query("SELECT * FROM documents WHERE uuid = :uuid")
     abstract suspend fun getByUuid(uuid: String): DocumentEntity?
 
+    /** Where the file of a document the app keeps is, relative to the files directory. */
+    @Query("SELECT file_path FROM documents WHERE uuid = :uuid")
+    abstract suspend fun filePathOf(uuid: String): String?
+
     /** Emits again whenever the row changes, and emits null once it is gone. */
     @Query("SELECT * FROM documents WHERE uuid = :uuid")
     abstract fun observeByUuid(uuid: String): Flow<DocumentEntity?>

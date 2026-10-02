@@ -81,12 +81,16 @@ Swapping the engine means changing the `DocumentScanner` binding in
 `SaveScanDraftUseCase` only fixes the order:
 1. store the file;
 2. confirm it is real;
-3. try for a preview;
-4. catalogue the document.
+3. catalogue the document.
 
 `DocumentStorage` decides where things go: it copies the scanner's short-lived file into the app's
-files directory (`scans/pdf/`) and exposes it as a `FileProvider` URI. The preview is a WEBP in
-`previews/`.
+files directory (`scans/pdf/`) and exposes it as a `FileProvider` URI.
+
+**A preview is not saved with the document.** It is a picture of its first page that can be drawn
+again at any time, so it lives in a cache (`DocumentThumbnails`, in the cache directory) and the
+catalogue keeps nothing about it. A screen hands the image loader the document's `DocumentThumbnail`,
+which names the document and the version of its content, and the preview is drawn the first time
+it is asked for. That one is missing is never an error: the screen shows a placeholder.
 
 The save reports its own failure. Earlier, a failed save still congratulated the user.
 
@@ -114,8 +118,9 @@ The save reports its own failure. Earlier, a failed save still congratulated the
   - **sort**.
 - **Document actions.** Actions, Edit and Delete are destinations with their own keys (see
   [navigation.md](navigation.md)), backed by `DocumentActionsViewModel`.
-- **Deleting.** `DeleteDocumentUseCase` removes the catalogue row first, then the file and its
-  preview. A row pointing at a missing file is visible to the user; an orphan file is not.
+- **Deleting.** `DeleteDocumentUseCase` removes the catalogue row first, then the file, and
+  forgets its previews. A row pointing at a missing file is visible to the user; an orphan file is
+  not.
 - **Export and share.**
   - `DocumentExporter` (FileKit) copies a document where the user chooses. It returns
     `Saved` / `Cancelled` / `Failed`, shaped like a scan.
