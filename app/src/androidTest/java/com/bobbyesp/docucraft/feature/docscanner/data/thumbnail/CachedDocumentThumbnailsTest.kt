@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.data.thumbnail
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.net.Uri
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -97,6 +98,18 @@ class CachedDocumentThumbnailsTest {
         assertNotNull("The preview is not a picture", preview)
         assertTrue(preview.width > 0 && preview.height > 0)
         assertTrue("Previews belong in the cache directory", location.value.startsWith(cache.path))
+    }
+
+    // A PDF page has no background of its own unless it paints one: left as it is rendered, the
+    // paper is transparent and takes the colour of whatever is behind the preview.
+    @Test
+    fun aPageIsDrawnOnWhitePaper() = runBlocking {
+        val location = checkNotNull(thumbnails.get(DocumentThumbnail(uuid, contentVersion = 1)))
+
+        val preview = BitmapFactory.decodeFile(location.value)
+        val corner = preview.getPixel(preview.width - 1, preview.height - 1)
+
+        assertEquals(Color.WHITE, corner)
     }
 
     @Test

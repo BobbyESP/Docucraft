@@ -6,6 +6,7 @@ package com.bobbyesp.docucraft.feature.docscanner.data.service
 import android.content.ContentResolver
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
@@ -72,6 +73,9 @@ class DocumentOperationsServiceImpl(private val context: Context) : DocumentOper
 
             renderer.openPage(pageIndex).use { page ->
                 val bitmap = createBitmap(page.width, page.height)
+                // The paper. A page paints only what is printed on it, so without this it comes
+                // out transparent and takes the colour of whatever the image is shown over.
+                bitmap.eraseColor(Color.WHITE)
                 page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
 
                 outputFile.parentFile?.mkdirs()
