@@ -552,10 +552,10 @@ class PdfViewerViewModelTest {
     private fun scanned() =
         testDocument(
             uuid = UUID,
-            filename = "Scan_20260924_101500",
+            originalName = "Scan_20260924_101500",
             title = "Invoice",
             location = ContentRef(LOCATION),
-            capturedAtEpochMillis = 0L,
+            createdAtEpochMillis = 0L,
             sizeBytes = 1024L,
             pageCount = 2,
         )

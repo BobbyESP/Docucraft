@@ -14,20 +14,20 @@ class ProcessDocumentsUseCase(
     private val localSearchStrategy: LocalSearchStrategy,
 ) {
     suspend operator fun invoke(
-        documents: List<Document>,
+        documents: List<Document.Managed>,
         query: String,
         filter: FilterOptions,
         sort: SortOption,
-    ): List<Document> {
+    ): List<Document.Managed> {
         val searched = search(documents, query)
         val filtered = filter(searched, filter)
         return sort(filtered, sort)
     }
 
     private suspend fun search(
-        documents: List<Document>,
+        documents: List<Document.Managed>,
         query: String,
-    ): List<Document> {
+    ): List<Document.Managed> {
         if (query.isBlank()) return documents
 
         return runCatching {
@@ -41,37 +41,37 @@ class ProcessDocumentsUseCase(
     }
 
     private fun filter(
-        documents: List<Document>,
+        documents: List<Document.Managed>,
         filter: FilterOptions,
-    ): List<Document> {
+    ): List<Document.Managed> {
         return documents.filterByPages(filter).filterBySize(filter).filterByDate(filter)
     }
 
-    private fun sort(documents: List<Document>, sort: SortOption): List<Document> {
+    private fun sort(documents: List<Document.Managed>, sort: SortOption): List<Document.Managed> {
         return when (sort.criteria) {
             SortOption.Criteria.DATE ->
                 if (sort.order == SortOption.Order.DESC)
-                    documents.sortedByDescending { it.capturedAtEpochMillis }
-                else documents.sortedBy { it.capturedAtEpochMillis }
+                    documents.sortedByDescending { it.createdAtEpochMillis }
+                else documents.sortedBy { it.createdAtEpochMillis }
 
             SortOption.Criteria.NAME ->
-                if (sort.order == SortOption.Order.DESC)
-                    documents.sortedByDescending { it.title ?: it.filename }
-                else documents.sortedBy { it.title ?: it.filename }
+                if (sort.order == SortOption.Order.DESC) documents.sortedByDescending { it.name }
+                else documents.sortedBy { it.name }
 
             SortOption.Criteria.SIZE ->
                 if (sort.order == SortOption.Order.DESC)
-                    documents.sortedByDescending { it.sizeBytes }
-                else documents.sortedBy { it.sizeBytes }
+                    documents.sortedByDescending { it.sizeBytes ?: 0 }
+                else documents.sortedBy { it.sizeBytes ?: 0 }
         }
     }
 
-    private fun List<Document>.filterByPages(filter: FilterOptions) =
-        filter.minPageCount?.let { min -> filter { it.pageCount >= min } } ?: this
+    private fun List<Document.Managed>.filterByPages(filter: FilterOptions) =
+        // A document whose pages have not been counted cannot be said to have that many.
+        filter.minPageCount?.let { min -> filter { (it.pageCount ?: 0) >= min } } ?: this
 
-    private fun List<Document>.filterBySize(filter: FilterOptions) =
-        filter.minFileSize?.let { min -> filter { it.sizeBytes >= min } } ?: this
+    private fun List<Document.Managed>.filterBySize(filter: FilterOptions) =
+        filter.minFileSize?.let { min -> filter { (it.sizeBytes ?: 0) >= min } } ?: this
 
-    private fun List<Document>.filterByDate(filter: FilterOptions) =
-        filter.dateRange?.let { range -> filter { it.capturedAtEpochMillis in range } } ?: this
+    private fun List<Document.Managed>.filterByDate(filter: FilterOptions) =
+        filter.dateRange?.let { range -> filter { it.createdAtEpochMillis in range } } ?: this
 }

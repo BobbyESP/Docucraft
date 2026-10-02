@@ -425,8 +425,8 @@ private val FlatFabElevation
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DocumentsPage(
-    documents: List<Document>,
-    recentDocuments: List<Document>,
+    documents: List<Document.Managed>,
+    recentDocuments: List<Document.Managed>,
     sortOption: SortOption,
     onSortOptionChange: (SortOption) -> Unit,
     onOpenDocument: (String) -> Unit,
@@ -532,7 +532,7 @@ private fun SectionHeader(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun RecentDocumentsCarousel(
-    documents: List<Document>,
+    documents: List<Document.Managed>,
     onOpenDocument: (String) -> Unit,
     onOpenDocumentActions: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -549,7 +549,7 @@ private fun RecentDocumentsCarousel(
         contentPadding = PaddingValues(horizontal = 16.dp),
     ) { index ->
         val document = documents[index]
-        val title = document.title ?: document.filename
+        val title = document.name
 
         Box(
             modifier =

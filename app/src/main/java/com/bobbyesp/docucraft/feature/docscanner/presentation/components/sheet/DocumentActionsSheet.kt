@@ -87,7 +87,7 @@ internal data class DocumentAction(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocumentActionsContent(
-    scannedDocument: Document,
+    scannedDocument: Document.Managed,
     onSave: () -> Unit,
     onShare: () -> Unit,
     onDelete: () -> Unit,
@@ -178,7 +178,7 @@ private fun rememberDocumentActions(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DocumentHeader(scannedDocument: Document, modifier: Modifier = Modifier) {
+private fun DocumentHeader(scannedDocument: Document.Managed, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         DocumentThumbnail(thumbnail = scannedDocument.thumbnail)
         DocumentInfo(scannedDocument = scannedDocument)
@@ -218,11 +218,11 @@ private fun DocumentThumbnail(thumbnail: Any?, modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DocumentInfo(scannedDocument: Document, modifier: Modifier = Modifier) {
+private fun DocumentInfo(scannedDocument: Document.Managed, modifier: Modifier = Modifier) {
     val formattedDate =
-        rememberSaveable(scannedDocument.capturedAtEpochMillis) {
+        rememberSaveable(scannedDocument.createdAtEpochMillis) {
             DateTime.formatDate(
-                timestampMillis = scannedDocument.capturedAtEpochMillis,
+                timestampMillis = scannedDocument.createdAtEpochMillis,
                 format = DateTime.DateFormat.LOCALIZED_MEDIUM,
             )
         }
@@ -233,7 +233,7 @@ private fun DocumentInfo(scannedDocument: Document, modifier: Modifier = Modifie
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = scannedDocument.title ?: scannedDocument.filename,
+            text = scannedDocument.name,
             style = MaterialTheme.typography.titleLargeEmphasized,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.Bold,
@@ -255,31 +255,37 @@ private fun DocumentInfo(scannedDocument: Document, modifier: Modifier = Modifie
 
 @Composable
 private fun DocumentTagsRow(
-    sizeBytes: Long,
-    pageCount: Int,
+    sizeBytes: Long?,
+    pageCount: Int?,
     formattedDate: String,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
 
-    val pageCountLabel =
-        pluralStringResource(id = R.plurals.doc_n_pages, count = pageCount, pageCount)
+    val pageCountLabel = pageCount?.let {
+        pluralStringResource(id = R.plurals.doc_n_pages, count = it, it)
+    }
 
     FlowRow(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
         horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
     ) {
-        RoundedTag(
-            icon = Icons.Rounded.Storage,
-            text = formatFileSize(context, sizeBytes),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest),
-        )
-        RoundedTag(
-            icon = Icons.Rounded.FileCopy,
-            text = pageCountLabel,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest),
-        )
+        // What is not known of the document is left out, rather than shown as zero.
+        if (sizeBytes != null) {
+            RoundedTag(
+                icon = Icons.Rounded.Storage,
+                text = formatFileSize(context, sizeBytes),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest),
+            )
+        }
+        if (pageCountLabel != null) {
+            RoundedTag(
+                icon = Icons.Rounded.FileCopy,
+                text = pageCountLabel,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest),
+            )
+        }
         RoundedTag(
             icon = Icons.Rounded.CalendarMonth,
             text = formattedDate,

@@ -51,7 +51,7 @@ class DocumentSearchViewModelTest {
         Dispatchers.setMain(testDispatcher)
         coEvery { processDocumentsUseCase(any(), any(), any(), any()) } answers
             {
-                val docs = firstArg<List<Document>>()
+                val docs = firstArg<List<Document.Managed>>()
                 val query = secondArg<String>()
                 docs.filter { it.title.orEmpty().contains(query, ignoreCase = true) }
             }
@@ -63,7 +63,7 @@ class DocumentSearchViewModelTest {
     }
 
     private fun document(title: String) =
-        testDocument(uuid = title.lowercase(), filename = "$title.pdf", title = title)
+        testDocument(uuid = title.lowercase(), originalName = "$title.pdf", title = title)
 
     private fun createViewModel(savedState: SavedStateHandle = SavedStateHandle()) =
         DocumentSearchViewModel(

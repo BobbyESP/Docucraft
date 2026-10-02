@@ -19,7 +19,7 @@ interface DocumentsRepository {
      *
      * The flow does not end on its own.
      */
-    fun observeDocuments(): Flow<List<Document>>
+    fun observeDocuments(): Flow<List<Document.Managed>>
 
     /**
      * Searches filename, title and description at once, so the UI can offer a single search box.
@@ -29,7 +29,7 @@ interface DocumentsRepository {
      * @param query Free text. An empty or blank query matches nothing.
      * @return The matching documents, or an empty list.
      */
-    suspend fun searchDocuments(query: String): List<Document>
+    suspend fun searchDocuments(query: String): List<Document.Managed>
 
     /**
      * @return The document with this [uuid].

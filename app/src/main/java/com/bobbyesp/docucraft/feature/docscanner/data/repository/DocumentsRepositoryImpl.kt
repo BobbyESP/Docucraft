@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.data.repository
 
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.DocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toManaged
 import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toModel
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
@@ -24,13 +25,13 @@ class DocumentsRepositoryImpl(
     private val now: () -> Long = System::currentTimeMillis,
 ) : DocumentsRepository {
 
-    override fun observeDocuments(): Flow<List<Document>> =
+    override fun observeDocuments(): Flow<List<Document.Managed>> =
         documentDao
             .observeLibrary()
-            .map { entities -> entities.map { it.toModel(locations) } }
+            .map { entities -> entities.map { it.toManaged(locations) } }
             .flowOn(Dispatchers.Default)
 
-    override suspend fun searchDocuments(query: String): List<Document> {
+    override suspend fun searchDocuments(query: String): List<Document.Managed> {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) return emptyList()
 
@@ -38,7 +39,7 @@ class DocumentsRepositoryImpl(
 
         val result = documentDao.search(ftsQuery)
 
-        return result.map { it.toModel(locations) }
+        return result.map { it.toManaged(locations) }
     }
 
     override fun observeDocument(uuid: String): Flow<Document?> =

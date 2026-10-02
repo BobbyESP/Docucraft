@@ -15,23 +15,52 @@ import com.bobbyesp.scanner.ContentRef
 /**
  * Where the storage vocabulary meets the domain one.
  *
- * The catalogue keeps a relative path; the domain's document carries a location to open, which is
- * worked out here through [locations]. The row id stays behind: nothing above this layer uses it.
+ * The table holds both kinds of document and tells them apart by a column; the domain has a type
+ * for each, so a managed document cannot be asked for a URI it does not have. The row id stays
+ * behind: nothing above this layer uses it.
+ *
+ * The catalogue keeps a managed document's path relative to the files directory; the location to
+ * open it from is worked out here through [locations].
  */
 internal fun DocumentEntity.toModel(locations: DocumentLocations): Document =
-    Document(
+    when (custody) {
+        DocumentCustody.MANAGED -> toManaged(locations)
+        DocumentCustody.LINKED -> toLinked()
+    }
+
+/** For a row known to be of a document the app keeps, such as any row of the library. */
+internal fun DocumentEntity.toManaged(locations: DocumentLocations): Document.Managed =
+    Document.Managed(
         uuid = uuid,
-        filename = originalName,
+        originalName = originalName,
         title = title,
+        suggestedTitle = suggestedTitle,
         description = description,
         location =
-            filePath?.let(locations::locationOf)
-                ?: ContentRef(checkNotNull(uri) { "Document $uuid has neither a file nor a URI" }),
-        capturedAtEpochMillis = capturedAt ?: createdAt,
-        // Unknown is 0 in the domain's document, which is what its readers already take it for.
-        sizeBytes = sizeBytes ?: 0,
-        pageCount = pageCount ?: 0,
+            locations.locationOf(checkNotNull(filePath) { "Managed document $uuid has no file" }),
+        sizeBytes = sizeBytes,
+        pageCount = pageCount,
+        createdAtEpochMillis = createdAt,
+        origin = checkNotNull(origin) { "Managed document $uuid has no origin" },
+        capturedAtEpochMillis = capturedAt,
         contentUpdatedAtEpochMillis = contentUpdatedAt,
+        isFavorite = isFavorite,
+        ocrEnabled = ocrEnabled,
+        trashedAtEpochMillis = trashedAt,
+    )
+
+private fun DocumentEntity.toLinked(): Document.Linked =
+    Document.Linked(
+        uuid = uuid,
+        originalName = originalName,
+        title = title,
+        suggestedTitle = suggestedTitle,
+        description = description,
+        location = ContentRef(checkNotNull(uri) { "Linked document $uuid has no URI" }),
+        sizeBytes = sizeBytes,
+        pageCount = pageCount,
+        createdAtEpochMillis = createdAt,
+        hasPersistedPermission = hasPersistedPermission == true,
     )
 
 /**

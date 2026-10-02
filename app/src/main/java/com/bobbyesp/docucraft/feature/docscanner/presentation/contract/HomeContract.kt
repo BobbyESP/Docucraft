@@ -21,8 +21,8 @@ sealed interface HomeStatus {
  */
 data class HomeUiState(
     val status: HomeStatus = HomeStatus.Loading,
-    val visibleDocuments: List<Document> = emptyList(),
-    val recentDocuments: List<Document> = emptyList(),
+    val visibleDocuments: List<Document.Managed> = emptyList(),
+    val recentDocuments: List<Document.Managed> = emptyList(),
     val hasDocuments: Boolean = false,
     val filterOptions: FilterOptions = FilterOptions.default,
     val isScanning: Boolean = false,

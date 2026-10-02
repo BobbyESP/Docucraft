@@ -82,7 +82,7 @@ class HomeViewModelTest {
     }
 
     private fun fakeDocument(uuid: String = "doc-1") =
-        testDocument(uuid = uuid, filename = "$uuid.pdf", title = "Title $uuid", pageCount = 3)
+        testDocument(uuid = uuid, originalName = "$uuid.pdf", title = "Title $uuid", pageCount = 3)
 
     private val scannedDraft =
         ScanDraft(
@@ -93,7 +93,7 @@ class HomeViewModelTest {
     private fun completedScan() = ScanOutcome.Completed(scannedDraft)
 
     private fun createViewModel(
-        documents: Flow<List<Document>> = flowOf(emptyList()),
+        documents: Flow<List<Document.Managed>> = flowOf(emptyList()),
         saveResult: Result<ContentRef> = Result.success(ContentRef("content://stored")),
         savedState: SavedStateHandle = SavedStateHandle(),
         pendingScan: ScanOutcome? = null,
@@ -183,7 +183,7 @@ class HomeViewModelTest {
         runTest(testDispatcher) {
             val documents =
                 List(12) {
-                    fakeDocument(uuid = "doc-$it").copy(capturedAtEpochMillis = it * 1_000L)
+                    fakeDocument(uuid = "doc-$it").copy(createdAtEpochMillis = it * 1_000L)
                 }
             val viewModel = createViewModel(documents = flowOf(documents.shuffled()))
 

@@ -8,5 +8,6 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepo
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrategy
 
 class DatabaseSearchStrategy(private val repository: DocumentsRepository) : QuerySearchStrategy {
-    override suspend fun search(query: String): List<Document> = repository.searchDocuments(query)
+    override suspend fun search(query: String): List<Document.Managed> =
+        repository.searchDocuments(query)
 }

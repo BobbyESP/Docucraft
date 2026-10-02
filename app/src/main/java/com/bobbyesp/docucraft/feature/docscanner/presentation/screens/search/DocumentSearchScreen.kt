@@ -375,7 +375,7 @@ private fun SearchField(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SearchResults(
-    results: List<Document>,
+    results: List<Document.Managed>,
     selectedDocumentId: String?,
     onOpenDocument: (String) -> Unit,
     onOpenDocumentActions: (String) -> Unit,

@@ -7,7 +7,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
 
 class InMemorySearchStrategy : LocalSearchStrategy {
-    override fun search(documents: List<Document>, query: String): List<Document> {
+    override fun search(documents: List<Document.Managed>, query: String): List<Document.Managed> {
         if (query.isBlank()) return documents
 
         val lowerQuery = query.lowercase()
@@ -19,7 +19,7 @@ class InMemorySearchStrategy : LocalSearchStrategy {
             if (doc.title != null) {
                 titleMatch || descriptionMatch
             } else {
-                doc.filename.lowercase().contains(lowerQuery) || descriptionMatch
+                doc.originalName.lowercase().contains(lowerQuery) || descriptionMatch
             }
         }
     }

@@ -8,5 +8,5 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepo
 import kotlinx.coroutines.flow.Flow
 
 class ObserveDocumentsUseCase(private val repository: DocumentsRepository) {
-    operator fun invoke(): Flow<List<Document>> = repository.observeDocuments()
+    operator fun invoke(): Flow<List<Document.Managed>> = repository.observeDocuments()
 }

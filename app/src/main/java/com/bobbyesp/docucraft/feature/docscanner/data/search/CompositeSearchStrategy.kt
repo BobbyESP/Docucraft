@@ -8,7 +8,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrate
 
 class CompositeSearchStrategy(private val strategies: List<QuerySearchStrategy>) :
     QuerySearchStrategy {
-    override suspend fun search(query: String): List<Document> {
+    override suspend fun search(query: String): List<Document.Managed> {
         for (strategy in strategies) {
             val result = runCatching { strategy.search(query) }.getOrNull()
             if (!result.isNullOrEmpty()) return result

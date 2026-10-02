@@ -10,5 +10,5 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
  * used as a fallback when the primary [QuerySearchStrategy] fails or returns no results.
  */
 interface LocalSearchStrategy {
-    fun search(documents: List<Document>, query: String): List<Document>
+    fun search(documents: List<Document.Managed>, query: String): List<Document.Managed>
 }

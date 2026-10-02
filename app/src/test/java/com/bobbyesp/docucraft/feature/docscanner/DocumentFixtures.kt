@@ -4,35 +4,43 @@
 package com.bobbyesp.docucraft.feature.docscanner
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentOrigin
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentThumbnail
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentThumbnails
 import com.bobbyesp.scanner.ContentRef
 
 /**
- * A document for a test that only cares about some of what a document has. Shared, so that a change
- * to the model is made here once and not in every test that builds one.
+ * A document the app keeps, for a test that only cares about some of what a document has. Shared,
+ * so that a change to the model is made here once and not in every test that builds one.
  */
 fun testDocument(
     uuid: String = "doc-1",
-    filename: String = "Scan_$uuid",
+    originalName: String = "Scan_$uuid",
     title: String? = null,
     description: String? = null,
     location: ContentRef = ContentRef("content://stored/$uuid.pdf"),
-    capturedAtEpochMillis: Long = 1_000L,
-    sizeBytes: Long = 2_048L,
-    pageCount: Int = 1,
-    contentUpdatedAtEpochMillis: Long = capturedAtEpochMillis,
+    createdAtEpochMillis: Long = 1_000L,
+    sizeBytes: Long? = 2_048L,
+    pageCount: Int? = 1,
+    suggestedTitle: String? = null,
+    origin: DocumentOrigin = DocumentOrigin.SCAN,
 ) =
-    Document(
+    Document.Managed(
         uuid = uuid,
-        filename = filename,
+        originalName = originalName,
         title = title,
+        suggestedTitle = suggestedTitle,
         description = description,
         location = location,
-        capturedAtEpochMillis = capturedAtEpochMillis,
         sizeBytes = sizeBytes,
         pageCount = pageCount,
-        contentUpdatedAtEpochMillis = contentUpdatedAtEpochMillis,
+        createdAtEpochMillis = createdAtEpochMillis,
+        origin = origin,
+        capturedAtEpochMillis = createdAtEpochMillis.takeIf { origin == DocumentOrigin.SCAN },
+        contentUpdatedAtEpochMillis = createdAtEpochMillis,
+        isFavorite = false,
+        ocrEnabled = false,
+        trashedAtEpochMillis = null,
     )
 
 /** A cache of previews that only remembers what it was told to forget. */

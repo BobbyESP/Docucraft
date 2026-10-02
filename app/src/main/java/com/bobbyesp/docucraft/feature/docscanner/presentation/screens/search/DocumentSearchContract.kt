@@ -12,7 +12,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
  */
 data class DocumentSearchUiState(
     val query: String = "",
-    val results: List<Document> = emptyList(),
+    val results: List<Document.Managed> = emptyList(),
     val resultsFor: String? = null,
 ) {
     val hasNoMatches: Boolean

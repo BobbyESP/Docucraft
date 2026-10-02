@@ -41,8 +41,10 @@ class ObserveViewerDocumentUseCase(private val observeDocument: ObserveDocumentU
 private fun Document.toBasicDocument() =
     BasicDocument(
         uuid = uuid,
-        filename = filename,
+        filename = originalName,
         uri = location.value,
-        title = title,
+        // The viewer shows the title and falls back on the file's name, so a suggested title goes
+        // where a title would.
+        title = title ?: suggestedTitle,
         description = description,
     )

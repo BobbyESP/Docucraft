@@ -96,12 +96,12 @@ class ViewerDocumentDetailsTest {
     private fun scanned() =
         testDocument(
             uuid = UUID,
-            filename = "Scan_20260924_101500",
+            originalName = "Scan_20260924_101500",
             title = "Invoice",
             description = "March",
             location =
                 ContentRef("content://com.bobbyesp.docucraft.fileprovider/documents/doc-1.pdf"),
-            capturedAtEpochMillis = 0L,
+            createdAtEpochMillis = 0L,
             sizeBytes = 1024L,
             pageCount = 3,
         )

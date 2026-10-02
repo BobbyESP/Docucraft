@@ -48,8 +48,8 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.util.DateTime
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentThumbnail
+import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
-import com.bobbyesp.scanner.ContentRef
 import java.util.UUID
 
 /**
@@ -67,7 +67,7 @@ import java.util.UUID
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ScannedDocumentListItem(
-    pdf: Document,
+    pdf: Document.Managed,
     onItemClick: (String) -> Unit,
     onItemLongClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -100,7 +100,7 @@ fun ScannedDocumentListItem(
         },
     ) {
         Text(
-            text = pdf.title ?: pdf.filename,
+            text = pdf.name,
             style = MaterialTheme.typography.bodyLargeEmphasized,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -109,21 +109,22 @@ fun ScannedDocumentListItem(
 }
 
 /**
- * The description, when there is one, above what every document has: pages, size and date. A
+ * The description, when there is one, above what is known of the document: pages, size and date. A
  * missing description used to take the line with "No description", which told the user nothing and
- * hid the facts that do tell documents apart.
+ * hid the facts that do tell documents apart. Pages or size that are not known are left out rather
+ * than shown as zero.
  */
 @Composable
-private fun DocumentSummary(pdf: Document, modifier: Modifier = Modifier) {
+private fun DocumentSummary(pdf: Document.Managed, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val pages = pluralStringResource(R.plurals.doc_n_pages, pdf.pageCount, pdf.pageCount)
+    val pages = pdf.pageCount?.let { pluralStringResource(R.plurals.doc_n_pages, it, it) }
     val facts =
-        remember(pdf.sizeBytes, pdf.capturedAtEpochMillis, pages) {
-            listOf(
+        remember(pdf.sizeBytes, pdf.createdAtEpochMillis, pages) {
+            listOfNotNull(
                     pages,
-                    formatShortFileSize(context, pdf.sizeBytes),
+                    pdf.sizeBytes?.let { formatShortFileSize(context, it) },
                     DateTime.formatDate(
-                        pdf.capturedAtEpochMillis,
+                        pdf.createdAtEpochMillis,
                         DateTime.DateFormat.LOCALIZED_MEDIUM,
                     ),
                 )
@@ -230,14 +231,11 @@ private fun ScannedDocumentListPreview() {
 }
 
 private fun previewDocument(index: Int, description: String?) =
-    Document(
-        filename = "Scan_20260919_14253$index",
+    DocumentPreviewData.document(
+        uuid = UUID.nameUUIDFromBytes("doc-$index".toByteArray()).toString(),
         title = "Document $index",
         description = description,
-        location = ContentRef("path"),
-        capturedAtEpochMillis = 1_758_290_000_000 + index,
+        createdAtEpochMillis = 1_758_290_000_000 + index,
         sizeBytes = 184_320L * (index + 1),
         pageCount = 1 + index,
-        contentUpdatedAtEpochMillis = 1_758_290_000_000 + index,
-        uuid = UUID.nameUUIDFromBytes("doc-$index".toByteArray()).toString(),
     )

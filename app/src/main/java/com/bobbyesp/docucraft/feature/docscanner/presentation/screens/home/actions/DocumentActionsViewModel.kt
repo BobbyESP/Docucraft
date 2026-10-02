@@ -10,6 +10,7 @@ import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.ExportOutcome
@@ -49,7 +50,9 @@ class DocumentActionsViewModel(
 
     init {
         launch {
-            observeDocument(documentUuid).collect { document ->
+            observeDocument(documentUuid).collect { found ->
+                // Sharing, exporting, editing and deleting are done to a document the app keeps.
+                val document = found as? Document.Managed
                 setState { copy(document = document) }
 
                 if (document != null) wasLoaded = true
@@ -90,7 +93,7 @@ class DocumentActionsViewModel(
         val outcome =
             documentExporter.export(
                 document = document.location,
-                suggestedName = document.title ?: document.filename,
+                suggestedName = document.name,
             )
 
         when (outcome) {

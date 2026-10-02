@@ -143,9 +143,9 @@ class HomeViewModel(
      * fewer documents, the list shows every one of them at a glance, and the shelf would only
      * repeat it.
      */
-    private fun recentOf(documents: List<Document>): List<Document> =
+    private fun recentOf(documents: List<Document.Managed>): List<Document.Managed> =
         if (documents.size <= RECENTS_MINIMUM) emptyList()
-        else documents.sortedByDescending { it.capturedAtEpochMillis }.take(RECENTS_SHOWN)
+        else documents.sortedByDescending { it.createdAtEpochMillis }.take(RECENTS_SHOWN)
 
     /**
      * Entry points outside the UI, such as the home screen widget.

@@ -60,10 +60,10 @@ class ObserveViewerDocumentDetailsUseCase(
                     }
                     val details =
                         ViewerDocumentDetails(
-                            name = document.title ?: document.filename,
+                            name = document.name,
                             description = document.description,
-                            pageCount = document.pageCount.takeIf { count -> count > 0 },
-                            sizeBytes = document.sizeBytes.takeIf { size -> size > 0 },
+                            pageCount = document.pageCount,
+                            sizeBytes = document.sizeBytes,
                         )
                     emit(details)
                     emit(details.copy(text = detectText(DocumentSource(document.location.value))))

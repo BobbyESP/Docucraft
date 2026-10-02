@@ -11,12 +11,14 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
 import com.bobbyesp.docucraft.feature.docscanner.data.db.long
 import com.bobbyesp.docucraft.feature.docscanner.data.db.rows
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.scanner.ContentRef
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -140,7 +142,7 @@ class DocumentsRepositoryImplTest {
         val db = database.openHelper.writableDatabase
         assertEquals(listOf("null"), db.rows("SELECT page_count FROM documents"))
         assertEquals(0, db.long("SELECT COUNT(*) FROM pages"))
-        assertEquals(0, repository.observeDocuments().first().single().pageCount)
+        assertNull(repository.observeDocuments().first().single().pageCount)
     }
 
     // Replacing on conflict would delete the document that already has that file.
@@ -170,18 +172,73 @@ class DocumentsRepositoryImplTest {
         assertEquals(document, repository.getDocument(document.uuid))
     }
 
+    // The viewer is handed the title, the suggested title or the original name, in that order.
+    @Test
+    fun aSuggestedTitleNamesADocumentOnlyUntilTheUserWritesOne() = runBlocking {
+        save("Scan_1", capturedAt = 1)
+        val db = database.openHelper.writableDatabase
+
+        assertEquals("Scan_1", repository.observeDocuments().first().single().name)
+
+        db.execSQL("UPDATE documents SET suggested_title = 'Invoice 42'")
+        assertEquals("Invoice 42", repository.observeDocuments().first().single().name)
+
+        repository.modifyFields(uuidOf("Scan_1"), title = "Electricity", description = null)
+        assertEquals("Electricity", repository.observeDocuments().first().single().name)
+    }
+
+    // Another app's document is known to the catalogue, and can be read by its uuid, but it is not
+    // part of the library: it is not listed and search does not find it.
+    @Test
+    fun aLinkedDocumentIsReadAsOneAndStaysOutOfTheLibrary() = runBlocking {
+        save("Factura luz", capturedAt = 1)
+        database.openHelper.writableDatabase.execSQL(
+            "INSERT INTO documents (uuid, custody, original_name, mime_type, size_bytes, " +
+                "is_encrypted, is_favorite, ocr_enabled, uri, has_persisted_permission, " +
+                "created_at, updated_at, content_updated_at) " +
+                "VALUES ('linked-1', 'LINKED', 'Factura gas.pdf', 'application/pdf', 512, " +
+                "0, 0, 0, 'content://other.app/documents/7', 1, 5, 5, 5)"
+        )
+
+        val linked = repository.getDocument("linked-1")
+
+        assertEquals(
+            Document.Linked(
+                uuid = "linked-1",
+                originalName = "Factura gas.pdf",
+                title = null,
+                suggestedTitle = null,
+                description = null,
+                location = ContentRef("content://other.app/documents/7"),
+                sizeBytes = 512,
+                pageCount = null,
+                createdAtEpochMillis = 5,
+                hasPersistedPermission = true,
+            ),
+            linked,
+        )
+        assertEquals(
+            listOf("Factura luz"),
+            repository.observeDocuments().first().map { it.originalName },
+        )
+        assertEquals(listOf("Factura luz"), search("factura"))
+    }
+
     // --- deleting ---
 
     @Test
     fun aDeletedDocumentTakesItsPagesAndItsActivityAndIsNoLongerFound() = runBlocking {
         save("Factura luz", capturedAt = 1, pageCount = 2)
         save("Contrato", capturedAt = 2, pageCount = 1)
-        val bill = repository.observeDocuments().first().first { it.filename == "Factura luz" }
+        val bill = repository.observeDocuments().first().first { it.originalName == "Factura luz" }
 
         repository.deleteDocument(bill.uuid)
 
         val db = database.openHelper.writableDatabase
-        assertEquals(listOf("Contrato"), repository.observeDocuments().first().map { it.filename })
+        assertEquals(
+            listOf("Contrato"),
+            repository.observeDocuments().first().map { it.originalName },
+        )
         assertEquals(1, db.long("SELECT COUNT(*) FROM pages"))
         assertEquals(1, db.long("SELECT COUNT(*) FROM document_activity"))
         assertEquals(emptyList<String>(), search("factura"))
@@ -215,7 +272,10 @@ class DocumentsRepositoryImplTest {
 
         repository.deleteDocument(uuidOf("Scan_2"))
 
-        assertEquals(listOf("Scan_1"), repository.observeDocuments().first().map { it.filename })
+        assertEquals(
+            listOf("Scan_1"),
+            repository.observeDocuments().first().map { it.originalName },
+        )
     }
 
     @Test
@@ -245,10 +305,10 @@ class DocumentsRepositoryImplTest {
     }
 
     private suspend fun search(query: String): List<String> =
-        repository.searchDocuments(query).map { it.filename }
+        repository.searchDocuments(query).map { it.originalName }
 
     private suspend fun uuidOf(filename: String): String =
-        repository.observeDocuments().first().first { it.filename == filename }.uuid
+        repository.observeDocuments().first().first { it.originalName == filename }.uuid
 
     private companion object {
         const val Now = 1_800_000_000_000

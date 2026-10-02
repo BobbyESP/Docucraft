@@ -41,7 +41,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPr
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DeleteDocumentSheet(
-    document: Document,
+    document: Document.Managed,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
@@ -93,7 +93,7 @@ fun DeleteDocumentSheet(
 
 @Composable
 fun DeleteDocumentDialog(
-    scannedDocument: Document,
+    scannedDocument: Document.Managed,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
@@ -129,8 +129,11 @@ fun DeleteDocumentDialog(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DeleteDocumentContent(scannedDocument: Document, modifier: Modifier = Modifier) {
-    val documentTitle = scannedDocument.title ?: scannedDocument.filename
+private fun DeleteDocumentContent(
+    scannedDocument: Document.Managed,
+    modifier: Modifier = Modifier,
+) {
+    val documentTitle = scannedDocument.name
     val text = stringResource(R.string.doc_delete_confirmation, documentTitle)
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {

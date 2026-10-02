@@ -33,5 +33,5 @@ data class DocumentActionsUiState(
      * Null while the document is being read, and again once it is deleted. The overlay closes on
      * the second, which is why deletion needs no separate signal.
      */
-    val document: Document? = null
+    val document: Document.Managed? = null
 )
