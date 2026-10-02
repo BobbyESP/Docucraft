@@ -50,6 +50,9 @@ android {
 
     // The test PDFs live with the engine's tests; the viewer's content tests read the same ones.
     sourceSets.getByName("androidTest").assets.directories += "../composepdf/src/androidTest/assets"
+
+    // The exported schemas, which the migration tests build each old version of the database from.
+    sourceSets.getByName("androidTest").assets.directories += "schemas"
 }
 
 composeCompiler {
@@ -129,6 +132,7 @@ dependencies {
     testImplementation(libs.mockk)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(platform(libs.androidx.compose.bom))
 
