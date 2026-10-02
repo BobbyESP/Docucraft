@@ -19,6 +19,7 @@ val documentScannerViewModels = module {
             documentScanner = get(),
             scanRequests = get(),
             observeDocumentsUseCase = get(),
+            observeRecentDocumentsUseCase = get(),
             processDocumentsUseCase = get(),
             saveScanDraftUseCase = get(),
             stringProvider = get(),

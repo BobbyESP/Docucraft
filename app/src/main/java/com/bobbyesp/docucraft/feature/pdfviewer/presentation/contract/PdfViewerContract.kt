@@ -8,6 +8,7 @@ import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.canBeHandedOff
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.BlockReason
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerLoadError
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
@@ -112,6 +113,12 @@ sealed interface PdfViewerIntent {
     data object CopyPreviewedLink : PdfViewerIntent
 
     data object DismissLinkPreview : PdfViewerIntent
+
+    /** The document is on screen: its file was there, and could be read. */
+    data object DocumentLoaded : PdfViewerIntent
+
+    /** The document could not be shown, for [error]. */
+    data class DocumentFailedToLoad(val error: ViewerLoadError) : PdfViewerIntent
 
     /** The pages on screen changed, and their text may be needed. */
     data class VisiblePagesChanged(val pages: IntRange) : PdfViewerIntent

@@ -8,6 +8,7 @@ import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ActivityDao
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.DocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.FolderDao
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.PageDao
@@ -54,6 +55,8 @@ const val CURRENT_VERSION = 5
 )
 abstract class DocumentsDatabase : RoomDatabase() {
     abstract fun documentDao(): DocumentDao
+
+    abstract fun activityDao(): ActivityDao
 
     abstract fun searchDao(): SearchDao
 

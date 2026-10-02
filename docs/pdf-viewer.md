@@ -127,6 +127,10 @@ shadowed:
   - *Back*, when the viewer shows one.
 - **On error**, the bottom toolbar hides, and so do the Share and Open with actions for a file the
   app cannot reach.
+- **The catalogue is told how it went** (`DocumentLoaded`, `DocumentFailedToLoad`): the file was
+  there, it was gone, or it could not be read for lack of permission. Recents shows that the next
+  time, instead of failing again. A protected or damaged document was reached, and counts as
+  there.
 
 ## The external viewer (D5)
 

@@ -6,6 +6,7 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.contract
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
 
 sealed interface HomeStatus {
     data object Idle : HomeStatus
@@ -16,13 +17,14 @@ sealed interface HomeStatus {
 }
 
 /**
- * @property recentDocuments what the Recents carousel shows; empty when there are too few documents
- *   for it to add anything the list below does not already show.
+ * @property recentDocuments what the Recents carousel shows: the documents used last, the app's own
+ *   and other apps'. Empty when there are too few documents for it to add anything the list below
+ *   does not already show.
  */
 data class HomeUiState(
     val status: HomeStatus = HomeStatus.Loading,
     val visibleDocuments: List<Document.Managed> = emptyList(),
-    val recentDocuments: List<Document.Managed> = emptyList(),
+    val recentDocuments: List<RecentDocument> = emptyList(),
     val hasDocuments: Boolean = false,
     val filterOptions: FilterOptions = FilterOptions.default,
     val isScanning: Boolean = false,

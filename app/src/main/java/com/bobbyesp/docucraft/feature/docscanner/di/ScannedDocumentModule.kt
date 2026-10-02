@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.core.data.image.ImageLoaderComponent
 import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
+import com.bobbyesp.docucraft.feature.docscanner.data.repository.DocumentActivityRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.DocumentsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.FoldersRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.PagesRepositoryImpl
@@ -18,6 +19,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentStorageImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.CachedDocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.DocumentThumbnailComponent
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentActivityRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.FoldersRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.PagesRepository
@@ -31,7 +33,10 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUs
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveRecentDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
@@ -73,6 +78,9 @@ val documentScannerDataModule = module {
     single<DocumentsRepository> {
         DocumentsRepositoryImpl(documentDao = get(), locations = get())
     }
+    single<DocumentActivityRepository> {
+        DocumentActivityRepositoryImpl(activityDao = get(), locations = get())
+    }
     single<FoldersRepository> { FoldersRepositoryImpl(database = get(), locations = get()) }
     single<TagsRepository> { TagsRepositoryImpl(database = get(), locations = get()) }
     single<PagesRepository> {
@@ -89,6 +97,9 @@ val documentScannerDataModule = module {
     factory { UpdateDocumentFieldsUseCase(repository = get()) }
     factory { ProcessDocumentsUseCase() }
     factory { SearchDocumentsUseCase(searchIndex = get()) }
+    factory { ObserveRecentDocumentsUseCase(activity = get()) }
+    factory { RecordDocumentOpenedUseCase(activity = get()) }
+    factory { RecordDocumentAvailabilityUseCase(activity = get()) }
 
     factory { DeleteDocumentUseCase(repository = get(), storage = get(), thumbnails = get()) }
 

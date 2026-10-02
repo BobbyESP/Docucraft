@@ -15,9 +15,13 @@ import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
+import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentActivityRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import com.bobbyesp.docucraft.feature.pdfviewer.FakePageContentProvider
 import com.bobbyesp.docucraft.feature.pdfviewer.data.settings.InMemoryViewerSessionSettings
@@ -28,6 +32,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDisplaySettingsUseCase
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerLoadError
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerEffect
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
@@ -83,6 +88,7 @@ class PdfViewerViewModelTest {
         every { settings } returns preferences
     }
     private val session = InMemoryViewerSessionSettings()
+    private val activity = FakeDocumentActivityRepository()
 
     // Page 0 "alpha beta", 1 "gamma", 2 a scan, 3 "delta epsilon", 4 "zeta".
     private val content =
@@ -512,6 +518,66 @@ class PdfViewerViewModelTest {
         assertEquals(1, analytics.screenViews)
     }
 
+    // ---------------------------------------------------------------------------------- activity
+
+    /** What puts a document at the front of Recents. */
+    @Test
+    fun `opening a catalogued document is noted once`() = runTest {
+        catalogue.value = scanned()
+        viewModel(ViewerDocumentRef.Catalogued(UUID))
+        advanceUntilIdle()
+
+        assertEquals(listOf(UUID), activity.opened)
+    }
+
+    @Test
+    fun `a document that loads is noted as available`() = runTest {
+        catalogue.value = scanned()
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded)
+        advanceUntilIdle()
+
+        assertEquals(listOf(UUID to DocumentAvailability.AVAILABLE), activity.availability)
+    }
+
+    /** Recents shows these two instead of failing when the document is tapped again. */
+    @Test
+    fun `a file that is gone or may not be read is noted as such`() = runTest {
+        catalogue.value = scanned()
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+
+        viewModel.onSendIntent(PdfViewerIntent.DocumentFailedToLoad(ViewerLoadError.NotFound))
+        viewModel.onSendIntent(PdfViewerIntent.DocumentFailedToLoad(ViewerLoadError.AccessDenied))
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(
+                UUID to DocumentAvailability.NOT_FOUND,
+                UUID to DocumentAvailability.NO_PERMISSION,
+            ),
+            activity.availability,
+        )
+    }
+
+    /** It could not be shown, but it was reached: the file is where the catalogue says. */
+    @Test
+    fun `a protected or damaged document is still noted as available`() = runTest {
+        catalogue.value = scanned()
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+
+        viewModel.onSendIntent(
+            PdfViewerIntent.DocumentFailedToLoad(ViewerLoadError.PasswordProtected)
+        )
+        viewModel.onSendIntent(PdfViewerIntent.DocumentFailedToLoad(ViewerLoadError.Damaged))
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(UUID to DocumentAvailability.AVAILABLE, UUID to DocumentAvailability.AVAILABLE),
+            activity.availability,
+        )
+    }
+
     // ---------------------------------------------------------------------------------- helpers
 
     private fun viewModel(ref: ViewerDocumentRef, handle: SavedStateHandle = SavedStateHandle()) =
@@ -528,6 +594,8 @@ class PdfViewerViewModelTest {
             analyticsHelper = analytics,
             contentProvider = content,
             resolveLink = ResolveLinkUseCase(),
+            recordOpened = RecordDocumentOpenedUseCase(activity),
+            recordAvailability = RecordDocumentAvailabilityUseCase(activity),
         )
 
     private fun TestScope.openedExternal(): PdfViewerViewModel =

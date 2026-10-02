@@ -77,6 +77,8 @@ val pdfViewerModule = module {
             analyticsHelper = get(),
             contentProvider = get(),
             resolveLink = get(),
+            recordOpened = get(),
+            recordAvailability = get(),
         )
     }
 

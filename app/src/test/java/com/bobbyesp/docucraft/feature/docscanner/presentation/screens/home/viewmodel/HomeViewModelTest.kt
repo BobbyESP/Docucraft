@@ -9,15 +9,20 @@ import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
+import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentActivityRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveRecentDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
+import com.bobbyesp.docucraft.feature.docscanner.testLinkedDocument
+import com.bobbyesp.docucraft.feature.docscanner.testRecent
 import com.bobbyesp.scanner.ContentRef
 import com.bobbyesp.scanner.DocumentScanner
 import com.bobbyesp.scanner.ScanArtifact
@@ -94,6 +99,7 @@ class HomeViewModelTest {
 
     private fun createViewModel(
         documents: Flow<List<Document.Managed>> = flowOf(emptyList()),
+        recents: List<RecentDocument> = emptyList(),
         saveResult: Result<String> = Result.success("doc-1"),
         savedState: SavedStateHandle = SavedStateHandle(),
         pendingScan: ScanOutcome? = null,
@@ -112,6 +118,8 @@ class HomeViewModelTest {
             documentScanner = documentScanner,
             scanRequests = scanRequests,
             observeDocumentsUseCase = observeDocumentsUseCase,
+            observeRecentDocumentsUseCase =
+                ObserveRecentDocumentsUseCase(FakeDocumentActivityRepository(recents)),
             processDocumentsUseCase = ProcessDocumentsUseCase(),
             saveScanDraftUseCase = saveScanDraftUseCase,
             stringProvider = stringProvider,
@@ -165,31 +173,56 @@ class HomeViewModelTest {
 
     /** With a handful of documents, the list already shows them all; a shelf would repeat it. */
     @Test
-    fun `a small catalogue has no recents`() =
+    fun `a small library has no recents`() =
         runTest(testDispatcher) {
             val documents = List(3) { fakeDocument(uuid = "doc-$it") }
-            val viewModel = createViewModel(documents = flowOf(documents))
+            val viewModel =
+                createViewModel(
+                    documents = flowOf(documents),
+                    recents = documents.map { testRecent(it) },
+                )
 
             advanceUntilIdle()
 
             assertTrue(viewModel.state.value.recentDocuments.isEmpty())
         }
 
-    /** Newest first whatever the list is sorted by, and only as many as the shelf shows. */
+    /** In the order they were used, whatever the list is sorted by, and only as many as fit. */
     @Test
-    fun `recents are the latest scans, newest first and capped`() =
+    fun `recents are the documents used last, in that order and capped`() =
         runTest(testDispatcher) {
-            val documents =
-                List(12) {
-                    fakeDocument(uuid = "doc-$it").copy(createdAtEpochMillis = it * 1_000L)
-                }
-            val viewModel = createViewModel(documents = flowOf(documents.shuffled()))
+            val documents = List(12) { fakeDocument(uuid = "doc-$it") }
+            val usedLast = listOf(5, 0, 11, 3, 8, 1, 9, 2, 7, 4).map { documents[it] }
+            val viewModel =
+                createViewModel(
+                    documents = flowOf(documents),
+                    recents = usedLast.map { testRecent(it) },
+                )
 
             advanceUntilIdle()
 
             assertEquals(
-                (11 downTo 4).map { "doc-$it" },
-                viewModel.state.value.recentDocuments.map { it.uuid },
+                listOf(5, 0, 11, 3, 8, 1, 9, 2).map { "doc-$it" },
+                viewModel.state.value.recentDocuments.map { it.document.uuid },
+            )
+        }
+
+    /** Another app's document is not in the list below: the shelf is the only way back to it. */
+    @Test
+    fun `a document of another app is on the shelf however small the library`() =
+        runTest(testDispatcher) {
+            val linked = testLinkedDocument()
+            val viewModel =
+                createViewModel(
+                    documents = flowOf(listOf(fakeDocument())),
+                    recents = listOf(testRecent(linked), testRecent(fakeDocument())),
+                )
+
+            advanceUntilIdle()
+
+            assertEquals(
+                listOf(linked.uuid, "doc-1"),
+                viewModel.state.value.recentDocuments.map { it.document.uuid },
             )
         }
 

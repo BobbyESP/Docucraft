@@ -276,6 +276,15 @@ fun PdfViewerScreen(
     val openWith: (() -> Unit)? =
         if (canHandOff) ({ viewModel.onSendIntent(PdfViewerIntent.OpenWith) }) else null
 
+    // Whether the file was there is only known here, once the engine has tried to read it.
+    LaunchedEffect(pdfViewerState.isLoaded, loadError) {
+        when {
+            loadError != null ->
+                viewModel.onSendIntent(PdfViewerIntent.DocumentFailedToLoad(loadError))
+            pdfViewerState.isLoaded -> viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded)
+        }
+    }
+
     Box(modifier = modifier.fillMaxSize().nestedScroll(chrome.nestedScrollConnection)) {
         PdfViewer(
             source = PdfSource.Uri(documentInfo.uri.toUri()),

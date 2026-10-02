@@ -121,6 +121,22 @@ The save reports its own failure. Earlier, a failed save still congratulated the
     schema JSON. There is no destructive fallback: a migration keeps every document and its uuid.
 - **Home's list.** `ObserveDocumentsUseCase` feeds `HomeViewModel.observeDocuments`, which combines
   it with the filters and hands both to `ProcessDocumentsUseCase`: **filter**, then **sort**.
+- **Recents.** The shelf at the top of Home is the documents used last
+  (`ObserveRecentDocumentsUseCase`), whatever the list below is sorted by.
+  - **A document is recent because it was opened, or because it is new.** `document_activity`
+    keeps `last_opened_at` and `last_activity_at`, the later of when the document entered the
+    catalogue and when it was last opened. It is stored, although it can be derived, because
+    Recents is ordered by it and needs the index. The statement that notes an open writes both.
+  - **The viewer says when a document is opened**, once each time (`RecordDocumentOpenedUseCase`),
+    and whether its file was there (`RecordDocumentAvailabilityUseCase`): only whoever has just
+    tried to read a file knows. A document whose file could not be reached is shown faded on the
+    shelf, so that it says so before it is tapped.
+  - **Activity is a table of its own** (`DocumentActivityRepository`), because it is written by
+    reading. In `documents`, each of those writes would re-index the document and make every list
+    of the library emit.
+  - **The bin is not recent, and other apps' documents are.** With three documents or fewer in the
+    library the shelf would only repeat the list, and is left out, unless it holds a document of
+    another app: those are in no list, and the shelf is the only way back to them.
 - **Search.** `DocumentSearchViewModel` combines the library with the query (debounced 150 ms) and
   hands both to `SearchDocumentsUseCase`. The results are in order of relevance, not in the list's
   order, and each says on which page the match is and shows the words around it when the match is

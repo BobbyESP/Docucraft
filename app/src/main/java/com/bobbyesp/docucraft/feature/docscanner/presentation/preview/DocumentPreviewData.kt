@@ -4,10 +4,13 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.preview
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentOrigin
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
 import com.bobbyesp.scanner.ContentRef
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 /** Documents for composable previews, which have no catalogue to read from. */
 object DocumentPreviewData {
@@ -60,4 +63,18 @@ object DocumentPreviewData {
                 pageCount = 20,
             ),
         )
+
+    /** The same documents as Recents shows them, the second one out of reach. */
+    val recentDocuments: ImmutableList<RecentDocument> =
+        documents
+            .mapIndexed { index, document ->
+                RecentDocument(
+                    document = document,
+                    lastOpenedAtEpochMillis = document.createdAtEpochMillis,
+                    availability =
+                        if (index == 1) DocumentAvailability.NOT_FOUND
+                        else DocumentAvailability.AVAILABLE,
+                )
+            }
+            .toImmutableList()
 }

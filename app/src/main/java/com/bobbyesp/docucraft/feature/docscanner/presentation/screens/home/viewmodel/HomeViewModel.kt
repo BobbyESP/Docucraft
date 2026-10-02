@@ -14,7 +14,9 @@ import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveRecentDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
@@ -40,6 +42,7 @@ class HomeViewModel(
     private val documentScanner: DocumentScanner,
     private val scanRequests: ScanRequestBus,
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
+    private val observeRecentDocumentsUseCase: ObserveRecentDocumentsUseCase,
     private val processDocumentsUseCase: ProcessDocumentsUseCase,
     private val saveScanDraftUseCase: SaveScanDraftUseCase,
     private val stringProvider: StringProvider,
@@ -102,18 +105,20 @@ class HomeViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeDocuments() = launch {
-        combine(observeDocumentsUseCase(), state.map { it.filterOptions }.distinctUntilChanged()) {
-                docs,
-                filters ->
-                docs to filters
+        combine(
+                observeDocumentsUseCase(),
+                observeRecentDocumentsUseCase(limit = RECENTS_SHOWN),
+                state.map { it.filterOptions }.distinctUntilChanged(),
+            ) { docs, recents, filters ->
+                Triple(docs, recents, filters)
             }
-            .mapLatest { (docs, filters) ->
+            .mapLatest { (docs, recents, filters) ->
                 val processed =
                     withContext(defaultDispatcher) {
                         processDocumentsUseCase(docs, filters, filters.sortBy)
                     }
 
-                Triple(processed, recentOf(docs), docs.isNotEmpty())
+                Triple(processed, shelfOf(recents, library = docs), docs.isNotEmpty())
             }
             .onStart { setState { copy(status = HomeStatus.Loading) } }
             .catch { error ->
@@ -136,16 +141,21 @@ class HomeViewModel(
     }
 
     /**
-     * The latest scans, newest first, whatever order the list below is sorted in.
+     * What the Recents shelf shows: the documents used last, whatever order the list below is
+     * sorted in.
      *
-     * Only while the catalogue does not record when a document was last opened: once it does, this
-     * becomes "recently opened", which is what a Recents shelf promises. With [RECENTS_MINIMUM] or
-     * fewer documents, the list shows every one of them at a glance, and the shelf would only
-     * repeat it.
+     * With [RECENTS_MINIMUM] or fewer documents in the library, the list shows every one of them at
+     * a glance, and the shelf would only repeat it. Unless it holds a document of another app:
+     * those are not in the list, and the shelf is the only place they can be found.
      */
-    private fun recentOf(documents: List<Document.Managed>): List<Document.Managed> =
-        if (documents.size <= RECENTS_MINIMUM) emptyList()
-        else documents.sortedByDescending { it.createdAtEpochMillis }.take(RECENTS_SHOWN)
+    private fun shelfOf(
+        recents: List<RecentDocument>,
+        library: List<Document.Managed>,
+    ): List<RecentDocument> {
+        val repeatsTheList =
+            library.size <= RECENTS_MINIMUM && recents.all { it.document is Document.Managed }
+        return if (repeatsTheList) emptyList() else recents
+    }
 
     /**
      * Entry points outside the UI, such as the home screen widget.

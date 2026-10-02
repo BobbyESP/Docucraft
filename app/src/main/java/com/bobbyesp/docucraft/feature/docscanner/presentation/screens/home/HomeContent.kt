@@ -75,6 +75,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -111,6 +112,7 @@ import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.core.util.contentRevealTransform
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
@@ -426,7 +428,7 @@ private val FlatFabElevation
 @Composable
 private fun DocumentsPage(
     documents: List<Document.Managed>,
-    recentDocuments: List<Document.Managed>,
+    recentDocuments: List<RecentDocument>,
     sortOption: SortOption,
     onSortOptionChange: (SortOption) -> Unit,
     onOpenDocument: (String) -> Unit,
@@ -525,14 +527,17 @@ private fun SectionHeader(
 }
 
 /**
- * The latest documents as their first pages, where a thumbnail tells them apart faster than a
+ * The documents used last as their first pages, where a thumbnail tells them apart faster than a
  * title. A multi-browse carousel: one large, the next ones shrinking, so it reads as more to swipe
  * through rather than a row that ends at the edge.
+ *
+ * A document whose file could not be reached the last time is shown faded, so that it says so
+ * before it is tapped rather than failing afterwards.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun RecentDocumentsCarousel(
-    documents: List<Document.Managed>,
+    documents: List<RecentDocument>,
     onOpenDocument: (String) -> Unit,
     onOpenDocumentActions: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -548,8 +553,12 @@ private fun RecentDocumentsCarousel(
         itemSpacing = 8.dp,
         contentPadding = PaddingValues(horizontal = 16.dp),
     ) { index ->
-        val document = documents[index]
+        val recent = documents[index]
+        val document = recent.document
         val title = document.name
+        // Only a document the app keeps has a preview: another app's file is not read to draw one.
+        val thumbnail = (document as? Document.Managed)?.thumbnail
+        val contentAlpha = if (recent.isReachable) 1f else UnreachableAlpha
 
         Box(
             modifier =
@@ -569,18 +578,18 @@ private fun RecentDocumentsCarousel(
         ) {
             // Outside the image, which goes out of focus towards its bottom: an icon is not a page,
             // and blurred it reads as a rendering fault.
-            var hasNoPreview by remember(document.thumbnail) { mutableStateOf(false) }
+            var hasNoPreview by remember(thumbnail) { mutableStateOf(thumbnail == null) }
             if (LocalInspectionMode.current || hasNoPreview) {
-                PreviewPlaceholder(modifier = Modifier.align(Alignment.Center))
+                PreviewPlaceholder(modifier = Modifier.align(Alignment.Center).alpha(contentAlpha))
             }
 
-            if (!LocalInspectionMode.current) {
+            if (!LocalInspectionMode.current && thumbnail != null) {
                 AsyncImage(
                     modifier =
-                        Modifier.fillMaxSize().blur {
+                        Modifier.fillMaxSize().alpha(contentAlpha).blur {
                             radius = titleBackdropBlur(titleVisibility = titleVisibility)
                         },
-                    imageModel = document.thumbnail,
+                    imageModel = thumbnail,
                     shape = RectangleShape,
                     // A page's heading is at its top, and is what identifies it.
                     imageOptions =
@@ -615,6 +624,9 @@ private fun RecentDocumentsCarousel(
         }
     }
 }
+
+/** How much of a recent document shows when its file could not be reached. */
+private const val UnreachableAlpha = 0.38f
 
 /** What a recent document shows where its preview would be, when there is none to show. */
 @Composable
@@ -850,7 +862,7 @@ private fun HomeContentPreview() {
                     status = HomeStatus.Idle,
                     hasDocuments = true,
                     visibleDocuments = DocumentPreviewData.documents,
-                    recentDocuments = DocumentPreviewData.documents,
+                    recentDocuments = DocumentPreviewData.recentDocuments,
                 ),
             onAction = {},
             onOpenDocument = {},

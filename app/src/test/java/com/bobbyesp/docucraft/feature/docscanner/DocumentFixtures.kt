@@ -4,8 +4,10 @@
 package com.bobbyesp.docucraft.feature.docscanner
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentOrigin
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentThumbnail
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentThumbnails
 import com.bobbyesp.scanner.ContentRef
 
@@ -44,6 +46,34 @@ fun testDocument(
         ocrEnabled = false,
         trashedAtEpochMillis = null,
     )
+
+/** A document of another app, for a test that only cares about some of what it has. */
+fun testLinkedDocument(
+    uuid: String = "linked-1",
+    originalName: String = "Shared_$uuid",
+    location: ContentRef = ContentRef("content://other.app/$uuid.pdf"),
+    createdAtEpochMillis: Long = 1_000L,
+    hasPersistedPermission: Boolean = false,
+) =
+    Document.Linked(
+        uuid = uuid,
+        originalName = originalName,
+        title = null,
+        suggestedTitle = null,
+        description = null,
+        location = location,
+        sizeBytes = null,
+        pageCount = null,
+        createdAtEpochMillis = createdAtEpochMillis,
+        hasPersistedPermission = hasPersistedPermission,
+    )
+
+/** [document] as Recents shows it. */
+fun testRecent(
+    document: Document,
+    lastOpenedAtEpochMillis: Long? = null,
+    availability: DocumentAvailability = DocumentAvailability.AVAILABLE,
+) = RecentDocument(document, lastOpenedAtEpochMillis, availability)
 
 /** A cache of previews that only remembers what it was told to forget. */
 class FakeDocumentThumbnails : DocumentThumbnails {

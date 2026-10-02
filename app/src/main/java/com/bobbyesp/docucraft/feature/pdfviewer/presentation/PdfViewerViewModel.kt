@@ -15,7 +15,10 @@ import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.domain.repository.logScreenView
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.ResolveLinkUseCase
@@ -23,6 +26,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDisplaySettingsUseCase
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerLoadError
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.LinkPreview
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerEffect
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
@@ -71,6 +75,8 @@ class PdfViewerViewModel(
     private val analyticsHelper: AnalyticsHelper,
     private val contentProvider: PageContentProvider,
     private val resolveLink: ResolveLinkUseCase,
+    private val recordOpened: RecordDocumentOpenedUseCase,
+    private val recordAvailability: RecordDocumentAvailabilityUseCase,
 ) :
     BaseViewModel<PdfViewerIntent, PdfViewerUiState, PdfViewerEffect>(
         initialState = PdfViewerUiState()
@@ -92,6 +98,9 @@ class PdfViewerViewModel(
             }
         }
 
+        // Once per opened document: this is what moves it to the front of Recents.
+        launch { catalogueUuid()?.let { recordOpened(it) } }
+
         launch {
             observeDocument(ref).collect { document ->
                 setState {
@@ -111,8 +120,29 @@ class PdfViewerViewModel(
     /** What the reader has been told about pages without text, so they are told once a document. */
     private val toldAbout = mutableSetOf<TextUnavailable>()
 
+    /**
+     * The uuid the catalogue knows this document by, or `null` when it does not know it: what is
+     * noted about a document as it is read is noted against this.
+     */
+    private fun catalogueUuid(): String? =
+        when (ref) {
+            is ViewerDocumentRef.Catalogued -> ref.uuid
+            is ViewerDocumentRef.External -> null
+        }
+
+    /**
+     * Tells the catalogue whether the file was where it says. Only the two answers that are about
+     * reaching the file: a document that is protected or damaged was reached, and is still there.
+     */
+    private fun noteAvailability(availability: DocumentAvailability) {
+        val uuid = catalogueUuid() ?: return
+        launch { recordAvailability(uuid, availability) }
+    }
+
     override fun onHandleIntent(intent: PdfViewerIntent) {
         when (intent) {
+            PdfViewerIntent.DocumentLoaded -> noteAvailability(DocumentAvailability.AVAILABLE)
+            is PdfViewerIntent.DocumentFailedToLoad -> noteAvailability(intent.error.availability)
             is PdfViewerIntent.VisiblePagesChanged -> loadTextNear(intent.pages)
             is PdfViewerIntent.Select -> setState { copy(selection = intent.selection) }
             PdfViewerIntent.SelectAll -> selectAll()
@@ -130,6 +160,16 @@ class PdfViewerViewModel(
             PdfViewerIntent.Print -> print()
         }
     }
+
+    private val ViewerLoadError.availability: DocumentAvailability
+        get() =
+            when (this) {
+                ViewerLoadError.NotFound -> DocumentAvailability.NOT_FOUND
+                ViewerLoadError.AccessDenied -> DocumentAvailability.NO_PERMISSION
+                ViewerLoadError.PasswordProtected,
+                ViewerLoadError.Damaged,
+                ViewerLoadError.Unknown -> DocumentAvailability.AVAILABLE
+            }
 
     private fun setFitMode(intent: PdfViewerIntent.SetFitMode) {
         val display = currentState.display ?: return
