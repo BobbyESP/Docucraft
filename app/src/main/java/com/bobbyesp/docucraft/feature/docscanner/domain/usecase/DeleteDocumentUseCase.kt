@@ -20,7 +20,7 @@ class DeleteDocumentUseCase(
     private val thumbnails: DocumentThumbnails,
 ) {
     suspend operator fun invoke(document: Document) {
-        repository.deleteDocument(document.location)
+        repository.deleteDocument(document.uuid)
 
         storage.delete(document.location)
         thumbnails.discard(document.uuid)

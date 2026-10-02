@@ -29,7 +29,7 @@ class DeleteDocumentUseCaseTest {
     fun `removes the document from the catalogue and from storage`() = runTest {
         useCase(document)
 
-        coVerify { repository.deleteDocument(document.location) }
+        coVerify { repository.deleteDocument("doc-1") }
         assertEquals(listOf(ContentRef("content://stored/doc.pdf")), storage.deleted)
     }
 

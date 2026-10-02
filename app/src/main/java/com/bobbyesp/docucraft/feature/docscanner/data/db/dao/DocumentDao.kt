@@ -100,8 +100,8 @@ abstract class DocumentDao {
     ): Int
 
     /** Its activity, pages and tags go with it, and the full-text indexes forget it. */
-    @Query("DELETE FROM documents WHERE file_path = :filePath")
-    abstract suspend fun deleteByFilePath(filePath: String): Int
+    @Query("DELETE FROM documents WHERE uuid = :uuid")
+    abstract suspend fun deleteByUuid(uuid: String): Int
 
     /**
      * Full-text search over the library. The query has to arrive already formatted for FTS.

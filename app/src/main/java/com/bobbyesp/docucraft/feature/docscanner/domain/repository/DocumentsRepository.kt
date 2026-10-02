@@ -5,7 +5,6 @@ package com.bobbyesp.docucraft.feature.docscanner.domain.repository
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
-import com.bobbyesp.scanner.ContentRef
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -65,11 +64,14 @@ interface DocumentsRepository {
     suspend fun modifyFields(uuid: String, title: String?, description: String?)
 
     /**
-     * Forgets the document stored at [location].
+     * Forgets the document with this [uuid], and everything the catalogue kept about it.
      *
      * Only the catalogue entry goes; removing the document itself is storage's job.
      *
-     * @throws IllegalArgumentException If the catalogue holds no document there.
+     * By uuid, which is the one thing that identifies a document. Where it is stored does not: two
+     * entries could point at one file, and deleting by location took both.
+     *
+     * @throws NoSuchElementException If the catalogue holds no document with this [uuid].
      */
-    suspend fun deleteDocument(location: ContentRef)
+    suspend fun deleteDocument(uuid: String)
 }

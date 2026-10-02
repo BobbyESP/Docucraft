@@ -3,12 +3,10 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.storage
 
-import android.content.ContentResolver
 import android.content.Context
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.App
-import com.bobbyesp.docucraft.feature.docscanner.data.db.LegacyDocumentPath
 import com.bobbyesp.scanner.ContentRef
 import java.io.File
 
@@ -33,18 +31,5 @@ class DocumentLocations(private val context: Context) {
                 file.toUri()
             }
         return ContentRef(uri.toString())
-    }
-
-    /**
-     * The path the catalogue keeps for the document at [location], or `null` if it is not ours. It
-     * undoes [locationOf], whichever of its two forms the location has.
-     */
-    fun filePathOf(location: ContentRef): String? {
-        LegacyDocumentPath.relativePathOf(location.value)?.let {
-            return it
-        }
-        val uri = location.value.toUri()
-        if (uri.scheme != ContentResolver.SCHEME_FILE) return null
-        return uri.path?.let(::File)?.relativeToOrNull(context.filesDir)?.invariantSeparatorsPath
     }
 }

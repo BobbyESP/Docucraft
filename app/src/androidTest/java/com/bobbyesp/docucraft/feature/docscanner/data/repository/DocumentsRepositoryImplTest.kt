@@ -178,7 +178,7 @@ class DocumentsRepositoryImplTest {
         save("Contrato", capturedAt = 2, pageCount = 1)
         val bill = repository.observeDocuments().first().first { it.filename == "Factura luz" }
 
-        repository.deleteDocument(bill.location)
+        repository.deleteDocument(bill.uuid)
 
         val db = database.openHelper.writableDatabase
         assertEquals(listOf("Contrato"), repository.observeDocuments().first().map { it.filename })
@@ -198,21 +198,32 @@ class DocumentsRepositoryImplTest {
         val document = repository.observeDocuments().first().single()
         assertEquals("file://${context.filesDir.path}/missing/gone.pdf", document.location.value)
 
-        repository.deleteDocument(document.location)
+        repository.deleteDocument(document.uuid)
 
         assertEquals(0, db.long("SELECT COUNT(*) FROM documents"))
     }
 
-    // Deleting by location must never reach a document it was not asked about.
+    // Two entries can point at one file. Deleting one of them must leave the other.
     @Test
-    fun aLocationThatIsNotADocumentOfTheCatalogueDeletesNothing() = runBlocking {
+    fun deletingADocumentLeavesAnotherOneThatIsStoredInTheSamePlaceAlone() = runBlocking {
+        save("Scan_1", capturedAt = 1)
+        save("Scan_2", capturedAt = 2)
+        val db = database.openHelper.writableDatabase
+        db.execSQL(
+            "UPDATE documents SET file_path = 'missing/gone.pdf' WHERE original_name = 'Scan_2'"
+        )
+
+        repository.deleteDocument(uuidOf("Scan_2"))
+
+        assertEquals(listOf("Scan_1"), repository.observeDocuments().first().map { it.filename })
+    }
+
+    @Test
+    fun deletingADocumentTheCatalogueDoesNotHaveIsReportedAndDeletesNothing() = runBlocking {
         save("Scan_1", capturedAt = 1)
 
-        for (location in
-            listOf("file:///sdcard/Download/Scan_1.pdf", "content://other/Scan_1.pdf")) {
-            assertThrows(IllegalArgumentException::class.java) {
-                runBlocking { repository.deleteDocument(ContentRef(location)) }
-            }
+        assertThrows(NoSuchElementException::class.java) {
+            runBlocking { repository.deleteDocument("no-such-document") }
         }
 
         assertEquals(1, repository.observeDocuments().first().size)

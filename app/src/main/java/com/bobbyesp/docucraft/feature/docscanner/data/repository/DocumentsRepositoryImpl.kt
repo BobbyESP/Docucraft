@@ -10,7 +10,6 @@ import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
-import com.bobbyesp.scanner.ContentRef
 import java.text.Normalizer
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
@@ -70,12 +69,10 @@ class DocumentsRepositoryImpl(
         if (updated <= 0) throw NoSuchElementException("No document found with UUID: $uuid")
     }
 
-    override suspend fun deleteDocument(location: ContentRef) {
-        val deletedCount = locations.filePathOf(location)?.let { documentDao.deleteByFilePath(it) }
+    override suspend fun deleteDocument(uuid: String) {
+        val deleted = documentDao.deleteByUuid(uuid)
 
-        if (deletedCount == null || deletedCount <= 0) {
-            throw IllegalArgumentException("No document found at: ${location.value}")
-        }
+        if (deleted <= 0) throw NoSuchElementException("No document found with UUID: $uuid")
     }
 
     private fun normalize(text: String): String {
