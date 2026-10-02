@@ -28,15 +28,20 @@ import kotlin.math.abs
  * through recomposition; this object only holds what changes through interaction. All animation
  * commands share one interruption domain with gestures — starting any of them cancels ongoing
  * motion, and a touch cancels them.
+ *
+ * @param initialPosition Where to open the document, to the point on the page. When given, it is
+ *   used instead of [initialPage]: a host that kept a [readingPosition] hands it back here.
  */
 @Stable
 class PdfViewerState(
     initialPage: Int = 0,
     initialZoom: Float = 1f,
     internal val bitmapPool: BitmapPool = BitmapPool(),
+    initialPosition: PdfReadingPosition? = null,
 ) {
     /** The index of the page most visible in the viewport. */
-    var currentPage: Int by mutableIntStateOf(initialPage)
+    var currentPage: Int by
+        mutableIntStateOf(initialPosition?.pageIndex?.coerceAtLeast(0) ?: initialPage)
         internal set
 
     /** Total number of pages in the current document. */
@@ -88,11 +93,36 @@ class PdfViewerState(
      * later load (a different document) starts from the top as before.
      */
     internal var pendingPosition: PendingPosition? =
-        if (initialPage != 0 || initialZoom != 1f) {
-            PendingPosition(PageAnchor(initialPage, 0.5f), initialZoom)
-        } else {
-            null
+        when {
+            initialPosition != null ->
+                PendingPosition(
+                    PageAnchor(
+                        pageIndex = initialPosition.pageIndex.coerceAtLeast(0),
+                        // Whatever a host kept: a fraction that is not a number would become a pan
+                        // that is not one either.
+                        fraction =
+                            initialPosition.fraction.takeUnless { it.isNaN() }?.coerceIn(0f, 1f)
+                                ?: 0f,
+                    ),
+                    initialZoom,
+                )
+            initialPage != 0 || initialZoom != 1f ->
+                PendingPosition(PageAnchor(initialPage, 0.5f), initialZoom)
+            else -> null
         }
+
+    /**
+     * Where the reader is: the point of the document at the centre of the content area, as a page
+     * and a fraction along it. It does not depend on the viewport, so a host can keep it and start
+     * a viewer there later, on a screen of another shape (`initialPosition`).
+     *
+     * Reading it observes pan and zoom: it changes on every frame of a scroll, so a host that
+     * stores it waits for it to settle. Until a document is laid out it is the position the state
+     * was created or restored with, which is not yet where anything is on screen: [isLoaded] tells
+     * the two apart.
+     */
+    val readingPosition: PdfReadingPosition
+        get() = positionToSave().anchor.let { PdfReadingPosition(it.pageIndex, it.fraction) }
 
     /** The effective minimum committed zoom. */
     val minZoom: Float

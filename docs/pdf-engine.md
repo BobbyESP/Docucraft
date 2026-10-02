@@ -158,6 +158,11 @@ positions as a `PageAnchor`: a page, plus a fraction along it.
 - **Restoring after recreation (E1).** The saver stores the anchor and the zoom. The position is
   applied only once the document is laid out; applying it earlier used to lose it to the first
   load.
+- **The host can keep it for longer.** `PdfViewerState.readingPosition` is that anchor as a public
+  `PdfReadingPosition`, and `rememberPdfViewerState(initialPosition = …)` opens a document at one,
+  through the same path a restored position takes. What the position is kept in, and for how long,
+  is the host's business: the engine knows nothing of documents beyond the one it is showing. A
+  position past the end of the document opens on its last page.
 - **Layout changes without recreation.** A resize, a rotation the activity handles itself, a new
   fit mode or new padding: the controller takes the anchor before the change and returns to it
   after. It only does so when page sizes actually change, so a zoomed page panned sideways is not
@@ -180,6 +185,7 @@ centred horizontally.
   - what Android 7's renderer does not survive (`PdfRenderersTest`), which only proves anything on
     API 24 or 25;
   - restoration and layout changes;
+  - the reading position a host reads and starts from (`PdfReadingPositionTest`);
   - content padding;
   - gestures and their consumption;
   - the three extension points;

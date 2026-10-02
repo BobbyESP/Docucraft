@@ -234,12 +234,22 @@ fun PdfViewer(
     }
 }
 
-/** Creates and remembers a [PdfViewerState] that survives configuration changes. */
+/**
+ * Creates and remembers a [PdfViewerState] that survives configuration changes.
+ *
+ * @param initialPosition Where to open the document, when the host kept the position it was left
+ *   at. Used instead of [initialPage], and only the first time: a state that is restored comes back
+ *   where it was, not where it started.
+ */
 @Composable
-fun rememberPdfViewerState(initialPage: Int = 0, initialZoom: Float = 1f): PdfViewerState {
+fun rememberPdfViewerState(
+    initialPage: Int = 0,
+    initialZoom: Float = 1f,
+    initialPosition: PdfReadingPosition? = null,
+): PdfViewerState {
     val bitmapPool = remember { BitmapPool() }
     return rememberSaveable(saver = PdfViewerState.saver(bitmapPool)) {
-        PdfViewerState(initialPage, initialZoom, bitmapPool)
+        PdfViewerState(initialPage, initialZoom, bitmapPool, initialPosition)
     }
 }
 
