@@ -9,12 +9,18 @@ import androidx.annotation.IntRange
 import java.io.File
 
 /**
- * Renders pages of a document as images.
+ * Reads and renders the pages of a document.
  *
  * An implementation detail of `DocumentStorageImpl` rather than a domain concept: it speaks Bitmap
  * and File, which is exactly why it belongs on this side of the line.
  */
 interface DocumentOperationsService {
+    /**
+     * How many pages [document] has, or `null` when it cannot be opened as a PDF: it is damaged,
+     * protected with a password, or not one.
+     */
+    fun pageCount(document: File): Int?
+
     /**
      * Renders one page of a document into [outputFile], overwriting whatever is there.
      *

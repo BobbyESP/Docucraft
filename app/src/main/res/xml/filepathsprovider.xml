@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Where documents are saved, each named after its uuid. -->
+    <files-path
+        name="documents"
+        path="documents" />
+
+    <!--
+        Where documents were saved before that, named after their scan. They are not moved, so the
+        folder is still served. The name is part of the URIs older versions handed out.
+    -->
     <files-path
         name="scanned-pdfs"
         path="scans/pdf" />
-
-    <files-path
-        name="thumbnails"
-        path="previews" />
 </paths>

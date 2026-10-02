@@ -3,13 +3,12 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.mapper
 
-import com.bobbyesp.docucraft.feature.docscanner.data.db.LegacyDocumentPath
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentCustody
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentOrigin
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScan
 import com.bobbyesp.scanner.ContentRef
 
 /**
@@ -29,18 +28,19 @@ internal fun DocumentEntity.toModel(locations: DocumentLocations): Document =
     }
 
 /** For a row known to be of a document the app keeps, such as any row of the library. */
-internal fun DocumentEntity.toManaged(locations: DocumentLocations): Document.Managed =
-    Document.Managed(
+internal fun DocumentEntity.toManaged(locations: DocumentLocations): Document.Managed {
+    val filePath = checkNotNull(filePath) { "Managed document $uuid has no file" }
+    return Document.Managed(
         uuid = uuid,
         originalName = originalName,
         title = title,
         suggestedTitle = suggestedTitle,
         description = description,
-        location =
-            locations.locationOf(checkNotNull(filePath) { "Managed document $uuid has no file" }),
+        location = locations.locationOf(filePath),
         sizeBytes = sizeBytes,
         pageCount = pageCount,
         createdAtEpochMillis = createdAt,
+        filePath = filePath,
         origin = checkNotNull(origin) { "Managed document $uuid has no origin" },
         capturedAtEpochMillis = capturedAt,
         contentUpdatedAtEpochMillis = contentUpdatedAt,
@@ -48,6 +48,7 @@ internal fun DocumentEntity.toManaged(locations: DocumentLocations): Document.Ma
         ocrEnabled = ocrEnabled,
         trashedAtEpochMillis = trashedAt,
     )
+}
 
 private fun DocumentEntity.toLinked(): Document.Linked =
     Document.Linked(
@@ -69,20 +70,19 @@ private fun DocumentEntity.toLinked(): Document.Linked =
  *
  * @param createdAt When it enters the catalogue, which is not when it was captured.
  */
-internal fun NewScannedDocument.toEntity(uuid: String, createdAt: Long): DocumentEntity =
+internal fun NewScan.toEntity(createdAt: Long): DocumentEntity =
     DocumentEntity(
         uuid = uuid,
         custody = DocumentCustody.MANAGED,
         origin = DocumentOrigin.SCAN,
-        originalName = filename,
+        originalName = originalName,
         title = null,
         suggestedTitle = null,
         description = null,
         mimeType = DocumentEntity.MIME_TYPE_PDF,
         sizeBytes = sizeBytes,
-        // A scanner that does not report its pages reports none: unknown, not zero.
-        pageCount = pageCount.takeIf { it > 0 },
-        contentHash = null,
+        pageCount = pageCount,
+        contentHash = contentHash,
         isEncrypted = false,
         pdfAuthor = null,
         pdfSubject = null,
@@ -92,7 +92,7 @@ internal fun NewScannedDocument.toEntity(uuid: String, createdAt: Long): Documen
         folderId = null,
         isFavorite = false,
         ocrEnabled = false,
-        filePath = LegacyDocumentPath.relativePathOf(location.value, filename),
+        filePath = filePath,
         uri = null,
         hasPersistedPermission = null,
         sourceUri = null,

@@ -78,13 +78,23 @@ Swapping the engine means changing the `DocumentScanner` binding in
 
 ## Saving a scan
 
-`SaveScanDraftUseCase` only fixes the order:
-1. store the file;
-2. confirm it is real;
-3. catalogue the document.
+`SaveScanDraftUseCase` only fixes the order, and the order is the rule: **the file first, the
+catalogue after**. A document is never listed before it can be opened.
+1. **Store the file.** `DocumentStorage` copies the scanner's short-lived file to
+   `documents/<uuid>.pdf`. It writes under a temporary name and renames at the end, so a file with
+   its final name is whole even if the process dies during the copy. An empty file is refused. The
+   copy also yields the file's size, its SHA-256 and its page count.
+2. **Catalogue it.** `DocumentsRepository.addScan` writes the document, its activity and one page
+   per page in a single transaction.
+3. **If cataloguing fails, take the file back out.**
 
-`DocumentStorage` decides where things go: it copies the scanner's short-lived file into the app's
-files directory (`scans/pdf/`) and exposes it as a `FileProvider` URI.
+- **The file is named after the document's uuid**, which is given before the file is written.
+  Named after the scan, two scans in the same second overwrote each other's file, and renaming a
+  document would have meant moving it.
+- **Documents saved before that stay in `scans/pdf/`** under their old name. The catalogue says
+  where each document is, so nothing needs them moved, and the provider serves both folders.
+- **The page count is the scanner's**, and when the scanner reports none, the one counted in the
+  file. A file with neither is not catalogued.
 
 **A preview is not saved with the document.** It is a picture of its first page that can be drawn
 again at any time, so it lives in a cache (`DocumentThumbnails`, in the cache directory) and the
@@ -125,6 +135,9 @@ The save reports its own failure. Earlier, a failed save still congratulated the
   - `DocumentExporter` (FileKit) copies a document where the user chooses. It returns
     `Saved` / `Cancelled` / `Failed`, shaped like a scan.
   - `DocumentSharer` shares its `FileProvider` URI.
+  - `CatalogueFileProvider` is that provider. A plain `FileProvider` names a file by its name on
+    disk, which is now a uuid; this one answers `DISPLAY_NAME` with the name the document has in
+    the catalogue, so the receiving app shows what the user sees here.
 
 ## Not yet verified on a device
 

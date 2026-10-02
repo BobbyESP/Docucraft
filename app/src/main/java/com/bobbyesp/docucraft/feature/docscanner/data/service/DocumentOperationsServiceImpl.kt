@@ -18,6 +18,16 @@ import java.io.FileOutputStream
 /** Renders with the platform's own [PdfRenderer]. */
 class DocumentOperationsServiceImpl(private val context: Context) : DocumentOperationsService {
 
+    override fun pageCount(document: File): Int? =
+        try {
+            ParcelFileDescriptor.open(document, ParcelFileDescriptor.MODE_READ_ONLY).use {
+                PdfRenderer(it).use { renderer -> renderer.pageCount }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not count the pages of ${document.name}", e)
+            null
+        }
+
     override fun saveDocumentPageAsImage(
         documentUri: Uri,
         outputFile: File,

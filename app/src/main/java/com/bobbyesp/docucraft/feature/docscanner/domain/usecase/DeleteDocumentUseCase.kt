@@ -22,7 +22,7 @@ class DeleteDocumentUseCase(
     suspend operator fun invoke(document: Document.Managed) {
         repository.deleteDocument(document.uuid)
 
-        storage.delete(document.location)
+        storage.delete(document.filePath)
         thumbnails.discard(document.uuid)
     }
 }

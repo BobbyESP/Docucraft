@@ -201,4 +201,5 @@ thumbnail's, need Android 13.
 ## Integrations
 
 - **Firebase.** Analytics and Crashlytics, behind `AnalyticsHelper` (`core/di/AnalyticsModule.kt`).
-- **FileProvider.** `${applicationId}.fileprovider`, for every document the app shares.
+- **FileProvider.** `${applicationId}.fileprovider`, for every document the app shares. It is
+  `CatalogueFileProvider`, which names a document as the catalogue does and not by its file.

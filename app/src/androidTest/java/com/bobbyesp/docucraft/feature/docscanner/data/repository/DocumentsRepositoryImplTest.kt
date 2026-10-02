@@ -12,7 +12,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.long
 import com.bobbyesp.docucraft.feature.docscanner.data.db.rows
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScan
 import com.bobbyesp.scanner.ContentRef
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -117,10 +117,10 @@ class DocumentsRepositoryImplTest {
 
         val db = database.openHelper.writableDatabase
         assertEquals(
-            listOf("MANAGED|SCAN|scans/pdf/Scan_1.pdf|3|5|$Now"),
+            listOf("uuid-Scan_1|MANAGED|SCAN|documents/uuid-Scan_1.pdf|hash-Scan_1|3|5|$Now"),
             db.rows(
-                "SELECT custody, origin, file_path, page_count, captured_at, created_at " +
-                    "FROM documents"
+                "SELECT uuid, custody, origin, file_path, content_hash, page_count, " +
+                    "captured_at, created_at FROM documents"
             ),
         )
         assertEquals(
@@ -133,27 +133,48 @@ class DocumentsRepositoryImplTest {
         )
     }
 
-    // A scanner that does not report its pages reports none. Recorded as zero pages, the document
-    // would be rejected by the rules of the catalogue; it is recorded as not known.
+    // An old scan can be in the catalogue without a page count. It is read as not known, which is
+    // not the same as having none.
     @Test
-    fun aScanWhosePagesWereNotReportedIsSavedWithAnUnknownPageCount() = runBlocking {
-        save("Scan_1", capturedAt = 1, pageCount = 0)
+    fun aDocumentWhosePagesWereNeverCountedIsReadWithAnUnknownPageCount() = runBlocking {
+        save("Scan_1", capturedAt = 1)
+        database.openHelper.writableDatabase.execSQL("UPDATE documents SET page_count = NULL")
 
-        val db = database.openHelper.writableDatabase
-        assertEquals(listOf("null"), db.rows("SELECT page_count FROM documents"))
-        assertEquals(0, db.long("SELECT COUNT(*) FROM pages"))
         assertNull(repository.observeDocuments().first().single().pageCount)
     }
 
-    // Replacing on conflict would delete the document that already has that file.
+    // Replacing on conflict would delete the document that already has that uuid or that file.
     @Test
-    fun savingOverTheFileOfAnotherDocumentFailsAndKeepsThatDocument() = runBlocking {
+    fun aScanThatClaimsAnotherDocumentsUuidOrFileIsRefusedAndThatDocumentIsKept() = runBlocking {
         save("Scan_1", capturedAt = 1)
-        val first = uuidOf("Scan_1")
 
-        assertThrows(Exception::class.java) { runBlocking { save("Scan_1", capturedAt = 2) } }
+        assertThrows(Exception::class.java) {
+            runBlocking { save("Scan_2", capturedAt = 2, uuid = "uuid-Scan_1") }
+        }
+        assertThrows(Exception::class.java) {
+            runBlocking { save("Scan_3", capturedAt = 3, filePath = "documents/uuid-Scan_1.pdf") }
+        }
 
-        assertEquals(listOf(first), repository.observeDocuments().first().map { it.uuid })
+        assertEquals(
+            listOf("uuid-Scan_1|Scan_1"),
+            database.openHelper.writableDatabase.rows("SELECT uuid, original_name FROM documents"),
+        )
+    }
+
+    // The three rows are written together. A document left without its pages by a failure half
+    // way would never have its text read, and nothing would say so.
+    @Test
+    fun aScanThatCannotBeAddedLeavesNothingOfItselfBehind() = runBlocking {
+        save("Scan_1", capturedAt = 1, pageCount = 2)
+        val db = database.openHelper.writableDatabase
+
+        assertThrows(Exception::class.java) {
+            runBlocking { save("Scan_2", capturedAt = 2, pageCount = 5, uuid = "uuid-Scan_1") }
+        }
+
+        assertEquals(1, db.long("SELECT COUNT(*) FROM documents"))
+        assertEquals(1, db.long("SELECT COUNT(*) FROM document_activity"))
+        assertEquals(2, db.long("SELECT COUNT(*) FROM pages"))
     }
 
     // --- reading back ---
@@ -161,15 +182,27 @@ class DocumentsRepositoryImplTest {
     // The catalogue keeps a relative path; what the app opens is the provider's URI for it.
     @Test
     fun aDocumentIsReadBackWithALocationThatCanBeOpened() = runBlocking {
-        save("Factura luz marzo", capturedAt = 1)
+        save("Scan_1", capturedAt = 1)
 
         val document = repository.observeDocuments().first().single()
 
+        assertEquals("documents/uuid-Scan_1.pdf", document.filePath)
         assertEquals(
-            "content://${context.packageName}.fileprovider/scanned-pdfs/Factura%20luz%20marzo.pdf",
+            "content://${context.packageName}.fileprovider/documents/uuid-Scan_1.pdf",
             document.location.value,
         )
         assertEquals(document, repository.getDocument(document.uuid))
+    }
+
+    // Documents saved before files were named by uuid stay where they were, under their old name.
+    @Test
+    fun aDocumentSavedBeforeFilesWereNamedByUuidIsStillOpenedFromWhereItIs() = runBlocking {
+        save("Factura luz marzo", capturedAt = 1, filePath = "scans/pdf/Factura luz marzo.pdf")
+
+        assertEquals(
+            "content://${context.packageName}.fileprovider/scanned-pdfs/Factura%20luz%20marzo.pdf",
+            repository.observeDocuments().first().single().location.value,
+        )
     }
 
     // The viewer is handed the title, the suggested title or the original name, in that order.
@@ -289,17 +322,22 @@ class DocumentsRepositoryImplTest {
         assertEquals(1, repository.observeDocuments().first().size)
     }
 
-    private suspend fun save(filename: String, capturedAt: Long, pageCount: Int = 1) {
-        repository.saveDocument(
-            NewScannedDocument(
-                filename = filename,
-                location =
-                    ContentRef(
-                        "content://${context.packageName}.fileprovider/scanned-pdfs/$filename.pdf"
-                    ),
-                capturedAtEpochMillis = capturedAt,
+    private suspend fun save(
+        name: String,
+        capturedAt: Long,
+        pageCount: Int = 1,
+        uuid: String = "uuid-$name",
+        filePath: String = "documents/$uuid.pdf",
+    ) {
+        repository.addScan(
+            NewScan(
+                uuid = uuid,
+                originalName = name,
+                filePath = filePath,
                 sizeBytes = 1,
+                contentHash = "hash-$name",
                 pageCount = pageCount,
+                capturedAtEpochMillis = capturedAt,
             )
         )
     }

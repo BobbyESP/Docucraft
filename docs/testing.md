@@ -26,7 +26,8 @@
 - **A test sits in the package of the class it tests**, so it reaches `internal` code and is found
   next to it.
 - **Doubles and fixtures shared by several tests** live in one place instead of being copied:
-  - `:app`: `FakeDocumentStorage` (docscanner), `FakePageContentProvider` and `textPage` (pdfviewer);
+  - `:app`: `FakeDocumentStorage`, `FakeDocumentsRepository`, `FakeDocumentThumbnails` and
+    `testDocument` (docscanner), `FakePageContentProvider` and `textPage` (pdfviewer);
   - `:app` on a device: `MigrationTestSupport.kt` builds an old version of the catalogue from its
     exported schema and fills it with rows as that version stored them;
   - `:composepdf` JVM: `layoutOf` and `threePages` build a `PageLayoutSnapshot` the way the real

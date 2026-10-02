@@ -226,6 +226,9 @@ A new Koin module is registered in `App.kt`.
 - **File sharing** uses `${applicationId}.fileprovider` (the manifest and `App.getAuthority`). Only
   `content://` locations are ever handed to another app (`canBeHandedOff`). A `file://` PDF opened
   from outside is shown, but never re-shared.
+  - The provider is `CatalogueFileProvider`, which names a document as the catalogue does. It
+    serves `documents/` (files named `<uuid>.pdf`) and `scans/pdf/` (documents saved before files
+    were named by uuid, which are never moved).
 - **Firebase Analytics and Crashlytics** are on (`core/di/AnalyticsModule.kt`,
   `google-services.json`).
 - **Room**:

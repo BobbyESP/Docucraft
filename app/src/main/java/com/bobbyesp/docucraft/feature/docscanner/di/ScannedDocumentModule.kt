@@ -42,7 +42,9 @@ val documentScannerDataModule = module {
     // Service layer
     single<DocumentOperationsService> { DocumentOperationsServiceImpl(context = androidContext()) }
 
-    single<DocumentStorage> { DocumentStorageImpl(context = androidContext()) }
+    single<DocumentStorage> {
+        DocumentStorageImpl(context = androidContext(), documentOperations = get())
+    }
 
     single<DocumentThumbnails> {
         CachedDocumentThumbnails(

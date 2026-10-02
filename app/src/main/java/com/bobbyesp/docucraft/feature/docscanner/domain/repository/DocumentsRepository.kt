@@ -4,7 +4,7 @@
 package com.bobbyesp.docucraft.feature.docscanner.domain.repository
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScan
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -46,12 +46,16 @@ interface DocumentsRepository {
     fun observeDocument(uuid: String): Flow<Document?>
 
     /**
-     * Adds a freshly stored document to the catalogue.
+     * Adds a scan to the catalogue, with everything a document cannot be without: its activity and
+     * a page for each of its pages. All of it or none of it.
      *
-     * The document is expected to already exist at [NewScannedDocument.location]. This records it,
-     * gives it an identity, and causes [observeDocuments] to emit again.
+     * The file is expected to already be whole at [NewScan.filePath]: a document is catalogued
+     * after its file is stored, never before. It causes [observeDocuments] to emit again.
+     *
+     * @throws Exception if the catalogue already has a document with that uuid or that file. The
+     *   one it has is left as it is.
      */
-    suspend fun saveDocument(document: NewScannedDocument)
+    suspend fun addScan(scan: NewScan)
 
     /**
      * Replaces the two fields the user can write.

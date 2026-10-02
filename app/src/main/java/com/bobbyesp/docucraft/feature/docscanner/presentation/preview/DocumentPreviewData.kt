@@ -31,6 +31,7 @@ object DocumentPreviewData {
             sizeBytes = sizeBytes,
             pageCount = pageCount,
             createdAtEpochMillis = createdAtEpochMillis,
+            filePath = "documents/$uuid.pdf",
             origin = DocumentOrigin.SCAN,
             capturedAtEpochMillis = createdAtEpochMillis,
             contentUpdatedAtEpochMillis = createdAtEpochMillis,

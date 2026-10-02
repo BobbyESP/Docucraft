@@ -24,6 +24,7 @@ fun testDocument(
     pageCount: Int? = 1,
     suggestedTitle: String? = null,
     origin: DocumentOrigin = DocumentOrigin.SCAN,
+    filePath: String = "documents/$uuid.pdf",
 ) =
     Document.Managed(
         uuid = uuid,
@@ -35,6 +36,7 @@ fun testDocument(
         sizeBytes = sizeBytes,
         pageCount = pageCount,
         createdAtEpochMillis = createdAtEpochMillis,
+        filePath = filePath,
         origin = origin,
         capturedAtEpochMillis = createdAtEpochMillis.takeIf { origin == DocumentOrigin.SCAN },
         contentUpdatedAtEpochMillis = createdAtEpochMillis,

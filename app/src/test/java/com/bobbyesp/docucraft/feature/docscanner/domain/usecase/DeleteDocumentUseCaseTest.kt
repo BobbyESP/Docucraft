@@ -7,7 +7,6 @@ import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
-import com.bobbyesp.scanner.ContentRef
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -22,15 +21,14 @@ class DeleteDocumentUseCaseTest {
     private val repository = mockk<DocumentsRepository>(relaxed = true)
     private val useCase = DeleteDocumentUseCase(repository, storage, thumbnails)
 
-    private val document =
-        testDocument(uuid = "doc-1", location = ContentRef("content://stored/doc.pdf"))
+    private val document = testDocument(uuid = "doc-1", filePath = "documents/doc-1.pdf")
 
     @Test
     fun `removes the document from the catalogue and from storage`() = runTest {
         useCase(document)
 
         coVerify { repository.deleteDocument("doc-1") }
-        assertEquals(listOf(ContentRef("content://stored/doc.pdf")), storage.deleted)
+        assertEquals(listOf("documents/doc-1.pdf"), storage.deleted)
     }
 
     // A preview is drawn from the document, so one left behind is of a document nobody has.

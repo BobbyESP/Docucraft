@@ -9,10 +9,9 @@ import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toManaged
 import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toModel
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScan
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import java.text.Normalizer
-import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -56,10 +55,8 @@ class DocumentsRepositoryImpl(
         return entity.toModel(locations)
     }
 
-    override suspend fun saveDocument(document: NewScannedDocument) {
-        documentDao.insertManaged(
-            document.toEntity(uuid = UUID.randomUUID().toString(), createdAt = now())
-        )
+    override suspend fun addScan(scan: NewScan) {
+        documentDao.insertManaged(scan.toEntity(createdAt = now()))
     }
 
     override suspend fun modifyFields(uuid: String, title: String?, description: String?) {

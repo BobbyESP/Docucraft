@@ -21,8 +21,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperations
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentThumbnail
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
-import com.bobbyesp.scanner.ContentRef
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScan
 import java.io.File
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -56,10 +55,10 @@ class CachedDocumentThumbnailsTest {
     private val renderer = CountingRenderer(DocumentOperationsServiceImpl(context))
     private val thumbnails = CachedDocumentThumbnails(context, database.documentDao(), renderer)
 
-    private val documentFile = File(context.filesDir, "scans/pdf/$Name.pdf")
+    private val documentFile = File(context.filesDir, FilePath)
     private val cache = File(context.cacheDir, "thumbnails")
 
-    private lateinit var uuid: String
+    private val uuid = "thumbnail-test"
 
     @Before
     fun saveADocument(): Unit = runBlocking {
@@ -68,19 +67,17 @@ class CachedDocumentThumbnailsTest {
         instrumentation.context.assets.open("fixtures/text-and-links.pdf").use { fixture ->
             documentFile.outputStream().use { fixture.copyTo(it) }
         }
-        repository.saveDocument(
-            NewScannedDocument(
-                filename = Name,
-                location =
-                    ContentRef(
-                        "content://${context.packageName}.fileprovider/scanned-pdfs/$Name.pdf"
-                    ),
-                capturedAtEpochMillis = 1,
+        repository.addScan(
+            NewScan(
+                uuid = uuid,
+                originalName = "Thumbnail test",
+                filePath = FilePath,
                 sizeBytes = documentFile.length(),
+                contentHash = "not-hashed",
                 pageCount = 2,
+                capturedAtEpochMillis = 1,
             )
         )
-        uuid = repository.observeDocuments().first().single().uuid
     }
 
     @After
@@ -195,6 +192,8 @@ class CachedDocumentThumbnailsTest {
         DocumentOperationsService {
         @Volatile var pagesDrawn = 0
 
+        override fun pageCount(document: File): Int? = renderer.pageCount(document)
+
         override fun saveDocumentPageAsImage(
             documentUri: Uri,
             outputFile: File,
@@ -214,6 +213,6 @@ class CachedDocumentThumbnailsTest {
     }
 
     private companion object {
-        const val Name = "Thumbnail test"
+        const val FilePath = "documents/thumbnail-test.pdf"
     }
 }

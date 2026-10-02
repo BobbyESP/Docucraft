@@ -94,7 +94,7 @@ class HomeViewModelTest {
 
     private fun createViewModel(
         documents: Flow<List<Document.Managed>> = flowOf(emptyList()),
-        saveResult: Result<ContentRef> = Result.success(ContentRef("content://stored")),
+        saveResult: Result<String> = Result.success("doc-1"),
         savedState: SavedStateHandle = SavedStateHandle(),
         pendingScan: ScanOutcome? = null,
     ): HomeViewModel {
@@ -105,7 +105,7 @@ class HomeViewModelTest {
 
         every { observeDocumentsUseCase() } returns documents
         coEvery { processDocumentsUseCase(any(), any(), any(), any()) } answers { firstArg() }
-        coEvery { saveScanDraftUseCase(any(), any()) } returns saveResult
+        coEvery { saveScanDraftUseCase(any()) } returns saveResult
         every { stringProvider.getError(any<Throwable>()) } returns "Something went wrong"
         every { stringProvider.get(any(), *anyVararg()) } returns "Something went wrong"
 
@@ -256,7 +256,7 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.isScanning)
-            coVerify { saveScanDraftUseCase(scannedDraft, any()) }
+            coVerify { saveScanDraftUseCase(scannedDraft) }
             assertTrue(
                 events.any { it is UiEvent.ShowMessage && it.type == NotificationType.Success }
             )
@@ -300,7 +300,7 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.isScanning)
-            coVerify(exactly = 0) { saveScanDraftUseCase(any(), any()) }
+            coVerify(exactly = 0) { saveScanDraftUseCase(any()) }
             assertTrue("backing out of the scanner should not nag the user", events.isEmpty())
             verify(exactly = 1) {
                 analyticsHelper.logEvent(match { it.type == AnalyticsEvent.Types.SCAN_CANCELLED })
@@ -323,7 +323,7 @@ class HomeViewModelTest {
             advanceUntilIdle()
 
             assertFalse(viewModel.state.value.isScanning)
-            coVerify(exactly = 0) { saveScanDraftUseCase(any(), any()) }
+            coVerify(exactly = 0) { saveScanDraftUseCase(any()) }
             assertTrue(
                 events.any { it is UiEvent.ShowMessage && it.type == NotificationType.Error }
             )
@@ -404,7 +404,7 @@ class HomeViewModelTest {
 
             assertEquals(1, documentScanner.resumed)
             assertEquals(0, documentScanner.started)
-            coVerify { saveScanDraftUseCase(scannedDraft, any()) }
+            coVerify { saveScanDraftUseCase(scannedDraft) }
             assertFalse(viewModel.state.value.isScanning)
         }
 
@@ -421,7 +421,7 @@ class HomeViewModelTest {
 
             assertEquals(1, documentScanner.resumed)
             assertFalse(viewModel.state.value.isScanning)
-            coVerify(exactly = 0) { saveScanDraftUseCase(any(), any()) }
+            coVerify(exactly = 0) { saveScanDraftUseCase(any()) }
         }
 
     @Test

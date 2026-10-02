@@ -44,6 +44,8 @@ sealed interface Document {
     /**
      * A document whose file is in the app's own storage, and which the app answers for.
      *
+     * @property filePath Where its file is, relative to the app's files directory. This is the fact
+     *   the catalogue keeps; [location] is how that file is opened.
      * @property capturedAtEpochMillis When it was scanned. `null` for an imported document.
      * @property contentUpdatedAtEpochMillis When the file's content last changed.
      * @property ocrEnabled Whether the user wants the text of its image-only pages recognized.
@@ -59,6 +61,7 @@ sealed interface Document {
         override val sizeBytes: Long?,
         override val pageCount: Int?,
         override val createdAtEpochMillis: Long,
+        val filePath: String,
         val origin: DocumentOrigin,
         val capturedAtEpochMillis: Long?,
         val contentUpdatedAtEpochMillis: Long,

@@ -92,8 +92,9 @@
                 android:value="true" />
         </service>
 
+        <!-- A FileProvider that names a shared document as the catalogue does, not by its file. -->
         <provider
-            android:name="androidx.core.content.FileProvider"
+            android:name=".feature.docscanner.data.sharing.CatalogueFileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:grantUriPermissions="true"
             android:exported="false">
