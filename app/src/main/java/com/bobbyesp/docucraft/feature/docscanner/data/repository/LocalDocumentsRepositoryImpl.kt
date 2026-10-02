@@ -80,11 +80,16 @@ class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocume
             .lowercase()
     }
 
+    /**
+     * Every term as a prefix, and all of them required. A space between terms is what requires them
+     * all: Android's SQLite is compiled with the standard query syntax, where `AND` is not an
+     * operator but one more word to look for.
+     */
     private fun buildFtsQuery(query: String): String {
         return query
             .trim()
             .split("\\s+".toRegex())
             .map { normalize(it) }
-            .joinToString(" AND ") { "$it*" }
+            .joinToString(" ") { "$it*" }
     }
 }
