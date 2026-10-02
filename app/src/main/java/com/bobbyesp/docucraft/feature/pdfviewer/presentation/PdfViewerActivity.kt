@@ -55,6 +55,9 @@ import org.koin.core.component.KoinComponent
  * intentionally separate from [com.bobbyesp.docucraft.MainActivity] so the main app's single back
  * stack stays untouched — back here simply finishes and returns to the calling app.
  *
+ * The document is registered in the catalogue as one that belongs to another app, by the viewer's
+ * ViewModel, so that it can be found again in Recents.
+ *
  * It runs in a task of its own (`taskAffinity=""` in the manifest), so a document opened from
  * another app never lands on top of the library, and leaving it never touches the library either.
  * Its card leaves Recents when it finishes. It used to share the app's task and leave through
@@ -136,15 +139,14 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
             }
         if (uri == null) return null
 
-        // Persist read access when the provider allows it; harmless otherwise.
-        runCatching {
-            contentResolver.takePersistableUriPermission(
-                uri,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION,
-            )
-        }
-
-        val displayName = queryDisplayName(uri) ?: uri.lastPathSegment ?: "PDF"
+        // Keeping the permission to read it is done where the document is registered in the
+        // catalogue, which needs to know whether it was kept (`RegisterLinkedDocumentUseCase`).
+        // A provider that will not say what the document is called leaves only the location, whose
+        // last segment can be a whole path of its own ("primary:Download/Report.pdf").
+        val displayName =
+            queryDisplayName(uri)
+                ?: uri.lastPathSegment?.substringAfterLast('/')?.takeIf { it.isNotBlank() }
+                ?: "PDF"
         return ViewerDocumentRef.External(uri = uri.toString(), displayName = displayName)
     }
 

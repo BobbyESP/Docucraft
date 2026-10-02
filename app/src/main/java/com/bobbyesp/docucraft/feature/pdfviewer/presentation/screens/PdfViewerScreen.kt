@@ -295,7 +295,8 @@ fun PdfViewerScreen(
         when {
             loadError != null ->
                 viewModel.onSendIntent(PdfViewerIntent.DocumentFailedToLoad(loadError))
-            pdfViewerState.isLoaded -> viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded)
+            pdfViewerState.isLoaded ->
+                viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pdfViewerState.pageCount))
         }
     }
 

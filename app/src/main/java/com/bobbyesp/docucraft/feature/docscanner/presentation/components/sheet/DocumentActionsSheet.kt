@@ -25,6 +25,7 @@ import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.FileCopy
 import androidx.compose.material.icons.rounded.QuestionMark
+import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.SaveAs
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Storage
@@ -71,11 +72,16 @@ internal enum class ActionImportance {
     DESTRUCTIVE,
 }
 
+/**
+ * @property fullWidth Takes a row to itself. For an action whose name does not fit in a cell of the
+ *   grid, where it would be cut short.
+ */
 @Immutable
 internal data class DocumentAction(
     val icon: ImageVector,
     val title: Int,
     val importance: ActionImportance,
+    val fullWidth: Boolean = false,
     val action: () -> Unit,
 )
 
@@ -138,6 +144,87 @@ fun DocumentActionsContent(
                 DocumentActionsRow(options = options, onOptionSelect = { it() })
             }
         }
+    }
+}
+
+/**
+ * The actions for a document of another app. It is only referred to, so the one thing to do to it
+ * is to stop: nothing here reaches its file.
+ *
+ * @param stacked as in [DocumentActionsContent].
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun LinkedDocumentActionsContent(
+    document: Document.Linked,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
+    stacked: Boolean = true,
+) {
+    val options = remember {
+        persistentListOf(
+            DocumentAction(
+                icon = Icons.Rounded.RemoveCircleOutline,
+                title = R.string.remove_from_recents,
+                importance = ActionImportance.SECONDARY,
+                fullWidth = true,
+                action = onRemove,
+            )
+        )
+    }
+
+    if (stacked) {
+        Column(modifier = modifier) {
+            LinkedDocumentHeader(document, modifier = Modifier.padding(horizontal = 16.dp))
+
+            AnimatedWavyDivider(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                strokeWidth = 4.dp,
+                colors =
+                    AnimatedWavyDividerDefaults.colors(
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    ),
+            )
+
+            DocumentActionsRow(options = options, onOptionSelect = { it() })
+        }
+    } else {
+        Row(
+            modifier = modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            LinkedDocumentHeader(document, modifier = Modifier.weight(1f).padding(start = 16.dp))
+
+            Box(modifier = Modifier.weight(1f)) {
+                DocumentActionsRow(options = options, onOptionSelect = { it() })
+            }
+        }
+    }
+}
+
+/** No preview: another app's file is not read to draw one. Its name, and whose it is. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun LinkedDocumentHeader(document: Document.Linked, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = document.name,
+            style = MaterialTheme.typography.titleLargeEmphasized,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Text(
+            modifier = Modifier.alpha(0.75f),
+            text = stringResource(id = R.string.linked_document_desc),
+            style = MaterialTheme.typography.bodyMediumEmphasized,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -317,10 +404,11 @@ private inline fun DocumentActionsRow(
                     },
                     enabled = true,
                     span = {
-                        when (option.importance) {
-                            ActionImportance.PRIMARY -> GridItemSpan(1)
-                            ActionImportance.SECONDARY -> GridItemSpan(1)
-                            ActionImportance.DESTRUCTIVE -> GridItemSpan(maxCurrentLineSpan)
+                        when {
+                            option.fullWidth -> GridItemSpan(maxLineSpan)
+                            option.importance == ActionImportance.DESTRUCTIVE ->
+                                GridItemSpan(maxCurrentLineSpan)
+                            else -> GridItemSpan(1)
                         }
                     },
                     onClick = { onOptionSelect(option.action) },

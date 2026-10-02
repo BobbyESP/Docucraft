@@ -9,8 +9,9 @@ import kotlinx.serialization.Serializable
  * Which document the viewer is showing, by identity only.
  *
  * Two kinds, because the viewer opens both: documents the catalogue knows, followed by their uuid
- * so a rename or a deletion reaches the open viewer; and documents another app handed over, which
- * have no catalogue entry and are known only by where they are.
+ * so a rename or a deletion reaches the open viewer; and documents another app has just handed
+ * over, known by where they are. The catalogue takes note of those too, as they are opened, but the
+ * viewer goes on showing what it was handed.
  */
 @Serializable
 sealed interface ViewerDocumentRef {

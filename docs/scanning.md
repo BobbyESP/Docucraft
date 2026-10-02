@@ -168,6 +168,35 @@ The save reports its own failure. Earlier, a failed save still congratulated the
     disk, which is now a uuid; this one answers `DISPLAY_NAME` with the name the document has in
     the catalogue, so the receiving app shows what the user sees here.
 
+## Documents of other apps
+
+A PDF another app opens in the viewer becomes a document of the catalogue too, of the other kind:
+`LINKED`. The app keeps a reference to it and nothing else, so that it can be found again in
+Recents.
+
+- **Its file is never the app's.** It is not copied, changed or deleted from here. Keeping it is
+  something the user asks for.
+- **Its location is its identity.** `RegisterLinkedDocumentUseCase` refers to the document the
+  catalogue already has for that URI, or adds one: opening the same file ten times is one entry in
+  Recents, with one reading position. The same file reached through two URIs is two documents.
+- **It is not in the library.** No folder, no tags, no pages, no bin, and its text is not read. The
+  triggers hold the row to that, and it shows in Recents only.
+- **Permission** (`ExternalDocumentAccess`). When it is registered, the app tries to keep the
+  permission to read it after the other app is gone. Most apps do not allow it, and a shared file
+  never does: the document then opens only for as long as the loan lasts. Whether it was kept is
+  noted, and what is held is given back when the document is forgotten.
+- **No more than 50.** They are only ever listed in Recents, which shows a handful; without a limit
+  they would pile up unseen, each holding a permission. Registering one over the limit forgets the
+  ones used longest ago, in the same transaction. The statement that removes them names the
+  custody: no mistake above it can make it delete a document the app keeps.
+- **What it turned out to be** is noted once it has been opened (`DescribeLinkedDocumentUseCase`):
+  size, pages, a hash of its content, whether it asks for a password. It reads the whole file, so
+  it runs after the document is on screen, and on every opening, since another app's file can be
+  replaced. What could not be learnt one time is left as it was known.
+- **On the shelf** it has no preview: its file is not read to draw one. One that could not be
+  reached the last time is faded, and tapping it offers what can be done about it, *Remove from
+  Recents*, instead of an error (`ForgetLinkedDocumentUseCase`). Only the reference goes.
+
 ## Search
 
 `SearchIndex` is the port: a text in, the documents that match out, best first. Its one

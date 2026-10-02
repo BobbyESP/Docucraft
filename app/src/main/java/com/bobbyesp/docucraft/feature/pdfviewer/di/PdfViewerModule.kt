@@ -82,6 +82,8 @@ val pdfViewerModule = module {
             recordAvailability = get(),
             getReadingPosition = get(),
             rememberReadingPosition = get(),
+            registerLinkedDocument = get(),
+            describeLinkedDocument = get(),
             // Outlives the viewer: where the reader was is written as they leave.
             longLived = get(qualifier = named("AppMainSupervisedScope")),
         )

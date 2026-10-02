@@ -18,9 +18,11 @@ import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DescribeLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RegisterLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
@@ -88,11 +90,32 @@ class PdfViewerViewModel(
     private val recordAvailability: RecordDocumentAvailabilityUseCase,
     private val getReadingPosition: GetReadingPositionUseCase,
     private val rememberReadingPosition: RememberReadingPositionUseCase,
+    private val registerLinkedDocument: RegisterLinkedDocumentUseCase,
+    private val describeLinkedDocument: DescribeLinkedDocumentUseCase,
     private val longLived: CoroutineScope,
 ) :
     BaseViewModel<PdfViewerIntent, PdfViewerUiState, PdfViewerEffect>(
         initialState = PdfViewerUiState()
     ) {
+
+    /**
+     * The uuid the catalogue knows this document by: what is noted about a document as it is read
+     * is noted against this.
+     *
+     * A document of the catalogue already has one. A document another app handed over is given one
+     * by being registered, which is what makes it show in Recents; `null` if that could not be
+     * done, and then the document is shown all the same and nothing is noted about it.
+     *
+     * Above `init`, which uses it: a property declared below would not exist yet.
+     */
+    private val catalogueUuid: Deferred<String?> = viewModelScope.async {
+        when (ref) {
+            is ViewerDocumentRef.Catalogued -> ref.uuid
+            is ViewerDocumentRef.External ->
+                runCatching { registerLinkedDocument(ContentRef(ref.uri), ref.displayName) }
+                    .getOrNull()
+        }
+    }
 
     init {
         // Once per opened document, whichever way it was opened.
@@ -111,12 +134,12 @@ class PdfViewerViewModel(
         }
 
         // Once per opened document: this is what moves it to the front of Recents.
-        launch { catalogueUuid()?.let { recordOpened(it) } }
+        launch { catalogueUuid.await()?.let { recordOpened(it) } }
 
         launch {
             // A position that could not be read is no reason not to show the document.
             val position =
-                catalogueUuid()?.let { runCatching { getReadingPosition(it) }.getOrNull() }
+                catalogueUuid.await()?.let { runCatching { getReadingPosition(it) }.getOrNull() }
             setState { copy(start = ViewerStart(position)) }
         }
 
@@ -140,29 +163,36 @@ class PdfViewerViewModel(
     private val toldAbout = mutableSetOf<TextUnavailable>()
 
     /**
-     * The uuid the catalogue knows this document by, or `null` when it does not know it: what is
-     * noted about a document as it is read is noted against this.
-     */
-    private fun catalogueUuid(): String? =
-        when (ref) {
-            is ViewerDocumentRef.Catalogued -> ref.uuid
-            is ViewerDocumentRef.External -> null
-        }
-
-    /**
      * Tells the catalogue whether the file was where it says. Only the two answers that are about
      * reaching the file: a document that is protected or damaged was reached, and is still there.
      */
-    private fun noteAvailability(availability: DocumentAvailability) {
-        val uuid = catalogueUuid() ?: return
-        launch { recordAvailability(uuid, availability) }
+    private fun noteAvailability(availability: DocumentAvailability) = launch {
+        val uuid = catalogueUuid.await() ?: return@launch
+        recordAvailability(uuid, availability)
+    }
+
+    /**
+     * What the document turned out to be, for one that belongs to another app: the catalogue knew
+     * nothing of it but where it is. The use case leaves the app's own documents alone.
+     */
+    private fun describe(pageCount: Int?, isProtected: Boolean) = launch {
+        val uuid = catalogueUuid.await() ?: return@launch
+        describeLinkedDocument(uuid, pageCount = pageCount, isProtected = isProtected)
     }
 
     override fun onHandleIntent(intent: PdfViewerIntent) {
         when (intent) {
-            PdfViewerIntent.DocumentLoaded -> noteAvailability(DocumentAvailability.AVAILABLE)
+            is PdfViewerIntent.DocumentLoaded -> {
+                noteAvailability(DocumentAvailability.AVAILABLE)
+                describe(pageCount = intent.pageCount, isProtected = false)
+            }
             is PdfViewerIntent.ReadingPositionChanged -> keepPosition(intent.position)
-            is PdfViewerIntent.DocumentFailedToLoad -> noteAvailability(intent.error.availability)
+            is PdfViewerIntent.DocumentFailedToLoad -> {
+                noteAvailability(intent.error.availability)
+                if (intent.error == ViewerLoadError.PasswordProtected) {
+                    describe(pageCount = null, isProtected = true)
+                }
+            }
             is PdfViewerIntent.VisiblePagesChanged -> loadTextNear(intent.pages)
             is PdfViewerIntent.Select -> setState { copy(selection = intent.selection) }
             PdfViewerIntent.SelectAll -> selectAll()
@@ -187,8 +217,12 @@ class PdfViewerViewModel(
      * a second before they left.
      */
     private fun keepPosition(position: ReadingPosition) {
-        val uuid = catalogueUuid() ?: return
-        longLived.launch { runCatching { rememberReadingPosition(uuid, position) } }
+        longLived.launch {
+            runCatching {
+                val uuid = catalogueUuid.await() ?: return@runCatching
+                rememberReadingPosition(uuid, position)
+            }
+        }
     }
 
     private val ViewerLoadError.availability: DocumentAvailability

@@ -14,6 +14,9 @@ sealed interface DocumentActionsIntent {
     data object ConfirmDelete : DocumentActionsIntent
 
     data class ConfirmEdit(val title: String, val description: String) : DocumentActionsIntent
+
+    /** For a document of another app: stop referring to it. Its file is not touched. */
+    data object RemoveFromRecents : DocumentActionsIntent
 }
 
 /**
@@ -33,5 +36,10 @@ data class DocumentActionsUiState(
      * Null while the document is being read, and again once it is deleted. The overlay closes on
      * the second, which is why deletion needs no separate signal.
      */
-    val document: Document.Managed? = null
+    val document: Document.Managed? = null,
+    /**
+     * The document, when it is one of another app: there is far less to do to it, and none of it is
+     * what is done to [document]. At most one of the two is set.
+     */
+    val linked: Document.Linked? = null,
 )

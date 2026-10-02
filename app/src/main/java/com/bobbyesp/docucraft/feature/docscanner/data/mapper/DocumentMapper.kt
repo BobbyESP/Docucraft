@@ -9,6 +9,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentOrigin
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScan
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.NewLinkedDocument
 import com.bobbyesp.scanner.ContentRef
 
 /**
@@ -62,6 +63,44 @@ private fun DocumentEntity.toLinked(): Document.Linked =
         pageCount = pageCount,
         createdAtEpochMillis = createdAt,
         hasPersistedPermission = hasPersistedPermission == true,
+    )
+
+/**
+ * A document of another app the catalogue is about to refer to. Nothing is known of it yet but
+ * where it is and what it is called there.
+ */
+internal fun NewLinkedDocument.toEntity(uuid: String, createdAt: Long): DocumentEntity =
+    DocumentEntity(
+        uuid = uuid,
+        custody = DocumentCustody.LINKED,
+        origin = null,
+        originalName = originalName,
+        title = null,
+        suggestedTitle = null,
+        description = null,
+        mimeType = DocumentEntity.MIME_TYPE_PDF,
+        sizeBytes = null,
+        pageCount = null,
+        contentHash = null,
+        isEncrypted = false,
+        pdfAuthor = null,
+        pdfSubject = null,
+        pdfKeywords = null,
+        pdfCreatedAt = null,
+        documentDate = null,
+        folderId = null,
+        isFavorite = false,
+        ocrEnabled = false,
+        filePath = null,
+        uri = location.value,
+        hasPersistedPermission = hasPersistedPermission,
+        sourceUri = null,
+        sourceModifiedAt = null,
+        capturedAt = null,
+        createdAt = createdAt,
+        updatedAt = createdAt,
+        contentUpdatedAt = createdAt,
+        trashedAt = null,
     )
 
 /**

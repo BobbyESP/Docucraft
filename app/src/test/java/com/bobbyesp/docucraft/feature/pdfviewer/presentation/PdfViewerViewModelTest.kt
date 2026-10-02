@@ -16,16 +16,24 @@ import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentActivityRepository
+import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.FakeExternalDocumentAccess
+import com.bobbyesp.docucraft.feature.docscanner.FakeLinkedDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LinkedDocumentFacts
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.NewLinkedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DescribeLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RegisterLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
+import com.bobbyesp.docucraft.feature.docscanner.testLinkedDocument
 import com.bobbyesp.docucraft.feature.pdfviewer.FakePageContentProvider
 import com.bobbyesp.docucraft.feature.pdfviewer.data.settings.InMemoryViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
@@ -94,6 +102,10 @@ class PdfViewerViewModelTest {
     }
     private val session = InMemoryViewerSessionSettings()
     private val activity = FakeDocumentActivityRepository()
+    private val linked = FakeLinkedDocumentsRepository()
+    private val access = FakeExternalDocumentAccess()
+    private val documents =
+        FakeDocumentsRepository(linked = listOf(testLinkedDocument(uuid = LINKED_UUID)))
 
     // Page 0 "alpha beta", 1 "gamma", 2 a scan, 3 "delta epsilon", 4 "zeta".
     private val content =
@@ -540,7 +552,7 @@ class PdfViewerViewModelTest {
         catalogue.value = scanned()
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
 
-        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded)
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 2))
         advanceUntilIdle()
 
         assertEquals(listOf(UUID to DocumentAvailability.AVAILABLE), activity.availability)
@@ -659,6 +671,84 @@ class PdfViewerViewModelTest {
         assertEquals(mapOf(UUID to ReadingPosition(1, 0.4f)), activity.positions)
     }
 
+    // ---------------------------------------------------------------------------------- external
+
+    /** What makes a PDF opened from another app show in Recents. */
+    @Test
+    fun `a document another app handed over is registered and noted as opened`() = runTest {
+        openedExternal()
+
+        assertEquals(
+            listOf(NewLinkedDocument(ContentRef(EXTERNAL), "a", hasPersistedPermission = false)),
+            linked.registered.map { it.first },
+        )
+        assertEquals(listOf(LINKED_UUID), activity.opened)
+    }
+
+    @Test
+    fun `it opens where it was left the last time it was handed over`() = runTest {
+        linked.uuids[ContentRef(EXTERNAL)] = LINKED_UUID
+        activity.positions[LINKED_UUID] = ReadingPosition(3, 0.5f)
+
+        val viewModel = openedExternal()
+
+        assertEquals(ViewerStart(ReadingPosition(3, 0.5f)), viewModel.state.value.start)
+    }
+
+    @Test
+    fun `where the reader is in it gets written down against its uuid`() = runTest {
+        val viewModel = openedExternal()
+
+        viewModel.onSendIntent(PdfViewerIntent.ReadingPositionChanged(ReadingPosition(2, 0.1f)))
+        advanceUntilIdle()
+
+        assertEquals(mapOf(LINKED_UUID to ReadingPosition(2, 0.1f)), activity.positions)
+    }
+
+    /** The catalogue is a convenience here. The document was handed over to be read. */
+    @Test
+    fun `a document that could not be registered is shown all the same`() = runTest {
+        linked.registerFailure = IllegalStateException("database is locked")
+
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 2))
+        viewModel.onSendIntent(PdfViewerIntent.ReadingPositionChanged(ReadingPosition(1, 0f)))
+        advanceUntilIdle()
+
+        assertEquals("a.pdf", viewModel.state.value.readyDocument?.title)
+        assertTrue(activity.opened.isEmpty())
+        assertTrue(activity.availability.isEmpty())
+        assertTrue(activity.positions.isEmpty())
+    }
+
+    @Test
+    fun `once it has loaded, what it turned out to be is noted`() = runTest {
+        val viewModel = openedExternal()
+
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 9))
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(LINKED_UUID to LinkedDocumentFacts(null, null, 9, isProtected = false)),
+            linked.described,
+        )
+    }
+
+    @Test
+    fun `one that asks for a password is noted as protected`() = runTest {
+        val viewModel = openedExternal()
+
+        viewModel.onSendIntent(
+            PdfViewerIntent.DocumentFailedToLoad(ViewerLoadError.PasswordProtected)
+        )
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(LINKED_UUID to LinkedDocumentFacts(null, null, null, isProtected = true)),
+            linked.described,
+        )
+    }
+
     // ---------------------------------------------------------------------------------- helpers
 
     private fun TestScope.viewModel(
@@ -682,6 +772,8 @@ class PdfViewerViewModelTest {
             recordAvailability = RecordDocumentAvailabilityUseCase(activity),
             getReadingPosition = GetReadingPositionUseCase(settingsRepository, activity),
             rememberReadingPosition = RememberReadingPositionUseCase(settingsRepository, activity),
+            registerLinkedDocument = RegisterLinkedDocumentUseCase(access, linked),
+            describeLinkedDocument = DescribeLinkedDocumentUseCase(documents, linked, access),
             // Unconfined: the scheduler does not wait for the background scope, and what is
             // written there is what these tests look at.
             longLived =
@@ -743,6 +835,9 @@ class PdfViewerViewModelTest {
 
     private companion object {
         const val UUID = "doc-1"
+
+        /** What the fake catalogue calls the first document it registers. */
+        const val LINKED_UUID = "linked-1"
         val AREA = NormalizedRect(0.1f, 0.1f, 0.3f, 0.12f)
         val LINK = PageLink.External(listOf(NormalizedRect(0.1f, 0.1f, 0.2f, 0.12f)), "https://a.b")
         const val LOCATION = "content://com.bobbyesp.docucraft.fileprovider/documents/doc-1.pdf"

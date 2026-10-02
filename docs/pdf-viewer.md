@@ -170,6 +170,10 @@ their PDFs in Docucraft.
 - **It handles rotation itself** (`configChanges`). The engine keeps the reading position across
   the resize (see [pdf-engine.md](pdf-engine.md#reading-position)).
 - **A `file://` PDF is shown, but never handed on** to another app.
+- **The document is registered in the catalogue**, as one that belongs to another app, by the
+  viewer's ViewModel as it opens ([scanning.md](scanning.md#documents-of-other-apps)). That is what
+  gives it a uuid to note its opening and its reading position against. The viewer goes on showing
+  what it was handed, and if registering fails the document is shown all the same.
 
 **Known gap.** The intent filter accepts `http`/`https` PDFs, but the viewer reads through the
 `ContentResolver`, so a remote PDF ends on the error screen. The engine can download

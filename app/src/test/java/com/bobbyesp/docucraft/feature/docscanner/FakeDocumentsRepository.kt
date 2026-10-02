@@ -15,10 +15,15 @@ import kotlinx.coroutines.flow.update
  * A catalogue held in memory, for tests of what sits above it. It keeps what it was asked to do,
  * and can be told to fail.
  */
-class FakeDocumentsRepository(documents: List<Document.Managed> = emptyList()) :
-    DocumentsRepository {
+class FakeDocumentsRepository(
+    documents: List<Document.Managed> = emptyList(),
+    linked: List<Document.Linked> = emptyList(),
+) : DocumentsRepository {
 
     val documents = MutableStateFlow(documents)
+
+    /** The documents of other apps: in the catalogue, and in none of the library's lists. */
+    val linked = MutableStateFlow(linked)
 
     /** Every scan the catalogue was asked to add, in order. */
     val added = mutableListOf<NewScan>()
@@ -32,6 +37,7 @@ class FakeDocumentsRepository(documents: List<Document.Managed> = emptyList()) :
 
     override suspend fun getDocument(uuid: String): Document =
         documents.value.firstOrNull { it.uuid == uuid }
+            ?: linked.value.firstOrNull { it.uuid == uuid }
             ?: throw NoSuchElementException("No document found with ID: $uuid")
 
     override fun observeDocument(uuid: String): Flow<Document?> = documents.map { all ->

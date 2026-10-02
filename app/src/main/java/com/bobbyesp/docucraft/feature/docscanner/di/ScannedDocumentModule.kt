@@ -8,6 +8,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.DocumentActivityRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.DocumentsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.FoldersRepositoryImpl
+import com.bobbyesp.docucraft.feature.docscanner.data.repository.LinkedDocumentsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.PagesRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.TagsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.search.Fts4SearchIndex
@@ -15,6 +16,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperations
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.sharing.AndroidDocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.data.sharing.FileKitDocumentExporter
+import com.bobbyesp.docucraft.feature.docscanner.data.storage.AndroidExternalDocumentAccess
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentStorageImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.CachedDocumentThumbnails
@@ -22,6 +24,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.DocumentThumbnai
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentActivityRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.FoldersRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LinkedDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.PagesRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.TagsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.SearchIndex
@@ -29,7 +32,10 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentThumbnails
+import com.bobbyesp.docucraft.feature.docscanner.domain.storage.ExternalDocumentAccess
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DescribeLinkedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ForgetLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
@@ -38,6 +44,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveRecentDoc
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RegisterLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
@@ -84,6 +91,8 @@ val documentScannerDataModule = module {
     single<DocumentActivityRepository> {
         DocumentActivityRepositoryImpl(activityDao = get(), locations = get())
     }
+    single<LinkedDocumentsRepository> { LinkedDocumentsRepositoryImpl(documentDao = get()) }
+    single<ExternalDocumentAccess> { AndroidExternalDocumentAccess(context = androidContext()) }
     single<FoldersRepository> { FoldersRepositoryImpl(database = get(), locations = get()) }
     single<TagsRepository> { TagsRepositoryImpl(database = get(), locations = get()) }
     single<PagesRepository> {
@@ -103,6 +112,9 @@ val documentScannerDataModule = module {
     factory { ObserveRecentDocumentsUseCase(activity = get()) }
     factory { RecordDocumentOpenedUseCase(activity = get()) }
     factory { RecordDocumentAvailabilityUseCase(activity = get()) }
+    factory { RegisterLinkedDocumentUseCase(access = get(), linked = get()) }
+    factory { ForgetLinkedDocumentUseCase(linked = get(), access = get()) }
+    factory { DescribeLinkedDocumentUseCase(documents = get(), linked = get(), access = get()) }
     factory { GetReadingPositionUseCase(settings = get(), activity = get()) }
     factory { RememberReadingPositionUseCase(settings = get(), activity = get()) }
     factory { SetReadingPositionMemoryUseCase(settings = get(), activity = get()) }

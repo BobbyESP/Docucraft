@@ -28,6 +28,7 @@ import com.bobbyesp.docucraft.feature.docscanner.navigation.DeleteDocument
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
 import com.bobbyesp.docucraft.feature.docscanner.navigation.EditDocument
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsContent
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.LinkedDocumentActionsContent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentSheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsDialog
@@ -53,6 +54,15 @@ fun EntryProviderScope<NavKey>.documentActionsSection(navigator: Navigator) {
     ) { key ->
         val viewModel = documentActionsViewModel(key, key.documentUuid, navigator)
         val state by viewModel.state.collectAsStateWithLifecycle()
+
+        state.linked?.let { linked ->
+            LinkedDocumentActionsContent(
+                document = linked,
+                onRemove = { viewModel.onSendIntent(DocumentActionsIntent.RemoveFromRecents) },
+                stacked = LocalOverlayContext.current.hasRoomToStack,
+            )
+            return@entry
+        }
         val document = state.document ?: return@entry
 
         DocumentActionsContent(

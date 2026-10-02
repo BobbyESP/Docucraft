@@ -169,6 +169,9 @@
     <string name="viewer_use_defaults_on_desc">Every document opens with the settings below</string>
     <string name="viewer_use_defaults_off_desc">Documents open fitted to width, without night mode</string>
     <string name="viewer_session_note">What you change while reading is kept for that document until you close the app.</string>
+    <string name="remove_from_recents">Remove from Recents</string>
+    <string name="removed_from_recents">Removed from Recents</string>
+    <string name="linked_document_desc">This document belongs to another app. Docucraft only remembers where it is.</string>
     <string name="viewer_remember_position">Remember where I left off</string>
     <string name="viewer_remember_position_on_desc">Documents open on the page you were reading</string>
     <string name="viewer_remember_position_off_desc">Documents always open at the beginning</string>

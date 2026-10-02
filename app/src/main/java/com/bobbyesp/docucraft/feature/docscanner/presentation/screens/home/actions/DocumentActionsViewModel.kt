@@ -15,6 +15,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.ExportOutcome
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ForgetLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 
@@ -35,6 +36,7 @@ class DocumentActionsViewModel(
     private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase,
     private val documentSharer: DocumentSharer,
     private val documentExporter: DocumentExporter,
+    private val forgetLinkedDocument: ForgetLinkedDocumentUseCase,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
 ) :
@@ -52,10 +54,15 @@ class DocumentActionsViewModel(
         launch {
             observeDocument(documentUuid).collect { found ->
                 // Sharing, exporting, editing and deleting are done to a document the app keeps.
-                val document = found as? Document.Managed
-                setState { copy(document = document) }
+                // One that belongs to another app can only be taken out of Recents.
+                setState {
+                    copy(
+                        document = found as? Document.Managed,
+                        linked = found as? Document.Linked,
+                    )
+                }
 
-                if (document != null) wasLoaded = true
+                if (found != null) wasLoaded = true
                 else if (wasLoaded) sendEffect(DocumentActionsEffect.CloseAll)
             }
         }
@@ -67,6 +74,7 @@ class DocumentActionsViewModel(
             DocumentActionsIntent.Export -> export()
             DocumentActionsIntent.ConfirmDelete -> delete()
             is DocumentActionsIntent.ConfirmEdit -> edit(intent.title, intent.description)
+            DocumentActionsIntent.RemoveFromRecents -> removeFromRecents()
         }
     }
 
@@ -140,6 +148,20 @@ class DocumentActionsViewModel(
         sendUiEvent(
             UiEvent.ShowMessage(
                 stringProvider.get(R.string.doc_deleted_successfully),
+                NotificationType.Success,
+            )
+        )
+    }
+
+    /** Closing is left to the document disappearing, as it is for [delete]. */
+    private fun removeFromRecents() = launch {
+        currentState.linked ?: return@launch
+
+        forgetLinkedDocument(documentUuid)
+
+        sendUiEvent(
+            UiEvent.ShowMessage(
+                stringProvider.get(R.string.removed_from_recents),
                 NotificationType.Success,
             )
         )

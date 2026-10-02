@@ -65,7 +65,8 @@ A new Koin module is registered in `App.kt`.
   feature's DI module. For the scanner that is `ScannedDocumentModule.kt`; for the viewer,
   `PdfViewerModule.kt`.
 - **Framework work goes behind a port.** The interface lives in the domain and the implementation
-  in data. Examples: `DocumentStorage`, `DocumentThumbnails`, `SearchIndex`, `DocumentSharer`,
+  in data. Examples: `DocumentStorage`, `DocumentThumbnails`, `SearchIndex`,
+  `ExternalDocumentAccess`, `DocumentSharer`,
   `DocumentOpener`, `DocumentPrinter`, `LinkOpener`, `PageContentProvider`. A port that needs an
   `Activity` is a Koin `factory` taking it through `parametersOf(activity)`. It is called by the
   screen, in response to an effect from the ViewModel.
@@ -210,6 +211,8 @@ A new Koin module is registered in `App.kt`.
 - **A catalogued document**: the `PdfViewer(uuid)` key, in the main stack. On a wide window it
   shows beside Home (list-detail).
 - **Another app's PDF**: `PdfViewerActivity` takes `VIEW` and `SEND` for `application/pdf`.
+  - The catalogue registers it as a `LINKED` document, by its URI: a reference, never a copy. It
+    shows in Recents only, and no more than 50 are kept (`RegisterLinkedDocumentUseCase`).
   - It runs in its own task (`taskAffinity=""`, `autoRemoveFromRecents`) with its own back stack,
     rooted at `ExternalPdfViewer(uri, displayName)`.
   - Closing it returns to the calling app, not to Docucraft.

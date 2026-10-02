@@ -87,6 +87,9 @@
     <string name="viewer_use_defaults_on_desc">Todos los documentos se abren con estos ajustes</string>
     <string name="viewer_use_defaults_off_desc">Los documentos se abren ajustados al ancho y sin modo nocturno</string>
     <string name="viewer_session_note">Lo que cambies mientras lees se mantiene en ese documento hasta que cierres la app.</string>
+    <string name="remove_from_recents">Quitar de Recientes</string>
+    <string name="removed_from_recents">Quitado de Recientes</string>
+    <string name="linked_document_desc">Este documento es de otra app. Docucraft solo recuerda dónde está.</string>
     <string name="viewer_remember_position">Recordar dónde lo dejé</string>
     <string name="viewer_remember_position_on_desc">Los documentos se abren por la página que estabas leyendo</string>
     <string name="viewer_remember_position_off_desc">Los documentos se abren siempre por el principio</string>

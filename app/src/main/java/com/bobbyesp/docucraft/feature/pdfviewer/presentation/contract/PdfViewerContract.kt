@@ -131,8 +131,8 @@ sealed interface PdfViewerIntent {
 
     data object DismissLinkPreview : PdfViewerIntent
 
-    /** The document is on screen: its file was there, and could be read. */
-    data object DocumentLoaded : PdfViewerIntent
+    /** The document is on screen: its file was there, and could be read. It has [pageCount]. */
+    data class DocumentLoaded(val pageCount: Int) : PdfViewerIntent
 
     /** The document could not be shown, for [error]. */
     data class DocumentFailedToLoad(val error: ViewerLoadError) : PdfViewerIntent

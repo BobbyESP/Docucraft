@@ -569,7 +569,15 @@ private fun RecentDocumentsCarousel(
                         role = Role.Button,
                         onClickLabel = openLabel,
                         onLongClickLabel = moreOptionsLabel,
-                        onClick = { onOpenDocument(document.uuid) },
+                        // Another app's document that can no longer be reached has nothing to
+                        // show: what can be done about it is offered instead of an error.
+                        onClick = {
+                            if (document is Document.Linked && !recent.isReachable) {
+                                onOpenDocumentActions(document.uuid)
+                            } else {
+                                onOpenDocument(document.uuid)
+                            }
+                        },
                         onLongClick = { onOpenDocumentActions(document.uuid) },
                     )
                     // The title is faded out on the narrow items, but a screen reader should still
