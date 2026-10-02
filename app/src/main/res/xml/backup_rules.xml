@@ -1,13 +1,27 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    What Auto Backup leaves out, on Android 11 and lower. Android 12 and higher read
+    data_extraction_rules.xml instead; keep the two lists the same.
+
+    The catalogue and the documents stay on the device. A cloud backup holds 25 MB per app and
+    copies nothing at all once the app is over that, and a restore that brings the catalogue
+    without its files, or part of them, leaves documents that cannot be opened. Preferences are
+    still backed up.
+
+    On these versions the same rules also apply to a device-to-device transfer.
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <!-- The catalogue, with the files SQLite keeps beside it. -->
+    <exclude domain="database" path="scanned_pdfs.db" />
+    <exclude domain="database" path="scanned_pdfs.db-journal" />
+    <exclude domain="database" path="scanned_pdfs.db-shm" />
+    <exclude domain="database" path="scanned_pdfs.db-wal" />
+
+    <!-- The documents. Both folders they can be in are named, so that neither is ever backed up by
+         omission. -->
+    <exclude domain="file" path="scans" />
+    <exclude domain="file" path="documents" />
+
+    <!-- Previews are a cache of the documents. -->
+    <exclude domain="file" path="previews" />
 </full-backup-content>

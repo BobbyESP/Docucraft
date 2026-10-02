@@ -1,19 +1,30 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    What a cloud backup leaves out, on Android 12 and higher. Android 11 and lower read
+    backup_rules.xml instead; keep the two lists the same.
+
+    The catalogue and the documents stay on the device. A cloud backup holds 25 MB per app and
+    copies nothing at all once the app is over that, and a restore that brings the catalogue
+    without its files, or part of them, leaves documents that cannot be opened. Preferences are
+    still backed up.
+
+    There is no <device-transfer> section on purpose: a transfer between two devices has no size
+    limit, so it carries everything, the catalogue and its documents together.
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <!-- The catalogue, with the files SQLite keeps beside it. -->
+        <exclude domain="database" path="scanned_pdfs.db" />
+        <exclude domain="database" path="scanned_pdfs.db-journal" />
+        <exclude domain="database" path="scanned_pdfs.db-shm" />
+        <exclude domain="database" path="scanned_pdfs.db-wal" />
+
+        <!-- The documents. Both folders they can be in are named, so that neither is ever backed up
+             by omission. -->
+        <exclude domain="file" path="scans" />
+        <exclude domain="file" path="documents" />
+
+        <!-- Previews are a cache of the documents. -->
+        <exclude domain="file" path="previews" />
     </cloud-backup>
-    <!--
-    <device-transfer>
-        <include .../>
-        <exclude .../>
-    </device-transfer>
-    -->
 </data-extraction-rules>
