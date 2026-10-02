@@ -3,7 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 
 /** What can be asked of the document an overlay is acting on. */
 sealed interface DocumentActionsIntent {
@@ -33,5 +33,5 @@ data class DocumentActionsUiState(
      * Null while the document is being read, and again once it is deleted. The overlay closes on
      * the second, which is why deletion needs no separate signal.
      */
-    val document: ScannedDocument? = null
+    val document: Document? = null
 )

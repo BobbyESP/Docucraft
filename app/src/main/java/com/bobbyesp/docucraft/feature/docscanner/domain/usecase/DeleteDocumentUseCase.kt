@@ -3,8 +3,8 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 
 /**
@@ -14,10 +14,10 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
  * points at, and only the first is visible to the user.
  */
 class DeleteDocumentUseCase(
-    private val repository: LocalDocumentsRepository,
+    private val repository: DocumentsRepository,
     private val storage: DocumentStorage,
 ) {
-    suspend operator fun invoke(document: ScannedDocument) {
+    suspend operator fun invoke(document: Document) {
         repository.deleteDocument(document.location)
 
         storage.delete(document.location)

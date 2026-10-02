@@ -109,7 +109,7 @@ import com.bobbyesp.docucraft.core.presentation.theme.frosted
 import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.core.util.contentRevealTransform
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
@@ -424,8 +424,8 @@ private val FlatFabElevation
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DocumentsPage(
-    documents: List<ScannedDocument>,
-    recentDocuments: List<ScannedDocument>,
+    documents: List<Document>,
+    recentDocuments: List<Document>,
     sortOption: SortOption,
     onSortOptionChange: (SortOption) -> Unit,
     onOpenDocument: (String) -> Unit,
@@ -531,7 +531,7 @@ private fun SectionHeader(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun RecentDocumentsCarousel(
-    documents: List<ScannedDocument>,
+    documents: List<Document>,
     onOpenDocument: (String) -> Unit,
     onOpenDocumentActions: (String) -> Unit,
     modifier: Modifier = Modifier,

@@ -15,7 +15,7 @@ import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.FakePageContentProvider
@@ -67,7 +67,7 @@ class PdfViewerViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private val catalogue = MutableStateFlow<ScannedDocument?>(null)
+    private val catalogue = MutableStateFlow<Document?>(null)
     private val observeDocument: ObserveDocumentUseCase = mockk {
         every { this@mockk.invoke(UUID) } returns catalogue
     }
@@ -549,7 +549,7 @@ class PdfViewerViewModelTest {
         DocumentSelection(TextCaret(startPage, startOffset), TextCaret(endPage, endOffset))
 
     private fun scanned() =
-        ScannedDocument(
+        Document(
             uuid = UUID,
             filename = "Scan_20260924_101500",
             title = "Invoice",

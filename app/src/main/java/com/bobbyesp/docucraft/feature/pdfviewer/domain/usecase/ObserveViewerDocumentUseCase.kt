@@ -3,7 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
@@ -38,7 +38,7 @@ class ObserveViewerDocumentUseCase(private val observeDocument: ObserveDocumentU
         }
 }
 
-private fun ScannedDocument.toBasicDocument() =
+private fun Document.toBasicDocument() =
     BasicDocument(
         uuid = uuid,
         filename = filename,

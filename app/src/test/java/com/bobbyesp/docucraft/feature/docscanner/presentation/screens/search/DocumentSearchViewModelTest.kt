@@ -7,7 +7,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.scanner.ContentRef
@@ -51,7 +51,7 @@ class DocumentSearchViewModelTest {
         Dispatchers.setMain(testDispatcher)
         coEvery { processDocumentsUseCase(any(), any(), any(), any()) } answers
             {
-                val docs = firstArg<List<ScannedDocument>>()
+                val docs = firstArg<List<Document>>()
                 val query = secondArg<String>()
                 docs.filter { it.title.orEmpty().contains(query, ignoreCase = true) }
             }
@@ -63,7 +63,7 @@ class DocumentSearchViewModelTest {
     }
 
     private fun document(title: String) =
-        ScannedDocument(
+        Document(
             uuid = title.lowercase(),
             filename = "$title.pdf",
             title = title,

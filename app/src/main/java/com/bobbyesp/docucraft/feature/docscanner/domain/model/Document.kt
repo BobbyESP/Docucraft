@@ -21,7 +21,7 @@ import com.bobbyesp.scanner.ContentRef
  * @property pageCount Pages in the document.
  * @property thumbnail Where its preview image lives, if one could be produced.
  */
-data class ScannedDocument(
+data class Document(
     val uuid: String,
     val filename: String,
     val title: String?,

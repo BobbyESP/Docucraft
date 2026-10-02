@@ -7,9 +7,9 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.DocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toModel
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.scanner.ContentRef
 import java.text.Normalizer
 import java.util.UUID
@@ -19,19 +19,19 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 /** @param now The clock, in epoch milliseconds. A parameter so that a test can hold it still. */
-class LocalDocumentsRepositoryImpl(
+class DocumentsRepositoryImpl(
     private val documentDao: DocumentDao,
     private val locations: DocumentLocations,
     private val now: () -> Long = System::currentTimeMillis,
-) : LocalDocumentsRepository {
+) : DocumentsRepository {
 
-    override fun observeDocuments(): Flow<List<ScannedDocument>> =
+    override fun observeDocuments(): Flow<List<Document>> =
         documentDao
             .observeLibrary()
             .map { entities -> entities.map { it.toModel(locations) } }
             .flowOn(Dispatchers.Default)
 
-    override suspend fun searchDocuments(query: String): List<ScannedDocument> {
+    override suspend fun searchDocuments(query: String): List<Document> {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) return emptyList()
 
@@ -42,13 +42,13 @@ class LocalDocumentsRepositoryImpl(
         return result.map { it.toModel(locations) }
     }
 
-    override fun observeDocument(uuid: String): Flow<ScannedDocument?> =
+    override fun observeDocument(uuid: String): Flow<Document?> =
         documentDao
             .observeByUuid(uuid)
             .map { entity -> entity?.toModel(locations) }
             .flowOn(Dispatchers.Default)
 
-    override suspend fun getDocument(uuid: String): ScannedDocument {
+    override suspend fun getDocument(uuid: String): Document {
         require(uuid.isNotEmpty()) { "Document UUID must not be empty" }
         val entity =
             documentDao.getByUuid(uuid)

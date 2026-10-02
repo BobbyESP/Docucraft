@@ -11,7 +11,7 @@ import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
@@ -81,7 +81,7 @@ class HomeViewModelTest {
     }
 
     private fun fakeDocument(uuid: String = "doc-1") =
-        ScannedDocument(
+        Document(
             uuid = uuid,
             filename = "$uuid.pdf",
             title = "Title $uuid",
@@ -102,7 +102,7 @@ class HomeViewModelTest {
     private fun completedScan() = ScanOutcome.Completed(scannedDraft)
 
     private fun createViewModel(
-        documents: Flow<List<ScannedDocument>> = flowOf(emptyList()),
+        documents: Flow<List<Document>> = flowOf(emptyList()),
         saveResult: Result<ContentRef> = Result.success(ContentRef("content://stored")),
         savedState: SavedStateHandle = SavedStateHandle(),
         pendingScan: ScanOutcome? = null,

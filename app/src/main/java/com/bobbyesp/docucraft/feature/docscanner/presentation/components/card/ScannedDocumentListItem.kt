@@ -46,7 +46,7 @@ import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.util.DateTime
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
 import com.bobbyesp.scanner.ContentRef
 import java.util.UUID
@@ -66,7 +66,7 @@ import java.util.UUID
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ScannedDocumentListItem(
-    pdf: ScannedDocument,
+    pdf: Document,
     onItemClick: (String) -> Unit,
     onItemLongClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -113,7 +113,7 @@ fun ScannedDocumentListItem(
  * hid the facts that do tell documents apart.
  */
 @Composable
-private fun DocumentSummary(pdf: ScannedDocument, modifier: Modifier = Modifier) {
+private fun DocumentSummary(pdf: Document, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val pages = pluralStringResource(R.plurals.doc_n_pages, pdf.pageCount, pdf.pageCount)
     val facts =
@@ -229,7 +229,7 @@ private fun ScannedDocumentListPreview() {
 }
 
 private fun previewDocument(index: Int, description: String?) =
-    ScannedDocument(
+    Document(
         filename = "Scan_20260919_14253$index",
         title = "Document $index",
         description = description,

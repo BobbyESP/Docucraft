@@ -7,9 +7,9 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.LegacyDocumentPath
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentCustody
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentOrigin
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.scanner.ContentRef
 
 /**
@@ -19,8 +19,8 @@ import com.bobbyesp.scanner.ContentRef
  * open and where its preview is, so both are worked out here through [locations]. The row id stays
  * behind: nothing above this layer uses it.
  */
-internal fun DocumentEntity.toModel(locations: DocumentLocations): ScannedDocument =
-    ScannedDocument(
+internal fun DocumentEntity.toModel(locations: DocumentLocations): Document =
+    Document(
         uuid = uuid,
         filename = originalName,
         title = title,

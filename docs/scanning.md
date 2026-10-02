@@ -98,8 +98,8 @@ The save reports its own failure. Earlier, a failed save still congratulated the
   document is called and described as; its `unicode61` tokenizer ignores case and accents.
   - The catalogue keeps a document's path relative to the files directory, never a `FileProvider`
     URI, which depends on the authority. `DocumentLocations` builds the URI when it is asked for.
-  - Column names are the schema. `ScannedDocumentMapper` translates them to the domain's
-    `ScannedDocument`.
+  - Column names are the schema. `DocumentMapper` translates them to the domain's
+    `Document`.
   - Rules the tables cannot state are triggers, in `DatabaseTriggers.ALL`. A new database gets
     them when it is created and an old one from the migration, from that same list.
   - Migrations are in `DocumentsDatabaseMigrations.kt`, and schemas are exported to

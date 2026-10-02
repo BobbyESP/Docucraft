@@ -26,7 +26,7 @@ import org.junit.runner.RunWith
  * are decided by the device's SQLite and how it was compiled, which a JVM test cannot stand in for.
  */
 @RunWith(AndroidJUnit4::class)
-class LocalDocumentsRepositoryImplTest {
+class DocumentsRepositoryImplTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val database =
@@ -34,7 +34,7 @@ class LocalDocumentsRepositoryImplTest {
             .addCallback(DatabaseTriggers.CreateOnNewDatabase)
             .build()
     private val repository =
-        LocalDocumentsRepositoryImpl(
+        DocumentsRepositoryImpl(
             documentDao = database.documentDao(),
             locations = DocumentLocations(context),
             now = { Now },

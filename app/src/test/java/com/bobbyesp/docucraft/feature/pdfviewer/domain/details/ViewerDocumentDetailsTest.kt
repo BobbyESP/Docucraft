@@ -3,7 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.domain.details
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.DocumentText
@@ -26,7 +26,7 @@ import org.junit.Test
  */
 class ViewerDocumentDetailsTest {
 
-    private val catalogue = MutableStateFlow<ScannedDocument?>(scanned())
+    private val catalogue = MutableStateFlow<Document?>(scanned())
     private val observeDocument: ObserveDocumentUseCase = mockk {
         every { this@mockk.invoke(UUID) } returns catalogue
     }
@@ -93,7 +93,7 @@ class ViewerDocumentDetailsTest {
     }
 
     private fun scanned() =
-        ScannedDocument(
+        Document(
             uuid = UUID,
             filename = "Scan_20260924_101500",
             title = "Invoice",

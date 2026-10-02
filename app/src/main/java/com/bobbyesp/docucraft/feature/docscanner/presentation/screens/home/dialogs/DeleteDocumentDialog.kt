@@ -34,14 +34,14 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionSheetSkeleton
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DeleteDocumentSheet(
-    document: ScannedDocument,
+    document: Document,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
@@ -93,7 +93,7 @@ fun DeleteDocumentSheet(
 
 @Composable
 fun DeleteDocumentDialog(
-    scannedDocument: ScannedDocument,
+    scannedDocument: Document,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
@@ -129,7 +129,7 @@ fun DeleteDocumentDialog(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DeleteDocumentContent(scannedDocument: ScannedDocument, modifier: Modifier = Modifier) {
+private fun DeleteDocumentContent(scannedDocument: Document, modifier: Modifier = Modifier) {
     val documentTitle = scannedDocument.title ?: scannedDocument.filename
     val text = stringResource(R.string.doc_delete_confirmation, documentTitle)
 

@@ -8,9 +8,9 @@ import com.bobbyesp.scanner.ContentRef
 /**
  * A document that has been stored but not yet catalogued.
  *
- * The write-side counterpart of [ScannedDocument]. It lacks exactly `uuid`, `title` and
- * `description`, which is the point: those are assigned by the catalogue or written by the user,
- * never produced by a scan. Everything else is named as it is named there.
+ * The write-side counterpart of [Document]. It lacks exactly `uuid`, `title` and `description`,
+ * which is the point: those are assigned by the catalogue or written by the user, never produced by
+ * a scan. Everything else is named as it is named there.
  *
  * @property filename Name without extension, e.g. `Scan_20260919_142530`.
  * @property location Where the stored document lives.

@@ -5,7 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrategy
 
@@ -14,20 +14,20 @@ class ProcessDocumentsUseCase(
     private val localSearchStrategy: LocalSearchStrategy,
 ) {
     suspend operator fun invoke(
-        documents: List<ScannedDocument>,
+        documents: List<Document>,
         query: String,
         filter: FilterOptions,
         sort: SortOption,
-    ): List<ScannedDocument> {
+    ): List<Document> {
         val searched = search(documents, query)
         val filtered = filter(searched, filter)
         return sort(filtered, sort)
     }
 
     private suspend fun search(
-        documents: List<ScannedDocument>,
+        documents: List<Document>,
         query: String,
-    ): List<ScannedDocument> {
+    ): List<Document> {
         if (query.isBlank()) return documents
 
         return runCatching {
@@ -41,13 +41,13 @@ class ProcessDocumentsUseCase(
     }
 
     private fun filter(
-        documents: List<ScannedDocument>,
+        documents: List<Document>,
         filter: FilterOptions,
-    ): List<ScannedDocument> {
+    ): List<Document> {
         return documents.filterByPages(filter).filterBySize(filter).filterByDate(filter)
     }
 
-    private fun sort(documents: List<ScannedDocument>, sort: SortOption): List<ScannedDocument> {
+    private fun sort(documents: List<Document>, sort: SortOption): List<Document> {
         return when (sort.criteria) {
             SortOption.Criteria.DATE ->
                 if (sort.order == SortOption.Order.DESC)
@@ -66,12 +66,12 @@ class ProcessDocumentsUseCase(
         }
     }
 
-    private fun List<ScannedDocument>.filterByPages(filter: FilterOptions) =
+    private fun List<Document>.filterByPages(filter: FilterOptions) =
         filter.minPageCount?.let { min -> filter { it.pageCount >= min } } ?: this
 
-    private fun List<ScannedDocument>.filterBySize(filter: FilterOptions) =
+    private fun List<Document>.filterBySize(filter: FilterOptions) =
         filter.minFileSize?.let { min -> filter { it.sizeBytes >= min } } ?: this
 
-    private fun List<ScannedDocument>.filterByDate(filter: FilterOptions) =
+    private fun List<Document>.filterByDate(filter: FilterOptions) =
         filter.dateRange?.let { range -> filter { it.capturedAtEpochMillis in range } } ?: this
 }

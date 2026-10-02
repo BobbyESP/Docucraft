@@ -59,7 +59,7 @@ import com.bobbyesp.docucraft.core.presentation.components.others.GridMenuItem
 import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
 import com.bobbyesp.docucraft.core.presentation.components.others.RoundedTag
 import com.bobbyesp.docucraft.core.util.DateTime
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -87,7 +87,7 @@ internal data class DocumentAction(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocumentActionsContent(
-    scannedDocument: ScannedDocument,
+    scannedDocument: Document,
     onSave: () -> Unit,
     onShare: () -> Unit,
     onDelete: () -> Unit,
@@ -178,7 +178,7 @@ private fun rememberDocumentActions(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DocumentHeader(scannedDocument: ScannedDocument, modifier: Modifier = Modifier) {
+private fun DocumentHeader(scannedDocument: Document, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         DocumentThumbnail(thumbnail = scannedDocument.thumbnail?.value)
         DocumentInfo(scannedDocument = scannedDocument)
@@ -218,7 +218,7 @@ private fun DocumentThumbnail(thumbnail: Any?, modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DocumentInfo(scannedDocument: ScannedDocument, modifier: Modifier = Modifier) {
+private fun DocumentInfo(scannedDocument: Document, modifier: Modifier = Modifier) {
     val formattedDate =
         rememberSaveable(scannedDocument.capturedAtEpochMillis) {
             DateTime.formatDate(

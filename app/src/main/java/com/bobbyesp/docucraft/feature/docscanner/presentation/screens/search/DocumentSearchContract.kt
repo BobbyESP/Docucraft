@@ -3,7 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 
 /**
  * @property results the documents matching [resultsFor].
@@ -12,7 +12,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
  */
 data class DocumentSearchUiState(
     val query: String = "",
-    val results: List<ScannedDocument> = emptyList(),
+    val results: List<Document> = emptyList(),
     val resultsFor: String? = null,
 ) {
     val hasNoMatches: Boolean

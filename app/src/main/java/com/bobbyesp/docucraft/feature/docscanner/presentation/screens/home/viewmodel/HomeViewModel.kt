@@ -13,7 +13,7 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
@@ -143,7 +143,7 @@ class HomeViewModel(
      * fewer documents, the list shows every one of them at a glance, and the shelf would only
      * repeat it.
      */
-    private fun recentOf(documents: List<ScannedDocument>): List<ScannedDocument> =
+    private fun recentOf(documents: List<Document>): List<Document> =
         if (documents.size <= RECENTS_MINIMUM) emptyList()
         else documents.sortedByDescending { it.capturedAtEpochMillis }.take(RECENTS_SHOWN)
 

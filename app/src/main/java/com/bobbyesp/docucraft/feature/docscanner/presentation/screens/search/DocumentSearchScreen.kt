@@ -86,7 +86,7 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.blurHalo
 import com.bobbyesp.docucraft.core.presentation.theme.frosted
 import com.bobbyesp.docucraft.core.util.animateItemWith
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import dev.chrisbanes.haze.HazeState
@@ -375,7 +375,7 @@ private fun SearchField(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SearchResults(
-    results: List<ScannedDocument>,
+    results: List<Document>,
     selectedDocumentId: String?,
     onOpenDocument: (String) -> Unit,
     onOpenDocumentActions: (String) -> Unit,

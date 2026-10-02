@@ -3,8 +3,8 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.repository
 
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.scanner.ContentRef
 import kotlinx.coroutines.flow.Flow
 
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.Flow
  * The catalogue of scanned documents: what the app knows about them, as opposed to where their
  * bytes live, which is `DocumentStorage`'s business.
  */
-interface LocalDocumentsRepository {
+interface DocumentsRepository {
 
     /**
      * Every catalogued document, newest first, emitted again on every change — a scan saved, a
@@ -20,7 +20,7 @@ interface LocalDocumentsRepository {
      *
      * The flow does not end on its own.
      */
-    fun observeDocuments(): Flow<List<ScannedDocument>>
+    fun observeDocuments(): Flow<List<Document>>
 
     /**
      * Searches filename, title and description at once, so the UI can offer a single search box.
@@ -30,13 +30,13 @@ interface LocalDocumentsRepository {
      * @param query Free text. An empty or blank query matches nothing.
      * @return The matching documents, or an empty list.
      */
-    suspend fun searchDocuments(query: String): List<ScannedDocument>
+    suspend fun searchDocuments(query: String): List<Document>
 
     /**
      * @return The document with this [uuid].
      * @throws NoSuchElementException If the catalogue holds no such document.
      */
-    suspend fun getDocument(uuid: String): ScannedDocument
+    suspend fun getDocument(uuid: String): Document
 
     /**
      * One document, emitted again whenever it changes, and `null` once it is deleted.
@@ -44,7 +44,7 @@ interface LocalDocumentsRepository {
      * For screens that outlive an edit: reading once would leave them showing what was true when
      * they opened.
      */
-    fun observeDocument(uuid: String): Flow<ScannedDocument?>
+    fun observeDocument(uuid: String): Flow<Document?>
 
     /**
      * Adds a freshly stored document to the catalogue.

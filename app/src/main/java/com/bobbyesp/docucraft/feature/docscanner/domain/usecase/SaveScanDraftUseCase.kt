@@ -6,7 +6,7 @@ package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 import com.bobbyesp.docucraft.core.util.DateTime
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.scanner.ContentRef
 import com.bobbyesp.scanner.ScanDraft
@@ -20,7 +20,7 @@ import com.bobbyesp.scanner.ScanDraft
  */
 class SaveScanDraftUseCase(
     private val storage: DocumentStorage,
-    private val repository: LocalDocumentsRepository,
+    private val repository: DocumentsRepository,
 ) {
     /**
      * @param filename Name without extension. Defaults to one derived from the capture time.

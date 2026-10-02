@@ -6,7 +6,7 @@ package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.scanner.ContentRef
 import com.bobbyesp.scanner.ScanArtifact
 import com.bobbyesp.scanner.ScanDraft
@@ -26,7 +26,7 @@ import org.junit.Test
 class SaveScanDraftUseCaseTest {
 
     private val storage = FakeDocumentStorage()
-    private val repository = mockk<LocalDocumentsRepository>(relaxed = true)
+    private val repository = mockk<DocumentsRepository>(relaxed = true)
     private val useCase = SaveScanDraftUseCase(storage, repository)
 
     private fun draft(pages: Int = 3, capturedAt: Long = 1_700_000_000_000L) =

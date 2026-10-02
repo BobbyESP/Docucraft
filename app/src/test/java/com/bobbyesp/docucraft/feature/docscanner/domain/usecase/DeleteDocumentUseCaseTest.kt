@@ -4,8 +4,8 @@
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.scanner.ContentRef
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -18,11 +18,11 @@ import org.junit.Test
 class DeleteDocumentUseCaseTest {
 
     private val storage = FakeDocumentStorage()
-    private val repository = mockk<LocalDocumentsRepository>(relaxed = true)
+    private val repository = mockk<DocumentsRepository>(relaxed = true)
     private val useCase = DeleteDocumentUseCase(repository, storage)
 
     private fun document(thumbnail: ContentRef? = ContentRef("/previews/doc.png")) =
-        ScannedDocument(
+        Document(
             uuid = "doc-1",
             filename = "doc",
             title = null,

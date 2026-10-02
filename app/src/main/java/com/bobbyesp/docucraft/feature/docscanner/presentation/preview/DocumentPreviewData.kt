@@ -3,15 +3,15 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.preview
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.scanner.ContentRef
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
 object DocumentPreviewData {
-    val documents: ImmutableList<ScannedDocument> =
+    val documents: ImmutableList<Document> =
         persistentListOf(
-            ScannedDocument(
+            Document(
                 uuid = "1asd",
                 filename = "document1.pdf",
                 title = "Documento 1 de prueba. Título corto",
@@ -23,7 +23,7 @@ object DocumentPreviewData {
                 pageCount = 10,
                 thumbnail = ContentRef("content://com.example.thumbnails/thumbnail/1"),
             ),
-            ScannedDocument(
+            Document(
                 uuid = "2asd",
                 filename = "document2.pdf",
                 title = "Apuntes de programación",

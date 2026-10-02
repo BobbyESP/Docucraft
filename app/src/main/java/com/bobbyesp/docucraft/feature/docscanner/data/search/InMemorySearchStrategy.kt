@@ -3,11 +3,11 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.search
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
 
 class InMemorySearchStrategy : LocalSearchStrategy {
-    override fun search(documents: List<ScannedDocument>, query: String): List<ScannedDocument> {
+    override fun search(documents: List<Document>, query: String): List<Document> {
         if (query.isBlank()) return documents
 
         val lowerQuery = query.lowercase()

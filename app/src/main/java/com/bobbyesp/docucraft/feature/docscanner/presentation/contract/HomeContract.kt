@@ -5,7 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.contract
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 
 sealed interface HomeStatus {
     data object Idle : HomeStatus
@@ -21,8 +21,8 @@ sealed interface HomeStatus {
  */
 data class HomeUiState(
     val status: HomeStatus = HomeStatus.Loading,
-    val visibleDocuments: List<ScannedDocument> = emptyList(),
-    val recentDocuments: List<ScannedDocument> = emptyList(),
+    val visibleDocuments: List<Document> = emptyList(),
+    val recentDocuments: List<Document> = emptyList(),
     val hasDocuments: Boolean = false,
     val filterOptions: FilterOptions = FilterOptions.default,
     val isScanning: Boolean = false,
