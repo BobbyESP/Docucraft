@@ -41,9 +41,9 @@ data           port implementations: Room, DataStore, files, platform APIs, othe
   still carry Compose types (`UserPreferences`, `InAppNotification`); moving them out is part of the
   preferences stabilization, still pending.
 - **Anything the framework does goes behind a port**: an interface in the domain, implemented in
-  data. Examples: `DocumentStorage`, `DocumentSharer`, `DocumentExporter`, `DocumentOpener`,
-  `DocumentPrinter`, `LinkOpener`, `PageContentProvider`, `DocumentScanner`. Tests use fakes, not
-  mocks of the framework.
+  data. Examples: `DocumentStorage`, `DocumentThumbnails`, `SearchIndex`, `DocumentSharer`,
+  `DocumentExporter`, `DocumentOpener`, `DocumentPrinter`, `LinkOpener`, `PageContentProvider`,
+  `DocumentScanner`. Tests use fakes, not mocks of the framework.
 - **A port that needs an `Activity`** (printing, opening a link) is a Koin `factory` given the
   activity through `parametersOf`. The ViewModel emits an effect, and the screen, which has the
   activity, calls the port.
@@ -87,7 +87,8 @@ have theirs in `core/di`. A new module is added to the list in `App.kt`.
 
 **Swapping an implementation is always one binding:**
 - the scanner: `DocumentScannerModule.kt`;
-- where page text comes from: `PageContentModule.kt`.
+- where page text comes from: `PageContentModule.kt`;
+- how the library is searched: the `SearchIndex` binding in `ScannedDocumentModule.kt`.
 
 If a swap needs more than one line, the design is not finished.
 

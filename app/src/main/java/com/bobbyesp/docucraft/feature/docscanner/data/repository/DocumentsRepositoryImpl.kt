@@ -11,7 +11,6 @@ import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScan
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
-import java.text.Normalizer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -29,17 +28,6 @@ class DocumentsRepositoryImpl(
             .observeLibrary()
             .map { entities -> entities.map { it.toManaged(locations) } }
             .flowOn(Dispatchers.Default)
-
-    override suspend fun searchDocuments(query: String): List<Document.Managed> {
-        val trimmed = query.trim()
-        if (trimmed.isEmpty()) return emptyList()
-
-        val ftsQuery = buildFtsQuery(trimmed)
-
-        val result = documentDao.search(ftsQuery)
-
-        return result.map { it.toManaged(locations) }
-    }
 
     override fun observeDocument(uuid: String): Flow<Document?> =
         documentDao
@@ -71,24 +59,5 @@ class DocumentsRepositoryImpl(
         val deleted = documentDao.deleteByUuid(uuid)
 
         if (deleted <= 0) throw NoSuchElementException("No document found with UUID: $uuid")
-    }
-
-    private fun normalize(text: String): String {
-        return Normalizer.normalize(text, Normalizer.Form.NFD)
-            .replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "")
-            .lowercase()
-    }
-
-    /**
-     * Every term as a prefix, and all of them required. A space between terms is what requires them
-     * all: Android's SQLite is compiled with the standard query syntax, where `AND` is not an
-     * operator but one more word to look for.
-     */
-    private fun buildFtsQuery(query: String): String {
-        return query
-            .trim()
-            .split("\\s+".toRegex())
-            .map { normalize(it) }
-            .joinToString(" ") { "$it*" }
     }
 }

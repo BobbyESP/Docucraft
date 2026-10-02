@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.DocumentDao
+import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.SearchDao
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -14,4 +15,5 @@ val scannedDocumentsDatabaseModule = module {
     single<DocumentsDatabase> { DocumentsDatabase.builder(androidContext()).build() }
 
     single<DocumentDao> { get<DocumentsDatabase>().documentDao() }
+    single<SearchDao> { get<DocumentsDatabase>().searchDao() }
 }

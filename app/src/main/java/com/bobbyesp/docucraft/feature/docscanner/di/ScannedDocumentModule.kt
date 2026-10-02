@@ -5,9 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.core.data.image.ImageLoaderComponent
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.DocumentsRepositoryImpl
-import com.bobbyesp.docucraft.feature.docscanner.data.search.CompositeSearchStrategy
-import com.bobbyesp.docucraft.feature.docscanner.data.search.DatabaseSearchStrategy
-import com.bobbyesp.docucraft.feature.docscanner.data.search.InMemorySearchStrategy
+import com.bobbyesp.docucraft.feature.docscanner.data.search.Fts4SearchIndex
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsService
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.sharing.AndroidDocumentSharer
@@ -17,8 +15,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentStorageImp
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.CachedDocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.DocumentThumbnailComponent
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
-import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
-import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrategy
+import com.bobbyesp.docucraft.feature.docscanner.domain.search.SearchIndex
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
@@ -29,6 +26,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentU
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
@@ -69,18 +67,16 @@ val documentScannerDataModule = module {
         DocumentsRepositoryImpl(documentDao = get(), locations = get())
     }
 
-    // Search Strategies
-    factory<LocalSearchStrategy> { InMemorySearchStrategy() }
-    factory<QuerySearchStrategy> {
-        CompositeSearchStrategy(listOf(DatabaseSearchStrategy(repository = get())))
-    }
+    // How the library is searched: the one line that changes for another search engine.
+    single<SearchIndex> { Fts4SearchIndex(searchDao = get()) }
 
     // Use cases
     factory { ObserveDocumentsUseCase(repository = get()) }
     factory { ObserveDocumentUseCase(repository = get()) }
     factory { GetDocumentUseCase(repository = get()) }
     factory { UpdateDocumentFieldsUseCase(repository = get()) }
-    factory { ProcessDocumentsUseCase(querySearchStrategy = get(), localSearchStrategy = get()) }
+    factory { ProcessDocumentsUseCase() }
+    factory { SearchDocumentsUseCase(searchIndex = get()) }
 
     factory { DeleteDocumentUseCase(repository = get(), storage = get(), thumbnails = get()) }
 

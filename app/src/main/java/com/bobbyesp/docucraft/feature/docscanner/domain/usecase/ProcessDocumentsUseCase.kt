@@ -6,67 +6,41 @@ package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
-import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
-import com.bobbyesp.docucraft.feature.docscanner.domain.search.QuerySearchStrategy
 
-class ProcessDocumentsUseCase(
-    private val querySearchStrategy: QuerySearchStrategy,
-    private val localSearchStrategy: LocalSearchStrategy,
-) {
-    suspend operator fun invoke(
+/**
+ * What the library's list shows of its documents: the ones that pass the filters, in the order the
+ * user chose. Searching is not part of it: a search has an order of its own, by relevance, and
+ * lives in [SearchDocumentsUseCase].
+ */
+class ProcessDocumentsUseCase {
+
+    operator fun invoke(
         documents: List<Document.Managed>,
-        query: String,
         filter: FilterOptions,
         sort: SortOption,
-    ): List<Document.Managed> {
-        val searched = search(documents, query)
-        val filtered = filter(searched, filter)
-        return sort(filtered, sort)
-    }
-
-    private suspend fun search(
-        documents: List<Document.Managed>,
-        query: String,
-    ): List<Document.Managed> {
-        if (query.isBlank()) return documents
-
-        return runCatching {
-            val queryResults = querySearchStrategy.search(query)
-            if (queryResults.isEmpty()) throw NoSuchElementException("No results found")
-
-            val ids = queryResults.map { it.uuid }.toSet()
-            documents.filter { it.uuid in ids }
-        }
-            .getOrElse { localSearchStrategy.search(documents, query) }
-    }
+    ): List<Document.Managed> = sort(filter(documents, filter), sort)
 
     private fun filter(
         documents: List<Document.Managed>,
         filter: FilterOptions,
-    ): List<Document.Managed> {
-        return documents.filterByPages(filter).filterBySize(filter).filterByDate(filter)
-    }
+    ): List<Document.Managed> =
+        documents.filterByPages(filter).filterBySize(filter).filterByDate(filter)
 
     private fun sort(documents: List<Document.Managed>, sort: SortOption): List<Document.Managed> {
-        return when (sort.criteria) {
-            SortOption.Criteria.DATE ->
-                if (sort.order == SortOption.Order.DESC)
-                    documents.sortedByDescending { it.createdAtEpochMillis }
-                else documents.sortedBy { it.createdAtEpochMillis }
-
-            SortOption.Criteria.NAME ->
-                if (sort.order == SortOption.Order.DESC) documents.sortedByDescending { it.name }
-                else documents.sortedBy { it.name }
-
-            SortOption.Criteria.SIZE ->
-                if (sort.order == SortOption.Order.DESC)
-                    documents.sortedByDescending { it.sizeBytes ?: 0 }
-                else documents.sortedBy { it.sizeBytes ?: 0 }
-        }
+        val ascending: Comparator<Document.Managed> =
+            when (sort.criteria) {
+                SortOption.Criteria.DATE -> compareBy { it.createdAtEpochMillis }
+                SortOption.Criteria.NAME -> compareBy { it.name }
+                // A size that is not known sorts as the smallest.
+                SortOption.Criteria.SIZE -> compareBy { it.sizeBytes ?: 0 }
+            }
+        return documents.sortedWith(
+            if (sort.order == SortOption.Order.DESC) ascending.reversed() else ascending
+        )
     }
 
+    // A document whose pages have not been counted cannot be said to have that many.
     private fun List<Document.Managed>.filterByPages(filter: FilterOptions) =
-        // A document whose pages have not been counted cannot be said to have that many.
         filter.minPageCount?.let { min -> filter { (it.pageCount ?: 0) >= min } } ?: this
 
     private fun List<Document.Managed>.filterBySize(filter: FilterOptions) =

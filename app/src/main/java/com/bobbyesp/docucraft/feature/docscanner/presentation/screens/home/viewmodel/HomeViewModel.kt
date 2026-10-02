@@ -110,7 +110,7 @@ class HomeViewModel(
             .mapLatest { (docs, filters) ->
                 val processed =
                     withContext(defaultDispatcher) {
-                        processDocumentsUseCase(docs, "", filters, filters.sortBy)
+                        processDocumentsUseCase(docs, filters, filters.sortBy)
                     }
 
                 Triple(processed, recentOf(docs), docs.isNotEmpty())

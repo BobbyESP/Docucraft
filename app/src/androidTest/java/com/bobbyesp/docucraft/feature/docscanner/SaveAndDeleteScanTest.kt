@@ -10,6 +10,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.search.SearchIndex
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.scanner.ContentRef
@@ -41,6 +42,7 @@ class SaveAndDeleteScanTest {
     private val saveScan: SaveScanDraftUseCase = koin.get()
     private val deleteDocument: DeleteDocumentUseCase = koin.get()
     private val repository: DocumentsRepository = koin.get()
+    private val searchIndex: SearchIndex = koin.get()
     private val database: DocumentsDatabase = koin.get()
 
     /** Where the scanner would leave its PDF. */
@@ -107,7 +109,7 @@ class SaveAndDeleteScanTest {
     fun aSavedScanIsFoundByItsNameStraightAway() = runBlocking {
         val document = save(reportedPages = 3)
 
-        assertTrue(repository.searchDocuments("scan").any { it.uuid == document.uuid })
+        assertTrue(searchIndex.search("scan").any { it.documentUuid == document.uuid })
     }
 
     @Test

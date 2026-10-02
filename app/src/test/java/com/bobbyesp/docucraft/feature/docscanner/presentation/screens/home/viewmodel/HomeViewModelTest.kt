@@ -100,11 +100,9 @@ class HomeViewModelTest {
     ): HomeViewModel {
         documentScanner.pending = pendingScan
         val observeDocumentsUseCase: ObserveDocumentsUseCase = mockk()
-        val processDocumentsUseCase: ProcessDocumentsUseCase = mockk()
         val stringProvider: StringProvider = mockk(relaxed = true)
 
         every { observeDocumentsUseCase() } returns documents
-        coEvery { processDocumentsUseCase(any(), any(), any(), any()) } answers { firstArg() }
         coEvery { saveScanDraftUseCase(any()) } returns saveResult
         every { stringProvider.getError(any<Throwable>()) } returns "Something went wrong"
         every { stringProvider.get(any(), *anyVararg()) } returns "Something went wrong"
@@ -114,7 +112,7 @@ class HomeViewModelTest {
             documentScanner = documentScanner,
             scanRequests = scanRequests,
             observeDocumentsUseCase = observeDocumentsUseCase,
-            processDocumentsUseCase = processDocumentsUseCase,
+            processDocumentsUseCase = ProcessDocumentsUseCase(),
             saveScanDraftUseCase = saveScanDraftUseCase,
             stringProvider = stringProvider,
             analyticsHelper = analyticsHelper,

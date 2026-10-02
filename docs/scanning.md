@@ -120,12 +120,11 @@ The save reports its own failure. Earlier, a failed save still congratulated the
     `app/schemas/`. A schema change means: bump the version, add the migration, and commit the new
     schema JSON. There is no destructive fallback: a migration keeps every document and its uuid.
 - **Home's list.** `ObserveDocumentsUseCase` feeds `HomeViewModel.observeDocuments`, which combines
-  it with the search query (debounced 150 ms) and the filters. It then hands everything to
-  `ProcessDocumentsUseCase`, in three steps:
-  - **search**, through the FTS table first, falling back to an in-memory search when the query
-    fails or matches nothing;
-  - **filter**;
-  - **sort**.
+  it with the filters and hands both to `ProcessDocumentsUseCase`: **filter**, then **sort**.
+- **Search.** `DocumentSearchViewModel` combines the library with the query (debounced 150 ms) and
+  hands both to `SearchDocumentsUseCase`. The results are in order of relevance, not in the list's
+  order, and each says on which page the match is and shows the words around it when the match is
+  in the document's text. See [Search](#search).
 - **Document actions.** Actions, Edit and Delete are destinations with their own keys (see
   [navigation.md](navigation.md)), backed by `DocumentActionsViewModel`.
 - **Deleting.** `DeleteDocumentUseCase` removes the catalogue row first, then the file, and
@@ -138,6 +137,38 @@ The save reports its own failure. Earlier, a failed save still congratulated the
   - `CatalogueFileProvider` is that provider. A plain `FileProvider` names a file by its name on
     disk, which is now a uuid; this one answers `DISPLAY_NAME` with the name the document has in
     the catalogue, so the receiving app shows what the user sees here.
+
+## Search
+
+`SearchIndex` is the port: a text in, the documents that match out, best first. Its one
+implementation, bound in `ScannedDocumentModule.kt`, is `Fts4SearchIndex`: SQLite's FTS4, which Room
+supports and every device has. FTS5 would add substring and CJK search, as another implementation
+and one line of DI.
+
+- **Two indexes.** `documents_fts` covers what a document is called and described as: title,
+  original name, suggested title, description and the PDF's author, subject and keywords.
+  `page_texts_fts` covers the text of each page. Neither holds text of its own: they point at
+  `documents` and `page_texts`, and Room keeps them in step with triggers.
+- **`unicode61`.** The tokenizer ignores case and accents, in the index and in the query alike, so
+  "cancion" finds "Canción".
+- **What the user types is text, never syntax** (`Fts4Query`). FTS4 gives a meaning to quotes, `*`,
+  `-`, `:` and the words `OR`, `NOT` and `NEAR`. The query is cut into words the way the tokenizer
+  cuts a document, lowered, and limited to eight; each becomes a prefix, and they are joined with
+  spaces, which requires them all. Never with `AND`: in the query syntax Android's SQLite is
+  compiled with, that is a word to look for.
+  - Accents are left in the terms. SQLite passes each term through the index's tokenizer; removing
+    them in Kotlin as well would do it by other rules, and break the words where the two disagree.
+- **Relevance** (`Bm25`). FTS4 has no ranking function, so the score is worked out in Kotlin from
+  `matchinfo(…, 'pcnalx')`: Okapi BM25, with a weight for each column (title 10, original name 8,
+  suggested title 6, description 4, PDF metadata 2, page text 1). A document scores its own row
+  plus half its best page. Between equal scores, the document used most recently comes first.
+- **Passages.** A match in a page comes with `snippet()`: about twelve words around it, and which
+  of them matched. The marks around a match are control characters, taken out in `MarkedFragment`,
+  so the brackets and asterisks a document has of its own stay text.
+- **Only the library.** Both queries go through the `library_documents` view, which leaves out the
+  bin and other apps' documents.
+- **Limits.** FTS4 finds whole words and their beginnings, not text inside a word, and it does not
+  split Chinese, Japanese or Korean into words.
 
 ## Not yet verified on a device
 

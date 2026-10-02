@@ -30,8 +30,6 @@ class FakeDocumentsRepository(documents: List<Document.Managed> = emptyList()) :
 
     override fun observeDocuments(): Flow<List<Document.Managed>> = documents
 
-    override suspend fun searchDocuments(query: String): List<Document.Managed> = emptyList()
-
     override suspend fun getDocument(uuid: String): Document =
         documents.value.firstOrNull { it.uuid == uuid }
             ?: throw NoSuchElementException("No document found with ID: $uuid")

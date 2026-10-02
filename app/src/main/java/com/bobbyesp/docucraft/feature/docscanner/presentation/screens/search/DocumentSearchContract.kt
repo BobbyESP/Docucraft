@@ -3,16 +3,17 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchResult
 
 /**
- * @property results the documents matching [resultsFor].
+ * @property results the documents matching [resultsFor], best match first, each with where in its
+ *   text it matched when that is where it was found.
  * @property resultsFor the query [results] answer, which trails [query] while the user types. Only
  *   when the two agree does an empty [results] mean nothing matches, rather than not searched yet.
  */
 data class DocumentSearchUiState(
     val query: String = "",
-    val results: List<Document.Managed> = emptyList(),
+    val results: List<SearchResult> = emptyList(),
     val resultsFor: String? = null,
 ) {
     val hasNoMatches: Boolean

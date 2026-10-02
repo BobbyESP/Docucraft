@@ -22,16 +22,6 @@ interface DocumentsRepository {
     fun observeDocuments(): Flow<List<Document.Managed>>
 
     /**
-     * Searches filename, title and description at once, so the UI can offer a single search box.
-     *
-     * Results come back newest first, not by relevance.
-     *
-     * @param query Free text. An empty or blank query matches nothing.
-     * @return The matching documents, or an empty list.
-     */
-    suspend fun searchDocuments(query: String): List<Document.Managed>
-
-    /**
      * @return The document with this [uuid].
      * @throws NoSuchElementException If the catalogue holds no such document.
      */

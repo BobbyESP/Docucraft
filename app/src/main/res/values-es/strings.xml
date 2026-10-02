@@ -48,6 +48,7 @@
     <string name="filter">Filtro</string>
     <string name="clear_filters">Limpiar filtros</string>
     <string name="search_documents">Buscar documentos</string>
+    <string name="search_result_page">Página %1$d</string>
     <string name="search">Buscar</string>
     <string name="clear_search">Limpiar búsqueda</string>
     <string name="sort_ascending">Ordenar ascendentemente</string>

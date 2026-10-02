@@ -234,6 +234,7 @@
     <string name="documents">Documents</string>
     <string name="sort_by">Sort by</string>
     <string name="search_hint_title">Search your documents</string>
+    <string name="search_result_page">Page %1$d</string>
     <string name="search_hint_desc">By name, or by anything in the description.</string>
     <string name="active_font">Active: %1$s</string>
     <string name="font_preview">Preview</string>

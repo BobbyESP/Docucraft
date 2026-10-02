@@ -65,10 +65,10 @@ A new Koin module is registered in `App.kt`.
   feature's DI module. For the scanner that is `ScannedDocumentModule.kt`; for the viewer,
   `PdfViewerModule.kt`.
 - **Framework work goes behind a port.** The interface lives in the domain and the implementation
-  in data. Examples: `DocumentStorage`, `DocumentSharer`, `DocumentOpener`, `DocumentPrinter`,
-  `LinkOpener`, `PageContentProvider`. A port that needs an `Activity` is a Koin `factory` taking
-  it through `parametersOf(activity)`. It is called by the screen, in response to an effect from
-  the ViewModel.
+  in data. Examples: `DocumentStorage`, `DocumentThumbnails`, `SearchIndex`, `DocumentSharer`,
+  `DocumentOpener`, `DocumentPrinter`, `LinkOpener`, `PageContentProvider`. A port that needs an
+  `Activity` is a Koin `factory` taking it through `parametersOf(activity)`. It is called by the
+  screen, in response to an effect from the ViewModel.
 - **What the user can cause is a result, not an exception**: cancelling, a page without text, a
   refused link. Examples: `ScanOutcome`, `ExportOutcome`, `PageContentResult`, `LinkAction`.
 - **Test a port with a fake**, not with a mock of the framework.

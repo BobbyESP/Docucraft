@@ -9,6 +9,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.DocumentDao
+import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.SearchDao
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentActivityEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentFtsEntity
@@ -50,6 +51,8 @@ const val CURRENT_VERSION = 5
 )
 abstract class DocumentsDatabase : RoomDatabase() {
     abstract fun documentDao(): DocumentDao
+
+    abstract fun searchDao(): SearchDao
 
     companion object {
         /**

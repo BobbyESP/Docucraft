@@ -31,7 +31,7 @@ val documentScannerViewModels = module {
         DocumentSearchViewModel(
             savedStateHandle = get(),
             observeDocumentsUseCase = get(),
-            processDocumentsUseCase = get(),
+            searchDocumentsUseCase = get(),
             stringProvider = get(),
             analyticsHelper = get(),
         )

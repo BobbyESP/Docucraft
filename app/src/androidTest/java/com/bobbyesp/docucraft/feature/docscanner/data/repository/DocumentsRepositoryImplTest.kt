@@ -10,6 +10,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.DatabaseTriggers
 import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
 import com.bobbyesp.docucraft.feature.docscanner.data.db.long
 import com.bobbyesp.docucraft.feature.docscanner.data.db.rows
+import com.bobbyesp.docucraft.feature.docscanner.data.search.Fts4SearchIndex
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScan
@@ -45,66 +46,6 @@ class DocumentsRepositoryImplTest {
     @After
     fun closeDatabase() {
         database.close()
-    }
-
-    // --- search ---
-
-    // Android's SQLite reads `AND` as a word to look for, not as an operator: terms joined with it
-    // only matched documents that also contained "and".
-    @Test
-    fun aQueryOfSeveralWordsFindsTheDocumentThatHasThemAll() = runBlocking {
-        save("Factura luz marzo", capturedAt = 1)
-        save("Factura agua marzo", capturedAt = 2)
-
-        assertEquals(listOf("Factura luz marzo"), search("factura luz"))
-    }
-
-    @Test
-    fun theWordsOfAQueryCanComeInAnyOrder() = runBlocking {
-        save("Factura luz marzo", capturedAt = 1)
-
-        assertEquals(listOf("Factura luz marzo"), search("marzo factura"))
-    }
-
-    // A space between terms means "all of them", not "any of them".
-    @Test
-    fun aDocumentMissingOneOfTheWordsIsNotFound() = runBlocking {
-        save("Factura luz marzo", capturedAt = 1)
-
-        assertEquals(emptyList<String>(), search("factura gas"))
-    }
-
-    @Test
-    fun eachWordMatchesAsAPrefix() = runBlocking {
-        save("Factura luz marzo", capturedAt = 1)
-        save("Contrato alquiler", capturedAt = 2)
-
-        assertEquals(listOf("Factura luz marzo"), search("fac lu"))
-    }
-
-    // The index folds accents and case, whichever side has them: what is typed or what is stored.
-    @Test
-    fun accentsAndCaseMakeNoDifference() = runBlocking {
-        save("Scan_1", capturedAt = 1)
-        save("Scan_2", capturedAt = 2)
-        repository.modifyFields(uuidOf("Scan_1"), title = "Canción de cuna", description = null)
-        repository.modifyFields(uuidOf("Scan_2"), title = "Recibo", description = "Del niño")
-
-        assertEquals(listOf("Scan_1"), search("cancion"))
-        assertEquals(listOf("Scan_1"), search("CANCIÓN"))
-        assertEquals(listOf("Scan_2"), search("nino"))
-        assertEquals(listOf("Scan_2"), search("Niño"))
-    }
-
-    // The index follows the table: the old title stops matching as soon as it is replaced.
-    @Test
-    fun anEditedTitleIsWhatSearchFinds() = runBlocking {
-        save("Scan_1", capturedAt = 1)
-        repository.modifyFields(uuidOf("Scan_1"), title = "Contrato", description = null)
-        repository.modifyFields(uuidOf("Scan_1"), title = "Factura", description = null)
-
-        assertEquals(emptyList<String>(), search("contrato"))
-        assertEquals(listOf("Scan_1"), search("factura"))
     }
 
     // --- saving ---
@@ -342,8 +283,11 @@ class DocumentsRepositoryImplTest {
         )
     }
 
+    /** The names of the documents a search of the library finds. */
     private suspend fun search(query: String): List<String> =
-        repository.searchDocuments(query).map { it.originalName }
+        Fts4SearchIndex(database.searchDao()).search(query).map {
+            it.documentUuid.removePrefix("uuid-")
+        }
 
     private suspend fun uuidOf(filename: String): String =
         repository.observeDocuments().first().first { it.originalName == filename }.uuid

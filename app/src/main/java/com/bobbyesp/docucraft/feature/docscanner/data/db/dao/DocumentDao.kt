@@ -102,21 +102,4 @@ abstract class DocumentDao {
     /** Its activity, pages and tags go with it, and the full-text indexes forget it. */
     @Query("DELETE FROM documents WHERE uuid = :uuid")
     abstract suspend fun deleteByUuid(uuid: String): Int
-
-    /**
-     * Full-text search over the library. The query has to arrive already formatted for FTS.
-     *
-     * Results come back newest first rather than by relevance: ranking needs `matchinfo()` decoded
-     * into a score, and that is not written yet.
-     */
-    @Query(
-        """
-        SELECT d.*
-        FROM documents_fts
-        JOIN library_documents d ON d.id = documents_fts.rowid
-        WHERE documents_fts MATCH :query
-        ORDER BY d.created_at DESC
-    """
-    )
-    abstract suspend fun search(query: String): List<DocumentEntity>
 }

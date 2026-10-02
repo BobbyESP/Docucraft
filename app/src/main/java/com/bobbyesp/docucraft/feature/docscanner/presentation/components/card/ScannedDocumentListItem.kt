@@ -37,6 +37,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -48,6 +51,7 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.util.DateTime
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentThumbnail
+import com.bobbyesp.docucraft.feature.docscanner.domain.search.SearchPassage
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
 import java.util.UUID
@@ -63,6 +67,7 @@ import java.util.UUID
  *   [DocucraftShapeDefaults.segmentedListItemShapes].
  * @param selected whether this is the document open beside the list, on windows wide enough to show
  *   both.
+ * @param passage where in the document's text a search found it, to show under its facts.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -73,6 +78,7 @@ fun ScannedDocumentListItem(
     modifier: Modifier = Modifier,
     shapes: ListItemShapes = DocucraftShapeDefaults.segmentedListItemShapes(index = 0, count = 1),
     selected: Boolean = false,
+    passage: SearchPassage? = null,
 ) {
     SegmentedListItem(
         selected = selected,
@@ -89,7 +95,7 @@ fun ScannedDocumentListItem(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow
             ),
         leadingContent = { DocumentThumbnail(thumbnail = pdf.thumbnail) },
-        supportingContent = { DocumentSummary(pdf = pdf) },
+        supportingContent = { DocumentSummary(pdf = pdf, passage = passage) },
         trailingContent = {
             IconButton(onClick = onItemLongClick, shapes = IconButtonDefaults.shapes()) {
                 Icon(
@@ -115,7 +121,11 @@ fun ScannedDocumentListItem(
  * than shown as zero.
  */
 @Composable
-private fun DocumentSummary(pdf: Document.Managed, modifier: Modifier = Modifier) {
+private fun DocumentSummary(
+    pdf: Document.Managed,
+    passage: SearchPassage?,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val pages = pdf.pageCount?.let { pluralStringResource(R.plurals.doc_n_pages, it, it) }
     val facts =
@@ -143,7 +153,42 @@ private fun DocumentSummary(pdf: Document.Managed, modifier: Modifier = Modifier
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+        if (passage != null) MatchingPassage(passage = passage)
     }
+}
+
+/**
+ * The words around what a search matched in the document's text, and the page they are on, so the
+ * reader can tell why the document was found before opening it. What matched is in bold: weight
+ * tells it apart in any theme, where a colour would have to be chosen for each.
+ */
+@Composable
+private fun MatchingPassage(passage: SearchPassage, modifier: Modifier = Modifier) {
+    val page = stringResource(R.string.search_result_page, passage.pageIndex + 1)
+    val text =
+        remember(passage, page) {
+            buildAnnotatedString {
+                append(page)
+                append(" · ")
+                val start = length
+                append(passage.text)
+                for (highlight in passage.highlights) {
+                    addStyle(
+                        SpanStyle(fontWeight = FontWeight.Bold),
+                        start + highlight.start,
+                        start + highlight.end,
+                    )
+                }
+            }
+        }
+
+    Text(
+        text = text,
+        modifier = modifier,
+        style = MaterialTheme.typography.bodySmall,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 /**
