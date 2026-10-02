@@ -9,7 +9,10 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.DocumentDao
+import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.FolderDao
+import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.PageDao
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.SearchDao
+import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.TagDao
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentActivityEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentFtsEntity
@@ -53,6 +56,12 @@ abstract class DocumentsDatabase : RoomDatabase() {
     abstract fun documentDao(): DocumentDao
 
     abstract fun searchDao(): SearchDao
+
+    abstract fun folderDao(): FolderDao
+
+    abstract fun tagDao(): TagDao
+
+    abstract fun pageDao(): PageDao
 
     companion object {
         /**

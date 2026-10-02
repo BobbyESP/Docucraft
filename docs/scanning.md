@@ -130,6 +130,19 @@ The save reports its own failure. Earlier, a failed save still congratulated the
 - **Deleting.** `DeleteDocumentUseCase` removes the catalogue row first, then the file, and
   forgets its previews. A row pointing at a missing file is visible to the user; an orphan file is
   not.
+- **Folders, tags and pages.** Their models and ports are in the domain (`FoldersRepository`,
+  `TagsRepository`, `PagesRepository`) and are implemented over Room. No screen uses them yet.
+  - **What the user can cause comes back as an answer**: a name that is taken, a folder moved into
+    itself. `FolderChange` and `TagChange` are sealed, and the repository checks the rule and makes
+    the change in one transaction. The triggers and indices stay as the net under it.
+  - **Names are compared normalized** (`normalizedNameOf`): trimmed, lower case, without accents.
+    "Facturas" and "facturas " are one folder among its siblings, and one tag.
+  - **Deleting a folder deletes no document.** Its documents, the bin's included, and its
+    subfolders go to the folder it was in; a subfolder that lands where its name is taken becomes
+    "Name (2)".
+  - **A folder cannot contain itself.** The trigger only sees a folder that is its own parent,
+    because SQLite 3.9 cannot walk the ancestors inside a trigger; a longer loop is stopped by the
+    repository (`FolderTree.wouldContainItself`).
 - **Export and share.**
   - `DocumentExporter` (FileKit) copies a document where the user chooses. It returns
     `Saved` / `Cancelled` / `Failed`, shaped like a scan.

@@ -4,7 +4,11 @@
 package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.core.data.image.ImageLoaderComponent
+import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.DocumentsRepositoryImpl
+import com.bobbyesp.docucraft.feature.docscanner.data.repository.FoldersRepositoryImpl
+import com.bobbyesp.docucraft.feature.docscanner.data.repository.PagesRepositoryImpl
+import com.bobbyesp.docucraft.feature.docscanner.data.repository.TagsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.search.Fts4SearchIndex
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsService
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
@@ -15,6 +19,9 @@ import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentStorageImp
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.CachedDocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.DocumentThumbnailComponent
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.FoldersRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.PagesRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.TagsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.SearchIndex
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
@@ -65,6 +72,11 @@ val documentScannerDataModule = module {
 
     single<DocumentsRepository> {
         DocumentsRepositoryImpl(documentDao = get(), locations = get())
+    }
+    single<FoldersRepository> { FoldersRepositoryImpl(database = get(), locations = get()) }
+    single<TagsRepository> { TagsRepositoryImpl(database = get(), locations = get()) }
+    single<PagesRepository> {
+        PagesRepositoryImpl(pageDao = get<DocumentsDatabase>().pageDao())
     }
 
     // How the library is searched: the one line that changes for another search engine.
