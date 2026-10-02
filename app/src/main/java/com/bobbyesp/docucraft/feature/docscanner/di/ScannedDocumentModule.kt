@@ -3,7 +3,6 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
-import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.LocalDocumentsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.search.CompositeSearchStrategy
 import com.bobbyesp.docucraft.feature.docscanner.data.search.DatabaseSearchStrategy
@@ -12,6 +11,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperations
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.sharing.AndroidDocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.data.sharing.FileKitDocumentExporter
+import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentStorageImpl
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.LocalSearchStrategy
@@ -45,8 +45,10 @@ val documentScannerDataModule = module {
     single<DocumentExporter> { FileKitDocumentExporter() }
 
     // Repository layer
+    single { DocumentLocations(context = androidContext()) }
+
     single<LocalDocumentsRepository> {
-        LocalDocumentsRepositoryImpl(scannedDocumentDao = get<ScannedDocumentDao>())
+        LocalDocumentsRepositoryImpl(documentDao = get(), locations = get())
     }
 
     // Search Strategies

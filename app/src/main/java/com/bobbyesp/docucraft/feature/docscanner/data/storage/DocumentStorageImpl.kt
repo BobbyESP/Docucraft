@@ -14,6 +14,7 @@ import androidx.core.net.toUri
 import com.bobbyesp.docucraft.App
 import com.bobbyesp.docucraft.core.util.ensure
 import com.bobbyesp.docucraft.core.util.ensureParent
+import com.bobbyesp.docucraft.feature.docscanner.data.db.LegacyDocumentPath
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsService
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
@@ -64,7 +65,7 @@ class DocumentStorageImpl(
         withContext(Dispatchers.IO) {
             val directory =
                 PlatformFile(FileKit.filesDir, THUMBNAILS_DIR).apply { ensure(mustCreate = true) }
-            val target = PlatformFile(directory, "$filename.${Thumbnail.EXTENSION}")
+            val target = PlatformFile(directory, "$filename.$THUMBNAIL_EXTENSION")
 
             val written =
                 documentOperations.saveDocumentPageAsImage(
@@ -133,7 +134,6 @@ class DocumentStorageImpl(
      * content rather than trusting the name.
      */
     private object Thumbnail {
-        const val EXTENSION = "webp"
         const val QUALITY = 65
 
         val format: Bitmap.CompressFormat
@@ -145,10 +145,13 @@ class DocumentStorageImpl(
                 }
     }
 
-    private companion object {
-        const val TAG = "DocumentStorage"
-        const val DOCUMENTS_DIR = "scans/pdf"
+    internal companion object {
+        private const val TAG = "DocumentStorage"
+        private const val DOCUMENTS_DIR = LegacyDocumentPath.DIRECTORY
+        private const val BUFFER_SIZE = 8192
+
+        /** Where previews are, and how they are named: `DocumentLocations` finds them by it. */
         const val THUMBNAILS_DIR = "previews"
-        const val BUFFER_SIZE = 8192
+        const val THUMBNAIL_EXTENSION = "webp"
     }
 }

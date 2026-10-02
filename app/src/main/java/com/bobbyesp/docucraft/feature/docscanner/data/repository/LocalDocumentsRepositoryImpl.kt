@@ -3,26 +3,32 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.repository
 
-import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
+import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.DocumentDao
 import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toModel
+import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
 import com.bobbyesp.scanner.ContentRef
 import java.text.Normalizer
+import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
-class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocumentDao) :
-    LocalDocumentsRepository {
+/** @param now The clock, in epoch milliseconds. A parameter so that a test can hold it still. */
+class LocalDocumentsRepositoryImpl(
+    private val documentDao: DocumentDao,
+    private val locations: DocumentLocations,
+    private val now: () -> Long = System::currentTimeMillis,
+) : LocalDocumentsRepository {
 
     override fun observeDocuments(): Flow<List<ScannedDocument>> =
-        scannedDocumentDao
-            .observeDocuments()
-            .map { entities -> entities.map { it.toModel() } }
+        documentDao
+            .observeLibrary()
+            .map { entities -> entities.map { it.toModel(locations) } }
             .flowOn(Dispatchers.Default)
 
     override suspend fun searchDocuments(query: String): List<ScannedDocument> {
@@ -31,45 +37,43 @@ class LocalDocumentsRepositoryImpl(private val scannedDocumentDao: ScannedDocume
 
         val ftsQuery = buildFtsQuery(trimmed)
 
-        val result = scannedDocumentDao.searchDocumentsFts(ftsQuery)
+        val result = documentDao.search(ftsQuery)
 
-        return result.map { it.toModel() }
+        return result.map { it.toModel(locations) }
     }
 
     override fun observeDocument(uuid: String): Flow<ScannedDocument?> =
-        scannedDocumentDao
+        documentDao
             .observeByUuid(uuid)
-            .map { entity -> entity?.toModel() }
+            .map { entity -> entity?.toModel(locations) }
             .flowOn(Dispatchers.Default)
 
     override suspend fun getDocument(uuid: String): ScannedDocument {
         require(uuid.isNotEmpty()) { "Document UUID must not be empty" }
         val entity =
-            scannedDocumentDao.getByUuid(uuid)
+            documentDao.getByUuid(uuid)
                 ?: throw NoSuchElementException("No document found with ID: $uuid")
-        return entity.toModel()
+        return entity.toModel(locations)
     }
 
     override suspend fun saveDocument(document: NewScannedDocument) {
-        scannedDocumentDao.insert(document.toEntity())
+        documentDao.insertManaged(
+            document.toEntity(uuid = UUID.randomUUID().toString(), createdAt = now())
+        )
     }
 
     override suspend fun modifyFields(uuid: String, title: String?, description: String?) {
         require(uuid.isNotEmpty()) { "Document UUID must not be empty" }
 
-        val existing =
-            scannedDocumentDao.getByUuid(uuid)
-                ?: throw NoSuchElementException("No document found with UUID: $uuid")
+        val updated = documentDao.updateFields(uuid, title, description, updatedAt = now())
 
-        val updated = existing.copy(title = title, description = description)
-
-        scannedDocumentDao.update(updated)
+        if (updated <= 0) throw NoSuchElementException("No document found with UUID: $uuid")
     }
 
     override suspend fun deleteDocument(location: ContentRef) {
-        val deletedCount = scannedDocumentDao.deleteByPath(location.value)
+        val deletedCount = locations.filePathOf(location)?.let { documentDao.deleteByFilePath(it) }
 
-        if (deletedCount <= 0) {
+        if (deletedCount == null || deletedCount <= 0) {
             throw IllegalArgumentException("No document found at: ${location.value}")
         }
     }

@@ -3,7 +3,11 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.mapper
 
-import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.ScannedDocumentEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.db.LegacyDocumentPath
+import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentCustody
+import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentOrigin
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
 import com.bobbyesp.scanner.ContentRef
@@ -11,31 +15,63 @@ import com.bobbyesp.scanner.ContentRef
 /**
  * Where the storage vocabulary meets the domain one.
  *
- * Column names are the schema and cannot move without a migration, so the renaming happens here,
- * which is what a mapper is for. The row id stays behind: nothing above this layer uses it.
+ * The catalogue keeps a relative path and no preview; the domain's document carries a location to
+ * open and where its preview is, so both are worked out here through [locations]. The row id stays
+ * behind: nothing above this layer uses it.
  */
-internal fun ScannedDocumentEntity.toModel(): ScannedDocument =
+internal fun DocumentEntity.toModel(locations: DocumentLocations): ScannedDocument =
     ScannedDocument(
         uuid = uuid,
-        filename = filename,
+        filename = originalName,
         title = title,
         description = description,
-        location = ContentRef(path),
-        capturedAtEpochMillis = createdTimestamp,
-        sizeBytes = fileSize,
-        pageCount = pageCount,
-        thumbnail = thumbnail?.let(::ContentRef),
+        location =
+            filePath?.let(locations::locationOf)
+                ?: ContentRef(checkNotNull(uri) { "Document $uuid has neither a file nor a URI" }),
+        capturedAtEpochMillis = capturedAt ?: createdAt,
+        // Unknown is 0 in the domain's document, which is what its readers already take it for.
+        sizeBytes = sizeBytes ?: 0,
+        pageCount = pageCount ?: 0,
+        thumbnail = locations.previewOf(originalName),
     )
 
-/** A document that has never been catalogued, so it carries no id and no user-supplied fields. */
-internal fun NewScannedDocument.toEntity(): ScannedDocumentEntity =
-    ScannedDocumentEntity(
-        filename = filename,
+/**
+ * A document that has never been catalogued: a scan the app now keeps, with no user-supplied fields
+ * yet.
+ *
+ * @param createdAt When it enters the catalogue, which is not when it was captured.
+ */
+internal fun NewScannedDocument.toEntity(uuid: String, createdAt: Long): DocumentEntity =
+    DocumentEntity(
+        uuid = uuid,
+        custody = DocumentCustody.MANAGED,
+        origin = DocumentOrigin.SCAN,
+        originalName = filename,
         title = null,
+        suggestedTitle = null,
         description = null,
-        path = location.value,
-        createdTimestamp = capturedAtEpochMillis,
-        fileSize = sizeBytes,
-        pageCount = pageCount,
-        thumbnail = thumbnail?.value,
+        mimeType = DocumentEntity.MIME_TYPE_PDF,
+        sizeBytes = sizeBytes,
+        // A scanner that does not report its pages reports none: unknown, not zero.
+        pageCount = pageCount.takeIf { it > 0 },
+        contentHash = null,
+        isEncrypted = false,
+        pdfAuthor = null,
+        pdfSubject = null,
+        pdfKeywords = null,
+        pdfCreatedAt = null,
+        documentDate = null,
+        folderId = null,
+        isFavorite = false,
+        ocrEnabled = false,
+        filePath = LegacyDocumentPath.relativePathOf(location.value, filename),
+        uri = null,
+        hasPersistedPermission = null,
+        sourceUri = null,
+        sourceModifiedAt = null,
+        capturedAt = capturedAtEpochMillis,
+        createdAt = createdAt,
+        updatedAt = createdAt,
+        contentUpdatedAt = createdAt,
+        trashedAt = null,
     )

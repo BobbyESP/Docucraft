@@ -54,10 +54,9 @@ class MigrationChainTest {
             MigrationTestDatabase,
             CURRENT_VERSION,
             true,
-            DocumentsDatabaseMigrations.MIGRATION_2_3,
-            DocumentsDatabaseMigrations.MIGRATION_3_4,
+            *DocumentsDatabaseMigrations.ALL,
         )
 
     private fun SupportSQLiteDatabase.identifiers() =
-        strings("SELECT uuid FROM scanned_documents ORDER BY id")
+        strings("SELECT uuid FROM documents ORDER BY id")
 }

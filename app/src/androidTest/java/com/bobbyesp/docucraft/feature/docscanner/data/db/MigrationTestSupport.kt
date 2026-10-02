@@ -50,6 +50,57 @@ internal fun SupportSQLiteDatabase.insertLegacyDocument(
     )
 }
 
+/**
+ * A scan as version 4 stored it.
+ *
+ * @param path What version 4 kept as the document's location: its `FileProvider` URI. By default,
+ *   the one of a file named after [filename].
+ * @return The row id it was given.
+ */
+internal fun SupportSQLiteDatabase.insertVersion4Scan(
+    uuid: String,
+    filename: String,
+    title: String? = null,
+    description: String? = null,
+    path: String = version4Location("$filename.pdf"),
+    createdTimestamp: Long = 1_700_000_000_000,
+    fileSize: Long = 2_048,
+    pageCount: Int = 1,
+): Long =
+    insert(
+        "scanned_documents",
+        SQLiteDatabase.CONFLICT_ABORT,
+        ContentValues().apply {
+            put("uuid", uuid)
+            put("filename", filename)
+            put("title", title)
+            put("description", description)
+            put("path", path)
+            put("createdTimestamp", createdTimestamp)
+            put("fileSize", fileSize)
+            put("pageCount", pageCount)
+            put("thumbnail", "/data/user/0/com.bobbyesp.docucraft/files/previews/$filename.webp")
+        },
+    )
+
+/** The URI version 4 stored for the file [encodedName], which is percent-encoded as it was. */
+internal fun version4Location(encodedName: String): String =
+    "content://com.bobbyesp.docucraft.fileprovider/scanned-pdfs/$encodedName"
+
+/** Every row [sql] returns, its columns joined with `|` and a missing value written as `null`. */
+internal fun SupportSQLiteDatabase.rows(sql: String): List<String> =
+    query(sql).use { cursor ->
+        buildList {
+            while (cursor.moveToNext()) {
+                add(
+                    (0 until cursor.columnCount).joinToString("|") { column ->
+                        if (cursor.isNull(column)) "null" else cursor.getString(column)
+                    }
+                )
+            }
+        }
+    }
+
 /** The first column of every row [sql] returns, as text. */
 internal fun SupportSQLiteDatabase.strings(sql: String): List<String?> =
     query(sql).use { cursor ->

@@ -3,24 +3,15 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
-import androidx.room.Room
 import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
-import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabaseMigrations.MIGRATION_2_3
-import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabaseMigrations.MIGRATION_3_4
-import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ScannedDocumentDao
+import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.DocumentDao
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val scannedDocumentsDatabaseModule = module {
-    single<DocumentsDatabase> {
-        Room.databaseBuilder(
-                context = androidContext(),
-                klass = DocumentsDatabase::class.java,
-                name = "scanned_pdfs.db",
-            )
-            .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
-            .build()
-    }
+    // How the catalogue is built, migrations included, is the database's own business: the tests
+    // build theirs the same way.
+    single<DocumentsDatabase> { DocumentsDatabase.builder(androidContext()).build() }
 
-    single<ScannedDocumentDao> { get<DocumentsDatabase>().scannedDocumentDao() }
+    single<DocumentDao> { get<DocumentsDatabase>().documentDao() }
 }

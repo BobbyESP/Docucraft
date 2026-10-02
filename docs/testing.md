@@ -8,7 +8,7 @@
 
 | Module | JVM (`src/test`) | On a device (`src/androidTest`) |
 |---|---|---|
-| `:app` | use cases, ViewModels, the D2 settings table, link resolution, selection decisions, navigation rules, text splitting, layered content | the platform content provider against the fixtures |
+| `:app` | use cases, ViewModels, the D2 settings table, link resolution, selection decisions, navigation rules, text splitting, layered content, the path a migration gives an old document | the platform content provider against the fixtures; the catalogue: migrations from every exported schema, a migrated schema against a new one, the triggers, search |
 | `:composepdf` | layout geometry, tile planning, zoom steps, viewport, load-error classification | fixtures, restoration, layout changes, content padding, gestures, extension points, scroll-to, load errors, platform content APIs |
 | `:document-content-api` | selection: carets, runs, layouts, right-to-left, across pages | — |
 | `:scanner-mlkit` | the scan result decision table, the activity-result host and process death | — |
@@ -17,7 +17,8 @@
 - **Decisions are pure and go on the JVM**: what a touch selects, what a link does, what a result
   means.
 - **Device tests check what only the platform can answer**: what `PdfRenderer` reports, how Compose
-  delivers gestures, how the engine draws.
+  delivers gestures, how the engine draws, what the device's SQLite does with a query, a trigger
+  or a migration.
 - **A port is tested with a fake**, never with a mock of the framework.
 
 ## Conventions
@@ -26,6 +27,8 @@
   next to it.
 - **Doubles and fixtures shared by several tests** live in one place instead of being copied:
   - `:app`: `FakeDocumentStorage` (docscanner), `FakePageContentProvider` and `textPage` (pdfviewer);
+  - `:app` on a device: `MigrationTestSupport.kt` builds an old version of the catalogue from its
+    exported schema and fills it with rows as that version stored them;
   - `:composepdf` JVM: `layoutOf` and `threePages` build a `PageLayoutSnapshot` the way the real
     layout does;
   - `:composepdf` on a device: `LongDocument` and `waitUntilLoaded` (`ViewerTestSupport.kt`), and the
@@ -48,6 +51,13 @@
   `ANDROID_SERIAL=emulator-5554`, and prefer the emulator unless a real device is really needed.
 - **The platform's text APIs need API 35+.** Tests that use them carry
   `@SdkSuppress(minSdkVersion = 35)`.
+- **The catalogue's tests also run on API 24**, the oldest SQLite the app meets (3.9), where SQL
+  that works everywhere else can fail. The AVD used for it is a Google APIs image of API 24.
+- **A run can pass without running anything.** If a copy of the app is already installed, on API 24
+  the task's own install fails, no test runs, and the build still succeeds. Uninstall
+  `com.bobbyesp.docucraft.debug` and `com.bobbyesp.docucraft.debug.test` first, and read the number
+  of tests in `app/build/outputs/androidTest-results/connected/debug/TEST-*.xml` rather than the
+  build result.
 - **Reading an app file after a test**: pass
   `-Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true`, then use
   `adb shell run-as <package> …`.

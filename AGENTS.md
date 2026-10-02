@@ -229,9 +229,19 @@ A new Koin module is registered in `App.kt`.
 - **Firebase Analytics and Crashlytics** are on (`core/di/AnalyticsModule.kt`,
   `google-services.json`).
 - **Room**:
-  - `DocumentsDatabase` is currently version 4. Migrations are in `DocumentsDatabaseMigrations.kt`.
+  - `DocumentsDatabase` is currently version 5, in the file `scanned_pdfs.db`. Migrations are in
+    `DocumentsDatabaseMigrations.kt`. Build it with `DocumentsDatabase.builder`, in tests too.
   - Schemas are exported to `app/schemas/`. A schema change means: bump the version, add a
     migration, and commit the new schema JSON.
+  - **Never a destructive fallback.** A migration keeps every document and its uuid, and only
+    touches the database: it moves no files.
+  - Room cannot declare a `CHECK`. Rules the tables cannot state are triggers in
+    `DatabaseTriggers.ALL`, the one list used for a new database and by migrations, so the two
+    cannot differ. `SchemaParityTest` compares them.
+  - The SQL has to run on API 24's SQLite (3.9): no UPSERT, window functions, generated columns or
+    `RENAME COLUMN`, and no `WITH` inside a trigger.
+  - The database keeps paths relative to the files directory, never `FileProvider` URIs or
+    absolute paths.
 - **`<queries>` in the manifest** declares which other apps the viewer may look for: Custom Tabs,
   browsers, email, dialler. A new intent to another app needs its entry there, or on API 30+ the app
   will seem not to exist.

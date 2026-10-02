@@ -92,14 +92,19 @@ The save reports its own failure. Earlier, a failed save still congratulated the
 
 ## The catalogue
 
-- **Room.** `DocumentsDatabase`, currently version 4, holds `ScannedDocumentEntity` (table
-  `scanned_documents`) and an FTS table (`scanned_documents_fts`) over title, description and file
-  name.
+- **Room.** `DocumentsDatabase`, currently version 5, in the file `scanned_pdfs.db`. A scan is a
+  row of `documents` with custody `MANAGED` and origin `SCAN`, plus a row of `document_activity`
+  and one row of `pages` for each of its pages. `documents_fts` is the FTS4 index over what a
+  document is called and described as; its `unicode61` tokenizer ignores case and accents.
+  - The catalogue keeps a document's path relative to the files directory, never a `FileProvider`
+    URI, which depends on the authority. `DocumentLocations` builds the URI when it is asked for.
   - Column names are the schema. `ScannedDocumentMapper` translates them to the domain's
     `ScannedDocument`.
+  - Rules the tables cannot state are triggers, in `DatabaseTriggers.ALL`. A new database gets
+    them when it is created and an old one from the migration, from that same list.
   - Migrations are in `DocumentsDatabaseMigrations.kt`, and schemas are exported to
     `app/schemas/`. A schema change means: bump the version, add the migration, and commit the new
-    schema JSON.
+    schema JSON. There is no destructive fallback: a migration keeps every document and its uuid.
 - **Home's list.** `ObserveDocumentsUseCase` feeds `HomeViewModel.observeDocuments`, which combines
   it with the search query (debounced 150 ms) and the filters. It then hands everything to
   `ProcessDocumentsUseCase`, in three steps:
