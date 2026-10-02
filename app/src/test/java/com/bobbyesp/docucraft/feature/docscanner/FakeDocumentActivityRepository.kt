@@ -4,6 +4,7 @@
 package com.bobbyesp.docucraft.feature.docscanner
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentActivityRepository
 import kotlinx.coroutines.flow.Flow
@@ -22,6 +23,12 @@ class FakeDocumentActivityRepository(recents: List<RecentDocument> = emptyList()
     /** What was said of each document's file, in order. */
     val availability = mutableListOf<Pair<String, DocumentAvailability>>()
 
+    /** Where each document was left, by uuid. */
+    val positions = mutableMapOf<String, ReadingPosition>()
+
+    /** Thrown by [readingPosition] when set. */
+    var readFailure: Exception? = null
+
     override fun observeRecents(limit: Int): Flow<List<RecentDocument>> = recents.map {
         it.take(limit)
     }
@@ -32,5 +39,18 @@ class FakeDocumentActivityRepository(recents: List<RecentDocument> = emptyList()
 
     override suspend fun recordAvailability(uuid: String, availability: DocumentAvailability) {
         this.availability += uuid to availability
+    }
+
+    override suspend fun readingPosition(uuid: String): ReadingPosition? {
+        readFailure?.let { throw it }
+        return positions[uuid]
+    }
+
+    override suspend fun rememberReadingPosition(uuid: String, position: ReadingPosition) {
+        positions[uuid] = position
+    }
+
+    override suspend fun forgetReadingPositions() {
+        positions.clear()
     }
 }

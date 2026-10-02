@@ -87,6 +87,9 @@
     <string name="viewer_use_defaults_on_desc">Todos los documentos se abren con estos ajustes</string>
     <string name="viewer_use_defaults_off_desc">Los documentos se abren ajustados al ancho y sin modo nocturno</string>
     <string name="viewer_session_note">Lo que cambies mientras lees se mantiene en ese documento hasta que cierres la app.</string>
+    <string name="viewer_remember_position">Recordar dónde lo dejé</string>
+    <string name="viewer_remember_position_on_desc">Los documentos se abren por la página que estabas leyendo</string>
+    <string name="viewer_remember_position_off_desc">Los documentos se abren siempre por el principio</string>
     <string name="fit_mode_width">Ajustar al ancho</string>
     <string name="fit_mode_height">Ajustar al alto</string>
     <string name="fit_mode_page">Página completa</string>

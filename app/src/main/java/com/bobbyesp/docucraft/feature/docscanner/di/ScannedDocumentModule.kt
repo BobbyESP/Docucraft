@@ -31,14 +31,17 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveRecentDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetReadingPositionMemoryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
@@ -100,6 +103,9 @@ val documentScannerDataModule = module {
     factory { ObserveRecentDocumentsUseCase(activity = get()) }
     factory { RecordDocumentOpenedUseCase(activity = get()) }
     factory { RecordDocumentAvailabilityUseCase(activity = get()) }
+    factory { GetReadingPositionUseCase(settings = get(), activity = get()) }
+    factory { RememberReadingPositionUseCase(settings = get(), activity = get()) }
+    factory { SetReadingPositionMemoryUseCase(settings = get(), activity = get()) }
 
     factory { DeleteDocumentUseCase(repository = get(), storage = get(), thumbnails = get()) }
 

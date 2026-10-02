@@ -26,6 +26,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.details.PdfDocument
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.ViewerPageRequests
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 /**
@@ -79,6 +80,10 @@ val pdfViewerModule = module {
             resolveLink = get(),
             recordOpened = get(),
             recordAvailability = get(),
+            getReadingPosition = get(),
+            rememberReadingPosition = get(),
+            // Outlives the viewer: where the reader was is written as they leave.
+            longLived = get(qualifier = named("AppMainSupervisedScope")),
         )
     }
 

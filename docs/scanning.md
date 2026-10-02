@@ -132,8 +132,9 @@ The save reports its own failure. Earlier, a failed save still congratulated the
     tried to read a file knows. A document whose file could not be reached is shown faded on the
     shelf, so that it says so before it is tapped.
   - **Activity is a table of its own** (`DocumentActivityRepository`), because it is written by
-    reading. In `documents`, each of those writes would re-index the document and make every list
-    of the library emit.
+    reading: it also keeps where each document was left
+    ([pdf-viewer.md](pdf-viewer.md#reading-position)). In `documents`, each of those writes would
+    re-index the document and make every list of the library emit.
   - **The bin is not recent, and other apps' documents are.** With three documents or fewer in the
     library the shelf would only repeat the list, and is left out, unless it holds a document of
     another app: those are in no list, and the shelf is the only way back to them.

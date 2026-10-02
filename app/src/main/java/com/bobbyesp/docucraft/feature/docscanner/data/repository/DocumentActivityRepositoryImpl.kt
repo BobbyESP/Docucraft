@@ -7,6 +7,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.ActivityDao
 import com.bobbyesp.docucraft.feature.docscanner.data.mapper.toModel
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentActivityRepository
 import kotlinx.coroutines.Dispatchers
@@ -45,5 +46,21 @@ class DocumentActivityRepositoryImpl(
 
     override suspend fun recordAvailability(uuid: String, availability: DocumentAvailability) {
         activityDao.recordAvailability(uuid, availability, at = now())
+    }
+
+    override suspend fun readingPosition(uuid: String): ReadingPosition? {
+        val row = activityDao.readingPositionOf(uuid) ?: return null
+        val page = row.page ?: return null
+        return ReadingPosition(page, row.offset ?: 0f).within(row.pageCount)
+    }
+
+    override suspend fun rememberReadingPosition(uuid: String, position: ReadingPosition) {
+        // Checked on the way in as well: whatever is kept is a position, whoever reads it.
+        val kept = position.within(pageCount = null)
+        activityDao.setReadingPosition(uuid, page = kept.pageIndex, offset = kept.offset)
+    }
+
+    override suspend fun forgetReadingPositions() {
+        activityDao.clearReadingPositions()
     }
 }

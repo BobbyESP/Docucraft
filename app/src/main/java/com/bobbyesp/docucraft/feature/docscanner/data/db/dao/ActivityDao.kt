@@ -19,6 +19,17 @@ data class RecentDocumentRow(
 )
 
 /**
+ * Where a document was left, with what is needed to tell whether that place is still in it.
+ *
+ * @property page `null` when no position is kept.
+ */
+data class ReadingPositionRow(
+    @ColumnInfo(name = "reading_page") val page: Int?,
+    @ColumnInfo(name = "reading_offset") val offset: Float?,
+    @ColumnInfo(name = "page_count") val pageCount: Int?,
+)
+
+/**
  * `document_activity`: what changes about a document as it is used. Every write finds its row by
  * the document's uuid, which is all that travels above the data layer.
  */
@@ -61,4 +72,26 @@ interface ActivityDao {
         WHERE document_id = (SELECT id FROM documents WHERE uuid = :uuid)"""
     )
     suspend fun recordAvailability(uuid: String, availability: DocumentAvailability, at: Long): Int
+
+    @Query(
+        """SELECT a.reading_page, a.reading_offset, d.page_count
+        FROM document_activity a JOIN documents d ON d.id = a.document_id
+        WHERE d.uuid = :uuid"""
+    )
+    suspend fun readingPositionOf(uuid: String): ReadingPositionRow?
+
+    @Query(
+        """UPDATE document_activity
+        SET reading_page = :page, reading_offset = :offset
+        WHERE document_id = (SELECT id FROM documents WHERE uuid = :uuid)"""
+    )
+    suspend fun setReadingPosition(uuid: String, page: Int, offset: Float): Int
+
+    /** Only the rows that have one, so that forgetting nothing writes nothing. */
+    @Query(
+        """UPDATE document_activity
+        SET reading_page = NULL, reading_offset = NULL
+        WHERE reading_page IS NOT NULL OR reading_offset IS NOT NULL"""
+    )
+    suspend fun clearReadingPositions(): Int
 }

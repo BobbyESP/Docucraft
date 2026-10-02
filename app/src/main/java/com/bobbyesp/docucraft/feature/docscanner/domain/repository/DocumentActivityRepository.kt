@@ -4,12 +4,13 @@
 package com.bobbyesp.docucraft.feature.docscanner.domain.repository
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
 import kotlinx.coroutines.flow.Flow
 
 /**
  * What the user has done with the documents of the catalogue, as opposed to what the documents are:
- * when each was last opened and whether its file could be reached.
+ * when each was last opened, where it was left and whether its file could be reached.
  *
  * Apart from `DocumentsRepository` because it is written all the time, by reading, and none of
  * those writes changes a document.
@@ -35,4 +36,17 @@ interface DocumentActivityRepository {
      * there is no such document.
      */
     suspend fun recordAvailability(uuid: String, availability: DocumentAvailability)
+
+    /**
+     * Where the reader left the document with this [uuid], as a place that document has: a position
+     * kept for a page it no longer has comes back as its last page. `null` when none is kept, or
+     * there is no such document.
+     */
+    suspend fun readingPosition(uuid: String): ReadingPosition?
+
+    /** Keeps where the reader is in the document with this [uuid]. Nothing if there is none. */
+    suspend fun rememberReadingPosition(uuid: String, position: ReadingPosition)
+
+    /** Forgets where every document was left. The documents are not touched. */
+    suspend fun forgetReadingPositions()
 }

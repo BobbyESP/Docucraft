@@ -12,10 +12,12 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.rows
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScan
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -176,13 +178,89 @@ class DocumentActivityRepositoryImplTest {
         assertEquals(listOf("second", "first"), recents())
     }
 
+    // --- reading position ---
+
+    @Test
+    fun aDocumentIsReadWhereItWasLeft() = runBlocking {
+        save("document", at = 1_000, pageCount = 10)
+
+        assertNull(activity.readingPosition("uuid-document"))
+
+        activity.rememberReadingPosition("uuid-document", ReadingPosition(4, 0.25f))
+
+        assertEquals(ReadingPosition(4, 0.25f), activity.readingPosition("uuid-document"))
+        assertEquals(listOf("4|0.25"), activityRows("reading_page, reading_offset"))
+    }
+
+    // A document can be replaced by a shorter one. The reader was near the end, and is taken to
+    // the last page it has now rather than to its start.
+    @Test
+    fun aPositionOnAPageTheDocumentNoLongerHasIsReadAsItsLastPage() = runBlocking {
+        save("document", at = 1_000, pageCount = 10)
+        activity.rememberReadingPosition("uuid-document", ReadingPosition(8, 0.5f))
+
+        database.openHelper.writableDatabase.execSQL("UPDATE documents SET page_count = 3")
+
+        assertEquals(ReadingPosition(2, 0f), activity.readingPosition("uuid-document"))
+    }
+
+    @Test
+    fun aPositionIsKeptForADocumentWhosePagesWereNeverCounted() = runBlocking {
+        save("document", at = 1_000)
+        database.openHelper.writableDatabase.execSQL("UPDATE documents SET page_count = NULL")
+
+        activity.rememberReadingPosition("uuid-document", ReadingPosition(30, 0.5f))
+
+        assertEquals(ReadingPosition(30, 0.5f), activity.readingPosition("uuid-document"))
+    }
+
+    // Reading is not opening: where the reader is changes all the time, and Recents does not.
+    @Test
+    fun keepingAPositionDoesNotCountAsActivity() = runBlocking {
+        save("first", at = 1_000)
+        save("second", at = 2_000)
+
+        now = 9_000
+        activity.rememberReadingPosition("uuid-first", ReadingPosition(0, 0.5f))
+
+        assertEquals(listOf("second", "first"), recents())
+    }
+
+    @Test
+    fun forgettingPositionsForgetsEveryOneAndNothingElse() = runBlocking {
+        save("first", at = 1_000)
+        save("second", at = 2_000)
+        open("first", at = 3_000)
+        activity.rememberReadingPosition("uuid-first", ReadingPosition(0, 0.5f))
+        activity.rememberReadingPosition("uuid-second", ReadingPosition(0, 0.9f))
+
+        activity.forgetReadingPositions()
+
+        assertNull(activity.readingPosition("uuid-first"))
+        assertNull(activity.readingPosition("uuid-second"))
+        assertEquals(
+            listOf("3000|3000|null|null", "null|2000|null|null"),
+            activityRows("last_opened_at, last_activity_at, reading_page, reading_offset"),
+        )
+    }
+
+    @Test
+    fun aPositionForADocumentTheCatalogueDoesNotHaveIsNeitherKeptNorRead() = runBlocking {
+        save("document", at = 1_000)
+
+        activity.rememberReadingPosition("no-such-document", ReadingPosition(1, 0.5f))
+
+        assertNull(activity.readingPosition("no-such-document"))
+        assertEquals(listOf("null|null"), activityRows("reading_page, reading_offset"))
+    }
+
     private suspend fun recents(limit: Int = 10): List<String> =
         activity.observeRecents(limit).first().map { it.document.originalName }
 
     private fun activityRows(columns: String): List<String> =
         database.openHelper.writableDatabase.rows("SELECT $columns FROM document_activity")
 
-    private suspend fun save(name: String, at: Long) {
+    private suspend fun save(name: String, at: Long, pageCount: Int = 1) {
         now = at
         documents.addScan(
             NewScan(
@@ -191,7 +269,7 @@ class DocumentActivityRepositoryImplTest {
                 filePath = "documents/uuid-$name.pdf",
                 sizeBytes = 1,
                 contentHash = "hash-$name",
-                pageCount = 1,
+                pageCount = pageCount,
                 capturedAtEpochMillis = at,
             )
         )

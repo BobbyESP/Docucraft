@@ -18,10 +18,13 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentActivityRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import com.bobbyesp.docucraft.feature.pdfviewer.FakePageContentProvider
 import com.bobbyesp.docucraft.feature.pdfviewer.data.settings.InMemoryViewerSessionSettings
@@ -36,6 +39,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerLo
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerEffect
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerStart
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
 import com.bobbyesp.docucraft.feature.pdfviewer.textPage
@@ -49,6 +53,7 @@ import com.bobbyesp.scanner.ContentRef
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -578,9 +583,88 @@ class PdfViewerViewModelTest {
         )
     }
 
+    // ---------------------------------------------------------------------------------- position
+
+    @Test
+    fun `a document opens where it was left`() = runTest {
+        catalogue.value = scanned()
+        activity.positions[UUID] = ReadingPosition(1, 0.4f)
+
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+        advanceUntilIdle()
+
+        assertEquals(ViewerStart(ReadingPosition(1, 0.4f)), viewModel.state.value.start)
+    }
+
+    @Test
+    fun `a document that was never read opens at its start`() = runTest {
+        catalogue.value = scanned()
+
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+        advanceUntilIdle()
+
+        assertEquals(ViewerStart(position = null), viewModel.state.value.start)
+        assertEquals("Invoice", viewModel.state.value.readyDocument?.title)
+    }
+
+    /** Laid out once, where it is to be read: not at its start and then somewhere else. */
+    @Test
+    fun `the document is not ready before it is known where to open it`() = runTest {
+        catalogue.value = scanned()
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+
+        assertEquals(null, viewModel.state.value.start)
+        assertEquals(null, viewModel.state.value.readyDocument)
+
+        advanceUntilIdle()
+
+        assertEquals("Invoice", viewModel.state.value.readyDocument?.title)
+    }
+
+    @Test
+    fun `a position that cannot be read does not keep the document from showing`() = runTest {
+        catalogue.value = scanned()
+        activity.readFailure = IllegalStateException("database is locked")
+
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+        advanceUntilIdle()
+
+        assertEquals(ViewerStart(position = null), viewModel.state.value.start)
+    }
+
+    @Test
+    fun `where the reader is gets written down`() = runTest {
+        catalogue.value = scanned()
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+        advanceUntilIdle()
+
+        viewModel.onSendIntent(PdfViewerIntent.ReadingPositionChanged(ReadingPosition(1, 0.8f)))
+        advanceUntilIdle()
+
+        assertEquals(mapOf(UUID to ReadingPosition(1, 0.8f)), activity.positions)
+    }
+
+    @Test
+    fun `with remembering off a document opens at its start and nothing is written`() = runTest {
+        catalogue.value = scanned()
+        activity.positions[UUID] = ReadingPosition(1, 0.4f)
+        preferences.value = UserPreferences(rememberReadingPosition = false)
+
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+        advanceUntilIdle()
+        viewModel.onSendIntent(PdfViewerIntent.ReadingPositionChanged(ReadingPosition(0, 0.1f)))
+        advanceUntilIdle()
+
+        assertEquals(ViewerStart(position = null), viewModel.state.value.start)
+        assertEquals(mapOf(UUID to ReadingPosition(1, 0.4f)), activity.positions)
+    }
+
     // ---------------------------------------------------------------------------------- helpers
 
-    private fun viewModel(ref: ViewerDocumentRef, handle: SavedStateHandle = SavedStateHandle()) =
+    private fun TestScope.viewModel(
+        ref: ViewerDocumentRef,
+        handle: SavedStateHandle = SavedStateHandle(),
+    ) =
         PdfViewerViewModel(
             ref = ref,
             savedStateHandle = handle,
@@ -596,6 +680,14 @@ class PdfViewerViewModelTest {
             resolveLink = ResolveLinkUseCase(),
             recordOpened = RecordDocumentOpenedUseCase(activity),
             recordAvailability = RecordDocumentAvailabilityUseCase(activity),
+            getReadingPosition = GetReadingPositionUseCase(settingsRepository, activity),
+            rememberReadingPosition = RememberReadingPositionUseCase(settingsRepository, activity),
+            // Unconfined: the scheduler does not wait for the background scope, and what is
+            // written there is what these tests look at.
+            longLived =
+                CoroutineScope(
+                    backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler)
+                ),
         )
 
     private fun TestScope.openedExternal(): PdfViewerViewModel =

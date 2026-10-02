@@ -21,6 +21,8 @@ data class UserPreferences(
     val completedOnboarding: Boolean = false,
     val marqueeTextEnabled: Boolean = true,
     val viewerDefaults: ViewerDefaults = ViewerDefaults(),
+    /** Whether a document is opened where it was left the last time. */
+    val rememberReadingPosition: Boolean = true,
 )
 
 enum class ThemeConfig {

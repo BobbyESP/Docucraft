@@ -16,9 +16,12 @@ import com.bobbyesp.docucraft.core.domain.repository.logScreenView
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.ResolveLinkUseCase
@@ -32,6 +35,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerE
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerUiState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerStart
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.SelectionInteraction
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
@@ -44,9 +48,11 @@ import com.bobbyesp.documentcontent.PageContentResult
 import com.bobbyesp.documentcontent.PageContentSession
 import com.bobbyesp.documentcontent.TextSelection
 import com.bobbyesp.scanner.ContentRef
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 /**
  * The viewer's state holder, one per navigation entry (or per external document, in
@@ -58,6 +64,9 @@ import kotlinx.coroutines.async
  * Those settings follow decision D2: remembered per document for the session, in memory. The
  * entry's [SavedStateHandle] keeps a copy, because a process death and restore is still the same
  * session to the user (A1), and the memory does not survive it.
+ *
+ * It is told where the reader is, and writes it down for the next time the document is opened; the
+ * position itself stays in the composition, like a list's scroll.
  *
  * It also holds what is needed to select and copy text: a content session on the document, opened
  * on first need and closed with the ViewModel, the text of the pages near what is on screen, and
@@ -77,6 +86,9 @@ class PdfViewerViewModel(
     private val resolveLink: ResolveLinkUseCase,
     private val recordOpened: RecordDocumentOpenedUseCase,
     private val recordAvailability: RecordDocumentAvailabilityUseCase,
+    private val getReadingPosition: GetReadingPositionUseCase,
+    private val rememberReadingPosition: RememberReadingPositionUseCase,
+    private val longLived: CoroutineScope,
 ) :
     BaseViewModel<PdfViewerIntent, PdfViewerUiState, PdfViewerEffect>(
         initialState = PdfViewerUiState()
@@ -100,6 +112,13 @@ class PdfViewerViewModel(
 
         // Once per opened document: this is what moves it to the front of Recents.
         launch { catalogueUuid()?.let { recordOpened(it) } }
+
+        launch {
+            // A position that could not be read is no reason not to show the document.
+            val position =
+                catalogueUuid()?.let { runCatching { getReadingPosition(it) }.getOrNull() }
+            setState { copy(start = ViewerStart(position)) }
+        }
 
         launch {
             observeDocument(ref).collect { document ->
@@ -142,6 +161,7 @@ class PdfViewerViewModel(
     override fun onHandleIntent(intent: PdfViewerIntent) {
         when (intent) {
             PdfViewerIntent.DocumentLoaded -> noteAvailability(DocumentAvailability.AVAILABLE)
+            is PdfViewerIntent.ReadingPositionChanged -> keepPosition(intent.position)
             is PdfViewerIntent.DocumentFailedToLoad -> noteAvailability(intent.error.availability)
             is PdfViewerIntent.VisiblePagesChanged -> loadTextNear(intent.pages)
             is PdfViewerIntent.Select -> setState { copy(selection = intent.selection) }
@@ -159,6 +179,16 @@ class PdfViewerViewModel(
             PdfViewerIntent.OpenWith -> handOff { documentOpener.openWith(it) }
             PdfViewerIntent.Print -> print()
         }
+    }
+
+    /**
+     * Not in the ViewModel's own scope: the last position arrives as the viewer is leaving, and a
+     * write started then would be cancelled with it. The reader would come back to where they were
+     * a second before they left.
+     */
+    private fun keepPosition(position: ReadingPosition) {
+        val uuid = catalogueUuid() ?: return
+        longLived.launch { runCatching { rememberReadingPosition(uuid, position) } }
     }
 
     private val ViewerLoadError.availability: DocumentAvailability

@@ -43,4 +43,10 @@ interface SettingsRepository {
     suspend fun updateViewerDefaultFitMode(fitMode: ViewerFitMode)
 
     suspend fun setViewerDefaultNightMode(enabled: Boolean)
+
+    /**
+     * Whether documents open where they were left. This only keeps the choice: forgetting what was
+     * already remembered is `SetReadingPositionMemoryUseCase`'s job, which is what to call.
+     */
+    suspend fun setRememberReadingPosition(enabled: Boolean)
 }

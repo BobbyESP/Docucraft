@@ -27,6 +27,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,6 +52,9 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
@@ -63,6 +67,7 @@ import com.bobbyesp.docucraft.core.domain.notifications.NotificationAction
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.util.events.UiEvent
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentPrinter
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkLook
@@ -91,6 +96,7 @@ import com.bobbyesp.documentcontent.PageLink
 import com.composepdf.FitMode
 import com.composepdf.PdfInteractionHandler
 import com.composepdf.PdfLayoutSpec
+import com.composepdf.PdfReadingPosition
 import com.composepdf.PdfSource
 import com.composepdf.PdfTapEvent
 import com.composepdf.PdfViewer
@@ -102,6 +108,7 @@ import com.composepdf.rememberPdfViewerState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
@@ -109,6 +116,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
@@ -132,8 +140,14 @@ fun PdfViewerScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Callers only show the screen once these are known; the factory values are a formality.
     val display = state.display ?: ViewerDisplaySettings.Factory
-    val pdfViewerState = rememberPdfViewerState()
+    // Where the reader left it, the first time. After a rotation or a process death the state
+    // comes back where it was, which is later than anything that was written down.
+    val pdfViewerState = rememberPdfViewerState(initialPosition = state.start?.position?.toEngine())
     val scope = rememberCoroutineScope()
+
+    ReportReadingPosition(pdfViewerState) {
+        viewModel.onSendIntent(PdfViewerIntent.ReadingPositionChanged(it))
+    }
 
     // A page asked for by *Go to page*, which cannot reach this state itself. Taken once scrolled
     // to.
@@ -554,6 +568,69 @@ private fun HandlePdfViewerEffects(
 }
 
 /**
+ * Tells [onPosition] where the reader is, for the next time the document is opened: a moment after
+ * they stop moving, and when they leave. Never on every frame of a scroll, since it is written
+ * down.
+ *
+ * What is reported on leaving is the last position seen, not one read then: by the time this is
+ * disposed the engine may already have let go of the document, and would answer with the middle of
+ * the current page.
+ */
+@OptIn(FlowPreview::class)
+@Composable
+private fun ReportReadingPosition(state: PdfViewerState, onPosition: (ReadingPosition) -> Unit) {
+    val report by rememberUpdatedState(onPosition)
+    val seen = remember(state) { LastSeen() }
+
+    LaunchedEffect(state) {
+        // Only once the document is laid out: before that the position is where the state was
+        // told to start, and nothing on screen yet.
+        snapshotFlow { if (state.isLoaded) state.readingPosition else null }
+            .filterNotNull()
+            .distinctUntilChanged()
+            .onEach { seen.position = it }
+            .debounce(ReadingPositionSettle)
+            .collect {
+                seen.reported = it
+                report(it.toDomain())
+            }
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, state) {
+        val reportLastSeen = {
+            val position = seen.position
+            if (position != null && position != seen.reported) {
+                seen.reported = position
+                report(position.toDomain())
+            }
+        }
+        // Stopping is the last moment the app is sure to get: it can be killed afterwards without
+        // another word.
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) reportLastSeen()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            reportLastSeen()
+        }
+    }
+}
+
+/** Where the reader was last seen, and the last place the ViewModel was told about. */
+private class LastSeen {
+    var position: PdfReadingPosition? = null
+    var reported: PdfReadingPosition? = null
+}
+
+private fun ReadingPosition.toEngine() =
+    PdfReadingPosition(pageIndex = pageIndex, fraction = offset)
+
+private fun PdfReadingPosition.toDomain() =
+    ReadingPosition(pageIndex = pageIndex, offset = fraction)
+
+/**
  * The page and point at the top of the content area, [contentTop] pixels down the viewer: where a
  * jump puts its target, so the way back returns the reader to the line they were on.
  */
@@ -594,6 +671,12 @@ private fun ViewerFitMode.toEngine(): FitMode =
 
 /** How long the pages on screen must stay put before their text is read. */
 private val VisiblePagesSettle = 150.milliseconds
+
+/**
+ * How long the reader stays put before where they are is written down. Long enough that leafing
+ * through a document writes nothing; what is lost by leaving sooner is written on the way out.
+ */
+private val ReadingPositionSettle = 1.seconds
 
 /** Each zoom button press scales by this much, animated. */
 private const val ZoomStep = 1.25f

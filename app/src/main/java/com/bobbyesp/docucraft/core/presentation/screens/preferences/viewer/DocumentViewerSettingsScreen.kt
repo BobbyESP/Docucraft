@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.FitScreen
 import androidx.compose.material.icons.rounded.Tune
@@ -67,23 +68,26 @@ fun DocumentViewerSettingsScreen(
     viewModel: DocumentViewerSettingsViewModel = koinViewModel(),
 ) {
     val defaults by viewModel.defaults.collectAsStateWithLifecycle()
+    val remembersReadingPosition by viewModel.remembersReadingPosition.collectAsStateWithLifecycle()
 
-    when (val current = defaults) {
-        null ->
-            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                LoadingIndicator(modifier = Modifier.size(64.dp))
-            }
-
-        else ->
-            DocumentViewerSettingsContent(
-                defaults = current,
-                onBack = onBack,
-                showBackButton = showBackButton,
-                onEnabledChange = viewModel::setEnabled,
-                onFitModeChange = viewModel::setFitMode,
-                onNightModeChange = viewModel::setNightMode,
-                modifier = modifier,
-            )
+    val current = defaults
+    val remembers = remembersReadingPosition
+    if (current == null || remembers == null) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            LoadingIndicator(modifier = Modifier.size(64.dp))
+        }
+    } else {
+        DocumentViewerSettingsContent(
+            defaults = current,
+            remembersReadingPosition = remembers,
+            onBack = onBack,
+            showBackButton = showBackButton,
+            onRememberReadingPositionChange = viewModel::setRememberReadingPosition,
+            onEnabledChange = viewModel::setEnabled,
+            onFitModeChange = viewModel::setFitMode,
+            onNightModeChange = viewModel::setNightMode,
+            modifier = modifier,
+        )
     }
 }
 
@@ -91,7 +95,9 @@ fun DocumentViewerSettingsScreen(
 @Composable
 fun DocumentViewerSettingsContent(
     defaults: ViewerDefaults,
+    remembersReadingPosition: Boolean,
     onBack: () -> Unit,
+    onRememberReadingPositionChange: (Boolean) -> Unit,
     onEnabledChange: (Boolean) -> Unit,
     onFitModeChange: (ViewerFitMode) -> Unit,
     onNightModeChange: (Boolean) -> Unit,
@@ -130,6 +136,20 @@ fun DocumentViewerSettingsContent(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            item(key = "remember_position", contentType = "settings_item") {
+                SettingSwitch(
+                    title = stringResource(R.string.viewer_remember_position),
+                    supportingText =
+                        stringResource(
+                            if (remembersReadingPosition) R.string.viewer_remember_position_on_desc
+                            else R.string.viewer_remember_position_off_desc
+                        ),
+                    icon = Icons.Rounded.Bookmark,
+                    isChecked = remembersReadingPosition,
+                    onCheckedChange = onRememberReadingPositionChange,
+                )
+            }
+
             item(key = "use_defaults", contentType = "settings_item") {
                 SettingSwitch(
                     title = stringResource(R.string.viewer_use_defaults),
@@ -251,7 +271,9 @@ private fun DocumentViewerSettingsOnPreview() {
     DocucraftTheme {
         DocumentViewerSettingsContent(
             defaults = ViewerDefaults(enabled = true),
+            remembersReadingPosition = true,
             onBack = {},
+            onRememberReadingPositionChange = {},
             onEnabledChange = {},
             onFitModeChange = {},
             onNightModeChange = {},
@@ -265,7 +287,9 @@ private fun DocumentViewerSettingsOffPreview() {
     DocucraftTheme {
         DocumentViewerSettingsContent(
             defaults = ViewerDefaults(enabled = false),
+            remembersReadingPosition = false,
             onBack = {},
+            onRememberReadingPositionChange = {},
             onEnabledChange = {},
             onFitModeChange = {},
             onNightModeChange = {},

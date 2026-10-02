@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract
 
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.canBeHandedOff
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.BlockReason
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
@@ -31,6 +32,11 @@ data class PdfViewerUiState(
      */
     val display: ViewerDisplaySettings? = null,
     /**
+     * `null` until it is known where to open the document. The pages are laid out once, at that
+     * place: showing them before it arrives would open the document at its start and then jump.
+     */
+    val start: ViewerStart? = null,
+    /**
      * The text of the pages near what is on screen, and of the pages the selection ends on. Read
      * lazily, as the reader moves; a page missing here is not known yet.
      */
@@ -47,7 +53,10 @@ data class PdfViewerUiState(
 ) {
     /** The document, once there is everything needed to show it. */
     val readyDocument: BasicDocument?
-        get() = (document as? ViewerDocumentState.Open)?.document?.takeIf { display != null }
+        get() =
+            (document as? ViewerDocumentState.Open)?.document?.takeIf {
+                display != null && start != null
+            }
 
     /** Whether Share and Open with are on offer. */
     val canHandOff: Boolean
@@ -56,6 +65,14 @@ data class PdfViewerUiState(
                 ContentRef(it.uri).canBeHandedOff()
             } == true
 }
+
+/**
+ * Where the document opens.
+ *
+ * @property position Where the reader left it, or `null` to open it at its start: it was never
+ *   read, or the app is not remembering.
+ */
+data class ViewerStart(val position: ReadingPosition?)
 
 /**
  * What is known so far about the document the viewer points at.
@@ -119,6 +136,12 @@ sealed interface PdfViewerIntent {
 
     /** The document could not be shown, for [error]. */
     data class DocumentFailedToLoad(val error: ViewerLoadError) : PdfViewerIntent
+
+    /**
+     * The reader is now at [position], and has been for a moment, or is leaving. Not every frame of
+     * a scroll: this is written down.
+     */
+    data class ReadingPositionChanged(val position: ReadingPosition) : PdfViewerIntent
 
     /** The pages on screen changed, and their text may be needed. */
     data class VisiblePagesChanged(val pages: IntRange) : PdfViewerIntent

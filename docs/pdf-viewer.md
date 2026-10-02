@@ -50,6 +50,32 @@ di/             PdfViewerModule, PageContentModule
   value if there is one, else the defaults if they are on, else the factory settings. It is tested
   case by case in `ViewerDisplaySettingsTest`.
 
+## Reading position
+
+A document opens where it was left, on the same line, whatever the screen it is opened on.
+
+- **What is kept** is a page and a fraction along it (`ReadingPosition`), in the document's row of
+  `document_activity`. It is the engine's own reading position
+  ([pdf-engine.md](pdf-engine.md#reading-position)), which does not depend on the viewport.
+- **When it is written.** A second after the reader stops moving, and when they leave: when the
+  screen is disposed, and when the activity stops, which is the last moment an app is sure to get.
+  Never on every frame of a scroll.
+  - What is written on leaving is the last position *seen*, not one read at that moment: by then
+    the engine may have let go of the document.
+  - The write runs in the app's scope, not the ViewModel's. It starts as the viewer leaves, and
+    would be cancelled with it.
+- **Where the document opens is known before it is shown.** The ViewModel reads the position
+  first (`start` in its state), and the screen is only composed once it has it, so the pages are
+  laid out once, in place. Showing them earlier would open the document at its start and then
+  jump.
+  - It is only where the state *starts*. After a rotation or a process death the engine restores
+    where the reader was, which is later than anything written down.
+- **A position is always read as a place the document has** (`ReadingPosition.within`). A file can
+  be replaced by a shorter one between two readings; the reader is then taken to its last page.
+- **It can be turned off**: Settings → Document viewer → *Remember where I left off*, on by
+  default. Off means the app does not remember: `SetReadingPositionMemoryUseCase` also forgets
+  every position already kept, and nothing is written while it is off.
+
 ## The screen
 
 ```
