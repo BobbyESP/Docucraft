@@ -9,6 +9,7 @@ import android.os.ParcelFileDescriptor
 import android.util.Log
 import android.util.Size
 import com.composepdf.PdfLoadException
+import com.composepdf.PdfRenderers
 import com.composepdf.PdfSource
 import com.composepdf.internal.util.longLivedContext
 import java.io.Closeable
@@ -35,6 +36,9 @@ private const val TAG = "PdfDocumentManager"
  *
  * Access to the renderer pool is managed via a semaphore to prevent resource exhaustion and
  * native-level contention.
+ *
+ * Below Android 8 the platform's renderer is not thread-safe at all, so every call made here into a
+ * renderer or a page goes through [PdfRenderers.exclusively]. See [PdfRenderers].
  */
 class PdfDocumentManager(context: Context) : Closeable {
 
@@ -95,7 +99,7 @@ class PdfDocumentManager(context: Context) : Closeable {
 
                 val firstRenderer =
                     try {
-                        PdfRenderer(fd)
+                        PdfRenderers.open(appContext, fd)
                     } catch (e: Exception) {
                         throw PdfLoadException.whileParsing(e)
                     }
@@ -106,7 +110,7 @@ class PdfDocumentManager(context: Context) : Closeable {
                 repeat(maxParallelRenderers - 1) {
                     try {
                         val dupFd = ParcelFileDescriptor.dup(fd.fileDescriptor)
-                        rendererPool.offer(PdfRenderer(dupFd))
+                        rendererPool.offer(PdfRenderers.open(appContext, dupFd))
                         actualRenderers++
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to dup FD for parallel rendering: ${e.message}")
@@ -137,13 +141,19 @@ class PdfDocumentManager(context: Context) : Closeable {
                         )
                     }
             try {
-                renderer.openPage(pageIndex).use { page -> action(page) }
+                // Not `use`: the action suspends, and the lock cannot be held across it.
+                val page = PdfRenderers.exclusively { renderer.openPage(pageIndex) }
+                try {
+                    action(page)
+                } finally {
+                    PdfRenderers.exclusively { page.close() }
+                }
             } finally {
                 if (generation.get() == capturedGeneration) {
                     rendererPool.offer(renderer)
                 } else {
                     try {
-                        renderer.close()
+                        PdfRenderers.exclusively { renderer.close() }
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to close stale renderer: ${e.message}")
                     }
@@ -208,7 +218,7 @@ class PdfDocumentManager(context: Context) : Closeable {
         while (true) {
             val renderer = rendererPool.poll() ?: break
             try {
-                renderer.close()
+                PdfRenderers.exclusively { renderer.close() }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to close renderer: ${e.message}")
             }

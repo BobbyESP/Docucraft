@@ -92,6 +92,29 @@ PdfDocumentCanvas ◀── RenderEngine: PlanComputer ─ WorkQueue ─ workers
   rendered under a single page open.
 - **Night mode and scaling are applied when drawing**, never baked into bitmaps.
 
+### Android 7
+
+Android 7 (API 24 and 25) has two faults in its `PdfRenderer`. Each one kills the process in native
+code, where nothing can catch it, and Android 8 fixed both. `PdfRenderers` (public, because the app
+opens renderers of its own for previews and page counts) is how the app lives with them, and it
+does nothing from Android 8 on.
+
+- **Every renderer is opened through `PdfRenderers`**, never with the constructor.
+  - The platform counts the renderers using its PDF library, to start it for the first and shut it
+    down after the last. A renderer that fails to open (a password, a damaged file, not a PDF) is
+    counted out twice, the second time by its finalizer. The count ends one short, and the library
+    is shut down under a document that is open, or never started for the next one.
+  - The count cannot be corrected, so it is offset. A one-page document of the engine's own is
+    opened before the real one. If the real one opens, it is closed again. If not, it is never
+    closed: it stands for the count the finalizer is about to take away.
+- **Every call into a renderer or a page takes one lock.**
+  - The PDF library is not made for two threads, and Android 7 does not keep them apart: two
+    renderers drawing text at once corrupt the font cache they share. The engine's own two
+    renderers are enough, and so are two previews.
+  - `PdfRenderers.use` opens, hands over and closes a renderer under that lock, for the app's
+    one-off uses. The engine keeps its renderers, so `PdfDocumentManager` and `PageRenderer` take
+    the lock call by call, which is what the platform itself does from Android 8 on.
+
 ### Gestures
 
 `PdfGestures` is one state machine, so gestures hand over to each other without dead frames: pan,
@@ -154,6 +177,8 @@ centred horizontally.
   coordinator, and load-error classification.
 - **Instrumented, on a device:**
   - fixtures (`PdfFixturesTest`);
+  - what Android 7's renderer does not survive (`PdfRenderersTest`), which only proves anything on
+    API 24 or 25;
   - restoration and layout changes;
   - content padding;
   - gestures and their consumption;

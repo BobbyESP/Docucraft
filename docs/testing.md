@@ -55,6 +55,10 @@
   `@SdkSuppress(minSdkVersion = 35)`.
 - **The catalogue's tests also run on API 24**, the oldest SQLite the app meets (3.9), where SQL
   that works everywhere else can fail. The AVD used for it is a Google APIs image of API 24.
+- **So do the tests that open PDFs.** Android 7's renderer crashes the process, and with it the
+  whole run, after a document that fails to open or when two are drawn at once
+  ([pdf-engine.md](pdf-engine.md#android-7)). A test opens its renderers through `PdfRenderers`,
+  like the app, or the first protected fixture takes down every test after it.
 - **A run can pass without running anything.** If a copy of the app is already installed, on API 24
   the task's own install fails, no test runs, and the build still succeeds. Uninstall
   `com.bobbyesp.docucraft.debug` and `com.bobbyesp.docucraft.debug.test` first, and read the number

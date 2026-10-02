@@ -3,10 +3,8 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.storage
 
-import android.os.Build
 import androidx.core.net.toUri
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsServiceImpl
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
@@ -127,11 +125,7 @@ class DocumentStorageImplTest {
         assertTrue(File(context.filesDir, stored.filePath).exists())
     }
 
-    // Not below Android 8. There, a renderer that fails to open a PDF leaves the platform's PDF
-    // library unusable for the rest of the process: this test would pass, and the next test to
-    // render a page, in whatever class, would crash the run.
     @Test
-    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.O)
     fun aProtectedPdfIsStoredWithNoPages() = runBlocking {
         val stored =
             storage.storeDocument(fixture("password-protected.pdf").asRef(), documentUuid = "a")

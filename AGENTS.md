@@ -164,6 +164,10 @@ A new Koin module is registered in `App.kt`.
   - The platform's content APIs (`getTextContents`, `selectContent`, `getLinkContents`, the
     `android.graphics.pdf.models` types) are used **only** in `PlatformPageContentProvider`.
     Anywhere else, `PdfRenderer` is only for counting pages.
+- **A `PdfRenderer` is never built with its constructor**, in the app or in a test. It is opened
+  with `PdfRenderers.open`, or opened, used and closed with `PdfRenderers.use` (`:composepdf`). On
+  Android 7 a document that fails to open, or two documents drawn at once, crash the process in
+  native code; see [docs/pdf-engine.md](docs/pdf-engine.md#android-7).
 - **Selection logic is pure and tested; the UI only draws it.**
   - `TextSelection` and `DocumentSelection`, in `:document-content-api`, work in carets over the
     page's text, character by character, across pages, and handle vertical and multi-column

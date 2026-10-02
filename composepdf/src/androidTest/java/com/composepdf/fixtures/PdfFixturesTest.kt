@@ -7,6 +7,7 @@ import android.graphics.pdf.PdfRenderer
 import android.os.ParcelFileDescriptor
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.composepdf.PdfRenderers
 import java.io.File
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -52,6 +53,9 @@ class PdfFixturesTest {
         context.assets.open("fixtures/$name").use { input ->
             file.outputStream().use { output -> input.copyTo(output) }
         }
-        return PdfRenderer(ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY))
+        return PdfRenderers.open(
+            context,
+            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY),
+        )
     }
 }

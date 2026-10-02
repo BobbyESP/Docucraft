@@ -11,6 +11,7 @@ import android.os.ParcelFileDescriptor
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
+import com.composepdf.PdfRenderers
 import java.io.File
 import kotlin.math.abs
 import org.json.JSONArray
@@ -294,7 +295,10 @@ class PlatformContentTest {
         context.assets.open("fixtures/$name").use { input ->
             file.outputStream().use { output -> input.copyTo(output) }
         }
-        return PdfRenderer(ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY))
+        return PdfRenderers.open(
+            context,
+            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY),
+        )
     }
 
     private companion object {

@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import androidx.core.graphics.createBitmap
+import com.composepdf.PdfRenderers
 import java.io.File
 import java.io.FileOutputStream
 
@@ -19,14 +20,13 @@ import java.io.FileOutputStream
 class DocumentOperationsServiceImpl(private val context: Context) : DocumentOperationsService {
 
     override fun pageCount(document: File): Int? {
-        // Asked of the file before the renderer is. On Android 7, a renderer that fails to open a
-        // file leaves the platform's PDF library unusable for the rest of the process, and the
-        // next page rendered crashes it. A file that is plainly not a PDF never gets that far.
+        // Asked of the file before the renderer is: one that is plainly not a PDF is answered
+        // without opening anything.
         if (!document.startsAsAPdf()) return null
 
         return try {
             ParcelFileDescriptor.open(document, ParcelFileDescriptor.MODE_READ_ONLY).use {
-                PdfRenderer(it).use { renderer -> renderer.pageCount }
+                PdfRenderers.use(context, it) { renderer -> renderer.pageCount }
             }
         } catch (e: Exception) {
             Log.w(TAG, "Could not count the pages of ${document.name}", e)
@@ -93,29 +93,38 @@ class DocumentOperationsServiceImpl(private val context: Context) : DocumentOper
         pageIndex: Int,
         format: Bitmap.CompressFormat,
         quality: Int,
-    ): Boolean =
-        PdfRenderer(descriptor).use { renderer ->
-            if (pageIndex !in 0 until renderer.pageCount) {
-                Log.e(TAG, "Page $pageIndex out of bounds; the document has ${renderer.pageCount}")
-                return false
-            }
+    ): Boolean {
+        // Only the drawing is done with the renderer: nothing else in the app draws a page until
+        // it is given back, on the versions that cannot draw two at once.
+        val bitmap =
+            PdfRenderers.use(context, descriptor) { renderer ->
+                if (pageIndex !in 0 until renderer.pageCount) {
+                    Log.e(
+                        TAG,
+                        "Page $pageIndex out of bounds; the document has ${renderer.pageCount}",
+                    )
+                    return false
+                }
 
-            renderer.openPage(pageIndex).use { page ->
-                val bitmap = createBitmap(page.width, page.height)
-                // The paper. A page paints only what is printed on it, so without this it comes
-                // out transparent and takes the colour of whatever the image is shown over.
-                bitmap.eraseColor(Color.WHITE)
-                page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-
-                outputFile.parentFile?.mkdirs()
-
-                FileOutputStream(outputFile).use { out ->
-                    bitmap.compress(format, quality, out).also { written ->
-                        if (!written) Log.e(TAG, "Could not encode ${outputFile.name} as $format")
+                renderer.openPage(pageIndex).use { page ->
+                    createBitmap(page.width, page.height).also { bitmap ->
+                        // The paper. A page paints only what is printed on it, so without this it
+                        // comes out transparent and takes the colour of whatever the image is
+                        // shown over.
+                        bitmap.eraseColor(Color.WHITE)
+                        page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
                     }
                 }
             }
+
+        outputFile.parentFile?.mkdirs()
+
+        return FileOutputStream(outputFile).use { out ->
+            bitmap.compress(format, quality, out).also { written ->
+                if (!written) Log.e(TAG, "Could not encode ${outputFile.name} as $format")
+            }
         }
+    }
 
     private companion object {
         const val TAG = "DocumentOperations"
