@@ -10,16 +10,21 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.DatabaseTriggers
 import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
 import com.bobbyesp.docucraft.feature.docscanner.data.db.long
 import com.bobbyesp.docucraft.feature.docscanner.data.db.rows
+import com.bobbyesp.docucraft.feature.docscanner.data.search.Fts4SearchIndex
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentOrigin
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScan
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LinkedDocumentFacts
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.NewLinkedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredDocument
 import com.bobbyesp.scanner.ContentRef
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -269,6 +274,138 @@ class LinkedDocumentsRepositoryImplTest {
 
         assertEquals(listOf("1|hash-scan|1|0|1000|1000"), factRows())
     }
+
+    // --- keeping it in the library ---
+
+    // It is the same document: what was noted about it is about the one the app now keeps.
+    @Test
+    fun aSavedDocumentIsTheSameRowWithAnotherCustody() = runBlocking {
+        link("content://other.app/1", "Contract", at = 2_000, held = true)
+        now = 3_000
+        activity.recordOpened("linked-1")
+        activity.rememberReadingPosition("linked-1", ReadingPosition(4, 0.25f))
+
+        now = 6_000
+        assertTrue(linked.keepInLibrary("linked-1", stored("linked-1", pageCount = 5)))
+
+        assertEquals(
+            listOf(
+                "linked-1|MANAGED|IMPORT|documents/linked-1.pdf|null|content://other.app/1|" +
+                    "null|2048|hash-linked-1|5|2000|6000|6000"
+            ),
+            db.rows(
+                "SELECT uuid, custody, origin, file_path, uri, source_uri, " +
+                    "has_persisted_permission, size_bytes, content_hash, page_count, created_at, " +
+                    "updated_at, content_updated_at FROM documents"
+            ),
+        )
+        assertEquals(
+            listOf("3000|3000|4|0.25"),
+            db.rows(
+                "SELECT last_opened_at, last_activity_at, reading_page, reading_offset " +
+                    "FROM document_activity"
+            ),
+        )
+    }
+
+    // A document the app keeps has a page for each of its pages, waiting for its text to be read.
+    @Test
+    fun aSavedDocumentGetsItsPages() = runBlocking {
+        link("content://other.app/1", "Contract", at = 2_000)
+
+        linked.keepInLibrary("linked-1", stored("linked-1", pageCount = 3))
+
+        assertEquals(
+            listOf("0|PENDING", "1|PENDING", "2|PENDING"),
+            db.rows("SELECT page_index, text_status FROM pages ORDER BY page_index"),
+        )
+    }
+
+    @Test
+    fun aSavedDocumentIsInTheLibraryAndIsFoundByItsName() = runBlocking {
+        link("content://other.app/1", "Contrato de alquiler", at = 2_000)
+
+        linked.keepInLibrary("linked-1", stored("linked-1", pageCount = 1))
+
+        val saved = documents.observeDocuments().first().single()
+        assertEquals("linked-1", saved.uuid)
+        assertEquals(DocumentOrigin.IMPORT, saved.origin)
+        assertEquals(
+            listOf("linked-1"),
+            Fts4SearchIndex(database.searchDao()).search("alquiler").map { it.documentUuid },
+        )
+    }
+
+    // The reference is gone with the save. The other app's file is still there, and opening it
+    // again is opening another app's file again.
+    @Test
+    fun theSameLocationOpenedAfterSavingIsANewLinkedDocument() = runBlocking {
+        link("content://other.app/1", "Contract", at = 2_000)
+        linked.keepInLibrary("linked-1", stored("linked-1", pageCount = 1))
+
+        val again = link("content://other.app/1", "Contract", at = 9_000)
+
+        assertEquals("linked-2", again.uuid)
+        assertEquals(
+            listOf("linked-1|MANAGED", "linked-2|LINKED"),
+            db.rows("SELECT uuid, custody FROM documents ORDER BY id"),
+        )
+    }
+
+    @Test
+    fun onlyALinkedDocumentCanBeKeptThroughHere() = runBlocking {
+        save("scan", at = 1_000)
+
+        assertFalse(linked.keepInLibrary("uuid-scan", stored("other", pageCount = 9)))
+        assertFalse(linked.keepInLibrary("no-such-document", stored("other", pageCount = 9)))
+
+        assertEquals(
+            listOf("documents/uuid-scan.pdf|1"),
+            db.rows("SELECT file_path, page_count FROM documents"),
+        )
+        assertEquals(1L, db.long("SELECT COUNT(*) FROM pages"))
+    }
+
+    // --- already in the library ---
+
+    @Test
+    fun aDocumentOfTheLibraryIsFoundByItsContent() = runBlocking {
+        save("first", at = 1_000)
+        save("second", at = 2_000)
+
+        assertEquals("uuid-second", documents.findInLibrary("hash-second")?.uuid)
+        assertNull(documents.findInLibrary("hash-of-nothing"))
+    }
+
+    // Importing a duplicate is allowed, so there can be several. The one found is the first.
+    @Test
+    fun ofSeveralWithTheSameContentTheOldestIsFound() = runBlocking {
+        save("first", at = 1_000)
+        save("second", at = 2_000)
+        db.execSQL("UPDATE documents SET content_hash = 'same'")
+
+        assertEquals("uuid-first", documents.findInLibrary("same")?.uuid)
+    }
+
+    // What is in the bin is not in the library, and a reference to another app's file is not a
+    // copy of it: neither makes saving a duplicate.
+    @Test
+    fun theBinAndOtherAppsDocumentsDoNotCount() = runBlocking {
+        save("binned", at = 1_000)
+        db.execSQL("UPDATE documents SET trashed_at = 5000")
+        link("content://other.app/1", "Contract", at = 2_000)
+        linked.describe("linked-1", LinkedDocumentFacts(1, "hash-binned", 1, isProtected = false))
+
+        assertNull(documents.findInLibrary("hash-binned"))
+    }
+
+    private fun stored(name: String, pageCount: Int?) =
+        StoredDocument(
+            filePath = "documents/$name.pdf",
+            sizeBytes = 2_048,
+            contentHash = "hash-$name",
+            pageCount = pageCount,
+        )
 
     private fun documentRows(): List<String> =
         db.rows("SELECT uuid, original_name, created_at FROM documents ORDER BY id")

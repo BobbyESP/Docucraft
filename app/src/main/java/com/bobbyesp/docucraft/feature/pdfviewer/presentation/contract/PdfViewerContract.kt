@@ -50,6 +50,13 @@ data class PdfViewerUiState(
     val selection: DocumentSelection? = null,
     /** The link tapped, shown before anything opens (D3); `null` when none is. */
     val linkPreview: LinkPreview? = null,
+    /**
+     * Whether *Save to Docucraft* is on offer: the document belongs to another app, and the
+     * catalogue only refers to it. It stops being so the moment it is saved.
+     */
+    val canSaveToLibrary: Boolean = false,
+    /** Its file is being copied: asking again would start a second copy. */
+    val isSavingToLibrary: Boolean = false,
 ) {
     /** The document, once there is everything needed to show it. */
     val readyDocument: BasicDocument?
@@ -162,6 +169,9 @@ sealed interface PdfViewerIntent {
 
     data object ToggleNightMode : PdfViewerIntent
 
+    /** Keep this document of another app in the library. */
+    data object SaveToLibrary : PdfViewerIntent
+
     data object Share : PdfViewerIntent
 
     data object OpenWith : PdfViewerIntent
@@ -179,6 +189,12 @@ sealed interface PdfViewerEffect {
      */
     data class GoToPage(val page: Int, val position: NormalizedPoint?, val from: Int) :
         PdfViewerEffect
+
+    /**
+     * The document being saved is already in the library. Whether to save a second copy is asked in
+     * a destination of its own, which only the screen can go to.
+     */
+    data class ConfirmSaveCopy(val documentUuid: String) : PdfViewerEffect
 
     /** The clipboard belongs to the UI. */
     data class CopyText(val text: String) : PdfViewerEffect

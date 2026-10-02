@@ -12,10 +12,12 @@ import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
+import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentActivityRepository
+import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.FakeExternalDocumentAccess
 import com.bobbyesp.docucraft.feature.docscanner.FakeLinkedDocumentsRepository
@@ -32,6 +34,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAv
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RegisterLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveLinkedToLibraryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import com.bobbyesp.docucraft.feature.docscanner.testLinkedDocument
 import com.bobbyesp.docucraft.feature.pdfviewer.FakePageContentProvider
@@ -87,9 +90,13 @@ class PdfViewerViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private val catalogue = MutableStateFlow<Document?>(null)
+    /** The document the fake catalogue registers for what another app hands over. */
+    private val handedOver = MutableStateFlow<Document?>(testLinkedDocument(uuid = LINKED_UUID))
     private val observeDocument: ObserveDocumentUseCase = mockk {
         every { this@mockk.invoke(UUID) } returns catalogue
+        every { this@mockk.invoke(LINKED_UUID) } returns handedOver
     }
+    private val storage = FakeDocumentStorage()
     private val sharer: DocumentSharer = mockk(relaxed = true)
     private val opener: DocumentOpener = mockk(relaxed = true)
     private val stringProvider: StringProvider = mockk {
@@ -749,7 +756,83 @@ class PdfViewerViewModelTest {
         )
     }
 
+    // ---------------------------------------------------------------------------------- library
+
+    /** It is on loan: saving it is the only way to keep it. */
+    @Test
+    fun `a document of another app can be saved to the library`() = runTest {
+        assertTrue(openedExternal().state.value.canSaveToLibrary)
+    }
+
+    @Test
+    fun `a document the app already keeps cannot`() = runTest {
+        catalogue.value = scanned()
+        val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
+        advanceUntilIdle()
+
+        assertFalse(viewModel.state.value.canSaveToLibrary)
+    }
+
+    @Test
+    fun `saving it copies its file, says so, and takes the offer away`() = runTest {
+        val viewModel = openedExternal()
+        val events = collectEvents(viewModel)
+
+        viewModel.onSendIntent(PdfViewerIntent.SaveToLibrary)
+        advanceUntilIdle()
+        // The catalogue reports it as the app's own from then on.
+        handedOver.value = testDocument(uuid = LINKED_UUID)
+        advanceUntilIdle()
+
+        assertEquals(listOf("documents/$LINKED_UUID.pdf"), storage.files)
+        assertEquals(LINKED_UUID, linked.kept.single().first)
+        assertEquals(NotificationType.Success, (events.single() as UiEvent.ShowMessage).type)
+        assertFalse(viewModel.state.value.canSaveToLibrary)
+        assertFalse(viewModel.state.value.isSavingToLibrary)
+    }
+
+    /** Asked in a destination of its own: only the screen can go there. */
+    @Test
+    fun `one that is already in the library is asked about before a second copy is made`() =
+        runTest {
+            documents.documents.value = listOf(testDocument(uuid = UUID))
+            documents.hashes[UUID] = "hash-of-$LINKED_UUID"
+            val viewModel = openedExternal()
+            val effects = collectEffects(viewModel)
+
+            viewModel.onSendIntent(PdfViewerIntent.SaveToLibrary)
+            advanceUntilIdle()
+
+            assertEquals(listOf(PdfViewerEffect.ConfirmSaveCopy(LINKED_UUID)), effects)
+            assertTrue(linked.kept.isEmpty())
+            assertTrue(storage.files.isEmpty())
+            assertTrue(viewModel.state.value.canSaveToLibrary)
+        }
+
+    @Test
+    fun `one that cannot be kept says why and stays open`() = runTest {
+        storage.pageCount = null
+        val viewModel = openedExternal()
+        val events = collectEvents(viewModel)
+
+        viewModel.onSendIntent(PdfViewerIntent.SaveToLibrary)
+        advanceUntilIdle()
+
+        assertEquals(NotificationType.Error, (events.single() as UiEvent.ShowMessage).type)
+        assertTrue(viewModel.state.value.readyDocument != null)
+        assertFalse(viewModel.state.value.isSavingToLibrary)
+    }
+
     // ---------------------------------------------------------------------------------- helpers
+
+    private fun TestScope.collectEvents(viewModel: PdfViewerViewModel): List<UiEvent> {
+        val events = mutableListOf<UiEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.defaultEvents.collect { events += it }
+        }
+        advanceUntilIdle()
+        return events
+    }
 
     private fun TestScope.viewModel(
         ref: ViewerDocumentRef,
@@ -774,6 +857,8 @@ class PdfViewerViewModelTest {
             rememberReadingPosition = RememberReadingPositionUseCase(settingsRepository, activity),
             registerLinkedDocument = RegisterLinkedDocumentUseCase(access, linked),
             describeLinkedDocument = DescribeLinkedDocumentUseCase(documents, linked, access),
+            observeCatalogueDocument = observeDocument,
+            saveToLibrary = SaveLinkedToLibraryUseCase(documents, linked, storage, access),
             // Unconfined: the scheduler does not wait for the background scope, and what is
             // written there is what these tests look at.
             longLived =

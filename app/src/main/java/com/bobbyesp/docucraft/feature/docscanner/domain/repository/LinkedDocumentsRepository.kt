@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.repository
 
+import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredDocument
 import com.bobbyesp.scanner.ContentRef
 
 /**
@@ -63,4 +64,16 @@ interface LinkedDocumentsRepository {
 
     /** Notes [facts] about the linked document with this [uuid]. Nothing if there is none. */
     suspend fun describe(uuid: String, facts: LinkedDocumentFacts)
+
+    /**
+     * Turns the linked document with this [uuid] into one the app keeps, whose file is [stored]: an
+     * imported document of the library, with a page for each of its pages. All of it or none of it.
+     *
+     * It is the same document, changed in place: its uuid, when it was opened and where it was left
+     * stay as they were, and where it came from is remembered.
+     *
+     * @return `false` when the catalogue has no linked document with this uuid, and nothing was
+     *   changed.
+     */
+    suspend fun keepInLibrary(uuid: String, stored: StoredDocument): Boolean
 }

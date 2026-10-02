@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -134,18 +135,31 @@ fun PdfViewerScreen(
     onBack: () -> Unit,
     onOpenDetails: () -> Unit,
     onGoToPage: (currentPage: Int, pageCount: Int) -> Unit,
+    onConfirmSaveCopy: (documentUuid: String) -> Unit,
     modifier: Modifier = Modifier,
     showBackButton: Boolean = true,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Callers only show the screen once these are known; the factory values are a formality.
     val display = state.display ?: ViewerDisplaySettings.Factory
+    // Where the reader was last seen in this document, whichever file it was read from.
+    val seen = remember { LastSeen() }
+
     // Where the reader left it, the first time. After a rotation or a process death the state
     // comes back where it was, which is later than anything that was written down.
-    val pdfViewerState = rememberPdfViewerState(initialPosition = state.start?.position?.toEngine())
+    //
+    // Keyed by where the document is read from: saving another app's document into the library
+    // moves it, and the engine starts a document it has not seen from the top. A state of its own
+    // for the new place starts where the reader was instead.
+    val pdfViewerState =
+        key(documentInfo.uri) {
+            rememberPdfViewerState(
+                initialPosition = seen.position ?: state.start?.position?.toEngine()
+            )
+        }
     val scope = rememberCoroutineScope()
 
-    ReportReadingPosition(pdfViewerState) {
+    ReportReadingPosition(pdfViewerState, seen) {
         viewModel.onSendIntent(PdfViewerIntent.ReadingPositionChanged(it))
     }
 
@@ -176,6 +190,7 @@ fun PdfViewerScreen(
         viewModel = viewModel,
         pdfViewerState = pdfViewerState,
         contentTop = { with(density) { topBarHeight.toPx() } },
+        onConfirmSaveCopy = onConfirmSaveCopy,
     )
 
     // ---------------------------------------------------------------- text selection
@@ -301,70 +316,77 @@ fun PdfViewerScreen(
     }
 
     Box(modifier = modifier.fillMaxSize().nestedScroll(chrome.nestedScrollConnection)) {
-        PdfViewer(
-            source = PdfSource.Uri(documentInfo.uri.toUri()),
-            state = pdfViewerState,
-            layout =
-                PdfLayoutSpec(
-                    scrollDirection = ScrollDirection.VERTICAL,
-                    fitMode = display.fitMode.toEngine(),
-                    contentPadding = PaddingValues(top = topBarHeight, bottom = bottomBarHeight),
-                ),
-            zoomSpec = PdfZoomSpec(minZoom = 0.25f, maxZoom = 10f),
-            // The fast scroller below replaces the engine's passive indicator.
-            style = PdfViewerDefaults.style(nightMode = display.nightMode, scrollIndicator = null),
-            loadingContent = { LoadingIndicator(modifier = Modifier.align(Alignment.Center)) },
-            errorContent = { error ->
-                ViewerErrorContent(
-                    error = loadError ?: ViewerLoadError.of(error),
-                    onOpenWith = openWith,
-                    onBack = if (showBackButton) onBack else null,
-                    modifier =
-                        Modifier.align(Alignment.Center)
-                            .padding(top = topBarHeight)
-                            .verticalScroll(rememberScrollState()),
-                )
-            },
-            // A tap closes a link's preview or lets go of a selection; otherwise it shows or hides
-            // the bars.
-            onTap = {
-                when {
-                    state.linkPreview != null ->
-                        viewModel.onSendIntent(PdfViewerIntent.DismissLinkPreview)
-                    state.selection != null ->
-                        viewModel.onSendIntent(PdfViewerIntent.ClearSelection)
-                    else -> chrome.toggle()
-                }
-            },
-            interactionHandler = selectionHandler,
-            overlay = {
-                TextSelectionLayer(
-                    state = pdfViewerState,
-                    pages = state.pageText,
-                    selection = state.selection,
-                    drag = selectionDrag,
-                    contentTop = topBarHeight,
-                    contentBottomInset = bottomBarHeight,
-                    nightMode = display.nightMode,
-                    onSelect = { viewModel.onSendIntent(PdfViewerIntent.Select(it)) },
-                    onCopy = { viewModel.onSendIntent(PdfViewerIntent.CopySelection) },
-                    onSelectAll = { viewModel.onSendIntent(PdfViewerIntent.SelectAll) },
-                )
-                LinkLayer(
-                    pageLinks = state.pageLinks,
-                    preview = state.linkPreview,
-                    describe = { describeLink(it, resolveLink, pdfViewerState.pageCount) },
-                    onTapLink = { page, link ->
-                        viewModel.onSendIntent(
-                            PdfViewerIntent.TapLink(page, link, pdfViewerState.pageCount)
-                        )
-                    },
-                    onOpen = { viewModel.onSendIntent(PdfViewerIntent.OpenPreviewedLink) },
-                    onCopy = { viewModel.onSendIntent(PdfViewerIntent.CopyPreviewedLink) },
-                )
-            },
-            modifier = Modifier.fillMaxSize().hazeSource(hazeState),
-        )
+        // A viewer of its own for each place the document is read from, like its state above: the
+        // engine does not take a new state under a viewer that is already laid out.
+        key(documentInfo.uri) {
+            PdfViewer(
+                source = PdfSource.Uri(documentInfo.uri.toUri()),
+                state = pdfViewerState,
+                layout =
+                    PdfLayoutSpec(
+                        scrollDirection = ScrollDirection.VERTICAL,
+                        fitMode = display.fitMode.toEngine(),
+                        contentPadding =
+                            PaddingValues(top = topBarHeight, bottom = bottomBarHeight),
+                    ),
+                zoomSpec = PdfZoomSpec(minZoom = 0.25f, maxZoom = 10f),
+                // The fast scroller below replaces the engine's passive indicator.
+                style =
+                    PdfViewerDefaults.style(nightMode = display.nightMode, scrollIndicator = null),
+                loadingContent = { LoadingIndicator(modifier = Modifier.align(Alignment.Center)) },
+                errorContent = { error ->
+                    ViewerErrorContent(
+                        error = loadError ?: ViewerLoadError.of(error),
+                        onOpenWith = openWith,
+                        onBack = if (showBackButton) onBack else null,
+                        modifier =
+                            Modifier.align(Alignment.Center)
+                                .padding(top = topBarHeight)
+                                .verticalScroll(rememberScrollState()),
+                    )
+                },
+                // A tap closes a link's preview or lets go of a selection; otherwise it shows or
+                // hides
+                // the bars.
+                onTap = {
+                    when {
+                        state.linkPreview != null ->
+                            viewModel.onSendIntent(PdfViewerIntent.DismissLinkPreview)
+                        state.selection != null ->
+                            viewModel.onSendIntent(PdfViewerIntent.ClearSelection)
+                        else -> chrome.toggle()
+                    }
+                },
+                interactionHandler = selectionHandler,
+                overlay = {
+                    TextSelectionLayer(
+                        state = pdfViewerState,
+                        pages = state.pageText,
+                        selection = state.selection,
+                        drag = selectionDrag,
+                        contentTop = topBarHeight,
+                        contentBottomInset = bottomBarHeight,
+                        nightMode = display.nightMode,
+                        onSelect = { viewModel.onSendIntent(PdfViewerIntent.Select(it)) },
+                        onCopy = { viewModel.onSendIntent(PdfViewerIntent.CopySelection) },
+                        onSelectAll = { viewModel.onSendIntent(PdfViewerIntent.SelectAll) },
+                    )
+                    LinkLayer(
+                        pageLinks = state.pageLinks,
+                        preview = state.linkPreview,
+                        describe = { describeLink(it, resolveLink, pdfViewerState.pageCount) },
+                        onTapLink = { page, link ->
+                            viewModel.onSendIntent(
+                                PdfViewerIntent.TapLink(page, link, pdfViewerState.pageCount)
+                            )
+                        },
+                        onOpen = { viewModel.onSendIntent(PdfViewerIntent.OpenPreviewedLink) },
+                        onCopy = { viewModel.onSendIntent(PdfViewerIntent.CopyPreviewedLink) },
+                    )
+                },
+                modifier = Modifier.fillMaxSize().hazeSource(hazeState),
+            )
+        }
 
         PdfFastScroller(
             state = pdfViewerState,
@@ -408,6 +430,12 @@ fun PdfViewerScreen(
                 description = documentInfo.description,
                 showBackButton = showBackButton,
                 onBack = onBack,
+                // Only for a document that is on screen: what cannot be shown is not kept.
+                onSaveToLibrary =
+                    if (state.canSaveToLibrary && pdfViewerState.isLoaded) {
+                        { viewModel.onSendIntent(PdfViewerIntent.SaveToLibrary) }
+                    } else null,
+                isSavingToLibrary = state.isSavingToLibrary,
                 onShare =
                     if (canHandOff) ({ viewModel.onSendIntent(PdfViewerIntent.Share) }) else null,
                 onPrint =
@@ -483,7 +511,9 @@ private fun HandlePdfViewerEffects(
     viewModel: PdfViewerViewModel,
     pdfViewerState: PdfViewerState,
     contentTop: () -> Float,
+    onConfirmSaveCopy: (documentUuid: String) -> Unit,
 ) {
+    val confirmSaveCopy by rememberUpdatedState(onConfirmSaveCopy)
     val activity = requireNotNull(LocalActivity.current) { "The PDF viewer needs an activity" }
     val printer: DocumentPrinter = koinInject { parametersOf(activity) }
     val linkOpener: LinkOpener = koinInject { parametersOf(activity) }
@@ -505,6 +535,7 @@ private fun HandlePdfViewerEffects(
         viewModel.effects.collectLatest { effect ->
             when (effect) {
                 is PdfViewerEffect.Print -> printer.print(effect.document, effect.jobName)
+                is PdfViewerEffect.ConfirmSaveCopy -> confirmSaveCopy(effect.documentUuid)
                 is PdfViewerEffect.OpenLink ->
                     if (!linkOpener.open(effect.action, latestLook)) {
                         notifications.show(
@@ -579,9 +610,12 @@ private fun HandlePdfViewerEffects(
  */
 @OptIn(FlowPreview::class)
 @Composable
-private fun ReportReadingPosition(state: PdfViewerState, onPosition: (ReadingPosition) -> Unit) {
+private fun ReportReadingPosition(
+    state: PdfViewerState,
+    seen: LastSeen,
+    onPosition: (ReadingPosition) -> Unit,
+) {
     val report by rememberUpdatedState(onPosition)
-    val seen = remember(state) { LastSeen() }
 
     LaunchedEffect(state) {
         // Only once the document is laid out: before that the position is where the state was

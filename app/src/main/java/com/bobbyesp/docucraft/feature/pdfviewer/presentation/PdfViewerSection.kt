@@ -17,8 +17,10 @@ import com.bobbyesp.docucraft.feature.pdfviewer.navigation.ExternalPdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.GoToPage
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.SaveCopyToLibrary
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.details.pdfDocumentDetailsSection
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.library.saveCopyToLibrarySection
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.goToPageSection
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
 import org.koin.androidx.compose.koinViewModel
@@ -59,6 +61,7 @@ fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
                 onBack = navigator::goBack,
                 onOpenDetails = { navigator.goTo(PdfDocumentDetails(ref)) },
                 onGoToPage = { current, count -> navigator.goTo(GoToPage(ref, current, count)) },
+                onConfirmSaveCopy = { uuid -> navigator.goTo(SaveCopyToLibrary(uuid)) },
                 // Beside the list there is already a way back on screen; filling the window there
                 // is not. The scene knows which of the two happened; this does not have to.
                 showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
@@ -68,6 +71,7 @@ fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
 
     pdfDocumentDetailsSection(navigator)
     goToPageSection(navigator)
+    saveCopyToLibrarySection(navigator)
 }
 
 /**
@@ -91,6 +95,7 @@ fun EntryProviderScope<NavKey>.externalPdfViewerSection(
                 onBack = onClose,
                 onOpenDetails = { navigator.goTo(PdfDocumentDetails(ref)) },
                 onGoToPage = { current, count -> navigator.goTo(GoToPage(ref, current, count)) },
+                onConfirmSaveCopy = { uuid -> navigator.goTo(SaveCopyToLibrary(uuid)) },
                 showBackButton = true,
             )
         }
@@ -98,4 +103,5 @@ fun EntryProviderScope<NavKey>.externalPdfViewerSection(
 
     pdfDocumentDetailsSection(navigator)
     goToPageSection(navigator)
+    saveCopyToLibrarySection(navigator)
 }

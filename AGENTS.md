@@ -213,6 +213,8 @@ A new Koin module is registered in `App.kt`.
 - **Another app's PDF**: `PdfViewerActivity` takes `VIEW` and `SEND` for `application/pdf`.
   - The catalogue registers it as a `LINKED` document, by its URI: a reference, never a copy. It
     shows in Recents only, and no more than 50 are kept (`RegisterLinkedDocumentUseCase`).
+  - *Save to Docucraft* copies its file and makes that same row a `MANAGED` document
+    (`SaveLinkedToLibraryUseCase`).
   - It runs in its own task (`taskAffinity=""`, `autoRemoveFromRecents`) with its own back stack,
     rooted at `ExternalPdfViewer(uri, displayName)`.
   - Closing it returns to the calling app, not to Docucraft.

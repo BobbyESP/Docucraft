@@ -9,6 +9,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LinkedDocumen
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.NewLinkedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.ExternalDocumentAccess
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.MeasuredFile
+import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredDocument
 import com.bobbyesp.scanner.ContentRef
 
 /**
@@ -51,6 +52,21 @@ class FakeLinkedDocumentsRepository : LinkedDocumentsRepository {
 
     override suspend fun describe(uuid: String, facts: LinkedDocumentFacts) {
         described += uuid to facts
+    }
+
+    /** What was kept in the library, in order. */
+    val kept = mutableListOf<Pair<String, StoredDocument>>()
+
+    /** What [keepInLibrary] answers: `false` for a document that is no longer linked. */
+    var keeps = true
+
+    /** Thrown by [keepInLibrary] when set. */
+    var keepFailure: Exception? = null
+
+    override suspend fun keepInLibrary(uuid: String, stored: StoredDocument): Boolean {
+        keepFailure?.let { throw it }
+        if (keeps) kept += uuid to stored
+        return keeps
     }
 }
 

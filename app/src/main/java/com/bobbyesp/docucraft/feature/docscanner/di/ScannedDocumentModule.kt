@@ -46,6 +46,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAv
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RegisterLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveLinkedToLibraryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetReadingPositionMemoryUseCase
@@ -115,6 +116,14 @@ val documentScannerDataModule = module {
     factory { RegisterLinkedDocumentUseCase(access = get(), linked = get()) }
     factory { ForgetLinkedDocumentUseCase(linked = get(), access = get()) }
     factory { DescribeLinkedDocumentUseCase(documents = get(), linked = get(), access = get()) }
+    factory {
+        SaveLinkedToLibraryUseCase(
+            documents = get(),
+            linked = get(),
+            storage = get(),
+            access = get(),
+        )
+    }
     factory { GetReadingPositionUseCase(settings = get(), activity = get()) }
     factory { RememberReadingPositionUseCase(settings = get(), activity = get()) }
     factory { SetReadingPositionMemoryUseCase(settings = get(), activity = get()) }

@@ -69,26 +69,35 @@ abstract class DocumentDao {
                 availabilityCheckedAt = document.createdAt,
             )
         )
-        insert(
-            List(document.pageCount ?: 0) { index ->
-                PageEntity(
-                    documentId = id,
-                    pageIndex = index,
-                    widthPt = null,
-                    heightPt = null,
-                    textStatus = PageTextStatus.PENDING,
-                    textOrigin = null,
-                    confidence = null,
-                    engine = null,
-                    extractorVersion = null,
-                    language = null,
-                    attempts = 0,
-                    extractedAt = null,
-                )
-            }
-        )
+        insert(pendingPages(documentId = id, count = document.pageCount ?: 0))
         return id
     }
+
+    /** A page for each page of a document's file, all still to be read. */
+    private fun pendingPages(documentId: Long, count: Int): List<PageEntity> =
+        List(count) { index ->
+            PageEntity(
+                documentId = documentId,
+                pageIndex = index,
+                widthPt = null,
+                heightPt = null,
+                textStatus = PageTextStatus.PENDING,
+                textOrigin = null,
+                confidence = null,
+                engine = null,
+                extractorVersion = null,
+                language = null,
+                attempts = 0,
+                extractedAt = null,
+            )
+        }
+
+    /** The oldest document of the library with this content, the bin left out. */
+    @Query(
+        "SELECT * FROM library_documents WHERE content_hash = :contentHash " +
+            "ORDER BY created_at, id LIMIT 1"
+    )
+    abstract suspend fun findInLibraryByHash(contentHash: String): DocumentEntity?
 
     // --- documents of other apps ---
 
@@ -152,6 +161,53 @@ abstract class DocumentDao {
         deleteLinked(uuid)
         return uri
     }
+
+    /**
+     * Makes a linked document one the app keeps, and gives it the pages a kept document has. The
+     * row is changed, not replaced: what hangs from it, its activity and its reading position, is
+     * the same document's before and after.
+     *
+     * @return Whether there was a linked document with this [uuid] to change.
+     */
+    @Transaction
+    open suspend fun keepLinkedInLibrary(
+        uuid: String,
+        filePath: String,
+        sizeBytes: Long,
+        contentHash: String,
+        pageCount: Int?,
+        at: Long,
+    ): Boolean {
+        val id = idOfLinked(uuid) ?: return false
+        makeManaged(uuid, filePath, sizeBytes, contentHash, pageCount, at)
+        insert(pendingPages(documentId = id, count = pageCount ?: 0))
+        return true
+    }
+
+    @Query("SELECT id FROM documents WHERE uuid = :uuid AND custody = 'LINKED'")
+    protected abstract suspend fun idOfLinked(uuid: String): Long?
+
+    /**
+     * In one statement, because the row has to satisfy the custody trigger at every step: a
+     * document with both a file and a location, or with neither, is refused. `source_uri = uri`
+     * reads the location the row had before this statement.
+     */
+    @Query(
+        """UPDATE documents
+        SET custody = 'MANAGED', origin = 'IMPORT', file_path = :filePath,
+            source_uri = uri, uri = NULL, has_persisted_permission = NULL,
+            size_bytes = :sizeBytes, content_hash = :contentHash, page_count = :pageCount,
+            is_encrypted = 0, updated_at = :at, content_updated_at = :at
+        WHERE uuid = :uuid AND custody = 'LINKED'"""
+    )
+    protected abstract suspend fun makeManaged(
+        uuid: String,
+        filePath: String,
+        sizeBytes: Long,
+        contentHash: String,
+        pageCount: Int?,
+        at: Long,
+    ): Int
 
     @Query("SELECT * FROM documents WHERE uri = :uri AND custody = 'LINKED'")
     protected abstract suspend fun linkedAt(uri: String): DocumentEntity?

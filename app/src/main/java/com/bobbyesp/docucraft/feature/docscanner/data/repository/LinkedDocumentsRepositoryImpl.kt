@@ -9,6 +9,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LinkRegistrat
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LinkedDocumentFacts
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LinkedDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.NewLinkedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredDocument
 import com.bobbyesp.scanner.ContentRef
 import java.util.UUID
 
@@ -38,6 +39,16 @@ class LinkedDocumentsRepositoryImpl(
         val uri = documentDao.forgetLinked(uuid) ?: return null
         return ContentRef(uri)
     }
+
+    override suspend fun keepInLibrary(uuid: String, stored: StoredDocument): Boolean =
+        documentDao.keepLinkedInLibrary(
+            uuid = uuid,
+            filePath = stored.filePath,
+            sizeBytes = stored.sizeBytes,
+            contentHash = stored.contentHash,
+            pageCount = stored.pageCount,
+            at = now(),
+        )
 
     override suspend fun describe(uuid: String, facts: LinkedDocumentFacts) {
         val known = documentDao.getByUuid(uuid) ?: return

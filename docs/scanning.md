@@ -193,6 +193,20 @@ Recents.
   size, pages, a hash of its content, whether it asks for a password. It reads the whole file, so
   it runs after the document is on screen, and on every opening, since another app's file can be
   replaced. What could not be learnt one time is left as it was known.
+- **Saving it** (`SaveLinkedToLibraryUseCase`) copies its file and turns the reference into a
+  document the app keeps: custody `MANAGED`, origin `IMPORT`.
+  - **It is the same document afterwards.** The row is changed in place, in one statement, so its
+    uuid, when it was opened and where it was left stay as they were. Where it came from is kept
+    in `source_uri`, and it gets the pages a kept document has.
+  - **The file first, then the catalogue**, as when a scan is saved. If the catalogue then fails,
+    the copy is removed: the library is never left with a file nothing refers to.
+  - **The answer is a result** (`SaveToLibraryOutcome`): saved; not readable, for a file out of
+    reach, protected or damaged, since the library only keeps what it can show; already in the
+    library, when a document there has the same content (its hash); or nothing to save.
+  - **A duplicate is asked about, not refused.** The copy made to compare it is removed, and the
+    question is a destination of its own (`SaveCopyToLibrary`). Saying yes saves it.
+  - **The same location opened after saving is a new linked document**: the reference went with
+    the save, and the other app's file is still the other app's.
 - **On the shelf** it has no preview: its file is not read to draw one. One that could not be
   reached the last time is faded, and tapping it offers what can be done about it, *Remove from
   Recents*, instead of an error (`ForgetLinkedDocumentUseCase`). Only the reference goes.

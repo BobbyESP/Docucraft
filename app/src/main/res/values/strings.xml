@@ -169,6 +169,12 @@
     <string name="viewer_use_defaults_on_desc">Every document opens with the settings below</string>
     <string name="viewer_use_defaults_off_desc">Documents open fitted to width, without night mode</string>
     <string name="viewer_session_note">What you change while reading is kept for that document until you close the app.</string>
+    <string name="save_to_docucraft">Save to Docucraft</string>
+    <string name="saved_to_library">Saved to your library</string>
+    <string name="save_to_library_failed">This document couldn\'t be saved. It may be protected or damaged.</string>
+    <string name="already_in_library_title">Already in your library</string>
+    <string name="already_in_library_desc">A document with the same content is already saved in Docucraft. Do you want to save another copy?</string>
+    <string name="save_another_copy">Save another copy</string>
     <string name="remove_from_recents">Remove from Recents</string>
     <string name="removed_from_recents">Removed from Recents</string>
     <string name="linked_document_desc">This document belongs to another app. Docucraft only remembers where it is.</string>

@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Print
 import androidx.compose.material.icons.rounded.Share
@@ -49,6 +50,10 @@ import dev.chrisbanes.haze.rememberHazeState
  * blurred, instead of ending at its edge.
  *
  * @param hazeState Where the pages are recorded.
+ * @param onSaveToLibrary Keeps another app's document in the library; `null` for a document that is
+ *   already the app's, and the action is then left out. It comes first, so that it is the one
+ *   action a narrow bar shows: it is the only way to keep a document that is otherwise on loan.
+ * @param isSavingToLibrary The copy is under way; the action stays but does nothing.
  * @param onShare `null` when the document cannot leave the app; the action is then left out.
  * @param onOpenWith Likewise.
  * @param onPrint `null` when there is nothing to print: the document did not load.
@@ -66,6 +71,8 @@ fun PdfViewerTopBar(
     onDetails: () -> Unit,
     hazeState: HazeState,
     modifier: Modifier = Modifier,
+    onSaveToLibrary: (() -> Unit)? = null,
+    isSavingToLibrary: Boolean = false,
 ) {
     val frostedStyle =
         DocucraftBlurDefaults.surfaceStyle(MaterialTheme.colorScheme.surfaceContainer)
@@ -83,6 +90,7 @@ fun PdfViewerTopBar(
         }
     }
 
+    val saveLabel = stringResource(R.string.save_to_docucraft)
     val shareLabel = stringResource(R.string.share)
     val printLabel = stringResource(R.string.print)
     val openWithLabel = stringResource(R.string.open_with)
@@ -100,6 +108,14 @@ fun PdfViewerTopBar(
                 )
             },
         ) {
+            if (onSaveToLibrary != null) {
+                clickableItem(
+                    onClick = onSaveToLibrary,
+                    icon = { Icon(Icons.Rounded.LibraryAdd, contentDescription = saveLabel) },
+                    label = saveLabel,
+                    enabled = !isSavingToLibrary,
+                )
+            }
             if (onShare != null) {
                 clickableItem(
                     onClick = onShare,

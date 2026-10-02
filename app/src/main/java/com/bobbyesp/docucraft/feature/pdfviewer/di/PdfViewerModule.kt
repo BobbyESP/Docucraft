@@ -23,6 +23,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocu
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.PdfViewerViewModel
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.details.PdfDocumentDetailsViewModel
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.library.SaveCopyToLibraryViewModel
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.ViewerPageRequests
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
@@ -84,6 +85,8 @@ val pdfViewerModule = module {
             rememberReadingPosition = get(),
             registerLinkedDocument = get(),
             describeLinkedDocument = get(),
+            observeCatalogueDocument = get(),
+            saveToLibrary = get(),
             // Outlives the viewer: where the reader was is written as they leave.
             longLived = get(qualifier = named("AppMainSupervisedScope")),
         )
@@ -91,5 +94,13 @@ val pdfViewerModule = module {
 
     viewModel { (ref: ViewerDocumentRef) ->
         PdfDocumentDetailsViewModel(ref = ref, observeDetails = get())
+    }
+
+    viewModel { (documentUuid: String) ->
+        SaveCopyToLibraryViewModel(
+            documentUuid = documentUuid,
+            saveToLibrary = get(),
+            notifyUser = get(),
+        )
     }
 }

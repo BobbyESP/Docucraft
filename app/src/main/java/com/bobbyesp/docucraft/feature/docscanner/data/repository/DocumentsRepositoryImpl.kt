@@ -43,6 +43,9 @@ class DocumentsRepositoryImpl(
         return entity.toModel(locations)
     }
 
+    override suspend fun findInLibrary(contentHash: String): Document.Managed? =
+        documentDao.findInLibraryByHash(contentHash)?.toManaged(locations)
+
     override suspend fun addScan(scan: NewScan) {
         documentDao.insertManaged(scan.toEntity(createdAt = now()))
     }

@@ -72,6 +72,10 @@ A document opens where it was left, on the same line, whatever the screen it is 
     where the reader was, which is later than anything written down.
 - **A position is always read as a place the document has** (`ReadingPosition.within`). A file can
   be replaced by a shorter one between two readings; the reader is then taken to its last page.
+- **A document that moves is read where it was.** Saving another app's document into the library
+  changes where it is read from while it is open. The viewer and its state are keyed by that
+  location, and the new ones start at the last position seen: the engine does not take a new state
+  under a viewer that is already laid out, and starts a document it has not seen from the top.
 - **It can be turned off**: Settings → Document viewer → *Remember where I left off*, on by
   default. Off means the app does not remember: `SetReadingPositionMemoryUseCase` also forgets
   every position already kept, and nothing is written while it is off.
@@ -98,6 +102,11 @@ Phone                                     Tablet / wide pane
 - **Actions in an `AppBarRow`**: Share, Print, Open with, Details. The row shows as many as fit in
   the bar's own width and moves the rest to its overflow menu, so a phone shows Share and "⋮" and a
   wide pane shows all four.
+  - **Save to Docucraft** comes before them, for a document that belongs to another app, and only
+    once it is on screen. It is then the one action a narrow bar shows: without it the document is
+    on loan. It goes when the document is saved, from here or from anywhere else, because the
+    ViewModel follows the document in the catalogue
+    ([scanning.md](scanning.md#documents-of-other-apps)).
   - Share and Open with are left out for a document that cannot leave the app (`canBeHandedOff`:
     only `content://`).
   - Print is left out until there is a document.

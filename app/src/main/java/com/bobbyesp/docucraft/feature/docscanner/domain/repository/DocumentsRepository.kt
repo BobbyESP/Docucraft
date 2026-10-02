@@ -36,6 +36,15 @@ interface DocumentsRepository {
     fun observeDocument(uuid: String): Flow<Document?>
 
     /**
+     * A document of the library with exactly this content, or `null`. The oldest, when there are
+     * several: importing a duplicate is allowed. Documents in the bin and documents of other apps
+     * do not count.
+     *
+     * @param contentHash SHA-256 of the file, in hexadecimal.
+     */
+    suspend fun findInLibrary(contentHash: String): Document.Managed?
+
+    /**
      * Adds a scan to the catalogue, with everything a document cannot be without: its activity and
      * a page for each of its pages. All of it or none of it.
      *

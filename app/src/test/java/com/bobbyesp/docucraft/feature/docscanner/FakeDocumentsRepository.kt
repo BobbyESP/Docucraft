@@ -44,6 +44,12 @@ class FakeDocumentsRepository(
         all.firstOrNull { it.uuid == uuid }
     }
 
+    /** The hash each document of the library was stored with. */
+    val hashes = mutableMapOf<String, String>()
+
+    override suspend fun findInLibrary(contentHash: String): Document.Managed? =
+        documents.value.firstOrNull { hashes[it.uuid] == contentHash }
+
     override suspend fun addScan(scan: NewScan) {
         addFailure?.let { throw it }
         added += scan

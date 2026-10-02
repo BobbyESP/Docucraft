@@ -27,6 +27,13 @@ import kotlinx.serialization.Serializable
 @Serializable data class PdfDocumentDetails(val document: ViewerDocumentRef) : NavKey
 
 /**
+ * The question asked when a document being saved into the library is already in it: save a second
+ * copy, or not. It names the document by its uuid in the catalogue, which a document handed over by
+ * another app has too by the time it can be saved.
+ */
+@Serializable data class SaveCopyToLibrary(val documentUuid: String) : NavKey
+
+/**
  * *Go to page* for a document open in a viewer. A destination because it is a dialog the user can
  * open and leave; [currentPage] and [pageCount] travel with it, zero-based and total, so it needs
  * nothing from the viewer to show itself.

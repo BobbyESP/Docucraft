@@ -15,15 +15,19 @@ import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.domain.repository.logScreenView
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DescribeLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RegisterLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveLinkedToLibraryUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveToLibraryOutcome
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.ResolveLinkUseCase
@@ -92,6 +96,8 @@ class PdfViewerViewModel(
     private val rememberReadingPosition: RememberReadingPositionUseCase,
     private val registerLinkedDocument: RegisterLinkedDocumentUseCase,
     private val describeLinkedDocument: DescribeLinkedDocumentUseCase,
+    private val observeCatalogueDocument: ObserveDocumentUseCase,
+    private val saveToLibrary: SaveLinkedToLibraryUseCase,
     private val longLived: CoroutineScope,
 ) :
     BaseViewModel<PdfViewerIntent, PdfViewerUiState, PdfViewerEffect>(
@@ -141,6 +147,15 @@ class PdfViewerViewModel(
             val position =
                 catalogueUuid.await()?.let { runCatching { getReadingPosition(it) }.getOrNull() }
             setState { copy(start = ViewerStart(position)) }
+        }
+
+        // Followed, not read once: it stops being another app's the moment it is saved, from here
+        // or from anywhere else.
+        launch {
+            val uuid = catalogueUuid.await() ?: return@launch
+            observeCatalogueDocument(uuid).collect { document ->
+                setState { copy(canSaveToLibrary = document is Document.Linked) }
+            }
         }
 
         launch {
@@ -205,6 +220,7 @@ class PdfViewerViewModel(
             PdfViewerIntent.DismissLinkPreview -> setState { copy(linkPreview = null) }
             is PdfViewerIntent.SetFitMode -> setFitMode(intent)
             PdfViewerIntent.ToggleNightMode -> toggleNightMode()
+            PdfViewerIntent.SaveToLibrary -> saveToLibrary()
             PdfViewerIntent.Share -> handOff { documentSharer.share(it) }
             PdfViewerIntent.OpenWith -> handOff { documentOpener.openWith(it) }
             PdfViewerIntent.Print -> print()
@@ -267,6 +283,47 @@ class PdfViewerViewModel(
             } ?: return null
         val nightMode = savedStateHandle.get<Boolean>(KEY_NIGHT_MODE) ?: return null
         return ViewerDisplaySettings(fitMode = fitMode, nightMode = nightMode)
+    }
+
+    /**
+     * Keeps another app's document in the library. Each way it can end is an answer the reader is
+     * given, and none of them closes the document: it is being read.
+     */
+    private fun saveToLibrary() {
+        if (currentState.isSavingToLibrary || !currentState.canSaveToLibrary) return
+        setState { copy(isSavingToLibrary = true) }
+
+        launch(onError = { saveFailed() }) {
+            val uuid = catalogueUuid.await()
+            val outcome = uuid?.let { saveToLibrary(it) } ?: SaveToLibraryOutcome.NothingToSave
+            setState { copy(isSavingToLibrary = false) }
+
+            when (outcome) {
+                SaveToLibraryOutcome.Saved ->
+                    sendUiEvent(
+                        UiEvent.ShowMessage(
+                            stringProvider.get(R.string.saved_to_library),
+                            NotificationType.Success,
+                        )
+                    )
+                is SaveToLibraryOutcome.AlreadyInLibrary ->
+                    // `uuid` is not null here: nothing is found to be a duplicate without one.
+                    sendEffect(PdfViewerEffect.ConfirmSaveCopy(checkNotNull(uuid)))
+                SaveToLibraryOutcome.NotReadable -> saveFailed()
+                // Saved from somewhere else in the meantime: the action is already gone.
+                SaveToLibraryOutcome.NothingToSave -> Unit
+            }
+        }
+    }
+
+    private fun saveFailed() {
+        setState { copy(isSavingToLibrary = false) }
+        sendUiEvent(
+            UiEvent.ShowMessage(
+                stringProvider.get(R.string.save_to_library_failed),
+                NotificationType.Error,
+            )
+        )
     }
 
     private fun handOff(action: (ContentRef) -> Unit) {
