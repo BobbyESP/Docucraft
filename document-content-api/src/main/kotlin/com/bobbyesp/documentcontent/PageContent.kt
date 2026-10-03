@@ -38,11 +38,15 @@ data class TextLine(val words: List<TextWord>)
  * The text of a page, lines in reading order.
  *
  * @param confidence How sure recognition is, from 0 to 1; `null` for [ContentOrigin.EMBEDDED].
+ * @param engine What read it, such as `mlkit-latin`, when the provider says.
+ * @param language BCP 47 tag of the language it was read in, when that could be told.
  */
 data class PageText(
     val lines: List<TextLine>,
     val origin: ContentOrigin,
     val confidence: Float? = null,
+    val engine: String? = null,
+    val language: String? = null,
 ) {
     /** True when the page has no words: an image-only page, such as a camera scan. */
     val isBlank: Boolean

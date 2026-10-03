@@ -40,3 +40,5 @@ include(":scanner-api")
 include(":scanner-mlkit")
 
 include(":document-content-api")
+
+include(":ocr-mlkit")
