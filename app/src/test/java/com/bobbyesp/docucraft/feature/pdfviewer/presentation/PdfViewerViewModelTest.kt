@@ -17,6 +17,7 @@ import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentActivityRepository
+import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.FakeExternalDocumentAccess
@@ -893,7 +894,14 @@ class PdfViewerViewModelTest {
             registerLinkedDocument = RegisterLinkedDocumentUseCase(access, linked),
             describeLinkedDocument = DescribeLinkedDocumentUseCase(documents, linked, access),
             observeCatalogueDocument = observeDocument,
-            saveToLibrary = SaveLinkedToLibraryUseCase(documents, linked, storage, access),
+            saveToLibrary =
+                SaveLinkedToLibraryUseCase(
+                    documents,
+                    linked,
+                    storage,
+                    access,
+                    FakeDocumentIndexQueue(),
+                ),
             // Unconfined: the scheduler does not wait for the background scope, and what is
             // written there is what these tests look at.
             longLived =

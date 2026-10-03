@@ -66,7 +66,7 @@ A new Koin module is registered in `App.kt`.
   `PdfViewerModule.kt`.
 - **Framework work goes behind a port.** The interface lives in the domain and the implementation
   in data. Examples: `DocumentStorage`, `DocumentThumbnails`, `SearchIndex`,
-  `ExternalDocumentAccess`, `DocumentSharer`,
+  `ExternalDocumentAccess`, `DocumentIndexQueue`, `DocumentSharer`,
   `DocumentOpener`, `DocumentPrinter`, `LinkOpener`, `PageContentProvider`. A port that needs an
   `Activity` is a Koin `factory` taking it through `parametersOf(activity)`. It is called by the
   screen, in response to an effect from the ViewModel.
@@ -203,7 +203,9 @@ A new Koin module is registered in `App.kt`.
    `SavedStateHandle`. On restore, it rejoins through `DocumentScanner.resumePendingScan()`.
 4. `SaveScanDraftUseCase` stores the file through `DocumentStorage` (app files, exposed through the
    `FileProvider`) and catalogues it in Room.
-5. Home observes `ObserveDocumentsUseCase`. `HomeViewModel.observeDocuments` hands each change to
+5. The document is queued to have the text of its pages read (`DocumentIndexQueue`, WorkManager),
+   which is what search finds it by. `App` queues whatever is still pending each time it starts.
+6. Home observes `ObserveDocumentsUseCase`. `HomeViewModel.observeDocuments` hands each change to
    `ProcessDocumentsUseCase`, which searches, filters and sorts.
 
 ### Opening a document

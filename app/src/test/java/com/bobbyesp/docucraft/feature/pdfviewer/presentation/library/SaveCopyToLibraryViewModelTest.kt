@@ -6,6 +6,7 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation.library
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.usecase.NotifyUserUseCase
+import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.FakeExternalDocumentAccess
@@ -106,6 +107,7 @@ class SaveCopyToLibraryViewModelTest {
                     linked,
                     storage,
                     FakeExternalDocumentAccess(),
+                    FakeDocumentIndexQueue(),
                 ),
             notifyUser = notifyUser,
         )

@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
 import com.bobbyesp.docucraft.core.util.DateTime
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
+import com.bobbyesp.docucraft.feature.docscanner.domain.indexing.DocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScan
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
@@ -22,11 +23,15 @@ import java.util.UUID
  * Where the file goes is [DocumentStorage]'s problem, and nothing in this class names a framework,
  * a file system or a database.
  *
+ * Once saved, the document is queued to have its text read. Saving does not wait for that, and does
+ * not fail if it cannot be queued: it is queued again when the app starts.
+ *
  * @param newUuid What gives the document its identity. A parameter so that a test can know it.
  */
 class SaveScanDraftUseCase(
     private val storage: DocumentStorage,
     private val repository: DocumentsRepository,
+    private val indexQueue: DocumentIndexQueue,
     private val newUuid: () -> String = { UUID.randomUUID().toString() },
 ) {
     /** @return The uuid of the saved document. */
@@ -57,6 +62,7 @@ class SaveScanDraftUseCase(
             runCatching { storage.delete(stored.filePath) }
             throw e
         }
+        runCatching { indexQueue.enqueue(uuid) }
 
         uuid
     }

@@ -18,12 +18,16 @@ import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerDataModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.scannedDocumentsDatabaseModule
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ResumeTextIndexingUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.di.pageContentModule
 import com.bobbyesp.docucraft.feature.pdfviewer.di.pdfViewerModule
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
+import org.koin.core.qualifier.named
 
 class App : Application(), ImageLoaderFactory {
     override fun onCreate() {
@@ -45,6 +49,13 @@ class App : Application(), ImageLoaderFactory {
                 analyticsModule,
             )
         }
+        // Reading the text of the documents is picked up where it was left: a library just brought
+        // over from an older catalogue, or a document saved as the app was closed. Never in the way
+        // of starting: a failure here only means nothing is queued this time.
+        get<CoroutineScope>(named("AppMainSupervisedScope")).launch {
+            runCatching { get<ResumeTextIndexingUseCase>()() }
+        }
+
         packageInfo = packageManager.run {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
                 getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))

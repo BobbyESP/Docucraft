@@ -63,6 +63,25 @@ data class PageEntity(
     @ColumnInfo(name = "extracted_at") val extractedAt: Long?,
 )
 
+/** A page for each page of a document's file, all still to be read. */
+internal fun pendingPages(documentId: Long, count: Int): List<PageEntity> =
+    List(count) { index ->
+        PageEntity(
+            documentId = documentId,
+            pageIndex = index,
+            widthPt = null,
+            heightPt = null,
+            textStatus = PageTextStatus.PENDING,
+            textOrigin = null,
+            confidence = null,
+            engine = null,
+            extractorVersion = null,
+            language = null,
+            attempts = 0,
+            extractedAt = null,
+        )
+    }
+
 /**
  * The text of a page, in reading order. A table of its own because it is the content of the
  * full-text index [PageTextFtsEntity]: [pageId] is the index's `docid`.

@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.core.data.image.ImageLoaderComponent
 import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
+import com.bobbyesp.docucraft.feature.docscanner.data.indexing.WorkManagerDocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.DocumentActivityRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.DocumentsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.FoldersRepositoryImpl
@@ -21,6 +22,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentStorageImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.CachedDocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.DocumentThumbnailComponent
+import com.bobbyesp.docucraft.feature.docscanner.domain.indexing.DocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentActivityRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.FoldersRepository
@@ -38,6 +40,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DescribeLinkedDo
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ForgetLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.IndexDocumentTextUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveRecentDocumentsUseCase
@@ -46,6 +49,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAv
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RegisterLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ResumeTextIndexingUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveLinkedToLibraryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
@@ -100,6 +104,8 @@ val documentScannerDataModule = module {
         PagesRepositoryImpl(pageDao = get<DocumentsDatabase>().pageDao())
     }
 
+    // Where documents wait to have their text read.
+    single<DocumentIndexQueue> { WorkManagerDocumentIndexQueue(context = androidContext()) }
     // How the library is searched: the one line that changes for another search engine.
     single<SearchIndex> { Fts4SearchIndex(searchDao = get()) }
 
@@ -122,6 +128,7 @@ val documentScannerDataModule = module {
             linked = get(),
             storage = get(),
             access = get(),
+            indexQueue = get(),
         )
     }
     factory { GetReadingPositionUseCase(settings = get(), activity = get()) }
@@ -130,5 +137,14 @@ val documentScannerDataModule = module {
 
     factory { DeleteDocumentUseCase(repository = get(), storage = get(), thumbnails = get()) }
 
-    factory { SaveScanDraftUseCase(storage = get(), repository = get()) }
+    factory { SaveScanDraftUseCase(storage = get(), repository = get(), indexQueue = get()) }
+    factory {
+        IndexDocumentTextUseCase(
+            documents = get(),
+            pages = get(),
+            storage = get(),
+            content = get(),
+        )
+    }
+    factory { ResumeTextIndexingUseCase(pages = get(), queue = get()) }
 }

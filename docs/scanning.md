@@ -254,6 +254,44 @@ and one line of DI.
 - **Limits.** FTS4 finds whole words and their beginnings, not text inside a word, and it does not
   split Chinese, Japanese or Korean into words.
 
+## Reading the text of pages
+
+The viewer reads the text of the pages on screen and forgets it. For search, the text of every
+page of the library is read in the background and kept (`IndexDocumentTextUseCase`).
+
+- **A queue behind a port.** `DocumentIndexQueue` is asked to read a document; its implementation
+  is WorkManager, one piece of unique work per document (`index/<uuid>`, `KEEP`), so the reading
+  outlives the screen and the process. `IndexDocumentWorker` only gives the use case somewhere to
+  run.
+- **When a document is queued.** When a scan is saved, when another app's document is saved into
+  the library, and when the app starts (`ResumeTextIndexingUseCase`, from `App`), for every
+  document of the library with a page still pending. The start is what covers a library just
+  migrated, a document whose work never ran, and a save that could not queue: saving never fails
+  because of the queue.
+- **Page by page, each in one transaction** (`PageDao`). The text, its origin and the page's state
+  are written together, so a process death leaves what was read and the rest pending. The text is
+  removed and added, never replaced: replacing a row does not run the triggers that keep
+  `page_texts_fts` in step, and the old words would still be found.
+- **The same reader as the viewer**: the `PageContentProvider` binding. A page with text becomes
+  `EXTRACTED`, with origin `EMBEDDED` and engine `platform`. A page without text of its own, or
+  any page on a device below API 35 where the platform cannot read text, becomes `OCR_DISABLED`:
+  it waits for text recognition, which the user turns on per document and which does not exist
+  yet.
+- **Failures are counted per page.** A page that fails is tried again at once, up to three times,
+  and is then `FAILED`; the other pages are still read. Failed pages become pending again when
+  the app starts, since what failed them, such as a file out of reach, may be over. Being
+  cancelled is not a failure.
+- **A newer extractor reads again.** Each page keeps the version of what read it
+  (`IndexDocumentTextUseCase.EXTRACTOR_VERSION`). Raising it makes the pages read by an older one
+  pending at the next start; they keep their text until they are read again.
+- **What is not read.** Documents in the bin and documents of other apps. A document deleted while
+  it is read ends the reading without error: its pages went with it.
+- **Pages that were never counted.** A document migrated without a page count has no page rows.
+  The reader counts the pages of its file (`DocumentStorage.pageCount`) and creates them first.
+- **Not done yet.** Nothing on screen says how far reading has got
+  (`PagesRepository.observeTextStatus` is there for it), and no title is suggested from the first
+  page.
+
 ## Not yet verified on a device
 
 The process-death paths are covered by `ActivityResultHostImplTest`, but not by a real kill:

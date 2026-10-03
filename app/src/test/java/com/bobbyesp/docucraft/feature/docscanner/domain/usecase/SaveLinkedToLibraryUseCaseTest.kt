@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
+import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.FakeExternalDocumentAccess
@@ -32,7 +33,8 @@ class SaveLinkedToLibraryUseCaseTest {
     private val linked = FakeLinkedDocumentsRepository()
     private val storage = FakeDocumentStorage()
     private val access = FakeExternalDocumentAccess()
-    private val save = SaveLinkedToLibraryUseCase(documents, linked, storage, access)
+    private val indexQueue = FakeDocumentIndexQueue()
+    private val save = SaveLinkedToLibraryUseCase(documents, linked, storage, access, indexQueue)
 
     @Test
     fun `its file is copied under its own uuid, and the reference becomes a document`() = runTest {
@@ -44,6 +46,18 @@ class SaveLinkedToLibraryUseCaseTest {
         assertEquals(LINKED, uuid)
         assertEquals("documents/$LINKED.pdf", stored.filePath)
         assertEquals(3, stored.pageCount)
+    }
+
+    /** It is in the library now, where documents are found by what they say. */
+    @Test
+    fun `once kept it is queued to have its text read, and not before`() = runTest {
+        storage.pageCount = null
+        save(LINKED)
+        assertTrue(indexQueue.queued.isEmpty())
+
+        storage.pageCount = 3
+        save(LINKED)
+        assertEquals(listOf(LINKED), indexQueue.queued)
     }
 
     /** The app reads its own copy from then on. */

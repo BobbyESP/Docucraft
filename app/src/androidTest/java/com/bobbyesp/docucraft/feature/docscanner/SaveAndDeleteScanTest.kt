@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner
 
+import android.os.Build
 import android.provider.OpenableColumns
 import androidx.core.net.toUri
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -12,6 +13,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.SearchIndex
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.IndexDocumentTextUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.scanner.ContentRef
 import com.bobbyesp.scanner.ScanArtifact
@@ -41,6 +43,7 @@ class SaveAndDeleteScanTest {
     private val koin = GlobalContext.get()
     private val saveScan: SaveScanDraftUseCase = koin.get()
     private val deleteDocument: DeleteDocumentUseCase = koin.get()
+    private val indexDocumentText: IndexDocumentTextUseCase = koin.get()
     private val repository: DocumentsRepository = koin.get()
     private val searchIndex: SearchIndex = koin.get()
     private val database: DocumentsDatabase = koin.get()
@@ -86,9 +89,10 @@ class SaveAndDeleteScanTest {
         val document = save(reportedPages = 3)
 
         assertEquals(
-            listOf("SCAN|3|AVAILABLE|3|3"),
+            // How many of them are still to be read is not asked: reading starts at once.
+            listOf("SCAN|3|AVAILABLE|3"),
             rows(
-                "SELECT d.origin, d.page_count, a.availability, s.pages, s.pending " +
+                "SELECT d.origin, d.page_count, a.availability, s.pages " +
                     "FROM documents d " +
                     "JOIN document_activity a ON a.document_id = d.id " +
                     "JOIN document_text_status s ON s.document_id = d.id " +
@@ -110,6 +114,30 @@ class SaveAndDeleteScanTest {
         val document = save(reportedPages = 3)
 
         assertTrue(searchIndex.search("scan").any { it.documentUuid == document.uuid })
+    }
+
+    // Reading runs in the background once a scan is saved. Here it is run and waited for, with the
+    // real reader over a real PDF.
+    @Test
+    fun aSavedScanIsReadAndThenFoundByWhatItsPagesSay() = runBlocking {
+        val document = save(reportedPages = 3)
+
+        indexDocumentText(document.uuid)
+
+        val statuses =
+            rows(
+                "SELECT p.text_status FROM pages p JOIN documents d ON d.id = p.document_id " +
+                    "WHERE d.uuid = '${document.uuid}' ORDER BY p.page_index"
+            )
+        if (Build.VERSION.SDK_INT >= 35) {
+            assertEquals("EXTRACTED", statuses.first())
+            // Typed without its accent, as the index folds them.
+            assertTrue(searchIndex.search("pinguino").any { it.documentUuid == document.uuid })
+        } else {
+            // The platform cannot read a PDF's text here: the pages wait for text recognition.
+            assertEquals(List(3) { "OCR_DISABLED" }, statuses)
+            assertFalse(searchIndex.search("pinguino").any { it.documentUuid == document.uuid })
+        }
     }
 
     @Test

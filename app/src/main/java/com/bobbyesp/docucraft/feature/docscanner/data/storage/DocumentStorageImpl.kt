@@ -59,6 +59,12 @@ class DocumentStorageImpl(
             }
         }
 
+    override suspend fun pageCount(filePath: String): Int? =
+        withContext(Dispatchers.IO) {
+            val file = File(context.filesDir, filePath)
+            if (file.isFile) documentOperations.pageCount(file) else null
+        }
+
     override suspend fun delete(filePath: String) {
         withContext(Dispatchers.IO) {
             val file = File(context.filesDir, filePath)

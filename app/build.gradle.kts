@@ -98,6 +98,9 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.datastore.preferences)
 
+    // Background work: reading the text of documents
+    implementation(libs.work.runtime)
+
     // Scanning. The engine lives behind :scanner-api and is only named by the Koin module, so
     // no ML Kit type is on this module's compile classpath at all.
     implementation(project(":scanner-api"))

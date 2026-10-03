@@ -11,8 +11,8 @@ import androidx.room.Transaction
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentActivityEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.PageEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.pendingPages
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.PageTextStatus
 import kotlinx.coroutines.flow.Flow
 
 /** A linked document by what identifies it above the data layer and by where it is. */
@@ -72,25 +72,6 @@ abstract class DocumentDao {
         insert(pendingPages(documentId = id, count = document.pageCount ?: 0))
         return id
     }
-
-    /** A page for each page of a document's file, all still to be read. */
-    private fun pendingPages(documentId: Long, count: Int): List<PageEntity> =
-        List(count) { index ->
-            PageEntity(
-                documentId = documentId,
-                pageIndex = index,
-                widthPt = null,
-                heightPt = null,
-                textStatus = PageTextStatus.PENDING,
-                textOrigin = null,
-                confidence = null,
-                engine = null,
-                extractorVersion = null,
-                language = null,
-                attempts = 0,
-                extractedAt = null,
-            )
-        }
 
     /** The oldest document of the library with this content, the bin left out. */
     @Query(

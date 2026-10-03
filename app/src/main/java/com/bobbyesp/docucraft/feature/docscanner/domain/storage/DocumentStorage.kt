@@ -45,6 +45,13 @@ interface DocumentStorage {
     suspend fun storeDocument(source: ContentRef, documentUuid: String): StoredDocument
 
     /**
+     * Counts the pages of the file at [filePath], as [StoredDocument.filePath] gives it.
+     *
+     * @return `null` when the file is not there, or cannot be read as a document.
+     */
+    suspend fun pageCount(filePath: String): Int?
+
+    /**
      * Removes the file at [filePath], as [StoredDocument.filePath] gives it. Does nothing if it is
      * already gone, since the caller's intent — that it not be there — is satisfied either way.
      */

@@ -43,6 +43,8 @@ class FakeDocumentStorage : DocumentStorage {
         )
     }
 
+    override suspend fun pageCount(filePath: String): Int? = pageCount.takeIf { filePath in files }
+
     override suspend fun delete(filePath: String) {
         deleteFailure?.let { throw it }
         files -= filePath

@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
+import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
@@ -22,7 +23,9 @@ class SaveScanDraftUseCaseTest {
 
     private val storage = FakeDocumentStorage()
     private val repository = FakeDocumentsRepository()
-    private val useCase = SaveScanDraftUseCase(storage, repository, newUuid = { "new-uuid" })
+    private val indexQueue = FakeDocumentIndexQueue()
+    private val useCase =
+        SaveScanDraftUseCase(storage, repository, indexQueue, newUuid = { "new-uuid" })
 
     private fun draft(pages: Int = 3, capturedAt: Long = 1_700_000_000_000L) =
         ScanDraft(
@@ -45,12 +48,38 @@ class SaveScanDraftUseCaseTest {
         assertEquals(1_700_000_000_000L, scan.capturedAtEpochMillis)
     }
 
+    @Test
+    fun `a saved scan is queued to have its text read`() = runTest {
+        useCase(draft())
+
+        assertEquals(listOf("new-uuid"), indexQueue.queued)
+    }
+
+    /** It is queued again when the app starts. The scan is saved all the same. */
+    @Test
+    fun `a scan that cannot be queued is still saved`() = runTest {
+        indexQueue.failure = IllegalStateException("no work manager")
+
+        assertEquals("new-uuid", useCase(draft()).getOrThrow())
+        assertEquals(1, repository.added.size)
+    }
+
+    @Test
+    fun `a scan that could not be saved is not queued`() = runTest {
+        repository.addFailure = IllegalStateException("database is locked")
+
+        useCase(draft())
+
+        assertTrue(indexQueue.queued.isEmpty())
+    }
+
     // The file is named after the uuid, so the two have to be the same one. A second uuid for the
     // catalogue would leave a document pointing at another document's file name.
     @Test
     fun `the document is catalogued under the uuid its file was stored with`() = runTest {
         var given = 0
-        val counting = SaveScanDraftUseCase(storage, repository, newUuid = { "uuid-${++given}" })
+        val counting =
+            SaveScanDraftUseCase(storage, repository, indexQueue, newUuid = { "uuid-${++given}" })
 
         counting(draft())
 

@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
+import com.bobbyesp.docucraft.feature.docscanner.domain.indexing.DocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LinkedDocumentsRepository
@@ -45,6 +46,7 @@ class SaveLinkedToLibraryUseCase(
     private val linked: LinkedDocumentsRepository,
     private val storage: DocumentStorage,
     private val access: ExternalDocumentAccess,
+    private val indexQueue: DocumentIndexQueue,
 ) {
     /**
      * @param evenIfAlreadyThere Saves it although the library has a document with the same content.
@@ -96,6 +98,9 @@ class SaveLinkedToLibraryUseCase(
 
         // The app reads its own copy from here on.
         access.release(document.location)
+        // It can be searched now, so its text is read. If it cannot be queued here, it is when
+        // the app starts.
+        runCatching { indexQueue.enqueue(documentUuid) }
 
         return SaveToLibraryOutcome.Saved
     }
