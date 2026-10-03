@@ -49,4 +49,10 @@ interface SettingsRepository {
      * already remembered is `SetReadingPositionMemoryUseCase`'s job, which is what to call.
      */
     suspend fun setRememberReadingPosition(enabled: Boolean)
+
+    /**
+     * Whether documents saved from now on have their text recognized. It changes nothing about the
+     * documents there already are: each one keeps what was chosen for it.
+     */
+    suspend fun setRecognizeTextInNewDocuments(enabled: Boolean)
 }

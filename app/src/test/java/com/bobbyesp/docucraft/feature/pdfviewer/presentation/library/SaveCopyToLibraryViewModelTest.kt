@@ -14,6 +14,7 @@ import com.bobbyesp.docucraft.feature.docscanner.FakeLinkedDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveLinkedToLibraryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import com.bobbyesp.docucraft.feature.docscanner.testLinkedDocument
+import com.bobbyesp.docucraft.feature.docscanner.testSettings
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
@@ -108,6 +109,7 @@ class SaveCopyToLibraryViewModelTest {
                     storage,
                     FakeExternalDocumentAccess(),
                     FakeDocumentIndexQueue(),
+                    testSettings(),
                 ),
             notifyUser = notifyUser,
         )

@@ -72,8 +72,10 @@ interface LinkedDocumentsRepository {
      * It is the same document, changed in place: its uuid, when it was opened and where it was left
      * stay as they were, and where it came from is remembered.
      *
+     * @param recognizeText Whether the text of its image-only pages is to be recognized, which only
+     *   a document the app keeps can have.
      * @return `false` when the catalogue has no linked document with this uuid, and nothing was
      *   changed.
      */
-    suspend fun keepInLibrary(uuid: String, stored: StoredDocument): Boolean
+    suspend fun keepInLibrary(uuid: String, stored: StoredDocument, recognizeText: Boolean): Boolean
 }

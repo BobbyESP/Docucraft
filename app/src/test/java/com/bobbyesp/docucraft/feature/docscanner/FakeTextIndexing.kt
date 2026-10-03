@@ -9,6 +9,8 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentTextS
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.Page
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.PageTextRecord
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.PagesRepository
+import com.bobbyesp.documentcontent.ContentOrigin
+import com.bobbyesp.documentcontent.PageText
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
@@ -121,6 +123,34 @@ class FakePagesRepository : PagesRepository {
         pages.getValue(documentUuid)[pageIndex] =
             page.copy(textStatus = status, attempts = attempts)
         return status
+    }
+
+    /** Whether text recognition is on for each document it was set for. */
+    val recognition = mutableMapOf<String, Boolean>()
+
+    override suspend fun recognizedText(documentUuid: String, pageIndex: Int): PageText? {
+        val record = texts[documentUuid to pageIndex] ?: return null
+        val layout = record.layout ?: return null
+        return PageText(layout, ContentOrigin.RECOGNIZED, record.confidence, record.engine)
+    }
+
+    override suspend fun setTextRecognition(documentUuid: String, enabled: Boolean): Boolean {
+        val all = pages[documentUuid] ?: return false
+        recognition[documentUuid] = enabled
+        all.replaceAll { index, page ->
+            when {
+                enabled && page.textStatus == PageTextStatus.OCR_DISABLED ->
+                    page.copy(textStatus = PageTextStatus.PENDING)
+                !enabled &&
+                    (page.textOrigin == ContentOrigin.RECOGNIZED ||
+                        page.textStatus == PageTextStatus.NO_TEXT) -> {
+                    texts -= documentUuid to index
+                    page.copy(textStatus = PageTextStatus.OCR_DISABLED, textOrigin = null)
+                }
+                else -> page
+            }
+        }
+        return true
     }
 
     override suspend fun requeue(extractorVersion: Int) {

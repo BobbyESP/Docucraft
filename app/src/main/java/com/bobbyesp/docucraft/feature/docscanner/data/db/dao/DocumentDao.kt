@@ -157,10 +157,11 @@ abstract class DocumentDao {
         sizeBytes: Long,
         contentHash: String,
         pageCount: Int?,
+        ocrEnabled: Boolean,
         at: Long,
     ): Boolean {
         val id = idOfLinked(uuid) ?: return false
-        makeManaged(uuid, filePath, sizeBytes, contentHash, pageCount, at)
+        makeManaged(uuid, filePath, sizeBytes, contentHash, pageCount, ocrEnabled, at)
         insert(pendingPages(documentId = id, count = pageCount ?: 0))
         return true
     }
@@ -178,7 +179,7 @@ abstract class DocumentDao {
         SET custody = 'MANAGED', origin = 'IMPORT', file_path = :filePath,
             source_uri = uri, uri = NULL, has_persisted_permission = NULL,
             size_bytes = :sizeBytes, content_hash = :contentHash, page_count = :pageCount,
-            is_encrypted = 0, updated_at = :at, content_updated_at = :at
+            is_encrypted = 0, ocr_enabled = :ocrEnabled, updated_at = :at, content_updated_at = :at
         WHERE uuid = :uuid AND custody = 'LINKED'"""
     )
     protected abstract suspend fun makeManaged(
@@ -187,6 +188,7 @@ abstract class DocumentDao {
         sizeBytes: Long,
         contentHash: String,
         pageCount: Int?,
+        ocrEnabled: Boolean,
         at: Long,
     ): Int
 

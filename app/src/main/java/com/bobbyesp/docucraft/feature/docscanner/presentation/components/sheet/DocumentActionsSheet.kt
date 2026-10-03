@@ -29,6 +29,7 @@ import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.SaveAs
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material.icons.rounded.Storage
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
@@ -98,14 +99,17 @@ fun DocumentActionsContent(
     onShare: () -> Unit,
     onDelete: () -> Unit,
     onModifyFields: () -> Unit,
+    onTextRecognitionChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     stacked: Boolean = true,
 ) {
     val options =
         rememberDocumentActions(
+            recognizesText = scannedDocument.ocrEnabled,
             onSave = onSave,
             onShare = onShare,
             onModifyFields = onModifyFields,
+            onTextRecognitionChange = onTextRecognitionChange,
             onDelete = onDelete,
         )
 
@@ -230,38 +234,52 @@ private fun LinkedDocumentHeader(document: Document.Linked, modifier: Modifier =
 
 @Composable
 private fun rememberDocumentActions(
+    recognizesText: Boolean,
     onSave: () -> Unit,
     onShare: () -> Unit,
     onModifyFields: () -> Unit,
+    onTextRecognitionChange: (Boolean) -> Unit,
     onDelete: () -> Unit,
-): ImmutableList<DocumentAction> = remember {
-    persistentListOf(
-        DocumentAction(
-            icon = Icons.Rounded.SaveAs,
-            title = R.string.save,
-            importance = ActionImportance.PRIMARY,
-            action = onSave,
-        ),
-        DocumentAction(
-            icon = Icons.Rounded.Share,
-            title = R.string.share,
-            importance = ActionImportance.PRIMARY,
-            action = onShare,
-        ),
-        DocumentAction(
-            icon = Icons.Rounded.EditNote,
-            title = R.string.edit_fields,
-            importance = ActionImportance.SECONDARY,
-            action = onModifyFields,
-        ),
-        DocumentAction(
-            icon = Icons.Rounded.DeleteForever,
-            title = R.string.delete,
-            importance = ActionImportance.DESTRUCTIVE,
-            action = onDelete,
-        ),
-    )
-}
+): ImmutableList<DocumentAction> =
+    remember(recognizesText) {
+        persistentListOf(
+            DocumentAction(
+                icon = Icons.Rounded.SaveAs,
+                title = R.string.save,
+                importance = ActionImportance.PRIMARY,
+                action = onSave,
+            ),
+            DocumentAction(
+                icon = Icons.Rounded.Share,
+                title = R.string.share,
+                importance = ActionImportance.PRIMARY,
+                action = onShare,
+            ),
+            DocumentAction(
+                icon = Icons.Rounded.EditNote,
+                title = R.string.edit_fields,
+                importance = ActionImportance.SECONDARY,
+                action = onModifyFields,
+            ),
+            // Named for what tapping it does, since it changes with the document. A row to itself:
+            // neither name fits in a cell of the grid.
+            DocumentAction(
+                icon = Icons.Rounded.TextFields,
+                title =
+                    if (recognizesText) R.string.text_recognition_turn_off
+                    else R.string.text_recognition_turn_on,
+                importance = ActionImportance.SECONDARY,
+                fullWidth = true,
+                action = { onTextRecognitionChange(!recognizesText) },
+            ),
+            DocumentAction(
+                icon = Icons.Rounded.DeleteForever,
+                title = R.string.delete,
+                importance = ActionImportance.DESTRUCTIVE,
+                action = onDelete,
+            ),
+        )
+    }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

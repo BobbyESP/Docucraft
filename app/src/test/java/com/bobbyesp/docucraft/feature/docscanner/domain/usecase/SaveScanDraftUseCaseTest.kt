@@ -3,15 +3,18 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
+import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
+import com.bobbyesp.docucraft.feature.docscanner.testSettings
 import com.bobbyesp.scanner.ContentRef
 import com.bobbyesp.scanner.ScanArtifact
 import com.bobbyesp.scanner.ScanDraft
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -25,7 +28,13 @@ class SaveScanDraftUseCaseTest {
     private val repository = FakeDocumentsRepository()
     private val indexQueue = FakeDocumentIndexQueue()
     private val useCase =
-        SaveScanDraftUseCase(storage, repository, indexQueue, newUuid = { "new-uuid" })
+        SaveScanDraftUseCase(
+            storage,
+            repository,
+            indexQueue,
+            testSettings(),
+            newUuid = { "new-uuid" },
+        )
 
     private fun draft(pages: Int = 3, capturedAt: Long = 1_700_000_000_000L) =
         ScanDraft(
@@ -47,6 +56,18 @@ class SaveScanDraftUseCaseTest {
         assertEquals(3, scan.pageCount)
         assertEquals(1_700_000_000_000L, scan.capturedAtEpochMillis)
     }
+
+    /** A scan is images: whether it is found by what it says is the user's to choose. */
+    @Test
+    fun `a scan has its text recognized if that is what the user chose for new documents`() =
+        runTest {
+            useCase(draft())
+            assertFalse(repository.added.single().recognizeText)
+
+            val recognizing = testSettings(UserPreferences(recognizeTextInNewDocuments = true))
+            SaveScanDraftUseCase(storage, repository, indexQueue, recognizing)(draft())
+            assertTrue(repository.added.last().recognizeText)
+        }
 
     @Test
     fun `a saved scan is queued to have its text read`() = runTest {
@@ -79,7 +100,13 @@ class SaveScanDraftUseCaseTest {
     fun `the document is catalogued under the uuid its file was stored with`() = runTest {
         var given = 0
         val counting =
-            SaveScanDraftUseCase(storage, repository, indexQueue, newUuid = { "uuid-${++given}" })
+            SaveScanDraftUseCase(
+                storage,
+                repository,
+                indexQueue,
+                testSettings(),
+                newUuid = { "uuid-${++given}" },
+            )
 
         counting(draft())
 

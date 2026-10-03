@@ -272,11 +272,29 @@ page of the library is read in the background and kept (`IndexDocumentTextUseCas
   are written together, so a process death leaves what was read and the rest pending. The text is
   removed and added, never replaced: replacing a row does not run the triggers that keep
   `page_texts_fts` in step, and the old words would still be found.
-- **The same reader as the viewer**: the `PageContentProvider` binding. A page with text becomes
-  `EXTRACTED`, with origin `EMBEDDED` and engine `platform`. A page without text of its own, or
-  any page on a device below API 35 where the platform cannot read text, becomes `OCR_DISABLED`:
-  it waits for text recognition, which the user turns on per document and which does not exist
-  yet.
+- **The document's own text first.** The PDF's text layer is read with the same
+  `PlatformPageContentProvider` the viewer uses. A page with text becomes `EXTRACTED`, with origin
+  `EMBEDDED` and engine `platform`.
+- **Text recognition only where it is needed, and only if the user asked.** A page without text
+  of its own, or any page on a device below API 35 where the platform cannot read text, goes to
+  the recognition engine when its document has `ocr_enabled`. Otherwise it becomes `OCR_DISABLED`
+  and waits. Recognition is slow and uses battery, so a page the PDF already gives the text of is
+  never sent to it.
+  - A recognized page is `EXTRACTED` with origin `RECOGNIZED`, its confidence, engine
+    (`mlkit-latin`) and language. An image with no words in it is `NO_TEXT`, and is not asked
+    again.
+  - **Where each word is, is kept with it** (`page_layouts`, written by `PageLayoutCodec`): a
+    PDF's own text can be read from the PDF whenever it is wanted, but getting recognized text
+    back costs a recognition. The viewer selects text on a scanned page from what is stored.
+  - Whether recognition is wanted is asked of the catalogue page by page, and again after each
+    pass, because it is turned on from the document's actions, perhaps while the document is
+    being read.
+- **Turning it on and off** (`SetDocumentTextRecognitionUseCase`, from the document's actions).
+  On: the pages that were waiting become pending and the document is queued. Off: in one
+  transaction the recognized text and layouts are deleted and those pages wait again, so they
+  stop being found by their content. The document's own text is never touched.
+- **What a new document gets** is a setting, *Recognize text in new documents*, off until the user
+  chooses. A scan and a document saved from another app are both given it when they are saved.
 - **Failures are counted per page.** A page that fails is tried again at once, up to three times,
   and is then `FAILED`; the other pages are still read. Failed pages become pending again when
   the app starts, since what failed them, such as a file out of reach, may be over. Being
@@ -289,8 +307,8 @@ page of the library is read in the background and kept (`IndexDocumentTextUseCas
 - **Pages that were never counted.** A document migrated without a page count has no page rows.
   The reader counts the pages of its file (`DocumentStorage.pageCount`) and creates them first.
 - **Not done yet.** Nothing on screen says how far reading has got
-  (`PagesRepository.observeTextStatus` is there for it), and no title is suggested from the first
-  page.
+  (`PagesRepository.observeTextStatus` is there for it). The choice is not offered at the moment
+  of saving, only as the setting and in the document's actions.
 
 ## Not yet verified on a device
 

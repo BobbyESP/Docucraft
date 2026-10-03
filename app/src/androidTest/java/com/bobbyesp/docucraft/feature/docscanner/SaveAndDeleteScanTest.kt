@@ -15,6 +15,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.search.SearchIndex
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.IndexDocumentTextUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentTextRecognitionUseCase
 import com.bobbyesp.scanner.ContentRef
 import com.bobbyesp.scanner.ScanArtifact
 import com.bobbyesp.scanner.ScanDraft
@@ -25,6 +26,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.GlobalContext
@@ -44,6 +46,7 @@ class SaveAndDeleteScanTest {
     private val saveScan: SaveScanDraftUseCase = koin.get()
     private val deleteDocument: DeleteDocumentUseCase = koin.get()
     private val indexDocumentText: IndexDocumentTextUseCase = koin.get()
+    private val setTextRecognition: SetDocumentTextRecognitionUseCase = koin.get()
     private val repository: DocumentsRepository = koin.get()
     private val searchIndex: SearchIndex = koin.get()
     private val database: DocumentsDatabase = koin.get()
@@ -140,6 +143,42 @@ class SaveAndDeleteScanTest {
         }
     }
 
+    // The real recognizer over a real PDF, through the app's own graph. What it reads depends on
+    // the device: where the platform reads the PDF's text, only the image-only page is left to
+    // recognition, and it holds no words; where it does not, every page is recognized.
+    @Test
+    fun withRecognitionOnThePagesThePlatformCannotReadAreReadFromTheirImage() = runBlocking {
+        val document = save(reportedPages = 3, fixture = "mixed-text-and-scanned.pdf")
+        setTextRecognition(document.uuid, true)
+
+        indexDocumentText(document.uuid)
+
+        val pages =
+            rows(
+                "SELECT p.text_status, COALESCE(p.text_origin, '-') FROM pages p " +
+                    "JOIN documents d ON d.id = p.document_id " +
+                    "WHERE d.uuid = '${document.uuid}' ORDER BY p.page_index"
+            )
+        assumeTrue("The recognition model is not on this device: $pages", "FAILED|-" !in pages)
+        if (Build.VERSION.SDK_INT >= 35) {
+            assertEquals(listOf("EXTRACTED|EMBEDDED", "NO_TEXT|-", "EXTRACTED|EMBEDDED"), pages)
+        } else {
+            assertEquals(
+                listOf("EXTRACTED|RECOGNIZED", "NO_TEXT|-", "EXTRACTED|RECOGNIZED"),
+                pages,
+            )
+            assertEquals(
+                listOf("2"),
+                rows(
+                    "SELECT COUNT(*) FROM page_layouts l JOIN pages p ON p.id = l.page_id " +
+                        "JOIN documents d ON d.id = p.document_id WHERE d.uuid = '${document.uuid}'"
+                ),
+            )
+        }
+        // Found by what a page says, whichever way it was read.
+        assertTrue(searchIndex.search("texto real").any { it.documentUuid == document.uuid })
+    }
+
     @Test
     fun deletingTakesTheFileAndEverythingTheCatalogueKept() = runBlocking {
         val document = save(reportedPages = 3)
@@ -160,8 +199,11 @@ class SaveAndDeleteScanTest {
         )
     }
 
-    private suspend fun save(reportedPages: Int): Document.Managed {
-        instrumentation.context.assets.open("fixtures/text-and-links.pdf").use { fixture ->
+    private suspend fun save(
+        reportedPages: Int,
+        fixture: String = "text-and-links.pdf",
+    ): Document.Managed {
+        instrumentation.context.assets.open("fixtures/$fixture").use { fixture ->
             scanned.outputStream().use { fixture.copyTo(it) }
         }
         val draft =

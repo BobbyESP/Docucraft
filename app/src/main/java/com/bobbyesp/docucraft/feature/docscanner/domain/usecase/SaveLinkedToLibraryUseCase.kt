@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
+import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.indexing.DocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
@@ -10,6 +11,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LinkedDocumen
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.ExternalDocumentAccess
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.flow.first
 
 /** What came of saving another app's document into the library. Each one is an answer. */
 sealed interface SaveToLibraryOutcome {
@@ -47,6 +49,7 @@ class SaveLinkedToLibraryUseCase(
     private val storage: DocumentStorage,
     private val access: ExternalDocumentAccess,
     private val indexQueue: DocumentIndexQueue,
+    private val settings: SettingsRepository,
 ) {
     /**
      * @param evenIfAlreadyThere Saves it although the library has a document with the same content.
@@ -85,7 +88,12 @@ class SaveLinkedToLibraryUseCase(
 
         val kept =
             try {
-                linked.keepInLibrary(documentUuid, stored)
+                linked.keepInLibrary(
+                    documentUuid,
+                    stored,
+                    // What the user last chose for the documents they save.
+                    recognizeText = settings.settings.first().recognizeTextInNewDocuments,
+                )
             } catch (failure: Exception) {
                 storage.delete(stored.filePath)
                 throw failure

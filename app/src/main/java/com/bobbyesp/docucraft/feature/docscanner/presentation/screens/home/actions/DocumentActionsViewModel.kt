@@ -17,6 +17,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.ExportOutcome
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ForgetLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentTextRecognitionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 
 /**
@@ -37,6 +38,7 @@ class DocumentActionsViewModel(
     private val documentSharer: DocumentSharer,
     private val documentExporter: DocumentExporter,
     private val forgetLinkedDocument: ForgetLinkedDocumentUseCase,
+    private val setTextRecognition: SetDocumentTextRecognitionUseCase,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
 ) :
@@ -75,6 +77,7 @@ class DocumentActionsViewModel(
             DocumentActionsIntent.ConfirmDelete -> delete()
             is DocumentActionsIntent.ConfirmEdit -> edit(intent.title, intent.description)
             DocumentActionsIntent.RemoveFromRecents -> removeFromRecents()
+            is DocumentActionsIntent.SetTextRecognition -> setTextRecognition(intent.enabled)
         }
     }
 
@@ -148,6 +151,24 @@ class DocumentActionsViewModel(
         sendUiEvent(
             UiEvent.ShowMessage(
                 stringProvider.get(R.string.doc_deleted_successfully),
+                NotificationType.Success,
+            )
+        )
+    }
+
+    /**
+     * The sheet stays: the action is named after what the document now does, and the reading it
+     * starts happens in the background, so there is nothing to wait for here.
+     */
+    private fun setTextRecognition(enabled: Boolean) = launch {
+        currentState.document ?: return@launch
+        if (!setTextRecognition(documentUuid, enabled)) return@launch
+        sendUiEvent(
+            UiEvent.ShowMessage(
+                stringProvider.get(
+                    if (enabled) R.string.text_recognition_turned_on
+                    else R.string.text_recognition_turned_off
+                ),
                 NotificationType.Success,
             )
         )

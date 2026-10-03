@@ -71,6 +71,9 @@ fun EntryProviderScope<NavKey>.documentActionsSection(navigator: Navigator) {
             onShare = { viewModel.onSendIntent(DocumentActionsIntent.Share) },
             onDelete = { navigator.goTo(DeleteDocument(key.documentUuid)) },
             onModifyFields = { navigator.goTo(EditDocument(key.documentUuid)) },
+            onTextRecognitionChange = { enabled ->
+                viewModel.onSendIntent(DocumentActionsIntent.SetTextRecognition(enabled))
+            },
             stacked = LocalOverlayContext.current.hasRoomToStack,
         )
     }

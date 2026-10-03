@@ -202,4 +202,11 @@
     <string name="typography_body_sample">Este documento se ha procesado con Docucraft y su análisis avanzado del diseño.</string>
     <string name="typography_label_sample">CONFIRMAR CAMBIOS</string>
     <string name="typography_monospace_sample">ID: 46F1-37FB-AC5A (60 caracteres)</string>
+    <string name="recognize_text_in_new_documents">Reconocer el texto de los documentos nuevos</string>
+    <string name="recognize_text_in_new_documents_on_desc">Los escaneos que guardes se encuentran por lo que dicen. Se lee en tu dispositivo</string>
+    <string name="recognize_text_in_new_documents_off_desc">Los escaneos que guardes solo se encuentran por su nombre. Puedes activarlo en cada documento</string>
+    <string name="text_recognition_turn_on">Reconocer texto</string>
+    <string name="text_recognition_turn_off">Dejar de reconocer texto</string>
+    <string name="text_recognition_turned_on">Su texto se está reconociendo en segundo plano</string>
+    <string name="text_recognition_turned_off">Se ha quitado el texto reconocido</string>
 </resources>

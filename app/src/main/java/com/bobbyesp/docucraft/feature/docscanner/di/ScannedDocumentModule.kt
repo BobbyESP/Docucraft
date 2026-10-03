@@ -53,8 +53,11 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ResumeTextIndexi
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveLinkedToLibraryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentTextRecognitionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetReadingPositionMemoryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
+import com.bobbyesp.docucraft.feature.pdfviewer.di.EMBEDDED_TEXT
+import com.bobbyesp.docucraft.feature.pdfviewer.di.TEXT_RECOGNITION
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -129,6 +132,7 @@ val documentScannerDataModule = module {
             storage = get(),
             access = get(),
             indexQueue = get(),
+            settings = get(),
         )
     }
     factory { GetReadingPositionUseCase(settings = get(), activity = get()) }
@@ -137,14 +141,23 @@ val documentScannerDataModule = module {
 
     factory { DeleteDocumentUseCase(repository = get(), storage = get(), thumbnails = get()) }
 
-    factory { SaveScanDraftUseCase(storage = get(), repository = get(), indexQueue = get()) }
+    factory {
+        SaveScanDraftUseCase(
+            storage = get(),
+            repository = get(),
+            indexQueue = get(),
+            settings = get(),
+        )
+    }
     factory {
         IndexDocumentTextUseCase(
             documents = get(),
             pages = get(),
             storage = get(),
-            content = get(),
+            embedded = get(named(EMBEDDED_TEXT)),
+            recognized = get(named(TEXT_RECOGNITION)),
         )
     }
+    factory { SetDocumentTextRecognitionUseCase(pages = get(), queue = get()) }
     factory { ResumeTextIndexingUseCase(pages = get(), queue = get()) }
 }

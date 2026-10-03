@@ -256,4 +256,11 @@
     <string name="typography_body_sample">This document was processed using Docucraft with advanced layout intelligence.</string>
     <string name="typography_label_sample">CONFIRM EDIT</string>
     <string name="typography_monospace_sample">ID: 46F1-37FB-AC5A (60 chars)</string>
+    <string name="recognize_text_in_new_documents">Recognize text in new documents</string>
+    <string name="recognize_text_in_new_documents_on_desc">Scans you save can be found by what they say. It is read on your device</string>
+    <string name="recognize_text_in_new_documents_off_desc">Scans you save are only found by their name. You can turn it on for each document</string>
+    <string name="text_recognition_turn_on">Recognize text</string>
+    <string name="text_recognition_turn_off">Stop recognizing text</string>
+    <string name="text_recognition_turned_on">Its text is being recognized in the background</string>
+    <string name="text_recognition_turned_off">The recognized text was removed</string>
 </resources>

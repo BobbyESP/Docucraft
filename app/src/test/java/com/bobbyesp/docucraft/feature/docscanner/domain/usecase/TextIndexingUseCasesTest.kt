@@ -7,6 +7,7 @@ import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.FakePagesRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.PageTextStatus
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.PageTextRecord
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
@@ -39,6 +40,7 @@ class TextIndexingUseCasesTest {
     private val storage = FakeDocumentStorage()
     private val content = ScriptedContent()
     private val queue = FakeDocumentIndexQueue()
+    private val recognition = ScriptedContent(ContentOrigin.RECOGNIZED)
 
     // --- reading a document ---
 
@@ -164,6 +166,183 @@ class TextIndexingUseCasesTest {
         assertEquals(1, content.closed)
     }
 
+    // --- text recognition ---
+
+    /** The user turns it on for a document. Until then its images are not read. */
+    @Test
+    fun `a page with no text of its own is not recognized unless the document asks for it`() =
+        runTest {
+            pages.pending("doc-1", 1)
+            content.page(0, PageContentResult.NoText)
+            recognition.page(0, recognized(listOf("never", "asked")))
+
+            index(testDocument(uuid = "doc-1", pageCount = 1))
+
+            assertTrue(recognition.opened.isEmpty())
+            assertEquals(listOf(PageTextStatus.OCR_DISABLED), pages.statusOf("doc-1"))
+        }
+
+    @Test
+    fun `with recognition on, a page with no text of its own is read from its image`() = runTest {
+        pages.pending("doc-1", 1)
+        content.page(0, PageContentResult.NoText)
+        recognition.page(0, recognized(listOf("Factura", "2026")))
+
+        index(recognizing("doc-1", pageCount = 1))
+
+        val record = checkNotNull(pages.texts["doc-1" to 0])
+        assertEquals("Factura 2026", record.text)
+        assertEquals(ContentOrigin.RECOGNIZED, record.origin)
+        assertEquals(0.9f, record.confidence)
+        assertEquals("test-engine", record.engine)
+        assertEquals("es", record.language)
+        // Where its words are is kept with it: getting it back costs a recognition.
+        assertEquals(listOf("Factura", "2026"), record.layout?.single()?.words?.map { it.text })
+        assertEquals(listOf(PageTextStatus.EXTRACTED), pages.statusOf("doc-1"))
+    }
+
+    /** Recognition is slow. A page the PDF already gives the text of is never sent to it. */
+    @Test
+    fun `the document's own text comes first, and only the other pages are recognized`() = runTest {
+        pages.pending("doc-1", 2)
+        content.page(0, text(listOf("typed")))
+        content.page(1, PageContentResult.Unsupported)
+        recognition.page(1, recognized(listOf("scanned")))
+
+        index(recognizing("doc-1", pageCount = 2))
+
+        assertEquals(listOf(1), recognition.read)
+        assertEquals(ContentOrigin.EMBEDDED, pages.texts["doc-1" to 0]?.origin)
+        assertNull(pages.texts["doc-1" to 0]?.layout)
+        assertEquals(ContentOrigin.RECOGNIZED, pages.texts["doc-1" to 1]?.origin)
+        assertEquals(1, recognition.closed)
+    }
+
+    @Test
+    fun `an image recognition finds no words in has no text, and that is not asked again`() =
+        runTest {
+            pages.pending("doc-1", 1)
+            content.page(0, PageContentResult.NoText)
+            recognition.page(0, PageContentResult.NoText)
+
+            index(recognizing("doc-1", pageCount = 1))
+
+            assertEquals(listOf(PageTextStatus.NO_TEXT), pages.statusOf("doc-1"))
+            assertTrue(pages.pagesToRead("doc-1").isEmpty())
+        }
+
+    /** Such as the model not having arrived yet: it is tried again the next time the app starts. */
+    @Test
+    fun `a recognition that fails is a failure of the page`() = runTest {
+        pages.pending("doc-1", 1)
+        content.page(0, PageContentResult.NoText)
+        recognition.page(0, failed())
+
+        index(recognizing("doc-1", pageCount = 1))
+
+        assertEquals(listOf(PageTextStatus.FAILED), pages.statusOf("doc-1"))
+        assertEquals(listOf(0, 0, 0), recognition.read)
+    }
+
+    @Test
+    fun `without a recognition engine every such page waits`() = runTest {
+        pages.pending("doc-1", 1)
+        content.page(0, PageContentResult.NoText)
+        val document = recognizing("doc-1", pageCount = 1)
+
+        IndexDocumentTextUseCase(
+            FakeDocumentsRepository(documents = listOf(document)),
+            pages,
+            storage,
+            content,
+            recognized = null,
+        )("doc-1")
+
+        assertEquals(listOf(PageTextStatus.OCR_DISABLED), pages.statusOf("doc-1"))
+    }
+
+    /** It is turned on from the document's actions, perhaps while the document is being read. */
+    @Test
+    fun `recognition turned on while the document is read reaches every page in the same go`() =
+        runTest {
+            pages.pending("doc-1", 2)
+            content.page(0, PageContentResult.NoText)
+            content.page(1, PageContentResult.NoText)
+            recognition.page(0, recognized(listOf("first")))
+            recognition.page(1, recognized(listOf("second")))
+            val documents =
+                FakeDocumentsRepository(
+                    documents = listOf(testDocument(uuid = "doc-1", pageCount = 2))
+                )
+            // As the second page is read: the first was already left waiting for recognition.
+            var turnedOn = false
+            content.onRead = { index ->
+                if (index == 1 && !turnedOn) {
+                    turnedOn = true
+                    kotlinx.coroutines.runBlocking { pages.setTextRecognition("doc-1", true) }
+                    documents.documents.value = listOf(recognizing("doc-1", pageCount = 2))
+                }
+            }
+
+            IndexDocumentTextUseCase(documents, pages, storage, content, recognition)("doc-1")
+
+            assertEquals("first", pages.texts["doc-1" to 0]?.text)
+            assertEquals("second", pages.texts["doc-1" to 1]?.text)
+        }
+
+    @Test
+    fun `turning recognition on makes the waiting pages pending and queues the document`() =
+        runTest {
+            pages.pending("doc-1", 2)
+            pages.storeWithoutText("doc-1", 0, PageTextStatus.OCR_DISABLED, 1)
+            pages.storeText(
+                "doc-1",
+                1,
+                PageTextRecord("typed", ContentOrigin.EMBEDDED, null, null),
+                1,
+            )
+
+            assertTrue(SetDocumentTextRecognitionUseCase(pages, queue)("doc-1", enabled = true))
+
+            assertEquals(listOf(0), pages.pagesToRead("doc-1"))
+            assertEquals(listOf("doc-1"), queue.queued)
+        }
+
+    @Test
+    fun `turning recognition off forgets what was recognized, keeps the rest and queues nothing`() =
+        runTest {
+            pages.pending("doc-1", 2)
+            pages.storeText(
+                "doc-1",
+                0,
+                PageTextRecord("typed", ContentOrigin.EMBEDDED, null, null),
+                1,
+            )
+            pages.storeText(
+                "doc-1",
+                1,
+                PageTextRecord("scanned", ContentOrigin.RECOGNIZED, 0.8f, "test-engine"),
+                1,
+            )
+
+            assertTrue(SetDocumentTextRecognitionUseCase(pages, queue)("doc-1", enabled = false))
+
+            assertEquals("typed", pages.texts["doc-1" to 0]?.text)
+            assertNull(pages.texts["doc-1" to 1])
+            assertEquals(
+                listOf(PageTextStatus.EXTRACTED, PageTextStatus.OCR_DISABLED),
+                pages.statusOf("doc-1"),
+            )
+            assertTrue(queue.queued.isEmpty())
+        }
+
+    @Test
+    fun `recognition cannot be set for a document that is not there, and nothing is queued`() =
+        runTest {
+            assertFalse(SetDocumentTextRecognitionUseCase(pages, queue)("gone", enabled = true))
+            assertTrue(queue.queued.isEmpty())
+        }
+
     // --- documents that are not read ---
 
     @Test
@@ -185,7 +364,7 @@ class TextIndexingUseCasesTest {
                 documents = listOf(testDocument(uuid = "binned").copy(trashedAtEpochMillis = 5L)),
                 linked = listOf(testLinkedDocument(uuid = "linked-1")),
             )
-        val index = IndexDocumentTextUseCase(documents, pages, storage, content)
+        val index = IndexDocumentTextUseCase(documents, pages, storage, content, recognition)
 
         index("binned")
         index("linked-1")
@@ -260,16 +439,31 @@ class TextIndexingUseCasesTest {
         assertNull(pages.texts["doc-1" to 0])
     }
 
-    private suspend fun index(
-        document: com.bobbyesp.docucraft.feature.docscanner.domain.model.Document.Managed
-    ) {
+    private suspend fun index(document: Document.Managed) {
         IndexDocumentTextUseCase(
             FakeDocumentsRepository(documents = listOf(document)),
             pages,
             storage,
             content,
+            recognition,
         )(document.uuid)
     }
+
+    private fun recognizing(uuid: String, pageCount: Int) =
+        testDocument(uuid = uuid, pageCount = pageCount).copy(ocrEnabled = true)
+
+    private fun recognized(vararg lines: List<String>) =
+        PageContentResult.Available(
+            text =
+                PageText(
+                    lines = lines.map { words -> TextLine(words.map { TextWord(it, BOX) }) },
+                    origin = ContentOrigin.RECOGNIZED,
+                    confidence = 0.9f,
+                    engine = "test-engine",
+                    language = "es",
+                ),
+            links = emptyList(),
+        )
 
     private fun failed() = PageContentResult.Failed(IllegalStateException("could not read"))
 
@@ -292,8 +486,8 @@ class TextIndexingUseCasesTest {
  * A document whose pages answer what they are told to, one answer per read; the last one is
  * repeated. An answer that is an exception is thrown. A page nothing was said about has no text.
  */
-private class ScriptedContent : PageContentProvider {
-    override val origin = ContentOrigin.EMBEDDED
+private class ScriptedContent(override val origin: ContentOrigin = ContentOrigin.EMBEDDED) :
+    PageContentProvider {
 
     private val script = mutableMapOf<Int, ArrayDeque<Any>>()
 

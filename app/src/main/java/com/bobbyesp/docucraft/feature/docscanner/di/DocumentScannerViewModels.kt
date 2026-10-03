@@ -49,6 +49,7 @@ val documentScannerViewModels = module {
             documentSharer = get(),
             documentExporter = get(),
             forgetLinkedDocument = get(),
+            setTextRecognition = get(),
             stringProvider = get(),
             analyticsHelper = get(),
         )

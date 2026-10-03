@@ -17,13 +17,15 @@ This file is the map and the rules. How each subsystem works, and why, is in
 | `:composepdf` | The PDF engine: rendering, layout, gestures. Public API in `com.composepdf`, internals in `com.composepdf.internal`. | Generic. It knows pages, pixels and fingers, **never** text or links. |
 | `:scanner-api` | The scanning contract (`DocumentScanner`, `ScanRequest`, `ScanOutcome`, `ContentRef`…). | Plain Kotlin, zero dependencies. |
 | `:scanner-mlkit` | ML Kit's implementation of that contract. | ML Kit is an `implementation` dependency, so no ML Kit type ever reaches `:app`'s classpath. |
-| `:document-content-api` | What is on a document's pages (words with their boxes, links) and the pure text-selection logic. | Plain Kotlin. A future OCR module implements it, as `:scanner-mlkit` implements `:scanner-api`. |
+| `:document-content-api` | What is on a document's pages (words with their boxes, links) and the pure text-selection logic. | Plain Kotlin. `:ocr-mlkit` implements it, as `:scanner-mlkit` implements `:scanner-api`. |
+| `:ocr-mlkit` | ML Kit's text recognition, as a `PageContentProvider`. | ML Kit is an `implementation` dependency, so no ML Kit type ever reaches `:app`'s classpath. |
 
 Build setup:
 - SDKs and JVM target: `buildSrc/src/main/kotlin/ProjectConfig.kt`. Currently minSdk 24, compile
   37.1 (Compose 1.13 requires it), target 37, Java 17.
 - `:app` and `:composepdf` apply `docucraft.android.convention` (`buildSrc`: Compose, SDKs,
-  desugaring). `:scanner-mlkit` has no UI, so it skips it, but reads the same `ProjectConfig`.
+  desugaring). `:scanner-mlkit` and `:ocr-mlkit` have no UI, so they skip it, but read the same
+  `ProjectConfig`.
 - Library versions: `gradle/libs.versions.toml`. The app's version: root `build.gradle.kts`.
 
 ## 2. Where things live in `:app`
@@ -157,9 +159,12 @@ A new Koin module is registered in `App.kt`.
 
   `PdfViewerState` is the public state, with `hitTest`, `panBy`, `animateScrollTo`,
   `pageRectInViewer` and more. Keep new engine API generic in the same way.
-- **Page content comes from one binding**, `feature/pdfviewer/di/PageContentModule.kt`:
-  `LayeredPageContentProvider(PlatformPageContentProvider, recognized = null)`.
-  - Text recognition (OCR) will go in as `recognized`, from its own module.
+- **Page content is bound in one file**, `feature/pdfviewer/di/PageContentModule.kt`: the two
+  readers by name (`EMBEDDED_TEXT`, `TEXT_RECOGNITION`), and what the viewer reads with,
+  `LayeredPageContentProvider(embedded, CatalogueRecognizedTextProvider)`.
+  - The recognition engine is swapped at one line: the `TEXT_RECOGNITION` binding.
+  - **Text recognition is the user's choice, per document** (`ocr_enabled`). Nothing recognizes a
+    page of a document that has it off: not the background reading, not the viewer.
   - The platform provider needs API 35+. Below that, every page is `Unsupported` and the viewer
     explains why (decision D1).
   - The platform's content APIs (`getTextContents`, `selectContent`, `getLinkContents`, the

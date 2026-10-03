@@ -16,6 +16,7 @@ package com.bobbyesp.docucraft.feature.docscanner.domain.model
  * @property contentHash SHA-256 of the file, in hexadecimal.
  * @property pageCount Pages in the document: at least one.
  * @property capturedAtEpochMillis When it was scanned.
+ * @property recognizeText Whether the text of its pages is to be recognized: a scan is images.
  */
 data class NewScan(
     val uuid: String,
@@ -25,6 +26,7 @@ data class NewScan(
     val contentHash: String,
     val pageCount: Int,
     val capturedAtEpochMillis: Long,
+    val recognizeText: Boolean = false,
 ) {
     init {
         require(pageCount >= 1) { "A document has at least one page, not $pageCount" }

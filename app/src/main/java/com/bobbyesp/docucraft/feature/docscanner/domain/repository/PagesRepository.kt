@@ -5,6 +5,8 @@ package com.bobbyesp.docucraft.feature.docscanner.domain.repository
 
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.PageTextStatus
 import com.bobbyesp.documentcontent.ContentOrigin
+import com.bobbyesp.documentcontent.PageText
+import com.bobbyesp.documentcontent.TextLine
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -45,12 +47,17 @@ data class DocumentTextStatus(
  * @property text Plain, in reading order.
  * @property confidence How sure text recognition was, from 0 to 1. Recognized text only.
  * @property engine What read it, such as `platform`.
+ * @property language BCP 47 tag of its language, when it could be told.
+ * @property layout Where each word is on the page. Kept for recognized text only, so that it can be
+ *   selected without recognizing the page again; a PDF's own text is read from the PDF.
  */
 data class PageTextRecord(
     val text: String,
     val origin: ContentOrigin,
     val confidence: Float?,
     val engine: String?,
+    val language: String? = null,
+    val layout: List<TextLine>? = null,
 )
 
 /**
@@ -119,6 +126,23 @@ interface PagesRepository {
         pageIndex: Int,
         maxAttempts: Int,
     ): PageTextStatus?
+
+    /**
+     * The recognized text of a page with where each word is, as it was written down. `null` when
+     * the page was not recognized, or is not there.
+     */
+    suspend fun recognizedText(documentUuid: String, pageIndex: Int): PageText?
+
+    /**
+     * Turns text recognition on or off for a document the app keeps.
+     *
+     * Turning it on makes the pages that were waiting for it pending again. Turning it off forgets
+     * what was recognized, so those pages stop being found by it; the text a PDF has of its own
+     * stays.
+     *
+     * @return `false` when there is no such document, or it is another app's.
+     */
+    suspend fun setTextRecognition(documentUuid: String, enabled: Boolean): Boolean
 
     /**
      * Makes pending again the pages that failed, and the ones read by an extractor older than

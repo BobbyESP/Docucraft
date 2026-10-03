@@ -15,6 +15,12 @@ sealed interface DocumentActionsIntent {
 
     data class ConfirmEdit(val title: String, val description: String) : DocumentActionsIntent
 
+    /**
+     * Have the text of the document's image-only pages recognized, or stop and forget what was
+     * recognized.
+     */
+    data class SetTextRecognition(val enabled: Boolean) : DocumentActionsIntent
+
     /** For a document of another app: stop referring to it. Its file is not touched. */
     data object RemoveFromRecents : DocumentActionsIntent
 }

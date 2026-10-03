@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -29,6 +30,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.settings.SettingSwitch
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsGroup
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsItem
 import kotlinx.collections.immutable.PersistentList
@@ -39,6 +41,8 @@ import kotlinx.collections.immutable.persistentListOf
 fun SettingsScreen(
     onOpenAppearance: () -> Unit,
     onOpenDocumentViewer: () -> Unit,
+    recognizesTextInNewDocuments: Boolean,
+    onRecognizeTextInNewDocumentsChange: (Boolean) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -98,6 +102,29 @@ fun SettingsScreen(
             }
             item(contentType = "settings_list") {
                 SettingsGroup(modifier = Modifier, items = settings)
+            }
+            item(contentType = "settings_category") {
+                Text(
+                    text = stringResource(R.string.documents),
+                    style = MaterialTheme.typography.labelLargeEmphasized,
+                    modifier = Modifier.padding(top = 16.dp),
+                )
+            }
+            item(contentType = "settings_item") {
+                SettingSwitch(
+                    title = stringResource(R.string.recognize_text_in_new_documents),
+                    supportingText =
+                        stringResource(
+                            if (recognizesTextInNewDocuments) {
+                                R.string.recognize_text_in_new_documents_on_desc
+                            } else {
+                                R.string.recognize_text_in_new_documents_off_desc
+                            }
+                        ),
+                    icon = Icons.Rounded.TextFields,
+                    isChecked = recognizesTextInNewDocuments,
+                    onCheckedChange = onRecognizeTextInNewDocumentsChange,
+                )
             }
         }
     }

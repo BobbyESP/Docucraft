@@ -39,6 +39,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingP
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveLinkedToLibraryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import com.bobbyesp.docucraft.feature.docscanner.testLinkedDocument
+import com.bobbyesp.docucraft.feature.docscanner.testSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.FakePageContentProvider
 import com.bobbyesp.docucraft.feature.pdfviewer.data.settings.InMemoryViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
@@ -901,6 +902,7 @@ class PdfViewerViewModelTest {
                     storage,
                     access,
                     FakeDocumentIndexQueue(),
+                    testSettings(),
                 ),
             // Unconfined: the scheduler does not wait for the background scope, and what is
             // written there is what these tests look at.

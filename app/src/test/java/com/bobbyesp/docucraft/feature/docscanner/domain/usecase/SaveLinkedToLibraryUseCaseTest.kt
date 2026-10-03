@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
+import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentsRepository
@@ -11,6 +12,7 @@ import com.bobbyesp.docucraft.feature.docscanner.FakeLinkedDocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import com.bobbyesp.docucraft.feature.docscanner.testLinkedDocument
+import com.bobbyesp.docucraft.feature.docscanner.testSettings
 import com.bobbyesp.scanner.ContentRef
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -34,7 +36,8 @@ class SaveLinkedToLibraryUseCaseTest {
     private val storage = FakeDocumentStorage()
     private val access = FakeExternalDocumentAccess()
     private val indexQueue = FakeDocumentIndexQueue()
-    private val save = SaveLinkedToLibraryUseCase(documents, linked, storage, access, indexQueue)
+    private val save =
+        SaveLinkedToLibraryUseCase(documents, linked, storage, access, indexQueue, testSettings())
 
     @Test
     fun `its file is copied under its own uuid, and the reference becomes a document`() = runTest {
@@ -58,6 +61,19 @@ class SaveLinkedToLibraryUseCaseTest {
         storage.pageCount = 3
         save(LINKED)
         assertEquals(listOf(LINKED), indexQueue.queued)
+    }
+
+    /** What the user last chose for the documents they save. */
+    @Test
+    fun `it has its text recognized if that is what the user chose for new documents`() = runTest {
+        save(LINKED)
+        assertEquals(mapOf(LINKED to false), linked.recognizing)
+
+        val recognizing = testSettings(UserPreferences(recognizeTextInNewDocuments = true))
+        SaveLinkedToLibraryUseCase(documents, linked, storage, access, indexQueue, recognizing)(
+            LINKED
+        )
+        assertEquals(mapOf(LINKED to true), linked.recognizing)
     }
 
     /** The app reads its own copy from then on. */

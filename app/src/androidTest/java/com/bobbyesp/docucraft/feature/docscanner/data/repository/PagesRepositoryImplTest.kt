@@ -15,6 +15,9 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.PageTextStatus
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentTextStatus
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.PageTextRecord
 import com.bobbyesp.documentcontent.ContentOrigin
+import com.bobbyesp.documentcontent.NormalizedRect
+import com.bobbyesp.documentcontent.TextLine
+import com.bobbyesp.documentcontent.TextWord
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -188,6 +191,124 @@ class PagesRepositoryImplTest {
         assertEquals(0, pages.pagesOf("a").single().attempts)
     }
 
+    // --- recognized text ---
+
+    @Test
+    fun recognizedTextIsKeptWithWhereItsWordsAreAndComesBackAsItWas() = runBlocking {
+        document("a", pageCount = 1)
+
+        pages.storeText("a", 0, recognized("Factura", "2026"), extractorVersion = 1)
+
+        val text = checkNotNull(pages.recognizedText("a", 0))
+        assertEquals(ContentOrigin.RECOGNIZED, text.origin)
+        assertEquals(0.8f, text.confidence)
+        assertEquals("mlkit-latin", text.engine)
+        assertEquals("es", text.language)
+        assertEquals(listOf("Factura", "2026"), text.lines.single().words.map { it.text })
+        assertEquals(NormalizedRect(0.1f, 0.2f, 0.3f, 0.4f), text.lines.single().words[0].bounds)
+        assertEquals(listOf("a"), found("factura"))
+        assertEquals(listOf("1"), rows("SELECT recognized FROM document_text_status"))
+    }
+
+    // A PDF's own text is read from the PDF whenever it is needed.
+    @Test
+    fun aPageThatWasNotRecognizedHasNoRecognizedText() = runBlocking {
+        document("a", pageCount = 2)
+        pages.storeText("a", 0, embedded("typed"), extractorVersion = 1)
+
+        assertNull(pages.recognizedText("a", 0))
+        assertNull(pages.recognizedText("a", 1))
+        assertNull(pages.recognizedText("gone", 0))
+    }
+
+    @Test
+    fun readingARecognizedPageAgainReplacesWhereItsWordsWere() = runBlocking {
+        document("a", pageCount = 1)
+        pages.storeText("a", 0, recognized("old"), extractorVersion = 1)
+
+        pages.storeText("a", 0, recognized("new", "words"), extractorVersion = 1)
+
+        assertEquals(
+            listOf("new", "words"),
+            pages.recognizedText("a", 0)?.lines?.single()?.words?.map { it.text },
+        )
+        assertEquals(listOf("1"), rows("SELECT COUNT(*) FROM page_layouts"))
+    }
+
+    @Test
+    fun turningRecognitionOnMakesTheWaitingPagesPendingAndNoOthers() = runBlocking {
+        document("a", pageCount = 3)
+        pages.storeText("a", 0, embedded("typed"), extractorVersion = 1)
+        pages.storeWithoutText("a", 1, PageTextStatus.OCR_DISABLED, extractorVersion = 1)
+        pages.storeWithoutText("a", 2, PageTextStatus.OCR_DISABLED, extractorVersion = 1)
+
+        assertTrue(pages.setTextRecognition("a", enabled = true))
+
+        assertEquals(listOf(1, 2), pages.pagesToRead("a"))
+        assertEquals(listOf("1"), rows("SELECT ocr_enabled FROM documents"))
+        assertEquals(listOf("a"), found("typed"))
+    }
+
+    // The words of an image are only there because recognition was asked for.
+    @Test
+    fun turningRecognitionOffForgetsWhatWasRecognizedAndKeepsTheDocumentsOwnText() = runBlocking {
+        document("a", pageCount = 3)
+        pages.setTextRecognition("a", enabled = true)
+        pages.storeText("a", 0, embedded("typed"), extractorVersion = 1)
+        pages.storeText("a", 1, recognized("scanned"), extractorVersion = 1)
+        pages.storeWithoutText("a", 2, PageTextStatus.NO_TEXT, extractorVersion = 1)
+
+        assertTrue(pages.setTextRecognition("a", enabled = false))
+
+        assertEquals(listOf("a"), found("typed"))
+        assertEquals(emptyList<String>(), found("scanned"))
+        assertNull(pages.recognizedText("a", 1))
+        assertEquals(
+            listOf(
+                PageTextStatus.EXTRACTED,
+                PageTextStatus.OCR_DISABLED,
+                PageTextStatus.OCR_DISABLED,
+            ),
+            pages.pagesOf("a").map { it.textStatus },
+        )
+        assertEquals(
+            listOf("1|0"),
+            rows("SELECT COUNT(*), (SELECT COUNT(*) FROM page_layouts) FROM page_texts"),
+        )
+        assertEquals(listOf("0"), rows("SELECT ocr_enabled FROM documents"))
+    }
+
+    // Another app's document has no pages, and the table refuses recognition for it.
+    @Test
+    fun recognitionIsOnlySetForADocumentTheAppKeeps() = runBlocking {
+        db.execSQL(
+            """INSERT INTO documents (uuid, custody, original_name, mime_type, is_encrypted,
+                is_favorite, ocr_enabled, uri, has_persisted_permission, created_at, updated_at,
+                content_updated_at)
+            VALUES ('linked', 'LINKED', 'shared', 'application/pdf', 0, 0, 0, 'content://x', 0, 1,
+                1, 1)"""
+        )
+
+        assertFalse(pages.setTextRecognition("linked", enabled = true))
+        assertFalse(pages.setTextRecognition("gone", enabled = true))
+        assertEquals(listOf("0"), rows("SELECT ocr_enabled FROM documents"))
+    }
+
+    // Read just as recognition was being turned on, and left waiting by mistake.
+    @Test
+    fun aPageLeftWaitingInADocumentThatHasRecognitionOnIsReadAgain() = runBlocking {
+        document("on", pageCount = 1)
+        document("off", pageCount = 1)
+        pages.setTextRecognition("on", enabled = true)
+        pages.storeWithoutText("on", 0, PageTextStatus.OCR_DISABLED, extractorVersion = 1)
+        pages.storeWithoutText("off", 0, PageTextStatus.OCR_DISABLED, extractorVersion = 1)
+
+        pages.requeue(extractorVersion = 1)
+
+        assertEquals(listOf(0), pages.pagesToRead("on"))
+        assertEquals(emptyList<Int>(), pages.pagesToRead("off"))
+    }
+
     // --- picking up where it was left ---
 
     @Test
@@ -248,6 +369,19 @@ class PagesRepositoryImplTest {
 
     private fun embedded(text: String) =
         PageTextRecord(text, ContentOrigin.EMBEDDED, confidence = null, engine = "platform")
+
+    private fun recognized(vararg words: String) =
+        PageTextRecord(
+            text = words.joinToString(" "),
+            origin = ContentOrigin.RECOGNIZED,
+            confidence = 0.8f,
+            engine = "mlkit-latin",
+            language = "es",
+            layout =
+                listOf(
+                    TextLine(words.map { TextWord(it, NormalizedRect(0.1f, 0.2f, 0.3f, 0.4f)) })
+                ),
+        )
 
     private suspend fun found(query: String): List<String> =
         index.search(query).map { it.documentUuid }

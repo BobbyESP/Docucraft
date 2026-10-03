@@ -3,6 +3,8 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner
 
+import com.bobbyesp.docucraft.core.domain.model.UserPreferences
+import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentOrigin
@@ -10,6 +12,9 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentThumbnail
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentThumbnails
 import com.bobbyesp.scanner.ContentRef
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * A document the app keeps, for a test that only cares about some of what a document has. Shared,
@@ -85,4 +90,9 @@ class FakeDocumentThumbnails : DocumentThumbnails {
     override suspend fun discard(documentUuid: String) {
         discarded += documentUuid
     }
+}
+
+/** Settings that only ever say [preferences]: what a use case reads before it decides. */
+fun testSettings(preferences: UserPreferences = UserPreferences()): SettingsRepository = mockk {
+    every { settings } returns flowOf(preferences)
 }

@@ -3,12 +3,16 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.repository
 
+import com.bobbyesp.docucraft.feature.docscanner.data.db.PageLayoutCodec
 import com.bobbyesp.docucraft.feature.docscanner.data.db.dao.PageDao
+import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.PageLayoutEntity
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.PageTextStatus
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentTextStatus
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.Page
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.PageTextRecord
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.PagesRepository
+import com.bobbyesp.documentcontent.ContentOrigin
+import com.bobbyesp.documentcontent.PageText
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -65,9 +69,34 @@ class PagesRepositoryImpl(
             origin = text.origin,
             confidence = text.confidence,
             engine = text.engine,
+            language = text.language,
+            layout =
+                text.layout?.let {
+                    // The page's own id is filled in where the page is found.
+                    PageLayoutEntity(
+                        pageId = 0,
+                        formatVersion = PageLayoutCodec.VERSION,
+                        data = PageLayoutCodec.encode(it),
+                    )
+                },
             extractorVersion = extractorVersion,
             at = now(),
         )
+
+    override suspend fun recognizedText(documentUuid: String, pageIndex: Int): PageText? {
+        val stored = pageDao.layoutOf(documentUuid, pageIndex) ?: return null
+        val lines = PageLayoutCodec.decode(stored.formatVersion, stored.data) ?: return null
+        return PageText(
+            lines = lines,
+            origin = ContentOrigin.RECOGNIZED,
+            confidence = stored.confidence,
+            engine = stored.engine,
+            language = stored.language,
+        )
+    }
+
+    override suspend fun setTextRecognition(documentUuid: String, enabled: Boolean): Boolean =
+        pageDao.setTextRecognition(documentUuid, enabled, at = now())
 
     override suspend fun storeWithoutText(
         documentUuid: String,

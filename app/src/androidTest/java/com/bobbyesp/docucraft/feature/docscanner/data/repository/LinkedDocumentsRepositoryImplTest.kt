@@ -286,7 +286,13 @@ class LinkedDocumentsRepositoryImplTest {
         activity.rememberReadingPosition("linked-1", ReadingPosition(4, 0.25f))
 
         now = 6_000
-        assertTrue(linked.keepInLibrary("linked-1", stored("linked-1", pageCount = 5)))
+        assertTrue(
+            linked.keepInLibrary(
+                "linked-1",
+                stored("linked-1", pageCount = 5),
+                recognizeText = false,
+            )
+        )
 
         assertEquals(
             listOf(
@@ -313,7 +319,7 @@ class LinkedDocumentsRepositoryImplTest {
     fun aSavedDocumentGetsItsPages() = runBlocking {
         link("content://other.app/1", "Contract", at = 2_000)
 
-        linked.keepInLibrary("linked-1", stored("linked-1", pageCount = 3))
+        linked.keepInLibrary("linked-1", stored("linked-1", pageCount = 3), recognizeText = false)
 
         assertEquals(
             listOf("0|PENDING", "1|PENDING", "2|PENDING"),
@@ -325,7 +331,7 @@ class LinkedDocumentsRepositoryImplTest {
     fun aSavedDocumentIsInTheLibraryAndIsFoundByItsName() = runBlocking {
         link("content://other.app/1", "Contrato de alquiler", at = 2_000)
 
-        linked.keepInLibrary("linked-1", stored("linked-1", pageCount = 1))
+        linked.keepInLibrary("linked-1", stored("linked-1", pageCount = 1), recognizeText = false)
 
         val saved = documents.observeDocuments().first().single()
         assertEquals("linked-1", saved.uuid)
@@ -341,7 +347,7 @@ class LinkedDocumentsRepositoryImplTest {
     @Test
     fun theSameLocationOpenedAfterSavingIsANewLinkedDocument() = runBlocking {
         link("content://other.app/1", "Contract", at = 2_000)
-        linked.keepInLibrary("linked-1", stored("linked-1", pageCount = 1))
+        linked.keepInLibrary("linked-1", stored("linked-1", pageCount = 1), recognizeText = false)
 
         val again = link("content://other.app/1", "Contract", at = 9_000)
 
@@ -356,8 +362,16 @@ class LinkedDocumentsRepositoryImplTest {
     fun onlyALinkedDocumentCanBeKeptThroughHere() = runBlocking {
         save("scan", at = 1_000)
 
-        assertFalse(linked.keepInLibrary("uuid-scan", stored("other", pageCount = 9)))
-        assertFalse(linked.keepInLibrary("no-such-document", stored("other", pageCount = 9)))
+        assertFalse(
+            linked.keepInLibrary("uuid-scan", stored("other", pageCount = 9), recognizeText = false)
+        )
+        assertFalse(
+            linked.keepInLibrary(
+                "no-such-document",
+                stored("other", pageCount = 9),
+                recognizeText = false,
+            )
+        )
 
         assertEquals(
             listOf("documents/uuid-scan.pdf|1"),

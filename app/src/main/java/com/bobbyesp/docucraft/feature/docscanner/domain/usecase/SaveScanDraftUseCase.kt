@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
+import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.core.util.DateTime
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.domain.indexing.DocumentIndexQueue
@@ -11,6 +12,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepo
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.scanner.ScanDraft
 import java.util.UUID
+import kotlinx.coroutines.flow.first
 
 /**
  * Turns a finished scan into a document the app owns and knows about.
@@ -32,6 +34,7 @@ class SaveScanDraftUseCase(
     private val storage: DocumentStorage,
     private val repository: DocumentsRepository,
     private val indexQueue: DocumentIndexQueue,
+    private val settings: SettingsRepository,
     private val newUuid: () -> String = { UUID.randomUUID().toString() },
 ) {
     /** @return The uuid of the saved document. */
@@ -56,6 +59,8 @@ class SaveScanDraftUseCase(
                             ?: stored.pageCount
                             ?: throw ScanSaveException.UnreadableDocument(),
                     capturedAtEpochMillis = draft.capturedAtEpochMillis,
+                    // What the user last chose for the documents they save.
+                    recognizeText = settings.settings.first().recognizeTextInNewDocuments,
                 )
             )
         } catch (e: Exception) {

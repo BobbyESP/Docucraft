@@ -63,9 +63,19 @@ class FakeLinkedDocumentsRepository : LinkedDocumentsRepository {
     /** Thrown by [keepInLibrary] when set. */
     var keepFailure: Exception? = null
 
-    override suspend fun keepInLibrary(uuid: String, stored: StoredDocument): Boolean {
+    /** Whether each document kept was to have its text recognized. */
+    val recognizing = mutableMapOf<String, Boolean>()
+
+    override suspend fun keepInLibrary(
+        uuid: String,
+        stored: StoredDocument,
+        recognizeText: Boolean,
+    ): Boolean {
         keepFailure?.let { throw it }
-        if (keeps) kept += uuid to stored
+        if (keeps) {
+            kept += uuid to stored
+            recognizing[uuid] = recognizeText
+        }
         return keeps
     }
 }

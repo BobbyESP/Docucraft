@@ -10,6 +10,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentTextStatusView
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.PageEntity
+import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.PageLayoutEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.PageTextEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.pendingPages
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.PageTextStatus
@@ -23,6 +24,19 @@ data class PageRow(
     @ColumnInfo(name = "text_status") val textStatus: PageTextStatus,
     @ColumnInfo(name = "text_origin") val textOrigin: ContentOrigin?,
     @ColumnInfo(name = "attempts") val attempts: Int,
+)
+
+/**
+ * The layout of a recognized page as it is stored. Not a data class: it holds an array.
+ *
+ * @property formatVersion The version of the binary format of [data].
+ */
+class StoredLayoutRow(
+    @ColumnInfo(name = "format_version") val formatVersion: Int,
+    @ColumnInfo(name = "data") val data: ByteArray,
+    @ColumnInfo(name = "confidence") val confidence: Float?,
+    @ColumnInfo(name = "engine") val engine: String?,
+    @ColumnInfo(name = "language") val language: String?,
 )
 
 /**
@@ -93,6 +107,8 @@ abstract class PageDao {
         origin: ContentOrigin,
         confidence: Float?,
         engine: String?,
+        language: String?,
+        layout: PageLayoutEntity?,
         extractorVersion: Int,
         at: Long,
     ): Boolean {
@@ -100,7 +116,19 @@ abstract class PageDao {
         deleteText(pageId)
         deleteLayout(pageId)
         insert(PageTextEntity(pageId = pageId, text = text))
-        setRead(pageId, PageTextStatus.EXTRACTED, origin, confidence, engine, extractorVersion, at)
+        layout?.let {
+            insert(PageLayoutEntity(pageId, formatVersion = it.formatVersion, data = it.data))
+        }
+        setRead(
+            pageId,
+            PageTextStatus.EXTRACTED,
+            origin,
+            confidence,
+            engine,
+            language,
+            extractorVersion,
+            at,
+        )
         return true
     }
 
@@ -116,9 +144,84 @@ abstract class PageDao {
         val pageId = pageId(documentUuid, pageIndex) ?: return false
         deleteText(pageId)
         deleteLayout(pageId)
-        setRead(pageId, status, null, null, null, extractorVersion, at)
+        setRead(pageId, status, null, null, null, null, extractorVersion, at)
         return true
     }
+
+    /**
+     * Where the words of a recognized page are, as they were written down, with how sure the
+     * recognition was.
+     */
+    @Query(
+        """SELECT l.format_version, l.data, p.confidence, p.engine, p.language
+        FROM page_layouts l
+          JOIN pages p ON p.id = l.page_id
+          JOIN documents d ON d.id = p.document_id
+        WHERE d.uuid = :documentUuid AND p.page_index = :pageIndex"""
+    )
+    abstract suspend fun layoutOf(documentUuid: String, pageIndex: Int): StoredLayoutRow?
+
+    /**
+     * Turns text recognition on or off for a document the app keeps, and puts its pages where that
+     * leaves them, all at once.
+     *
+     * On: the pages that were waiting for it are to be read again. Off: what was recognized is
+     * forgotten, text and layout, and those pages wait for it once more. The text a PDF has of its
+     * own is never touched: it was not recognition that read it.
+     *
+     * @return Whether there was such a document.
+     */
+    @Transaction
+    open suspend fun setTextRecognition(documentUuid: String, enabled: Boolean, at: Long): Boolean {
+        val documentId = idOfManaged(documentUuid) ?: return false
+        setOcrEnabled(documentId, enabled, at)
+        if (enabled) {
+            requeueWaitingForRecognition(documentId)
+        } else {
+            deleteRecognizedText(documentId)
+            deleteRecognizedLayouts(documentId)
+            forgetRecognition(documentId)
+        }
+        return true
+    }
+
+    @Query("SELECT id FROM documents WHERE uuid = :documentUuid AND custody = 'MANAGED'")
+    protected abstract suspend fun idOfManaged(documentUuid: String): Long?
+
+    @Query("UPDATE documents SET ocr_enabled = :enabled, updated_at = :at WHERE id = :documentId")
+    protected abstract suspend fun setOcrEnabled(documentId: Long, enabled: Boolean, at: Long)
+
+    @Query(
+        "UPDATE pages SET text_status = 'PENDING', attempts = 0 " +
+            "WHERE document_id = :documentId AND text_status = 'OCR_DISABLED'"
+    )
+    protected abstract suspend fun requeueWaitingForRecognition(documentId: Long)
+
+    /** A plain delete, so that the full-text index forgets the words too. */
+    @Query(
+        "DELETE FROM page_texts WHERE page_id IN (" +
+            "SELECT id FROM pages WHERE document_id = :documentId AND text_origin = 'RECOGNIZED')"
+    )
+    protected abstract suspend fun deleteRecognizedText(documentId: Long)
+
+    @Query(
+        "DELETE FROM page_layouts WHERE page_id IN (" +
+            "SELECT id FROM pages WHERE document_id = :documentId)"
+    )
+    protected abstract suspend fun deleteRecognizedLayouts(documentId: Long)
+
+    /**
+     * Pages recognition read, and pages it found nothing on: neither is known any more. A page that
+     * failed is left to be tried again, since it may be the document's own text that failed.
+     */
+    @Query(
+        """UPDATE pages
+        SET text_status = 'OCR_DISABLED', text_origin = NULL, confidence = NULL, engine = NULL,
+            language = NULL, attempts = 0
+        WHERE document_id = :documentId
+          AND (text_origin = 'RECOGNIZED' OR text_status = 'NO_TEXT')"""
+    )
+    protected abstract suspend fun forgetRecognition(documentId: Long)
 
     /** @return How the page is left, or `null` when it is not there. */
     @Transaction
@@ -133,13 +236,18 @@ abstract class PageDao {
     }
 
     /**
+     * A page left waiting for text recognition in a document that has it on is one that was read
+     * just as it was being turned on, and is read again.
+     *
      * A page read by an older extractor keeps its text until it is read again. One that was never
      * read has no version, and `NULL < :extractorVersion` leaves it alone.
      */
     @Query(
         """UPDATE pages SET text_status = 'PENDING', attempts = 0
         WHERE text_status = 'FAILED'
-          OR (text_status <> 'PENDING' AND extractor_version < :extractorVersion)"""
+          OR (text_status <> 'PENDING' AND extractor_version < :extractorVersion)
+          OR (text_status = 'OCR_DISABLED'
+            AND document_id IN (SELECT id FROM documents WHERE ocr_enabled = 1))"""
     )
     abstract suspend fun requeue(extractorVersion: Int): Int
 
@@ -167,7 +275,7 @@ abstract class PageDao {
     @Query(
         """UPDATE pages
         SET text_status = :status, text_origin = :origin, confidence = :confidence,
-            engine = :engine, extractor_version = :extractorVersion, language = NULL,
+            engine = :engine, extractor_version = :extractorVersion, language = :language,
             attempts = 0, extracted_at = :at
         WHERE id = :pageId"""
     )
@@ -177,6 +285,7 @@ abstract class PageDao {
         origin: ContentOrigin?,
         confidence: Float?,
         engine: String?,
+        language: String?,
         extractorVersion: Int,
         at: Long,
     )
@@ -193,6 +302,8 @@ abstract class PageDao {
     protected abstract suspend fun statusOf(pageId: Long): PageTextStatus?
 
     @Insert protected abstract suspend fun insert(text: PageTextEntity)
+
+    @Insert protected abstract suspend fun insert(layout: PageLayoutEntity)
 
     @Insert protected abstract suspend fun insert(pages: List<PageEntity>)
 }

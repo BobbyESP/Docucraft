@@ -40,13 +40,18 @@ class LinkedDocumentsRepositoryImpl(
         return ContentRef(uri)
     }
 
-    override suspend fun keepInLibrary(uuid: String, stored: StoredDocument): Boolean =
+    override suspend fun keepInLibrary(
+        uuid: String,
+        stored: StoredDocument,
+        recognizeText: Boolean,
+    ): Boolean =
         documentDao.keepLinkedInLibrary(
             uuid = uuid,
             filePath = stored.filePath,
             sizeBytes = stored.sizeBytes,
             contentHash = stored.contentHash,
             pageCount = stored.pageCount,
+            ocrEnabled = recognizeText,
             at = now(),
         )
 
