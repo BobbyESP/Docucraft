@@ -138,6 +138,15 @@ The save reports its own failure. Earlier, a failed save still congratulated the
   - **The bin is not recent, and other apps' documents are.** With three documents or fewer in the
     library the shelf would only repeat the list, and is left out, unless it holds a document of
     another app: those are in no list, and the shelf is the only way back to them.
+  - **The same content is on the shelf once.** A PDF opened from a chat arrives at a new location
+    each time, and is a new linked document each time: opening it twice, or again after saving
+    it, used to show it twice. A linked document is left out when the library has a document with
+    the same hash, or when another linked document with it was used later. The one that stays
+    takes the place of the ones it stands for, so what was just read is still first. It is the
+    query that does this (`ActivityDao.observeRecents`): the rows are all kept, each with its own
+    location and reading position. Two documents of the library are never merged, since a second
+    copy is something the user asked for, and a linked document that was never read has no hash
+    yet and is listed.
 - **Search.** `DocumentSearchViewModel` combines the library with the query (debounced 150 ms) and
   hands both to `SearchDocumentsUseCase`. The results are in order of relevance, not in the list's
   order, and each says on which page the match is and shows the words around it when the match is
@@ -192,7 +201,9 @@ Recents.
 - **What it turned out to be** is noted once it has been opened (`DescribeLinkedDocumentUseCase`):
   size, pages, a hash of its content, whether it asks for a password. It reads the whole file, so
   it runs after the document is on screen, and on every opening, since another app's file can be
-  replaced. What could not be learnt one time is left as it was known.
+  replaced. What could not be learnt one time is left as it was known. Having just hashed the
+  file, it also answers whether the library already keeps that content, and the viewer says so
+  ([pdf-viewer.md](pdf-viewer.md#the-external-viewer-d5)).
 - **Saving it** (`SaveLinkedToLibraryUseCase`) copies its file and turns the reference into a
   document the app keeps: custody `MANAGED`, origin `IMPORT`.
   - **It is the same document afterwards.** The row is changed in place, in one statement, so its

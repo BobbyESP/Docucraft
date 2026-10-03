@@ -196,6 +196,13 @@ sealed interface PdfViewerEffect {
      */
     data class ConfirmSaveCopy(val documentUuid: String) : PdfViewerEffect
 
+    /**
+     * This document of another app has the same content as [documentUuid], which the library
+     * already keeps. Said, with the way to open that one, and nothing else: the reader may well
+     * want to go on reading this one.
+     */
+    data class AlreadyInLibrary(val documentUuid: String) : PdfViewerEffect
+
     /** The clipboard belongs to the UI. */
     data class CopyText(val text: String) : PdfViewerEffect
 

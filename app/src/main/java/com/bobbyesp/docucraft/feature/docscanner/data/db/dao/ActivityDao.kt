@@ -40,12 +40,31 @@ interface ActivityDao {
      * Recents: the app's own documents outside the bin, and the linked ones, by their last
      * activity. The row id breaks a tie, so that two documents saved in the same millisecond do not
      * swap places between two readings.
+     *
+     * The same content is listed once. A PDF opened from another app arrives at a new location each
+     * time, and is a new linked document each time: without this, opening it twice, or opening it
+     * again after saving it, showed it twice. A linked document is left out when the library has
+     * that content, or when another linked document with it was used later. The one that stays
+     * takes the place of the ones it stands for, so that what was just read is still first. Two
+     * documents of the library are never merged: a second copy was asked for.
+     *
+     * A linked document has no hash until it has been read once, and is listed until then.
      */
     @Query(
         """SELECT d.*, a.last_opened_at, a.availability
         FROM documents d JOIN document_activity a ON a.document_id = d.id
         WHERE d.trashed_at IS NULL
-        ORDER BY a.last_activity_at DESC, d.id DESC
+          AND NOT (d.custody = 'LINKED' AND d.content_hash IS NOT NULL AND EXISTS (
+            SELECT 1 FROM documents o JOIN document_activity oa ON oa.document_id = o.id
+            WHERE o.content_hash = d.content_hash AND o.id <> d.id AND o.trashed_at IS NULL
+              AND (o.custody = 'MANAGED'
+                OR oa.last_activity_at > a.last_activity_at
+                OR (oa.last_activity_at = a.last_activity_at AND o.id > d.id))))
+        ORDER BY MAX(a.last_activity_at, COALESCE((
+            SELECT MAX(oa.last_activity_at)
+            FROM documents o JOIN document_activity oa ON oa.document_id = o.id
+            WHERE o.content_hash = d.content_hash AND o.id <> d.id AND o.custody = 'LINKED'), 0)
+          ) DESC, d.id DESC
         LIMIT :limit"""
     )
     fun observeRecents(limit: Int): Flow<List<RecentDocumentRow>>

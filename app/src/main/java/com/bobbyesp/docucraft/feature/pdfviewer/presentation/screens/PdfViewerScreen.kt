@@ -136,6 +136,7 @@ fun PdfViewerScreen(
     onOpenDetails: () -> Unit,
     onGoToPage: (currentPage: Int, pageCount: Int) -> Unit,
     onConfirmSaveCopy: (documentUuid: String) -> Unit,
+    onOpenInLibrary: (documentUuid: String) -> Unit,
     modifier: Modifier = Modifier,
     showBackButton: Boolean = true,
 ) {
@@ -191,6 +192,7 @@ fun PdfViewerScreen(
         pdfViewerState = pdfViewerState,
         contentTop = { with(density) { topBarHeight.toPx() } },
         onConfirmSaveCopy = onConfirmSaveCopy,
+        onOpenInLibrary = onOpenInLibrary,
     )
 
     // ---------------------------------------------------------------- text selection
@@ -512,8 +514,10 @@ private fun HandlePdfViewerEffects(
     pdfViewerState: PdfViewerState,
     contentTop: () -> Float,
     onConfirmSaveCopy: (documentUuid: String) -> Unit,
+    onOpenInLibrary: (documentUuid: String) -> Unit,
 ) {
     val confirmSaveCopy by rememberUpdatedState(onConfirmSaveCopy)
+    val openInLibrary by rememberUpdatedState(onOpenInLibrary)
     val activity = requireNotNull(LocalActivity.current) { "The PDF viewer needs an activity" }
     val printer: DocumentPrinter = koinInject { parametersOf(activity) }
     val linkOpener: LinkOpener = koinInject { parametersOf(activity) }
@@ -536,6 +540,18 @@ private fun HandlePdfViewerEffects(
             when (effect) {
                 is PdfViewerEffect.Print -> printer.print(effect.document, effect.jobName)
                 is PdfViewerEffect.ConfirmSaveCopy -> confirmSaveCopy(effect.documentUuid)
+                is PdfViewerEffect.AlreadyInLibrary ->
+                    notifications.show(
+                        InAppNotification(
+                            message = resources.getString(R.string.already_in_library_title),
+                            type = NotificationType.Info,
+                            action =
+                                NotificationAction(label = resources.getString(R.string.open)) {
+                                    openInLibrary(effect.documentUuid)
+                                },
+                            duration = AlreadyInLibraryNotice,
+                        )
+                    )
                 is PdfViewerEffect.OpenLink ->
                     if (!linkOpener.open(effect.action, latestLook)) {
                         notifications.show(
@@ -715,3 +731,9 @@ private val ReadingPositionSettle = 1.seconds
 
 /** Each zoom button press scales by this much, animated. */
 private const val ZoomStep = 1.25f
+
+/**
+ * How long the reader is told that the library already has the document. Longer than a message that
+ * only informs: there is something to decide, and they have just started looking at the page.
+ */
+private val AlreadyInLibraryNotice = 8.seconds

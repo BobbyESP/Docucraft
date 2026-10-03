@@ -14,6 +14,7 @@ import com.bobbyesp.docucraft.feature.docscanner.testLinkedDocument
 import com.bobbyesp.scanner.ContentRef
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -146,6 +147,38 @@ class LinkedDocumentUseCasesTest {
 
         assertTrue(access.calls.isEmpty())
         assertTrue(linked.described.isEmpty())
+    }
+
+    /** The file is read whole to describe it: that is when its content can be compared. */
+    @Test
+    fun `describing one says which document of the library has the same content`() = runTest {
+        val document = testLinkedDocument(uuid = "linked-1", location = SHARED)
+        access.files[SHARED] = MeasuredFile(sizeBytes = 2_048, contentHash = "abc")
+        val documents =
+            FakeDocumentsRepository(
+                documents = listOf(testDocument(uuid = "doc-1"), testDocument(uuid = "doc-2")),
+                linked = listOf(document),
+            )
+        documents.hashes["doc-2"] = "abc"
+
+        assertEquals("doc-2", describeFor(documents)("linked-1", 12, isProtected = false))
+    }
+
+    @Test
+    fun `describing one the library does not have, or that cannot be read, names none`() = runTest {
+        val document = testLinkedDocument(uuid = "linked-1", location = SHARED)
+        val documents =
+            FakeDocumentsRepository(
+                documents = listOf(testDocument(uuid = "doc-1")),
+                linked = listOf(document),
+            )
+        documents.hashes["doc-1"] = "abc"
+
+        // Out of reach: nothing is known of its content.
+        assertNull(describeFor(documents)("linked-1", null, isProtected = true))
+
+        access.files[SHARED] = MeasuredFile(sizeBytes = 2_048, contentHash = "xyz")
+        assertNull(describeFor(documents)("linked-1", 12, isProtected = false))
     }
 
     private fun describeFor(documents: FakeDocumentsRepository) =

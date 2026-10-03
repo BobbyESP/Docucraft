@@ -177,6 +177,9 @@ class PdfViewerViewModel(
     /** What the reader has been told about pages without text, so they are told once a document. */
     private val toldAbout = mutableSetOf<TextUnavailable>()
 
+    /** Said once a document: the viewer reports that it loaded again after a rotation. */
+    private var toldItIsInLibrary = false
+
     /**
      * Tells the catalogue whether the file was where it says. Only the two answers that are about
      * reaching the file: a document that is protected or damaged was reached, and is still there.
@@ -189,10 +192,18 @@ class PdfViewerViewModel(
     /**
      * What the document turned out to be, for one that belongs to another app: the catalogue knew
      * nothing of it but where it is. The use case leaves the app's own documents alone.
+     *
+     * If the library turns out to have the same content, the reader is offered that document: it is
+     * the one with their place in it, and the one that does not depend on another app.
      */
     private fun describe(pageCount: Int?, isProtected: Boolean) = launch {
         val uuid = catalogueUuid.await() ?: return@launch
-        describeLinkedDocument(uuid, pageCount = pageCount, isProtected = isProtected)
+        val inLibrary =
+            describeLinkedDocument(uuid, pageCount = pageCount, isProtected = isProtected)
+        if (inLibrary != null && !toldItIsInLibrary) {
+            toldItIsInLibrary = true
+            sendEffect(PdfViewerEffect.AlreadyInLibrary(inLibrary))
+        }
     }
 
     override fun onHandleIntent(intent: PdfViewerIntent) {

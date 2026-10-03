@@ -80,6 +80,8 @@ class ForgetLinkedDocumentUseCase(
  * two openings, so this is done on each.
  *
  * It reads the whole file, which is why it is not part of registering: the document is shown first.
+ * That is also the moment it can be told whether the library already has this content, so it is
+ * answered here rather than by reading the file a second time.
  */
 class DescribeLinkedDocumentUseCase(
     private val documents: DocumentsRepository,
@@ -89,11 +91,17 @@ class DescribeLinkedDocumentUseCase(
     /**
      * @param pageCount Its pages, when it could be opened.
      * @param isProtected Whether it asked for a password.
+     * @return The uuid of a document of the library with the same content, or `null`: there is
+     *   none, the file could not be read, or this is not a linked document.
      */
-    suspend operator fun invoke(documentUuid: String, pageCount: Int?, isProtected: Boolean) {
+    suspend operator fun invoke(
+        documentUuid: String,
+        pageCount: Int?,
+        isProtected: Boolean,
+    ): String? {
         val document =
             runCatching { documents.getDocument(documentUuid) }.getOrNull() as? Document.Linked
-                ?: return
+                ?: return null
 
         val file = access.measure(document.location)
         linked.describe(
@@ -105,5 +113,6 @@ class DescribeLinkedDocumentUseCase(
                 isProtected = isProtected,
             ),
         )
+        return file?.let { documents.findInLibrary(it.contentHash)?.uuid }
     }
 }

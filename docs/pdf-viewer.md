@@ -183,6 +183,12 @@ their PDFs in Docucraft.
   viewer's ViewModel as it opens ([scanning.md](scanning.md#documents-of-other-apps)). That is what
   gives it a uuid to note its opening and its reading position against. The viewer goes on showing
   what it was handed, and if registering fails the document is shown all the same.
+- **A document the library already has is said to be there**, once, with *Open*
+  (`PdfViewerEffect.AlreadyInLibrary`). It is known a moment after the document shows, when its
+  file has been hashed. The document handed over stays open: the notice only offers the library's
+  one, which has the reader's place in it and does not depend on the other app. *Open* puts that
+  document on top, as a `PdfViewer` destination of this stack, so back returns to the one handed
+  over.
 
 **Known gap.** The intent filter accepts `http`/`https` PDFs, but the viewer reads through the
 `ContentResolver`, so a remote PDF ends on the error screen. The engine can download

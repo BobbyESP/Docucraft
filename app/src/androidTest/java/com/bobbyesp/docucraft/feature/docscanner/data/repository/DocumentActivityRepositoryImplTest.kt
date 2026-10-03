@@ -115,6 +115,77 @@ class DocumentActivityRepositoryImplTest {
         assertEquals(listOf("shared", "own"), recents())
     }
 
+    // --- the same content, listed once ---
+
+    // A PDF opened twice from a chat arrives at two locations, and is two linked documents.
+    @Test
+    fun twoDocumentsOfOtherAppsWithTheSameContentAreListedOnceAsTheOneUsedLast() = runBlocking {
+        link("content://chat/1", name = "first", at = 1_000, hash = "same")
+        save("own", at = 2_000)
+        link("content://chat/2", name = "second", at = 3_000, hash = "same")
+
+        assertEquals(listOf("second", "own"), recents())
+    }
+
+    @Test
+    fun betweenTwoOfTheSameInstantTheOneAddedLastIsListed() = runBlocking {
+        link("content://chat/1", name = "first", at = 1_000, hash = "same")
+        link("content://chat/2", name = "second", at = 1_000, hash = "same")
+
+        assertEquals(listOf("second"), recents())
+    }
+
+    // Opened from the chat, saved, and opened from the chat again.
+    @Test
+    fun aDocumentOfAnotherAppTheLibraryAlreadyHasIsNotListed() = runBlocking {
+        save("own", at = 1_000)
+        link("content://chat/1", name = "shared", at = 2_000, hash = "hash-own")
+
+        assertEquals(listOf("own"), recents())
+    }
+
+    // What was just read is first, whichever of its copies it was read from.
+    @Test
+    fun theDocumentOfTheLibraryTakesThePlaceOfTheCopyThatWasJustOpened() = runBlocking {
+        save("own", at = 1_000)
+        save("other", at = 2_000)
+        link("content://chat/1", name = "shared", at = 3_000, hash = "hash-own")
+
+        assertEquals(listOf("own", "other"), recents())
+    }
+
+    @Test
+    fun aDocumentInTheBinDoesNotHideTheCopyOfAnotherApp() = runBlocking {
+        save("binned", at = 1_000)
+        database.openHelper.writableDatabase.execSQL(
+            "UPDATE documents SET trashed_at = 1500 WHERE uuid = 'uuid-binned'"
+        )
+        link("content://chat/1", name = "shared", at = 2_000, hash = "hash-binned")
+
+        assertEquals(listOf("shared"), recents())
+    }
+
+    // A second copy in the library was asked for: they are two documents.
+    @Test
+    fun twoDocumentsOfTheLibraryWithTheSameContentAreBothListed() = runBlocking {
+        save("one", at = 1_000)
+        save("two", at = 2_000)
+        database.openHelper.writableDatabase.execSQL(
+            "UPDATE documents SET content_hash = 'hash-one' WHERE uuid = 'uuid-two'"
+        )
+
+        assertEquals(listOf("two", "one"), recents())
+    }
+
+    // Nothing is known of its content until it has been read once.
+    @Test
+    fun documentsOfOtherAppsThatWereNeverReadAreAllListed() = runBlocking {
+        link("content://chat/1", name = "first", at = 1_000)
+        link("content://chat/2", name = "second", at = 2_000)
+
+        assertEquals(listOf("second", "first"), recents())
+    }
+
     // --- opening ---
 
     @Test
@@ -281,14 +352,14 @@ class DocumentActivityRepositoryImplTest {
     }
 
     /** A linked document, written as rows: nothing registers one yet. */
-    private fun link(uri: String, name: String, at: Long) {
+    private fun link(uri: String, name: String, at: Long, hash: String? = null) {
         val db = database.openHelper.writableDatabase
         db.execSQL(
             """INSERT INTO documents (uuid, custody, original_name, mime_type, is_encrypted,
-                is_favorite, ocr_enabled, uri, has_persisted_permission, created_at, updated_at,
-                content_updated_at)
-            VALUES ('uuid-$name', 'LINKED', '$name', 'application/pdf', 0, 0, 0, '$uri', 0, $at,
-                $at, $at)"""
+                is_favorite, ocr_enabled, uri, has_persisted_permission, content_hash, created_at,
+                updated_at, content_updated_at)
+            VALUES ('uuid-$name', 'LINKED', '$name', 'application/pdf', 0, 0, 0, '$uri', 0,
+                ${hash?.let { "'$it'" } ?: "NULL"}, $at, $at, $at)"""
         )
         db.execSQL(
             """INSERT INTO document_activity (document_id, last_activity_at, availability)

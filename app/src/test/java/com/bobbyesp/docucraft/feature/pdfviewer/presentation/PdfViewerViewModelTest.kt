@@ -27,6 +27,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LinkedDocumentFacts
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.NewLinkedDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
+import com.bobbyesp.docucraft.feature.docscanner.domain.storage.MeasuredFile
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DescribeLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
@@ -754,6 +755,40 @@ class PdfViewerViewModelTest {
             listOf(LINKED_UUID to LinkedDocumentFacts(null, null, null, isProtected = true)),
             linked.described,
         )
+    }
+
+    /** It is the library's document that has the reader's place in it, and that will still open. */
+    @Test
+    fun `one whose content the library already has is said to be there, once`() = runTest {
+        documents.documents.value = listOf(testDocument(uuid = UUID))
+        documents.hashes[UUID] = "same-content"
+        access.files[ContentRef("content://other.app/$LINKED_UUID.pdf")] =
+            MeasuredFile(sizeBytes = 10, contentHash = "same-content")
+        val viewModel = openedExternal()
+        val effects = collectEffects(viewModel)
+
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 2))
+        advanceUntilIdle()
+        // The viewer reports it again after a rotation.
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 2))
+        advanceUntilIdle()
+
+        assertEquals(listOf(PdfViewerEffect.AlreadyInLibrary(UUID)), effects)
+    }
+
+    @Test
+    fun `one the library does not have is not said to be there`() = runTest {
+        documents.documents.value = listOf(testDocument(uuid = UUID))
+        documents.hashes[UUID] = "other-content"
+        access.files[ContentRef("content://other.app/$LINKED_UUID.pdf")] =
+            MeasuredFile(sizeBytes = 10, contentHash = "same-content")
+        val viewModel = openedExternal()
+        val effects = collectEffects(viewModel)
+
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 2))
+        advanceUntilIdle()
+
+        assertTrue(effects.isEmpty())
     }
 
     // ---------------------------------------------------------------------------------- library
