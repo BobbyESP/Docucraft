@@ -299,8 +299,10 @@ A new Koin module is registered in `App.kt`.
   - Internal links inside a PDF are never reported by the platform (`getGotoLinks()` is empty).
     The code is ready for them.
   - A link that spans two lines comes as one rectangle that may also cover nearby text.
-  - `./gradlew :app:lintDebug` fails on `MissingTranslation`: most strings exist only in English
-    and Spanish.
+  - `./gradlew :app:lintDebug` fails on `NewApi`: `BlurHalo.kt` calls
+    `RuntimeShader.setFloatUniform` (API 33) where lint sees no version check. Every string and
+    plural is translated into the twelve languages in `res/values-*`, so a new one needs all of
+    them, or lint fails on `MissingTranslation` as well.
 
 ---
 

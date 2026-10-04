@@ -1,0 +1,17 @@
+<resources>
+    <plurals name="doc_n_pages">
+        <item quantity="other">%d ページ</item>
+    </plurals>
+    <plurals name="n_documents">
+        <item quantity="other">%d 件のドキュメント</item>
+    </plurals>
+    <plurals name="n_folders">
+        <item quantity="other">%d 個のフォルダ</item>
+    </plurals>
+    <plurals name="bin_days_left">
+        <item quantity="other">残り %d 日</item>
+    </plurals>
+    <plurals name="bin_empty_confirmation">
+        <item quantity="other">%d 件のドキュメントを完全に削除します。</item>
+    </plurals>
+</resources>

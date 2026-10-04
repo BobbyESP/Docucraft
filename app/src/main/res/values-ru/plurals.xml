@@ -1,0 +1,32 @@
+<resources>
+    <plurals name="doc_n_pages">
+        <item quantity="one">%d страница</item>
+        <item quantity="few">%d страницы</item>
+        <item quantity="many">%d страниц</item>
+        <item quantity="other">%d страницы</item>
+    </plurals>
+    <plurals name="n_documents">
+        <item quantity="one">%d документ</item>
+        <item quantity="few">%d документа</item>
+        <item quantity="many">%d документов</item>
+        <item quantity="other">%d документа</item>
+    </plurals>
+    <plurals name="n_folders">
+        <item quantity="one">%d папка</item>
+        <item quantity="few">%d папки</item>
+        <item quantity="many">%d папок</item>
+        <item quantity="other">%d папки</item>
+    </plurals>
+    <plurals name="bin_days_left">
+        <item quantity="one">Остался %d день</item>
+        <item quantity="few">Осталось %d дня</item>
+        <item quantity="many">Осталось %d дней</item>
+        <item quantity="other">Осталось %d дня</item>
+    </plurals>
+    <plurals name="bin_empty_confirmation">
+        <item quantity="one">%d документ будет удалён навсегда.</item>
+        <item quantity="few">%d документа будут удалены навсегда.</item>
+        <item quantity="many">%d документов будут удалены навсегда.</item>
+        <item quantity="other">%d документа будут удалены навсегда.</item>
+    </plurals>
+</resources>

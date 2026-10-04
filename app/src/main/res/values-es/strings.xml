@@ -38,7 +38,7 @@
     <string name="title">Título</string>
     <string name="description">Descripción</string>
     <string name="retry">Reintentar</string>
-    <string name="doc_modify_details_description">Actualiza abajo el título y la descrpición del documento para reflejar su contenido y detalles.</string>
+    <string name="doc_modify_details_description">Actualiza abajo el título y la descripción del documento para reflejar su contenido y detalles.</string>
     <string name="doc_scan_to_see_document_list">Escanea tus documentos para verlos aquí listados.</string>
     <string name="no_scanned_documents">No hay documentos escaneados</string>
     <string name="scan_cancelled">Proceso de escaneo cancelado</string>
@@ -52,8 +52,8 @@
     <string name="clear_search">Limpiar búsqueda</string>
     <string name="sort_ascending">Ordenar ascendentemente</string>
     <string name="sort_descending">Ordenar descendentemente</string>
-    <string name="app_tagline">"Escanea fácilmente tus documentos con IA "</string>
-    <string name="exit_search">Salir de la búsqeuda</string>
+    <string name="app_tagline">Escanea fácilmente tus documentos con IA</string>
+    <string name="exit_search">Salir de la búsqueda</string>
     <string name="results">Resultados</string>
 	<string name="doc_updated_successfully">Documento actualizado correctamente</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
@@ -198,7 +198,7 @@
     <string name="typography_title_sample">Documentos escaneados</string>
     <string name="typography_body_sample">Este documento se ha procesado con Docucraft y su análisis avanzado del diseño.</string>
     <string name="typography_label_sample">CONFIRMAR CAMBIOS</string>
-    <string name="typography_monospace_sample">ID: 46F1-37FB-AC5A (60 caracteres)</string>
+    <string name="typography_monospace_sample">ID: 46F1–37FB-AC5A (60 caracteres)</string>
     <string name="recognize_text_in_new_documents">Reconocer el texto de los documentos nuevos</string>
     <string name="recognize_text_in_new_documents_on_desc">Los escaneos que guardes se encuentran por lo que dicen. Se lee en tu dispositivo</string>
     <string name="recognize_text_in_new_documents_off_desc">Los escaneos que guardes solo se encuentran por su nombre. Puedes activarlo en cada documento</string>
@@ -345,4 +345,9 @@
     <string name="document_details_file_name">Nombre del archivo</string>
     <string name="document_details_format">Formato</string>
     <string name="document_details_pdf_version">PDF %1$s</string>
+    <string name="print">Imprimir</string>
+    <string name="open_with">Abrir con</string>
+    <string name="pages_count">%1$d páginas</string>
+    <string name="cannot_open_pdf">No se ha podido abrir este documento</string>
+    <string name="view_document">Ver documento</string>
 </resources>

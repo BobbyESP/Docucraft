@@ -1,0 +1,17 @@
+<resources>
+    <plurals name="doc_n_pages">
+        <item quantity="other">%d 页</item>
+    </plurals>
+    <plurals name="n_documents">
+        <item quantity="other">%d 个文档</item>
+    </plurals>
+    <plurals name="n_folders">
+        <item quantity="other">%d 个文件夹</item>
+    </plurals>
+    <plurals name="bin_days_left">
+        <item quantity="other">剩余 %d 天</item>
+    </plurals>
+    <plurals name="bin_empty_confirmation">
+        <item quantity="other">%d 个文档将被永久删除。</item>
+    </plurals>
+</resources>

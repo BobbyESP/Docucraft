@@ -1,0 +1,42 @@
+<resources>
+    <plurals name="doc_n_pages">
+        <item quantity="zero">%d صفحة</item>
+        <item quantity="one">صفحة واحدة</item>
+        <item quantity="two">صفحتان</item>
+        <item quantity="few">%d صفحات</item>
+        <item quantity="many">%d صفحة</item>
+        <item quantity="other">%d صفحة</item>
+    </plurals>
+    <plurals name="n_documents">
+        <item quantity="zero">%d مستند</item>
+        <item quantity="one">مستند واحد</item>
+        <item quantity="two">مستندان</item>
+        <item quantity="few">%d مستندات</item>
+        <item quantity="many">%d مستندًا</item>
+        <item quantity="other">%d مستند</item>
+    </plurals>
+    <plurals name="n_folders">
+        <item quantity="zero">%d مجلد</item>
+        <item quantity="one">مجلد واحد</item>
+        <item quantity="two">مجلدان</item>
+        <item quantity="few">%d مجلدات</item>
+        <item quantity="many">%d مجلدًا</item>
+        <item quantity="other">%d مجلد</item>
+    </plurals>
+    <plurals name="bin_days_left">
+        <item quantity="zero">بقي %d يوم</item>
+        <item quantity="one">بقي يوم واحد</item>
+        <item quantity="two">بقي يومان</item>
+        <item quantity="few">بقيت %d أيام</item>
+        <item quantity="many">بقي %d يومًا</item>
+        <item quantity="other">بقي %d يوم</item>
+    </plurals>
+    <plurals name="bin_empty_confirmation">
+        <item quantity="zero">سيُحذف %d مستند نهائيًا.</item>
+        <item quantity="one">سيُحذف مستند واحد نهائيًا.</item>
+        <item quantity="two">سيُحذف مستندان نهائيًا.</item>
+        <item quantity="few">ستُحذف %d مستندات نهائيًا.</item>
+        <item quantity="many">سيُحذف %d مستندًا نهائيًا.</item>
+        <item quantity="other">سيُحذف %d مستند نهائيًا.</item>
+    </plurals>
+</resources>

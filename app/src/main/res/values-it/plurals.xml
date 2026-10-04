@@ -1,0 +1,27 @@
+<resources>
+    <plurals name="doc_n_pages">
+        <item quantity="one">%d pagina</item>
+        <item quantity="many">%d pagine</item>
+        <item quantity="other">%d pagine</item>
+    </plurals>
+    <plurals name="n_documents">
+        <item quantity="one">%d documento</item>
+        <item quantity="many">%d documenti</item>
+        <item quantity="other">%d documenti</item>
+    </plurals>
+    <plurals name="n_folders">
+        <item quantity="one">%d cartella</item>
+        <item quantity="many">%d cartelle</item>
+        <item quantity="other">%d cartelle</item>
+    </plurals>
+    <plurals name="bin_days_left">
+        <item quantity="one">Manca %d giorno</item>
+        <item quantity="many">Mancano %d giorni</item>
+        <item quantity="other">Mancano %d giorni</item>
+    </plurals>
+    <plurals name="bin_empty_confirmation">
+        <item quantity="one">%d documento verrà eliminato definitivamente.</item>
+        <item quantity="many">%d documenti verranno eliminati definitivamente.</item>
+        <item quantity="other">%d documenti verranno eliminati definitivamente.</item>
+    </plurals>
+</resources>

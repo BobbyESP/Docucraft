@@ -1,0 +1,17 @@
+<resources>
+    <plurals name="doc_n_pages">
+        <item quantity="other">%d페이지</item>
+    </plurals>
+    <plurals name="n_documents">
+        <item quantity="other">문서 %d개</item>
+    </plurals>
+    <plurals name="n_folders">
+        <item quantity="other">폴더 %d개</item>
+    </plurals>
+    <plurals name="bin_days_left">
+        <item quantity="other">%d일 남음</item>
+    </plurals>
+    <plurals name="bin_empty_confirmation">
+        <item quantity="other">문서 %d개가 완전히 삭제됩니다.</item>
+    </plurals>
+</resources>
