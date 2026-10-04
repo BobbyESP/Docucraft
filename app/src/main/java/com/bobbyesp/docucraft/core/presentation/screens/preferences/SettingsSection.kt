@@ -30,7 +30,9 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.common.LocalSettingsRepository
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.LocalPaneContext
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.about.AboutScreen
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.appearance.AppearanceScreen
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AboutSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
@@ -62,6 +64,7 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
         SettingsScreen(
             onOpenAppearance = { navigator.goTo(AppearanceSettings) },
             onOpenDocumentViewer = { navigator.goTo(DocumentViewerSettings) },
+            onOpenAbout = { navigator.goTo(AboutSettings) },
             recognizesTextInNewDocuments = preferences?.recognizeTextInNewDocuments == true,
             onRecognizeTextInNewDocumentsChange = { enabled ->
                 scope.launch { settingsRepository.setRecognizeTextInNewDocuments(enabled) }
@@ -90,6 +93,13 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
             showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
         )
     }
+
+    entry<AboutSettings>(metadata = ListDetailSceneStrategy.detailPane(SettingsScene)) {
+        AboutScreen(
+            onBack = navigator::goBack,
+            showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
+        )
+    }
 }
 
 /**
@@ -100,7 +110,9 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
  * were. Internal so the rule can be asserted without a composition.
  */
 internal fun Navigator.leaveSettings() {
-    goBackWhile { it is AppearanceSettings || it is DocumentViewerSettings }
+    goBackWhile {
+        it is AppearanceSettings || it is DocumentViewerSettings || it is AboutSettings
+    }
 
     goBack()
 }

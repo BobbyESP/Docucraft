@@ -106,7 +106,9 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
+import com.bobbyesp.docucraft.core.presentation.components.SectionHeader
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
@@ -121,8 +123,6 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Tag
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.labelColor
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.FrostedLargeTopAppBar
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SectionHeader
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SortMenu
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.rememberIsFabExpanded
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderBadge

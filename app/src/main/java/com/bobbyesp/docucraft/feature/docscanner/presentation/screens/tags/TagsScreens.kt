@@ -72,7 +72,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
+import com.bobbyesp.docucraft.core.presentation.components.SectionHeader
 import com.bobbyesp.docucraft.core.presentation.components.overlay.OverlayForm
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
@@ -84,8 +86,6 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.LabelColor
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Tag
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.labelColor
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.normalizedNameOf
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.FrostedLargeTopAppBar
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SectionHeader
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.rememberIsFabExpanded
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FormSectionLabel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FormSpacer

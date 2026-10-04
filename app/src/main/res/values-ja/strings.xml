@@ -109,6 +109,16 @@
     <string name="cannot_open_pdf">このドキュメントを開けませんでした</string>
     <string name="settings">設定</string>
     <string name="general">全般</string>
+    <string name="version_format">バージョン %1$s</string>
+    <string name="about">このアプリについて</string>
+    <string name="about_desc">バージョン、開発者、支援の方法</string>
+    <string name="about_support_title">Docucraft を支援</string>
+    <string name="about_support_desc">Docucraft は無料のオープンソースアプリです。お役に立っていれば、コーヒー1杯のご支援が開発を続ける力になります。</string>
+    <string name="about_buy_me_a_coffee">コーヒーをおごる</string>
+    <string name="about_links">リンク</string>
+    <string name="about_developer_role">Docucraft の設計と開発</string>
+    <string name="about_source_code">ソースコード</string>
+    <string name="about_source_code_desc">オープンソース（GPL-3.0 ライセンス）</string>
     <string name="view_document">ドキュメントを表示</string>
     <string name="document_viewer">ドキュメントビューア</string>
     <string name="document_viewer_desc">ドキュメントの開き方</string>

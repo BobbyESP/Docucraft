@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -24,7 +27,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -47,11 +50,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.model.ViewerDefaults
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
+import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingSwitch
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsCategory
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsItemDefaults
+import com.bobbyesp.docucraft.core.presentation.components.settings.settingsContentWidth
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -104,14 +111,26 @@ fun DocumentViewerSettingsContent(
     modifier: Modifier = Modifier,
     showBackButton: Boolean = true,
 ) {
+    val listState = rememberLazyListState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val layoutDirection = LocalLayoutDirection.current
+
+    // The list, recorded for the app bar to frost once it scrolls beneath it.
+    val hazeState = rememberHazeState()
+
+    // A setting that stands outside a category takes the margins a category gives its own.
+    val settingModifier =
+        Modifier.settingsContentWidth().padding(horizontal = SettingsItemDefaults.HorizontalMargin)
 
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeFlexibleTopAppBar(
-                title = { Text(stringResource(R.string.document_viewer)) },
-                subtitle = { Text(stringResource(R.string.document_viewer_desc)) },
+            FrostedLargeTopAppBar(
+                title = stringResource(R.string.document_viewer),
+                subtitle = stringResource(R.string.document_viewer_desc),
+                isContentScrolled = listState.canScrollBackward,
+                scrollBehavior = scrollBehavior,
+                hazeState = hazeState,
                 navigationIcon = {
                     // Beside the settings list there is already a way back on screen.
                     if (showBackButton) {
@@ -123,18 +142,21 @@ fun DocumentViewerSettingsContent(
                         }
                     }
                 },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        scrolledContainerColor = MaterialTheme.colorScheme.surface
-                    ),
-                scrollBehavior = scrollBehavior,
             )
         },
     ) { paddingValues ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxSize().hazeSource(hazeState),
+            state = listState,
+            // Padded rather than inset, so the list scrolls beneath the app bar that frosts it.
+            contentPadding =
+                PaddingValues(
+                    start = paddingValues.calculateStartPadding(layoutDirection),
+                    top = paddingValues.calculateTopPadding() + 8.dp,
+                    end = paddingValues.calculateEndPadding(layoutDirection),
+                    bottom = paddingValues.calculateBottomPadding() + 16.dp,
+                ),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item(key = "remember_position", contentType = "settings_item") {
                 SettingSwitch(
@@ -147,6 +169,7 @@ fun DocumentViewerSettingsContent(
                     icon = Icons.Rounded.Bookmark,
                     isChecked = remembersReadingPosition,
                     onCheckedChange = onRememberReadingPositionChange,
+                    modifier = settingModifier,
                 )
             }
 
@@ -161,6 +184,7 @@ fun DocumentViewerSettingsContent(
                     icon = Icons.Rounded.Tune,
                     isChecked = defaults.enabled,
                     onCheckedChange = onEnabledChange,
+                    modifier = settingModifier,
                 )
             }
 
@@ -169,6 +193,7 @@ fun DocumentViewerSettingsContent(
                     selected = defaults.settings.fitMode,
                     enabled = defaults.enabled,
                     onSelect = onFitModeChange,
+                    modifier = Modifier.settingsContentWidth(),
                 )
             }
 
@@ -179,6 +204,7 @@ fun DocumentViewerSettingsContent(
                     icon = Icons.Rounded.DarkMode,
                     isChecked = defaults.settings.nightMode,
                     onCheckedChange = onNightModeChange,
+                    modifier = settingModifier,
                     enabled = defaults.enabled,
                 )
             }
@@ -188,7 +214,8 @@ fun DocumentViewerSettingsContent(
                     text = stringResource(R.string.viewer_session_note),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp),
+                    // Aligned with the titles of the settings above it, inside their containers.
+                    modifier = settingModifier.padding(horizontal = 16.dp).padding(top = 8.dp),
                 )
             }
         }

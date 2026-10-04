@@ -109,6 +109,16 @@
     <string name="cannot_open_pdf">Dieses Dokument konnte nicht geöffnet werden</string>
     <string name="settings">Einstellungen</string>
     <string name="general">Allgemein</string>
+    <string name="version_format">Version %1$s</string>
+    <string name="about">Über</string>
+    <string name="about_desc">Version, wer sie macht und wie du sie unterstützen kannst</string>
+    <string name="about_support_title">Docucraft unterstützen</string>
+    <string name="about_support_desc">Docucraft ist kostenlos und quelloffen. Wenn die App dir nützt, hilft mir ein Kaffee, weiter daran zu arbeiten.</string>
+    <string name="about_buy_me_a_coffee">Spendier mir einen Kaffee</string>
+    <string name="about_links">Links</string>
+    <string name="about_developer_role">Entwirft und entwickelt Docucraft</string>
+    <string name="about_source_code">Quellcode</string>
+    <string name="about_source_code_desc">Quelloffen, unter der GPL-3.0-Lizenz</string>
     <string name="view_document">Dokument ansehen</string>
     <string name="document_viewer">Dokument-Viewer</string>
     <string name="document_viewer_desc">Wie Dokumente geöffnet werden</string>

@@ -41,7 +41,7 @@ One back stack, one Navigation 3 `NavDisplay`, typed keys. Code:
   | `feature/docscanner/navigation/BinKeys.kt` | `Bin`, `BinDocumentActions`, `DeleteForever`, `EmptyBin` |
   | `feature/docscanner/navigation/OrganizationKeys.kt` | `FolderContents`, `FolderEditor`, `FolderActions`, `DeleteFolder`, `MoveToFolder`, `DocumentTags`, `ManageTags`, `TagEditor`, `DeleteTag` |
   | `feature/pdfviewer/navigation/PdfViewerKey.kt` | `PdfViewer`, `ExternalPdfViewer`, `PdfDocumentDetails`, `GoToPage` |
-  | `core/.../preferences/navigation/SettingsKeys.kt` | `Settings`, `AppearanceSettings`, `DocumentViewerSettings` |
+  | `core/.../preferences/navigation/SettingsKeys.kt` | `Settings`, `AppearanceSettings`, `DocumentViewerSettings`, `AboutSettings` |
 
 - **`DocucraftNavDisplay` is the one way a back stack is rendered.** Both `MainActivity`'s shell
   and `PdfViewerActivity`'s own stack use it, so every entry keeps its state and moves the same

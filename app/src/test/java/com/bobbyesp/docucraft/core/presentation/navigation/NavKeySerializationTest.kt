@@ -4,6 +4,7 @@
 package com.bobbyesp.docucraft.core.presentation.navigation
 
 import androidx.navigation3.runtime.NavKey
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AboutSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
@@ -102,6 +103,7 @@ class NavKeySerializationTest {
                 Settings,
                 AppearanceSettings,
                 DocumentViewerSettings,
+                AboutSettings,
             )
     }
 }

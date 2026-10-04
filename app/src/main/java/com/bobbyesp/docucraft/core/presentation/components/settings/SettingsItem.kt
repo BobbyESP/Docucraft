@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronRight
@@ -66,6 +68,8 @@ fun SettingsItem(
         onClick = item.onClick,
         shapes = shapes,
         modifier = modifier,
+        // Centered however long the description runs, as a setting with a switch is.
+        verticalAlignment = Alignment.CenterVertically,
         leadingContent = { SettingsItemIcon(item.icon) },
         trailingContent = {
             Icon(imageVector = Icons.Rounded.ChevronRight, contentDescription = null)
@@ -105,6 +109,12 @@ fun SettingsGroup(items: ImmutableList<SettingsItem>, modifier: Modifier = Modif
 /** What every item of a settings list shares, whatever control it carries. */
 object SettingsItemDefaults {
 
+    /** The margin between a setting and the edge of its screen, as every grouped list has. */
+    val HorizontalMargin = 16.dp
+
+    /** How wide a settings screen's content grows: across a tablet it is hard to read. */
+    val ContentMaxWidth = 640.dp
+
     /**
      * The grouped surface's container, kept while disabled: the list's own disabled container is
      * the page's color, and a disabled item would vanish from its group instead of looking
@@ -118,6 +128,16 @@ object SettingsItemDefaults {
             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         )
 }
+
+/**
+ * A row of a settings screen: as wide as the screen up to [SettingsItemDefaults.ContentMaxWidth],
+ * and centered in what is left over.
+ */
+fun Modifier.settingsContentWidth(): Modifier =
+    fillMaxWidth()
+        .wrapContentWidth()
+        .widthIn(max = SettingsItemDefaults.ContentMaxWidth)
+        .fillMaxWidth()
 
 /**
  * The icon on a tonal disc, the paired container and content roles keeping it legible. Disabled, it

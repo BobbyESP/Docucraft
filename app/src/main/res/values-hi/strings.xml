@@ -109,6 +109,16 @@
     <string name="cannot_open_pdf">यह दस्तावेज़ खोला नहीं जा सका</string>
     <string name="settings">सेटिंग</string>
     <string name="general">सामान्य</string>
+    <string name="version_format">संस्करण %1$s</string>
+    <string name="about">ऐप के बारे में</string>
+    <string name="about_desc">संस्करण, इसे कौन बनाता है और इसका समर्थन कैसे करें</string>
+    <string name="about_support_title">Docucraft का समर्थन करें</string>
+    <string name="about_support_desc">Docucraft मुफ़्त और ओपन सोर्स है। अगर यह आपके काम आता है, तो एक कॉफ़ी मुझे इस पर काम जारी रखने में मदद करती है।</string>
+    <string name="about_buy_me_a_coffee">मुझे एक कॉफ़ी पिलाएँ</string>
+    <string name="about_links">लिंक</string>
+    <string name="about_developer_role">Docucraft को डिज़ाइन और विकसित करते हैं</string>
+    <string name="about_source_code">सोर्स कोड</string>
+    <string name="about_source_code_desc">ओपन सोर्स, GPL-3.0 लाइसेंस के तहत</string>
     <string name="view_document">दस्तावेज़ देखें</string>
     <string name="document_viewer">दस्तावेज़ व्यूअर</string>
     <string name="document_viewer_desc">दस्तावेज़ कैसे खुलते हैं</string>

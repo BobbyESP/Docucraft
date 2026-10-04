@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -36,7 +39,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.LoadingIndicator
@@ -61,6 +63,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -73,10 +76,12 @@ import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
 import com.bobbyesp.docucraft.core.domain.model.ThemeConfig
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.core.presentation.components.ColorPickerDialog
+import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.settings.PaletteStylePicker
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingSwitch
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsCategory
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsItemDefaults
+import com.bobbyesp.docucraft.core.presentation.components.settings.settingsContentWidth
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.isDarkTheme
@@ -84,6 +89,8 @@ import com.bobbyesp.docucraft.core.presentation.theme.isDynamicColoringSupported
 import com.bobbyesp.docucraft.core.presentation.theme.toFontFamily
 import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.core.util.contentRevealTransform
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import org.koin.androidx.compose.koinViewModel
 
 private val SeedColorHexFormat = HexFormat {
@@ -207,9 +214,14 @@ fun AppearanceScreenContent(
     modifier: Modifier = Modifier,
     showBackButton: Boolean = true,
 ) {
+    val listState = rememberLazyListState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val motionScheme = MaterialTheme.motionScheme
+    val layoutDirection = LocalLayoutDirection.current
     val showsCustomColors = !preferences.useDynamicColoring || !isDynamicColoringSupported()
+
+    // The list, recorded for the app bar to frost once it scrolls beneath it.
+    val hazeState = rememberHazeState()
 
     var showColorPicker by rememberSaveable { mutableStateOf(false) }
     var editedCategory by rememberSaveable { mutableStateOf<TypographyCategory?>(null) }
@@ -217,9 +229,12 @@ fun AppearanceScreenContent(
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeFlexibleTopAppBar(
-                title = { Text(stringResource(R.string.appearance)) },
-                subtitle = { Text(stringResource(R.string.appearance_desc)) },
+            FrostedLargeTopAppBar(
+                title = stringResource(R.string.appearance),
+                subtitle = stringResource(R.string.appearance_desc),
+                isContentScrolled = listState.canScrollBackward,
+                scrollBehavior = scrollBehavior,
+                hazeState = hazeState,
                 navigationIcon = {
                     if (showBackButton) {
                         IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
@@ -230,26 +245,29 @@ fun AppearanceScreenContent(
                         }
                     }
                 },
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        scrolledContainerColor = MaterialTheme.colorScheme.surface
-                    ),
-                scrollBehavior = scrollBehavior,
             )
         },
     ) { paddingValues ->
         // Switching dynamic color on or off adds or removes whole sections: they fade, and the
         // ones below glide to their new place rather than jump.
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxSize().hazeSource(hazeState),
+            state = listState,
+            // Padded rather than inset, so the list scrolls beneath the app bar that frosts it.
+            contentPadding =
+                PaddingValues(
+                    start = paddingValues.calculateStartPadding(layoutDirection),
+                    top = paddingValues.calculateTopPadding(),
+                    end = paddingValues.calculateEndPadding(layoutDirection),
+                    bottom = paddingValues.calculateBottomPadding() + 16.dp,
+                ),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item(key = "theme", contentType = "settings_section") {
                 ThemeSection(
                     selected = preferences.themeConfig,
                     onSelect = onThemeConfigChange,
-                    modifier = animateItemWith(motionScheme),
+                    modifier = animateItemWith(motionScheme).settingsContentWidth(),
                 )
             }
 
@@ -261,7 +279,10 @@ fun AppearanceScreenContent(
                         icon = Icons.Rounded.ColorLens,
                         isChecked = preferences.useDynamicColoring,
                         onCheckedChange = onDynamicColoringChange,
-                        modifier = animateItemWith(motionScheme),
+                        modifier =
+                            animateItemWith(motionScheme)
+                                .settingsContentWidth()
+                                .padding(horizontal = SettingsItemDefaults.HorizontalMargin),
                     )
                 }
             }
@@ -276,7 +297,7 @@ fun AppearanceScreenContent(
                         onSeedColorClick = { showColorPicker = true },
                         onPaletteStyleChange = onPaletteStyleChange,
                         onHighContrastChange = onHighContrastModeChange,
-                        modifier = animateItemWith(motionScheme),
+                        modifier = animateItemWith(motionScheme).settingsContentWidth(),
                     )
                 }
             }
@@ -285,7 +306,7 @@ fun AppearanceScreenContent(
                 TypographySection(
                     preferences = preferences,
                     onCategoryClick = { editedCategory = it },
-                    modifier = animateItemWith(motionScheme),
+                    modifier = animateItemWith(motionScheme).settingsContentWidth(),
                 )
             }
         }
@@ -467,6 +488,7 @@ private fun TypographyCategoryItem(
         onClick = onClick,
         shapes = shapes,
         modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
         leadingContent = { FontSample(font) },
         supportingContent = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

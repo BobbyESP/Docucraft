@@ -187,6 +187,8 @@ and the surface applies `Modifier.frosted` with `DocucraftBlurDefaults.surfaceSt
 built on Haze's Material 3 style. The surface's own container becomes transparent and loses its
 shadow elevation.
 - Home: the app bar once the list scrolls under it, the search bar, and the sort menu.
+- Every other screen with a list, settings included: the same app bar, `FrostedLargeTopAppBar`
+  (`core/presentation/components/ScreenChrome.kt`).
 - Search: the field, over the results.
 - Viewer: the top bar and the floating toolbar, over the pages.
 
