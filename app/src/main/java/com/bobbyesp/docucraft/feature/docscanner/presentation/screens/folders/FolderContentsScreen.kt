@@ -63,11 +63,13 @@ import com.bobbyesp.docucraft.core.presentation.theme.blurHalo
 import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.core.util.contentRevealTransform
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Folder
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.LabelColor
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SectionHeader
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SortMenu
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderListItem
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.LabelColorTheme
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -105,13 +107,17 @@ fun FolderContentsScreen(
         }
     }
 
-    FolderContentsContent(
-        uiState = uiState,
-        onAction = viewModel::onSendIntent,
-        navigation = navigation,
-        modifier = modifier,
-        selectedDocumentId = selectedDocumentId,
-    )
+    // The folder's own color, for as long as its screen is the one showing: the root, a folder
+    // without one, and one still being read are in the app's.
+    LabelColorTheme(color = LabelColor.of(uiState.folder?.color)) {
+        FolderContentsContent(
+            uiState = uiState,
+            onAction = viewModel::onSendIntent,
+            navigation = navigation,
+            modifier = modifier,
+            selectedDocumentId = selectedDocumentId,
+        )
+    }
 }
 
 private enum class FolderPage {

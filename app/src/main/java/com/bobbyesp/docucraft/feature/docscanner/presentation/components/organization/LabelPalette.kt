@@ -96,9 +96,9 @@ fun LabelColor?.tones(): LabelTones {
 }
 
 /**
- * The app's theme around this color, for a screen about something that carries it, such as a tag:
- * [content] takes the color, and the rest of the app keeps its own. No color leaves the theme as it
- * is (see [DocucraftAccentTheme]).
+ * The app's theme around this color, for a screen about something that carries it, such as a
+ * folder: [content] takes the color, and the rest of the app keeps its own. No color leaves the
+ * theme as it is (see [DocucraftAccentTheme]).
  */
 @Composable
 fun LabelColorTheme(color: LabelColor?, content: @Composable () -> Unit) {

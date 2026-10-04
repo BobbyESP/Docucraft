@@ -141,6 +141,7 @@ fun DocucraftTheme(
  *   and go while [content] stays.
  */
 @Suppress("ModifierRequired")
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocucraftAccentTheme(accent: Color?, content: @Composable () -> Unit) {
     val appScheme = MaterialTheme.colorScheme
@@ -166,7 +167,15 @@ fun DocucraftAccentTheme(accent: Color?, content: @Composable () -> Unit) {
         }
     val transition = rememberThemeTransition(target)
 
-    MaterialTheme(colorScheme = transition.colorScheme, content = content)
+    // Expressive, as the app's is, to hand down a motion scheme: what Material's components animate
+    // of their own has to keep up with this theme's changes too, not only with the app's.
+    MaterialExpressiveTheme(
+        colorScheme = transition.colorScheme,
+        motionScheme = transition.motionScheme(MaterialTheme.motionScheme),
+        shapes = MaterialTheme.shapes,
+        typography = MaterialTheme.typography,
+        content = content,
+    )
 }
 
 @Immutable

@@ -139,16 +139,23 @@ the tree one for every frame of its own, longer, animation, and more of them the
 
 **A screen with a color of its own nests a theme** (`DocucraftAccentTheme`, and `LabelColorTheme`
 for a color of the palette). It is for a destination that is about something the user gave a color
-to, such as a tag: that screen takes the color and the rest of the app keeps its own.
+to: that screen takes the color and the rest of the app keeps its own. A folder's contents
+(`FolderContentsScreen`) are in the folder's color; the root, and a folder without one, are in the
+app's.
 - **Only that screen is recomposed for it.** Changing the app's theme on the way in and back on the
   way out would recompose every screen twice.
-- **It opens already in its color** once that color has been shown, and the navigation's transition
-  is what takes the app from one to the other. A color seen for the first time is built in the
-  background and arrived at in steps, as any change is.
+- **A screen that knows its color when it opens is in it from its first frame** once that color has
+  been shown, and the navigation's transition is what takes the app from one to the other. A color
+  seen for the first time is built in the background and arrived at in steps, as any change is. So
+  is one the screen learns after opening: a folder's screen is given the folder's uuid, reads the
+  folder, and moves to its color then.
+- **Its components keep up with its changes** as the app's do with the app's: the nested theme
+  hands down its own motion scheme (see below).
 - **The color is a hue, not a value**: it is pulled towards the theme's primary and the scheme
   keeps the theme's style and darkness, as the tones of a label do
   ([organization.md](organization.md#colors-and-icons)).
-- No screen uses it yet: a tag has no screen of its own.
+- The overlays opened over that screen (a folder's actions, its editor) are destinations of their
+  own and stay in the app's theme.
 
 **Components never animate colors for a theme change.** A component animates its own state (pressed,
 selected, enabled, scrolled) and reads its colors from the theme on every frame, as
