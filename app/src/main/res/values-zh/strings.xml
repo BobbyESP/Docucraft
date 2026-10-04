@@ -109,6 +109,7 @@
     <string name="cannot_open_pdf">无法打开此文档</string>
     <string name="settings">设置</string>
     <string name="general">常规</string>
+    <string name="version_format">版本 %1$s</string>
     <string name="view_document">查看文档</string>
     <string name="document_viewer">文档查看器</string>
     <string name="document_viewer_desc">文档的打开方式</string>

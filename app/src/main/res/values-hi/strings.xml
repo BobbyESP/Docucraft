@@ -109,6 +109,7 @@
     <string name="cannot_open_pdf">यह दस्तावेज़ खोला नहीं जा सका</string>
     <string name="settings">सेटिंग</string>
     <string name="general">सामान्य</string>
+    <string name="version_format">संस्करण %1$s</string>
     <string name="view_document">दस्तावेज़ देखें</string>
     <string name="document_viewer">दस्तावेज़ व्यूअर</string>
     <string name="document_viewer_desc">दस्तावेज़ कैसे खुलते हैं</string>

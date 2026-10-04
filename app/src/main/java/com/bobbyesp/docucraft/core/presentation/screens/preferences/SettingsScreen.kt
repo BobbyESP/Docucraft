@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -20,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Description
-import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.RateReview
 import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +42,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -186,9 +187,9 @@ fun SettingsScreen(
 }
 
 /**
- * The app's name and the version installed, closing the list. Not a setting and not a row: nothing
- * here is tapped, so it has no container, only one of the expressive shapes the app's empty screens
- * carry.
+ * The app's icon, name and installed version, closing the list. Not a setting and not a row:
+ * nothing here is tapped, so it has no container, only the icon on one of the expressive shapes the
+ * app's empty screens carry.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -210,32 +211,40 @@ private fun AppSignature(modifier: Modifier = Modifier) {
     ) {
         Box(
             modifier =
-                Modifier.padding(bottom = 8.dp)
-                    .size(56.dp)
+                Modifier.padding(bottom = 12.dp)
+                    .size(AppIconSize)
                     .clip(MaterialShapes.Cookie9Sided.toShape())
                     .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center,
         ) {
+            // The launcher's own foreground, in the theme's colors as a themed icon is. Drawn
+            // larger than its container, as the launcher does: only the middle two thirds of an
+            // adaptive icon's layer are meant to be seen.
             Icon(
-                imageVector = Icons.Rounded.DocumentScanner,
+                painter = painterResource(R.drawable.ic_launcher_foreground),
                 contentDescription = null,
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier.requiredSize(AppIconSize * AdaptiveIconLayerRatio),
                 tint = MaterialTheme.colorScheme.onPrimaryContainer,
             )
         }
         Text(
             text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.titleLargeEmphasized,
+            style = MaterialTheme.typography.headlineMediumEmphasized,
         )
         if (versionName != null) {
             Text(
-                text = versionName,
-                style = MaterialTheme.typography.labelLarge,
+                text = stringResource(R.string.version_format, versionName),
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 }
+
+private val AppIconSize = 96.dp
+
+/** An adaptive icon's layer is 108dp, of which a launcher shows 72dp. */
+private const val AdaptiveIconLayerRatio = 108f / 72f
 
 @PreviewLightDark
 @Composable

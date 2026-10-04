@@ -109,6 +109,7 @@
     <string name="cannot_open_pdf">تعذّر فتح هذا المستند</string>
     <string name="settings">الإعدادات</string>
     <string name="general">عام</string>
+    <string name="version_format">الإصدار %1$s</string>
     <string name="view_document">عرض المستند</string>
     <string name="document_viewer">عارض المستندات</string>
     <string name="document_viewer_desc">طريقة فتح المستندات</string>

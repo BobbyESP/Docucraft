@@ -109,6 +109,7 @@
     <string name="cannot_open_pdf">Impossibile aprire questo documento</string>
     <string name="settings">Impostazioni</string>
     <string name="general">Generali</string>
+    <string name="version_format">Versione %1$s</string>
     <string name="view_document">Visualizza documento</string>
     <string name="document_viewer">Visualizzatore di documenti</string>
     <string name="document_viewer_desc">Come si aprono i documenti</string>

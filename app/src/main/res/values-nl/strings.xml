@@ -109,6 +109,7 @@
     <string name="cannot_open_pdf">Dit document kon niet worden geopend</string>
     <string name="settings">Instellingen</string>
     <string name="general">Algemeen</string>
+    <string name="version_format">Versie %1$s</string>
     <string name="view_document">Document bekijken</string>
     <string name="document_viewer">Documentviewer</string>
     <string name="document_viewer_desc">Hoe documenten worden geopend</string>

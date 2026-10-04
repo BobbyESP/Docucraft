@@ -109,6 +109,7 @@
     <string name="cannot_open_pdf">이 문서를 열 수 없습니다</string>
     <string name="settings">설정</string>
     <string name="general">일반</string>
+    <string name="version_format">버전 %1$s</string>
     <string name="view_document">문서 보기</string>
     <string name="document_viewer">문서 뷰어</string>
     <string name="document_viewer_desc">문서를 여는 방식</string>

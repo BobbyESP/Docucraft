@@ -166,6 +166,7 @@
     <!-- Ajustes -->
     <string name="settings">Ajustes</string>
     <string name="general">General</string>
+    <string name="version_format">Versión %1$s</string>
     <string name="select_setting_to_open">Selecciona un ajuste para abrirlo aquí</string>
     <string name="appearance">Apariencia</string>
     <string name="appearance_desc">Tema, colores y tipografía</string>
