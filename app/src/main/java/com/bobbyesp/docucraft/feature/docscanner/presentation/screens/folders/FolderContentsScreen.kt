@@ -53,7 +53,9 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
+import com.bobbyesp.docucraft.core.presentation.components.SectionHeader
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
@@ -63,8 +65,6 @@ import com.bobbyesp.docucraft.core.util.contentRevealTransform
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Folder
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.LabelColor
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.FrostedLargeTopAppBar
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SectionHeader
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SortMenu
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.rememberIsFabExpanded
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderListItem

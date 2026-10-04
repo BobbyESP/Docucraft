@@ -17,6 +17,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -61,6 +62,9 @@ fun SettingSwitch(
                 toggleableState = ToggleableState(isChecked)
             },
         enabled = enabled,
+        // The list's own alignment moves the icon and the switch to the top once the description
+        // takes a second line, and a group then mixes rows of both kinds.
+        verticalAlignment = Alignment.CenterVertically,
         leadingContent = { SettingsItemIcon(icon = icon, enabled = enabled) },
         trailingContent = {
             // The row is the control; the switch only shows its state.

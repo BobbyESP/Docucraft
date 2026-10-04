@@ -107,9 +107,10 @@ A document whose file is not there is listed like any other, faded and saying *F
 (`ObserveNotFoundDocumentsUseCase` gives the lists which ones). It is never left out: only the user
 deletes a document.
 
-Home and a folder's screen are built from the same parts
-(`presentation/components/list/DocumentListChrome.kt`): the large app bar that frosts once the list
-scrolls under it, the section header, and the sort menu. A screen that floats a button over its list
+Home and a folder's screen are built from the same parts. The large app bar that frosts once the
+list scrolls under it and the section header are the ones every screen with a list has, settings
+included (`core/presentation/components/ScreenChrome.kt`); the sort menu is theirs alone
+(`presentation/components/list/DocumentListChrome.kt`). A screen that floats a button over its list
 lifts it with a blur halo, as Home does; see [architecture.md](architecture.md#blur).
 
 ## Not done yet
