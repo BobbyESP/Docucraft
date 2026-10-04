@@ -116,7 +116,8 @@ A new Koin module is registered in `App.kt`.
 - **Transitions live in one file**: `core/presentation/navigation/motion/NavigationMotion.kt`.
   Screens contribute nothing to them. A destination reached through a shared element uses
   `SharedElementMotion` from that file, and marks the element with
-  `Modifier.sharedBoundsAcrossDestinations`.
+  `Modifier.sharedBoundsAcrossDestinations`. One that interrupts what the user was doing, rather
+  than following from it, uses `RisingMotion`.
 - **App-wide services reach the UI as composition locals**, from
   `core/presentation/common/CompositionLocals.kt`: `LocalDarkTheme`, `LocalSettingsRepository`,
   `LocalNotificationsService` and `LocalAnalyticsHelper`.
@@ -147,6 +148,9 @@ A new Koin module is registered in `App.kt`.
 
 ### Scanner
 
+- **Suggestions for a document go behind `DocumentSuggester`** (`domain/suggestions`), bound in
+  `ScannedDocumentModule`. None is bound yet. One that is runs only on text the document's pages
+  gave, never on a scan whose text recognition is off, and proposes: the user applies.
 - **The engine is swapped at one line**: the `DocumentScanner` binding in
   `feature/docscanner/di/DocumentScannerModule.kt`.
 - ML Kit options are derived from a `ScanRequest` inside `MlKitDocumentScanner`.
@@ -214,11 +218,14 @@ A new Koin module is registered in `App.kt`.
    `SavedStateHandle`. On restore, it rejoins through `DocumentScanner.resumePendingScan()`.
 4. `SaveScanDraftUseCase` stores the file through `DocumentStorage` (app files, exposed through the
    `FileProvider`) and catalogues it in Room.
-5. The document is queued to have the text of its pages read (`DocumentIndexQueue`, WorkManager),
+5. If the user has not turned it off, the scan is then shown for review (`ReviewScan`): it is
+   already saved, and the review only edits it, so skipping it leaves the document as it came. See
+   [docs/scanning.md](docs/scanning.md#reviewing-a-scan).
+6. The document is queued to have the text of its pages read (`DocumentIndexQueue`, WorkManager),
    which is what search finds it by. `App` queues whatever is still pending each time it starts,
    and schedules the library's daily upkeep (`LibraryMaintenance`): the bin's purge and the
    reconciliation of files and catalogue.
-6. Home observes `ObserveDocumentsUseCase`. `HomeViewModel.observeDocuments` hands each change to
+7. Home observes `ObserveDocumentsUseCase`. `HomeViewModel.observeDocuments` hands each change to
    `ProcessDocumentsUseCase`, which searches, filters and sorts.
 
 ### Opening a document

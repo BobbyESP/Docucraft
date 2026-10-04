@@ -318,4 +318,22 @@
     <string name="folder_delete_with_contents_note">Las carpetas que contiene también se eliminan y todos sus documentos van a la papelera.</string>
     <string name="folder_deleted_with_contents">Carpeta eliminada. Sus documentos están en la papelera</string>
     <string name="document_text_unknown">No se sabe</string>
+    <string name="skip">Omitir</string>
+    <string name="folder">Carpeta</string>
+    <string name="scan_review_title">Escaneo guardado</string>
+    <string name="scan_review_desc">Ya está en tu biblioteca. Ponle nombre ahora u omítelo y hazlo después.</string>
+    <string name="scan_review_recognize_text_desc">Para encontrarlo por lo que dice</string>
+    <string name="suggestions">Sugerencias</string>
+    <string name="suggestions_working">Leyendo el documento…</string>
+    <string name="suggestions_none">No hay nada que sugerir para este documento.</string>
+    <string name="suggestions_failed">Esta vez no se han podido hacer sugerencias.</string>
+    <string name="suggestions_text_recognition_off">No se va a sugerir nada: el reconocimiento de texto está desactivado para este documento y un escaneo no tiene texto sin él. Actívalo abajo, o para todos los documentos nuevos en Ajustes.</string>
+    <string name="suggestion_use">Usar</string>
+    <string name="suggestion_move_to">Mover a %1$s</string>
+    <string name="review_new_scans">Revisar los escaneos al guardarlos</string>
+    <string name="review_new_scans_on_desc">Tras escanear, le pones nombre al documento y dices dónde va</string>
+    <string name="review_new_scans_off_desc">Los escaneos se guardan tal cual. Puedes editarlos después</string>
+    <string name="tags_add">Añadir etiquetas</string>
+    <string name="tags_edit_short">Editar</string>
+    <string name="preview">Vista previa</string>
 </resources>

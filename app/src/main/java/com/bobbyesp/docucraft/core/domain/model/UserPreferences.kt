@@ -28,6 +28,11 @@ data class UserPreferences(
      * until the user chooses: recognition takes time and battery.
      */
     val recognizeTextInNewDocuments: Boolean = false,
+    /**
+     * Whether a scan is shown to the user as soon as it is saved, to be named and organized. On
+     * until the user turns it off; without it a scan is saved as it comes, as it always was.
+     */
+    val reviewNewScans: Boolean = true,
 )
 
 enum class ThemeConfig {

@@ -26,6 +26,9 @@ sealed interface HomeStatus {
  * @property pinnedFolders the folders pinned to Home, in the order they were pinned.
  * @property tagSections the tags the user gave a section of their own, with their documents.
  * @property notFoundUuids the documents whose file is not there, which are shown saying so.
+ * @property scanToReview the uuid of a scan that was just saved and is still to be shown to the
+ *   user for review, or `null`. State rather than an effect: the scan is saved while the scanner
+ *   still covers the app, when nobody is there to take an effect, and after a process death.
  * @property tags every tag, for the list of documents to be narrowed down by.
  */
 data class HomeUiState(
@@ -39,6 +42,7 @@ data class HomeUiState(
     val hasDocuments: Boolean = false,
     val filterOptions: FilterOptions = FilterOptions.default,
     val isScanning: Boolean = false,
+    val scanToReview: String? = null,
 ) {
     val errorMessage: String? = (status as? HomeStatus.Error)?.message
 

@@ -10,6 +10,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.Fo
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.MoveToFolderViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.DocumentActionsViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.review.ScanReviewViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.DocumentSearchViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.tags.DocumentTagsViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.tags.TagsViewModel
@@ -33,6 +34,7 @@ val documentScannerViewModels = module {
             observeNotFoundDocuments = get(),
             processDocumentsUseCase = get(),
             saveScanDraftUseCase = get(),
+            settings = get(),
             stringProvider = get(),
             analyticsHelper = get(),
         )
@@ -110,6 +112,19 @@ val documentScannerViewModels = module {
             deleteFromBin = get(),
             emptyBin = get(),
             stringProvider = get(),
+        )
+    }
+
+    viewModel { (documentUuid: String) ->
+        ScanReviewViewModel(
+            documentUuid = documentUuid,
+            observeDocument = get(),
+            folders = get(),
+            tags = get(),
+            updateDocumentFields = get(),
+            setTextRecognition = get(),
+            tagByName = get(),
+            suggestDetails = get(),
         )
     }
 

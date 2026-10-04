@@ -45,6 +45,7 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
         val REMEMBER_READING_POSITION = booleanPreferencesKey("remember_reading_position")
         val RECOGNIZE_TEXT_IN_NEW_DOCUMENTS =
             booleanPreferencesKey("recognize_text_in_new_documents")
+        val REVIEW_NEW_SCANS = booleanPreferencesKey("review_new_scans")
     }
 
     override val settings: Flow<UserPreferences> =
@@ -150,6 +151,9 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
                     recognizeTextInNewDocuments =
                         preferences[PreferencesKeys.RECOGNIZE_TEXT_IN_NEW_DOCUMENTS]
                             ?: defaultPrefs.recognizeTextInNewDocuments,
+                    reviewNewScans =
+                        preferences[PreferencesKeys.REVIEW_NEW_SCANS]
+                            ?: defaultPrefs.reviewNewScans,
                 )
             }
 
@@ -243,6 +247,10 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.RECOGNIZE_TEXT_IN_NEW_DOCUMENTS] = enabled
         }
+    }
+
+    override suspend fun setReviewNewScans(enabled: Boolean) {
+        dataStore.edit { preferences -> preferences[PreferencesKeys.REVIEW_NEW_SCANS] = enabled }
     }
 
     private fun Preferences.viewerDefaults(default: ViewerDefaults): ViewerDefaults =

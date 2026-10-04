@@ -8,6 +8,7 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
+import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
@@ -36,6 +37,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -54,10 +56,14 @@ class HomeViewModel(
     private val observeNotFoundDocuments: ObserveNotFoundDocumentsUseCase,
     private val processDocumentsUseCase: ProcessDocumentsUseCase,
     private val saveScanDraftUseCase: SaveScanDraftUseCase,
+    private val settings: SettingsRepository,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
-) : BaseViewModel<HomeIntent, HomeUiState, Nothing>(initialState = HomeUiState()) {
+) :
+    BaseViewModel<HomeIntent, HomeUiState, Nothing>(
+        initialState = HomeUiState(scanToReview = savedStateHandle[KEY_SCAN_TO_REVIEW])
+    ) {
     // `Nothing` because this raises no effects: everything it is asked to do, it does.
 
     init {
@@ -74,6 +80,11 @@ class HomeViewModel(
             HomeIntent.Load -> observeDocuments()
 
             HomeIntent.LaunchScanner -> startScan()
+
+            HomeIntent.ScanReviewOpened -> {
+                savedStateHandle[KEY_SCAN_TO_REVIEW] = null
+                setState { copy(scanToReview = null) }
+            }
 
             is HomeIntent.ApplySort -> {
                 analyticsHelper.logEvent(
@@ -337,7 +348,7 @@ class HomeViewModel(
         if (draft.pdf == null) return onScanFailed(ScanError.NoOutputProduced)
 
         saveScanDraftUseCase(draft)
-            .onSuccess {
+            .onSuccess { uuid ->
                 analyticsHelper.logEvent(
                     AnalyticsEvent(
                         type = AnalyticsEvent.Types.SCAN_COMPLETED,
@@ -351,12 +362,20 @@ class HomeViewModel(
                     )
                 )
 
-                sendUiEvent(
-                    UiEvent.ShowMessage(
-                        stringProvider.get(R.string.doc_saved_successfully),
-                        NotificationType.Success,
+                // The review is what tells the user the scan is saved. Without it, a message does.
+                // Kept where a process death does not lose it: the scanner outlives the process,
+                // and the scan it hands back then is as much to be reviewed as any other.
+                if (settings.settings.first().reviewNewScans) {
+                    savedStateHandle[KEY_SCAN_TO_REVIEW] = uuid
+                    setState { copy(scanToReview = uuid) }
+                } else {
+                    sendUiEvent(
+                        UiEvent.ShowMessage(
+                            stringProvider.get(R.string.doc_saved_successfully),
+                            NotificationType.Success,
+                        )
                     )
-                )
+                }
             }
             .onFailure { error ->
                 sendUiEvent(
@@ -402,6 +421,7 @@ class HomeViewModel(
     /** The viewer reads the document itself; all it needs from here is which one. */
     private companion object {
         const val KEY_SCAN_IN_FLIGHT = "scan_in_flight"
+        const val KEY_SCAN_TO_REVIEW = "scan_to_review"
         const val RECENTS_MINIMUM = 3
         const val RECENTS_SHOWN = 8
     }

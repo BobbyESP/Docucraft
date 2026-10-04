@@ -29,6 +29,7 @@ import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentTags
 import com.bobbyesp.docucraft.feature.docscanner.navigation.EditDocument
 import com.bobbyesp.docucraft.feature.docscanner.navigation.MoveToFolder
+import com.bobbyesp.docucraft.feature.docscanner.navigation.ReviewScan
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsContent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.LinkedDocumentActionsContent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentDialog
@@ -210,6 +211,7 @@ private val NavKey.isDocumentOverlay: Boolean
             this is EditDocument ||
             this is DeleteDocument ||
             this is DocumentTags ||
+            this is ReviewScan ||
             (this is MoveToFolder && documentUuid != null)
 
 private val DialogMaxWidth = 560.dp

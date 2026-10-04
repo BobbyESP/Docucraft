@@ -104,6 +104,47 @@ it is asked for. That one is missing is never an error: the screen shows a place
 
 The save reports its own failure. Earlier, a failed save still congratulated the user.
 
+## Reviewing a scan
+
+As the scanner closes, the scan is shown to the user to be named and organized
+(`presentation/screens/review`), on a screen of its own: a card with its first page and what is
+known of it; under it, the tags it carries; its title and description; its folder; and whether its
+text is recognized. The card is wide rather than tall, so that the fields are on screen without
+scrolling.
+
+- **Title and description are typed in the same fields that edit a document later**
+  (`EditDocumentDetailsContent`), with the same limits and the same count of what is left, so a
+  title that fits here fits there.
+- **Folder and tags are chosen in the overlays the document's actions use**, which open over the
+  review and come back to it.
+
+- **The scan is saved first, and reviewed after.** The review edits a document that is already in
+  the library, through the operations its actions use (`UpdateDocumentFieldsUseCase`, the folder
+  picker, the tags sheet, `SetDocumentTextRecognitionUseCase`). Nothing is held in memory waiting
+  for an answer, so a process that dies during the review, or a user who walks away, leaves a
+  document saved as it came. That is also what *Skip* does, and what turning the review off in
+  Settings does (`UserPreferences.reviewNewScans`): the scan is saved with its defaults, as before
+  the review existed.
+- **It is a destination**, `ReviewScan(documentUuid)`, that rises over Home from the bottom
+  ([navigation.md](navigation.md#the-model): `RisingMotion`), since it interrupts what the user was
+  doing rather than following from it. `HomeViewModel` keeps
+  the uuid of the scan to review in its state and its `SavedStateHandle` (`scanToReview`), and
+  Home opens the review and says it did. State rather than an effect: the scan is saved while the
+  scanner still covers the app, and after a process death, when nobody is there to take an effect.
+- **The review is where suggestions will show.** `DocumentSuggester`
+  (`domain/suggestions`) is the port for whatever proposes a title, a description, a folder and
+  tags from a document's text. **No build has one**: `SuggestDocumentDetailsUseCase` takes it as
+  nullable, and binding one in `ScannedDocumentModule` is all it takes to turn suggestions on.
+  Everything around it is in place and tested with a stand-in:
+  - It runs after the text is read. The use case waits for the document's pages
+    (`PagesRepository.observeTextStatus`), which the background reading fills, recognition included.
+  - A scan has no text without text recognition. With it off, the answer is
+    `SuggestionOutcome.TextRecognitionOff`, the suggester is not asked, and the review says that
+    nothing will be suggested and why, with the switch beside it and a way to Settings. Turning it
+    on asks again.
+  - A proposal is never applied by itself. Each part is offered and taken with a tap.
+  - With no suggester, the review does not mention suggestions at all.
+
 ## The catalogue
 
 - **Room.** The whole model is in [database.md](database.md).

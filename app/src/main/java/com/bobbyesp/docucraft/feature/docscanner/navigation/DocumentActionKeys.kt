@@ -19,5 +19,11 @@ import kotlinx.serialization.Serializable
 /** Editing a document's title and description. */
 @Serializable data class EditDocument(val documentUuid: String) : NavKey
 
+/**
+ * Reviewing a scan that has just been saved: naming it and saying where it goes, while the user
+ * still knows what it is. The scan is already a document; this only changes it.
+ */
+@Serializable data class ReviewScan(val documentUuid: String) : NavKey
+
 /** Confirming a document's deletion. */
 @Serializable data class DeleteDocument(val documentUuid: String) : NavKey

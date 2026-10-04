@@ -128,6 +128,12 @@ interface PagesRepository {
     ): PageTextStatus?
 
     /**
+     * The text of a document's pages, in order, whichever way each was read. Only the pages that
+     * have text: one that has none, or is still to be read, is not in the list.
+     */
+    suspend fun textOf(documentUuid: String): List<String>
+
+    /**
      * The recognized text of a page with where each word is, as it was written down. `null` when
      * the page was not recognized, or is not there.
      */

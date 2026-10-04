@@ -55,4 +55,7 @@ interface SettingsRepository {
      * documents there already are: each one keeps what was chosen for it.
      */
     suspend fun setRecognizeTextInNewDocuments(enabled: Boolean)
+
+    /** Whether a scan is shown to the user to be named and organized as soon as it is saved. */
+    suspend fun setReviewNewScans(enabled: Boolean)
 }

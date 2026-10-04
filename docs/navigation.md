@@ -37,7 +37,7 @@ One back stack, one Navigation 3 `NavDisplay`, typed keys. Code:
   |---|---|
   | `feature/docscanner/navigation/HomeKey.kt` | `Home` |
   | `feature/docscanner/navigation/DocumentSearchKey.kt` | `DocumentSearch` |
-  | `feature/docscanner/navigation/DocumentActionKeys.kt` | `DocumentActions`, `EditDocument`, `DeleteDocument` |
+  | `feature/docscanner/navigation/DocumentActionKeys.kt` | `DocumentActions`, `EditDocument`, `DeleteDocument`, `ReviewScan` |
   | `feature/docscanner/navigation/BinKeys.kt` | `Bin`, `BinDocumentActions`, `DeleteForever`, `EmptyBin` |
   | `feature/docscanner/navigation/OrganizationKeys.kt` | `FolderContents`, `FolderEditor`, `FolderActions`, `DeleteFolder`, `MoveToFolder`, `DocumentTags`, `ManageTags`, `TagEditor`, `DeleteTag` |
   | `feature/pdfviewer/navigation/PdfViewerKey.kt` | `PdfViewer`, `ExternalPdfViewer`, `PdfDocumentDetails`, `GoToPage` |
@@ -50,10 +50,15 @@ One back stack, one Navigation 3 `NavDisplay`, typed keys. Code:
     `ViewModelStore`. That is what gives each entry its own ViewModel, and a `SavedStateHandle`
     that works.
   - Transitions come from `NavigationMotion` alone. No screen contributes its own.
-  - The one exception is also defined there. A destination reached *through* an element it shares
-    with the previous one, as search is reached through Home's search bar, cross-fades
-    (`SharedElementMotion`) and lets the element carry the motion. The door slide would drag the
-    whole screen sideways while the bar grows upwards.
+  - The exceptions are also defined there, and a destination asks for one in its `entry` metadata.
+    - A destination reached *through* an element it shares with the previous one, as search is
+      reached through Home's search bar, cross-fades (`SharedElementMotion`) and lets the element
+      carry the motion. The door slide would drag the whole screen sideways while the bar grows
+      upwards.
+    - A destination that interrupts rather than follows, as the review of a scan does when the
+      scanner closes, rises from the bottom edge over what is there and sinks back to it
+      (`RisingMotion`). What is under it is held still: a step forward slides in from the side,
+      and this is not one.
   - Shared elements animate in one `SharedTransitionLayout` around the display. Its scope reaches
     destinations through `LocalNavSharedTransitionScope`, not through `NavDisplay`'s own parameter:
     given the scope, the display wraps *every* entry in a shared element, and each destination
