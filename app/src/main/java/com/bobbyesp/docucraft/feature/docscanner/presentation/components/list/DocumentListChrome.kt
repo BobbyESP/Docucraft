@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Sort
 import androidx.compose.material.icons.rounded.ArrowDownward
@@ -31,10 +32,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -115,6 +119,31 @@ fun FrostedLargeTopAppBar(
             ),
         scrollBehavior = scrollBehavior,
     )
+}
+
+/**
+ * Whether the button floating over a list shows its label: not while the list is read downwards,
+ * and again as soon as the user heads back up or is at the top.
+ *
+ * Remembered rather than derived from the list's last scroll. `lastScrolledForward` is false after
+ * any scroll that moved nothing, such as a drag past the end of the list, so a button derived from
+ * it grew back by itself there, and shrank again on the next pixel.
+ */
+@Composable
+fun rememberIsFabExpanded(listState: LazyListState): State<Boolean> {
+    val isExpanded = remember(listState) { mutableStateOf(true) }
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            when {
+                !listState.canScrollBackward || listState.lastScrolledBackward -> true
+                listState.lastScrolledForward -> false
+                // A scroll that moved nothing says nothing about where the user is heading.
+                else -> null
+            }
+        }
+            .collect { heading -> if (heading != null) isExpanded.value = heading }
+    }
+    return isExpanded
 }
 
 /**

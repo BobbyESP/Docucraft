@@ -42,9 +42,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,6 +66,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.Sc
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SectionHeader
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SortMenu
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.rememberIsFabExpanded
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.LabelColorTheme
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
@@ -155,9 +154,7 @@ fun FolderContentsContent(
             else -> FolderPage.Contents
         }
 
-    val isFabExpanded by remember {
-        derivedStateOf { !listState.lastScrolledForward || !listState.canScrollBackward }
-    }
+    val isFabExpanded by rememberIsFabExpanded(listState)
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),

@@ -54,7 +54,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -87,6 +86,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.labelColor
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.normalizedNameOf
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SectionHeader
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.rememberIsFabExpanded
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FormSectionLabel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FormSpacer
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.LabelColorPicker
@@ -225,9 +225,7 @@ fun ManageTagsScreen(
             uiState.isEmpty -> TagsPage.Empty
             else -> TagsPage.Tags
         }
-    val isFabExpanded by remember {
-        derivedStateOf { !listState.lastScrolledForward || !listState.canScrollBackward }
-    }
+    val isFabExpanded by rememberIsFabExpanded(listState)
     val haloStrength by
         animateFloatAsState(
             targetValue = if (page == TagsPage.Tags) 1f else 0f,

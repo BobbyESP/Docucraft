@@ -65,14 +65,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.material3.carousel.CarouselItemScope
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -85,12 +83,15 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.blur.BlurRadiusSpec
 import androidx.compose.ui.graphics.blur.BlurStop
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -101,7 +102,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
@@ -121,6 +124,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.Sc
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SectionHeader
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SortMenu
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.rememberIsFabExpanded
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderBadge
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderCard
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.TagDot
@@ -184,9 +188,7 @@ fun HomeContent(
     val hazeState = rememberHazeState()
 
     // Collapsed while the user reads down the list, extended again as soon as they head back up.
-    val isScanButtonExpanded by remember {
-        derivedStateOf { !listState.lastScrolledForward || !listState.canScrollBackward }
-    }
+    val isScanButtonExpanded by rememberIsFabExpanded(listState)
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -338,7 +340,7 @@ private fun HomeBottomActions(
             Modifier.fillMaxWidth()
                 .padding(start = 32.dp)
                 .blurHalo(state = hazeState, shape = CircleShape, strength = haloStrength)
-                .animateFloatingActionButton(visible = visible, alignment = Alignment.BottomEnd),
+                .showBottomActions(visible = visible),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -371,6 +373,63 @@ private fun HomeBottomActions(
         )
     }
 }
+
+/**
+ * Shows and hides the bottom actions as Material shows and hides a FAB: scaled from the corner they
+ * sit in, and faded.
+ *
+ * Not `animateFloatingActionButton`, which draws a recording of its content that it only renews
+ * when its own size changes. That suits a button, but this row never changes size while its
+ * children do: the scan button stayed drawn where and as wide as it had been recorded, with the
+ * search bar already grown underneath it.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun Modifier.showBottomActions(visible: Boolean): Modifier {
+    val motionScheme = MaterialTheme.motionScheme
+    val scale =
+        animateFloatAsState(
+            targetValue = if (visible) 1f else 0f,
+            animationSpec = motionScheme.fastSpatialSpec(),
+            label = "HomeBottomActionsScale",
+        )
+    val alpha =
+        animateFloatAsState(
+            targetValue = if (visible) 1f else 0f,
+            animationSpec = motionScheme.fastEffectsSpec(),
+            label = "HomeBottomActionsAlpha",
+        )
+    val bottomEnd =
+        TransformOrigin(
+            pivotFractionX = if (LocalLayoutDirection.current == LayoutDirection.Ltr) 1f else 0f,
+            pivotFractionY = 1f,
+        )
+
+    return this
+        // Gone, not only invisible, once hidden: the scaffold skips what takes no room, and
+        // nothing is left to tap.
+        .layout { measurable, constraints ->
+            if (alpha.value == 0f) {
+                layout(0, 0) {}
+            } else {
+                val placeable = measurable.measure(constraints)
+                layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+            }
+        }
+        .graphicsLayer {
+            this.alpha = alpha.value
+            val shown = lerp(HiddenBottomActionsScale, 1f, scale.value)
+            scaleX = shown
+            scaleY = shown
+            transformOrigin = bottomEnd
+            // Faded without a buffer of its own, which would cut the buttons' shadows to its
+            // bounds. The two never overlap, so neither shows through the other.
+            compositingStrategy = CompositingStrategy.ModulateAlpha
+        }
+}
+
+/** How small the bottom actions are when they start to show, as a FAB is. */
+private const val HiddenBottomActionsScale = 0.2f
 
 /** A FAB the halo lifts instead, at rest and when pressed alike. */
 private val FlatFabElevation
