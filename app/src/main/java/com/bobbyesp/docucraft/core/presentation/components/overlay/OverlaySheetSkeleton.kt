@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet
+package com.bobbyesp.docucraft.core.presentation.components.overlay
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -43,7 +43,7 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 
 @Composable
-fun DocumentActionSheetSkeleton(
+fun OverlaySheetSkeleton(
     modifier: Modifier = Modifier,
     elevation: Dp = DocucraftElevationDefaults.Modal,
     header: @Composable () -> Unit = {},
@@ -80,7 +80,7 @@ fun DocumentActionSheetSkeleton(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun DocumentActionSheetSkeleton(
+fun OverlaySheetSkeleton(
     headingTitle: String,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
@@ -104,7 +104,7 @@ fun DocumentActionSheetSkeleton(
             label = "RotationAngle",
         )
 
-    DocumentActionSheetSkeleton(
+    OverlaySheetSkeleton(
         modifier = modifier,
         header = {
             Column(
@@ -163,9 +163,9 @@ fun DocumentActionSheetSkeleton(
 
 @PreviewLightDark
 @Composable
-private fun DocumentActionSheetSkeletonPreview() {
+private fun OverlaySheetSkeletonPreview() {
     DocucraftTheme {
-        DocumentActionSheetSkeleton(
+        OverlaySheetSkeleton(
             headingTitle = "Action Sheet Title",
             headingDescription = "This is a description for the action sheet.",
             icon = Icons.Rounded.DocumentScanner,

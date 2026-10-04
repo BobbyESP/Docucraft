@@ -87,7 +87,7 @@ The bin's keys are in `navigation/BinKeys.kt`. It is entered from the root of th
 the library's folders start, and not from a folder: the bin is the library's. What it does is in
 [database.md](database.md#the-life-of-a-document).
 
-- **A form is written once.** `OverlayForm` renders the same heading, body and two buttons as a
+- **A form is written once.** `OverlayForm` (`core/presentation/components/overlay/`) renders the same heading, body and two buttons as a
   sheet or as a dialog, as `LocalOverlayContext` says.
 - **What is typed lives in the composition** (`rememberSaveable`), not in the ViewModel: it is not
   what the folder is. The ViewModel holds what the folder is, and what was wrong with the last

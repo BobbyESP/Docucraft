@@ -5,7 +5,6 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.components.list
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -20,14 +19,12 @@ import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.MenuGroupShapes
 import androidx.compose.material3.SelectableDropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -54,6 +51,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.FrostedMenuGroup
 import com.bobbyesp.docucraft.core.presentation.components.HaloDropdownMenuPopup
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.frosted
@@ -278,39 +276,5 @@ fun SortMenu(
                 }
             }
         }
-    }
-}
-
-/**
- * A menu group frosted over [hazeState]'s content. Its shadow is left to the menu's halo, or kept
- * where there is none.
- *
- * The frost goes around the group, because the group's own modifier lands inside its container. It
- * keeps one shape, hovered or not, so that the frost, clipped to it, always matches.
- */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun FrostedMenuGroup(
-    shapes: MenuGroupShapes,
-    hazeState: HazeState,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val shape = shapes.shape
-    Box(
-        modifier =
-            Modifier.frosted(
-                state = hazeState,
-                style =
-                    DocucraftBlurDefaults.surfaceStyle(MenuDefaults.groupStandardContainerColor),
-                shape = shape,
-            )
-    ) {
-        DropdownMenuGroup(
-            shapes = MenuGroupShapes(shape = shape, inactiveShape = shape),
-            containerColor = Color.Transparent,
-            shadowElevation =
-                if (DocucraftBlurDefaults.isHaloSupported) 0.dp else MenuDefaults.ShadowElevation,
-            content = content,
-        )
     }
 }

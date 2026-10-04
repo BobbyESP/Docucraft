@@ -99,9 +99,13 @@ Phone                                     Tablet / wide pane
 
 - A standard Material 3 `TopAppBar`: the document's name as the title, and its description as the
   subtitle.
-- **Actions in an `AppBarRow`**: Share, Print, Open with, Details. The row shows as many as fit in
-  the bar's own width and moves the rest to its overflow menu, so a phone shows Share and "⋮" and a
-  wide pane shows all four.
+- **Actions**: Share, Print, Open with, Details. As many as fit in the bar's own width are buttons
+  and the rest go in a menu, so a phone shows one and "⋮" and a wide pane shows all four.
+  - **The menu is the app's own**, not the one Material's `AppBarRow` brings: two groups, what is
+    done with the document and what it is, each frosted over the pages (`FrostedMenuGroup`). It has
+    a shadow and no blur halo, unlike Home's sort menu: a halo blurs what was recorded around the
+    menu, which is the pages, and this menu opens from the bar, which is not in that recording, so
+    the halo drew the pages over the bar's buttons.
   - **Save to Docucraft** comes before them, for a document that belongs to another app, and only
     once it is on screen. It is then the one action a narrow bar shows: without it the document is
     on loan. It goes when the document is saved, from here or from anywhere else, because the
@@ -149,6 +153,10 @@ shadowed:
 - **Details** shows name, pages, size, description, and whether the document has text (see
   [text-and-links.md](text-and-links.md#text-in-details)). A catalogued document's details come
   from the catalogue; an external one's are read from the file.
+  - Its body is written once, on `OverlayForm`, which is what every other overlay of the app is
+    built on: the name and the description are the heading, and each fact is a tile of its own.
+  - A fact that is not known is left out, not shown as a dash: another app's document may have no
+    size or page count to give. Whether it has text is always said.
 
 ### Loading and errors
 

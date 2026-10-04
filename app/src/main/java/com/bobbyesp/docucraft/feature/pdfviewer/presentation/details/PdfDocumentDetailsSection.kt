@@ -5,40 +5,48 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation.details
 
 import android.text.format.Formatter
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.FileCopy
+import androidx.compose.material.icons.rounded.Storage
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.overlay.OverlayForm
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
-import com.bobbyesp.docucraft.core.presentation.navigation.overlay.LocalOverlayContext
-import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPresentation
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlaySceneStrategy
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.ViewerDocumentDetails
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.DocumentText
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
@@ -51,7 +59,8 @@ import org.koin.core.parameter.parametersOf
  *
  * A destination rather than a sheet the viewer keeps in a boolean, so [OverlaySceneStrategy] picks
  * a sheet or a dialog for the window, back closes it, and it survives rotation and process death
- * like any other entry (`docs/navigation.md`).
+ * like any other entry (`docs/navigation.md`). [OverlayForm] gives it the same heading and close
+ * button in either, as every other overlay of the app has.
  */
 fun EntryProviderScope<NavKey>.pdfDocumentDetailsSection(navigator: Navigator) {
     entry<PdfDocumentDetails>(metadata = OverlaySceneStrategy.overlay()) { key ->
@@ -65,119 +74,172 @@ fun EntryProviderScope<NavKey>.pdfDocumentDetailsSection(navigator: Navigator) {
 
         val details = (state as? PdfDocumentDetailsState.Ready)?.details ?: return@entry
 
-        when (LocalOverlayContext.current.presentation) {
-            OverlayPresentation.Sheet -> PdfDocumentDetailsSheetContent(details)
-
-            OverlayPresentation.Dialog ->
-                PdfDocumentDetailsDialog(
-                    details = details,
-                    onDismiss = navigator::goBack,
-                    modifier = Modifier.widthIn(max = DialogMaxWidth),
-                )
-        }
+        PdfDocumentDetailsContent(details = details, onDismiss = navigator::goBack)
     }
 }
 
-/** The sheet itself is the scene's; this is only what goes in it. */
+/**
+ * What is known of the document: its name and description as the heading, and each fact as a tile
+ * of its own, the value large and what it measures small under it.
+ *
+ * A fact that is not known is left out rather than shown as a dash: a document of another app may
+ * have neither a size nor a page count to give. Whether it has text is always said, since "none" is
+ * an answer the reader can act on.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun PdfDocumentDetailsSheetContent(details: ViewerDocumentDetails) {
-    Column(
-        modifier =
-            Modifier.fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(
-                    bottom =
-                        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
-                            24.dp
-                ),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.document_details),
-            style = MaterialTheme.typography.headlineSmallEmphasized,
-            modifier = Modifier.padding(bottom = 12.dp),
-        )
-        DetailRows(details)
-    }
-}
-
-@Composable
-private fun PdfDocumentDetailsDialog(
+fun PdfDocumentDetailsContent(
     details: ViewerDocumentDetails,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    AlertDialog(
-        modifier = modifier,
-        onDismissRequest = onDismiss,
-        icon = { Icon(imageVector = Icons.Rounded.Info, contentDescription = null) },
-        title = {
-            Text(text = stringResource(R.string.document_details), fontWeight = FontWeight.SemiBold)
-        },
-        text = { Column(verticalArrangement = Arrangement.spacedBy(4.dp)) { DetailRows(details) } },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.close)) }
-        },
-    )
-}
-
-@Composable
-private fun DetailRows(details: ViewerDocumentDetails) {
     val context = LocalContext.current
-    val unknown = "—"
+    val colorScheme = MaterialTheme.colorScheme
 
-    DetailRow(label = stringResource(R.string.name), value = details.name)
-    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-    DetailRow(
-        label = stringResource(R.string.page_count),
-        value = details.pageCount?.toString() ?: unknown,
-    )
-    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-    DetailRow(
-        label = stringResource(R.string.file_size),
-        value = details.sizeBytes?.let { Formatter.formatShortFileSize(context, it) } ?: unknown,
-    )
-    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-    DetailRow(
-        label = stringResource(R.string.document_text),
-        value =
-            when (details.text) {
-                null -> stringResource(R.string.document_text_checking)
-                DocumentText.Embedded -> stringResource(R.string.document_text_embedded)
-                DocumentText.Recognized -> stringResource(R.string.document_text_recognized)
-                DocumentText.None -> stringResource(R.string.document_text_none)
-                DocumentText.Unsupported -> stringResource(R.string.document_text_unsupported)
-                DocumentText.Unknown -> unknown
-            },
-    )
-    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-    DetailRow(
-        label = stringResource(R.string.description),
-        value = details.description ?: stringResource(R.string.no_description),
-    )
-}
-
-@Composable
-private fun DetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.Top,
+    OverlayForm(
+        title = details.name,
+        icon = Icons.Rounded.Description,
+        onDismiss = onDismiss,
+        modifier = modifier,
+        description = details.description?.takeIf { it.isNotBlank() },
+        dismissText = stringResource(R.string.close),
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(0.4f),
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(0.6f),
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (details.pageCount != null || details.sizeBytes != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    details.pageCount?.let { pages ->
+                        FactTile(
+                            icon = Icons.Rounded.FileCopy,
+                            value = pages.toString(),
+                            label = stringResource(R.string.page_count),
+                            containerColor = colorScheme.primaryContainer,
+                            contentColor = colorScheme.onPrimaryContainer,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                        )
+                    }
+                    details.sizeBytes?.let { size ->
+                        FactTile(
+                            icon = Icons.Rounded.Storage,
+                            value = Formatter.formatShortFileSize(context, size),
+                            label = stringResource(R.string.file_size),
+                            containerColor = colorScheme.secondaryContainer,
+                            contentColor = colorScheme.onSecondaryContainer,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                        )
+                    }
+                }
+            }
+            TextFact(text = details.text)
+        }
     }
 }
 
-private val DialogMaxWidth = 560.dp
+/** One fact about the document, in a container of its own color. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun FactTile(
+    icon: ImageVector,
+    value: String,
+    label: String,
+    containerColor: Color,
+    contentColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = DocucraftShapeDefaults.cardShape,
+        color = containerColor,
+        contentColor = contentColor,
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(imageVector = icon, contentDescription = null)
+            Column {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.headlineSmallEmphasized,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(text = label, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
+}
+
+/**
+ * Whether the document has text to select and search, which takes reading some of its pages: said
+ * as being looked into until it is known.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun TextFact(text: DocumentText?, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = DocucraftShapeDefaults.cardShape,
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+                if (text == null) {
+                    LoadingIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = LocalContentColor.current,
+                    )
+                } else {
+                    Icon(imageVector = Icons.Rounded.TextFields, contentDescription = null)
+                }
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.document_text),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                Text(
+                    text =
+                        when (text) {
+                            null -> stringResource(R.string.document_text_checking)
+                            DocumentText.Embedded -> stringResource(R.string.document_text_embedded)
+                            DocumentText.Recognized ->
+                                stringResource(R.string.document_text_recognized)
+                            DocumentText.None -> stringResource(R.string.document_text_none)
+                            DocumentText.Unsupported ->
+                                stringResource(R.string.document_text_unsupported)
+                            DocumentText.Unknown -> stringResource(R.string.document_text_unknown)
+                        },
+                    style = MaterialTheme.typography.titleMediumEmphasized,
+                )
+            }
+        }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun PdfDocumentDetailsContentPreview() {
+    DocucraftTheme {
+        Surface {
+            PdfDocumentDetailsContent(
+                details =
+                    ViewerDocumentDetails(
+                        name = "Invoice March",
+                        description = "Paid on 12/03",
+                        pageCount = 3,
+                        sizeBytes = 184_320,
+                        text = DocumentText.Embedded,
+                    ),
+                onDismiss = {},
+            )
+        }
+    }
+}

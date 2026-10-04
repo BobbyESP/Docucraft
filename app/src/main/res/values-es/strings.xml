@@ -317,4 +317,5 @@
     <string name="folder_delete_with_contents">Eliminar también su contenido</string>
     <string name="folder_delete_with_contents_note">Las carpetas que contiene también se eliminan y todos sus documentos van a la papelera.</string>
     <string name="folder_deleted_with_contents">Carpeta eliminada. Sus documentos están en la papelera</string>
+    <string name="document_text_unknown">No se sabe</string>
 </resources>

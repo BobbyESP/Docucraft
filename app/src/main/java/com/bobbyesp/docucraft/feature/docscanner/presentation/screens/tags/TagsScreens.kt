@@ -74,6 +74,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
+import com.bobbyesp.docucraft.core.presentation.components.overlay.OverlayForm
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
@@ -90,7 +91,6 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organiz
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FormSpacer
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.LabelColorPicker
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.NameField
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.OverlayForm
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.TagDot
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.TagFilterChip
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.NameError
