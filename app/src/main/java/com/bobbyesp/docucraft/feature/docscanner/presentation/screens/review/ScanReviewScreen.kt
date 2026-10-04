@@ -4,7 +4,6 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.review
 
 import android.text.format.Formatter.formatShortFileSize
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,13 +12,11 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.union
@@ -36,7 +33,6 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.FileCopy
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Storage
@@ -54,7 +50,6 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedListItem
@@ -63,29 +58,21 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
-import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
@@ -104,8 +91,8 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organiz
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.EditDocumentUiState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsContent
-import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
-import com.skydoves.landscapist.ImageOptions
+import com.bobbyesp.docucraft.feature.shared.presentation.DocumentHeroCard
+import com.bobbyesp.docucraft.feature.shared.presentation.DocumentHeroFact
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
@@ -187,12 +174,29 @@ fun ScanReviewScreen(
         ) {
             // A form as wide as a tablet is hard to read across, so it keeps to a column.
             Column(modifier = Modifier.widthIn(max = ContentMaxWidth).fillMaxWidth()) {
-                ScanHero(
-                    document = document,
+                val context = LocalContext.current
+                DocumentHeroCard(
                     // Named as it is typed, so that the card shows what the document will be.
                     name = fields.title.trim().ifBlank { document.originalName },
+                    thumbnail = document.thumbnail,
                     modifier = Modifier.padding(horizontal = 16.dp),
-                )
+                    // Marked as saved, which it already is.
+                    badge = Icons.Rounded.Check,
+                ) {
+                    // What is not known of the scan is left out, rather than shown as zero.
+                    document.pageCount?.let { pages ->
+                        DocumentHeroFact(
+                            icon = Icons.Rounded.FileCopy,
+                            text = pluralStringResource(R.plurals.doc_n_pages, pages, pages),
+                        )
+                    }
+                    document.sizeBytes?.let { size ->
+                        DocumentHeroFact(
+                            icon = Icons.Rounded.Storage,
+                            text = formatShortFileSize(context, size),
+                        )
+                    }
+                }
 
                 SectionHeader(
                     title = stringResource(R.string.scan_review_section_details),
@@ -327,162 +331,6 @@ private fun ReviewActions(
 }
 
 private val FallbackElevation = 6.dp
-
-/**
- * The scan as a card in the theme's own color, as a folder without one is on Home: its first page
- * at one side, marked as saved, and beside it its name and what is known of it. Wide rather than
- * tall, so that the fields under it are on screen without scrolling; the page is there to be
- * recognized, not read.
- *
- * The page lands a little askew and its mark springs in, once: not again after a rotation.
- *
- * @param name What the document is called as it is being typed.
- */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun ScanHero(document: Document.Managed, name: String, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-
-    val isPreview = LocalInspectionMode.current
-    var hasLanded by rememberSaveable { mutableStateOf(isPreview) }
-    LaunchedEffect(Unit) { hasLanded = true }
-    val landing by
-        animateFloatAsState(
-            targetValue = if (hasLanded) 1f else 0f,
-            animationSpec = MaterialTheme.motionScheme.slowSpatialSpec(),
-            label = "ScanHeroLanding",
-        )
-
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    ) {
-        Row(
-            modifier = Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(24.dp),
-        ) {
-            Box {
-                Box(
-                    modifier =
-                        Modifier.width(HeroPageWidth)
-                            .aspectRatio(Measurements.A4_RATIO)
-                            .graphicsLayer { rotationZ = HeroPageTilt * landing }
-                            .clip(MaterialTheme.shapes.medium)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    val placeholder =
-                        @Composable {
-                            Icon(
-                                imageVector = Icons.Rounded.Description,
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    if (isPreview) {
-                        placeholder()
-                    } else {
-                        AsyncImage(
-                            modifier = Modifier.fillMaxSize(),
-                            imageModel = document.thumbnail,
-                            shape = RectangleShape,
-                            imageOptions =
-                                ImageOptions(
-                                    alignment = Alignment.TopCenter,
-                                    contentDescription = null,
-                                ),
-                            failure = { placeholder() },
-                        )
-                    }
-                }
-                Box(
-                    modifier =
-                        Modifier.align(Alignment.BottomEnd)
-                            .offset(x = 10.dp, y = 10.dp)
-                            .size(36.dp)
-                            .graphicsLayer {
-                                scaleX = landing
-                                scaleY = landing
-                            }
-                            .clip(MaterialShapes.Cookie9Sided.toShape())
-                            .background(MaterialTheme.colorScheme.primary),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Check,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                    )
-                }
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(
-                    text = name,
-                    style = MaterialTheme.typography.titleLargeEmphasized,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    // What is not known of the scan is left out, rather than shown as zero.
-                    document.pageCount?.let { pages ->
-                        Fact(
-                            icon = Icons.Rounded.FileCopy,
-                            text = pluralStringResource(R.plurals.doc_n_pages, pages, pages),
-                        )
-                    }
-                    document.sizeBytes?.let { size ->
-                        Fact(
-                            icon = Icons.Rounded.Storage,
-                            text = formatShortFileSize(context, size),
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-private val HeroPageWidth = 96.dp
-
-/** How far the page leans once it has landed, in degrees. */
-private const val HeroPageTilt = -4f
-
-/** One thing known of the scan, as a pill on its card. */
-@Composable
-private fun Fact(icon: ImageVector, text: String) {
-    Row(
-        modifier =
-            Modifier.clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(start = 8.dp, top = 6.dp, end = 12.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(16.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-        )
-    }
-}
 
 /**
  * Where the scan goes, the tags it carries and whether its text is recognized: one grouped list, as

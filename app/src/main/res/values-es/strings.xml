@@ -336,4 +336,13 @@
     <string name="tags_add">Añadir etiquetas</string>
     <string name="scan_review_section_details">Detalles</string>
     <string name="scan_review_section_organize">Organizar</string>
+    <string name="document_details">Detalles del documento</string>
+    <string name="document_details_in_library">En tu biblioteca</string>
+    <string name="document_details_file">Archivo</string>
+    <string name="document_details_scanned">Escaneado</string>
+    <string name="document_details_imported">Importado</string>
+    <string name="document_details_modified">Última modificación</string>
+    <string name="document_details_file_name">Nombre del archivo</string>
+    <string name="document_details_format">Formato</string>
+    <string name="document_details_pdf_version">PDF %1$s</string>
 </resources>

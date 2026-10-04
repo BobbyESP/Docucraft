@@ -118,7 +118,9 @@ are on screen without scrolling.
   scan are. The folder shows its own badge and color and the tags their dots, as they do there.
   The card takes the theme's own color, as a folder without one does on Home.
 - **The card names the document as it is typed**, so that it shows what the scan will be called
-  before it is saved.
+  before it is saved. It is `DocumentHeroCard` (`feature/shared`), which the viewer's details use
+  too, so that a document is introduced the same way in both: its page lands a little askew and
+  its badge springs in, once.
 - **Title and description are typed in the same fields that edit a document later**
   (`EditDocumentDetailsContent`), with the same limits and the same count of what is left, so a
   title that fits here fits there.
