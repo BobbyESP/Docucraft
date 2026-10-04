@@ -126,9 +126,9 @@ switching back to a previous theme builds nothing.
 **A theme change moves the scheme itself, in a fixed number of steps** (`ThemeTransition.kt`).
 Material provides the color scheme through a static composition local, so each scheme it is given
 recomposes everything under the theme, and nothing is skipped. That is the cost of a change, and it
-is bounded: the way from one scheme to the next is cut into 16 schemes over 400 ms, whatever the
-display's refresh rate. Animating frame by frame (MaterialKolor's `animate = true`) would hand the
-tree 48 of them on a 120 Hz display.
+is bounded: the way from one scheme to the next is cut into at most 10 schemes over 100 ms, whatever
+the display's refresh rate. Animating frame by frame (MaterialKolor's `animate = true`) would hand
+the tree one for every frame of its own, longer, animation, and more of them the faster the display.
 - **The app stays live throughout.** The change used to be one fade of a picture of the last frame
   over the new theme. It cost a single recomposition, but the picture stood still over whatever
   moved under it: scrolling during the fade left a ghost of the old position.

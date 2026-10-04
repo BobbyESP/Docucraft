@@ -89,13 +89,14 @@ internal class ThemeTransitionState(initialScheme: ColorScheme) {
 
     internal companion object {
         /** Long enough to read as a change of light rather than a cut. */
-        const val DurationMillis = 400
+        const val DurationMillis = 100
 
         /**
-         * How many schemes a change goes through, the last being the target: one every 25 ms, which
-         * the eye takes for a continuous change of color.
+         * How many schemes a change goes through at most, the last being the target: one every 10
+         * ms, which the eye takes for a continuous change of color. A display that draws a frame
+         * less often than that shows one scheme per frame, and skips the rest.
          */
-        const val Steps = 16
+        const val Steps = 10
     }
 }
 
