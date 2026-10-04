@@ -66,7 +66,7 @@ class ThemeTransitionMotionSchemeTest {
         val dark = darkColorScheme()
         val state = ThemeTransitionState(light)
         // Cut short after a few frames, as a second change of theme cuts the first.
-        val interrupted = FramesOf(state, frameNanos = 16_000_000L, stopAfter = 8)
+        val interrupted = FramesOf(state, frameNanos = 16_000_000L, stopAfter = 3)
         runCatching { withContext(interrupted) { state.transitionTo(dark) } }
         val midway = state.colorScheme
 

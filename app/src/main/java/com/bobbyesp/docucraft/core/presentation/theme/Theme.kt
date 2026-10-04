@@ -163,7 +163,9 @@ fun DocucraftAccentTheme(accent: Color?, content: @Composable () -> Unit) {
                 )
                 .scheme
         } else {
-            appScheme
+            // Where the app is heading as well, not the step it is at: following its steps would
+            // start a change of this theme's own at each of them, and arrive after the app has.
+            themeColors?.built?.scheme ?: appScheme
         }
     val transition = rememberThemeTransition(target)
 
