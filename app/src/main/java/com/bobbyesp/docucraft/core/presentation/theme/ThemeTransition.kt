@@ -102,17 +102,26 @@ internal fun Modifier.themeTransition(state: ThemeTransitionState): Modifier =
 /**
  * [base], with its effects specs snapping colors whenever [isFading]. The type argument is erased,
  * so colors are told apart by their four-channel vector; alphas and spatial specs keep [base].
+ *
+ * Each spec is one object for as long as the scheme lives, as [base]'s are. Material remembers what
+ * it animates by the spec it is given: a new one on every call made a button forget the shape it
+ * was morphing from each time it recomposed, so pressing it jumped to the pressed shape.
  */
+@Suppress("UNCHECKED_CAST")
 private class ThemeTransitionMotionScheme(val base: MotionScheme, val isFading: () -> Boolean) :
     MotionScheme by base {
+    private val defaultEffects = SnapColorsWhileFading(base.defaultEffectsSpec<Any>(), isFading)
+    private val fastEffects = SnapColorsWhileFading(base.fastEffectsSpec<Any>(), isFading)
+    private val slowEffects = SnapColorsWhileFading(base.slowEffectsSpec<Any>(), isFading)
+
     override fun <T> defaultEffectsSpec(): FiniteAnimationSpec<T> =
-        SnapColorsWhileFading(base.defaultEffectsSpec(), isFading)
+        defaultEffects as FiniteAnimationSpec<T>
 
     override fun <T> fastEffectsSpec(): FiniteAnimationSpec<T> =
-        SnapColorsWhileFading(base.fastEffectsSpec(), isFading)
+        fastEffects as FiniteAnimationSpec<T>
 
     override fun <T> slowEffectsSpec(): FiniteAnimationSpec<T> =
-        SnapColorsWhileFading(base.slowEffectsSpec(), isFading)
+        slowEffects as FiniteAnimationSpec<T>
 }
 
 /** Decided once per animation, when it starts and the spec is vectorized. */

@@ -3,152 +3,137 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.data.storage
 
-import android.content.ContentResolver
 import android.content.Context
-import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Build
 import android.util.Log
-import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import com.bobbyesp.docucraft.App
-import com.bobbyesp.docucraft.core.util.ensure
-import com.bobbyesp.docucraft.core.util.ensureParent
 import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperationsService
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredFile
 import com.bobbyesp.scanner.ContentRef
-import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.filesDir
-import io.github.vinceglb.filekit.path
-import io.github.vinceglb.filekit.sink
-import io.github.vinceglb.filekit.size
 import java.io.File
+import java.security.MessageDigest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.io.buffered
 
 /**
- * Keeps documents in the app's private files directory and hands them out as `FileProvider` URIs,
- * which is what makes them shareable with the viewer and with other apps.
+ * Keeps documents in the app's private files directory, each named after its document's uuid:
+ * `documents/<uuid>.pdf`.
+ *
+ * Documents saved before files were named this way are in `scans/pdf/`, under the name their scan
+ * had. They stay there: the catalogue says where each document is, so nothing needs them moved.
  */
 class DocumentStorageImpl(
     private val context: Context,
     private val documentOperations: DocumentOperationsService,
 ) : DocumentStorage {
 
-    override suspend fun storeDocument(source: ContentRef, filename: String): StoredDocument =
+    override suspend fun storeDocument(source: ContentRef, documentUuid: String): StoredDocument =
         withContext(Dispatchers.IO) {
-            val directory =
-                PlatformFile(FileKit.filesDir, DOCUMENTS_DIR).apply { ensure(mustCreate = true) }
-            val target = PlatformFile(directory, "$filename.pdf")
-
-            copy(from = source.value.toUri(), to = target)
-
-            val shareableUri =
-                FileProvider.getUriForFile(
-                    context,
-                    App.getAuthority(context),
-                    File(target.path),
-                )
-
-            StoredDocument(
-                location = ContentRef(shareableUri.toString()),
-                sizeBytes = target.size(),
-            )
-        }
-
-    override suspend fun storeThumbnail(document: ContentRef, filename: String): ContentRef? =
-        withContext(Dispatchers.IO) {
-            val directory =
-                PlatformFile(FileKit.filesDir, THUMBNAILS_DIR).apply { ensure(mustCreate = true) }
-            val target = PlatformFile(directory, "$filename.${Thumbnail.EXTENSION}")
-
-            val written =
-                documentOperations.saveDocumentPageAsImage(
-                    documentUri = document.value.toUri(),
-                    outputFile = File(target.path),
-                    pageIndex = 0,
-                    format = Thumbnail.format,
-                    quality = Thumbnail.QUALITY,
-                )
-
-            // Reporting a location for a preview that was never written leaves the catalogue
-            // pointing at a file that is not there, and the list showing a broken image.
-            if (written) ContentRef(target.path) else null
-        }
-
-    /**
-     * Note the `contentResolver.delete`. These are `FileProvider` URIs, and a `FileProvider`
-     * exposes no `_data` column, so resolving one back to a path returns null — which is why the
-     * previous attempt at deleting by path silently left every document on disk. Asking the
-     * provider to delete works, because deleting the underlying file is exactly what it does.
-     */
-    override suspend fun delete(location: ContentRef) {
-        withContext(Dispatchers.IO) {
-            val uri = location.value.toUri()
+            val directory = File(context.filesDir, DIRECTORY)
+            val file = File(directory, "$documentUuid.$EXTENSION")
+            // Written under another name first. A file with its final name is a whole document,
+            // even if the process dies half way through a copy.
+            val unfinished = File(directory, "${file.name}.tmp")
 
             try {
-                when (uri.scheme) {
-                    ContentResolver.SCHEME_CONTENT ->
-                        context.contentResolver.delete(uri, null, null)
-                    // Thumbnails are kept as plain paths, which parse with no scheme at all.
-                    ContentResolver.SCHEME_FILE,
-                    null -> uri.path?.let { File(it).delete() }
-                    else -> Log.w(TAG, "Not deleting, unsupported scheme: ${uri.scheme}")
-                }
+                directory.mkdirs()
+                val copied = copy(from = source.value.toUri(), to = unfinished)
+                if (copied.sizeBytes == 0L) throw ScanSaveException.OutputFileEmpty()
+
+                val pageCount = documentOperations.pageCount(unfinished)
+
+                if (!unfinished.renameTo(file)) throw ScanSaveException.OutputFileNotCopied()
+
+                StoredDocument(
+                    filePath = "$DIRECTORY/${file.name}",
+                    sizeBytes = copied.sizeBytes,
+                    contentHash = copied.sha256,
+                    pageCount = pageCount,
+                )
             } catch (e: Exception) {
-                Log.e(TAG, "Could not delete ${location.value}", e)
+                unfinished.delete()
+                throw e as? ScanSaveException
+                    ?: ScanSaveException.OutputFileNotCopied().initCause(e)
+            }
+        }
+
+    override suspend fun pageCount(filePath: String): Int? =
+        withContext(Dispatchers.IO) {
+            val file = File(context.filesDir, filePath)
+            if (file.isFile) documentOperations.pageCount(file) else null
+        }
+
+    override suspend fun exists(filePath: String): Boolean =
+        withContext(Dispatchers.IO) { File(context.filesDir, filePath).isFile }
+
+    override suspend fun storedFiles(): List<StoredFile> =
+        withContext(Dispatchers.IO) {
+            DIRECTORIES.flatMap { directory ->
+                File(context.filesDir, directory)
+                    .listFiles { file -> file.isFile }
+                    .orEmpty()
+                    .map { StoredFile("$directory/${it.name}", it.lastModified()) }
+            }
+        }
+
+    override suspend fun delete(filePath: String) {
+        withContext(Dispatchers.IO) {
+            val file = File(context.filesDir, filePath)
+            // The path comes from the catalogue. Nothing outside the files directory is this
+            // storage's to remove, whatever a path says.
+            if (file.canonicalPath.startsWith(context.filesDir.canonicalPath + File.separator)) {
+                file.delete()
+            } else {
+                Log.w(TAG, "Not deleting a file outside the app's storage: $filePath")
             }
         }
     }
 
-    private fun copy(from: Uri, to: PlatformFile) {
-        to.ensureParent(mustCreate = true)
+    /** Copies while hashing, so the bytes are read once. */
+    private fun copy(from: Uri, to: File): Copied {
+        val digest = MessageDigest.getInstance("SHA-256")
+        var size = 0L
 
-        try {
-            to.sink(append = false).buffered().use { sink ->
-                val input =
-                    context.contentResolver.openInputStream(from)
-                        ?: throw IllegalStateException("Could not open input stream for URI: $from")
+        val input =
+            context.contentResolver.openInputStream(from)
+                ?: throw IllegalStateException("Could not open input stream for URI: $from")
 
-                input.use { stream ->
-                    val buffer = ByteArray(BUFFER_SIZE)
-                    var read: Int
-                    while (stream.read(buffer).also { read = it } != -1) {
-                        sink.write(buffer, 0, read)
-                    }
+        input.use { stream ->
+            to.outputStream().use { output ->
+                val buffer = ByteArray(BUFFER_SIZE)
+                while (true) {
+                    val read = stream.read(buffer)
+                    if (read == -1) break
+                    output.write(buffer, 0, read)
+                    digest.update(buffer, 0, read)
+                    size += read
                 }
             }
-        } catch (e: Exception) {
-            throw ScanSaveException.OutputFileNotCopied().initCause(e)
         }
+
+        return Copied(size, digest.digest().joinToString("") { "%02x".format(it) })
     }
 
-    /**
-     * Encoding and file extension in one place, so they cannot drift apart again. Previews used to
-     * be named `.png` while being encoded as WEBP, which worked only because decoders sniff the
-     * content rather than trusting the name.
-     */
-    private object Thumbnail {
-        const val EXTENSION = "webp"
-        const val QUALITY = 65
+    private class Copied(val sizeBytes: Long, val sha256: String)
 
-        val format: Bitmap.CompressFormat
-            get() =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    Bitmap.CompressFormat.WEBP_LOSSY
-                } else {
-                    @Suppress("DEPRECATION") Bitmap.CompressFormat.WEBP
-                }
-    }
+    internal companion object {
+        private const val TAG = "DocumentStorage"
+        private const val EXTENSION = "pdf"
+        private const val BUFFER_SIZE = 8192
 
-    private companion object {
-        const val TAG = "DocumentStorage"
-        const val DOCUMENTS_DIR = "scans/pdf"
-        const val THUMBNAILS_DIR = "previews"
-        const val BUFFER_SIZE = 8192
+        /**
+         * The folder documents are saved in. `filepathsprovider.xml` serves it under the same name,
+         * which is how a file here is told apart from an older one in a provider URI.
+         */
+        const val DIRECTORY = "documents"
+
+        /** Where documents were saved before files were named by uuid. Never written to now. */
+        private const val LEGACY_DIRECTORY = "scans/pdf"
+
+        /** Every place a document's file can be. */
+        private val DIRECTORIES = listOf(DIRECTORY, LEGACY_DIRECTORY)
     }
 }

@@ -5,12 +5,12 @@ package com.bobbyesp.docucraft.feature.pdfviewer.data.details
 
 import android.content.ContentResolver
 import android.content.Context
-import android.graphics.pdf.PdfRenderer
 import android.provider.OpenableColumns
 import androidx.core.net.toUri
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.DocumentFacts
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.details.DocumentFactsReader
 import com.bobbyesp.scanner.ContentRef
+import com.composepdf.PdfRenderers
 import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -48,7 +48,7 @@ class AndroidDocumentFactsReader(private val context: Context) : DocumentFactsRe
             runCatching { context.contentResolver.openFileDescriptor(uri, "r") }.getOrNull()
                 ?: return null
         // The renderer owns the descriptor from here on and closes it with itself.
-        return runCatching { PdfRenderer(descriptor).use { it.pageCount } }
+        return runCatching { PdfRenderers.use(context, descriptor) { it.pageCount } }
             .onFailure { runCatching { descriptor.close() } }
             .getOrNull()
     }

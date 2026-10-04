@@ -21,6 +21,13 @@ data class UserPreferences(
     val completedOnboarding: Boolean = false,
     val marqueeTextEnabled: Boolean = true,
     val viewerDefaults: ViewerDefaults = ViewerDefaults(),
+    /** Whether a document is opened where it was left the last time. */
+    val rememberReadingPosition: Boolean = true,
+    /**
+     * Whether a document saved from now on has the text of its image-only pages recognized. Off
+     * until the user chooses: recognition takes time and battery.
+     */
+    val recognizeTextInNewDocuments: Boolean = false,
 )
 
 enum class ThemeConfig {

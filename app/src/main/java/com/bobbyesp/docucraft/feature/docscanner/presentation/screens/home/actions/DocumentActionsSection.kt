@@ -26,8 +26,11 @@ import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlaySceneS
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DeleteDocument
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
+import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentTags
 import com.bobbyesp.docucraft.feature.docscanner.navigation.EditDocument
+import com.bobbyesp.docucraft.feature.docscanner.navigation.MoveToFolder
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsContent
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.LinkedDocumentActionsContent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentDialog
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentSheet
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsDialog
@@ -53,6 +56,15 @@ fun EntryProviderScope<NavKey>.documentActionsSection(navigator: Navigator) {
     ) { key ->
         val viewModel = documentActionsViewModel(key, key.documentUuid, navigator)
         val state by viewModel.state.collectAsStateWithLifecycle()
+
+        state.linked?.let { linked ->
+            LinkedDocumentActionsContent(
+                document = linked,
+                onRemove = { viewModel.onSendIntent(DocumentActionsIntent.RemoveFromRecents) },
+                stacked = LocalOverlayContext.current.hasRoomToStack,
+            )
+            return@entry
+        }
         val document = state.document ?: return@entry
 
         DocumentActionsContent(
@@ -61,6 +73,14 @@ fun EntryProviderScope<NavKey>.documentActionsSection(navigator: Navigator) {
             onShare = { viewModel.onSendIntent(DocumentActionsIntent.Share) },
             onDelete = { navigator.goTo(DeleteDocument(key.documentUuid)) },
             onModifyFields = { navigator.goTo(EditDocument(key.documentUuid)) },
+            onTextRecognitionChange = { enabled ->
+                viewModel.onSendIntent(DocumentActionsIntent.SetTextRecognition(enabled))
+            },
+            onFavoriteChange = { favorite ->
+                viewModel.onSendIntent(DocumentActionsIntent.SetFavorite(favorite))
+            },
+            onMove = { navigator.goTo(MoveToFolder(documentUuid = key.documentUuid)) },
+            onEditTags = { navigator.goTo(DocumentTags(key.documentUuid)) },
             stacked = LocalOverlayContext.current.hasRoomToStack,
         )
     }
@@ -185,6 +205,11 @@ private fun HandleDocumentActionsEffects(
 }
 
 private val NavKey.isDocumentOverlay: Boolean
-    get() = this is DocumentActions || this is EditDocument || this is DeleteDocument
+    get() =
+        this is DocumentActions ||
+            this is EditDocument ||
+            this is DeleteDocument ||
+            this is DocumentTags ||
+            (this is MoveToFolder && documentUuid != null)
 
 private val DialogMaxWidth = 560.dp

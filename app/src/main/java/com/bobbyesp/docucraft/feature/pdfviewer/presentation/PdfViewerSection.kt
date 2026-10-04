@@ -17,8 +17,10 @@ import com.bobbyesp.docucraft.feature.pdfviewer.navigation.ExternalPdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.GoToPage
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.SaveCopyToLibrary
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.details.pdfDocumentDetailsSection
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.library.saveCopyToLibrarySection
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.goToPageSection
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens.PdfViewerScreen
 import org.koin.androidx.compose.koinViewModel
@@ -59,6 +61,8 @@ fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
                 onBack = navigator::goBack,
                 onOpenDetails = { navigator.goTo(PdfDocumentDetails(ref)) },
                 onGoToPage = { current, count -> navigator.goTo(GoToPage(ref, current, count)) },
+                onConfirmSaveCopy = { uuid -> navigator.goTo(SaveCopyToLibrary(uuid)) },
+                onOpenInLibrary = { uuid -> navigator.goTo(PdfViewer(uuid)) },
                 // Beside the list there is already a way back on screen; filling the window there
                 // is not. The scene knows which of the two happened; this does not have to.
                 showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
@@ -68,6 +72,7 @@ fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
 
     pdfDocumentDetailsSection(navigator)
     goToPageSection(navigator)
+    saveCopyToLibrarySection(navigator)
 }
 
 /**
@@ -91,6 +96,37 @@ fun EntryProviderScope<NavKey>.externalPdfViewerSection(
                 onBack = onClose,
                 onOpenDetails = { navigator.goTo(PdfDocumentDetails(ref)) },
                 onGoToPage = { current, count -> navigator.goTo(GoToPage(ref, current, count)) },
+                onConfirmSaveCopy = { uuid -> navigator.goTo(SaveCopyToLibrary(uuid)) },
+                onOpenInLibrary = { uuid -> navigator.goTo(PdfViewer(uuid)) },
+                showBackButton = true,
+            )
+        }
+    }
+
+    // The document of the library with the same content as the one handed over, when the reader
+    // asks for it: on top of that one, so that back returns to it. There is no list here to sit
+    // beside, so it is a plain destination.
+    entry<PdfViewer> { route ->
+        val ref = ViewerDocumentRef.Catalogued(route.documentUuid)
+        val viewModel: PdfViewerViewModel =
+            koinViewModel(key = route.documentUuid) { parametersOf(ref) }
+        val state by viewModel.state.collectAsStateWithLifecycle()
+        val document = state.document
+
+        LaunchedEffect(document, route) {
+            if (document is ViewerDocumentState.Gone) navigator.removeDestination(route)
+        }
+
+        state.readyDocument?.let { ready ->
+            PdfViewerScreen(
+                viewModel = viewModel,
+                document = ref,
+                documentInfo = ready,
+                onBack = navigator::goBack,
+                onOpenDetails = { navigator.goTo(PdfDocumentDetails(ref)) },
+                onGoToPage = { current, count -> navigator.goTo(GoToPage(ref, current, count)) },
+                onConfirmSaveCopy = { uuid -> navigator.goTo(SaveCopyToLibrary(uuid)) },
+                onOpenInLibrary = { uuid -> navigator.goTo(PdfViewer(uuid)) },
                 showBackButton = true,
             )
         }
@@ -98,4 +134,5 @@ fun EntryProviderScope<NavKey>.externalPdfViewerSection(
 
     pdfDocumentDetailsSection(navigator)
     goToPageSection(navigator)
+    saveCopyToLibrarySection(navigator)
 }

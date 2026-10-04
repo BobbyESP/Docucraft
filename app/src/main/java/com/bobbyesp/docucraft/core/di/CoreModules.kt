@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.Preferences
 import coil.ImageLoader
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import com.bobbyesp.docucraft.core.data.image.ImageLoaderComponent
 import com.bobbyesp.docucraft.core.data.local.preferences.SettingsRepositoryImpl
 import com.bobbyesp.docucraft.core.data.local.preferences.datastore.dataStore
 import com.bobbyesp.docucraft.core.domain.StringProvider
@@ -42,6 +43,8 @@ val commonModule = module {
                     .maxSizePercent(0.02)
                     .build()
             }
+            // What each feature knows how to load, such as a document's preview.
+            .components { getAll<ImageLoaderComponent>().forEach { it.register(this) } }
             .respectCacheHeaders(false)
             .allowHardware(true)
             .bitmapFactoryMaxParallelism(Runtime.getRuntime().availableProcessors().coerceAtMost(4))

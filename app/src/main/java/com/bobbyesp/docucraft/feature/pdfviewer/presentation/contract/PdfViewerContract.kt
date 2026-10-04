@@ -5,9 +5,11 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract
 
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.canBeHandedOff
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.BlockReason
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerLoadError
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
 import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
@@ -30,6 +32,11 @@ data class PdfViewerUiState(
      */
     val display: ViewerDisplaySettings? = null,
     /**
+     * `null` until it is known where to open the document. The pages are laid out once, at that
+     * place: showing them before it arrives would open the document at its start and then jump.
+     */
+    val start: ViewerStart? = null,
+    /**
      * The text of the pages near what is on screen, and of the pages the selection ends on. Read
      * lazily, as the reader moves; a page missing here is not known yet.
      */
@@ -43,10 +50,20 @@ data class PdfViewerUiState(
     val selection: DocumentSelection? = null,
     /** The link tapped, shown before anything opens (D3); `null` when none is. */
     val linkPreview: LinkPreview? = null,
+    /**
+     * Whether *Save to Docucraft* is on offer: the document belongs to another app, and the
+     * catalogue only refers to it. It stops being so the moment it is saved.
+     */
+    val canSaveToLibrary: Boolean = false,
+    /** Its file is being copied: asking again would start a second copy. */
+    val isSavingToLibrary: Boolean = false,
 ) {
     /** The document, once there is everything needed to show it. */
     val readyDocument: BasicDocument?
-        get() = (document as? ViewerDocumentState.Open)?.document?.takeIf { display != null }
+        get() =
+            (document as? ViewerDocumentState.Open)?.document?.takeIf {
+                display != null && start != null
+            }
 
     /** Whether Share and Open with are on offer. */
     val canHandOff: Boolean
@@ -55,6 +72,14 @@ data class PdfViewerUiState(
                 ContentRef(it.uri).canBeHandedOff()
             } == true
 }
+
+/**
+ * Where the document opens.
+ *
+ * @property position Where the reader left it, or `null` to open it at its start: it was never
+ *   read, or the app is not remembering.
+ */
+data class ViewerStart(val position: ReadingPosition?)
 
 /**
  * What is known so far about the document the viewer points at.
@@ -113,6 +138,18 @@ sealed interface PdfViewerIntent {
 
     data object DismissLinkPreview : PdfViewerIntent
 
+    /** The document is on screen: its file was there, and could be read. It has [pageCount]. */
+    data class DocumentLoaded(val pageCount: Int) : PdfViewerIntent
+
+    /** The document could not be shown, for [error]. */
+    data class DocumentFailedToLoad(val error: ViewerLoadError) : PdfViewerIntent
+
+    /**
+     * The reader is now at [position], and has been for a moment, or is leaving. Not every frame of
+     * a scroll: this is written down.
+     */
+    data class ReadingPositionChanged(val position: ReadingPosition) : PdfViewerIntent
+
     /** The pages on screen changed, and their text may be needed. */
     data class VisiblePagesChanged(val pages: IntRange) : PdfViewerIntent
 
@@ -132,6 +169,9 @@ sealed interface PdfViewerIntent {
 
     data object ToggleNightMode : PdfViewerIntent
 
+    /** Keep this document of another app in the library. */
+    data object SaveToLibrary : PdfViewerIntent
+
     data object Share : PdfViewerIntent
 
     data object OpenWith : PdfViewerIntent
@@ -149,6 +189,19 @@ sealed interface PdfViewerEffect {
      */
     data class GoToPage(val page: Int, val position: NormalizedPoint?, val from: Int) :
         PdfViewerEffect
+
+    /**
+     * The document being saved is already in the library. Whether to save a second copy is asked in
+     * a destination of its own, which only the screen can go to.
+     */
+    data class ConfirmSaveCopy(val documentUuid: String) : PdfViewerEffect
+
+    /**
+     * This document of another app has the same content as [documentUuid], which the library
+     * already keeps. Said, with the way to open that one, and nothing else: the reader may well
+     * want to go on reading this one.
+     */
+    data class AlreadyInLibrary(val documentUuid: String) : PdfViewerEffect
 
     /** The clipboard belongs to the UI. */
     data class CopyText(val text: String) : PdfViewerEffect

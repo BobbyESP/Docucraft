@@ -3,58 +3,77 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.domain.usecase
 
+import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.core.util.DateTime
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScannedDocument
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.LocalDocumentsRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.indexing.DocumentIndexQueue
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.NewScan
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
-import com.bobbyesp.scanner.ContentRef
 import com.bobbyesp.scanner.ScanDraft
+import java.util.UUID
+import kotlinx.coroutines.flow.first
 
 /**
  * Turns a finished scan into a document the app owns and knows about.
  *
- * Only the order of operations lives here: store the file, confirm it is real, try for a preview,
- * then catalogue it. Where the file goes and how the preview is rendered are [DocumentStorage]'s
- * problem, and nothing in this class names a framework, a file system or a database.
+ * Only the order of operations lives here, and the order is the rule: **the file first, the
+ * catalogue after**. A document enters the catalogue only once its file is whole, so the user is
+ * never shown a document that cannot be opened. If cataloguing then fails, the file is taken back
+ * out: a file nothing points at is invisible, but it is still the user's storage.
+ *
+ * Where the file goes is [DocumentStorage]'s problem, and nothing in this class names a framework,
+ * a file system or a database.
+ *
+ * Once saved, the document is queued to have its text read. Saving does not wait for that, and does
+ * not fail if it cannot be queued: it is queued again when the app starts.
+ *
+ * @param newUuid What gives the document its identity. A parameter so that a test can know it.
  */
 class SaveScanDraftUseCase(
     private val storage: DocumentStorage,
-    private val repository: LocalDocumentsRepository,
+    private val repository: DocumentsRepository,
+    private val indexQueue: DocumentIndexQueue,
+    private val settings: SettingsRepository,
+    private val newUuid: () -> String = { UUID.randomUUID().toString() },
 ) {
-    /**
-     * @param filename Name without extension. Defaults to one derived from the capture time.
-     * @return Where the saved document lives.
-     */
-    suspend operator fun invoke(draft: ScanDraft, filename: String? = null): Result<ContentRef> =
-        runCatching {
-            val pdf = draft.pdf ?: throw ScanSaveException.NothingToSave()
-            val name = filename ?: defaultFilename(draft.capturedAtEpochMillis)
+    /** @return The uuid of the saved document. */
+    suspend operator fun invoke(draft: ScanDraft): Result<String> = runCatching {
+        val pdf = draft.pdf ?: throw ScanSaveException.NothingToSave()
+        val uuid = newUuid()
 
-            val stored = storage.storeDocument(source = pdf.content, filename = name)
-            if (stored.sizeBytes <= 0) throw ScanSaveException.OutputFileEmpty()
+        val stored = storage.storeDocument(source = pdf.content, documentUuid = uuid)
 
-            // A document without a preview is still a document, so this must not fail the save.
-            val thumbnail = runCatching {
-                storage.storeThumbnail(stored.location, name)
-            }
-                .getOrNull()
-
-            repository.saveDocument(
-                NewScannedDocument(
-                    filename = name,
-                    location = stored.location,
-                    capturedAtEpochMillis = draft.capturedAtEpochMillis,
+        try {
+            repository.addScan(
+                NewScan(
+                    uuid = uuid,
+                    originalName = defaultName(draft.capturedAtEpochMillis),
+                    filePath = stored.filePath,
                     sizeBytes = stored.sizeBytes,
-                    pageCount = pdf.pageCount,
-                    thumbnail = thumbnail,
+                    contentHash = stored.contentHash,
+                    // What the scanner says it captured. A scanner that does not say reports
+                    // none, and then the pages are those counted in the file itself.
+                    pageCount =
+                        pdf.pageCount.takeIf { it > 0 }
+                            ?: stored.pageCount
+                            ?: throw ScanSaveException.UnreadableDocument(),
+                    capturedAtEpochMillis = draft.capturedAtEpochMillis,
+                    // What the user last chose for the documents they save.
+                    recognizeText = settings.settings.first().recognizeTextInNewDocuments,
                 )
             )
-
-            stored.location
+        } catch (e: Exception) {
+            runCatching { storage.delete(stored.filePath) }
+            throw e
         }
+        runCatching { indexQueue.enqueue(uuid) }
 
-    private fun defaultFilename(capturedAtEpochMillis: Long): String {
+        uuid
+    }
+
+    /** What a scan is called until the user gives it a title. */
+    private fun defaultName(capturedAtEpochMillis: Long): String {
         val stamp =
             DateTime.formatDateTime(
                 timestampMillis = capturedAtEpochMillis,

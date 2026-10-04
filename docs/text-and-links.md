@@ -34,10 +34,15 @@ PageLink.External(bounds, uri) · PageLink.Internal(bounds, pageIndex, position?
 
 ## Providers
 
-The only binding is in `PageContentModule.kt`:
+They are bound in `PageContentModule.kt`. The two readers have a name each, `EMBEDDED_TEXT` and
+`TEXT_RECOGNITION`, and the viewer reads with the unnamed one:
 
 ```kotlin
-LayeredPageContentProvider(embedded = PlatformPageContentProvider(context), recognized = null)
+LayeredPageContentProvider(
+    embedded = PlatformPageContentProvider(context),
+    recognized =
+        CatalogueRecognizedTextProvider(documents, pages, MlKitTextRecognitionProvider(context)),
+)
 ```
 
 - **`PlatformPageContentProvider`** reads the PDF's own text layer through `PdfRenderer`'s content
@@ -46,12 +51,24 @@ LayeredPageContentProvider(embedded = PlatformPageContentProvider(context), reco
     never competes with drawing.
   - **Below API 35 every page is `Unsupported`**, and the file is not even opened (**D1**). No
     second PDF library, and no higher `minSdk`: the degradation is the same path a scanned page
-    takes, and OCR will cover both.
+    takes, and text recognition covers both.
 - **`LayeredPageContentProvider`** tries the embedded text first. Only for a page with none
   (`NoText`, `Unsupported`, or links only) does it ask `recognized`, opened lazily, once per
   session.
   - Recognized text keeps the document's own links.
-  - OCR slots in here, as the second argument, with no change elsewhere.
+- **`MlKitTextRecognitionProvider`** (`:ocr-mlkit`) reads a page from its image: the page is drawn
+  at about 200 dpi on white, recognized on the device with ML Kit, and each word's box is given as
+  a fraction of the page. ML Kit is an `implementation` dependency of that module, so none of its
+  types reach `:app`; the engine is swapped at the `TEXT_RECOGNITION` binding.
+  - The model is Google Play services'. A page read before it has arrived fails, and is read again
+    later.
+  - The document is opened for each page with `PdfRenderers.use`, never held: a renderer that is
+    kept has to take turns with every other one on Android 7.
+- **`CatalogueRecognizedTextProvider`** is what the viewer gets as `recognized`. Text recognition
+  is the user's choice for each document, so the viewer does not recognize whatever page is on
+  screen: it shows what was already recognized and stored, and only recognizes a page itself when
+  its document has recognition on and the background reading has not reached that page yet. A
+  document that is not in the library has no recognized text.
 
 ### What the platform really gives (verified on API 37)
 

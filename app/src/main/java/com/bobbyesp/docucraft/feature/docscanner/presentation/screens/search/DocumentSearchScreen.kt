@@ -86,7 +86,7 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.blurHalo
 import com.bobbyesp.docucraft.core.presentation.theme.frosted
 import com.bobbyesp.docucraft.core.util.animateItemWith
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchResult
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import dev.chrisbanes.haze.HazeState
@@ -249,6 +249,7 @@ fun DocumentSearchContent(
                     SearchPage.Results ->
                         SearchResults(
                             results = uiState.results,
+                            notFoundUuids = uiState.notFoundUuids,
                             selectedDocumentId = selectedDocumentId,
                             onOpenDocument = onOpenDocument,
                             onOpenDocumentActions = onOpenDocumentActions,
@@ -375,7 +376,8 @@ private fun SearchField(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SearchResults(
-    results: List<ScannedDocument>,
+    results: List<SearchResult>,
+    notFoundUuids: Set<String>,
     selectedDocumentId: String?,
     onOpenDocument: (String) -> Unit,
     onOpenDocumentActions: (String) -> Unit,
@@ -397,18 +399,21 @@ private fun SearchResults(
     ) {
         itemsIndexed(
             items = results,
-            key = { _, document -> document.uuid },
+            key = { _, result -> result.document.uuid },
             contentType = { _, _ -> "document" },
-        ) { index, document ->
+        ) { index, result ->
+            val document = result.document
             ScannedDocumentListItem(
                 modifier = Modifier.fillMaxWidth().then(animateItemWith(motionScheme)),
                 pdf = document,
+                passage = result.passage,
                 shapes =
                     DocucraftShapeDefaults.segmentedListItemShapes(
                         index = index,
                         count = results.size,
                     ),
                 selected = document.uuid == selectedDocumentId,
+                fileMissing = document.uuid in notFoundUuids,
                 onItemClick = onOpenDocument,
                 onItemLongClick = { onOpenDocumentActions(document.uuid) },
             )
@@ -452,7 +457,8 @@ private fun DocumentSearchResultsPreview() {
             uiState =
                 DocumentSearchUiState(
                     query = "doc",
-                    results = DocumentPreviewData.documents,
+                    results =
+                        DocumentPreviewData.documents.map { SearchResult(it, passage = null) },
                     resultsFor = "doc",
                 ),
             onQueryChange = {},

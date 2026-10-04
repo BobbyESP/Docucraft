@@ -41,9 +41,9 @@ data           port implementations: Room, DataStore, files, platform APIs, othe
   still carry Compose types (`UserPreferences`, `InAppNotification`); moving them out is part of the
   preferences stabilization, still pending.
 - **Anything the framework does goes behind a port**: an interface in the domain, implemented in
-  data. Examples: `DocumentStorage`, `DocumentSharer`, `DocumentExporter`, `DocumentOpener`,
-  `DocumentPrinter`, `LinkOpener`, `PageContentProvider`, `DocumentScanner`. Tests use fakes, not
-  mocks of the framework.
+  data. Examples: `DocumentStorage`, `DocumentThumbnails`, `SearchIndex`, `DocumentSharer`,
+  `DocumentExporter`, `DocumentOpener`, `DocumentPrinter`, `LinkOpener`, `PageContentProvider`,
+  `DocumentScanner`. Tests use fakes, not mocks of the framework.
 - **A port that needs an `Activity`** (printing, opening a link) is a Koin `factory` given the
   activity through `parametersOf`. The ViewModel emits an effect, and the screen, which has the
   activity, calls the port.
@@ -87,7 +87,8 @@ have theirs in `core/di`. A new module is added to the list in `App.kt`.
 
 **Swapping an implementation is always one binding:**
 - the scanner: `DocumentScannerModule.kt`;
-- where page text comes from: `PageContentModule.kt`.
+- where page text comes from: `PageContentModule.kt`;
+- how the library is searched: the `SearchIndex` binding in `ScannedDocumentModule.kt`.
 
 If a swap needs more than one line, the design is not finished.
 
@@ -134,6 +135,14 @@ selected, enabled, scrolled) and reads its colors from the theme on every frame,
 `SettingsItemIcon` and Home's top bar do with a fraction and `lerp`. Material's own components still
 animate their colors when their target changes; while the frame fades, the theme's motion scheme
 makes those color animations snap, so they do not trail behind the rest of the screen.
+
+**A motion scheme hands out the same spec every time it is asked.** Material remembers what a
+component is animating by the spec it was given: a button's shape morph is kept in a
+`remember(animationSpec)`. A scheme that builds a new spec on each call makes every recomposition
+look like a change of spec, and the button starts over from the shape it was heading to, so a press
+jumps to the pressed shape instead of morphing into it. The theme's own scheme wraps Material's to
+snap colors during a fade, and keeps one wrapper per spec for that reason
+(`ThemeTransitionMotionScheme`).
 
 ### Blur
 
@@ -201,4 +210,5 @@ thumbnail's, need Android 13.
 ## Integrations
 
 - **Firebase.** Analytics and Crashlytics, behind `AnalyticsHelper` (`core/di/AnalyticsModule.kt`).
-- **FileProvider.** `${applicationId}.fileprovider`, for every document the app shares.
+- **FileProvider.** `${applicationId}.fileprovider`, for every document the app shares. It is
+  `CatalogueFileProvider`, which names a document as the catalogue does and not by its file.

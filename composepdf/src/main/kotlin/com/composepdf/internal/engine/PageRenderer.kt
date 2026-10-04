@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Matrix
 import android.graphics.pdf.PdfRenderer
+import com.composepdf.PdfRenderers
 
 /**
  * Low-level rasterization of pages and tiles into pooled [Bitmap]s. Pixel production only; all
@@ -20,7 +21,7 @@ internal class PageRenderer(private val pool: BitmapPool) {
         bitmap.eraseColor(Color.WHITE)
         val scale = targetWidth.toFloat() / page.width.toFloat()
         val matrix = Matrix().apply { postScale(scale, scale) }
-        page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+        draw(page, bitmap, matrix)
         return bitmap
     }
 
@@ -42,7 +43,13 @@ internal class PageRenderer(private val pool: BitmapPool) {
                 postScale(scale, scale)
                 postTranslate(-rect.left.toFloat(), -rect.top.toFloat())
             }
-        page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+        draw(page, bitmap, matrix)
         return bitmap
     }
+
+    // One at a time below Android 8, where the platform does not see to it itself.
+    private fun draw(page: PdfRenderer.Page, bitmap: Bitmap, matrix: Matrix) =
+        PdfRenderers.exclusively {
+            page.render(bitmap, null, matrix, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+        }
 }

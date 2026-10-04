@@ -17,13 +17,15 @@ This file is the map and the rules. How each subsystem works, and why, is in
 | `:composepdf` | The PDF engine: rendering, layout, gestures. Public API in `com.composepdf`, internals in `com.composepdf.internal`. | Generic. It knows pages, pixels and fingers, **never** text or links. |
 | `:scanner-api` | The scanning contract (`DocumentScanner`, `ScanRequest`, `ScanOutcome`, `ContentRef`…). | Plain Kotlin, zero dependencies. |
 | `:scanner-mlkit` | ML Kit's implementation of that contract. | ML Kit is an `implementation` dependency, so no ML Kit type ever reaches `:app`'s classpath. |
-| `:document-content-api` | What is on a document's pages (words with their boxes, links) and the pure text-selection logic. | Plain Kotlin. A future OCR module implements it, as `:scanner-mlkit` implements `:scanner-api`. |
+| `:document-content-api` | What is on a document's pages (words with their boxes, links) and the pure text-selection logic. | Plain Kotlin. `:ocr-mlkit` implements it, as `:scanner-mlkit` implements `:scanner-api`. |
+| `:ocr-mlkit` | ML Kit's text recognition, as a `PageContentProvider`. | ML Kit is an `implementation` dependency, so no ML Kit type ever reaches `:app`'s classpath. |
 
 Build setup:
 - SDKs and JVM target: `buildSrc/src/main/kotlin/ProjectConfig.kt`. Currently minSdk 24, compile
   37.1 (Compose 1.13 requires it), target 37, Java 17.
 - `:app` and `:composepdf` apply `docucraft.android.convention` (`buildSrc`: Compose, SDKs,
-  desugaring). `:scanner-mlkit` has no UI, so it skips it, but reads the same `ProjectConfig`.
+  desugaring). `:scanner-mlkit` and `:ocr-mlkit` have no UI, so they skip it, but read the same
+  `ProjectConfig`.
 - Library versions: `gradle/libs.versions.toml`. The app's version: root `build.gradle.kts`.
 
 ## 2. Where things live in `:app`
@@ -37,7 +39,7 @@ core/                      shared by features
   presentation/            navigation shell, theme, settings screens, common components
   util/                    BaseViewModel, UiEvent, date/time
   di/                      commonModule, preferencesModule, notificationsServiceModule, analyticsModule
-feature/docscanner/        scanning, the catalogue (Room), Home, document actions, the widget
+feature/docscanner/        scanning, the catalogue (Room), Home, folders and tags, document actions, the widget
 feature/pdfviewer/         the viewer: settings, details, text selection, links, the external-PDF activity
 feature/shared/            what both features need (BasicDocument)
 ```
@@ -65,10 +67,11 @@ A new Koin module is registered in `App.kt`.
   feature's DI module. For the scanner that is `ScannedDocumentModule.kt`; for the viewer,
   `PdfViewerModule.kt`.
 - **Framework work goes behind a port.** The interface lives in the domain and the implementation
-  in data. Examples: `DocumentStorage`, `DocumentSharer`, `DocumentOpener`, `DocumentPrinter`,
-  `LinkOpener`, `PageContentProvider`. A port that needs an `Activity` is a Koin `factory` taking
-  it through `parametersOf(activity)`. It is called by the screen, in response to an effect from
-  the ViewModel.
+  in data. Examples: `DocumentStorage`, `DocumentThumbnails`, `SearchIndex`,
+  `ExternalDocumentAccess`, `DocumentIndexQueue`, `DocumentSharer`,
+  `DocumentOpener`, `DocumentPrinter`, `LinkOpener`, `PageContentProvider`. A port that needs an
+  `Activity` is a Koin `factory` taking it through `parametersOf(activity)`. It is called by the
+  screen, in response to an effect from the ViewModel.
 - **What the user can cause is a result, not an exception**: cancelling, a page without text, a
   refused link. Examples: `ScanOutcome`, `ExportOutcome`, `PageContentResult`, `LinkAction`.
 - **Test a port with a fake**, not with a mock of the framework.
@@ -91,8 +94,8 @@ A new Koin module is registered in `App.kt`.
 - **One back stack, one Navigation 3 `NavDisplay`**: `core/presentation/navigation/DocucraftApp.kt`,
   rendered by `DocucraftNavDisplay.kt`. `PdfViewerActivity` reuses that display with its own stack.
 - **Keys are typed and `@Serializable`, and each feature owns its own.**
-  - Scanner: `feature/docscanner/navigation/HomeKey.kt`, `DocumentSearchKey.kt` and
-    `DocumentActionKeys.kt`.
+  - Scanner: `feature/docscanner/navigation/HomeKey.kt`, `DocumentSearchKey.kt`,
+    `DocumentActionKeys.kt`, `OrganizationKeys.kt` and `BinKeys.kt`.
   - Viewer: `feature/pdfviewer/navigation/PdfViewerKey.kt`.
   - Settings: `core/presentation/screens/preferences/navigation/SettingsKeys.kt`.
 - **Features never touch the stack.** They get a `Navigator`
@@ -132,6 +135,12 @@ A new Koin module is registered in `App.kt`.
   `Modifier.blurHalo` instead of a shadow (a menu: `HaloDropdownMenuPopup`), keeping the shadow
   where the halo is not supported. Content taken out of focus uses `Modifier.blur` with a
   `BlurRadiusSpec`. See [docs/architecture.md](docs/architecture.md#blur).
+- **A motion scheme returns the same spec object on every call.** Material remembers a running
+  shape morph by its spec, so a new spec per call makes buttons jump to their pressed shape. See
+  [docs/architecture.md](docs/architecture.md#theme).
+- **A color or an icon the user picks is a key of a closed palette** (`LabelColor`, `FolderIcon`),
+  never a color value or a resource id. Its tones come from the theme (`LabelColor.tones()`). See
+  [docs/organization.md](docs/organization.md#colors-and-icons).
 - Color schemes are generated only when their inputs change (`rememberColorScheme` in `Theme.kt`).
   Every change is built off the main thread. The one exception is the first scheme, built in
   composition because the first frame needs it.
@@ -156,14 +165,21 @@ A new Koin module is registered in `App.kt`.
 
   `PdfViewerState` is the public state, with `hitTest`, `panBy`, `animateScrollTo`,
   `pageRectInViewer` and more. Keep new engine API generic in the same way.
-- **Page content comes from one binding**, `feature/pdfviewer/di/PageContentModule.kt`:
-  `LayeredPageContentProvider(PlatformPageContentProvider, recognized = null)`.
-  - Text recognition (OCR) will go in as `recognized`, from its own module.
+- **Page content is bound in one file**, `feature/pdfviewer/di/PageContentModule.kt`: the two
+  readers by name (`EMBEDDED_TEXT`, `TEXT_RECOGNITION`), and what the viewer reads with,
+  `LayeredPageContentProvider(embedded, CatalogueRecognizedTextProvider)`.
+  - The recognition engine is swapped at one line: the `TEXT_RECOGNITION` binding.
+  - **Text recognition is the user's choice, per document** (`ocr_enabled`). Nothing recognizes a
+    page of a document that has it off: not the background reading, not the viewer.
   - The platform provider needs API 35+. Below that, every page is `Unsupported` and the viewer
     explains why (decision D1).
   - The platform's content APIs (`getTextContents`, `selectContent`, `getLinkContents`, the
     `android.graphics.pdf.models` types) are used **only** in `PlatformPageContentProvider`.
     Anywhere else, `PdfRenderer` is only for counting pages.
+- **A `PdfRenderer` is never built with its constructor**, in the app or in a test. It is opened
+  with `PdfRenderers.open`, or opened, used and closed with `PdfRenderers.use` (`:composepdf`). On
+  Android 7 a document that fails to open, or two documents drawn at once, crash the process in
+  native code; see [docs/pdf-engine.md](docs/pdf-engine.md#android-7).
 - **Selection logic is pure and tested; the UI only draws it.**
   - `TextSelection` and `DocumentSelection`, in `:document-content-api`, work in carets over the
     page's text, character by character, across pages, and handle vertical and multi-column
@@ -198,7 +214,11 @@ A new Koin module is registered in `App.kt`.
    `SavedStateHandle`. On restore, it rejoins through `DocumentScanner.resumePendingScan()`.
 4. `SaveScanDraftUseCase` stores the file through `DocumentStorage` (app files, exposed through the
    `FileProvider`) and catalogues it in Room.
-5. Home observes `ObserveDocumentsUseCase`. `HomeViewModel.observeDocuments` hands each change to
+5. The document is queued to have the text of its pages read (`DocumentIndexQueue`, WorkManager),
+   which is what search finds it by. `App` queues whatever is still pending each time it starts,
+   and schedules the library's daily upkeep (`LibraryMaintenance`): the bin's purge and the
+   reconciliation of files and catalogue.
+6. Home observes `ObserveDocumentsUseCase`. `HomeViewModel.observeDocuments` hands each change to
    `ProcessDocumentsUseCase`, which searches, filters and sorts.
 
 ### Opening a document
@@ -206,6 +226,10 @@ A new Koin module is registered in `App.kt`.
 - **A catalogued document**: the `PdfViewer(uuid)` key, in the main stack. On a wide window it
   shows beside Home (list-detail).
 - **Another app's PDF**: `PdfViewerActivity` takes `VIEW` and `SEND` for `application/pdf`.
+  - The catalogue registers it as a `LINKED` document, by its URI: a reference, never a copy. It
+    shows in Recents only, and no more than 50 are kept (`RegisterLinkedDocumentUseCase`).
+  - *Save to Docucraft* copies its file and makes that same row a `MANAGED` document
+    (`SaveLinkedToLibraryUseCase`).
   - It runs in its own task (`taskAffinity=""`, `autoRemoveFromRecents`) with its own back stack,
     rooted at `ExternalPdfViewer(uri, displayName)`.
   - Closing it returns to the calling app, not to Docucraft.
@@ -226,12 +250,33 @@ A new Koin module is registered in `App.kt`.
 - **File sharing** uses `${applicationId}.fileprovider` (the manifest and `App.getAuthority`). Only
   `content://` locations are ever handed to another app (`canBeHandedOff`). A `file://` PDF opened
   from outside is shown, but never re-shared.
+  - The provider is `CatalogueFileProvider`, which names a document as the catalogue does. It
+    serves `documents/` (files named `<uuid>.pdf`) and `scans/pdf/` (documents saved before files
+    were named by uuid, which are never moved).
 - **Firebase Analytics and Crashlytics** are on (`core/di/AnalyticsModule.kt`,
   `google-services.json`).
-- **Room**:
-  - `DocumentsDatabase` is currently version 4. Migrations are in `DocumentsDatabaseMigrations.kt`.
+- **Room** (the model, its rules and decisions DB1–DB11 are in
+  [docs/database.md](docs/database.md)):
+  - **Nothing automatic deletes a document of the library.** Deleting sends a document to the bin
+    (`MoveDocumentToBinUseCase`); it is deleted for good only from there
+    (`DeleteFromBinUseCase`), by the user or after 30 days. The reconciliation marks a document
+    whose file is missing as not found and never removes it. A new process that removes documents
+    goes through the bin.
+  - `DocumentsRepository.observeDocument` emits `null` for a document in the bin: to everything
+    but the bin, it is gone.
+  - `DocumentsDatabase` is currently version 5, in the file `scanned_pdfs.db`. Migrations are in
+    `DocumentsDatabaseMigrations.kt`. Build it with `DocumentsDatabase.builder`, in tests too.
   - Schemas are exported to `app/schemas/`. A schema change means: bump the version, add a
     migration, and commit the new schema JSON.
+  - **Never a destructive fallback.** A migration keeps every document and its uuid, and only
+    touches the database: it moves no files.
+  - Room cannot declare a `CHECK`. Rules the tables cannot state are triggers in
+    `DatabaseTriggers.ALL`, the one list used for a new database and by migrations, so the two
+    cannot differ. `SchemaParityTest` compares them.
+  - The SQL has to run on API 24's SQLite (3.9): no UPSERT, window functions, generated columns or
+    `RENAME COLUMN`, and no `WITH` inside a trigger.
+  - The database keeps paths relative to the files directory, never `FileProvider` URIs or
+    absolute paths.
 - **`<queries>` in the manifest** declares which other apps the viewer may look for: Custom Tabs,
   browsers, email, dialler. A new intent to another app needs its entry there, or on API 30+ the app
   will seem not to exist.
@@ -280,7 +325,8 @@ A new Koin module is registered in `App.kt`.
   - Everything is in English, and describes the app as it is now. When code changes, update the
     document that describes it. History lives in git, not in the docs.
   - Explain the why next to each decision. Code-level detail belongs in KDoc, not in the docs.
-  - The decisions named in code comments (D1–D5, E1–E6) are listed in `docs/README.md`.
+  - The decisions named in code comments (D1–D5, DB1–DB11, E1–E6) are listed in
+    `docs/README.md`.
 - **Work happens by stabilization**, one subsystem at a time, following the method in
   [`docs/README.md`](docs/README.md#how-a-subsystem-is-stabilized). Each one has its own branch
   (`refactor/<subsystem>`), merged through a PR.

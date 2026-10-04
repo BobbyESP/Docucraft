@@ -16,6 +16,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.navigation.ExternalPdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.GoToPage
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.SaveCopyToLibrary
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
@@ -94,6 +95,7 @@ class NavKeySerializationTest {
                     currentPage = 2,
                     pageCount = 12,
                 ),
+                SaveCopyToLibrary(documentUuid = "uuid"),
                 DocumentActions(documentUuid = "uuid"),
                 EditDocument(documentUuid = "uuid"),
                 DeleteDocument(documentUuid = "uuid"),

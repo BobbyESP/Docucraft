@@ -15,7 +15,19 @@ import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.domain.repository.logScreenView
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentAvailability
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DescribeLinkedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RegisterLinkedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveLinkedToLibraryUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveToLibraryOutcome
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.ResolveLinkUseCase
@@ -23,11 +35,13 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDisplaySettingsUseCase
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerLoadError
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.LinkPreview
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerEffect
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerUiState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerStart
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.SelectionInteraction
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
@@ -40,9 +54,11 @@ import com.bobbyesp.documentcontent.PageContentResult
 import com.bobbyesp.documentcontent.PageContentSession
 import com.bobbyesp.documentcontent.TextSelection
 import com.bobbyesp.scanner.ContentRef
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 /**
  * The viewer's state holder, one per navigation entry (or per external document, in
@@ -54,6 +70,9 @@ import kotlinx.coroutines.async
  * Those settings follow decision D2: remembered per document for the session, in memory. The
  * entry's [SavedStateHandle] keeps a copy, because a process death and restore is still the same
  * session to the user (A1), and the memory does not survive it.
+ *
+ * It is told where the reader is, and writes it down for the next time the document is opened; the
+ * position itself stays in the composition, like a list's scroll.
  *
  * It also holds what is needed to select and copy text: a content session on the document, opened
  * on first need and closed with the ViewModel, the text of the pages near what is on screen, and
@@ -71,10 +90,38 @@ class PdfViewerViewModel(
     private val analyticsHelper: AnalyticsHelper,
     private val contentProvider: PageContentProvider,
     private val resolveLink: ResolveLinkUseCase,
+    private val recordOpened: RecordDocumentOpenedUseCase,
+    private val recordAvailability: RecordDocumentAvailabilityUseCase,
+    private val getReadingPosition: GetReadingPositionUseCase,
+    private val rememberReadingPosition: RememberReadingPositionUseCase,
+    private val registerLinkedDocument: RegisterLinkedDocumentUseCase,
+    private val describeLinkedDocument: DescribeLinkedDocumentUseCase,
+    private val observeCatalogueDocument: ObserveDocumentUseCase,
+    private val saveToLibrary: SaveLinkedToLibraryUseCase,
+    private val longLived: CoroutineScope,
 ) :
     BaseViewModel<PdfViewerIntent, PdfViewerUiState, PdfViewerEffect>(
         initialState = PdfViewerUiState()
     ) {
+
+    /**
+     * The uuid the catalogue knows this document by: what is noted about a document as it is read
+     * is noted against this.
+     *
+     * A document of the catalogue already has one. A document another app handed over is given one
+     * by being registered, which is what makes it show in Recents; `null` if that could not be
+     * done, and then the document is shown all the same and nothing is noted about it.
+     *
+     * Above `init`, which uses it: a property declared below would not exist yet.
+     */
+    private val catalogueUuid: Deferred<String?> = viewModelScope.async {
+        when (ref) {
+            is ViewerDocumentRef.Catalogued -> ref.uuid
+            is ViewerDocumentRef.External ->
+                runCatching { registerLinkedDocument(ContentRef(ref.uri), ref.displayName) }
+                    .getOrNull()
+        }
+    }
 
     init {
         // Once per opened document, whichever way it was opened.
@@ -89,6 +136,25 @@ class PdfViewerViewModel(
                 // from the session memory, and must keep it across a process death just the same.
                 if (resolved.isChosen) keepAcrossProcessDeath(resolved.settings)
                 setState { copy(display = resolved.settings) }
+            }
+        }
+
+        // Once per opened document: this is what moves it to the front of Recents.
+        launch { catalogueUuid.await()?.let { recordOpened(it) } }
+
+        launch {
+            // A position that could not be read is no reason not to show the document.
+            val position =
+                catalogueUuid.await()?.let { runCatching { getReadingPosition(it) }.getOrNull() }
+            setState { copy(start = ViewerStart(position)) }
+        }
+
+        // Followed, not read once: it stops being another app's the moment it is saved, from here
+        // or from anywhere else.
+        launch {
+            val uuid = catalogueUuid.await() ?: return@launch
+            observeCatalogueDocument(uuid).collect { document ->
+                setState { copy(canSaveToLibrary = document is Document.Linked) }
             }
         }
 
@@ -111,8 +177,48 @@ class PdfViewerViewModel(
     /** What the reader has been told about pages without text, so they are told once a document. */
     private val toldAbout = mutableSetOf<TextUnavailable>()
 
+    /** Said once a document: the viewer reports that it loaded again after a rotation. */
+    private var toldItIsInLibrary = false
+
+    /**
+     * Tells the catalogue whether the file was where it says. Only the two answers that are about
+     * reaching the file: a document that is protected or damaged was reached, and is still there.
+     */
+    private fun noteAvailability(availability: DocumentAvailability) = launch {
+        val uuid = catalogueUuid.await() ?: return@launch
+        recordAvailability(uuid, availability)
+    }
+
+    /**
+     * What the document turned out to be, for one that belongs to another app: the catalogue knew
+     * nothing of it but where it is. The use case leaves the app's own documents alone.
+     *
+     * If the library turns out to have the same content, the reader is offered that document: it is
+     * the one with their place in it, and the one that does not depend on another app.
+     */
+    private fun describe(pageCount: Int?, isProtected: Boolean) = launch {
+        val uuid = catalogueUuid.await() ?: return@launch
+        val inLibrary =
+            describeLinkedDocument(uuid, pageCount = pageCount, isProtected = isProtected)
+        if (inLibrary != null && !toldItIsInLibrary) {
+            toldItIsInLibrary = true
+            sendEffect(PdfViewerEffect.AlreadyInLibrary(inLibrary))
+        }
+    }
+
     override fun onHandleIntent(intent: PdfViewerIntent) {
         when (intent) {
+            is PdfViewerIntent.DocumentLoaded -> {
+                noteAvailability(DocumentAvailability.AVAILABLE)
+                describe(pageCount = intent.pageCount, isProtected = false)
+            }
+            is PdfViewerIntent.ReadingPositionChanged -> keepPosition(intent.position)
+            is PdfViewerIntent.DocumentFailedToLoad -> {
+                noteAvailability(intent.error.availability)
+                if (intent.error == ViewerLoadError.PasswordProtected) {
+                    describe(pageCount = null, isProtected = true)
+                }
+            }
             is PdfViewerIntent.VisiblePagesChanged -> loadTextNear(intent.pages)
             is PdfViewerIntent.Select -> setState { copy(selection = intent.selection) }
             PdfViewerIntent.SelectAll -> selectAll()
@@ -125,11 +231,36 @@ class PdfViewerViewModel(
             PdfViewerIntent.DismissLinkPreview -> setState { copy(linkPreview = null) }
             is PdfViewerIntent.SetFitMode -> setFitMode(intent)
             PdfViewerIntent.ToggleNightMode -> toggleNightMode()
+            PdfViewerIntent.SaveToLibrary -> saveToLibrary()
             PdfViewerIntent.Share -> handOff { documentSharer.share(it) }
             PdfViewerIntent.OpenWith -> handOff { documentOpener.openWith(it) }
             PdfViewerIntent.Print -> print()
         }
     }
+
+    /**
+     * Not in the ViewModel's own scope: the last position arrives as the viewer is leaving, and a
+     * write started then would be cancelled with it. The reader would come back to where they were
+     * a second before they left.
+     */
+    private fun keepPosition(position: ReadingPosition) {
+        longLived.launch {
+            runCatching {
+                val uuid = catalogueUuid.await() ?: return@runCatching
+                rememberReadingPosition(uuid, position)
+            }
+        }
+    }
+
+    private val ViewerLoadError.availability: DocumentAvailability
+        get() =
+            when (this) {
+                ViewerLoadError.NotFound -> DocumentAvailability.NOT_FOUND
+                ViewerLoadError.AccessDenied -> DocumentAvailability.NO_PERMISSION
+                ViewerLoadError.PasswordProtected,
+                ViewerLoadError.Damaged,
+                ViewerLoadError.Unknown -> DocumentAvailability.AVAILABLE
+            }
 
     private fun setFitMode(intent: PdfViewerIntent.SetFitMode) {
         val display = currentState.display ?: return
@@ -163,6 +294,47 @@ class PdfViewerViewModel(
             } ?: return null
         val nightMode = savedStateHandle.get<Boolean>(KEY_NIGHT_MODE) ?: return null
         return ViewerDisplaySettings(fitMode = fitMode, nightMode = nightMode)
+    }
+
+    /**
+     * Keeps another app's document in the library. Each way it can end is an answer the reader is
+     * given, and none of them closes the document: it is being read.
+     */
+    private fun saveToLibrary() {
+        if (currentState.isSavingToLibrary || !currentState.canSaveToLibrary) return
+        setState { copy(isSavingToLibrary = true) }
+
+        launch(onError = { saveFailed() }) {
+            val uuid = catalogueUuid.await()
+            val outcome = uuid?.let { saveToLibrary(it) } ?: SaveToLibraryOutcome.NothingToSave
+            setState { copy(isSavingToLibrary = false) }
+
+            when (outcome) {
+                SaveToLibraryOutcome.Saved ->
+                    sendUiEvent(
+                        UiEvent.ShowMessage(
+                            stringProvider.get(R.string.saved_to_library),
+                            NotificationType.Success,
+                        )
+                    )
+                is SaveToLibraryOutcome.AlreadyInLibrary ->
+                    // `uuid` is not null here: nothing is found to be a duplicate without one.
+                    sendEffect(PdfViewerEffect.ConfirmSaveCopy(checkNotNull(uuid)))
+                SaveToLibraryOutcome.NotReadable -> saveFailed()
+                // Saved from somewhere else in the meantime: the action is already gone.
+                SaveToLibraryOutcome.NothingToSave -> Unit
+            }
+        }
+    }
+
+    private fun saveFailed() {
+        setState { copy(isSavingToLibrary = false) }
+        sendUiEvent(
+            UiEvent.ShowMessage(
+                stringProvider.get(R.string.save_to_library_failed),
+                NotificationType.Error,
+            )
+        )
     }
 
     private fun handOff(action: (ContentRef) -> Unit) {

@@ -48,7 +48,6 @@
     <string name="unknown_error">Onbekende fout</string>
     <string name="page_count">Aantal pagina\'s</string>
     <string name="save">Opslaan</string>
-    <string name="doc_deleted_successfully">Het document is succesvol verwijderd</string>
     <string name="app_tagline">Scan moeiteloos uw documenten met AI</string>
     <string name="share">Delen</string>
     <string name="doc_open_in_viewer">Document openen in viewer</string>
@@ -56,9 +55,7 @@
     <string name="doc_scan_new">Nieuw document scannen</string>
     <string name="doc_delete">Document verwijderen</string>
     <string name="title">Titel</string>
-	<string name="doc_delete_warning">Deze actie is permanent en kan niet ongedaan gemaakt worden. Als u het document al geëxporteerd heeft, worden die kopieën niet beïnvloed.</string>
 	<string name="doc_updated_successfully">Document succesvol bijgewerkt</string>
-	<string name="doc_delete_confirmation">Weet u zeker dat u het bestand \"%1$s\" wilt verwijderen?</string>
 	<string name="field_required">Dit veld is verplicht</string>
 	<string name="clear_field">Veld leegmaken</string>
 	<string name="field_too_long">Dit veld overschrijdt de maximale lengte</string>

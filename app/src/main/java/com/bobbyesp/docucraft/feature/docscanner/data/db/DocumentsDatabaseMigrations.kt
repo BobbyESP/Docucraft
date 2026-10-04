@@ -99,4 +99,9 @@ object DocumentsDatabaseMigrations {
                 )
             }
         }
+
+    val MIGRATION_4_5: Migration = Migration4To5
+
+    /** Every hand-written migration, in order. The database is built with all of them. */
+    val ALL: Array<Migration> = arrayOf(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
 }

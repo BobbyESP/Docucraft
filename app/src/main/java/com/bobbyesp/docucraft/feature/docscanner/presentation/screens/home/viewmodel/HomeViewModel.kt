@@ -13,8 +13,14 @@ import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.TagsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveHomeSectionsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveLibraryUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveNotFoundDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveRecentDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
@@ -30,6 +36,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onStart
@@ -40,6 +47,11 @@ class HomeViewModel(
     private val documentScanner: DocumentScanner,
     private val scanRequests: ScanRequestBus,
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
+    private val observeRecentDocumentsUseCase: ObserveRecentDocumentsUseCase,
+    private val observeLibraryUseCase: ObserveLibraryUseCase,
+    private val observeHomeSectionsUseCase: ObserveHomeSectionsUseCase,
+    private val tags: TagsRepository,
+    private val observeNotFoundDocuments: ObserveNotFoundDocumentsUseCase,
     private val processDocumentsUseCase: ProcessDocumentsUseCase,
     private val saveScanDraftUseCase: SaveScanDraftUseCase,
     private val stringProvider: StringProvider,
@@ -50,6 +62,7 @@ class HomeViewModel(
 
     init {
         observeDocuments()
+        observeOrganization()
         observeExternalScanRequests()
         resumePendingScan()
     }
@@ -94,7 +107,43 @@ class HomeViewModel(
                 setState { copy(filterOptions = intent.filter) }
             }
 
-            HomeIntent.ClearFilters -> setState { copy(filterOptions = FilterOptions.default) }
+            HomeIntent.ToggleFavoritesFilter ->
+                setState {
+                    copy(
+                        filterOptions =
+                            filterOptions.copy(favoritesOnly = !filterOptions.favoritesOnly)
+                    )
+                }
+
+            is HomeIntent.ToggleTagFilter ->
+                setState {
+                    val selected = filterOptions.tagUuids
+                    copy(
+                        filterOptions =
+                            filterOptions.copy(
+                                tagUuids =
+                                    if (intent.tagUuid in selected) selected - intent.tagUuid
+                                    else selected + intent.tagUuid
+                            )
+                    )
+                }
+
+            is HomeIntent.ShowOnlyTag ->
+                setState {
+                    copy(
+                        filterOptions =
+                            filterOptions.copy(
+                                favoritesOnly = false,
+                                tagUuids = setOf(intent.tagUuid),
+                            )
+                    )
+                }
+
+            // The order is not a filter: clearing them leaves the list sorted as it was.
+            HomeIntent.ClearFilters ->
+                setState {
+                    copy(filterOptions = FilterOptions.default.copy(sortBy = filterOptions.sortBy))
+                }
         }
     }
 
@@ -102,18 +151,29 @@ class HomeViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeDocuments() = launch {
-        combine(observeDocumentsUseCase(), state.map { it.filterOptions }.distinctUntilChanged()) {
-                docs,
-                filters ->
-                docs to filters
+        // What the list is narrowed down from: the whole library, or what carries the chosen
+        // tags. Asked again only when the tags change, not on every change of order.
+        val narrowed =
+            state
+                .map { it.filterOptions.tagUuids }
+                .distinctUntilChanged()
+                .flatMapLatest { tagUuids -> observeLibraryUseCase(tagUuids) }
+
+        combine(
+                observeDocumentsUseCase(),
+                narrowed,
+                observeRecentDocumentsUseCase(limit = RECENTS_SHOWN),
+                state.map { it.filterOptions }.distinctUntilChanged(),
+            ) { library, shown, recents, filters ->
+                LibrarySnapshot(library, shown, recents, filters)
             }
-            .mapLatest { (docs, filters) ->
+            .mapLatest { (library, shown, recents, filters) ->
                 val processed =
                     withContext(defaultDispatcher) {
-                        processDocumentsUseCase(docs, "", filters, filters.sortBy)
+                        processDocumentsUseCase(shown, filters, filters.sortBy)
                     }
 
-                Triple(processed, recentOf(docs), docs.isNotEmpty())
+                Triple(processed, shelfOf(recents, library = library), library.isNotEmpty())
             }
             .onStart { setState { copy(status = HomeStatus.Loading) } }
             .catch { error ->
@@ -135,17 +195,68 @@ class HomeViewModel(
             }
     }
 
+    private data class LibrarySnapshot(
+        val library: List<Document.Managed>,
+        val shown: List<Document.Managed>,
+        val recents: List<RecentDocument>,
+        val filters: FilterOptions,
+    )
+
     /**
-     * The latest scans, newest first, whatever order the list below is sorted in.
-     *
-     * Only while the catalogue does not record when a document was last opened: once it does, this
-     * becomes "recently opened", which is what a Recents shelf promises. With [RECENTS_MINIMUM] or
-     * fewer documents, the list shows every one of them at a glance, and the shelf would only
-     * repeat it.
+     * How the library is organized: the pinned folders and the sections of the tags, and every tag
+     * for the list to be narrowed down by. On its own, so that a tag renamed or a folder pinned
+     * does not sort the documents again.
      */
-    private fun recentOf(documents: List<ScannedDocument>): List<ScannedDocument> =
-        if (documents.size <= RECENTS_MINIMUM) emptyList()
-        else documents.sortedByDescending { it.capturedAtEpochMillis }.take(RECENTS_SHOWN)
+    private fun observeOrganization() {
+        launch {
+            observeHomeSectionsUseCase().collect { sections ->
+                setState {
+                    copy(
+                        pinnedFolders = sections.pinnedFolders,
+                        tagSections = sections.tagSections,
+                    )
+                }
+            }
+        }
+        launch {
+            observeNotFoundDocuments().collect { notFound ->
+                setState { copy(notFoundUuids = notFound) }
+            }
+        }
+        launch {
+            tags.observeTags().collect { all ->
+                setState {
+                    // A tag that was deleted cannot go on narrowing the list down.
+                    val known = all.mapTo(HashSet()) { it.uuid }
+                    copy(
+                        tags = all,
+                        filterOptions =
+                            filterOptions.copy(
+                                tagUuids =
+                                    filterOptions.tagUuids.filterTo(HashSet()) { it in known }
+                            ),
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * What the Recents shelf shows: the documents used last, whatever order the list below is
+     * sorted in.
+     *
+     * With [RECENTS_MINIMUM] or fewer documents in the library, the list shows every one of them at
+     * a glance, and the shelf would only repeat it. Unless it holds a document of another app:
+     * those are not in the list, and the shelf is the only place they can be found.
+     */
+    private fun shelfOf(
+        recents: List<RecentDocument>,
+        library: List<Document.Managed>,
+    ): List<RecentDocument> {
+        val repeatsTheList =
+            library.size <= RECENTS_MINIMUM && recents.all { it.document is Document.Managed }
+        return if (repeatsTheList) emptyList() else recents
+    }
 
     /**
      * Entry points outside the UI, such as the home screen widget.

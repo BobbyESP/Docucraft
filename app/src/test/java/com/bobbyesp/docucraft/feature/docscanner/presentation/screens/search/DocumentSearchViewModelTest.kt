@@ -7,12 +7,13 @@ import androidx.lifecycle.SavedStateHandle
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentActivityRepository
+import com.bobbyesp.docucraft.feature.docscanner.FakeSearchIndex
+import com.bobbyesp.docucraft.feature.docscanner.domain.search.SearchHit
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
-import com.bobbyesp.scanner.ContentRef
-import io.mockk.coEvery
-import io.mockk.coVerify
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveNotFoundDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -35,26 +36,25 @@ import org.junit.Test
  * The search screen's state holder: what an empty query answers, when "no matches" may be said, and
  * that a query outlives the process.
  *
- * The matching itself is [ProcessDocumentsUseCase]'s and is not retested here; the fake below
- * matches on the title, which is all these tests need.
+ * The matching itself is the search index's and is not retested here; the fake below matches on the
+ * title, which is all these tests need.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DocumentSearchViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val analyticsHelper: AnalyticsHelper = mockk(relaxed = true)
-    private val processDocumentsUseCase: ProcessDocumentsUseCase = mockk()
     private val documents = MutableStateFlow(listOf(document("Invoice"), document("Notes")))
+
+    private val index = FakeSearchIndex { query ->
+        documents.value
+            .filter { it.title.orEmpty().contains(query, ignoreCase = true) }
+            .map { SearchHit(documentUuid = it.uuid, score = 1.0, passage = null) }
+    }
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        coEvery { processDocumentsUseCase(any(), any(), any(), any()) } answers
-            {
-                val docs = firstArg<List<ScannedDocument>>()
-                val query = secondArg<String>()
-                docs.filter { it.title.orEmpty().contains(query, ignoreCase = true) }
-            }
     }
 
     @After
@@ -63,24 +63,16 @@ class DocumentSearchViewModelTest {
     }
 
     private fun document(title: String) =
-        ScannedDocument(
-            uuid = title.lowercase(),
-            filename = "$title.pdf",
-            title = title,
-            description = null,
-            location = ContentRef("content://stored/$title.pdf"),
-            capturedAtEpochMillis = 1_000L,
-            sizeBytes = 2_048L,
-            pageCount = 1,
-            thumbnail = null,
-        )
+        testDocument(uuid = title.lowercase(), originalName = "$title.pdf", title = title)
 
     private fun createViewModel(savedState: SavedStateHandle = SavedStateHandle()) =
         DocumentSearchViewModel(
             savedStateHandle = savedState,
             observeDocumentsUseCase =
                 mockk<ObserveDocumentsUseCase>().also { every { it() } returns documents },
-            processDocumentsUseCase = processDocumentsUseCase,
+            searchDocumentsUseCase = SearchDocumentsUseCase(index),
+            observeNotFoundDocuments =
+                ObserveNotFoundDocumentsUseCase(FakeDocumentActivityRepository()),
             stringProvider = mockk<StringProvider>(relaxed = true),
             analyticsHelper = analyticsHelper,
             defaultDispatcher = testDispatcher,
@@ -96,7 +88,7 @@ class DocumentSearchViewModelTest {
             val state = viewModel.state.value
             assertTrue(state.results.isEmpty())
             assertFalse(state.hasNoMatches)
-            coVerify(exactly = 0) { processDocumentsUseCase(any(), any(), any(), any()) }
+            assertTrue(index.queries.isEmpty())
         }
 
     @Test
@@ -108,7 +100,10 @@ class DocumentSearchViewModelTest {
             viewModel.onSendIntent(DocumentSearchIntent.UpdateQuery("inv"))
             advanceUntilIdle()
 
-            assertEquals(listOf("invoice"), viewModel.state.value.results.map { it.uuid })
+            assertEquals(
+                listOf("invoice"),
+                viewModel.state.value.results.map { it.document.uuid },
+            )
             assertEquals("inv", viewModel.state.value.resultsFor)
         }
 
@@ -143,7 +138,7 @@ class DocumentSearchViewModelTest {
 
             assertEquals(
                 listOf("invoice", "invoice 2"),
-                viewModel.state.value.results.map { it.uuid },
+                viewModel.state.value.results.map { it.document.uuid },
             )
         }
 
@@ -172,7 +167,10 @@ class DocumentSearchViewModelTest {
             advanceUntilIdle()
 
             assertEquals("notes", restored.state.value.query)
-            assertEquals(listOf("notes"), restored.state.value.results.map { it.uuid })
+            assertEquals(
+                listOf("notes"),
+                restored.state.value.results.map { it.document.uuid },
+            )
         }
 
     /** Counted once a query says something; one or two letters are still being typed. */

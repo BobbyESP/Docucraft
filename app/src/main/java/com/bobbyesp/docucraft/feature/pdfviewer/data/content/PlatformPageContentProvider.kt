@@ -22,6 +22,7 @@ import com.bobbyesp.documentcontent.PageLink
 import com.bobbyesp.documentcontent.PageText
 import com.bobbyesp.documentcontent.TextLine
 import com.bobbyesp.documentcontent.TextWord
+import com.composepdf.PdfRenderers
 import java.io.FileNotFoundException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +50,8 @@ class PlatformPageContentProvider(
     private val cacheSize: Int = DefaultCacheSize,
 ) : PageContentProvider {
 
-    private val contentResolver = context.applicationContext.contentResolver
+    private val appContext = context.applicationContext
+    private val contentResolver = appContext.contentResolver
 
     override val origin: ContentOrigin = ContentOrigin.EMBEDDED
 
@@ -74,7 +76,7 @@ class PlatformPageContentProvider(
             contentResolver.openFileDescriptor(document.value.toUri(), "r")
                 ?: throw FileNotFoundException("Cannot open ${document.value}")
         return try {
-            PdfRenderer(descriptor)
+            PdfRenderers.open(appContext, descriptor)
         } catch (e: Exception) {
             descriptor.closeQuietly()
             throw e

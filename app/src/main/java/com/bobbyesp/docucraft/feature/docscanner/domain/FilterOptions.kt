@@ -15,12 +15,22 @@ data class DateRange(val fromEpochMillis: Long, val toEpochMillis: Long) {
 }
 
 /** Which documents the list shows, and in what order. */
+/**
+ * @property favoritesOnly Only the documents marked as favorites.
+ * @property tagUuids Only the documents that carry every one of these tags. Empty for no filter.
+ */
 data class FilterOptions(
     val minPageCount: Int?,
     val minFileSize: Long?,
     val dateRange: DateRange?,
     val sortBy: SortOption,
+    val favoritesOnly: Boolean = false,
+    val tagUuids: Set<String> = emptySet(),
 ) {
+    /** Whether the user narrowed the library down by how it is organized. */
+    val narrowsByOrganization: Boolean
+        get() = favoritesOnly || tagUuids.isNotEmpty()
+
     companion object {
         val default =
             FilterOptions(

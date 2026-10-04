@@ -16,14 +16,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.common.LocalSettingsRepository
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.LocalPaneContext
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.appearance.AppearanceScreen
@@ -31,6 +35,7 @@ import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.A
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.viewer.DocumentViewerSettingsScreen
+import kotlinx.coroutines.launch
 
 /**
  * Settings and its sub-screens, as a list-detail pair of their own.
@@ -49,9 +54,18 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
                 detailPlaceholder = { NoSettingOpenPane() },
             )
     ) {
+        // One switch does not make a ViewModel: it is read from the settings and written back.
+        val settingsRepository = LocalSettingsRepository.current
+        val preferences by settingsRepository.settings.collectAsStateWithLifecycle(null)
+        val scope = rememberCoroutineScope()
+
         SettingsScreen(
             onOpenAppearance = { navigator.goTo(AppearanceSettings) },
             onOpenDocumentViewer = { navigator.goTo(DocumentViewerSettings) },
+            recognizesTextInNewDocuments = preferences?.recognizeTextInNewDocuments == true,
+            onRecognizeTextInNewDocumentsChange = { enabled ->
+                scope.launch { settingsRepository.setRecognizeTextInNewDocuments(enabled) }
+            },
             onBack = navigator::leaveSettings,
         )
     }

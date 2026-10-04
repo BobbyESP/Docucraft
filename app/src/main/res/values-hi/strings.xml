@@ -28,7 +28,6 @@
     <string name="select_document_to_preview">यहाँ पूर्वावलोकन के लिए कोई दस्तावेज़ चुनें</string>
     <string name="doc_scan_to_see_document_list">यहां सूचीबद्ध देखने के लिए अपने दस्तावेज़ों को स्कैन करें।</string>
     <string name="name">नाम</string>
-    <string name="doc_deleted_successfully">दस्तावेज़ सफलतापूर्वक हटा दिया गया है</string>
     <string name="follow_system">सिस्टम का पालन करें</string>
     <string name="search_documents">दस्तावेज़ खोजें</string>
     <string name="app_tagline">एआई के साथ आसानी से अपने दस्तावेजों को स्कैन करें</string>
@@ -57,8 +56,6 @@
     <string name="doc_save_error_with_reason">दस्तावेज़ को सहेजने में त्रुटि हुई: %1$s</string>
     <string name="search">खोजें</string>
 	<string name="doc_updated_successfully">दस्तावेज़ सफलतापूर्वक अपडेट किया गया</string>
-	<string name="doc_delete_warning">यह कार्रवाई स्थायी है और इसे पूर्ववत नहीं किया जा सकता. यदि आपने पहले ही दस्तावेज़ निर्यात कर लिया है, तो वे प्रतियां प्रभावित नहीं होंगी.</string>
-	<string name="doc_delete_confirmation">क्या आप वाकई फ़ाइल \"%1$s\" को हटाना चाहते हैं?</string>
 	<string name="clear_field">फ़ील्ड साफ़ करें</string>
 	<string name="field_too_long">यह फ़ील्ड अधिकतम लंबाई से ज़्यादा है</string>
 	<string name="chars_remaining">%1$d / %2$d</string>

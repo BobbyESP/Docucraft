@@ -10,9 +10,9 @@ import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
-import com.bobbyesp.docucraft.feature.docscanner.domain.FilterOptions
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveNotFoundDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +36,8 @@ import kotlinx.coroutines.withContext
 class DocumentSearchViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
-    private val processDocumentsUseCase: ProcessDocumentsUseCase,
+    private val searchDocumentsUseCase: SearchDocumentsUseCase,
+    private val observeNotFoundDocuments: ObserveNotFoundDocumentsUseCase,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
@@ -47,6 +48,11 @@ class DocumentSearchViewModel(
 
     init {
         observeResults()
+        launch {
+            observeNotFoundDocuments().collect { notFound ->
+                setState { copy(notFoundUuids = notFound) }
+            }
+        }
     }
 
     override fun onHandleIntent(intent: DocumentSearchIntent) {
@@ -92,18 +98,7 @@ class DocumentSearchViewModel(
             }
             .mapLatest { (documents, query) ->
                 val results =
-                    if (query.isBlank()) {
-                        emptyList()
-                    } else {
-                        withContext(defaultDispatcher) {
-                            processDocumentsUseCase(
-                                documents,
-                                query,
-                                FilterOptions.default,
-                                FilterOptions.default.sortBy,
-                            )
-                        }
-                    }
+                    withContext(defaultDispatcher) { searchDocumentsUseCase(documents, query) }
                 results to query
             }
             .catch { error ->

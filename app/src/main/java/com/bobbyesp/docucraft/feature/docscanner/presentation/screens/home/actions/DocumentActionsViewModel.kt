@@ -10,11 +10,15 @@ import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.ExportOutcome
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ForgetLinkedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.MoveDocumentToBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentFavoriteUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentTextRecognitionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 
 /**
@@ -30,10 +34,13 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFi
 class DocumentActionsViewModel(
     private val documentUuid: String,
     observeDocument: ObserveDocumentUseCase,
-    private val deleteDocumentUseCase: DeleteDocumentUseCase,
+    private val moveDocumentToBin: MoveDocumentToBinUseCase,
     private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase,
     private val documentSharer: DocumentSharer,
     private val documentExporter: DocumentExporter,
+    private val forgetLinkedDocument: ForgetLinkedDocumentUseCase,
+    private val setTextRecognition: SetDocumentTextRecognitionUseCase,
+    private val setFavorite: SetDocumentFavoriteUseCase,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
 ) :
@@ -49,10 +56,17 @@ class DocumentActionsViewModel(
 
     init {
         launch {
-            observeDocument(documentUuid).collect { document ->
-                setState { copy(document = document) }
+            observeDocument(documentUuid).collect { found ->
+                // Sharing, exporting, editing and deleting are done to a document the app keeps.
+                // One that belongs to another app can only be taken out of Recents.
+                setState {
+                    copy(
+                        document = found as? Document.Managed,
+                        linked = found as? Document.Linked,
+                    )
+                }
 
-                if (document != null) wasLoaded = true
+                if (found != null) wasLoaded = true
                 else if (wasLoaded) sendEffect(DocumentActionsEffect.CloseAll)
             }
         }
@@ -64,6 +78,13 @@ class DocumentActionsViewModel(
             DocumentActionsIntent.Export -> export()
             DocumentActionsIntent.ConfirmDelete -> delete()
             is DocumentActionsIntent.ConfirmEdit -> edit(intent.title, intent.description)
+            DocumentActionsIntent.RemoveFromRecents -> removeFromRecents()
+            is DocumentActionsIntent.SetTextRecognition -> setTextRecognition(intent.enabled)
+            // No message: the name and the icon of the action change with it, in plain sight.
+            is DocumentActionsIntent.SetFavorite ->
+                launch {
+                    setFavorite(documentUuid, intent.favorite)
+                }
         }
     }
 
@@ -90,7 +111,7 @@ class DocumentActionsViewModel(
         val outcome =
             documentExporter.export(
                 document = document.location,
-                suggestedName = document.title ?: document.filename,
+                suggestedName = document.name,
             )
 
         when (outcome) {
@@ -123,20 +144,55 @@ class DocumentActionsViewModel(
     }
 
     /**
+     * Deleting sends the document to the bin, where it can be brought back from.
+     *
      * Closing is left to the document disappearing from underneath, which the observer above
-     * notices: the same path that closes these overlays when the document is deleted from another
-     * window, so there is only one way out to get right.
+     * notices: a document in the bin is observed as one that is gone. It is the same path that
+     * closes these overlays when the document is deleted from another window, so there is only one
+     * way out to get right.
      */
     private fun delete() = launch {
         val document = currentState.document ?: return@launch
 
-        deleteDocumentUseCase(document)
+        if (!moveDocumentToBin(document.uuid)) return@launch
 
         analyticsHelper.logEvent(AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_DELETED))
 
         sendUiEvent(
             UiEvent.ShowMessage(
-                stringProvider.get(R.string.doc_deleted_successfully),
+                stringProvider.get(R.string.doc_moved_to_bin),
+                NotificationType.Success,
+            )
+        )
+    }
+
+    /**
+     * The sheet stays: the action is named after what the document now does, and the reading it
+     * starts happens in the background, so there is nothing to wait for here.
+     */
+    private fun setTextRecognition(enabled: Boolean) = launch {
+        currentState.document ?: return@launch
+        if (!setTextRecognition(documentUuid, enabled)) return@launch
+        sendUiEvent(
+            UiEvent.ShowMessage(
+                stringProvider.get(
+                    if (enabled) R.string.text_recognition_turned_on
+                    else R.string.text_recognition_turned_off
+                ),
+                NotificationType.Success,
+            )
+        )
+    }
+
+    /** Closing is left to the document disappearing, as it is for [delete]. */
+    private fun removeFromRecents() = launch {
+        currentState.linked ?: return@launch
+
+        forgetLinkedDocument(documentUuid)
+
+        sendUiEvent(
+            UiEvent.ShowMessage(
+                stringProvider.get(R.string.removed_from_recents),
                 NotificationType.Success,
             )
         )

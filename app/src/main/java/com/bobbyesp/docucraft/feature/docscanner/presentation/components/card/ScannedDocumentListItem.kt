@@ -8,10 +8,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.QuestionMark
+import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -32,11 +35,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -46,9 +53,11 @@ import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.util.DateTime
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentThumbnail
+import com.bobbyesp.docucraft.feature.docscanner.domain.search.SearchPassage
+import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
-import com.bobbyesp.scanner.ContentRef
 import java.util.UUID
 
 /**
@@ -62,16 +71,24 @@ import java.util.UUID
  *   [DocucraftShapeDefaults.segmentedListItemShapes].
  * @param selected whether this is the document open beside the list, on windows wide enough to show
  *   both.
+ * @param passage where in the document's text a search found it, to show under its facts.
+ * @param fileMissing whether the document's file is not there. It is still listed, faded and saying
+ *   so: a document is never dropped from the library because its file went missing.
+ * @param note something to say of the document in this list in particular, such as the days it has
+ *   left in the bin.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ScannedDocumentListItem(
-    pdf: ScannedDocument,
+    pdf: Document.Managed,
     onItemClick: (String) -> Unit,
     onItemLongClick: () -> Unit,
     modifier: Modifier = Modifier,
     shapes: ListItemShapes = DocucraftShapeDefaults.segmentedListItemShapes(index = 0, count = 1),
     selected: Boolean = false,
+    passage: SearchPassage? = null,
+    fileMissing: Boolean = false,
+    note: String? = null,
 ) {
     SegmentedListItem(
         selected = selected,
@@ -87,8 +104,15 @@ fun ScannedDocumentListItem(
             ListItemDefaults.segmentedColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow
             ),
-        leadingContent = { DocumentThumbnail(thumbnail = pdf.thumbnail) },
-        supportingContent = { DocumentSummary(pdf = pdf) },
+        leadingContent = {
+            DocumentThumbnail(
+                thumbnail = pdf.thumbnail,
+                modifier = Modifier.alpha(if (fileMissing) MissingFileAlpha else 1f),
+            )
+        },
+        supportingContent = {
+            DocumentSummary(pdf = pdf, passage = passage, fileMissing = fileMissing, note = note)
+        },
         trailingContent = {
             IconButton(onClick = onItemLongClick, shapes = IconButtonDefaults.shapes()) {
                 Icon(
@@ -98,31 +122,54 @@ fun ScannedDocumentListItem(
             }
         },
     ) {
-        Text(
-            text = pdf.title ?: pdf.filename,
-            style = MaterialTheme.typography.bodyLargeEmphasized,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(
+                text = pdf.name,
+                modifier = Modifier.weight(1f, fill = false),
+                style = MaterialTheme.typography.bodyLargeEmphasized,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            // After the name, not in place of the menu: a mark of what the document is, which a
+            // title cut short still leaves room for.
+            if (pdf.isFavorite) {
+                Icon(
+                    imageVector = Icons.Rounded.Star,
+                    contentDescription = stringResource(R.string.favorite),
+                    modifier = Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.tertiary,
+                )
+            }
+        }
     }
 }
 
 /**
- * The description, when there is one, above what every document has: pages, size and date. A
+ * The description, when there is one, above what is known of the document: pages, size and date. A
  * missing description used to take the line with "No description", which told the user nothing and
- * hid the facts that do tell documents apart.
+ * hid the facts that do tell documents apart. Pages or size that are not known are left out rather
+ * than shown as zero.
  */
 @Composable
-private fun DocumentSummary(pdf: ScannedDocument, modifier: Modifier = Modifier) {
+private fun DocumentSummary(
+    pdf: Document.Managed,
+    passage: SearchPassage?,
+    fileMissing: Boolean,
+    note: String?,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
-    val pages = pluralStringResource(R.plurals.doc_n_pages, pdf.pageCount, pdf.pageCount)
+    val pages = pdf.pageCount?.let { pluralStringResource(R.plurals.doc_n_pages, it, it) }
     val facts =
-        remember(pdf.sizeBytes, pdf.capturedAtEpochMillis, pages) {
-            listOf(
+        remember(pdf.sizeBytes, pdf.createdAtEpochMillis, pages) {
+            listOfNotNull(
                     pages,
-                    formatShortFileSize(context, pdf.sizeBytes),
+                    pdf.sizeBytes?.let { formatShortFileSize(context, it) },
                     DateTime.formatDate(
-                        pdf.capturedAtEpochMillis,
+                        pdf.createdAtEpochMillis,
                         DateTime.DateFormat.LOCALIZED_MEDIUM,
                     ),
                 )
@@ -141,7 +188,63 @@ private fun DocumentSummary(pdf: ScannedDocument, modifier: Modifier = Modifier)
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+        if (passage != null) MatchingPassage(passage = passage)
+        if (note != null) {
+            Text(
+                text = note,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.tertiary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (fileMissing) {
+            Text(
+                text = stringResource(R.string.doc_file_not_found),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.error,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
+}
+
+/** How much of a document's preview shows when its file is not there. */
+private const val MissingFileAlpha = 0.38f
+
+/**
+ * The words around what a search matched in the document's text, and the page they are on, so the
+ * reader can tell why the document was found before opening it. What matched is in bold: weight
+ * tells it apart in any theme, where a colour would have to be chosen for each.
+ */
+@Composable
+private fun MatchingPassage(passage: SearchPassage, modifier: Modifier = Modifier) {
+    val page = stringResource(R.string.search_result_page, passage.pageIndex + 1)
+    val text =
+        remember(passage, page) {
+            buildAnnotatedString {
+                append(page)
+                append(" · ")
+                val start = length
+                append(passage.text)
+                for (highlight in passage.highlights) {
+                    addStyle(
+                        SpanStyle(fontWeight = FontWeight.Bold),
+                        start + highlight.start,
+                        start + highlight.end,
+                    )
+                }
+            }
+        }
+
+    Text(
+        text = text,
+        modifier = modifier,
+        style = MaterialTheme.typography.bodySmall,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 /**
@@ -149,7 +252,7 @@ private fun DocumentSummary(pdf: ScannedDocument, modifier: Modifier = Modifier)
  * rounded rectangle: a morphing shape would crop the page it is supposed to show.
  */
 @Composable
-private fun DocumentThumbnail(thumbnail: ContentRef?, modifier: Modifier = Modifier) {
+private fun DocumentThumbnail(thumbnail: DocumentThumbnail, modifier: Modifier = Modifier) {
     Box(
         modifier =
             modifier
@@ -169,7 +272,7 @@ private fun DocumentThumbnail(thumbnail: ContentRef?, modifier: Modifier = Modif
         } else {
             AsyncImage(
                 modifier = Modifier.fillMaxSize(),
-                imageModel = thumbnail?.value,
+                imageModel = thumbnail,
                 failure = {
                     Placeholder(
                         modifier = Modifier.fillMaxSize(),
@@ -229,14 +332,11 @@ private fun ScannedDocumentListPreview() {
 }
 
 private fun previewDocument(index: Int, description: String?) =
-    ScannedDocument(
-        filename = "Scan_20260919_14253$index",
+    DocumentPreviewData.document(
+        uuid = UUID.nameUUIDFromBytes("doc-$index".toByteArray()).toString(),
         title = "Document $index",
         description = description,
-        location = ContentRef("path"),
-        capturedAtEpochMillis = 1_758_290_000_000 + index,
+        createdAtEpochMillis = 1_758_290_000_000 + index,
         sizeBytes = 184_320L * (index + 1),
         pageCount = 1 + index,
-        thumbnail = null,
-        uuid = UUID.nameUUIDFromBytes("doc-$index".toByteArray()).toString(),
     )

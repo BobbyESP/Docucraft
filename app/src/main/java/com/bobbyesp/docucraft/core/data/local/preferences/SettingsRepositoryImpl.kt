@@ -42,6 +42,9 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
         val VIEWER_DEFAULTS_ENABLED = booleanPreferencesKey("viewer_defaults_enabled")
         val VIEWER_DEFAULT_FIT_MODE = stringPreferencesKey("viewer_default_fit_mode")
         val VIEWER_DEFAULT_NIGHT_MODE = booleanPreferencesKey("viewer_default_night_mode")
+        val REMEMBER_READING_POSITION = booleanPreferencesKey("remember_reading_position")
+        val RECOGNIZE_TEXT_IN_NEW_DOCUMENTS =
+            booleanPreferencesKey("recognize_text_in_new_documents")
     }
 
     override val settings: Flow<UserPreferences> =
@@ -141,6 +144,12 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
                         preferences[PreferencesKeys.MARQUEE_TEXT_ENABLED]
                             ?: defaultPrefs.marqueeTextEnabled,
                     viewerDefaults = preferences.viewerDefaults(defaultPrefs.viewerDefaults),
+                    rememberReadingPosition =
+                        preferences[PreferencesKeys.REMEMBER_READING_POSITION]
+                            ?: defaultPrefs.rememberReadingPosition,
+                    recognizeTextInNewDocuments =
+                        preferences[PreferencesKeys.RECOGNIZE_TEXT_IN_NEW_DOCUMENTS]
+                            ?: defaultPrefs.recognizeTextInNewDocuments,
                 )
             }
 
@@ -221,6 +230,18 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
     override suspend fun setViewerDefaultNightMode(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.VIEWER_DEFAULT_NIGHT_MODE] = enabled
+        }
+    }
+
+    override suspend fun setRememberReadingPosition(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.REMEMBER_READING_POSITION] = enabled
+        }
+    }
+
+    override suspend fun setRecognizeTextInNewDocuments(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.RECOGNIZE_TEXT_IN_NEW_DOCUMENTS] = enabled
         }
     }
 

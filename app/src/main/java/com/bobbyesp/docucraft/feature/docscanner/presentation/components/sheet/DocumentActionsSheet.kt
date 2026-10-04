@@ -19,15 +19,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
+import androidx.compose.material.icons.automirrored.rounded.Label
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.EditNote
 import androidx.compose.material.icons.rounded.FileCopy
 import androidx.compose.material.icons.rounded.QuestionMark
+import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.SaveAs
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material.icons.rounded.Storage
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
@@ -59,7 +65,7 @@ import com.bobbyesp.docucraft.core.presentation.components.others.GridMenuItem
 import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
 import com.bobbyesp.docucraft.core.presentation.components.others.RoundedTag
 import com.bobbyesp.docucraft.core.util.DateTime
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -68,14 +74,20 @@ import kotlinx.collections.immutable.persistentListOf
 internal enum class ActionImportance {
     PRIMARY,
     SECONDARY,
+    ORGANIZE,
     DESTRUCTIVE,
 }
 
+/**
+ * @property fullWidth Takes a row to itself. For an action whose name does not fit in a cell of the
+ *   grid, where it would be cut short.
+ */
 @Immutable
 internal data class DocumentAction(
     val icon: ImageVector,
     val title: Int,
     val importance: ActionImportance,
+    val fullWidth: Boolean = false,
     val action: () -> Unit,
 )
 
@@ -87,19 +99,29 @@ internal data class DocumentAction(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocumentActionsContent(
-    scannedDocument: ScannedDocument,
+    scannedDocument: Document.Managed,
     onSave: () -> Unit,
     onShare: () -> Unit,
     onDelete: () -> Unit,
     onModifyFields: () -> Unit,
+    onTextRecognitionChange: (Boolean) -> Unit,
+    onFavoriteChange: (Boolean) -> Unit,
+    onMove: () -> Unit,
+    onEditTags: () -> Unit,
     modifier: Modifier = Modifier,
     stacked: Boolean = true,
 ) {
     val options =
         rememberDocumentActions(
+            recognizesText = scannedDocument.ocrEnabled,
+            isFavorite = scannedDocument.isFavorite,
             onSave = onSave,
             onShare = onShare,
             onModifyFields = onModifyFields,
+            onTextRecognitionChange = onTextRecognitionChange,
+            onFavoriteChange = onFavoriteChange,
+            onMove = onMove,
+            onEditTags = onEditTags,
             onDelete = onDelete,
         )
 
@@ -141,46 +163,165 @@ fun DocumentActionsContent(
     }
 }
 
+/**
+ * The actions for a document of another app. It is only referred to, so the one thing to do to it
+ * is to stop: nothing here reaches its file.
+ *
+ * @param stacked as in [DocumentActionsContent].
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun LinkedDocumentActionsContent(
+    document: Document.Linked,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
+    stacked: Boolean = true,
+) {
+    val options = remember {
+        persistentListOf(
+            DocumentAction(
+                icon = Icons.Rounded.RemoveCircleOutline,
+                title = R.string.remove_from_recents,
+                importance = ActionImportance.SECONDARY,
+                fullWidth = true,
+                action = onRemove,
+            )
+        )
+    }
+
+    if (stacked) {
+        Column(modifier = modifier) {
+            LinkedDocumentHeader(document, modifier = Modifier.padding(horizontal = 16.dp))
+
+            AnimatedWavyDivider(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                strokeWidth = 4.dp,
+                colors =
+                    AnimatedWavyDividerDefaults.colors(
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    ),
+            )
+
+            DocumentActionsRow(options = options, onOptionSelect = { it() })
+        }
+    } else {
+        Row(
+            modifier = modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            LinkedDocumentHeader(document, modifier = Modifier.weight(1f).padding(start = 16.dp))
+
+            Box(modifier = Modifier.weight(1f)) {
+                DocumentActionsRow(options = options, onOptionSelect = { it() })
+            }
+        }
+    }
+}
+
+/** No preview: another app's file is not read to draw one. Its name, and whose it is. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun LinkedDocumentHeader(document: Document.Linked, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = document.name,
+            style = MaterialTheme.typography.titleLargeEmphasized,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Text(
+            modifier = Modifier.alpha(0.75f),
+            text = stringResource(id = R.string.linked_document_desc),
+            style = MaterialTheme.typography.bodyMediumEmphasized,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
 @Composable
 private fun rememberDocumentActions(
+    recognizesText: Boolean,
+    isFavorite: Boolean,
     onSave: () -> Unit,
     onShare: () -> Unit,
     onModifyFields: () -> Unit,
+    onTextRecognitionChange: (Boolean) -> Unit,
+    onFavoriteChange: (Boolean) -> Unit,
+    onMove: () -> Unit,
+    onEditTags: () -> Unit,
     onDelete: () -> Unit,
-): ImmutableList<DocumentAction> = remember {
-    persistentListOf(
-        DocumentAction(
-            icon = Icons.Rounded.SaveAs,
-            title = R.string.save,
-            importance = ActionImportance.PRIMARY,
-            action = onSave,
-        ),
-        DocumentAction(
-            icon = Icons.Rounded.Share,
-            title = R.string.share,
-            importance = ActionImportance.PRIMARY,
-            action = onShare,
-        ),
-        DocumentAction(
-            icon = Icons.Rounded.EditNote,
-            title = R.string.edit_fields,
-            importance = ActionImportance.SECONDARY,
-            action = onModifyFields,
-        ),
-        DocumentAction(
-            icon = Icons.Rounded.DeleteForever,
-            title = R.string.delete,
-            importance = ActionImportance.DESTRUCTIVE,
-            action = onDelete,
-        ),
-    )
-}
+): ImmutableList<DocumentAction> =
+    remember(recognizesText, isFavorite) {
+        persistentListOf(
+            DocumentAction(
+                icon = Icons.Rounded.SaveAs,
+                title = R.string.save,
+                importance = ActionImportance.PRIMARY,
+                action = onSave,
+            ),
+            DocumentAction(
+                icon = Icons.Rounded.Share,
+                title = R.string.share,
+                importance = ActionImportance.PRIMARY,
+                action = onShare,
+            ),
+            DocumentAction(
+                icon = Icons.Rounded.EditNote,
+                title = R.string.edit_fields,
+                importance = ActionImportance.SECONDARY,
+                action = onModifyFields,
+            ),
+            // What organizes the document, in a row of its own kind. The star is filled once
+            // the document is a favorite.
+            DocumentAction(
+                icon = if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+                title = R.string.favorite,
+                importance = ActionImportance.ORGANIZE,
+                action = { onFavoriteChange(!isFavorite) },
+            ),
+            DocumentAction(
+                icon = Icons.AutoMirrored.Rounded.DriveFileMove,
+                title = R.string.move,
+                importance = ActionImportance.ORGANIZE,
+                action = onMove,
+            ),
+            DocumentAction(
+                icon = Icons.AutoMirrored.Rounded.Label,
+                title = R.string.tags,
+                importance = ActionImportance.ORGANIZE,
+                action = onEditTags,
+            ),
+            // Named for what tapping it does, since it changes with the document. A row to itself:
+            // neither name fits in a cell of the grid.
+            DocumentAction(
+                icon = Icons.Rounded.TextFields,
+                title =
+                    if (recognizesText) R.string.text_recognition_turn_off
+                    else R.string.text_recognition_turn_on,
+                importance = ActionImportance.SECONDARY,
+                fullWidth = true,
+                action = { onTextRecognitionChange(!recognizesText) },
+            ),
+            DocumentAction(
+                icon = Icons.Rounded.DeleteForever,
+                title = R.string.delete,
+                importance = ActionImportance.DESTRUCTIVE,
+                action = onDelete,
+            ),
+        )
+    }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DocumentHeader(scannedDocument: ScannedDocument, modifier: Modifier = Modifier) {
+private fun DocumentHeader(scannedDocument: Document.Managed, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        DocumentThumbnail(thumbnail = scannedDocument.thumbnail?.value)
+        DocumentThumbnail(thumbnail = scannedDocument.thumbnail)
         DocumentInfo(scannedDocument = scannedDocument)
     }
 }
@@ -218,11 +359,11 @@ private fun DocumentThumbnail(thumbnail: Any?, modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DocumentInfo(scannedDocument: ScannedDocument, modifier: Modifier = Modifier) {
+private fun DocumentInfo(scannedDocument: Document.Managed, modifier: Modifier = Modifier) {
     val formattedDate =
-        rememberSaveable(scannedDocument.capturedAtEpochMillis) {
+        rememberSaveable(scannedDocument.createdAtEpochMillis) {
             DateTime.formatDate(
-                timestampMillis = scannedDocument.capturedAtEpochMillis,
+                timestampMillis = scannedDocument.createdAtEpochMillis,
                 format = DateTime.DateFormat.LOCALIZED_MEDIUM,
             )
         }
@@ -233,7 +374,7 @@ private fun DocumentInfo(scannedDocument: ScannedDocument, modifier: Modifier = 
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = scannedDocument.title ?: scannedDocument.filename,
+            text = scannedDocument.name,
             style = MaterialTheme.typography.titleLargeEmphasized,
             textAlign = TextAlign.Center,
             fontWeight = FontWeight.Bold,
@@ -255,31 +396,37 @@ private fun DocumentInfo(scannedDocument: ScannedDocument, modifier: Modifier = 
 
 @Composable
 private fun DocumentTagsRow(
-    sizeBytes: Long,
-    pageCount: Int,
+    sizeBytes: Long?,
+    pageCount: Int?,
     formattedDate: String,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
 
-    val pageCountLabel =
-        pluralStringResource(id = R.plurals.doc_n_pages, count = pageCount, pageCount)
+    val pageCountLabel = pageCount?.let {
+        pluralStringResource(id = R.plurals.doc_n_pages, count = it, it)
+    }
 
     FlowRow(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
         horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
     ) {
-        RoundedTag(
-            icon = Icons.Rounded.Storage,
-            text = formatFileSize(context, sizeBytes),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest),
-        )
-        RoundedTag(
-            icon = Icons.Rounded.FileCopy,
-            text = pageCountLabel,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest),
-        )
+        // What is not known of the document is left out, rather than shown as zero.
+        if (sizeBytes != null) {
+            RoundedTag(
+                icon = Icons.Rounded.Storage,
+                text = formatFileSize(context, sizeBytes),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest),
+            )
+        }
+        if (pageCountLabel != null) {
+            RoundedTag(
+                icon = Icons.Rounded.FileCopy,
+                text = pageCountLabel,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainerHighest),
+            )
+        }
         RoundedTag(
             icon = Icons.Rounded.CalendarMonth,
             text = formattedDate,
@@ -306,15 +453,18 @@ private inline fun DocumentActionsRow(
                         when (option.importance) {
                             ActionImportance.PRIMARY -> MaterialTheme.colorScheme.primary
                             ActionImportance.SECONDARY -> MaterialTheme.colorScheme.secondary
+                            ActionImportance.ORGANIZE -> MaterialTheme.colorScheme.tertiary
                             ActionImportance.DESTRUCTIVE -> MaterialTheme.colorScheme.error
                         }
                     },
                     enabled = true,
+                    maxLines = 2,
                     span = {
-                        when (option.importance) {
-                            ActionImportance.PRIMARY -> GridItemSpan(1)
-                            ActionImportance.SECONDARY -> GridItemSpan(1)
-                            ActionImportance.DESTRUCTIVE -> GridItemSpan(maxCurrentLineSpan)
+                        when {
+                            option.fullWidth -> GridItemSpan(maxLineSpan)
+                            option.importance == ActionImportance.DESTRUCTIVE ->
+                                GridItemSpan(maxCurrentLineSpan)
+                            else -> GridItemSpan(1)
                         }
                     },
                     onClick = { onOptionSelect(option.action) },

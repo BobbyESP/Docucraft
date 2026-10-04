@@ -50,6 +50,9 @@ android {
 
     // The test PDFs live with the engine's tests; the viewer's content tests read the same ones.
     sourceSets.getByName("androidTest").assets.directories += "../composepdf/src/androidTest/assets"
+
+    // The exported schemas, which the migration tests build each old version of the database from.
+    sourceSets.getByName("androidTest").assets.directories += "schemas"
 }
 
 composeCompiler {
@@ -95,6 +98,9 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.datastore.preferences)
 
+    // Background work: reading the text of documents
+    implementation(libs.work.runtime)
+
     // Scanning. The engine lives behind :scanner-api and is only named by the Koin module, so
     // no ML Kit type is on this module's compile classpath at all.
     implementation(project(":scanner-api"))
@@ -102,6 +108,7 @@ dependencies {
 
     // What is on a document's pages, behind a contract text recognition can implement too.
     implementation(project(":document-content-api"))
+    implementation(project(":ocr-mlkit"))
 
     // Links from documents open in a Custom Tab, which stays in the app's task (D4).
     implementation(libs.androidx.browser)
@@ -129,6 +136,7 @@ dependencies {
     testImplementation(libs.mockk)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(platform(libs.androidx.compose.bom))
 
