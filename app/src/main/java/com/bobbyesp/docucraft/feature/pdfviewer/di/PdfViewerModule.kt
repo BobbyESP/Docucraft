@@ -4,6 +4,8 @@
 package com.bobbyesp.docucraft.feature.pdfviewer.di
 
 import android.app.Activity
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.FoldersRepository
+import com.bobbyesp.docucraft.feature.docscanner.domain.repository.TagsRepository
 import com.bobbyesp.docucraft.feature.pdfviewer.data.actions.AndroidDocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.data.actions.AndroidDocumentPrinter
 import com.bobbyesp.docucraft.feature.pdfviewer.data.details.AndroidDocumentFactsReader
@@ -56,8 +58,12 @@ val pdfViewerModule = module {
     factory { DetectDocumentTextUseCase(provider = get()) }
     factory {
         val detectText: DetectDocumentTextUseCase = get()
+        val folders: FoldersRepository = get()
+        val tags: TagsRepository = get()
         ObserveViewerDocumentDetailsUseCase(
             observeDocument = get(),
+            folderOf = folders::observeFolderOf,
+            tagsOf = tags::observeTagsOf,
             facts = get(),
             detectText = { detectText(it) },
         )

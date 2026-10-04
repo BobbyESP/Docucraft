@@ -388,6 +388,14 @@
     <string name="review_new_scans_on_desc">After scanning, you name the document and say where it goes</string>
     <string name="review_new_scans_off_desc">Scans are saved as they come. You can edit them later</string>
     <string name="tags_add">Add tags</string>
-    <string name="tags_edit_short">Edit</string>
-    <string name="preview">Preview</string>
+    <string name="scan_review_section_details">Details</string>
+    <string name="scan_review_section_organize">Organize</string>
+    <string name="document_details_in_library">In your library</string>
+    <string name="document_details_file">File</string>
+    <string name="document_details_scanned">Scanned</string>
+    <string name="document_details_imported">Imported</string>
+    <string name="document_details_modified">Last modified</string>
+    <string name="document_details_file_name">File name</string>
+    <string name="document_details_format">Format</string>
+    <string name="document_details_pdf_version">PDF %1$s</string>
 </resources>

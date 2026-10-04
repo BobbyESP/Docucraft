@@ -150,11 +150,24 @@ shadowed:
   a wide window, chosen by the overlay strategy ([navigation.md](navigation.md#modal-destinations)).
 - ***Go to page*** returns the page through `ViewerPageRequests`, a standing request per document
   that the viewer consumes once it has scrolled there.
-- **Details** shows name, pages, size, description, and whether the document has text (see
-  [text-and-links.md](text-and-links.md#text-in-details)). A catalogued document's details come
-  from the catalogue; an external one's are read from the file.
+- **Details** says what is known of the document, in three parts.
+  - **The document**, as the card that introduces a scan in its review (`DocumentHeroCard`,
+    [scanning.md](scanning.md#reviewing-a-scan)): its first page, its name and description, its
+    pages and size, and whether it is a favorite. The page's badge says where it came from.
+  - **In your library**, for a document the app keeps: its folder, its tags, when it was scanned or
+    imported, and when its content last changed, if it has.
+  - **File**: what its file is called, when that is not its name; the version of PDF it is; and
+    whether it has text (see [text-and-links.md](text-and-links.md#text-in-details)). The text is
+    one row among the others: it is a fact of the file, not what the details are about.
+  - A catalogued document's details come from the catalogue; an external one's are read from the
+    file. What the catalogue does not keep, the version and the text, is read from the file for
+    both, once for as long as the document stays where it is: not again when it is renamed or
+    tagged while the details are open.
+  - **The version is read from the file's first bytes**, not with a renderer. The PDF's own
+    metadata (author, subject, creation date) and the size of its pages are not shown: nothing
+    reads them yet, and `PdfRenderer` is only for counting pages outside the content provider.
   - Its body is written once, on `OverlayForm`, which is what every other overlay of the app is
-    built on: the name and the description are the heading, and each fact is a tile of its own.
+    built on. A fact that is not known is left out rather than shown empty.
   - A fact that is not known is left out, not shown as a dash: another app's document may have no
     size or page count to give. Whether it has text is always said.
 
