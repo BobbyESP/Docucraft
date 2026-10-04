@@ -39,7 +39,7 @@ core/                      shared by features
   presentation/            navigation shell, theme, settings screens, common components
   util/                    BaseViewModel, UiEvent, date/time
   di/                      commonModule, preferencesModule, notificationsServiceModule, analyticsModule
-feature/docscanner/        scanning, the catalogue (Room), Home, document actions, the widget
+feature/docscanner/        scanning, the catalogue (Room), Home, folders and tags, document actions, the widget
 feature/pdfviewer/         the viewer: settings, details, text selection, links, the external-PDF activity
 feature/shared/            what both features need (BasicDocument)
 ```
@@ -94,8 +94,8 @@ A new Koin module is registered in `App.kt`.
 - **One back stack, one Navigation 3 `NavDisplay`**: `core/presentation/navigation/DocucraftApp.kt`,
   rendered by `DocucraftNavDisplay.kt`. `PdfViewerActivity` reuses that display with its own stack.
 - **Keys are typed and `@Serializable`, and each feature owns its own.**
-  - Scanner: `feature/docscanner/navigation/HomeKey.kt`, `DocumentSearchKey.kt` and
-    `DocumentActionKeys.kt`.
+  - Scanner: `feature/docscanner/navigation/HomeKey.kt`, `DocumentSearchKey.kt`,
+    `DocumentActionKeys.kt` and `OrganizationKeys.kt`.
   - Viewer: `feature/pdfviewer/navigation/PdfViewerKey.kt`.
   - Settings: `core/presentation/screens/preferences/navigation/SettingsKeys.kt`.
 - **Features never touch the stack.** They get a `Navigator`
@@ -135,6 +135,12 @@ A new Koin module is registered in `App.kt`.
   `Modifier.blurHalo` instead of a shadow (a menu: `HaloDropdownMenuPopup`), keeping the shadow
   where the halo is not supported. Content taken out of focus uses `Modifier.blur` with a
   `BlurRadiusSpec`. See [docs/architecture.md](docs/architecture.md#blur).
+- **A motion scheme returns the same spec object on every call.** Material remembers a running
+  shape morph by its spec, so a new spec per call makes buttons jump to their pressed shape. See
+  [docs/architecture.md](docs/architecture.md#theme).
+- **A color or an icon the user picks is a key of a closed palette** (`LabelColor`, `FolderIcon`),
+  never a color value or a resource id. Its tones come from the theme (`LabelColor.tones()`). See
+  [docs/organization.md](docs/organization.md#colors-and-icons).
 - Color schemes are generated only when their inputs change (`rememberColorScheme` in `Theme.kt`).
   Every change is built off the main thread. The one exception is the first scheme, built in
   composition because the first frame needs it.

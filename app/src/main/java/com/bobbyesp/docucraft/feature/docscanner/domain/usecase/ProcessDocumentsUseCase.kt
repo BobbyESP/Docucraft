@@ -24,7 +24,11 @@ class ProcessDocumentsUseCase {
         documents: List<Document.Managed>,
         filter: FilterOptions,
     ): List<Document.Managed> =
-        documents.filterByPages(filter).filterBySize(filter).filterByDate(filter)
+        documents
+            .filterByFavorite(filter)
+            .filterByPages(filter)
+            .filterBySize(filter)
+            .filterByDate(filter)
 
     private fun sort(documents: List<Document.Managed>, sort: SortOption): List<Document.Managed> {
         val ascending: Comparator<Document.Managed> =
@@ -38,6 +42,10 @@ class ProcessDocumentsUseCase {
             if (sort.order == SortOption.Order.DESC) ascending.reversed() else ascending
         )
     }
+
+    // Tags are not filtered here: which documents carry a tag is the catalogue's to answer.
+    private fun List<Document.Managed>.filterByFavorite(filter: FilterOptions) =
+        if (filter.favoritesOnly) filter { it.isFavorite } else this
 
     // A document whose pages have not been counted cannot be said to have that many.
     private fun List<Document.Managed>.filterByPages(filter: FilterOptions) =

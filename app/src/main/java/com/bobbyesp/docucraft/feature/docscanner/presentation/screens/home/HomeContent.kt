@@ -10,10 +10,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,66 +24,71 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Sort
-import androidx.compose.material.icons.rounded.ArrowDownward
-import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.automirrored.rounded.Label
 import androidx.compose.material.icons.rounded.CameraAlt
-import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.CreateNewFolder
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.FileCopy
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material.icons.rounded.Warning
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.MenuGroupShapes
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SelectableDropdownMenuItem
 import androidx.compose.material3.SmallExtendedFloatingActionButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.animateFloatingActionButton
 import androidx.compose.material3.carousel.CarouselItemScope
 import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.blur.BlurRadiusSpec
 import androidx.compose.ui.graphics.blur.BlurStop
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -93,36 +98,44 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.bobbyesp.docucraft.R
-import com.bobbyesp.docucraft.core.presentation.components.HaloDropdownMenuPopup
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.blurHalo
-import com.bobbyesp.docucraft.core.presentation.theme.frosted
 import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.core.util.contentRevealTransform
-import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Folder
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.FolderIcon
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Tag
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.labelColor
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.FrostedLargeTopAppBar
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SectionHeader
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SortMenu
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderBadge
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderCard
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.TagDot
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.TagFilterChip
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.DocumentSearchBarButton
+import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
 import com.skydoves.landscapist.ImageOptions
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
+import kotlinx.coroutines.launch
 
 /** Which of Home's faces is showing. Its own type so a change between any two of them animates. */
 private enum class HomePage {
@@ -156,6 +169,7 @@ fun HomeContent(
     onOpenSearch: () -> Unit,
     onOpenDocumentActions: (String) -> Unit,
     modifier: Modifier = Modifier,
+    organization: HomeOrganizationActions = HomeOrganizationActions(),
     selectedDocumentId: String? = null,
     actionsInTopBar: Boolean = false,
 ) {
@@ -177,23 +191,26 @@ fun HomeContent(
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            HomeTopBar(
+            FrostedLargeTopAppBar(
+                title = stringResource(id = R.string.app_name),
                 isContentScrolled = listState.canScrollBackward,
                 scrollBehavior = scrollBehavior,
                 hazeState = hazeState,
-                onOpenSettings = onOpenSettings,
-                documentActions =
+                actions = {
                     if (actionsInTopBar && page == HomePage.Documents) {
-                        {
-                            TopBarDocumentActions(
-                                isScanning = uiState.isScanning,
-                                onOpenSearch = onOpenSearch,
-                                onScan = { onAction(HomeIntent.LaunchScanner) },
-                            )
-                        }
-                    } else {
-                        null
-                    },
+                        TopBarDocumentActions(
+                            isScanning = uiState.isScanning,
+                            onOpenSearch = onOpenSearch,
+                            onScan = { onAction(HomeIntent.LaunchScanner) },
+                        )
+                    }
+                    IconButton(onClick = onOpenSettings, shapes = IconButtonDefaults.shapes()) {
+                        Icon(
+                            imageVector = Icons.Rounded.Settings,
+                            contentDescription = stringResource(id = R.string.settings),
+                        )
+                    }
+                },
             )
         },
         floatingActionButton = {
@@ -236,10 +253,9 @@ fun HomeContent(
                 HomePage.Documents -> {
                     val bottomClearance = if (actionsInTopBar) 16.dp else BottomActionsClearance
                     DocumentsPage(
-                        documents = uiState.visibleDocuments,
-                        recentDocuments = uiState.recentDocuments,
-                        sortOption = uiState.filterOptions.sortBy,
-                        onSortOptionChange = { onAction(HomeIntent.ApplySort(it)) },
+                        uiState = uiState,
+                        onAction = onAction,
+                        organization = organization,
                         onOpenDocument = onOpenDocument,
                         onOpenDocumentActions = onOpenDocumentActions,
                         listState = listState,
@@ -257,59 +273,6 @@ fun HomeContent(
             }
         }
     }
-}
-
-/**
- * The expressive large app bar. It takes a container tone once the list scrolls beneath it, eased
- * rather than switched, and is frosted in it: the documents passing under it stay in view, blurred.
- * Until then nothing is beneath it, and it is the page's own surface.
- */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun HomeTopBar(
-    isContentScrolled: Boolean,
-    scrollBehavior: TopAppBarScrollBehavior,
-    hazeState: HazeState,
-    onOpenSettings: () -> Unit,
-    modifier: Modifier = Modifier,
-    documentActions: (@Composable () -> Unit)? = null,
-) {
-    val scrolledFraction by
-        animateFloatAsState(
-            targetValue = if (isContentScrolled) 1f else 0f,
-            animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
-            label = "HomeTopBarScrolled",
-        )
-    val containerColor =
-        lerp(
-            MaterialTheme.colorScheme.surface,
-            MaterialTheme.colorScheme.surfaceContainer,
-            scrolledFraction,
-        )
-
-    LargeFlexibleTopAppBar(
-        title = { Text(text = stringResource(id = R.string.app_name)) },
-        modifier =
-            modifier.frosted(
-                state = hazeState,
-                style = DocucraftBlurDefaults.surfaceStyle(containerColor),
-            ),
-        actions = {
-            documentActions?.invoke()
-            IconButton(onClick = onOpenSettings, shapes = IconButtonDefaults.shapes()) {
-                Icon(
-                    imageVector = Icons.Rounded.Settings,
-                    contentDescription = stringResource(id = R.string.settings),
-                )
-            }
-        },
-        colors =
-            TopAppBarDefaults.topAppBarColors(
-                containerColor = Color.Transparent,
-                scrolledContainerColor = Color.Transparent,
-            ),
-        scrollBehavior = scrollBehavior,
-    )
 }
 
 /**
@@ -421,16 +384,29 @@ private val FlatFabElevation
         )
 
 /**
- * Recents first, then every document in the chosen order. Categories will sit between the two once
- * the catalogue has them.
+ * Where Home sends the user to organize the library. Navigation, so none of it is an intent: Home
+ * only says where the user asked to go.
+ *
+ * @property onOpenFolder a folder, or the root of the library for `null`.
+ */
+@Immutable
+data class HomeOrganizationActions(
+    val onOpenFolder: (String?) -> Unit = {},
+    val onOpenFolderActions: (String) -> Unit = {},
+    val onCreateFolder: () -> Unit = {},
+    val onManageTags: () -> Unit = {},
+)
+
+/**
+ * Home, top to bottom: what was used last; the folders pinned here; a shelf for each tag the user
+ * chose; and then every document, in the chosen order and narrowed down by the chosen filters.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DocumentsPage(
-    documents: List<Document.Managed>,
-    recentDocuments: List<RecentDocument>,
-    sortOption: SortOption,
-    onSortOptionChange: (SortOption) -> Unit,
+    uiState: HomeUiState,
+    onAction: (HomeIntent) -> Unit,
+    organization: HomeOrganizationActions,
     onOpenDocument: (String) -> Unit,
     onOpenDocumentActions: (String) -> Unit,
     listState: LazyListState,
@@ -439,6 +415,14 @@ private fun DocumentsPage(
     hazeState: HazeState,
 ) {
     val motionScheme = MaterialTheme.motionScheme
+    val scope = rememberCoroutineScope()
+    val documents = uiState.visibleDocuments
+    val recentDocuments = uiState.recentDocuments
+    val filters = uiState.filterOptions
+
+    // Where the list of every document starts, after the two items of each section above it.
+    val libraryHeaderIndex =
+        (if (recentDocuments.isNotEmpty()) 2 else 0) + 2 + 2 * uiState.tagSections.size
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -460,17 +444,93 @@ private fun DocumentsPage(
             }
         }
 
+        // Always here, pinned folders or not: it is also the way into the folders.
+        item(key = "folders-header", contentType = "section-header") {
+            SectionHeader(
+                title = stringResource(R.string.folders),
+                trailing = {
+                    TextButton(
+                        onClick = { organization.onOpenFolder(null) },
+                        shapes = ButtonDefaults.shapes(),
+                    ) {
+                        Text(text = stringResource(R.string.see_all))
+                    }
+                },
+            )
+        }
+        item(key = "folders", contentType = "folders") {
+            PinnedFoldersRow(
+                folders = uiState.pinnedFolders,
+                onOpenFolder = organization.onOpenFolder,
+                onOpenFolderActions = organization.onOpenFolderActions,
+                onCreateFolder = organization.onCreateFolder,
+                modifier = Modifier.padding(bottom = 16.dp).then(animateItemWith(motionScheme)),
+            )
+        }
+
+        for (section in uiState.tagSections) {
+            item(key = "tag-header-${section.tag.uuid}", contentType = "section-header") {
+                SectionHeader(
+                    title = section.tag.name,
+                    modifier = animateItemWith(motionScheme),
+                    leading = { TagDot(color = section.tag.labelColor) },
+                    trailing = {
+                        TextButton(
+                            onClick = {
+                                onAction(HomeIntent.ShowOnlyTag(section.tag.uuid))
+                                // Down to the list it now narrows, which is where "all" is.
+                                scope.launch {
+                                    listState.animateScrollToItem(libraryHeaderIndex)
+                                }
+                            },
+                            shapes = ButtonDefaults.shapes(),
+                        ) {
+                            Text(text = stringResource(R.string.see_all))
+                        }
+                    },
+                )
+            }
+            item(key = "tag-${section.tag.uuid}", contentType = "tag-shelf") {
+                TagShelf(
+                    documents = section.documents,
+                    onOpenDocument = onOpenDocument,
+                    onOpenDocumentActions = onOpenDocumentActions,
+                    modifier = Modifier.padding(bottom = 16.dp).then(animateItemWith(motionScheme)),
+                )
+            }
+        }
+
         item(key = "documents-header", contentType = "section-header") {
             SectionHeader(
                 title = stringResource(R.string.documents),
                 trailing = {
                     SortMenu(
-                        currentSortOption = sortOption,
-                        onSortOptionChange = onSortOptionChange,
+                        currentSortOption = filters.sortBy,
+                        onSortOptionChange = { onAction(HomeIntent.ApplySort(it)) },
                         hazeState = hazeState,
                     )
                 },
             )
+        }
+        item(key = "documents-filters", contentType = "filters") {
+            LibraryFilters(
+                tags = uiState.tags,
+                favoritesOnly = filters.favoritesOnly,
+                selectedTagUuids = filters.tagUuids,
+                onToggleFavorites = { onAction(HomeIntent.ToggleFavoritesFilter) },
+                onToggleTag = { onAction(HomeIntent.ToggleTagFilter(it)) },
+                onManageTags = organization.onManageTags,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+        }
+
+        if (documents.isEmpty()) {
+            item(key = "documents-none", contentType = "placeholder") {
+                NothingMatchesFilters(
+                    onClearFilters = { onAction(HomeIntent.ClearFilters) },
+                    modifier = animateItemWith(motionScheme),
+                )
+            }
         }
 
         itemsIndexed(
@@ -497,32 +557,247 @@ private fun DocumentsPage(
     }
 }
 
+/**
+ * The folders pinned to Home, as cards in their own colors, and a way to make one at the end. With
+ * none pinned, the row says what goes here instead of leaving a gap under its header.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun SectionHeader(
-    title: String,
+private fun PinnedFoldersRow(
+    folders: List<Folder>,
+    onOpenFolder: (String?) -> Unit,
+    onOpenFolderActions: (String) -> Unit,
+    onCreateFolder: () -> Unit,
     modifier: Modifier = Modifier,
-    trailing: (@Composable () -> Unit)? = null,
 ) {
-    Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .padding(start = 20.dp, end = if (trailing != null) 8.dp else 20.dp),
+    val motionScheme = MaterialTheme.motionScheme
+
+    if (folders.isEmpty()) {
+        Surface(
+            modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            shape = DocucraftShapeDefaults.cardShape,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                FolderBadge(icon = FolderIcon.Default, color = null)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.pinned_folders_empty_title),
+                        style = MaterialTheme.typography.titleMediumEmphasized,
+                    )
+                    Text(
+                        text = stringResource(R.string.pinned_folders_empty_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                FilledTonalIconButton(
+                    onClick = onCreateFolder,
+                    shapes = IconButtonDefaults.shapes(),
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.CreateNewFolder,
+                        contentDescription = stringResource(R.string.folder_new),
+                    )
+                }
+            }
+        }
+        return
+    }
+
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(items = folders, key = { it.uuid }, contentType = { "folder" }) { folder ->
+            FolderCard(
+                folder = folder,
+                onClick = { onOpenFolder(folder.uuid) },
+                onLongClick = { onOpenFolderActions(folder.uuid) },
+                modifier = animateItemWith(motionScheme),
+            )
+        }
+    }
+}
+
+/**
+ * The documents of a tag, side by side as their first pages: a shelf, shorter than Recents so that
+ * the two do not read as the same thing twice.
+ */
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun TagShelf(
+    documents: List<Document.Managed>,
+    onOpenDocument: (String) -> Unit,
+    onOpenDocumentActions: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val motionScheme = MaterialTheme.motionScheme
+
+    if (documents.isEmpty()) {
+        Text(
+            text = stringResource(R.string.tag_section_empty),
+            modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        return
+    }
+
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(items = documents, key = { it.uuid }, contentType = { "document" }) { document ->
+            Column(
+                modifier =
+                    Modifier.width(112.dp)
+                        .then(animateItemWith(motionScheme))
+                        .clip(MaterialTheme.shapes.large)
+                        .combinedClickable(
+                            role = Role.Button,
+                            onLongClickLabel = stringResource(R.string.more_options),
+                            onLongClick = { onOpenDocumentActions(document.uuid) },
+                            onClick = { onOpenDocument(document.uuid) },
+                        )
+                        .padding(4.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Box(
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .aspectRatio(Measurements.A4_RATIO)
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (LocalInspectionMode.current) {
+                        PreviewPlaceholder()
+                    } else {
+                        AsyncImage(
+                            modifier = Modifier.fillMaxSize(),
+                            imageModel = document.thumbnail,
+                            shape = RectangleShape,
+                            imageOptions =
+                                ImageOptions(
+                                    alignment = Alignment.TopCenter,
+                                    contentDescription = null,
+                                ),
+                            failure = { PreviewPlaceholder() },
+                        )
+                    }
+                }
+                Text(
+                    text = document.name,
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+/**
+ * What the list of documents is narrowed down by: favorites, and the tags. Chips in a row that
+ * scrolls, with the way to the tags themselves at its end.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun LibraryFilters(
+    tags: List<Tag>,
+    favoritesOnly: Boolean,
+    selectedTagUuids: Set<String>,
+    onToggleFavorites: () -> Unit,
+    onToggleTag: (String) -> Unit,
+    onManageTags: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val hapticFeedback = LocalHapticFeedback.current
+
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        item(key = "favorites", contentType = "favorites") {
+            FilterChip(
+                selected = favoritesOnly,
+                onClick = {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                    onToggleFavorites()
+                },
+                label = { Text(text = stringResource(R.string.favorites)) },
+                shapes = FilterChipDefaults.shapes(),
+                leadingIcon = {
+                    Icon(
+                        imageVector =
+                            if (favoritesOnly) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+                        contentDescription = null,
+                        modifier = Modifier.size(FilterChipDefaults.IconSize),
+                    )
+                },
+            )
+        }
+        items(items = tags, key = { it.uuid }, contentType = { "tag" }) { tag ->
+            TagFilterChip(
+                tag = tag,
+                selected = tag.uuid in selectedTagUuids,
+                onClick = {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                    onToggleTag(tag.uuid)
+                },
+                modifier = Modifier.animateItem(),
+            )
+        }
+        item(key = "manage-tags", contentType = "manage") {
+            AssistChip(
+                onClick = onManageTags,
+                label = {
+                    Text(
+                        text =
+                            stringResource(
+                                if (tags.isEmpty()) R.string.tag_new else R.string.tags_manage
+                            )
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.Label,
+                        contentDescription = null,
+                        modifier = Modifier.size(AssistChipDefaults.IconSize),
+                    )
+                },
+            )
+        }
+    }
+}
+
+/** The library has documents, and none of them passes the filters. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun NothingMatchesFilters(onClearFilters: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
         Text(
-            text = title.uppercase(),
-            style =
-                MaterialTheme.typography.labelLargeEmphasized.copy(
-                    letterSpacing = 1.25.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium,
-                ),
-            modifier = Modifier.weight(1f),
+            text = stringResource(R.string.filters_no_matches),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
         )
-        trailing?.invoke()
+        FilledTonalButton(onClick = onClearFilters, shapes = ButtonDefaults.shapes()) {
+            Text(text = stringResource(R.string.filters_clear))
+        }
     }
 }
 
@@ -680,161 +955,6 @@ private fun titleBackdropBlur(titleVisibility: Float): BlurRadiusSpec =
             ),
         )
     )
-
-/**
- * The current order, named on the button itself, and a menu to change it: criteria in one group,
- * direction in the other. A transient popup anchored here, not a destination. Its groups are
- * frosted over the list they open on, and a blur halo lifts the menu where Material would give it a
- * shadow.
- */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun SortMenu(
-    currentSortOption: SortOption,
-    onSortOptionChange: (SortOption) -> Unit,
-    hazeState: HazeState,
-    modifier: Modifier = Modifier,
-) {
-    val hapticFeedback = LocalHapticFeedback.current
-    var expanded by remember { mutableStateOf(false) }
-
-    val ascending = currentSortOption.order == SortOption.Order.ASC
-    val arrowRotation by
-        animateFloatAsState(
-            targetValue = if (ascending) 0f else 180f,
-            animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
-            label = "SortOrderArrow",
-        )
-
-    val changeSort = { sortOption: SortOption ->
-        hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
-        onSortOptionChange(sortOption)
-        expanded = false
-    }
-
-    val sortByLabel = stringResource(R.string.sort_by)
-    val orderLabel =
-        stringResource(if (ascending) R.string.sort_ascending else R.string.sort_descending)
-    val criterionLabel = currentSortOption.criteria.label()
-
-    Box(modifier = modifier) {
-        TextButton(
-            onClick = { expanded = true },
-            shapes = ButtonDefaults.shapes(),
-            modifier =
-                Modifier.semantics {
-                    contentDescription = sortByLabel
-                    stateDescription = "$criterionLabel, $orderLabel"
-                },
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Rounded.Sort,
-                contentDescription = null,
-                modifier = Modifier.size(ButtonDefaults.IconSize),
-            )
-            Spacer(modifier = Modifier.width(ButtonDefaults.IconSpacing))
-            Text(text = criterionLabel)
-            Spacer(modifier = Modifier.width(4.dp))
-            Icon(
-                imageVector = Icons.Rounded.ArrowUpward,
-                contentDescription = null,
-                modifier =
-                    Modifier.size(ButtonDefaults.IconSize).graphicsLayer {
-                        rotationZ = arrowRotation
-                    },
-            )
-        }
-
-        HaloDropdownMenuPopup(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            hazeState = hazeState,
-            // The two groups read as one menu: the halo follows their outer corners.
-            shape = MenuDefaults.groupShape(index = 0, count = 1).shape,
-        ) {
-            val criteria = SortOption.Criteria.entries
-
-            FrostedMenuGroup(
-                shapes = MenuDefaults.groupShape(index = 0, count = 2),
-                hazeState = hazeState,
-            ) {
-                criteria.forEachIndexed { index, criterion ->
-                    SelectableDropdownMenuItem(
-                        selected = criterion == currentSortOption.criteria,
-                        onClick = { changeSort(currentSortOption.copy(criteria = criterion)) },
-                        text = { Text(text = criterion.label()) },
-                        shapes = MenuDefaults.itemShape(index = index, count = criteria.size),
-                        selectedLeadingIcon = {
-                            Icon(Icons.Rounded.Check, contentDescription = null)
-                        },
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(MenuDefaults.GroupSpacing))
-
-            FrostedMenuGroup(
-                shapes = MenuDefaults.groupShape(index = 1, count = 2),
-                hazeState = hazeState,
-            ) {
-                val orders =
-                    listOf(
-                        SortOption.Order.ASC to
-                            (R.string.sort_ascending to Icons.Rounded.ArrowUpward),
-                        SortOption.Order.DESC to
-                            (R.string.sort_descending to Icons.Rounded.ArrowDownward),
-                    )
-                orders.forEachIndexed { index, (order, labelAndIcon) ->
-                    val (label, icon) = labelAndIcon
-                    SelectableDropdownMenuItem(
-                        selected = order == currentSortOption.order,
-                        onClick = { changeSort(currentSortOption.copy(order = order)) },
-                        text = { Text(text = stringResource(label)) },
-                        shapes = MenuDefaults.itemShape(index = index, count = orders.size),
-                        leadingIcon = { Icon(icon, contentDescription = null) },
-                        selectedLeadingIcon = {
-                            Icon(Icons.Rounded.Check, contentDescription = null)
-                        },
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * A menu group frosted over [hazeState]'s content. Its shadow is left to the menu's halo, or kept
- * where there is none.
- *
- * The frost goes around the group, because the group's own modifier lands inside its container. It
- * keeps one shape, hovered or not, so that the frost, clipped to it, always matches.
- */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun FrostedMenuGroup(
-    shapes: MenuGroupShapes,
-    hazeState: HazeState,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val shape = shapes.shape
-    Box(
-        modifier =
-            Modifier.frosted(
-                state = hazeState,
-                style =
-                    DocucraftBlurDefaults.surfaceStyle(MenuDefaults.groupStandardContainerColor),
-                shape = shape,
-            )
-    ) {
-        DropdownMenuGroup(
-            shapes = MenuGroupShapes(shape = shape, inactiveShape = shape),
-            containerColor = Color.Transparent,
-            shadowElevation =
-                if (DocucraftBlurDefaults.isHaloSupported) 0.dp else MenuDefaults.ShadowElevation,
-            content = content,
-        )
-    }
-}
 
 @Composable
 private fun EmptyStateScreen(onScanDocument: () -> Unit, modifier: Modifier = Modifier) {

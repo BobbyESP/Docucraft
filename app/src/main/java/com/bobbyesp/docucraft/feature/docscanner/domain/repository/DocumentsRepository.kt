@@ -67,6 +67,12 @@ interface DocumentsRepository {
     suspend fun modifyFields(uuid: String, title: String?, description: String?)
 
     /**
+     * Marks a document of the library as a favorite, or takes the mark away. Nothing changes for a
+     * document of another app, or for one that is not there.
+     */
+    suspend fun setFavorite(uuid: String, favorite: Boolean)
+
+    /**
      * Forgets the document with this [uuid], and everything the catalogue kept about it.
      *
      * Only the catalogue entry goes; removing the document itself is storage's job.

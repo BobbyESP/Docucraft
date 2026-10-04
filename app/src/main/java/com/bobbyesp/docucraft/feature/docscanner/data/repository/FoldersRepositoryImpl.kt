@@ -50,6 +50,12 @@ class FoldersRepositoryImpl(
 
     override suspend fun getFolder(uuid: String): Folder? = folderDao.rowByUuid(uuid)?.toModel()
 
+    override fun observeFolder(uuid: String): Flow<Folder?> =
+        folderDao.observeByUuid(uuid).map { it?.toModel() }
+
+    override fun observeFolderOf(documentUuid: String): Flow<Folder?> =
+        folderDao.observeFolderOf(documentUuid).map { it?.toModel() }
+
     override suspend fun pathTo(uuid: String): List<Folder> = database.withTransaction {
         pathRowsTo(uuid).map { it.toModel() }
     }
@@ -236,6 +242,8 @@ class FoldersRepositoryImpl(
                     SortOption(criteria, folder.sortOrder ?: SortOption.Order.DESC)
                 },
             createdAtEpochMillis = folder.createdAt,
+            documentCount = documentCount,
+            folderCount = folderCount,
         )
 
     private companion object {

@@ -17,6 +17,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.ExportOutcome
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ForgetLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentFavoriteUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentTextRecognitionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 
@@ -39,6 +40,7 @@ class DocumentActionsViewModel(
     private val documentExporter: DocumentExporter,
     private val forgetLinkedDocument: ForgetLinkedDocumentUseCase,
     private val setTextRecognition: SetDocumentTextRecognitionUseCase,
+    private val setFavorite: SetDocumentFavoriteUseCase,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
 ) :
@@ -78,6 +80,11 @@ class DocumentActionsViewModel(
             is DocumentActionsIntent.ConfirmEdit -> edit(intent.title, intent.description)
             DocumentActionsIntent.RemoveFromRecents -> removeFromRecents()
             is DocumentActionsIntent.SetTextRecognition -> setTextRecognition(intent.enabled)
+            // No message: the name and the icon of the action change with it, in plain sight.
+            is DocumentActionsIntent.SetFavorite ->
+                launch {
+                    setFavorite(documentUuid, intent.favorite)
+                }
         }
     }
 

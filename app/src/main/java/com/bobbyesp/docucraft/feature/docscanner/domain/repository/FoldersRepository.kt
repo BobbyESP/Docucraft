@@ -44,6 +44,12 @@ interface FoldersRepository {
 
     suspend fun getFolder(uuid: String): Folder?
 
+    /** One folder, emitted again whenever it or what it holds changes, and `null` once deleted. */
+    fun observeFolder(uuid: String): Flow<Folder?>
+
+    /** The folder a document is in, or `null` while it is in the root. */
+    fun observeFolderOf(documentUuid: String): Flow<Folder?>
+
     /**
      * From the root down to the folder [uuid], itself included. Empty when there is no such folder.
      */

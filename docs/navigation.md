@@ -38,6 +38,7 @@ One back stack, one Navigation 3 `NavDisplay`, typed keys. Code:
   | `feature/docscanner/navigation/HomeKey.kt` | `Home` |
   | `feature/docscanner/navigation/DocumentSearchKey.kt` | `DocumentSearch` |
   | `feature/docscanner/navigation/DocumentActionKeys.kt` | `DocumentActions`, `EditDocument`, `DeleteDocument` |
+  | `feature/docscanner/navigation/OrganizationKeys.kt` | `FolderContents`, `FolderEditor`, `FolderActions`, `DeleteFolder`, `MoveToFolder`, `DocumentTags`, `ManageTags`, `TagEditor`, `DeleteTag` |
   | `feature/pdfviewer/navigation/PdfViewerKey.kt` | `PdfViewer`, `ExternalPdfViewer`, `PdfDocumentDetails`, `GoToPage` |
   | `core/.../preferences/navigation/SettingsKeys.kt` | `Settings`, `AppearanceSettings`, `DocumentViewerSettings` |
 

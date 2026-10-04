@@ -264,6 +264,17 @@ abstract class DocumentDao {
         updatedAt: Long,
     ): Int
 
+    /**
+     * Only a document the app keeps can be a favorite: another app's is not organized.
+     *
+     * @return How many documents were changed.
+     */
+    @Query(
+        "UPDATE documents SET is_favorite = :favorite, updated_at = :updatedAt " +
+            "WHERE uuid = :uuid AND custody = 'MANAGED'"
+    )
+    abstract suspend fun setFavorite(uuid: String, favorite: Boolean, updatedAt: Long): Int
+
     /** Its activity, pages and tags go with it, and the full-text indexes forget it. */
     @Query("DELETE FROM documents WHERE uuid = :uuid")
     abstract suspend fun deleteByUuid(uuid: String): Int

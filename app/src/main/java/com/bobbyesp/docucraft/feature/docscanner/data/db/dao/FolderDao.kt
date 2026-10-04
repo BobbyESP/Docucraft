@@ -13,13 +13,21 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.DocumentEntity
 import com.bobbyesp.docucraft.feature.docscanner.data.db.entity.FolderEntity
 import kotlinx.coroutines.flow.Flow
 
-/** A folder with the uuid of its parent, which is how the rest of the app refers to it. */
+/**
+ * A folder with the uuid of its parent, which is how the rest of the app refers to it, and how much
+ * is directly inside it. The bin's documents are not counted: they are not shown in it either.
+ */
 private const val FOLDER_ROWS =
-    "SELECT f.*, p.uuid AS parent_uuid FROM folders f LEFT JOIN folders p ON p.id = f.parent_id"
+    "SELECT f.*, p.uuid AS parent_uuid, " +
+        "(SELECT COUNT(*) FROM library_documents d WHERE d.folder_id = f.id) AS document_count, " +
+        "(SELECT COUNT(*) FROM folders c WHERE c.parent_id = f.id) AS folder_count " +
+        "FROM folders f LEFT JOIN folders p ON p.id = f.parent_id"
 
 class FolderRow(
     @Embedded val folder: FolderEntity,
     @ColumnInfo(name = "parent_uuid") val parentUuid: String?,
+    @ColumnInfo(name = "document_count") val documentCount: Int,
+    @ColumnInfo(name = "folder_count") val folderCount: Int,
 )
 
 /**
@@ -39,6 +47,12 @@ interface FolderDao {
     fun observePinned(): Flow<List<FolderRow>>
 
     @Query("$FOLDER_ROWS WHERE f.uuid = :uuid") suspend fun rowByUuid(uuid: String): FolderRow?
+
+    @Query("$FOLDER_ROWS WHERE f.uuid = :uuid") fun observeByUuid(uuid: String): Flow<FolderRow?>
+
+    /** The folder a document is in. No row for a document in the root. */
+    @Query("$FOLDER_ROWS WHERE f.id = (SELECT folder_id FROM documents WHERE uuid = :documentUuid)")
+    fun observeFolderOf(documentUuid: String): Flow<FolderRow?>
 
     @Query("$FOLDER_ROWS WHERE f.id = :id") suspend fun rowById(id: Long): FolderRow?
 

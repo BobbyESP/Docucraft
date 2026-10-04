@@ -35,6 +35,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.ExternalDocumentAccess
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ArrangeHomeSectionsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DescribeLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ForgetLinkedDocumentUseCase
@@ -43,6 +44,8 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositi
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.IndexDocumentTextUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveHomeSectionsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveLibraryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveRecentDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
@@ -50,11 +53,15 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOp
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RegisterLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ResumeTextIndexingUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveFolderUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveLinkedToLibraryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveTagUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentFavoriteUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentTextRecognitionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetReadingPositionMemoryUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.TagDocumentByNameUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.di.EMBEDDED_TEXT
 import com.bobbyesp.docucraft.feature.pdfviewer.di.TEXT_RECOGNITION
@@ -159,5 +166,14 @@ val documentScannerDataModule = module {
         )
     }
     factory { SetDocumentTextRecognitionUseCase(pages = get(), queue = get()) }
+
+    // Organizing the library: folders, tags and favorites.
+    factory { ObserveLibraryUseCase(documents = get(), tags = get()) }
+    factory { ObserveHomeSectionsUseCase(folders = get(), tags = get()) }
+    factory { SetDocumentFavoriteUseCase(documents = get()) }
+    factory { SaveFolderUseCase(folders = get()) }
+    factory { SaveTagUseCase(tags = get()) }
+    factory { TagDocumentByNameUseCase(tags = get()) }
+    factory { ArrangeHomeSectionsUseCase(tags = get()) }
     factory { ResumeTextIndexingUseCase(pages = get(), queue = get()) }
 }

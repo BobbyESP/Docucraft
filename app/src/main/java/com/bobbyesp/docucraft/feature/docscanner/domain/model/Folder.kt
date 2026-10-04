@@ -19,6 +19,9 @@ import java.text.Normalizer
  * @property pinnedAtEpochMillis When it was pinned to Home, which is also where it goes among the
  *   pinned folders; `null` when it is not pinned.
  * @property sort How its contents are ordered, if the user chose.
+ * @property documentCount The library's documents directly in it: not those of its subfolders, and
+ *   not those in the bin.
+ * @property folderCount The folders directly in it.
  */
 data class Folder(
     val uuid: String,
@@ -29,6 +32,8 @@ data class Folder(
     val pinnedAtEpochMillis: Long?,
     val sort: SortOption?,
     val createdAtEpochMillis: Long,
+    val documentCount: Int = 0,
+    val folderCount: Int = 0,
 ) {
     val isPinned: Boolean
         get() = pinnedAtEpochMillis != null

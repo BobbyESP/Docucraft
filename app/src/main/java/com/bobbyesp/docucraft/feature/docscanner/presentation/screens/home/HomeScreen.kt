@@ -28,6 +28,7 @@ fun HomeScreen(
     onOpenSearch: () -> Unit,
     onOpenDocumentActions: (String) -> Unit,
     modifier: Modifier = Modifier,
+    organization: HomeOrganizationActions = HomeOrganizationActions(),
     viewModel: HomeViewModel = koinViewModel(),
     selectedDocumentId: String? = null,
     actionsInTopBar: Boolean = false,
@@ -48,6 +49,7 @@ fun HomeScreen(
         },
         onOpenSearch = onOpenSearch,
         onOpenDocumentActions = onOpenDocumentActions,
+        organization = organization,
         selectedDocumentId = selectedDocumentId,
         actionsInTopBar = actionsInTopBar,
     )

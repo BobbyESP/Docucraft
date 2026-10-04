@@ -119,8 +119,10 @@ The save reports its own failure. Earlier, a failed save still congratulated the
   - Migrations are in `DocumentsDatabaseMigrations.kt`, and schemas are exported to
     `app/schemas/`. A schema change means: bump the version, add the migration, and commit the new
     schema JSON. There is no destructive fallback: a migration keeps every document and its uuid.
-- **Home's list.** `ObserveDocumentsUseCase` feeds `HomeViewModel.observeDocuments`, which combines
-  it with the filters and hands both to `ProcessDocumentsUseCase`: **filter**, then **sort**.
+- **Home's list.** `HomeViewModel.observeDocuments` takes the library, or what carries the chosen
+  tags (`ObserveLibraryUseCase`), and hands it with the filters to `ProcessDocumentsUseCase`:
+  **filter**, then **sort**. What else Home shows, and how the library is organized, is in
+  [organization.md](organization.md).
 - **Recents.** The shelf at the top of Home is the documents used last
   (`ObserveRecentDocumentsUseCase`), whatever the list below is sorted by.
   - **A document is recent because it was opened, or because it is new.** `document_activity`

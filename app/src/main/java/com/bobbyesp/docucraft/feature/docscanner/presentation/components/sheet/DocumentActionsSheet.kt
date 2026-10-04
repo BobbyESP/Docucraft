@@ -19,7 +19,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.DriveFileMove
 import androidx.compose.material.icons.automirrored.rounded.InsertDriveFile
+import androidx.compose.material.icons.automirrored.rounded.Label
 import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.EditNote
@@ -28,6 +30,8 @@ import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.SaveAs
 import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material.icons.rounded.Star
+import androidx.compose.material.icons.rounded.StarBorder
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -70,6 +74,7 @@ import kotlinx.collections.immutable.persistentListOf
 internal enum class ActionImportance {
     PRIMARY,
     SECONDARY,
+    ORGANIZE,
     DESTRUCTIVE,
 }
 
@@ -100,16 +105,23 @@ fun DocumentActionsContent(
     onDelete: () -> Unit,
     onModifyFields: () -> Unit,
     onTextRecognitionChange: (Boolean) -> Unit,
+    onFavoriteChange: (Boolean) -> Unit,
+    onMove: () -> Unit,
+    onEditTags: () -> Unit,
     modifier: Modifier = Modifier,
     stacked: Boolean = true,
 ) {
     val options =
         rememberDocumentActions(
             recognizesText = scannedDocument.ocrEnabled,
+            isFavorite = scannedDocument.isFavorite,
             onSave = onSave,
             onShare = onShare,
             onModifyFields = onModifyFields,
             onTextRecognitionChange = onTextRecognitionChange,
+            onFavoriteChange = onFavoriteChange,
+            onMove = onMove,
+            onEditTags = onEditTags,
             onDelete = onDelete,
         )
 
@@ -235,13 +247,17 @@ private fun LinkedDocumentHeader(document: Document.Linked, modifier: Modifier =
 @Composable
 private fun rememberDocumentActions(
     recognizesText: Boolean,
+    isFavorite: Boolean,
     onSave: () -> Unit,
     onShare: () -> Unit,
     onModifyFields: () -> Unit,
     onTextRecognitionChange: (Boolean) -> Unit,
+    onFavoriteChange: (Boolean) -> Unit,
+    onMove: () -> Unit,
+    onEditTags: () -> Unit,
     onDelete: () -> Unit,
 ): ImmutableList<DocumentAction> =
-    remember(recognizesText) {
+    remember(recognizesText, isFavorite) {
         persistentListOf(
             DocumentAction(
                 icon = Icons.Rounded.SaveAs,
@@ -260,6 +276,26 @@ private fun rememberDocumentActions(
                 title = R.string.edit_fields,
                 importance = ActionImportance.SECONDARY,
                 action = onModifyFields,
+            ),
+            // What organizes the document, in a row of its own kind. The star is filled once
+            // the document is a favorite.
+            DocumentAction(
+                icon = if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
+                title = R.string.favorite,
+                importance = ActionImportance.ORGANIZE,
+                action = { onFavoriteChange(!isFavorite) },
+            ),
+            DocumentAction(
+                icon = Icons.AutoMirrored.Rounded.DriveFileMove,
+                title = R.string.move,
+                importance = ActionImportance.ORGANIZE,
+                action = onMove,
+            ),
+            DocumentAction(
+                icon = Icons.AutoMirrored.Rounded.Label,
+                title = R.string.tags,
+                importance = ActionImportance.ORGANIZE,
+                action = onEditTags,
             ),
             // Named for what tapping it does, since it changes with the document. A row to itself:
             // neither name fits in a cell of the grid.
@@ -417,10 +453,12 @@ private inline fun DocumentActionsRow(
                         when (option.importance) {
                             ActionImportance.PRIMARY -> MaterialTheme.colorScheme.primary
                             ActionImportance.SECONDARY -> MaterialTheme.colorScheme.secondary
+                            ActionImportance.ORGANIZE -> MaterialTheme.colorScheme.tertiary
                             ActionImportance.DESTRUCTIVE -> MaterialTheme.colorScheme.error
                         }
                     },
                     enabled = true,
+                    maxLines = 2,
                     span = {
                         when {
                             option.fullWidth -> GridItemSpan(maxLineSpan)

@@ -10,17 +10,23 @@ import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentActivityRepository
+import com.bobbyesp.docucraft.feature.docscanner.FakeFoldersRepository
+import com.bobbyesp.docucraft.feature.docscanner.FakeTagsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.RecentDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.model.Tag
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveHomeSectionsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveLibraryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveRecentDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
+import com.bobbyesp.docucraft.feature.docscanner.testFolder
 import com.bobbyesp.docucraft.feature.docscanner.testLinkedDocument
 import com.bobbyesp.docucraft.feature.docscanner.testRecent
 import com.bobbyesp.scanner.ContentRef
@@ -103,12 +109,21 @@ class HomeViewModelTest {
         saveResult: Result<String> = Result.success("doc-1"),
         savedState: SavedStateHandle = SavedStateHandle(),
         pendingScan: ScanOutcome? = null,
+        folders: FakeFoldersRepository = FakeFoldersRepository(),
+        tags: FakeTagsRepository = FakeTagsRepository(),
     ): HomeViewModel {
         documentScanner.pending = pendingScan
         val observeDocumentsUseCase: ObserveDocumentsUseCase = mockk()
         val stringProvider: StringProvider = mockk(relaxed = true)
 
         every { observeDocumentsUseCase() } returns documents
+        // The whole library comes from the same flow; a tag narrows it down through the tags.
+        val observeLibraryUseCase: ObserveLibraryUseCase = mockk()
+        every { observeLibraryUseCase(any()) } answers
+            {
+                val wanted = firstArg<Set<String>>()
+                if (wanted.isEmpty()) documents else tags.observeDocumentsWithAll(wanted.toList())
+            }
         coEvery { saveScanDraftUseCase(any()) } returns saveResult
         every { stringProvider.getError(any<Throwable>()) } returns "Something went wrong"
         every { stringProvider.get(any(), *anyVararg()) } returns "Something went wrong"
@@ -120,6 +135,9 @@ class HomeViewModelTest {
             observeDocumentsUseCase = observeDocumentsUseCase,
             observeRecentDocumentsUseCase =
                 ObserveRecentDocumentsUseCase(FakeDocumentActivityRepository(recents)),
+            observeLibraryUseCase = observeLibraryUseCase,
+            observeHomeSectionsUseCase = ObserveHomeSectionsUseCase(folders, tags),
+            tags = tags,
             processDocumentsUseCase = ProcessDocumentsUseCase(),
             saveScanDraftUseCase = saveScanDraftUseCase,
             stringProvider = stringProvider,
@@ -141,6 +159,97 @@ class HomeViewModelTest {
             viewModel.defaultEvents.toList(events)
         }
     }
+
+    // ---------------- organization ----------------
+
+    @Test
+    fun `Home shows the pinned folders and the sections of the chosen tags`() =
+        runTest(testDispatcher) {
+            val document = fakeDocument()
+            val viewModel =
+                createViewModel(
+                    documents = flowOf(listOf(document)),
+                    folders =
+                        FakeFoldersRepository(
+                            folders =
+                                listOf(
+                                    testFolder("pinned", pinnedAtEpochMillis = 1),
+                                    testFolder("no"),
+                                )
+                        ),
+                    tags =
+                        FakeTagsRepository(
+                            tags =
+                                listOf(
+                                    Tag("shown", "Shown", color = null, homePosition = 0),
+                                    Tag("hidden", "Hidden", color = null, homePosition = null),
+                                ),
+                            documents = listOf(document),
+                            assignments = mapOf(document.uuid to setOf("shown")),
+                        ),
+                )
+            advanceUntilIdle()
+
+            val state = viewModel.state.value
+            assertEquals(listOf("pinned"), state.pinnedFolders.map { it.uuid })
+            assertEquals(listOf("shown"), state.tagSections.map { it.tag.uuid })
+            assertEquals(listOf(document), state.tagSections.single().documents)
+            assertEquals(2, state.tags.size)
+        }
+
+    @Test
+    fun `the list is narrowed down to favorites and to a tag, and cleared keeping its order`() =
+        runTest(testDispatcher) {
+            val favorite = fakeDocument("fav").copy(isFavorite = true)
+            val tagged = fakeDocument("tagged")
+            val viewModel =
+                createViewModel(
+                    documents = flowOf(listOf(favorite, tagged)),
+                    tags =
+                        FakeTagsRepository(
+                            tags = listOf(Tag("t", "T", color = null, homePosition = null)),
+                            documents = listOf(favorite, tagged),
+                            assignments = mapOf("tagged" to setOf("t")),
+                        ),
+                )
+            advanceUntilIdle()
+
+            viewModel.onSendIntent(HomeIntent.ToggleFavoritesFilter)
+            advanceUntilIdle()
+            assertEquals(listOf("fav"), viewModel.state.value.visibleDocuments.map { it.uuid })
+
+            // What a tag's section offers: only that tag, whatever was chosen before.
+            viewModel.onSendIntent(HomeIntent.ShowOnlyTag("t"))
+            advanceUntilIdle()
+            assertEquals(listOf("tagged"), viewModel.state.value.visibleDocuments.map { it.uuid })
+            assertTrue(viewModel.state.value.hasDocuments)
+
+            viewModel.onSendIntent(HomeIntent.ApplySort(SortOption.NameAsc))
+            viewModel.onSendIntent(HomeIntent.ClearFilters)
+            advanceUntilIdle()
+            assertEquals(2, viewModel.state.value.visibleDocuments.size)
+            assertEquals(SortOption.NameAsc, viewModel.state.value.filterOptions.sortBy)
+        }
+
+    @Test
+    fun `a tag that is deleted stops narrowing the list down`() =
+        runTest(testDispatcher) {
+            val document = fakeDocument()
+            val tags =
+                FakeTagsRepository(tags = listOf(Tag("t", "T", color = null, homePosition = null)))
+            val viewModel = createViewModel(documents = flowOf(listOf(document)), tags = tags)
+            advanceUntilIdle()
+
+            viewModel.onSendIntent(HomeIntent.ToggleTagFilter("t"))
+            advanceUntilIdle()
+            assertTrue(viewModel.state.value.visibleDocuments.isEmpty())
+
+            tags.delete("t")
+            advanceUntilIdle()
+
+            assertTrue(viewModel.state.value.filterOptions.tagUuids.isEmpty())
+            assertEquals(listOf(document), viewModel.state.value.visibleDocuments)
+        }
 
     // ---------------- documents ----------------
 

@@ -29,9 +29,15 @@ import com.bobbyesp.docucraft.core.presentation.navigation.pane.LocalPaneContext
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentSearch
+import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderActions
+import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderContents
+import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderEditor
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
+import com.bobbyesp.docucraft.feature.docscanner.navigation.ManageTags
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.foldersSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.documentActionsSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.documentSearchSection
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.tags.tagsSection
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 
 /**
@@ -59,6 +65,13 @@ fun EntryProviderScope<NavKey>.homeSection(
             onOpenSettings = { navigator.goTo(Settings) },
             onOpenSearch = { navigator.goTo(DocumentSearch) },
             onOpenDocumentActions = { uuid -> navigator.goTo(DocumentActions(uuid)) },
+            organization =
+                HomeOrganizationActions(
+                    onOpenFolder = { uuid -> navigator.goTo(FolderContents(uuid)) },
+                    onOpenFolderActions = { uuid -> navigator.goTo(FolderActions(uuid)) },
+                    onCreateFolder = { navigator.goTo(FolderEditor()) },
+                    onManageTags = { navigator.goTo(ManageTags) },
+                ),
             selectedDocumentId = selectedDocumentId,
             // Beside a document, Home is a short pane, and a floating search bar and scan button
             // cover most of it. The app bar has room for both.
@@ -68,6 +81,8 @@ fun EntryProviderScope<NavKey>.homeSection(
 
     documentSearchSection(navigator, selectedDocumentId)
     documentActionsSection(navigator)
+    foldersSection(navigator, selectedDocumentId)
+    tagsSection(navigator)
 }
 
 /** Shown in the detail pane on expanded windows while no document is open. */

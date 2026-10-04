@@ -58,6 +58,10 @@ class DocumentsRepositoryImpl(
         if (updated <= 0) throw NoSuchElementException("No document found with UUID: $uuid")
     }
 
+    override suspend fun setFavorite(uuid: String, favorite: Boolean) {
+        documentDao.setFavorite(uuid, favorite, updatedAt = now())
+    }
+
     override suspend fun deleteDocument(uuid: String) {
         val deleted = documentDao.deleteByUuid(uuid)
 

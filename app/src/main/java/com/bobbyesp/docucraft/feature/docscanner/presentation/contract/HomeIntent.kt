@@ -22,5 +22,14 @@ sealed interface HomeIntent {
 
     data class ApplyFilter(val filter: FilterOptions) : HomeIntent
 
+    /** Show only the favorites in the list of documents, or every document again. */
+    data object ToggleFavoritesFilter : HomeIntent
+
+    /** Narrow the list of documents down to those with this tag, or stop doing so. */
+    data class ToggleTagFilter(val tagUuid: String) : HomeIntent
+
+    /** Show only the documents with this tag: what a tag's section offers to see all of. */
+    data class ShowOnlyTag(val tagUuid: String) : HomeIntent
+
     data object ClearFilters : HomeIntent
 }

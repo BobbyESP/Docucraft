@@ -63,6 +63,12 @@ class FakeDocumentsRepository(
         }
     }
 
+    override suspend fun setFavorite(uuid: String, favorite: Boolean) {
+        documents.update { all ->
+            all.map { if (it.uuid == uuid) it.copy(isFavorite = favorite) else it }
+        }
+    }
+
     override suspend fun deleteDocument(uuid: String) {
         deleted += uuid
         documents.update { all -> all.filterNot { it.uuid == uuid } }

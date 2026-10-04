@@ -21,6 +21,9 @@ sealed interface DocumentActionsIntent {
      */
     data class SetTextRecognition(val enabled: Boolean) : DocumentActionsIntent
 
+    /** Mark the document as a favorite, or take the mark away. */
+    data class SetFavorite(val favorite: Boolean) : DocumentActionsIntent
+
     /** For a document of another app: stop referring to it. Its file is not touched. */
     data object RemoveFromRecents : DocumentActionsIntent
 }
