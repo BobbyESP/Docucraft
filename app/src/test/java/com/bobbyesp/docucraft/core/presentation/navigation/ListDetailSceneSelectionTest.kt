@@ -201,10 +201,14 @@ class ListDetailSceneSelectionTest {
 
     private fun plainEntry(key: NavKey) = NavEntry<NavKey>(key = key) {}
 
-    /** `NavEntry.key` is private, so entries are identified by `contentKey` — `key.toString()`. */
+    /** `NavEntry.key` is private, so entries are identified by `contentKey`. */
     private fun List<NavEntry<NavKey>>.contentKeys() = map { it.contentKey }
 
-    private fun contentKeysOf(vararg keys: NavKey) = keys.map { it.toString() }
+    /**
+     * What a content key is made of is the library's business, and it has changed between releases:
+     * the expected ones are asked of an entry rather than spelled out here.
+     */
+    private fun contentKeysOf(vararg keys: NavKey) = keys.map { plainEntry(it).contentKey }
 
     private companion object {
         val pdfViewer = PdfViewer(documentUuid = "doc-1")

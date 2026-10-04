@@ -72,7 +72,7 @@ class OverlaySceneSelectionTest {
         val scene = sceneFor(deleteOverlay, windowIsWide = false)
 
         assertEquals(
-            listOf(Home.toString()),
+            listOf(plainEntry(Home).contentKey),
             (scene as? OverlayScene)?.overlaidEntries?.map { it.contentKey },
         )
     }
