@@ -34,6 +34,7 @@ dependencies {
 
     // For `PdfRenderers`: a page is drawn to be read, and a renderer is never built by hand.
     implementation(project(":composepdf"))
+    implementation(libs.androidx.core.ktx)
     implementation(libs.gms.mlkit.text.recognition)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.bundles.coroutines)

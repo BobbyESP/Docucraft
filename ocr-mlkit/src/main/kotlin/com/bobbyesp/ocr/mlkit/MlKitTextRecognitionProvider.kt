@@ -9,6 +9,8 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
+import androidx.core.graphics.createBitmap
+import androidx.core.net.toUri
 import com.bobbyesp.documentcontent.ContentOrigin
 import com.bobbyesp.documentcontent.DocumentSource
 import com.bobbyesp.documentcontent.NormalizedRect
@@ -55,7 +57,7 @@ class MlKitTextRecognitionProvider(context: Context) : PageContentProvider {
     override suspend fun open(document: DocumentSource): PageContentSession =
         RecognitionSession(
             context = appContext,
-            document = Uri.parse(document.value),
+            document = document.value.toUri(),
             recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS),
         )
 
@@ -106,10 +108,9 @@ private class RecognitionSession(
                 renderer.openPage(index).use { page ->
                     val scale = scaleFor(page.width, page.height)
                     val bitmap =
-                        Bitmap.createBitmap(
+                        createBitmap(
                             max(1, (page.width * scale).roundToInt()),
                             max(1, (page.height * scale).roundToInt()),
-                            Bitmap.Config.ARGB_8888,
                         )
                     // Paper is white. A page drawn on a transparent bitmap is black on black to
                     // the recognizer.
