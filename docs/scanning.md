@@ -107,16 +107,25 @@ The save reports its own failure. Earlier, a failed save still congratulated the
 ## Reviewing a scan
 
 As the scanner closes, the scan is shown to the user to be named and organized
-(`presentation/screens/review`), on a screen of its own: a card with its first page and what is
-known of it; under it, the tags it carries; its title and description; its folder; and whether its
-text is recognized. The card is wide rather than tall, so that the fields are on screen without
-scrolling.
+(`presentation/screens/review`), on a screen of its own: a card with its first page, its name and
+what is known of it; its title and description; and one grouped list with its folder, the tags it
+carries and whether its text is recognized. The card is wide rather than tall, so that the fields
+are on screen without scrolling.
 
+- **It is built from what Home is built from**, so that the screen the scanner closes onto reads
+  as the same app: Home's app bar and section headers, a grouped list like the one its documents
+  are in, and *Skip* and *Save* floating at the bottom, lifted by a blur halo as Home's search and
+  scan are. The folder shows its own badge and color and the tags their dots, as they do there.
+  The card takes the theme's own color, as a folder without one does on Home.
+- **The card names the document as it is typed**, so that it shows what the scan will be called
+  before it is saved.
 - **Title and description are typed in the same fields that edit a document later**
   (`EditDocumentDetailsContent`), with the same limits and the same count of what is left, so a
   title that fits here fits there.
 - **Folder and tags are chosen in the overlays the document's actions use**, which open over the
   review and come back to it.
+- **On a wide window the form keeps to a column**: a title field as wide as a tablet is hard to
+  read across.
 
 - **The scan is saved first, and reviewed after.** The review edits a document that is already in
   the library, through the operations its actions use (`UpdateDocumentFieldsUseCase`, the folder

@@ -334,6 +334,6 @@
     <string name="review_new_scans_on_desc">Tras escanear, le pones nombre al documento y dices dónde va</string>
     <string name="review_new_scans_off_desc">Los escaneos se guardan tal cual. Puedes editarlos después</string>
     <string name="tags_add">Añadir etiquetas</string>
-    <string name="tags_edit_short">Editar</string>
-    <string name="preview">Vista previa</string>
+    <string name="scan_review_section_details">Detalles</string>
+    <string name="scan_review_section_organize">Organizar</string>
 </resources>

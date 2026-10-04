@@ -388,6 +388,6 @@
     <string name="review_new_scans_on_desc">After scanning, you name the document and say where it goes</string>
     <string name="review_new_scans_off_desc">Scans are saved as they come. You can edit them later</string>
     <string name="tags_add">Add tags</string>
-    <string name="tags_edit_short">Edit</string>
-    <string name="preview">Preview</string>
+    <string name="scan_review_section_details">Details</string>
+    <string name="scan_review_section_organize">Organize</string>
 </resources>
