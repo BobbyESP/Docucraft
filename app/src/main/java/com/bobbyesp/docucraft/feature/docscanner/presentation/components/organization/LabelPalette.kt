@@ -4,6 +4,11 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.AccountBalance
@@ -19,15 +24,25 @@ import androidx.compose.material.icons.rounded.MedicalServices
 import androidx.compose.material.icons.rounded.School
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.Work
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftAccentTheme
+import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.FolderIcon
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.LabelColor
 import com.materialkolor.blend.Blend
@@ -78,6 +93,19 @@ fun LabelColor?.tones(): LabelTones {
             )
         }
     }
+}
+
+/**
+ * The app's theme around this color, for a screen about something that carries it, such as a tag:
+ * [content] takes the color, and the rest of the app keeps its own. No color leaves the theme as it
+ * is (see [DocucraftAccentTheme]).
+ */
+@Composable
+fun LabelColorTheme(color: LabelColor?, content: @Composable () -> Unit) {
+    DocucraftAccentTheme(
+        accent = color?.let { Color(Hct.from(it.hue, SeedChroma, 50.0).toInt()) },
+        content = content,
+    )
 }
 
 private const val SeedChroma = 56.0
@@ -154,3 +182,32 @@ val FolderIcon.label: Int
             FolderIcon.HEART -> R.string.icon_heart
             FolderIcon.STAR -> R.string.icon_star
         }
+
+/** The app's theme, and the same content in the theme of three colors of the palette. */
+@PreviewLightDark
+@Composable
+private fun LabelColorThemePreview() {
+    DocucraftTheme {
+        Column {
+            for (color in listOf(null, LabelColor.TEAL, LabelColor.AMBER, LabelColor.PINK)) {
+                LabelColorTheme(color = color) {
+                    Surface(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            FolderBadge(icon = FolderIcon.Default, color = null)
+                            Text(
+                                text = stringResource(color?.label ?: R.string.color_default),
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Button(onClick = {}) { Text(text = stringResource(R.string.scan)) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

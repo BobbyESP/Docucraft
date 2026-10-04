@@ -124,9 +124,14 @@ A new Koin module is registered in `App.kt`.
 
 ### Theme
 
-- **A theme change is one crossfade at the theme**, not an animated color scheme
-  (`core/presentation/theme/ThemeTransition.kt`). Never pass `animate = true` to MaterialKolor or
-  animate `ColorScheme`: every new scheme recomposes the whole tree.
+- **A theme change moves the color scheme itself, in a fixed number of steps**
+  (`core/presentation/theme/ThemeTransition.kt`). Every scheme given to Material recomposes
+  everything under the theme, so the steps are the cost: never pass `animate = true` to
+  MaterialKolor, or animate `ColorScheme` frame by frame. Never fade a picture of the screen
+  either: it stands still over whatever moves under it.
+- **A screen with a color of its own nests a theme, it does not change the app's**:
+  `LabelColorTheme` (`DocucraftAccentTheme`) around that destination. Only that screen is
+  recomposed for it.
 - **Components animate their own state, never theme colors.** Animate a fraction (pressed, selected,
   enabled, scrolled) and `lerp` between colors read from `MaterialTheme`; do not
   `animateColorAsState` to a theme color. See [docs/architecture.md](docs/architecture.md#theme).

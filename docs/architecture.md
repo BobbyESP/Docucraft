@@ -123,25 +123,48 @@ takes several milliseconds per scheme, too much for the frame that switches the 
 first scheme is built in place, because the first frame needs it. The last few are cached, so
 switching back to a previous theme builds nothing.
 
-**A theme change is one crossfade, drawn at the theme** (`ThemeTransition.kt`). Material provides
-the color scheme through a static composition local, so any new scheme recomposes the whole tree.
-Animating the scheme itself (MaterialKolor's `animate = true`) hands the tree a new scheme on every
-frame. Instead, the last frame drawn with the old scheme is kept as an image, the new scheme is
-applied once, and the image fades out on top; the fade only redraws one node. What another window
-draws, such as a dialog, switches without the fade.
+**A theme change moves the scheme itself, in a fixed number of steps** (`ThemeTransition.kt`).
+Material provides the color scheme through a static composition local, so each scheme it is given
+recomposes everything under the theme, and nothing is skipped. That is the cost of a change, and it
+is bounded: the way from one scheme to the next is cut into 16 schemes over 400 ms, whatever the
+display's refresh rate. Animating frame by frame (MaterialKolor's `animate = true`) would hand the
+tree 48 of them on a 120 Hz display.
+- **The app stays live throughout.** The change used to be one fade of a picture of the last frame
+  over the new theme. It cost a single recomposition, but the picture stood still over whatever
+  moved under it: scrolling during the fade left a ghost of the old position.
+- **A change that interrupts another continues from what is showing**, so tapping through seed
+  colors never jumps back.
+- **Colors are mixed in Oklab**, as Compose's `lerp` does, so a light theme goes dark through greys
+  of its own hue.
+
+**A screen with a color of its own nests a theme** (`DocucraftAccentTheme`, and `LabelColorTheme`
+for a color of the palette). It is for a destination that is about something the user gave a color
+to, such as a tag: that screen takes the color and the rest of the app keeps its own.
+- **Only that screen is recomposed for it.** Changing the app's theme on the way in and back on the
+  way out would recompose every screen twice.
+- **It opens already in its color** once that color has been shown, and the navigation's transition
+  is what takes the app from one to the other. A color seen for the first time is built in the
+  background and arrived at in steps, as any change is.
+- **The color is a hue, not a value**: it is pulled towards the theme's primary and the scheme
+  keeps the theme's style and darkness, as the tones of a label do
+  ([organization.md](organization.md#colors-and-icons)).
+- No screen uses it yet: a tag has no screen of its own.
 
 **Components never animate colors for a theme change.** A component animates its own state (pressed,
 selected, enabled, scrolled) and reads its colors from the theme on every frame, as
 `SettingsItemIcon` and Home's top bar do with a fraction and `lerp`. Material's own components still
-animate their colors when their target changes; while the frame fades, the theme's motion scheme
-makes those color animations snap, so they do not trail behind the rest of the screen.
+animate their colors when their target changes; while the theme changes, its motion scheme hands
+them an all but immediate spring, so they do not trail behind the rest of the screen. A spring, not
+a snap: each step moves the target of an animation that is under way, and Compose keeps a
+component's own spec for an interrupted animation only when it is a spring.
 
 **A motion scheme hands out the same spec every time it is asked.** Material remembers what a
 component is animating by the spec it was given: a button's shape morph is kept in a
 `remember(animationSpec)`. A scheme that builds a new spec on each call makes every recomposition
 look like a change of spec, and the button starts over from the shape it was heading to, so a press
 jumps to the pressed shape instead of morphing into it. The theme's own scheme wraps Material's to
-snap colors during a fade, and keeps one wrapper per spec for that reason
+keep components up with a change, and hands out Material's own specs the rest of the time for that
+reason
 (`ThemeTransitionMotionScheme`).
 
 ### Blur
