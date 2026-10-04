@@ -110,6 +110,15 @@
     <string name="settings">Настройки</string>
     <string name="general">Общие</string>
     <string name="version_format">Версия %1$s</string>
+    <string name="about">О приложении</string>
+    <string name="about_desc">Версия, автор и как поддержать проект</string>
+    <string name="about_support_title">Поддержите Docucraft</string>
+    <string name="about_support_desc">Docucraft — бесплатное приложение с открытым исходным кодом. Если оно вам полезно, чашка кофе поможет мне продолжать работу над ним.</string>
+    <string name="about_buy_me_a_coffee">Угостить кофе</string>
+    <string name="about_links">Ссылки</string>
+    <string name="about_developer_role">Проектирует и разрабатывает Docucraft</string>
+    <string name="about_source_code">Исходный код</string>
+    <string name="about_source_code_desc">Открытый исходный код, лицензия GPL-3.0</string>
     <string name="view_document">Просмотреть документ</string>
     <string name="document_viewer">Просмотр документов</string>
     <string name="document_viewer_desc">Как открываются документы</string>

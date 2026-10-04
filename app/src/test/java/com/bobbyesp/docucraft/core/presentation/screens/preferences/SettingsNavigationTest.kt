@@ -6,6 +6,7 @@ package com.bobbyesp.docucraft.core.presentation.screens.preferences
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.core.presentation.navigation.BackStackNavigator
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AboutSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
@@ -48,6 +49,15 @@ class SettingsNavigationTest {
     @Test
     fun `leaving settings works from the document viewer detail too`() {
         val stack = backStack(Home, Settings, DocumentViewerSettings)
+
+        BackStackNavigator(stack).leaveSettings()
+
+        assertEquals(listOf(Home), stack.toList())
+    }
+
+    @Test
+    fun `leaving settings works from the about detail too`() {
+        val stack = backStack(Home, Settings, AboutSettings)
 
         BackStackNavigator(stack).leaveSettings()
 

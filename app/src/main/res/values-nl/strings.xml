@@ -110,6 +110,15 @@
     <string name="settings">Instellingen</string>
     <string name="general">Algemeen</string>
     <string name="version_format">Versie %1$s</string>
+    <string name="about">Over</string>
+    <string name="about_desc">Versie, wie het maakt en hoe je het kunt steunen</string>
+    <string name="about_support_title">Steun Docucraft</string>
+    <string name="about_support_desc">Docucraft is gratis en open source. Als je er iets aan hebt, helpt een kop koffie me om eraan te blijven werken.</string>
+    <string name="about_buy_me_a_coffee">Trakteer me op een koffie</string>
+    <string name="about_links">Links</string>
+    <string name="about_developer_role">Ontwerpt en ontwikkelt Docucraft</string>
+    <string name="about_source_code">Broncode</string>
+    <string name="about_source_code_desc">Open source, onder de GPL-3.0-licentie</string>
     <string name="view_document">Document bekijken</string>
     <string name="document_viewer">Documentviewer</string>
     <string name="document_viewer_desc">Hoe documenten worden geopend</string>

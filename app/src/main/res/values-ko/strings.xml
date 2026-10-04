@@ -110,6 +110,15 @@
     <string name="settings">설정</string>
     <string name="general">일반</string>
     <string name="version_format">버전 %1$s</string>
+    <string name="about">정보</string>
+    <string name="about_desc">버전, 만든 사람, 후원 방법</string>
+    <string name="about_support_title">Docucraft 후원하기</string>
+    <string name="about_support_desc">Docucraft는 무료 오픈 소스 앱입니다. 유용하게 쓰고 계신다면 커피 한 잔이 개발을 이어 가는 데 도움이 됩니다.</string>
+    <string name="about_buy_me_a_coffee">커피 한 잔 사 주기</string>
+    <string name="about_links">링크</string>
+    <string name="about_developer_role">Docucraft 디자인 및 개발</string>
+    <string name="about_source_code">소스 코드</string>
+    <string name="about_source_code_desc">오픈 소스, GPL-3.0 라이선스</string>
     <string name="view_document">문서 보기</string>
     <string name="document_viewer">문서 뷰어</string>
     <string name="document_viewer_desc">문서를 여는 방식</string>

@@ -110,6 +110,15 @@
     <string name="settings">设置</string>
     <string name="general">常规</string>
     <string name="version_format">版本 %1$s</string>
+    <string name="about">关于</string>
+    <string name="about_desc">版本、开发者以及如何支持</string>
+    <string name="about_support_title">支持 Docucraft</string>
+    <string name="about_support_desc">Docucraft 免费且开源。如果它对你有帮助，请我喝杯咖啡能让我继续把它做下去。</string>
+    <string name="about_buy_me_a_coffee">请我喝杯咖啡</string>
+    <string name="about_links">链接</string>
+    <string name="about_developer_role">设计并开发 Docucraft</string>
+    <string name="about_source_code">源代码</string>
+    <string name="about_source_code_desc">开源，采用 GPL-3.0 许可证</string>
     <string name="view_document">查看文档</string>
     <string name="document_viewer">文档查看器</string>
     <string name="document_viewer_desc">文档的打开方式</string>

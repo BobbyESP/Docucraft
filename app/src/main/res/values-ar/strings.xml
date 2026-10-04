@@ -110,6 +110,15 @@
     <string name="settings">الإعدادات</string>
     <string name="general">عام</string>
     <string name="version_format">الإصدار %1$s</string>
+    <string name="about">حول التطبيق</string>
+    <string name="about_desc">الإصدار، ومن يطوّره، وكيف تدعمه</string>
+    <string name="about_support_title">ادعم Docucraft</string>
+    <string name="about_support_desc">Docucraft مجاني ومفتوح المصدر. إذا كان مفيدًا لك، فكوب قهوة يساعدني على مواصلة العمل عليه.</string>
+    <string name="about_buy_me_a_coffee">ادعمني بكوب قهوة</string>
+    <string name="about_links">روابط</string>
+    <string name="about_developer_role">يصمّم Docucraft ويطوّره</string>
+    <string name="about_source_code">الشيفرة المصدرية</string>
+    <string name="about_source_code_desc">مفتوح المصدر، بترخيص GPL-3.0</string>
     <string name="view_document">عرض المستند</string>
     <string name="document_viewer">عارض المستندات</string>
     <string name="document_viewer_desc">طريقة فتح المستندات</string>

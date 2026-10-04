@@ -18,3 +18,6 @@ import kotlinx.serialization.Serializable
 
 /** What documents open with in the viewer. */
 @Serializable data object DocumentViewerSettings : NavKey
+
+/** Which app this is, who makes it and how to support it. */
+@Serializable data object AboutSettings : NavKey
