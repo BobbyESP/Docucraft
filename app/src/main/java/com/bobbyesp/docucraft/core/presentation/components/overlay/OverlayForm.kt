@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization
+package com.bobbyesp.docucraft.core.presentation.components.overlay
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -21,7 +19,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,14 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.LocalOverlayContext
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPresentation
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionSheetSkeleton
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.NameError
 
 /**
  * An overlay that asks for something and is confirmed or dismissed: a form, or a confirmation. It
@@ -68,8 +61,9 @@ fun OverlayForm(
 
     when (LocalOverlayContext.current.presentation) {
         OverlayPresentation.Sheet ->
-            DocumentActionSheetSkeleton(
-                modifier = modifier,
+            OverlaySheetSkeleton(
+                // A form can be taller than the window, with the keyboard up or on a short one.
+                modifier = modifier.verticalScroll(rememberScrollState()),
                 headingTitle = title,
                 headingDescription = description,
                 icon = icon,
@@ -165,50 +159,3 @@ fun OverlayForm(
 
 private val FooterButtonHeight = 48.dp
 private val DialogMaxWidth = 560.dp
-
-/**
- * The field a folder or a tag is named in. What is wrong with the name is said under it, in place:
- * it is something the user typed, not a failure.
- *
- * @param takenMessage What to say when another one has the name, which differs by what is named.
- */
-@Composable
-fun NameField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    error: NameError?,
-    takenMessage: String,
-    onDone: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = { if (it.length <= NameMaxLength) onValueChange(it) },
-        modifier = modifier.fillMaxWidth(),
-        label = { Text(text = label) },
-        singleLine = true,
-        isError = error != null,
-        supportingText =
-            error?.let {
-                {
-                    Text(
-                        text =
-                            when (it) {
-                                NameError.Empty -> stringResource(R.string.name_empty)
-                                NameError.Taken -> takenMessage
-                            }
-                    )
-                }
-            },
-        shape = MaterialTheme.shapes.large,
-        keyboardOptions =
-            KeyboardOptions(
-                capitalization = KeyboardCapitalization.Sentences,
-                imeAction = ImeAction.Done,
-            ),
-        keyboardActions = KeyboardActions(onDone = { onDone() }),
-    )
-}
-
-private const val NameMaxLength = 40

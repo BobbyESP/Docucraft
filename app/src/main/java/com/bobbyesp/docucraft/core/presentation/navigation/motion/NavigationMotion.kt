@@ -5,6 +5,8 @@ package com.bobbyesp.docucraft.core.presentation.navigation.motion
 
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -13,7 +15,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -43,8 +47,8 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
  * swallowing taps meant for the screen underneath. One that travels the whole way cannot.
  *
  * Screens contribute nothing here; a destination that needs to move differently says so in its own
- * `entry` metadata, which `NavDisplay` prefers over this. The one such motion so far,
- * [SharedElementMotion], is defined in this file too.
+ * `entry` metadata, which `NavDisplay` prefers over this. Those motions, [SharedElementMotion] and
+ * [RisingMotion], are defined in this file too.
  */
 @Immutable
 class NavigationMotion internal constructor() {
@@ -109,6 +113,44 @@ object SharedElementMotion {
     private fun crossFade(): ContentTransform =
         fadeIn(tween(DURATION, easing = Emphasized)) togetherWith
             fadeOut(tween(DURATION, easing = Emphasized))
+
+    private const val DURATION = 350
+    private val Emphasized = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+}
+
+/**
+ * A destination that rises from the bottom edge over what is on screen, and sinks back to it when
+ * left: for something that interrupts what the user was doing rather than following from it, such
+ * as the review of a scan as the scanner closes. A step forward in the app slides in from the side;
+ * this comes from elsewhere, and says so by where it comes from.
+ *
+ * What is underneath does not move. It is held where it is while the destination travels over it,
+ * and is there, unmoved, when the destination leaves.
+ */
+object RisingMotion {
+
+    /** Entry metadata for the destination that rises. */
+    fun metadata(): Map<String, Any> =
+        NavDisplay.transitionSpec { rise() } +
+            NavDisplay.popTransitionSpec { sink() } +
+            NavDisplay.predictivePopTransitionSpec { sink() }
+
+    private fun rise(): ContentTransform =
+        slideInVertically(tween(DURATION, easing = Emphasized)) { height -> height } togetherWith
+            hold()
+
+    /**
+     * Keeps what is underneath on screen, as it is, for as long as the destination travels: a fade
+     * that goes nowhere. With no exit at all it would be gone on the first frame, and the
+     * destination would rise over nothing.
+     */
+    private fun hold(): ExitTransition = fadeOut(tween(DURATION), targetAlpha = 1f)
+
+    // It leaves the whole way, as the door slide does: one that only faded would stay on top,
+    // invisible, taking the taps meant for what is under it.
+    private fun sink(): ContentTransform =
+        EnterTransition.None togetherWith
+            slideOutVertically(tween(DURATION, easing = Emphasized)) { height -> height }
 
     private const val DURATION = 350
     private val Emphasized = CubicBezierEasing(0.2f, 0f, 0f, 1f)

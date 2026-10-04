@@ -6,6 +6,7 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.view
 import androidx.lifecycle.SavedStateHandle
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
+import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
@@ -30,6 +31,7 @@ import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import com.bobbyesp.docucraft.feature.docscanner.testFolder
 import com.bobbyesp.docucraft.feature.docscanner.testLinkedDocument
 import com.bobbyesp.docucraft.feature.docscanner.testRecent
+import com.bobbyesp.docucraft.feature.docscanner.testSettings
 import com.bobbyesp.scanner.ContentRef
 import com.bobbyesp.scanner.DocumentScanner
 import com.bobbyesp.scanner.ScanArtifact
@@ -62,6 +64,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -112,6 +115,7 @@ class HomeViewModelTest {
         pendingScan: ScanOutcome? = null,
         folders: FakeFoldersRepository = FakeFoldersRepository(),
         tags: FakeTagsRepository = FakeTagsRepository(),
+        reviewNewScans: Boolean = true,
     ): HomeViewModel {
         documentScanner.pending = pendingScan
         val observeDocumentsUseCase: ObserveDocumentsUseCase = mockk()
@@ -143,6 +147,7 @@ class HomeViewModelTest {
                 ObserveNotFoundDocumentsUseCase(FakeDocumentActivityRepository()),
             processDocumentsUseCase = ProcessDocumentsUseCase(),
             saveScanDraftUseCase = saveScanDraftUseCase,
+            settings = testSettings(UserPreferences(reviewNewScans = reviewNewScans)),
             stringProvider = stringProvider,
             analyticsHelper = analyticsHelper,
             defaultDispatcher = testDispatcher,
@@ -386,7 +391,7 @@ class HomeViewModelTest {
     @Test
     fun `a completed scan clears isScanning and saves the document`() =
         runTest(testDispatcher) {
-            val viewModel = createViewModel()
+            val viewModel = createViewModel(reviewNewScans = false)
             advanceUntilIdle()
 
             val events = mutableListOf<UiEvent>()
@@ -403,6 +408,57 @@ class HomeViewModelTest {
             assertTrue(
                 events.any { it is UiEvent.ShowMessage && it.type == NotificationType.Success }
             )
+            // Skipped in the settings: the scan is saved as it came, and nothing is to be shown.
+            assertNull(viewModel.state.value.scanToReview)
+        }
+
+    @Test
+    fun `a saved scan waits to be reviewed, and is reviewed once`() =
+        runTest(testDispatcher) {
+            val savedState = SavedStateHandle()
+            val viewModel = createViewModel(savedState = savedState)
+            advanceUntilIdle()
+            val events = mutableListOf<UiEvent>()
+            collectEvents(viewModel, events)
+
+            viewModel.onSendIntent(HomeIntent.LaunchScanner)
+            advanceUntilIdle()
+            documentScanner.finishWith(completedScan())
+            advanceUntilIdle()
+
+            assertEquals("doc-1", viewModel.state.value.scanToReview)
+            // Kept where a process death does not lose it.
+            assertEquals("doc-1", savedState.get<String>("scan_to_review"))
+            // The review is what says the scan is saved.
+            assertTrue(events.isEmpty())
+
+            viewModel.onSendIntent(HomeIntent.ScanReviewOpened)
+
+            assertNull(viewModel.state.value.scanToReview)
+            assertNull(savedState.get<String>("scan_to_review"))
+        }
+
+    @Test
+    fun `a scan that was waiting for its review when the process died still gets it`() =
+        runTest(testDispatcher) {
+            val viewModel =
+                createViewModel(savedState = SavedStateHandle(mapOf("scan_to_review" to "doc-9")))
+
+            assertEquals("doc-9", viewModel.state.value.scanToReview)
+        }
+
+    @Test
+    fun `a scan that failed to save has no review`() =
+        runTest(testDispatcher) {
+            val viewModel = createViewModel(saveResult = Result.failure(IllegalStateException()))
+            advanceUntilIdle()
+
+            viewModel.onSendIntent(HomeIntent.LaunchScanner)
+            advanceUntilIdle()
+            documentScanner.finishWith(completedScan())
+            advanceUntilIdle()
+
+            assertNull(viewModel.state.value.scanToReview)
         }
 
     /** The use case reports failure in its Result rather than by throwing, so it has to be read. */

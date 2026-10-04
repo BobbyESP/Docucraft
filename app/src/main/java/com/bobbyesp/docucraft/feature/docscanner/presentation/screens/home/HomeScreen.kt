@@ -14,6 +14,7 @@ import com.bobbyesp.docucraft.core.domain.repository.logScreenView
 import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.util.events.UiEvent
+import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel.HomeViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -27,6 +28,7 @@ fun HomeScreen(
     onOpenSettings: () -> Unit,
     onOpenSearch: () -> Unit,
     onOpenDocumentActions: (String) -> Unit,
+    onReviewScan: (String) -> Unit,
     modifier: Modifier = Modifier,
     organization: HomeOrganizationActions = HomeOrganizationActions(),
     viewModel: HomeViewModel = koinViewModel(),
@@ -37,6 +39,16 @@ fun HomeScreen(
     val analyticsHelper = LocalAnalyticsHelper.current
 
     HandleHomeMessages(uiEventFlow = viewModel.defaultEvents)
+
+    // A scan that was saved while the scanner covered the app is reviewed as soon as Home is back.
+    // Taken once: opening the review is what stops it from being opened again.
+    val scanToReview = uiState.scanToReview
+    LaunchedEffect(scanToReview) {
+        if (scanToReview != null) {
+            onReviewScan(scanToReview)
+            viewModel.onSendIntent(HomeIntent.ScanReviewOpened)
+        }
+    }
 
     HomeContent(
         modifier = modifier,

@@ -83,6 +83,8 @@ class PagesRepositoryImpl(
             at = now(),
         )
 
+    override suspend fun textOf(documentUuid: String): List<String> = pageDao.textOf(documentUuid)
+
     override suspend fun recognizedText(documentUuid: String, pageIndex: Int): PageText? {
         val stored = pageDao.layoutOf(documentUuid, pageIndex) ?: return null
         val lines = PageLayoutCodec.decode(stored.formatVersion, stored.data) ?: return null

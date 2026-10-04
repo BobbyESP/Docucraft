@@ -37,6 +37,8 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.ExternalDocumentAccess
+import com.bobbyesp.docucraft.feature.docscanner.domain.suggestions.DocumentSuggester
+import com.bobbyesp.docucraft.feature.docscanner.domain.suggestions.SuggestDocumentDetailsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ArrangeHomeSectionsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteFromBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DescribeLinkedDocumentUseCase
@@ -169,6 +171,15 @@ val documentScannerDataModule = module {
         )
     }
     factory { ObserveNotFoundDocumentsUseCase(activity = get()) }
+    // What proposes a title, a description, a folder and tags for a document from its text. No
+    // build has one yet: binding a `DocumentSuggester` here is all it takes to turn it on.
+    factory {
+        SuggestDocumentDetailsUseCase(
+            suggester = getOrNull<DocumentSuggester>(),
+            documents = get(),
+            pages = get(),
+        )
+    }
     single<LibraryMaintenance> { WorkManagerLibraryMaintenance(context = androidContext()) }
 
     factory {

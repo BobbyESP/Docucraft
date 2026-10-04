@@ -62,6 +62,15 @@ class FakePagesRepository : PagesRepository {
 
     override fun observeTextStatus(documentUuid: String): Flow<DocumentTextStatus?> = flowOf(null)
 
+    override suspend fun textOf(documentUuid: String): List<String> =
+        texts
+            .filterKeys { it.first == documentUuid }
+            .toSortedMap(compareBy { it.second })
+            .values
+            .map {
+                it.text
+            }
+
     override suspend fun pagesToRead(documentUuid: String): List<Int> =
         pagesOf(documentUuid).filter { it.textStatus == PageTextStatus.PENDING }.map { it.index }
 

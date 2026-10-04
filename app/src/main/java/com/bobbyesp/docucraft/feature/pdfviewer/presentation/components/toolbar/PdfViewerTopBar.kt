@@ -3,8 +3,11 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -13,23 +16,32 @@ import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Print
 import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material3.AppBarRow
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.FrostedMenuGroup
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.frosted
@@ -41,10 +53,9 @@ import dev.chrisbanes.haze.rememberHazeState
  * The viewer's top app bar: a standard Material `TopAppBar`, with the document's name, its
  * description as the subtitle when it has one, and its actions.
  *
- * The actions go in an [AppBarRow], which shows as many as fit and moves the rest into its overflow
- * menu: a phone shows Share and "more", a wide pane shows them all. The bar adapts to the room it
- * is given without the screen having to measure the window. Design and reasons:
- * `docs/pdf-viewer.md`.
+ * As many actions as fit are buttons and the rest go in a menu: a phone shows one and "more", a
+ * wide pane shows them all. The bar adapts to the room it is given without the screen having to
+ * measure the window. Design and reasons: `docs/pdf-viewer.md`.
  *
  * Frosted over the pages, which scroll beneath it: the document stays in view under the bar,
  * blurred, instead of ending at its edge.
@@ -90,73 +101,135 @@ fun PdfViewerTopBar(
         }
     }
 
-    val saveLabel = stringResource(R.string.save_to_docucraft)
-    val shareLabel = stringResource(R.string.share)
-    val printLabel = stringResource(R.string.print)
-    val openWithLabel = stringResource(R.string.open_with)
-    val detailsLabel = stringResource(R.string.document_details)
-    val moreLabel = stringResource(R.string.more_options)
-
-    val actions: @Composable (maxItems: Int) -> Unit = { maxItems ->
-        AppBarRow(
-            maxItemCount = maxItems,
-            overflowIndicator = { menuState ->
-                TooltipIconButton(
-                    icon = Icons.Rounded.MoreVert,
-                    label = moreLabel,
-                    onClick = { menuState.show() },
+    // In the order they are shown: what there is room for as buttons, the rest in the menu.
+    // Details last and apart, since it is about the document rather than something done with it.
+    val handOff =
+        listOfNotNull(
+            onSaveToLibrary?.let {
+                ViewerAction(
+                    icon = Icons.Rounded.LibraryAdd,
+                    label = stringResource(R.string.save_to_docucraft),
+                    enabled = !isSavingToLibrary,
+                    onClick = it,
                 )
             },
-        ) {
-            if (onSaveToLibrary != null) {
-                clickableItem(
-                    onClick = onSaveToLibrary,
-                    icon = { Icon(Icons.Rounded.LibraryAdd, contentDescription = saveLabel) },
-                    label = saveLabel,
-                    enabled = !isSavingToLibrary,
+            onShare?.let {
+                ViewerAction(Icons.Rounded.Share, stringResource(R.string.share), onClick = it)
+            },
+            onPrint?.let {
+                ViewerAction(Icons.Rounded.Print, stringResource(R.string.print), onClick = it)
+            },
+            onOpenWith?.let {
+                ViewerAction(
+                    icon = Icons.AutoMirrored.Rounded.OpenInNew,
+                    label = stringResource(R.string.open_with),
+                    onClick = it,
                 )
-            }
-            if (onShare != null) {
-                clickableItem(
-                    onClick = onShare,
-                    icon = { Icon(Icons.Rounded.Share, contentDescription = shareLabel) },
-                    label = shareLabel,
-                )
-            }
-            if (onPrint != null) {
-                clickableItem(
-                    onClick = onPrint,
-                    icon = { Icon(Icons.Rounded.Print, contentDescription = printLabel) },
-                    label = printLabel,
-                )
-            }
-            if (onOpenWith != null) {
-                clickableItem(
-                    onClick = onOpenWith,
-                    icon = {
-                        Icon(
-                            Icons.AutoMirrored.Rounded.OpenInNew,
-                            contentDescription = openWithLabel,
-                        )
-                    },
-                    label = openWithLabel,
-                )
-            }
-            clickableItem(
-                onClick = onDetails,
-                icon = { Icon(Icons.Rounded.Info, contentDescription = detailsLabel) },
-                label = detailsLabel,
-            )
-        }
-    }
+            },
+        )
+    val details =
+        ViewerAction(
+            icon = Icons.Rounded.Info,
+            label = stringResource(R.string.document_details),
+            onClick = onDetails,
+        )
 
     // The bar's own width, not the window's: in a list-detail layout the viewer is one pane. A
-    // narrow
-    // bar keeps its title legible by showing only Share and the overflow menu.
+    // narrow bar keeps its title legible by showing one action and the menu.
     BoxWithConstraints(modifier = modifier.frosted(state = hazeState, style = frostedStyle)) {
-        // The overflow button counts as an item: 2 is Share plus "more".
-        val maxItems = if (maxWidth < WideBarWidth) 2 else Int.MAX_VALUE
-        TopBar(description, titleContent, navigationIcon, { actions(maxItems) }, colors)
+        val shown = if (maxWidth < WideBarWidth) NarrowBarActions else Int.MAX_VALUE
+        TopBar(
+            description = description,
+            titleContent = titleContent,
+            navigationIcon = navigationIcon,
+            actions = {
+                ViewerActions(
+                    handOff = handOff,
+                    details = details,
+                    shown = shown,
+                    hazeState = hazeState,
+                )
+            },
+            colors = colors,
+        )
+    }
+}
+
+/** Something the bar offers to do with the document. */
+@Immutable
+private class ViewerAction(
+    val icon: ImageVector,
+    val label: String,
+    val enabled: Boolean = true,
+    val onClick: () -> Unit,
+)
+
+/**
+ * The bar's actions: the first [shown] as buttons, and the rest in a menu behind "more". The menu
+ * is the app's own, as Home's sort menu is: groups frosted over the pages it opens on. What is done
+ * with the document is one group and what it is, the details, another.
+ *
+ * @param hazeState Where the pages the menu opens over are recorded.
+ */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun ViewerActions(
+    handOff: List<ViewerAction>,
+    details: ViewerAction,
+    shown: Int,
+    hazeState: HazeState,
+) {
+    val all = handOff + details
+    val buttons = if (all.size <= shown) all else all.take(shown)
+    val inMenu = all.drop(buttons.size)
+
+    for (action in buttons) {
+        TooltipIconButton(
+            icon = action.icon,
+            label = action.label,
+            onClick = action.onClick,
+            enabled = action.enabled,
+        )
+    }
+    if (inMenu.isEmpty()) return
+
+    var expanded by remember { mutableStateOf(false) }
+    val groups = listOf(inMenu.filter { it !== details }, inMenu.filter { it === details })
+    val menuGroups = groups.filter { it.isNotEmpty() }
+
+    Box {
+        TooltipIconButton(
+            icon = Icons.Rounded.MoreVert,
+            label = stringResource(R.string.more_options),
+            onClick = { expanded = true },
+        )
+
+        // Material's popup, not the one with a halo: a halo blurs what the pages recorded all
+        // around the menu, and this menu opens from the bar, which is not in that recording. The
+        // halo painted the pages over the bar's own buttons. The groups cast a shadow instead.
+        DropdownMenuPopup(expanded = expanded, onDismissRequest = { expanded = false }) {
+            menuGroups.forEachIndexed { groupIndex, group ->
+                if (groupIndex > 0) Spacer(modifier = Modifier.height(MenuDefaults.GroupSpacing))
+                FrostedMenuGroup(
+                    shapes = MenuDefaults.groupShape(index = groupIndex, count = menuGroups.size),
+                    hazeState = hazeState,
+                    shadowElevation = MenuDefaults.ShadowElevation,
+                ) {
+                    group.forEachIndexed { index, action ->
+                        DropdownMenuItem(
+                            onClick = {
+                                expanded = false
+                                action.onClick()
+                            },
+                            text = { Text(text = action.label) },
+                            shape = MenuDefaults.itemShape(index = index, count = group.size).shape,
+                            leadingIcon = { Icon(action.icon, contentDescription = null) },
+                            enabled = action.enabled,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -187,8 +260,11 @@ private fun TopBar(
     }
 }
 
-/** Below this, only Share and the overflow menu: the Material compact width. */
+/** Below this, one action and the menu: the Material compact width. */
 private val WideBarWidth = 600.dp
+
+/** How many actions a narrow bar shows as buttons, beside the menu. */
+private const val NarrowBarActions = 1
 
 @PreviewLightDark
 @Composable

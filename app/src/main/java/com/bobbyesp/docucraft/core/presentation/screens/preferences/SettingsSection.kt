@@ -66,6 +66,11 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
             onRecognizeTextInNewDocumentsChange = { enabled ->
                 scope.launch { settingsRepository.setRecognizeTextInNewDocuments(enabled) }
             },
+            // On until the settings say otherwise, as the default is.
+            reviewsNewScans = preferences?.reviewNewScans != false,
+            onReviewNewScansChange = { enabled ->
+                scope.launch { settingsRepository.setReviewNewScans(enabled) }
+            },
             onBack = navigator::leaveSettings,
         )
     }

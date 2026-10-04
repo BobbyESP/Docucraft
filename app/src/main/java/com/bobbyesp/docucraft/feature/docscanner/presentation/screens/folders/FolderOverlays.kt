@@ -48,6 +48,7 @@ import com.bobbyesp.docucraft.core.presentation.components.divider.AnimatedWavyD
 import com.bobbyesp.docucraft.core.presentation.components.divider.defaults.AnimatedWavyDividerDefaults
 import com.bobbyesp.docucraft.core.presentation.components.others.GridMenu
 import com.bobbyesp.docucraft.core.presentation.components.others.GridMenuItem
+import com.bobbyesp.docucraft.core.presentation.components.overlay.OverlayForm
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Folder
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.FolderIcon
@@ -61,7 +62,6 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organiz
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FormSpacer
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.LabelColorPicker
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.NameField
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.OverlayForm
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.folderSummary
 
 /**

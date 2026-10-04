@@ -53,8 +53,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.components.overlay.OverlaySheetSkeleton
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionSheetSkeleton
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.EditDocumentUiState
 
@@ -73,7 +73,7 @@ fun EditDocumentDetailsSheet(
 ) {
     val focusManager = LocalFocusManager.current
 
-    DocumentActionSheetSkeleton(
+    OverlaySheetSkeleton(
         modifier =
             modifier.pointerInput(Unit) {
                 detectTapGestures(onTap = { focusManager.clearFocus() })
@@ -180,9 +180,14 @@ fun EditDocumentDetailsDialog(
     )
 }
 
+/**
+ * The two fields the user writes of a document, each with the room it has left. Shared by the
+ * overlay that edits a document and the review of a new scan, so that a title is typed the same way
+ * in both.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun EditDocumentDetailsContent(
+internal fun EditDocumentDetailsContent(
     state: EditDocumentUiState,
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,

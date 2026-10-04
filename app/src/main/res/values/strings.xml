@@ -371,4 +371,23 @@
     <string name="folder_delete_with_contents">Also delete what it holds</string>
     <string name="folder_delete_with_contents_note">The folders inside it are deleted too, and every document in them goes to the bin.</string>
     <string name="folder_deleted_with_contents">Folder deleted. Its documents are in the bin</string>
+    <string name="document_text_unknown">Not known</string>
+    <string name="skip">Skip</string>
+    <string name="folder">Folder</string>
+    <string name="scan_review_title">Scan saved</string>
+    <string name="scan_review_desc">It is in your library. Name it now, or skip and do it later.</string>
+    <string name="scan_review_recognize_text_desc">So it can be found by what it says</string>
+    <string name="suggestions">Suggestions</string>
+    <string name="suggestions_working">Reading the document…</string>
+    <string name="suggestions_none">There is nothing to suggest for this document.</string>
+    <string name="suggestions_failed">Suggestions could not be made this time.</string>
+    <string name="suggestions_text_recognition_off">Nothing will be suggested: text recognition is off for this document, and a scan has no text without it. Turn it on below, or for every new document in Settings.</string>
+    <string name="suggestion_use">Use</string>
+    <string name="suggestion_move_to">Move to %1$s</string>
+    <string name="review_new_scans">Review scans when they are saved</string>
+    <string name="review_new_scans_on_desc">After scanning, you name the document and say where it goes</string>
+    <string name="review_new_scans_off_desc">Scans are saved as they come. You can edit them later</string>
+    <string name="tags_add">Add tags</string>
+    <string name="tags_edit_short">Edit</string>
+    <string name="preview">Preview</string>
 </resources>

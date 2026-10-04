@@ -18,6 +18,9 @@ sealed interface HomeIntent {
 
     data object LaunchScanner : HomeIntent
 
+    /** The review of the scan that was waiting for one is on screen, so it waits no longer. */
+    data object ScanReviewOpened : HomeIntent
+
     data class ApplySort(val sort: SortOption) : HomeIntent
 
     data class ApplyFilter(val filter: FilterOptions) : HomeIntent

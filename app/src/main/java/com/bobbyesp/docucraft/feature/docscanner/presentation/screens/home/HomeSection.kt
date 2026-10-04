@@ -34,9 +34,11 @@ import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderContents
 import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderEditor
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.docscanner.navigation.ManageTags
+import com.bobbyesp.docucraft.feature.docscanner.navigation.ReviewScan
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.bin.binSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.foldersSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.documentActionsSection
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.review.scanReviewSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.documentSearchSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.tags.tagsSection
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
@@ -66,6 +68,7 @@ fun EntryProviderScope<NavKey>.homeSection(
             onOpenSettings = { navigator.goTo(Settings) },
             onOpenSearch = { navigator.goTo(DocumentSearch) },
             onOpenDocumentActions = { uuid -> navigator.goTo(DocumentActions(uuid)) },
+            onReviewScan = { uuid -> navigator.goTo(ReviewScan(uuid)) },
             organization =
                 HomeOrganizationActions(
                     onOpenFolder = { uuid -> navigator.goTo(FolderContents(uuid)) },
@@ -85,6 +88,7 @@ fun EntryProviderScope<NavKey>.homeSection(
     foldersSection(navigator, selectedDocumentId)
     tagsSection(navigator)
     binSection(navigator)
+    scanReviewSection(navigator)
 }
 
 /** Shown in the detail pane on expanded windows while no document is open. */
