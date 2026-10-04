@@ -158,6 +158,32 @@ class FakeFoldersRepository(
         }
     }
 
+    /** The documents the fake was asked to send to the bin with their folder, in order. */
+    val binned = mutableListOf<String>()
+
+    override suspend fun deleteWithContents(uuid: String) {
+        val folder = getFolder(uuid) ?: return
+        val subtree = mutableListOf(uuid)
+        var next = 0
+        while (next < subtree.size) {
+            val parent = subtree[next++]
+            subtree += folders.value.filter { it.parentUuid == parent }.map { it.uuid }
+        }
+        binned += documentFolders.value.filterValues { it in subtree }.keys
+        documentFolders.update { placed ->
+            placed
+                .mapNotNull { (document, where) ->
+                    when {
+                        where !in subtree -> document to where
+                        folder.parentUuid != null -> document to folder.parentUuid
+                        else -> null
+                    }
+                }
+                .toMap()
+        }
+        folders.update { all -> all.filterNot { it.uuid in subtree } }
+    }
+
     override suspend fun moveDocuments(
         documentUuids: List<String>,
         folderUuid: String?,

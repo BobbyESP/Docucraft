@@ -28,7 +28,8 @@ interface DocumentsRepository {
     suspend fun getDocument(uuid: String): Document
 
     /**
-     * One document, emitted again whenever it changes, and `null` once it is deleted.
+     * One document, emitted again whenever it changes, and `null` once it is deleted or sent to the
+     * bin: for everything but the bin itself, a document that is there is one that is gone.
      *
      * For screens that outlive an edit: reading once would leave them showing what was true when
      * they opened.
@@ -71,6 +72,46 @@ interface DocumentsRepository {
      * document of another app, or for one that is not there.
      */
     suspend fun setFavorite(uuid: String, favorite: Boolean)
+
+    /**
+     * The bin: the documents that were deleted and can still be brought back, the last one deleted
+     * first.
+     */
+    fun observeBin(): Flow<List<Document.Managed>>
+
+    /**
+     * Sends a document of the library to the bin. It leaves the library, search and Recents, and
+     * keeps everything else: its folder, its tags, its text and its file.
+     *
+     * @return Whether it went: `false` for a document that is already there, or is not one the app
+     *   keeps.
+     */
+    suspend fun moveToBin(uuid: String): Boolean
+
+    /**
+     * Brings a document back from the bin, to the folder it is in. That folder is one that still
+     * exists: deleting a folder moves what it holds, the bin's documents too, to the folder above.
+     *
+     * @return Whether it came back: `false` for a document that is not in the bin.
+     */
+    suspend fun restoreFromBin(uuid: String): Boolean
+
+    /** What has been in the bin since [epochMillis] or longer. */
+    suspend fun binnedUntil(epochMillis: Long): List<Document.Managed>
+
+    /**
+     * Deletes a document of the bin for good, with everything the catalogue kept about it. Only the
+     * catalogue entry goes; removing the file is storage's job, afterwards.
+     *
+     * A document that is not in the bin is left alone, whatever asked: nothing but the user naming
+     * a document deletes one from the library.
+     *
+     * @return Whether it was deleted.
+     */
+    suspend fun deleteFromBin(uuid: String): Boolean
+
+    /** Where the file of every document the app keeps is, by uuid. The bin's are included. */
+    suspend fun keptFiles(): Map<String, String>
 
     /**
      * Forgets the document with this [uuid], and everything the catalogue kept about it.

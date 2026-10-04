@@ -26,8 +26,9 @@ tag and is never a favorite; the catalogue's triggers refuse it.
 - **A name is unique among siblings** for folders, and among all tags, without regard to case,
   accents or spaces (`normalizedNameOf`). A name that is taken is an answer, `FolderChange.NameTaken`
   or `TagChange.NameTaken`, said under the field the user typed it in.
-- **Deleting a folder deletes no document.** What it holds goes to the folder it was in. Deleting a
-  tag only takes it off its documents.
+- **Deleting a folder deletes no document.** What it holds goes to the folder it was in. Deleting
+  it together with what it holds is a switch in the confirmation, off each time: the folders inside
+  it go too, and their documents go to the bin. Deleting a tag only takes it off its documents.
 - **Each folder remembers the order of its documents** (`FoldersRepository.setSort`). The root has
   no folder to remember it in, so its order lasts while its screen does.
 
@@ -78,6 +79,13 @@ All of them are keys of the one back stack (`navigation/OrganizationKeys.kt`); s
 | `ManageTags` | Every tag, and which have a section in Home | A screen |
 | `TagEditor(tagUuid?)` | Name and color, of a tag or of a new one | Sheet or dialog |
 | `DeleteTag(tagUuid)` | Confirmation | Sheet or dialog |
+| `Bin` | What was deleted, each with the days it has left | A screen |
+| `BinDocumentActions(documentUuid)` | Restore, or delete for good | Sheet |
+| `DeleteForever(documentUuid)`, `EmptyBin` | Confirmations | Sheet or dialog |
+
+The bin's keys are in `navigation/BinKeys.kt`. It is entered from the root of the folders, where
+the library's folders start, and not from a folder: the bin is the library's. What it does is in
+[database.md](database.md#the-life-of-a-document).
 
 - **A form is written once.** `OverlayForm` renders the same heading, body and two buttons as a
   sheet or as a dialog, as `LocalOverlayContext` says.
@@ -95,6 +103,10 @@ All of them are keys of the one back stack (`navigation/OrganizationKeys.kt`); s
 
 ## What every list of documents shares
 
+A document whose file is not there is listed like any other, faded and saying *File not found*
+(`ObserveNotFoundDocumentsUseCase` gives the lists which ones). It is never left out: only the user
+deletes a document.
+
 Home and a folder's screen are built from the same parts
 (`presentation/components/list/DocumentListChrome.kt`): the large app bar that frosts once the list
 scrolls under it, the section header, and the sort menu. A screen that floats a button over its list
@@ -102,8 +114,6 @@ lifts it with a blur halo, as Home does; see [architecture.md](architecture.md#b
 
 ## Not done yet
 
-- Deleting a folder *with* what it holds, which sends its documents to the bin: it waits for the
-  bin.
 - Tags are not shown on a document's row in a list. A row would need its document's tags, and the
   lists do not ask for them.
 - A folder is moved to where a folder can be created, without looking at how deep the folders

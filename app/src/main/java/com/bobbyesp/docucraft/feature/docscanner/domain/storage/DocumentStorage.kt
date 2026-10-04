@@ -21,6 +21,14 @@ data class StoredDocument(
 )
 
 /**
+ * A file found in storage.
+ *
+ * @property filePath Where it is, relative to the app's files directory.
+ * @property lastModifiedEpochMillis When it was last written.
+ */
+data class StoredFile(val filePath: String, val lastModifiedEpochMillis: Long)
+
+/**
  * Where the documents the app keeps are stored.
  *
  * Scanners hand back locations in their own short-lived storage, so a document has to be copied
@@ -50,6 +58,15 @@ interface DocumentStorage {
      * @return `null` when the file is not there, or cannot be read as a document.
      */
     suspend fun pageCount(filePath: String): Int?
+
+    /** Whether there is a file at [filePath], as [StoredDocument.filePath] gives it. */
+    suspend fun exists(filePath: String): Boolean
+
+    /**
+     * Every file in the places documents are kept, whatever it is: a document, one left half
+     * written, or one nothing refers to any more.
+     */
+    suspend fun storedFiles(): List<StoredFile>
 
     /**
      * Removes the file at [filePath], as [StoredDocument.filePath] gives it. Does nothing if it is

@@ -40,6 +40,9 @@ class DocumentActivityRepositoryImpl(
             .distinctUntilChanged()
             .flowOn(Dispatchers.Default)
 
+    override fun observeNotFound(): Flow<Set<String>> =
+        activityDao.observeKeptNotFound().map { it.toSet() }.distinctUntilChanged()
+
     override suspend fun recordOpened(uuid: String) {
         activityDao.recordOpened(uuid, at = now())
     }

@@ -4,6 +4,7 @@
 package com.bobbyesp.docucraft.feature.docscanner.di
 
 import com.bobbyesp.docucraft.feature.docscanner.navigation.MoveToFolder
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.bin.BinViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.FolderContentsViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.FolderViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.MoveToFolderViewModel
@@ -29,6 +30,7 @@ val documentScannerViewModels = module {
             observeLibraryUseCase = get(),
             observeHomeSectionsUseCase = get(),
             tags = get(),
+            observeNotFoundDocuments = get(),
             processDocumentsUseCase = get(),
             saveScanDraftUseCase = get(),
             stringProvider = get(),
@@ -42,6 +44,7 @@ val documentScannerViewModels = module {
             savedStateHandle = get(),
             observeDocumentsUseCase = get(),
             searchDocumentsUseCase = get(),
+            observeNotFoundDocuments = get(),
             stringProvider = get(),
             analyticsHelper = get(),
         )
@@ -53,7 +56,7 @@ val documentScannerViewModels = module {
         DocumentActionsViewModel(
             documentUuid = documentUuid,
             observeDocument = get(),
-            deleteDocumentUseCase = get(),
+            moveDocumentToBin = get(),
             updateDocumentFieldsUseCase = get(),
             documentSharer = get(),
             documentExporter = get(),
@@ -71,6 +74,7 @@ val documentScannerViewModels = module {
             folderUuid = folder.uuid,
             folders = get(),
             processDocuments = get(),
+            observeNotFoundDocuments = get(),
         )
     }
 
@@ -98,6 +102,17 @@ val documentScannerViewModels = module {
         DocumentTagsViewModel(documentUuid = documentUuid, tags = get(), tagByName = get())
     }
 
+    viewModel { (document: BinDocumentRef) ->
+        BinViewModel(
+            documentUuid = document.uuid,
+            documents = get(),
+            restoreDocument = get(),
+            deleteFromBin = get(),
+            emptyBin = get(),
+            stringProvider = get(),
+        )
+    }
+
     viewModel { (tag: TagRef) ->
         TagsViewModel(
             tagUuid = tag.uuid,
@@ -108,6 +123,9 @@ val documentScannerViewModels = module {
         )
     }
 }
+
+/** A document of the bin, or none: the bin as a whole. */
+data class BinDocumentRef(val uuid: String?)
 
 /**
  * A folder, or none: the root, or a folder that does not exist yet. Wrapped because a `null` is not

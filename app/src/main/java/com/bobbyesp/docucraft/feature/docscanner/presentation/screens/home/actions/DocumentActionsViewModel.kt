@@ -14,8 +14,8 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentExporter
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.DocumentSharer
 import com.bobbyesp.docucraft.feature.docscanner.domain.sharing.ExportOutcome
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ForgetLinkedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.MoveDocumentToBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentFavoriteUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentTextRecognitionUseCase
@@ -34,7 +34,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFi
 class DocumentActionsViewModel(
     private val documentUuid: String,
     observeDocument: ObserveDocumentUseCase,
-    private val deleteDocumentUseCase: DeleteDocumentUseCase,
+    private val moveDocumentToBin: MoveDocumentToBinUseCase,
     private val updateDocumentFieldsUseCase: UpdateDocumentFieldsUseCase,
     private val documentSharer: DocumentSharer,
     private val documentExporter: DocumentExporter,
@@ -144,20 +144,23 @@ class DocumentActionsViewModel(
     }
 
     /**
+     * Deleting sends the document to the bin, where it can be brought back from.
+     *
      * Closing is left to the document disappearing from underneath, which the observer above
-     * notices: the same path that closes these overlays when the document is deleted from another
-     * window, so there is only one way out to get right.
+     * notices: a document in the bin is observed as one that is gone. It is the same path that
+     * closes these overlays when the document is deleted from another window, so there is only one
+     * way out to get right.
      */
     private fun delete() = launch {
         val document = currentState.document ?: return@launch
 
-        deleteDocumentUseCase(document)
+        if (!moveDocumentToBin(document.uuid)) return@launch
 
         analyticsHelper.logEvent(AnalyticsEvent(type = AnalyticsEvent.Types.DOCUMENT_DELETED))
 
         sendUiEvent(
             UiEvent.ShowMessage(
-                stringProvider.get(R.string.doc_deleted_successfully),
+                stringProvider.get(R.string.doc_moved_to_bin),
                 NotificationType.Success,
             )
         )

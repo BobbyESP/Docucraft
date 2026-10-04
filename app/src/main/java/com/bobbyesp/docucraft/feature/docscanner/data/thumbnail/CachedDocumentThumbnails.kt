@@ -51,6 +51,18 @@ class CachedDocumentThumbnails(
         withContext(Dispatchers.IO) { previewsOf(documentUuid).forEach { it.delete() } }
     }
 
+    override suspend fun retainOnly(documentUuids: Set<String>) {
+        withContext(Dispatchers.IO) {
+            directory
+                .listFiles()
+                .orEmpty()
+                .filter { it.name.substringBefore('.') !in documentUuids }
+                .forEach { it.delete() }
+            // Previews were files of the app once, named after the document's file.
+            File(context.filesDir, LEGACY_DIRECTORY).deleteRecursively()
+        }
+    }
+
     private suspend fun draw(thumbnail: DocumentThumbnail, into: File): Boolean {
         val filePath = documentDao.filePathOf(thumbnail.documentUuid) ?: return false
         val document = File(context.filesDir, filePath)
@@ -94,6 +106,7 @@ class CachedDocumentThumbnails(
 
     private companion object {
         const val DIRECTORY = "thumbnails"
+        const val LEGACY_DIRECTORY = "previews"
         const val EXTENSION = "webp"
         const val QUALITY = 65
     }

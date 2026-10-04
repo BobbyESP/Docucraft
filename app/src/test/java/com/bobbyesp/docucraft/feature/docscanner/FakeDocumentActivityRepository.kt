@@ -33,12 +33,20 @@ class FakeDocumentActivityRepository(recents: List<RecentDocument> = emptyList()
         it.take(limit)
     }
 
+    /** The documents whose file is noted as not found. */
+    val notFound = MutableStateFlow(emptySet<String>())
+
+    override fun observeNotFound(): Flow<Set<String>> = notFound
+
     override suspend fun recordOpened(uuid: String) {
         opened += uuid
     }
 
     override suspend fun recordAvailability(uuid: String, availability: DocumentAvailability) {
         this.availability += uuid to availability
+        notFound.value =
+            if (availability == DocumentAvailability.NOT_FOUND) notFound.value + uuid
+            else notFound.value - uuid
     }
 
     override suspend fun readingPosition(uuid: String): ReadingPosition? {

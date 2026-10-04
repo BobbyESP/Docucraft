@@ -32,6 +32,13 @@ interface DocumentActivityRepository {
     suspend fun recordOpened(uuid: String)
 
     /**
+     * The uuids of the documents the app keeps whose file was not there the last time it was looked
+     * for. They are still documents, shown as not found, until the file is back or the user deletes
+     * them.
+     */
+    fun observeNotFound(): Flow<Set<String>>
+
+    /**
      * Notes whether the file of the document with this [uuid] could be reached just now. Nothing if
      * there is no such document.
      */

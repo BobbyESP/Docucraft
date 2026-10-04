@@ -550,6 +550,7 @@ private fun DocumentsPage(
                         count = documents.size,
                     ),
                 selected = scannedDocument.uuid == selectedDocumentId,
+                fileMissing = scannedDocument.uuid in uiState.notFoundUuids,
                 onItemClick = onOpenDocument,
                 onItemLongClick = { onOpenDocumentActions(scannedDocument.uuid) },
             )

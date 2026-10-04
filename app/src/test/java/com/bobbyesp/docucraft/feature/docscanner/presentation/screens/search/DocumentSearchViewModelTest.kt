@@ -7,9 +7,11 @@ import androidx.lifecycle.SavedStateHandle
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
+import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentActivityRepository
 import com.bobbyesp.docucraft.feature.docscanner.FakeSearchIndex
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.SearchHit
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveNotFoundDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import io.mockk.every
@@ -69,6 +71,8 @@ class DocumentSearchViewModelTest {
             observeDocumentsUseCase =
                 mockk<ObserveDocumentsUseCase>().also { every { it() } returns documents },
             searchDocumentsUseCase = SearchDocumentsUseCase(index),
+            observeNotFoundDocuments =
+                ObserveNotFoundDocumentsUseCase(FakeDocumentActivityRepository()),
             stringProvider = mockk<StringProvider>(relaxed = true),
             analyticsHelper = analyticsHelper,
             defaultDispatcher = testDispatcher,

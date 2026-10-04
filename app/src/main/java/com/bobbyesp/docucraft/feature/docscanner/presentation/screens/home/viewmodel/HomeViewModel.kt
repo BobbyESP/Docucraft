@@ -19,6 +19,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.TagsRepositor
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveHomeSectionsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveLibraryUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveNotFoundDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveRecentDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
@@ -50,6 +51,7 @@ class HomeViewModel(
     private val observeLibraryUseCase: ObserveLibraryUseCase,
     private val observeHomeSectionsUseCase: ObserveHomeSectionsUseCase,
     private val tags: TagsRepository,
+    private val observeNotFoundDocuments: ObserveNotFoundDocumentsUseCase,
     private val processDocumentsUseCase: ProcessDocumentsUseCase,
     private val saveScanDraftUseCase: SaveScanDraftUseCase,
     private val stringProvider: StringProvider,
@@ -214,6 +216,11 @@ class HomeViewModel(
                         tagSections = sections.tagSections,
                     )
                 }
+            }
+        }
+        launch {
+            observeNotFoundDocuments().collect { notFound ->
+                setState { copy(notFoundUuids = notFound) }
             }
         }
         launch {

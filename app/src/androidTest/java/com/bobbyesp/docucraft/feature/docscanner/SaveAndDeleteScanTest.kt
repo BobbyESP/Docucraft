@@ -12,8 +12,9 @@ import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.search.SearchIndex
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteFromBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.IndexDocumentTextUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.MoveDocumentToBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentTextRecognitionUseCase
 import com.bobbyesp.scanner.ContentRef
@@ -44,7 +45,8 @@ class SaveAndDeleteScanTest {
     private val context = instrumentation.targetContext
     private val koin = GlobalContext.get()
     private val saveScan: SaveScanDraftUseCase = koin.get()
-    private val deleteDocument: DeleteDocumentUseCase = koin.get()
+    private val moveToBin: MoveDocumentToBinUseCase = koin.get()
+    private val deleteFromBin: DeleteFromBinUseCase = koin.get()
     private val indexDocumentText: IndexDocumentTextUseCase = koin.get()
     private val setTextRecognition: SetDocumentTextRecognitionUseCase = koin.get()
     private val repository: DocumentsRepository = koin.get()
@@ -179,12 +181,26 @@ class SaveAndDeleteScanTest {
         assertTrue(searchIndex.search("texto real").any { it.documentUuid == document.uuid })
     }
 
+    // Deleting is two steps now. The first keeps everything, the file too; only deleting it from
+    // the bin takes it all.
     @Test
-    fun deletingTakesTheFileAndEverythingTheCatalogueKept() = runBlocking {
+    fun deletingSendsToTheBinAndDeletingFromTheBinTakesTheFileAndEverythingKept() = runBlocking {
         val document = save(reportedPages = 3)
         val file = File(context.filesDir, document.filePath)
 
-        deleteDocument(document)
+        // Not in the bin yet: it cannot be deleted for good.
+        assertFalse(deleteFromBin(document))
+        assertTrue(moveToBin(document.uuid))
+        assertTrue(file.exists())
+        assertEquals(
+            listOf("3"),
+            rows(
+                "SELECT COUNT(*) FROM pages p JOIN documents d ON d.id = p.document_id " +
+                    "WHERE d.uuid = '${document.uuid}'"
+            ),
+        )
+
+        assertTrue(deleteFromBin(document))
 
         assertFalse(file.exists())
         assertEquals(

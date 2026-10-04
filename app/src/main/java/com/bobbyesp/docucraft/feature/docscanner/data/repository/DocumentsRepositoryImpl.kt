@@ -32,7 +32,7 @@ class DocumentsRepositoryImpl(
     override fun observeDocument(uuid: String): Flow<Document?> =
         documentDao
             .observeByUuid(uuid)
-            .map { entity -> entity?.toModel(locations) }
+            .map { entity -> entity?.takeIf { it.trashedAt == null }?.toModel(locations) }
             .flowOn(Dispatchers.Default)
 
     override suspend fun getDocument(uuid: String): Document {
@@ -61,6 +61,26 @@ class DocumentsRepositoryImpl(
     override suspend fun setFavorite(uuid: String, favorite: Boolean) {
         documentDao.setFavorite(uuid, favorite, updatedAt = now())
     }
+
+    override fun observeBin(): Flow<List<Document.Managed>> =
+        documentDao
+            .observeBin()
+            .map { entities -> entities.map { it.toManaged(locations) } }
+            .flowOn(Dispatchers.Default)
+
+    override suspend fun moveToBin(uuid: String): Boolean =
+        documentDao.moveToBin(uuid, at = now()) > 0
+
+    override suspend fun restoreFromBin(uuid: String): Boolean =
+        documentDao.restoreFromBin(uuid, at = now()) > 0
+
+    override suspend fun binnedUntil(epochMillis: Long): List<Document.Managed> =
+        documentDao.binnedUntil(epochMillis).map { it.toManaged(locations) }
+
+    override suspend fun deleteFromBin(uuid: String): Boolean = documentDao.deleteFromBin(uuid) > 0
+
+    override suspend fun keptFiles(): Map<String, String> =
+        documentDao.keptFiles().associate { it.uuid to it.filePath }
 
     override suspend fun deleteDocument(uuid: String) {
         val deleted = documentDao.deleteByUuid(uuid)

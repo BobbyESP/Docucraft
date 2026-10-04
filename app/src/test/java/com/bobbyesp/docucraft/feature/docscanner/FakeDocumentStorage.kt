@@ -6,6 +6,7 @@ package com.bobbyesp.docucraft.feature.docscanner
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredFile
 import com.bobbyesp.scanner.ContentRef
 
 /**
@@ -44,6 +45,15 @@ class FakeDocumentStorage : DocumentStorage {
     }
 
     override suspend fun pageCount(filePath: String): Int? = pageCount.takeIf { filePath in files }
+
+    /** When each file was last written, for those that are not as new as the rest. */
+    val lastModified = mutableMapOf<String, Long>()
+
+    override suspend fun exists(filePath: String): Boolean = filePath in files
+
+    override suspend fun storedFiles(): List<StoredFile> = files.map {
+        StoredFile(it, lastModified[it] ?: 0L)
+    }
 
     override suspend fun delete(filePath: String) {
         deleteFailure?.let { throw it }

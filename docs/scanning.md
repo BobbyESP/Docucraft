@@ -106,7 +106,8 @@ The save reports its own failure. Earlier, a failed save still congratulated the
 
 ## The catalogue
 
-- **Room.** `DocumentsDatabase`, currently version 5, in the file `scanned_pdfs.db`. A scan is a
+- **Room.** The whole model is in [database.md](database.md).
+  `DocumentsDatabase`, currently version 5, in the file `scanned_pdfs.db`. A scan is a
   row of `documents` with custody `MANAGED` and origin `SCAN`, plus a row of `document_activity`
   and one row of `pages` for each of its pages. `documents_fts` is the FTS4 index over what a
   document is called and described as; its `unicode61` tokenizer ignores case and accents.
@@ -155,11 +156,11 @@ The save reports its own failure. Earlier, a failed save still congratulated the
   in the document's text. See [Search](#search).
 - **Document actions.** Actions, Edit and Delete are destinations with their own keys (see
   [navigation.md](navigation.md)), backed by `DocumentActionsViewModel`.
-- **Deleting.** `DeleteDocumentUseCase` removes the catalogue row first, then the file, and
-  forgets its previews. A row pointing at a missing file is visible to the user; an orphan file is
-  not.
+- **Deleting.** A deleted document goes to the bin, and is only deleted for good from there:
+  see [database.md](database.md#the-life-of-a-document).
 - **Folders, tags and pages.** Their models and ports are in the domain (`FoldersRepository`,
-  `TagsRepository`, `PagesRepository`) and are implemented over Room. No screen uses them yet.
+  `TagsRepository`, `PagesRepository`) and are implemented over Room. What the screens do with
+  them is in [organization.md](organization.md).
   - **What the user can cause comes back as an answer**: a name that is taken, a folder moved into
     itself. `FolderChange` and `TagChange` are sealed, and the repository checks the rule and makes
     the change in one transaction. The triggers and indices stay as the net under it.

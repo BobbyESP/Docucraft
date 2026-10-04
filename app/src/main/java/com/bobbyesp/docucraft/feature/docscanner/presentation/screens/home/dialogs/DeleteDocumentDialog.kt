@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -35,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.BinRetention
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionSheetSkeleton
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 
@@ -49,7 +49,7 @@ fun DeleteDocumentSheet(
     DocumentActionSheetSkeleton(
         modifier = modifier,
         headingTitle = stringResource(R.string.doc_delete),
-        icon = Icons.Rounded.DeleteForever,
+        icon = Icons.Rounded.Delete,
         iconTint = MaterialTheme.colorScheme.error,
         content = {
             DeleteDocumentContent(modifier = Modifier.padding(8.dp), scannedDocument = document)
@@ -75,7 +75,7 @@ fun DeleteDocumentSheet(
                         modifier = Modifier.size(ButtonDefaults.IconSize),
                     )
 
-                    Text(stringResource(R.string.delete))
+                    Text(stringResource(R.string.move_to_bin))
                 }
 
                 OutlinedButton(
@@ -103,7 +103,7 @@ fun DeleteDocumentDialog(
         onDismissRequest = onDismiss,
         icon = {
             Icon(
-                imageVector = Icons.Rounded.DeleteForever,
+                imageVector = Icons.Rounded.Delete,
                 contentDescription = stringResource(R.string.doc_delete),
                 tint = MaterialTheme.colorScheme.error,
             )
@@ -118,7 +118,7 @@ fun DeleteDocumentDialog(
                 colors =
                     ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
             ) {
-                Text(text = stringResource(R.string.delete))
+                Text(text = stringResource(R.string.move_to_bin))
             }
         },
         dismissButton = {
@@ -134,7 +134,7 @@ private fun DeleteDocumentContent(
     modifier: Modifier = Modifier,
 ) {
     val documentTitle = scannedDocument.name
-    val text = stringResource(R.string.doc_delete_confirmation, documentTitle)
+    val text = stringResource(R.string.doc_bin_confirmation, documentTitle)
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -159,7 +159,7 @@ private fun DeleteDocumentContent(
 
         Text(
             modifier = Modifier.alpha(0.66f).fillMaxWidth(),
-            text = stringResource(R.string.doc_delete_warning),
+            text = stringResource(R.string.doc_bin_note, BinRetention.DAYS),
             style = MaterialTheme.typography.bodySmall,
             textAlign = TextAlign.Center,
         )

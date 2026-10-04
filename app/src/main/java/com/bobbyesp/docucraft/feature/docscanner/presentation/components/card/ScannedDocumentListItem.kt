@@ -35,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -71,6 +72,10 @@ import java.util.UUID
  * @param selected whether this is the document open beside the list, on windows wide enough to show
  *   both.
  * @param passage where in the document's text a search found it, to show under its facts.
+ * @param fileMissing whether the document's file is not there. It is still listed, faded and saying
+ *   so: a document is never dropped from the library because its file went missing.
+ * @param note something to say of the document in this list in particular, such as the days it has
+ *   left in the bin.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -82,6 +87,8 @@ fun ScannedDocumentListItem(
     shapes: ListItemShapes = DocucraftShapeDefaults.segmentedListItemShapes(index = 0, count = 1),
     selected: Boolean = false,
     passage: SearchPassage? = null,
+    fileMissing: Boolean = false,
+    note: String? = null,
 ) {
     SegmentedListItem(
         selected = selected,
@@ -97,8 +104,15 @@ fun ScannedDocumentListItem(
             ListItemDefaults.segmentedColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow
             ),
-        leadingContent = { DocumentThumbnail(thumbnail = pdf.thumbnail) },
-        supportingContent = { DocumentSummary(pdf = pdf, passage = passage) },
+        leadingContent = {
+            DocumentThumbnail(
+                thumbnail = pdf.thumbnail,
+                modifier = Modifier.alpha(if (fileMissing) MissingFileAlpha else 1f),
+            )
+        },
+        supportingContent = {
+            DocumentSummary(pdf = pdf, passage = passage, fileMissing = fileMissing, note = note)
+        },
         trailingContent = {
             IconButton(onClick = onItemLongClick, shapes = IconButtonDefaults.shapes()) {
                 Icon(
@@ -143,6 +157,8 @@ fun ScannedDocumentListItem(
 private fun DocumentSummary(
     pdf: Document.Managed,
     passage: SearchPassage?,
+    fileMissing: Boolean,
+    note: String?,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -173,8 +189,29 @@ private fun DocumentSummary(
             overflow = TextOverflow.Ellipsis,
         )
         if (passage != null) MatchingPassage(passage = passage)
+        if (note != null) {
+            Text(
+                text = note,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.tertiary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (fileMissing) {
+            Text(
+                text = stringResource(R.string.doc_file_not_found),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.error,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
+
+/** How much of a document's preview shows when its file is not there. */
+private const val MissingFileAlpha = 0.38f
 
 /**
  * The words around what a search matched in the document's text, and the page they are on, so the

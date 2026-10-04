@@ -95,7 +95,7 @@ A new Koin module is registered in `App.kt`.
   rendered by `DocucraftNavDisplay.kt`. `PdfViewerActivity` reuses that display with its own stack.
 - **Keys are typed and `@Serializable`, and each feature owns its own.**
   - Scanner: `feature/docscanner/navigation/HomeKey.kt`, `DocumentSearchKey.kt`,
-    `DocumentActionKeys.kt` and `OrganizationKeys.kt`.
+    `DocumentActionKeys.kt`, `OrganizationKeys.kt` and `BinKeys.kt`.
   - Viewer: `feature/pdfviewer/navigation/PdfViewerKey.kt`.
   - Settings: `core/presentation/screens/preferences/navigation/SettingsKeys.kt`.
 - **Features never touch the stack.** They get a `Navigator`
@@ -215,7 +215,9 @@ A new Koin module is registered in `App.kt`.
 4. `SaveScanDraftUseCase` stores the file through `DocumentStorage` (app files, exposed through the
    `FileProvider`) and catalogues it in Room.
 5. The document is queued to have the text of its pages read (`DocumentIndexQueue`, WorkManager),
-   which is what search finds it by. `App` queues whatever is still pending each time it starts.
+   which is what search finds it by. `App` queues whatever is still pending each time it starts,
+   and schedules the library's daily upkeep (`LibraryMaintenance`): the bin's purge and the
+   reconciliation of files and catalogue.
 6. Home observes `ObserveDocumentsUseCase`. `HomeViewModel.observeDocuments` hands each change to
    `ProcessDocumentsUseCase`, which searches, filters and sorts.
 
@@ -253,7 +255,15 @@ A new Koin module is registered in `App.kt`.
     were named by uuid, which are never moved).
 - **Firebase Analytics and Crashlytics** are on (`core/di/AnalyticsModule.kt`,
   `google-services.json`).
-- **Room**:
+- **Room** (the model, its rules and decisions DB1–DB11 are in
+  [docs/database.md](docs/database.md)):
+  - **Nothing automatic deletes a document of the library.** Deleting sends a document to the bin
+    (`MoveDocumentToBinUseCase`); it is deleted for good only from there
+    (`DeleteFromBinUseCase`), by the user or after 30 days. The reconciliation marks a document
+    whose file is missing as not found and never removes it. A new process that removes documents
+    goes through the bin.
+  - `DocumentsRepository.observeDocument` emits `null` for a document in the bin: to everything
+    but the bin, it is gone.
   - `DocumentsDatabase` is currently version 5, in the file `scanned_pdfs.db`. Migrations are in
     `DocumentsDatabaseMigrations.kt`. Build it with `DocumentsDatabase.builder`, in tests too.
   - Schemas are exported to `app/schemas/`. A schema change means: bump the version, add a
@@ -315,7 +325,8 @@ A new Koin module is registered in `App.kt`.
   - Everything is in English, and describes the app as it is now. When code changes, update the
     document that describes it. History lives in git, not in the docs.
   - Explain the why next to each decision. Code-level detail belongs in KDoc, not in the docs.
-  - The decisions named in code comments (D1–D5, E1–E6) are listed in `docs/README.md`.
+  - The decisions named in code comments (D1–D5, DB1–DB11, E1–E6) are listed in
+    `docs/README.md`.
 - **Work happens by stabilization**, one subsystem at a time, following the method in
   [`docs/README.md`](docs/README.md#how-a-subsystem-is-stabilized). Each one has its own branch
   (`refactor/<subsystem>`), merged through a PR.

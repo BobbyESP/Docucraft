@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.rounded.CreateNewFolder
+import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PushPin
@@ -81,6 +82,7 @@ data class FolderContentsNavigation(
     val onOpenFolder: (String) -> Unit = {},
     val onOpenFolderActions: (String) -> Unit = {},
     val onCreateFolder: () -> Unit = {},
+    val onOpenBin: () -> Unit = {},
     /** The folder was deleted while its screen was open. */
     val onFolderGone: () -> Unit = {},
 )
@@ -174,6 +176,19 @@ fun FolderContentsContent(
                     }
                 },
                 actions = {
+                    // The bin is the library's, not a folder's: it is reached from where the
+                    // folders start.
+                    if (uiState.isRoot) {
+                        IconButton(
+                            onClick = navigation.onOpenBin,
+                            shapes = IconButtonDefaults.shapes(),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.DeleteOutline,
+                                contentDescription = stringResource(R.string.bin),
+                            )
+                        }
+                    }
                     if (folder != null) {
                         FilledTonalIconToggleButton(
                             checked = folder.isPinned,
@@ -360,6 +375,7 @@ private fun FolderContentsList(
                             count = documents.size,
                         ),
                     selected = document.uuid == selectedDocumentId,
+                    fileMissing = document.uuid in uiState.notFoundUuids,
                     onItemClick = navigation.onOpenDocument,
                     onItemLongClick = { navigation.onOpenDocumentActions(document.uuid) },
                 )

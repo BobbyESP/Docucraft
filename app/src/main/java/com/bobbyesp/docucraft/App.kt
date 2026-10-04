@@ -18,6 +18,7 @@ import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerDataModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.scannedDocumentsDatabaseModule
+import com.bobbyesp.docucraft.feature.docscanner.domain.maintenance.LibraryMaintenance
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ResumeTextIndexingUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.di.pageContentModule
 import com.bobbyesp.docucraft.feature.pdfviewer.di.pdfViewerModule
@@ -55,6 +56,10 @@ class App : Application(), ImageLoaderFactory {
         get<CoroutineScope>(named("AppMainSupervisedScope")).launch {
             runCatching { get<ResumeTextIndexingUseCase>()() }
         }
+
+        // The bin is emptied of what has been there too long, and the files are checked against
+        // the catalogue, once a day in the background. As above, never in the way of starting.
+        runCatching { get<LibraryMaintenance>().schedule() }
 
         packageInfo = packageManager.run {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)

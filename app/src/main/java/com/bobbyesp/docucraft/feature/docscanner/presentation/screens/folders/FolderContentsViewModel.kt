@@ -10,6 +10,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Folder
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.FoldersRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.FolderDepth
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveNotFoundDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +36,7 @@ sealed interface FolderContentsEffect {
  * @property isRoot Whether this is the root of the library rather than a folder.
  * @property folder The folder shown. `null` at the root, and for a folder still being read.
  * @property path From the root down to [folder], itself included.
+ * @property notFoundUuids The documents whose file is not there, which are shown saying so.
  * @property canCreateFolder Whether a folder can be put here: not when this one is as deep as the
  *   app lets folders go.
  */
@@ -47,6 +49,7 @@ data class FolderContentsUiState(
     val sort: SortOption = SortOption.DateDesc,
     val isLoading: Boolean = true,
     val canCreateFolder: Boolean = false,
+    val notFoundUuids: Set<String> = emptySet(),
 ) {
     val isEmpty: Boolean
         get() = !isLoading && subfolders.isEmpty() && documents.isEmpty()
@@ -62,6 +65,7 @@ class FolderContentsViewModel(
     private val folderUuid: String?,
     private val folders: FoldersRepository,
     private val processDocuments: ProcessDocumentsUseCase,
+    private val observeNotFoundDocuments: ObserveNotFoundDocumentsUseCase,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) :
     BaseViewModel<FolderContentsIntent, FolderContentsUiState, FolderContentsEffect>(
@@ -82,7 +86,8 @@ class FolderContentsViewModel(
                     folders.observeFolders(folderUuid),
                     folders.observeDocuments(folderUuid),
                     rootSort,
-                ) { current, subfolders, documents, rootSort ->
+                    observeNotFoundDocuments(),
+                ) { current, subfolders, documents, rootSort, notFound ->
                     if (folderUuid != null && current == null) return@combine null
 
                     val sort = current?.sort ?: rootSort
@@ -99,6 +104,7 @@ class FolderContentsViewModel(
                         sort = sort,
                         isLoading = false,
                         canCreateFolder = FolderDepth.allowsFolderIn(path),
+                        notFoundUuids = notFound,
                     )
                 }
                 .collect { state ->

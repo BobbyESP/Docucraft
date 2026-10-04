@@ -87,6 +87,13 @@ class FakeDocumentThumbnails : DocumentThumbnails {
 
     override suspend fun get(thumbnail: DocumentThumbnail): ContentRef? = null
 
+    /** What it was last told to keep, or `null` if it never was. */
+    var retained: Set<String>? = null
+
+    override suspend fun retainOnly(documentUuids: Set<String>) {
+        retained = documentUuids
+    }
+
     override suspend fun discard(documentUuid: String) {
         discarded += documentUuid
     }

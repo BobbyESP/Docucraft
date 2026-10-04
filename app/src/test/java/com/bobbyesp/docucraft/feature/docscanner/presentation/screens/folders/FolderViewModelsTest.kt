@@ -5,10 +5,12 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders
 
 import androidx.lifecycle.SavedStateHandle
 import com.bobbyesp.docucraft.core.domain.StringProvider
+import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentActivityRepository
 import com.bobbyesp.docucraft.feature.docscanner.FakeFoldersRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.FolderIcon
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.FolderDepth
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveNotFoundDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveFolderUseCase
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
@@ -39,6 +41,7 @@ class FolderViewModelsTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val stringProvider: StringProvider = mockk(relaxed = true)
+    private val activity = FakeDocumentActivityRepository()
 
     @Before
     fun setUp() {
@@ -55,6 +58,7 @@ class FolderViewModelsTest {
             folderUuid = folderUuid,
             folders = folders,
             processDocuments = ProcessDocumentsUseCase(),
+            observeNotFoundDocuments = ObserveNotFoundDocumentsUseCase(activity),
             defaultDispatcher = testDispatcher,
         )
 
@@ -229,11 +233,48 @@ class FolderViewModelsTest {
             val effects = collect(viewModel.effects)
             advanceUntilIdle()
 
-            viewModel.onSendIntent(FolderIntent.ConfirmDelete)
+            viewModel.onSendIntent(FolderIntent.ConfirmDelete(withContents = false))
             advanceUntilIdle()
 
             assertNull(folders.getFolder("a"))
+            assertTrue(folders.binned.isEmpty())
             assertEquals(listOf<FolderEffect>(FolderEffect.CloseAll), effects)
+        }
+
+    @Test
+    fun `a folder deleted with what it holds sends its documents to the bin`() =
+        runTest(testDispatcher) {
+            val folders =
+                FakeFoldersRepository(
+                    folders = listOf(testFolder("a"), testFolder("b", parentUuid = "a")),
+                    documents = listOf(testDocument("in"), testDocument("deep")),
+                    documentFolders = mapOf("in" to "a", "deep" to "b"),
+                )
+            val viewModel = folderViewModel(folders, folderUuid = "a")
+            advanceUntilIdle()
+
+            viewModel.onSendIntent(FolderIntent.ConfirmDelete(withContents = true))
+            advanceUntilIdle()
+
+            assertTrue(folders.folders.value.isEmpty())
+            assertEquals(setOf("in", "deep"), folders.binned.toSet())
+        }
+
+    @Test
+    fun `a document whose file is not there is shown as not found`() =
+        runTest(testDispatcher) {
+            val folders =
+                FakeFoldersRepository(
+                    folders = listOf(testFolder("a")),
+                    documents = listOf(testDocument("doc")),
+                    documentFolders = mapOf("doc" to "a"),
+                )
+            activity.notFound.value = setOf("doc")
+
+            val viewModel = contents(folders, "a")
+            advanceUntilIdle()
+
+            assertEquals(setOf("doc"), viewModel.state.value.notFoundUuids)
         }
 
     // ---------------- moving ----------------

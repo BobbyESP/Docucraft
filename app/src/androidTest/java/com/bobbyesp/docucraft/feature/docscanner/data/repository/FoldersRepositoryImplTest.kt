@@ -255,6 +255,34 @@ class FoldersRepositoryImplTest {
         )
     }
 
+    // The other way to delete a folder, asked for by name: what it holds goes to the bin, and
+    // comes back, if restored, to the folder the deleted one was in.
+    @Test
+    fun deletingAFolderWithItsContentsSendsEveryDocumentUnderItToTheBin() = runBlocking {
+        folders.create("p", "Casa", parentUuid = null)
+        folders.create("a", "Facturas", parentUuid = "p")
+        folders.create("b", "2026", parentUuid = "a")
+        document("beside")
+        document("in")
+        document("deep")
+        folders.moveDocuments(listOf("beside"), "p")
+        folders.moveDocuments(listOf("in"), "a")
+        folders.moveDocuments(listOf("deep"), "b")
+
+        folders.deleteWithContents("a")
+
+        assertNull(folders.getFolder("a"))
+        assertNull(folders.getFolder("b"))
+        assertEquals(listOf("beside"), documentsIn("p"))
+        assertEquals(
+            listOf("beside|p|0", "deep|p|1", "in|p|1"),
+            db.rows(
+                "SELECT d.uuid, f.uuid, d.trashed_at IS NOT NULL FROM documents d " +
+                    "JOIN folders f ON f.id = d.folder_id ORDER BY d.uuid"
+            ),
+        )
+    }
+
     @Test
     fun deletingAFolderInTheRootSendsItsContentsToTheRoot() = runBlocking {
         folders.create("a", "Facturas", parentUuid = null)

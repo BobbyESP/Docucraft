@@ -24,8 +24,11 @@ sealed interface FolderIntent {
 
     data class SetPinned(val pinned: Boolean) : FolderIntent
 
-    /** Delete the folder. What it holds goes to the folder it was in. */
-    data object ConfirmDelete : FolderIntent
+    /**
+     * Delete the folder. What it holds goes to the folder it was in, unless the user asked for it
+     * to go too: then the folders inside it are deleted with it, and their documents go to the bin.
+     */
+    data class ConfirmDelete(val withContents: Boolean) : FolderIntent
 }
 
 sealed interface FolderEffect {
@@ -90,7 +93,7 @@ class FolderViewModel(
             is FolderIntent.Save -> save(intent)
             FolderIntent.NameEdited -> setState { copy(nameError = null) }
             is FolderIntent.SetPinned -> setPinned(intent.pinned)
-            FolderIntent.ConfirmDelete -> delete()
+            is FolderIntent.ConfirmDelete -> delete(intent.withContents)
         }
     }
 
@@ -118,10 +121,15 @@ class FolderViewModel(
     }
 
     /** Closing is left to the folder disappearing, which the observer above notices. */
-    private fun delete() = launch {
+    private fun delete(withContents: Boolean) = launch {
         val folder = currentState.folder ?: return@launch
-        folders.delete(folder.uuid)
-        say(R.string.folder_deleted, NotificationType.Success)
+        if (withContents) {
+            folders.deleteWithContents(folder.uuid)
+            say(R.string.folder_deleted_with_contents, NotificationType.Success)
+        } else {
+            folders.delete(folder.uuid)
+            say(R.string.folder_deleted, NotificationType.Success)
+        }
     }
 
     private fun say(message: Int, type: NotificationType) {

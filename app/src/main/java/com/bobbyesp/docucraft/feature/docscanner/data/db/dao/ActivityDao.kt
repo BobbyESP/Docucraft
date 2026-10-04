@@ -85,6 +85,13 @@ interface ActivityDao {
     )
     suspend fun recordOpened(uuid: String, at: Long): Int
 
+    /** The documents the app keeps whose file was not there the last time it was looked for. */
+    @Query(
+        """SELECT d.uuid FROM documents d JOIN document_activity a ON a.document_id = d.id
+        WHERE d.custody = 'MANAGED' AND a.availability = 'NOT_FOUND'"""
+    )
+    fun observeKeptNotFound(): Flow<List<String>>
+
     @Query(
         """UPDATE document_activity
         SET availability = :availability, availability_checked_at = :at

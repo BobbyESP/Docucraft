@@ -74,6 +74,35 @@ class DocumentStorageImplTest {
         assertEquals(3, stored.pageCount)
     }
 
+    // What the reconciliation looks at: every file where documents are kept, the old place too,
+    // and whether the file a document says it has is there.
+    @Test
+    fun theFilesInStorageAreListedWhereverDocumentsAreKept() = runBlocking {
+        val stored = storage.storeDocument(fixture("text-and-links.pdf").asRef(), "a")
+        val unfinished = File(documents, "b.pdf.tmp").apply { writeText("half") }
+        val legacyDirectory = File(context.filesDir, "scans/pdf").apply { mkdirs() }
+        val legacy = File(legacyDirectory, "Scan_1.pdf").apply { writeText("old") }
+
+        try {
+            val listed = storage.storedFiles()
+
+            assertEquals(
+                setOf("documents/a.pdf", "documents/b.pdf.tmp", "scans/pdf/Scan_1.pdf"),
+                listed.map { it.filePath }.toSet(),
+            )
+            assertEquals(
+                unfinished.lastModified(),
+                listed.first { it.filePath == "documents/b.pdf.tmp" }.lastModifiedEpochMillis,
+            )
+            assertTrue(storage.exists(stored.filePath))
+            assertFalse(storage.exists("documents/gone.pdf"))
+            // A folder is not a document's file, whatever a path says.
+            assertFalse(storage.exists("documents"))
+        } finally {
+            legacy.delete()
+        }
+    }
+
     // The name comes from the uuid, so nothing a document is called can make two files collide.
     @Test
     fun twoDocumentsNeverShareAFile() = runBlocking {

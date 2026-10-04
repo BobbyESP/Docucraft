@@ -11,6 +11,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.service.DocumentOperations
 import com.bobbyesp.docucraft.feature.docscanner.domain.exception.ScanSaveException
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredDocument
+import com.bobbyesp.docucraft.feature.docscanner.domain.storage.StoredFile
 import com.bobbyesp.scanner.ContentRef
 import java.io.File
 import java.security.MessageDigest
@@ -65,6 +66,19 @@ class DocumentStorageImpl(
             if (file.isFile) documentOperations.pageCount(file) else null
         }
 
+    override suspend fun exists(filePath: String): Boolean =
+        withContext(Dispatchers.IO) { File(context.filesDir, filePath).isFile }
+
+    override suspend fun storedFiles(): List<StoredFile> =
+        withContext(Dispatchers.IO) {
+            DIRECTORIES.flatMap { directory ->
+                File(context.filesDir, directory)
+                    .listFiles { file -> file.isFile }
+                    .orEmpty()
+                    .map { StoredFile("$directory/${it.name}", it.lastModified()) }
+            }
+        }
+
     override suspend fun delete(filePath: String) {
         withContext(Dispatchers.IO) {
             val file = File(context.filesDir, filePath)
@@ -115,5 +129,11 @@ class DocumentStorageImpl(
          * which is how a file here is told apart from an older one in a provider URI.
          */
         const val DIRECTORY = "documents"
+
+        /** Where documents were saved before files were named by uuid. Never written to now. */
+        private const val LEGACY_DIRECTORY = "scans/pdf"
+
+        /** Every place a document's file can be. */
+        private val DIRECTORIES = listOf(DIRECTORY, LEGACY_DIRECTORY)
     }
 }

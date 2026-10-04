@@ -83,6 +83,15 @@ interface FoldersRepository {
      */
     suspend fun delete(uuid: String)
 
+    /**
+     * Deletes a folder together with what it holds: the folders inside it, however deep, and their
+     * documents, which go to the bin. Asked for by name, and never what [delete] does.
+     *
+     * No document is deleted here either. Those sent to the bin, and those that were already there,
+     * are left in the folder this one was in, which is where they come back to if restored.
+     */
+    suspend fun deleteWithContents(uuid: String)
+
     /** @param folderUuid Where they go: a folder, or the root for `null`. */
     suspend fun moveDocuments(documentUuids: List<String>, folderUuid: String?): FolderChange
 }

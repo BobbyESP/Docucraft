@@ -196,6 +196,25 @@ class FoldersRepositoryImpl(
         }
     }
 
+    override suspend fun deleteWithContents(uuid: String) {
+        database.withTransaction {
+            val folder = folderDao.byUuid(uuid) ?: return@withTransaction
+
+            // The folder and everything under it, each after the folder it is in.
+            val subtree = mutableListOf(folder)
+            var next = 0
+            while (next < subtree.size) subtree += folderDao.childrenOf(subtree[next++].id)
+
+            val at = now()
+            // From the deepest up: a folder can only go once nothing is inside it.
+            for (deleted in subtree.asReversed()) {
+                folderDao.binDocumentsOf(deleted.id, at)
+                folderDao.moveDocumentsOut(from = deleted.id, to = folder.parentId)
+                folderDao.delete(deleted.id)
+            }
+        }
+    }
+
     override suspend fun moveDocuments(
         documentUuids: List<String>,
         folderUuid: String?,

@@ -22,6 +22,7 @@ import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlaySceneS
 import com.bobbyesp.docucraft.feature.docscanner.di.FolderRef
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.FolderIcon
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.LabelColor
+import com.bobbyesp.docucraft.feature.docscanner.navigation.Bin
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DeleteFolder
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
 import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderActions
@@ -66,6 +67,7 @@ fun EntryProviderScope<NavKey>.foldersSection(navigator: Navigator, selectedDocu
                     onOpenFolder = { uuid -> navigator.goTo(FolderContents(uuid)) },
                     onOpenFolderActions = { uuid -> navigator.goTo(FolderActions(uuid)) },
                     onCreateFolder = { navigator.goTo(FolderEditor(parentUuid = key.folderUuid)) },
+                    onOpenBin = { navigator.goTo(Bin) },
                     onFolderGone = { navigator.removeDestination(key) },
                 ),
             selectedDocumentId = selectedDocumentId,
@@ -127,10 +129,16 @@ fun EntryProviderScope<NavKey>.foldersSection(navigator: Navigator, selectedDocu
         val state by viewModel.state.collectAsStateWithLifecycle()
         val folder = state.folder ?: return@entry
 
+        // A choice being made, not what the folder is: off each time, since it is the one that
+        // sends documents to the bin.
+        var withContents by rememberSaveable { mutableStateOf(false) }
+
         DeleteFolderForm(
             folder = folder,
+            withContents = withContents,
+            onWithContentsChange = { withContents = it },
             onDismiss = navigator::goBack,
-            onConfirm = { viewModel.onSendIntent(FolderIntent.ConfirmDelete) },
+            onConfirm = { viewModel.onSendIntent(FolderIntent.ConfirmDelete(withContents)) },
         )
     }
 

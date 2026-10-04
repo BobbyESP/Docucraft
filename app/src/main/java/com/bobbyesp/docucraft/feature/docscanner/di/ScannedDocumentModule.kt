@@ -6,6 +6,7 @@ package com.bobbyesp.docucraft.feature.docscanner.di
 import com.bobbyesp.docucraft.core.data.image.ImageLoaderComponent
 import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
 import com.bobbyesp.docucraft.feature.docscanner.data.indexing.WorkManagerDocumentIndexQueue
+import com.bobbyesp.docucraft.feature.docscanner.data.maintenance.WorkManagerLibraryMaintenance
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.DocumentActivityRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.DocumentsRepositoryImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.repository.FoldersRepositoryImpl
@@ -23,6 +24,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentStorageImp
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.CachedDocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.DocumentThumbnailComponent
 import com.bobbyesp.docucraft.feature.docscanner.domain.indexing.DocumentIndexQueue
+import com.bobbyesp.docucraft.feature.docscanner.domain.maintenance.LibraryMaintenance
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentActivityRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.FoldersRepository
@@ -36,22 +38,28 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentStorage
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.DocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.domain.storage.ExternalDocumentAccess
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ArrangeHomeSectionsUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DeleteFromBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.DescribeLinkedDocumentUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.EmptyBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ForgetLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.IndexDocumentTextUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.MoveDocumentToBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveHomeSectionsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveLibraryUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveNotFoundDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveRecentDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.PurgeExpiredBinUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ReconcileStorageUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentAvailabilityUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RecordDocumentOpenedUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RegisterLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RememberReadingPositionUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.RestoreDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ResumeTextIndexingUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveFolderUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveLinkedToLibraryUseCase
@@ -146,7 +154,22 @@ val documentScannerDataModule = module {
     factory { RememberReadingPositionUseCase(settings = get(), activity = get()) }
     factory { SetReadingPositionMemoryUseCase(settings = get(), activity = get()) }
 
-    factory { DeleteDocumentUseCase(repository = get(), storage = get(), thumbnails = get()) }
+    // The bin, and what keeps the library in order in the background.
+    factory { MoveDocumentToBinUseCase(documents = get()) }
+    factory { RestoreDocumentUseCase(documents = get(), indexQueue = get()) }
+    factory { DeleteFromBinUseCase(documents = get(), storage = get(), thumbnails = get()) }
+    factory { EmptyBinUseCase(documents = get(), deleteFromBin = get()) }
+    factory { PurgeExpiredBinUseCase(documents = get(), deleteFromBin = get()) }
+    factory {
+        ReconcileStorageUseCase(
+            documents = get(),
+            activity = get(),
+            storage = get(),
+            thumbnails = get(),
+        )
+    }
+    factory { ObserveNotFoundDocumentsUseCase(activity = get()) }
+    single<LibraryMaintenance> { WorkManagerLibraryMaintenance(context = androidContext()) }
 
     factory {
         SaveScanDraftUseCase(

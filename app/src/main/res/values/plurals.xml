@@ -11,4 +11,12 @@
         <item quantity="one">%d folder</item>
         <item quantity="other">%d folders</item>
     </plurals>
+    <plurals name="bin_days_left">
+        <item quantity="one">%d day left</item>
+        <item quantity="other">%d days left</item>
+    </plurals>
+    <plurals name="bin_empty_confirmation">
+        <item quantity="one">%d document will be deleted for good.</item>
+        <item quantity="other">%d documents will be deleted for good.</item>
+    </plurals>
 </resources>

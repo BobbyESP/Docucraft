@@ -11,6 +11,7 @@ import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveNotFoundDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchDocumentsUseCase
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineDispatcher
@@ -36,6 +37,7 @@ class DocumentSearchViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val observeDocumentsUseCase: ObserveDocumentsUseCase,
     private val searchDocumentsUseCase: SearchDocumentsUseCase,
+    private val observeNotFoundDocuments: ObserveNotFoundDocumentsUseCase,
     private val stringProvider: StringProvider,
     private val analyticsHelper: AnalyticsHelper,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
@@ -46,6 +48,11 @@ class DocumentSearchViewModel(
 
     init {
         observeResults()
+        launch {
+            observeNotFoundDocuments().collect { notFound ->
+                setState { copy(notFoundUuids = notFound) }
+            }
+        }
     }
 
     override fun onHandleIntent(intent: DocumentSearchIntent) {

@@ -19,8 +19,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -196,6 +198,80 @@ class DocumentsRepositoryImplTest {
             repository.observeDocuments().first().map { it.originalName },
         )
         assertEquals(listOf("Factura luz"), search("factura"))
+    }
+
+    // --- the bin ---
+
+    // The bin keeps everything: only where the document is listed changes.
+    @Test
+    fun aBinnedDocumentLeavesTheLibraryAndSearchAndKeepsItsPagesAndItsActivity() = runBlocking {
+        save("Factura luz", capturedAt = 1, pageCount = 2)
+        save("Contrato", capturedAt = 2, pageCount = 1)
+        val bill = uuidOf("Factura luz")
+
+        assertTrue(repository.moveToBin(bill))
+
+        val db = database.openHelper.writableDatabase
+        assertEquals(
+            listOf("Contrato"),
+            repository.observeDocuments().first().map { it.originalName },
+        )
+        assertEquals(listOf(bill), repository.observeBin().first().map { it.uuid })
+        assertEquals(Now, repository.observeBin().first().single().trashedAtEpochMillis)
+        assertEquals(3, db.long("SELECT COUNT(*) FROM pages"))
+        assertEquals(2, db.long("SELECT COUNT(*) FROM document_activity"))
+        assertEquals(emptyList<String>(), search("factura"))
+        // To everything but the bin, it is a document that is gone.
+        assertNull(repository.observeDocument(bill).first())
+        // Already there: asking again changes nothing, and does not move its date.
+        assertFalse(repository.moveToBin(bill))
+    }
+
+    @Test
+    fun aRestoredDocumentIsBackInTheLibraryAndFoundAgain() = runBlocking {
+        save("Factura luz", capturedAt = 1)
+        val bill = uuidOf("Factura luz")
+        repository.moveToBin(bill)
+
+        assertTrue(repository.restoreFromBin(bill))
+
+        assertEquals(listOf(bill), repository.observeDocuments().first().map { it.uuid })
+        assertTrue(repository.observeBin().first().isEmpty())
+        assertEquals(listOf("Factura luz"), search("factura"))
+        assertFalse(repository.restoreFromBin(bill))
+    }
+
+    // What purging rests on: the one delete nobody asked for by name only reaches the bin.
+    @Test
+    fun onlyADocumentOfTheBinIsDeletedFromIt() = runBlocking {
+        save("Scan_1", capturedAt = 1)
+        save("Scan_2", capturedAt = 2)
+        val kept = uuidOf("Scan_1")
+        val binned = uuidOf("Scan_2")
+        repository.moveToBin(binned)
+
+        assertFalse(repository.deleteFromBin(kept))
+        assertTrue(repository.deleteFromBin(binned))
+
+        val db = database.openHelper.writableDatabase
+        assertEquals(listOf("Scan_1"), db.rows("SELECT original_name FROM documents"))
+        assertEquals(1, db.long("SELECT COUNT(*) FROM pages"))
+    }
+
+    @Test
+    fun theBinIsAskedForWhatHasBeenThereSinceATime() = runBlocking {
+        save("Scan_1", capturedAt = 1)
+        save("Scan_2", capturedAt = 2)
+        val binned = uuidOf("Scan_1")
+        repository.moveToBin(binned)
+
+        assertEquals(emptyList<String>(), repository.binnedUntil(Now - 1).map { it.uuid })
+        assertEquals(listOf(binned), repository.binnedUntil(Now).map { it.uuid })
+        // The bin's documents are still the app's to answer for, files included.
+        assertEquals(
+            setOf("documents/uuid-Scan_1.pdf", "documents/uuid-Scan_2.pdf"),
+            repository.keptFiles().values.toSet(),
+        )
     }
 
     // --- deleting ---

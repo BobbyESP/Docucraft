@@ -88,6 +88,13 @@ interface FolderDao {
     @Query("UPDATE documents SET folder_id = :to WHERE folder_id = :from")
     suspend fun moveDocumentsOut(from: Long, to: Long?)
 
+    /** Sends to the bin the library's documents directly in the folder [folderId]. */
+    @Query(
+        "UPDATE documents SET trashed_at = :at, updated_at = :at " +
+            "WHERE folder_id = :folderId AND custody = 'MANAGED' AND trashed_at IS NULL"
+    )
+    suspend fun binDocumentsOf(folderId: Long, at: Long)
+
     /** Only documents the app keeps: another app's document is in no folder. */
     @Query(
         "UPDATE documents SET folder_id = :folderId, updated_at = :updatedAt " +

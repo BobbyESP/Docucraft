@@ -249,6 +249,7 @@ fun DocumentSearchContent(
                     SearchPage.Results ->
                         SearchResults(
                             results = uiState.results,
+                            notFoundUuids = uiState.notFoundUuids,
                             selectedDocumentId = selectedDocumentId,
                             onOpenDocument = onOpenDocument,
                             onOpenDocumentActions = onOpenDocumentActions,
@@ -376,6 +377,7 @@ private fun SearchField(
 @Composable
 private fun SearchResults(
     results: List<SearchResult>,
+    notFoundUuids: Set<String>,
     selectedDocumentId: String?,
     onOpenDocument: (String) -> Unit,
     onOpenDocumentActions: (String) -> Unit,
@@ -411,6 +413,7 @@ private fun SearchResults(
                         count = results.size,
                     ),
                 selected = document.uuid == selectedDocumentId,
+                fileMissing = document.uuid in notFoundUuids,
                 onItemClick = onOpenDocument,
                 onItemLongClick = { onOpenDocumentActions(document.uuid) },
             )

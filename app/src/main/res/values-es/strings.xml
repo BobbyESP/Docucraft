@@ -28,7 +28,6 @@
     <string name="unknown_error">Error desconocido</string>
     <string name="doc_save_error_with_reason">Ocurrió un error al guardar el documento: %1$s</string>
     <string name="doc_saved_successfully_to">Documento guardado correctamente en %1$s</string>
-    <string name="doc_deleted_successfully">El documento se ha eliminado correctamente</string>
     <string name="doc_delete_error">Ocurrió un error al eliminar el documento</string>
     <string name="doc_delete_warning_message">Estás a punto de eliminar %1$s de tu dispositivo y base de datos de la aplicación.\n\nTiene %2$s páginas y un tamaño de %3$s.\n\n¿Estás seguro de que quieres eliminarlo?</string>
     <string name="cancel">Cancelar</string>
@@ -56,8 +55,6 @@
     <string name="app_tagline">"Escanea fácilmente tus documentos con IA "</string>
     <string name="exit_search">Salir de la búsqeuda</string>
     <string name="results">Resultados</string>
-	<string name="doc_delete_confirmation">¿Está seguro de que desea eliminar el archivo \"%1$s\"?</string>
-	<string name="doc_delete_warning">Esta acción es permanente y no se puede deshacer. Las copias ya exportadas del documento no se verán afectadas.</string>
 	<string name="doc_updated_successfully">Documento actualizado correctamente</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="field_too_long">Este campo excede la longitud máxima</string>
@@ -299,4 +296,25 @@
     <string name="icon_family">Familia</string>
     <string name="icon_heart">Corazón</string>
     <string name="icon_star">Estrella</string>
+    <string name="bin">Papelera</string>
+    <string name="bin_empty">Vaciar papelera</string>
+    <string name="bin_nothing_title">La papelera está vacía</string>
+    <string name="bin_nothing_desc">Los documentos que elimines se quedan aquí %1$d días, por si quieres recuperarlos.</string>
+    <string name="bin_retention_notice">Los documentos se eliminan del todo tras %1$d días en la papelera.</string>
+    <string name="bin_deleted_soon">Se eliminará del todo pronto</string>
+    <string name="bin_restored">Restaurado en tu biblioteca</string>
+    <string name="bin_deleted_forever">Eliminado del todo</string>
+    <string name="bin_emptied">Se ha vaciado la papelera</string>
+    <string name="restore">Restaurar</string>
+    <string name="delete_forever">Eliminar del todo</string>
+    <string name="delete_forever_confirmation">«%1$s» se eliminará del todo.</string>
+    <string name="delete_forever_note">No se puede deshacer. Las copias que hayas exportado no se ven afectadas.</string>
+    <string name="move_to_bin">Mover a la papelera</string>
+    <string name="doc_bin_confirmation">«%1$s» irá a la papelera.</string>
+    <string name="doc_bin_note">Se queda allí %1$d días y hasta entonces se puede restaurar.</string>
+    <string name="doc_moved_to_bin">Movido a la papelera</string>
+    <string name="doc_file_not_found">Archivo no encontrado</string>
+    <string name="folder_delete_with_contents">Eliminar también su contenido</string>
+    <string name="folder_delete_with_contents_note">Las carpetas que contiene también se eliminan y todos sus documentos van a la papelera.</string>
+    <string name="folder_deleted_with_contents">Carpeta eliminada. Sus documentos están en la papelera</string>
 </resources>

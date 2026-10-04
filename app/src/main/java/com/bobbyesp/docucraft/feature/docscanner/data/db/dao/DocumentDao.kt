@@ -27,6 +27,12 @@ data class LinkedDocumentRef(
  */
 data class LinkedRegistration(val uuid: String, val forgotten: List<LinkedDocumentRef>)
 
+/** A document the app keeps, by its uuid, and where its file is. */
+data class KeptFileRow(
+    @ColumnInfo(name = "uuid") val uuid: String,
+    @ColumnInfo(name = "file_path") val filePath: String,
+)
+
 @Dao
 abstract class DocumentDao {
 
@@ -274,6 +280,50 @@ abstract class DocumentDao {
             "WHERE uuid = :uuid AND custody = 'MANAGED'"
     )
     abstract suspend fun setFavorite(uuid: String, favorite: Boolean, updatedAt: Long): Int
+
+    /** The bin: the documents the app keeps that were deleted, the last one deleted first. */
+    @Query(
+        "SELECT * FROM documents WHERE custody = 'MANAGED' AND trashed_at IS NOT NULL " +
+            "ORDER BY trashed_at DESC, id DESC"
+    )
+    abstract fun observeBin(): Flow<List<DocumentEntity>>
+
+    /** What went to the bin at [cutoff] or before. */
+    @Query(
+        "SELECT * FROM documents WHERE custody = 'MANAGED' AND trashed_at IS NOT NULL " +
+            "AND trashed_at <= :cutoff"
+    )
+    abstract suspend fun binnedUntil(cutoff: Long): List<DocumentEntity>
+
+    /**
+     * Sends a document of the library to the bin. Only that is written: its folder, its tags, its
+     * text and its file stay as they are.
+     *
+     * @return How many documents were changed: none for one that is already there, or is not kept.
+     */
+    @Query(
+        "UPDATE documents SET trashed_at = :at, updated_at = :at " +
+            "WHERE uuid = :uuid AND custody = 'MANAGED' AND trashed_at IS NULL"
+    )
+    abstract suspend fun moveToBin(uuid: String, at: Long): Int
+
+    /** @return How many documents were changed: none for one that is not in the bin. */
+    @Query(
+        "UPDATE documents SET trashed_at = NULL, updated_at = :at " +
+            "WHERE uuid = :uuid AND trashed_at IS NOT NULL"
+    )
+    abstract suspend fun restoreFromBin(uuid: String, at: Long): Int
+
+    /**
+     * Deletes a document for good, and only one that is in the bin: the one statement that removes
+     * a document the app keeps without the user having asked for that document by name.
+     */
+    @Query("DELETE FROM documents WHERE uuid = :uuid AND trashed_at IS NOT NULL")
+    abstract suspend fun deleteFromBin(uuid: String): Int
+
+    /** Every document the app keeps and where its file is, the bin's included. */
+    @Query("SELECT uuid, file_path FROM documents WHERE custody = 'MANAGED'")
+    abstract suspend fun keptFiles(): List<KeptFileRow>
 
     /** Its activity, pages and tags go with it, and the full-text indexes forget it. */
     @Query("DELETE FROM documents WHERE uuid = :uuid")

@@ -25,6 +25,11 @@ class RecordDocumentOpenedUseCase(private val activity: DocumentActivityReposito
  * Notes whether a document's file could be reached. Only whoever has just tried to read it knows,
  * so the catalogue is told rather than left to find out.
  */
+/** The uuids of the library's documents whose file is not there, to show them as not found. */
+class ObserveNotFoundDocumentsUseCase(private val activity: DocumentActivityRepository) {
+    operator fun invoke(): Flow<Set<String>> = activity.observeNotFound()
+}
+
 class RecordDocumentAvailabilityUseCase(private val activity: DocumentActivityRepository) {
     suspend operator fun invoke(documentUuid: String, availability: DocumentAvailability) =
         activity.recordAvailability(documentUuid, availability)

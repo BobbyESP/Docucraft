@@ -20,6 +20,12 @@ interface DocumentThumbnails {
      */
     suspend fun get(thumbnail: DocumentThumbnail): ContentRef?
 
+    /**
+     * Forgets the previews of every document that is not one of [documentUuids], and whatever older
+     * versions of the app left where previews used to be kept.
+     */
+    suspend fun retainOnly(documentUuids: Set<String>)
+
     /** Forgets every preview of the document [documentUuid], whichever version. */
     suspend fun discard(documentUuid: String)
 }

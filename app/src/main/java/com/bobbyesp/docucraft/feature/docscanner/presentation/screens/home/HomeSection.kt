@@ -34,6 +34,7 @@ import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderContents
 import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderEditor
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.docscanner.navigation.ManageTags
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.bin.binSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.foldersSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.documentActionsSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.documentSearchSection
@@ -83,6 +84,7 @@ fun EntryProviderScope<NavKey>.homeSection(
     documentActionsSection(navigator)
     foldersSection(navigator, selectedDocumentId)
     tagsSection(navigator)
+    binSection(navigator)
 }
 
 /** Shown in the detail pane on expanded windows while no document is open. */

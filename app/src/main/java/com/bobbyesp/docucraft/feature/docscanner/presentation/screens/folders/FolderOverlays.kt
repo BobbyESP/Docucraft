@@ -34,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -221,10 +222,17 @@ fun FolderActionsContent(
     }
 }
 
-/** Says what deleting a folder does before it is done: the folder goes, what it holds stays. */
+/**
+ * Says what deleting a folder does before it is done: the folder goes, what it holds stays. A
+ * folder that holds something can be deleted with it instead, which is asked for with a switch of
+ * its own and never the default: it is what sends documents to the bin.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DeleteFolderForm(
     folder: Folder,
+    withContents: Boolean,
+    onWithContentsChange: (Boolean) -> Unit,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
@@ -245,12 +253,31 @@ fun DeleteFolderForm(
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = stringResource(R.string.folder_delete_note),
+                text =
+                    stringResource(
+                        if (withContents) R.string.folder_delete_with_contents_note
+                        else R.string.folder_delete_note
+                    ),
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+            if (folder.documentCount > 0 || folder.folderCount > 0) {
+                SegmentedListItem(
+                    checked = withContents,
+                    onCheckedChange = onWithContentsChange,
+                    shapes = DocucraftShapeDefaults.segmentedListItemShapes(index = 0, count = 1),
+                    modifier = Modifier.padding(top = 8.dp),
+                    colors =
+                        ListItemDefaults.segmentedColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        ),
+                    trailingContent = { Switch(checked = withContents, onCheckedChange = null) },
+                ) {
+                    Text(text = stringResource(R.string.folder_delete_with_contents))
+                }
+            }
         }
     }
 }

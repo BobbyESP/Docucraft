@@ -33,7 +33,9 @@ class FakeDocumentsRepository(
 
     var addFailure: Exception? = null
 
-    override fun observeDocuments(): Flow<List<Document.Managed>> = documents
+    override fun observeDocuments(): Flow<List<Document.Managed>> = documents.map { all ->
+        all.filter { it.trashedAtEpochMillis == null }
+    }
 
     override suspend fun getDocument(uuid: String): Document =
         documents.value.firstOrNull { it.uuid == uuid }
@@ -41,7 +43,7 @@ class FakeDocumentsRepository(
             ?: throw NoSuchElementException("No document found with ID: $uuid")
 
     override fun observeDocument(uuid: String): Flow<Document?> = documents.map { all ->
-        all.firstOrNull { it.uuid == uuid }
+        all.firstOrNull { it.uuid == uuid && it.trashedAtEpochMillis == null }
     }
 
     /** The hash each document of the library was stored with. */
@@ -67,6 +69,47 @@ class FakeDocumentsRepository(
         documents.update { all ->
             all.map { if (it.uuid == uuid) it.copy(isFavorite = favorite) else it }
         }
+    }
+
+    /** When each document of the bin went there, by uuid. The clock is [now]. */
+    var now = 1_000L
+
+    override fun observeBin(): Flow<List<Document.Managed>> = documents.map { all ->
+        all.filter { it.trashedAtEpochMillis != null }
+            .sortedByDescending { it.trashedAtEpochMillis }
+    }
+
+    override suspend fun moveToBin(uuid: String): Boolean =
+        changeBin(uuid, from = false) {
+            it.copy(trashedAtEpochMillis = now)
+        }
+
+    override suspend fun restoreFromBin(uuid: String): Boolean =
+        changeBin(uuid, from = true) {
+            it.copy(trashedAtEpochMillis = null)
+        }
+
+    override suspend fun binnedUntil(epochMillis: Long): List<Document.Managed> =
+        documents.value.filter { (it.trashedAtEpochMillis ?: Long.MAX_VALUE) <= epochMillis }
+
+    override suspend fun deleteFromBin(uuid: String): Boolean {
+        val binned = documents.value.any { it.uuid == uuid && it.trashedAtEpochMillis != null }
+        if (binned) deleteDocument(uuid)
+        return binned
+    }
+
+    override suspend fun keptFiles(): Map<String, String> =
+        documents.value.associate { it.uuid to it.filePath }
+
+    private fun changeBin(
+        uuid: String,
+        from: Boolean,
+        change: (Document.Managed) -> Document.Managed,
+    ): Boolean {
+        val found =
+            documents.value.any { it.uuid == uuid && (it.trashedAtEpochMillis != null) == from }
+        if (found) documents.update { all -> all.map { if (it.uuid == uuid) change(it) else it } }
+        return found
     }
 
     override suspend fun deleteDocument(uuid: String) {

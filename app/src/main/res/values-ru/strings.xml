@@ -41,7 +41,6 @@
     <string name="follow_system">Следовать системной</string>
     <string name="save">Сохранить</string>
     <string name="issue_opening_doc_viewer">Произошла ошибка при попытке открыть просмотрщик документов</string>
-    <string name="doc_deleted_successfully">Документ успешно удален</string>
     <string name="title">Название</string>
     <string name="doc_modify_details_description">Обновите название и описание документа ниже, чтобы отразить его содержание и детали.</string>
     <string name="page_count">Количество страниц</string>
@@ -56,9 +55,7 @@
     <string name="confirm">Подтвердить</string>
     <string name="share">Поделиться</string>
     <string name="sort_descending">Сортировать по убыванию</string>
-	<string name="doc_delete_confirmation">Вы уверены, что хотите удалить файл \"%1$s\"?</string>
 	<string name="doc_updated_successfully">Документ успешно обновлен</string>
-	<string name="doc_delete_warning">Это действие необратимо. Если вы уже экспортировали документ, это не повлияет на эти копии.</string>
 	<string name="field_required">Это поле обязательно для заполнения</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="field_too_long">Длина этого поля превышает максимальную</string>

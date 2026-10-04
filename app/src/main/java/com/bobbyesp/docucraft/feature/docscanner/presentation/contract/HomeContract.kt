@@ -25,6 +25,7 @@ sealed interface HomeStatus {
  *   does not already show.
  * @property pinnedFolders the folders pinned to Home, in the order they were pinned.
  * @property tagSections the tags the user gave a section of their own, with their documents.
+ * @property notFoundUuids the documents whose file is not there, which are shown saying so.
  * @property tags every tag, for the list of documents to be narrowed down by.
  */
 data class HomeUiState(
@@ -34,6 +35,7 @@ data class HomeUiState(
     val pinnedFolders: List<Folder> = emptyList(),
     val tagSections: List<TagSection> = emptyList(),
     val tags: List<Tag> = emptyList(),
+    val notFoundUuids: Set<String> = emptySet(),
     val hasDocuments: Boolean = false,
     val filterOptions: FilterOptions = FilterOptions.default,
     val isScanning: Boolean = false,

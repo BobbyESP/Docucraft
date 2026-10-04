@@ -11,4 +11,12 @@
         <item quantity="one">%d carpeta</item>
         <item quantity="other">%d carpetas</item>
     </plurals>
+    <plurals name="bin_days_left">
+        <item quantity="one">Queda %d día</item>
+        <item quantity="other">Quedan %d días</item>
+    </plurals>
+    <plurals name="bin_empty_confirmation">
+        <item quantity="one">Se eliminará del todo %d documento.</item>
+        <item quantity="other">Se eliminarán del todo %d documentos.</item>
+    </plurals>
 </resources>
