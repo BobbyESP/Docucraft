@@ -47,7 +47,7 @@
     <string name="scan">スキャン</string>
     <string name="clear_filters">フィルターをクリア</string>
     <string name="filter">フィルター</string>
-    <string name="app_tagline">AIで簡単にドキュメントをスキャン</string>
+    <string name="app_tagline">ドキュメントをスキャン、整理、閲覧。すべてあなたの端末の中で。</string>
     <string name="issue_opening_doc_viewer">ドキュメントビューアを開こうとして問題が発生しました</string>
     <string name="doc_save_error_with_reason">ドキュメントの保存中にエラーが発生しました: %1$s</string>
     <string name="confirm">確認</string>

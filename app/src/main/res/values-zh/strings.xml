@@ -33,7 +33,7 @@
     <string name="scan_cancelled">扫描过程已取消</string>
     <string name="error_loading_docs">加载文档出错</string>
     <string name="select_document_to_preview">选择一个文档以在此处预览</string>
-    <string name="app_tagline">使用 AI 轻松扫描您的文档</string>
+    <string name="app_tagline">扫描、整理和阅读您的文档。一切都在您的设备上完成。</string>
     <string name="search">搜索</string>
     <string name="issue_opening_doc_viewer">尝试打开文档查看器时出现问题</string>
     <string name="doc_delete_warning_message">您即将从设备和应用数据库中删除 %1$s。\n\n它有 %2$s 页，大小为 %3$s。\n\n您确定要删除它吗？</string>

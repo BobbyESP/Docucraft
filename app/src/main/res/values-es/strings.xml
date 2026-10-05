@@ -52,7 +52,7 @@
     <string name="clear_search">Limpiar búsqueda</string>
     <string name="sort_ascending">Ordenar ascendentemente</string>
     <string name="sort_descending">Ordenar descendentemente</string>
-    <string name="app_tagline">Escanea fácilmente tus documentos con IA</string>
+    <string name="app_tagline">Escanea, ordena y lee tus documentos. Todo en tu dispositivo.</string>
     <string name="exit_search">Salir de la búsqueda</string>
     <string name="results">Resultados</string>
 	<string name="doc_updated_successfully">Documento actualizado correctamente</string>

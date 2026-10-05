@@ -9,7 +9,7 @@
     <string name="confirm">تأكيد</string>
     <string name="scan">مسح ضوئي</string>
     <string name="sort_descending">فرز تنازلي</string>
-    <string name="app_tagline">امسح مستنداتك ضوئياً بسهولة باستخدام الذكاء الاصطناعي</string>
+    <string name="app_tagline">امسح مستنداتك ضوئياً ونظّمها واقرأها. كل ذلك على جهازك.</string>
     <string name="doc_scan_error">حدث خطأ أثناء المسح الضوئي</string>
     <string name="doc_modify_details_description">قم بتحديث عنوان المستند والوصف أدناه ليعكسا محتواه وتفاصيله.</string>
     <string name="error_loading_docs">خطأ في تحميل المستندات</string>

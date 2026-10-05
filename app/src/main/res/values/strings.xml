@@ -3,7 +3,7 @@
          APP
          ════════════════════════════════════════════════ -->
     <string name="app_name" translatable="false">Docucraft</string>
-    <string name="app_tagline">Effortlessly scan your documents with AI</string>
+    <string name="app_tagline">Scan, organize and read your documents. All of it on your device.</string>
 
     <!-- ════════════════════════════════════════════════
          GENERAL / COMMON
