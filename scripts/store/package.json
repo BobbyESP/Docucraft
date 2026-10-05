@@ -1,0 +1,16 @@
+{
+  "name": "docucraft-store-screenshots",
+  "private": true,
+  "description": "Writes Docucraft's Google Play listing (text and graphics) from the app's strings.",
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "listing": "node listing.mjs",
+    "render": "node render.mjs",
+    "preview": "node render.mjs --preview",
+    "all": "node listing.mjs && node render.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}

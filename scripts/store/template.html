@@ -1,0 +1,215 @@
+<!doctype html>
+<!--
+  Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+
+  The panorama the store screenshots are cut from. render.mjs opens this page, calls drawPanorama
+  with the layout, the fonts, the copy of one language and its captures, and photographs each
+  1080 px frame; then drawFeatureGraphic, and photographs the 1024 × 500 graphic. Nothing here is
+  specific to a language.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: transparent; }
+  #canvas { position: relative; overflow: hidden; }
+  #canvas > * { position: absolute; }
+  .sheet { overflow: hidden; }
+  .sheet i { position: absolute; display: block; border-radius: 4px; }
+  .phone { overflow: hidden; }
+  .screen { position: absolute; overflow: hidden; }
+  .screen img { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+  .placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+                 text-transform: uppercase; letter-spacing: 0.14em; font-size: 30px; text-align: center; }
+  .copy { display: flex; flex-direction: column; }
+  .copy p { white-space: normal; overflow-wrap: break-word; }
+</style>
+</head>
+<body>
+<div id="canvas"></div>
+<script>
+/** Points through which the thread passes, joined by a Catmull-Rom curve. */
+function smoothPath(points) {
+  let d = `M ${points[0][0]} ${points[0][1]}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i - 1] || points[i], p1 = points[i], p2 = points[i + 1], p3 = points[i + 2] || p2;
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += ` C ${c1[0]} ${c1[1]} ${c2[0]} ${c2[1]} ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+
+function el(tag, style, parent) {
+  const node = document.createElement(tag);
+  Object.assign(node.style, style);
+  if (parent) parent.appendChild(node);
+  return node;
+}
+
+/** Number of lines a block of text takes, from its height. */
+function lineCount(node, size, lineHeight) {
+  return Math.round(node.getBoundingClientRect().height / (size * lineHeight));
+}
+
+/** Shrinks a text node two pixels at a time until it fits its lines, or reports that it cannot. */
+function fit(node, spec) {
+  let size = spec.size;
+  node.style.fontSize = size + 'px';
+  while (lineCount(node, size, spec.lineHeight) > spec.maxLines && size > spec.minSize) {
+    size -= 2;
+    node.style.fontSize = size + 'px';
+  }
+  const lines = lineCount(node, size, spec.lineHeight);
+  return { size, lines, fits: lines <= spec.maxLines };
+}
+
+async function loadFonts(fonts) {
+  const faces = [['Headline', fonts.headline], ['Supporting', fonts.supporting], ['Label', fonts.label]];
+  for (const [family, url] of faces) {
+    if ([...document.fonts].some(f => f.family === family)) continue;
+    const face = new FontFace(family, `url(${url})`);
+    await face.load();
+    document.fonts.add(face);
+  }
+}
+
+function resetCanvas(width, height, background) {
+  const canvas = document.getElementById('canvas');
+  canvas.innerHTML = '';
+  Object.assign(canvas.style, { width: width + 'px', height: height + 'px', background });
+  return canvas;
+}
+
+function drawThread(canvas, width, height, points, strokeWidth, color) {
+  const svgNs = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNs, 'svg');
+  svg.setAttribute('width', width); svg.setAttribute('height', height);
+  Object.assign(svg.style, { left: '0', top: '0', position: 'absolute' });
+  const path = document.createElementNS(svgNs, 'path');
+  path.setAttribute('d', smoothPath(points));
+  path.setAttribute('fill', 'none'); path.setAttribute('stroke', color); path.setAttribute('stroke-width', strokeWidth);
+  svg.appendChild(path); canvas.appendChild(svg);
+}
+
+/** A sheet of paper centred on (x, y), turned clockwise by angle degrees. */
+function drawSheet(canvas, s, S, C) {
+  const scale = s.scale ?? 1;
+  const sheet = el('div', {
+    left: (s.x - S.width / 2) + 'px', top: (s.y - S.height / 2) + 'px', width: S.width + 'px', height: S.height + 'px',
+    background: C.sheet, border: `${S.stroke}px solid ${C.ink}`, transform: `rotate(${s.angle}deg) scale(${scale})`,
+  }, canvas);
+  sheet.className = 'sheet';
+  for (let k = 0; k < 9; k++) {
+    const width = k % 4 === 3 ? 44 : 64 + (k * 17) % 14;
+    el('i', { left: '12%', top: (12 + k * 9) + '%', width: width + '%', height: '10px', background: C.sheetLine }, sheet);
+  }
+}
+
+/** A phone centred on (cx, cy) showing a capture, or a placeholder with the screen's name. */
+function drawPhone(canvas, cx, cy, angle, scale, capture, label, P, C) {
+  const phone = el('div', {
+    left: (cx - P.width / 2) + 'px', top: (cy - P.height / 2) + 'px', width: P.width + 'px', height: P.height + 'px',
+    background: C.ink, borderRadius: P.radius + 'px', transform: `rotate(${angle}deg) scale(${scale})`,
+  }, canvas);
+  phone.className = 'phone';
+  const screen = el('div', {
+    left: P.bezel + 'px', top: P.bezel + 'px', width: (P.width - 2 * P.bezel) + 'px', height: (P.height - 2 * P.bezel) + 'px',
+    borderRadius: P.screenRadius + 'px', background: C.screenPlaceholder,
+  }, phone);
+  screen.className = 'screen';
+  if (capture) {
+    const img = document.createElement('img');
+    img.src = capture;
+    screen.appendChild(img);
+  } else {
+    const text = el('div', { fontFamily: 'Label', color: C.placeholderLabel }, screen);
+    text.className = 'placeholder';
+    text.textContent = label;
+  }
+}
+
+/** A headline and its supporting line, fitted to their specs. */
+function drawCopy(block, copy, specs, C) {
+  const result = {};
+  for (const [key, family, color] of [['headline', 'Headline', C.ink], ['supporting', 'Supporting', C.inkMuted]]) {
+    const spec = specs[key];
+    const p = el('p', { fontFamily: family, color, lineHeight: String(spec.lineHeight), letterSpacing: (spec.letterSpacing ?? 0) + 'px' }, block);
+    p.textContent = copy[key];
+    result[key] = fit(p, spec);
+    // Two short sentences read better one per line ("Scan it once. / Find it anytime."), when each fits.
+    if (spec.breakSentences && /[.!?] \S/.test(copy[key])) {
+      p.style.whiteSpace = 'pre-line';
+      p.textContent = copy[key].replace(/([.!?]) (?=\S)/g, '$1\n');
+      const broken = fit(p, spec);
+      if (broken.fits && broken.lines === 2) result[key] = broken;
+      else { p.style.whiteSpace = ''; p.textContent = copy[key]; result[key] = fit(p, spec); }
+    }
+  }
+  return result;
+}
+
+const imagesReady = () => Promise.all([...document.images].map(img => img.decode().catch(() => {})));
+
+/**
+ * Draws the whole panorama.
+ * data = { layout, fonts: { headline, supporting, label } as data URLs,
+ *          frames: [{ headline, supporting, capture (data URL or null) }] }
+ * Returns, for each frame, the sizes the copy was set at and whether it fitted.
+ */
+async function drawPanorama(data) {
+  const { layout: L, fonts, frames } = data;
+  const C = L.colors, F = L.canvas.frameWidth, W = F * L.canvas.frameCount, H = L.canvas.height;
+  await loadFonts(fonts);
+  const canvas = resetCanvas(W, H, C.paper);
+
+  drawThread(canvas, W, H, L.thread.points, L.thread.width, C.ink);
+  for (const s of L.sheets) drawSheet(canvas, s, L.sheet, C);
+
+  const P = L.phone;
+  L.frames.forEach((frame, i) => drawPhone(canvas, i * F + frame.phoneX, P.centerY[frame.text], frame.angle, 1, frames[i].capture, frame.screen, P, C));
+
+  const K = L.copy, report = [];
+  L.frames.forEach((frame, i) => {
+    const block = el('div', { left: (i * F + K.left) + 'px', width: K.width + 'px', gap: K.gap + 'px' }, canvas);
+    block.className = 'copy';
+    if (frame.text === 'top') block.style.top = K.top + 'px'; else block.style.bottom = K.bottom + 'px';
+    report.push({ id: frame.id, ...drawCopy(block, frames[i], K, C) });
+  });
+
+  await imagesReady();
+  return report;
+}
+
+/**
+ * Draws the 1024 × 500 feature graphic: the promise on the left, a stretch of the paper trail on
+ * the right. data = { layout, fonts, copy: { headline, supporting }, captures: { <frame id>: data URL or null } }
+ */
+async function drawFeatureGraphic(data) {
+  const { layout: L, fonts, copy, captures } = data;
+  const G = L.featureGraphic, C = L.colors;
+  await loadFonts(fonts);
+  const canvas = resetCanvas(G.width, G.height, C.paper);
+
+  drawThread(canvas, G.width, G.height, G.thread.points, G.thread.width, C.ink);
+  for (const s of G.sheets) drawSheet(canvas, s, L.sheet, C);
+  for (const p of G.phones) {
+    const frame = L.frames.find(f => f.id === p.frame);
+    drawPhone(canvas, p.x, p.y, p.angle, p.scale, captures[p.frame], frame.screen, L.phone, C);
+  }
+
+  const logo = el('div', { left: G.logo.x + 'px', top: G.logo.y + 'px', fontFamily: 'Headline', fontSize: G.logo.size + 'px', lineHeight: '1', color: C.ink }, canvas);
+  logo.textContent = 'D';
+
+  const K = G.copy;
+  const block = el('div', { left: K.left + 'px', width: K.width + 'px', gap: K.gap + 'px', top: K.centerY + 'px', transform: 'translateY(-50%)' }, canvas);
+  block.className = 'copy';
+  const report = { id: 'feature', ...drawCopy(block, copy, K, C) };
+
+  await imagesReady();
+  return report;
+}
+</script>
+</body>
+</html>

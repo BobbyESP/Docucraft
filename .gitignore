@@ -46,3 +46,10 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Store screenshots tooling
+scripts/store/node_modules/
+
+# Written by scripts/store from store_listing.xml, and by fastlane itself
+fastlane/metadata/
+fastlane/README.md

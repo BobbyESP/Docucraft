@@ -1,0 +1,139 @@
+{
+  "canvas": {
+    "frameWidth": 1080,
+    "height": 1920,
+    "frameCount": 8
+  },
+  "colors": {
+    "paper": "#FFFDF0",
+    "ink": "#34322C",
+    "inkMuted": "#6E6A60",
+    "sheet": "#FFFFFB",
+    "sheetLine": "#D3CEBD",
+    "screenPlaceholder": "#F5F2E1",
+    "placeholderLabel": "#9A968B"
+  },
+  "copy": {
+    "left": 90,
+    "width": 900,
+    "top": 150,
+    "bottom": 170,
+    "gap": 26,
+    "headline": {
+      "font": "dm_serif_display_regular.ttf",
+      "size": 96,
+      "minSize": 80,
+      "lineHeight": 1.04,
+      "letterSpacing": -0.5,
+      "maxLines": 2
+    },
+    "supporting": {
+      "font": "dm_sans_regular.ttf",
+      "size": 40,
+      "minSize": 34,
+      "lineHeight": 1.35,
+      "letterSpacing": 0,
+      "maxLines": 2
+    },
+    "labelFont": "dm_sans_medium.ttf"
+  },
+  "phone": {
+    "width": 600,
+    "height": 1260,
+    "radius": 86,
+    "bezel": 16,
+    "screenRadius": 72,
+    "centerY": {
+      "top": 1330,
+      "bottom": 590
+    }
+  },
+  "sheet": {
+    "width": 400,
+    "height": 530,
+    "stroke": 3
+  },
+  "thread": {
+    "width": 4,
+    "points": [
+      [-40, 1250],
+      [60, 1560],
+      [1080, 1000],
+      [2160, 920],
+      [3240, 1020],
+      [4320, 900],
+      [5400, 1000],
+      [6480, 940],
+      [7560, 980],
+      [8600, 380],
+      [8680, 330]
+    ]
+  },
+  "frames": [
+    { "id": "01", "text": "top", "screen": "Home", "phoneX": 560, "angle": -5 },
+    { "id": "02", "text": "bottom", "screen": "Scanner", "phoneX": 520, "angle": 6 },
+    { "id": "03", "text": "top", "screen": "Viewer", "phoneX": 540, "angle": -4 },
+    { "id": "04", "text": "bottom", "screen": "Search results", "phoneX": 540, "angle": 5 },
+    { "id": "05", "text": "top", "screen": "Folder", "phoneX": 520, "angle": -6 },
+    { "id": "06", "text": "bottom", "screen": "Viewer, night mode", "phoneX": 560, "angle": 4 },
+    { "id": "07", "text": "top", "screen": "Link preview", "phoneX": 540, "angle": -4 },
+    { "id": "08", "text": "bottom", "screen": "Document details", "phoneX": 540, "angle": 0 }
+  ],
+  "sheets": [
+    { "x": 1080, "y": 1000, "angle": -14 },
+    { "x": 2160, "y": 920, "angle": 10 },
+    { "x": 3240, "y": 1020, "angle": -8 },
+    { "x": 4320, "y": 900, "angle": 16 },
+    { "x": 5400, "y": 1000, "angle": -12 },
+    { "x": 6480, "y": 940, "angle": 9 },
+    { "x": 7560, "y": 980, "angle": -10 },
+    { "x": 60, "y": 1560, "angle": 7 },
+    { "x": 8600, "y": 380, "angle": -8 }
+  ],
+  "featureGraphic": {
+    "width": 1024,
+    "height": 500,
+    "logo": { "x": 64, "y": 50, "size": 52 },
+    "copy": {
+      "left": 64,
+      "width": 470,
+      "centerY": 272,
+      "gap": 16,
+      "headline": {
+        "size": 60,
+        "minSize": 48,
+        "lineHeight": 1.06,
+        "letterSpacing": -0.3,
+        "maxLines": 2,
+        "breakSentences": true
+      },
+      "supporting": {
+        "size": 22,
+        "minSize": 18,
+        "lineHeight": 1.35,
+        "letterSpacing": 0,
+        "maxLines": 2
+      }
+    },
+    "thread": {
+      "width": 2.5,
+      "points": [
+        [-30, 468],
+        [300, 478],
+        [580, 455],
+        [720, 300],
+        [815, 58],
+        [1060, 36]
+      ]
+    },
+    "sheets": [
+      { "x": 640, "y": 64, "angle": -12, "scale": 0.42 },
+      { "x": 815, "y": 58, "angle": 9, "scale": 0.42 },
+      { "x": 1000, "y": 460, "angle": -8, "scale": 0.42 }
+    ],
+    "phones": [
+      { "frame": "04", "x": 925, "y": 340, "angle": 7, "scale": 0.42 },
+      { "frame": "01", "x": 722, "y": 385, "angle": -6, "scale": 0.42 }
+    ]
+  }
+}
