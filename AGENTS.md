@@ -51,7 +51,7 @@ Each feature has the same shape:
 - `di/`: its Koin modules;
 - `navigation/`: its keys.
 
-A new Koin module is registered in `App.kt`.
+A new Koin module is registered in `App.kt`, in `appModules`.
 
 ---
 
@@ -328,6 +328,10 @@ A new Koin module is registered in `App.kt`.
 - **Spotless** formats Kotlin with ktfmt (Kotlin-lang style) and adds the license header from
   `spotless/copyright.txt`. Run it before every commit; `spotlessCheck` fails on anything it would
   change.
+- **The Google Play listing** is written from the repository: `scripts/store`
+  ([README](scripts/store/README.md)). Its screenshots are drawn around the app's own screens,
+  taken on an emulator by `node scripts/store/capture.mjs` (the device test `StoreCaptureTest`,
+  skipped in any other run).
 - Named APK copies go to `app/build/outputs/apk_custom/<variant>/` (`buildSrc/CopyApkPlugin.kt`).
 
 ---

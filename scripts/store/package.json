@@ -6,9 +6,10 @@
   "type": "module",
   "scripts": {
     "listing": "node listing.mjs",
+    "capture": "node capture.mjs",
     "render": "node render.mjs",
     "preview": "node render.mjs --preview",
-    "all": "node listing.mjs && node render.mjs"
+    "all": "node listing.mjs && node capture.mjs && node render.mjs"
   },
   "dependencies": {
     "playwright": "^1.55.0"
