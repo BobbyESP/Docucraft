@@ -3,6 +3,7 @@
 # The Google Play listing, written from the app's strings and uploaded without touching any release.
 #   bundle exec fastlane store_text     the title and descriptions, in every language that has them
 #   bundle exec fastlane store          the same, plus the screenshots and the feature graphic
+#   bundle exec fastlane captures       only take the app's screens the screenshots are drawn around
 # What is written, and from where, is in scripts/store/README.md.
 #
 # Pass track:<name> to pick the track whose release supply anchors the edit to, e.g.
@@ -81,9 +82,26 @@ platform :android do
     )
   end
 
-  desc "Write the listing's text, draw the screenshots and the feature graphic, and upload them all"
+  # The app's screens come from an emulator: the one running, or the one named with avd:<name>,
+  # which is started for the run and stopped after it. serial:<serial> picks among several.
+  private_lane :capture_screens do |options|
+    command = ["node", File.join(ROOT, "scripts/store/capture.mjs")]
+    command += ["--avd", options[:avd].to_s] if options[:avd]
+    command += ["--serial", options[:serial].to_s] if options[:serial]
+    command += ["--locale", options[:locale].to_s] if options[:locale]
+    sh(*command)
+  end
+
+  desc "Take the app's screens the store screenshots are drawn around, on an emulator"
+  lane :captures do |options|
+    capture_screens(options)
+  end
+
+  desc "Write the listing's text, take the app's screens, draw the screenshots and the feature graphic, and upload them all"
   lane :store do |options|
     sh("node", File.join(ROOT, "scripts/store/listing.mjs"))
+    # captures:false draws around the screens taken the last time, without an emulator.
+    capture_screens(options) unless options[:captures] == false
     sh("node", File.join(ROOT, "scripts/store/render.mjs"))
     track, version_code = listing_release(options)
     upload_to_play_store(

@@ -45,6 +45,8 @@ npx playwright install chromium   # once, for render.mjs
 
 node listing.mjs                  # the text, every language
 node listing.mjs --check          # only check the limits
+node capture.mjs                  # the app's screens, every language marked "graphics"
+node capture.mjs --locale es,de   # only these
 node render.mjs                   # the graphics, every language marked "graphics"
 node render.mjs --locale es,de    # only these
 node render.mjs --preview         # also the whole panorama and the feature graphic in build/store-screenshots
@@ -64,7 +66,7 @@ installed.
 |---|---|---|
 | Layout | `layout.json` | Positions, angles, sizes and colors. Phone `x` is inside its own frame; sheets and the thread are in canvas pixels; angles are clockwise. `featureGraphic` holds the banner's own layout, and reuses frames 01 and 04's captures. |
 | Fonts | `app/src/main/res/font` | DM Serif Display for headlines, DM Sans for the rest: the app's own files. |
-| Captures | `captures/<language>/NN.png` | The app's screen for each frame, portrait, any resolution (it fills the screen from the top). |
+| Captures | `captures/<language>/NN.png` | The app's screen for each frame, portrait, any resolution (it fills the screen from the top). Written by `capture.mjs`, and ignored by git: they are derived, like the graphics. |
 
 | Frame | Text | Screen |
 |---|---|---|
@@ -80,6 +82,44 @@ installed.
 A frame with no capture in its language uses the English one, and with no English one, a labelled
 placeholder. The script says which frames fell back.
 
+## The app's screens
+
+`capture.mjs` takes the eight screens in each language, from the app itself, on an emulator. It
+runs one of `:app`'s device tests, `StoreCaptureTest`
+(`app/src/androidTest/.../store/`), and copies what it photographed to `captures/`.
+
+```sh
+node capture.mjs                           # on the emulator that is running
+node capture.mjs --avd Pixel_10_Pro_XL     # start this one if none is, and stop it afterwards
+node capture.mjs --serial emulator-5554    # this device, when there are several
+```
+
+`STORE_AVD` and `ANDROID_SERIAL` do the same as `--avd` and `--serial`. The emulator needs API 35
+or later, where the platform reads a page's text. An emulator the script starts is opened
+read-only, so nothing of the run is left in it. A phone is only used when named with `--serial`.
+
+What makes the screens the same on every run:
+- **A sample library**, never the device's own: a tenant's paperwork, written into a catalogue of
+  its own that is deleted afterwards. Its documents are PDFs written for the run, with real text
+  and a real link, in the language of the screenshot. What they say is in
+  `app/src/androidTest/res/values*/store_samples.xml`, translated like the app's strings; a
+  language without that file gets the English library. All of it is invented.
+- **The brand's colors**: Paper and Ink, the same values as `layout.json`, instead of the colors
+  the app would build from a seed or take from the wallpaper. Frame 06 is the same scheme
+  reversed. They are in `StoreCaptureTheme.kt`.
+- **A clean status bar**: the system's demo mode, at 9:41 with a full battery and Wi-Fi, and no
+  notification icons. The device gets its own back when the run ends.
+- **A fixed clock** for the catalogue, so the dates on screen do not move.
+
+Everything else is the app as it is: its screens, reached with the back stack a user would have
+under them, its ViewModels, its catalogue, its viewer drawing real pages. The one exception is
+frame 02. The scanner is Google Play services' screen in front of a camera, which the app cannot
+show and no run could repeat, so that frame is a drawing of what it does: a page of the sample
+library in a viewfinder, with its edges found (`ScannerStandIn.kt`).
+
+The test is skipped unless it is asked for, so an ordinary run of the device tests takes no
+screenshots.
+
 ## Uploading
 
 From the repository's root, with Ruby and Bundler:
@@ -87,11 +127,15 @@ From the repository's root, with Ruby and Bundler:
 ```sh
 bundle install
 bundle exec fastlane store_text   # writes and uploads the text only
-bundle exec fastlane store        # writes and uploads the text, screenshots and feature graphic
+bundle exec fastlane captures     # only takes the app's screens
+bundle exec fastlane store        # takes the screens, then writes and uploads the text, screenshots and feature graphic
 ```
 
-Neither touches a release: no app bundle and no release notes are uploaded. Screenshots are only
-re-uploaded when they changed.
+`store` and `captures` take `avd:<name>` and `serial:<serial>`, as `capture.mjs` does.
+`store captures:false` skips the emulator and draws around the screens taken the last time.
+
+None of them touches a release: no app bundle and no release notes are uploaded. Screenshots are
+only re-uploaded when they changed.
 
 Uploading needs a Google Play service account with access to the app, and its JSON key. Point
 `PLAY_STORE_JSON_KEY` at the key, or save it as `fastlane/play-store-key.json`, which git ignores.
@@ -113,6 +157,9 @@ Each script exits with 1 when something is wrong, so a bad listing cannot reach 
   an error.
 
 ## Changing the design
+
+A frame that shows another screen is changed in `StoreCaptureTest.captureAll`, where each frame is
+a back stack and what to wait for; what the sample library holds, in `SampleLibrary.kt`.
 
 Change Figma first, then the matching numbers in `layout.json`. The variables in Figma's
 *Store copy* collection are a preview of the English strings; `store_listing.xml` is the source.

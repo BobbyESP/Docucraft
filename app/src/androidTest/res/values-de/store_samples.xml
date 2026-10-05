@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+-->
+<resources>
+    <string name="sample_folder_bills">Rechnungen</string>
+    <string name="sample_folder_university">Universität</string>
+    <string name="sample_folder_home">Zuhause</string>
+    <string name="sample_folder_taxes">Steuern</string>
+    <string name="sample_tag_contract">Vertrag</string>
+    <string name="sample_tag_warranty">Garantie</string>
+    <string name="sample_search_query">garantie</string>
+    <string name="sample_clause">Paragraf %1$d</string>
+    <string name="sample_section">Abschnitt %1$d</string>
+    <string name="sample_contract_title">Mietvertrag</string>
+    <string name="sample_contract_description">Wohnung in der Ahornstraße, 12 Monate</string>
+    <string name="sample_contract_body_1">Dieser Vertrag wird zwischen dem Vermieter und dem Mieter der Wohnung in der Ahornstraße 14 geschlossen. Das Mietverhältnis läuft zwölf Monate ab dem 1. März 2026.</string>
+    <string name="sample_contract_body_2">Die Monatsmiete beträgt 850 Euro und ist in den ersten fünf Tagen jedes Monats zu zahlen. Eine Kaution in Höhe einer Monatsmiete wird bis zum Ende des Mietverhältnisses einbehalten.</string>
+    <string name="sample_contract_body_3">Für die im Inventar aufgeführten Geräte gilt die Garantie des Herstellers. Der Mieter meldet jeden Defekt innerhalb von sieben Tagen.</string>
+    <string name="sample_electricity_title">Stromrechnung</string>
+    <string name="sample_electricity_description">Februar 2026</string>
+    <string name="sample_electricity_body">Abrechnungszeitraum vom 1. bis 28. Februar 2026. Verbrauch von 214 kWh. Der Betrag von 48,30 Euro wird am 10. März von Ihrem Konto abgebucht.</string>
+    <string name="sample_gas_title">Gasrechnung</string>
+    <string name="sample_gas_description">März 2026</string>
+    <string name="sample_gas_body">Abrechnungszeitraum vom 1. bis 31. März 2026. Verbrauch von 386 kWh. Der Betrag von 37,15 Euro wird am 12. April von Ihrem Konto abgebucht.</string>
+    <string name="sample_internet_title">Internetrechnung</string>
+    <string name="sample_internet_description">Februar 2026</string>
+    <string name="sample_internet_body">Glasfaser mit 600 Mbit und Festnetz für Februar 2026. Der Betrag von 39,90 Euro wird am 5. März von Ihrem Konto abgebucht.</string>
+    <string name="sample_water_title">Wasserrechnung</string>
+    <string name="sample_water_description">Erstes Quartal 2026</string>
+    <string name="sample_water_body">Wasserversorgung und Abwasser von Januar bis März 2026. Verbrauch von 21 Kubikmetern. Betrag: 52,80 Euro.</string>
+    <string name="sample_council_title">Grundsteuer</string>
+    <string name="sample_council_description">Jahr 2026</string>
+    <string name="sample_council_body">Jährliche Grundsteuer für die Wohnung in der Ahornstraße 14. Sie kann in zwei Raten gezahlt werden, im Mai und im Oktober.</string>
+    <string name="sample_washing_title">Waschmaschine</string>
+    <string name="sample_washing_description">Kaufbeleg</string>
+    <string name="sample_washing_body">Frontlader-Waschmaschine mit 8 kg, geliefert und angeschlossen am 3. Februar 2026. Für dieses Gerät gilt eine Garantie von drei Jahren auf Teile und Arbeitszeit.</string>
+    <string name="sample_laptop_title">Laptop-Rechnung</string>
+    <string name="sample_laptop_description">Laptop mit 14 Zoll</string>
+    <string name="sample_laptop_body">Laptop mit 14 Zoll und 16 GB Speicher, gekauft am 18. Januar 2026. Die Garantie von zwei Jahren gilt ab dem Datum dieser Rechnung. Bewahren Sie sie als Kaufnachweis auf.</string>
+    <string name="sample_phone_title">Handy-Quittung</string>
+    <string name="sample_phone_description">Displayreparatur</string>
+    <string name="sample_phone_body">Display am 9. März 2026 ausgetauscht. Auf die Reparatur gilt eine Garantie von sechs Monaten. Schäden durch Stürze oder Flüssigkeiten sind nicht abgedeckt.</string>
+    <string name="sample_notes_title">Algebra-Notizen</string>
+    <string name="sample_notes_description">Lineare Algebra, Kapitel 3</string>
+    <string name="sample_notes_body_1">Ein Vektorraum ist eine Menge, die unter der Addition und unter der Multiplikation mit einem Skalar abgeschlossen ist. Ihre Elemente heißen Vektoren.</string>
+    <string name="sample_notes_body_2">Satz. Alle Basen eines Vektorraums endlicher Dimension haben gleich viele Elemente. Diese Zahl ist die Dimension des Raums.</string>
+    <string name="sample_notes_body_3">Aufgabe. Zeige, dass die Vektoren (1, 0, 1), (0, 1, 1) und (1, 1, 0) linear unabhängig sind, und schreibe (2, 3, 1) als Kombination aus ihnen.</string>
+    <string name="sample_bank_title">Brief der Bank</string>
+    <string name="sample_bank_description">Ihre neue Karte</string>
+    <string name="sample_bank_body_1">Sehr geehrter Kunde, Ihre neue Karte ist unterwegs und trifft innerhalb von fünf Werktagen bei Ihnen ein.</string>
+    <string name="sample_bank_body_2">Sie können sie aktivieren und Ihren letzten Kontoauszug ansehen unter:</string>
+    <string name="sample_bank_body_3">Wir fragen Sie niemals per E-Mail oder Telefon nach Ihrer PIN oder Ihrem Passwort.</string>
+</resources>

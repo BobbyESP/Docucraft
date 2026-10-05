@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+-->
+<resources>
+    <string name="sample_folder_bills">Facturas</string>
+    <string name="sample_folder_university">Universidad</string>
+    <string name="sample_folder_home">Casa</string>
+    <string name="sample_folder_taxes">Impuestos</string>
+    <string name="sample_tag_contract">Contrato</string>
+    <string name="sample_tag_warranty">Garantía</string>
+    <string name="sample_search_query">garantía</string>
+    <string name="sample_clause">Cláusula %1$d</string>
+    <string name="sample_section">Sección %1$d</string>
+    <string name="sample_contract_title">Contrato de alquiler</string>
+    <string name="sample_contract_description">Piso en la calle Arce, 12 meses</string>
+    <string name="sample_contract_body_1">Este contrato se celebra entre el arrendador y el arrendatario del piso situado en la calle Arce, 14. El alquiler dura doce meses desde el 1 de marzo de 2026.</string>
+    <string name="sample_contract_body_2">La renta mensual es de 850 euros, que se pagan en los cinco primeros días de cada mes. Se deposita una fianza de un mes de renta hasta el final del contrato.</string>
+    <string name="sample_contract_body_3">Los electrodomésticos del inventario están cubiertos por la garantía del fabricante. El arrendatario avisará de cualquier avería en un plazo de siete días.</string>
+    <string name="sample_electricity_title">Factura de la luz</string>
+    <string name="sample_electricity_description">Febrero de 2026</string>
+    <string name="sample_electricity_body">Periodo de facturación del 1 al 28 de febrero de 2026. Consumo de 214 kWh. El importe de 48,30 euros se cargará en su cuenta el 10 de marzo.</string>
+    <string name="sample_gas_title">Factura del gas</string>
+    <string name="sample_gas_description">Marzo de 2026</string>
+    <string name="sample_gas_body">Periodo de facturación del 1 al 31 de marzo de 2026. Consumo de 386 kWh. El importe de 37,15 euros se cargará en su cuenta el 12 de abril.</string>
+    <string name="sample_internet_title">Factura de internet</string>
+    <string name="sample_internet_description">Febrero de 2026</string>
+    <string name="sample_internet_body">Fibra de 600 Mb y teléfono fijo de febrero de 2026. El importe de 39,90 euros se cargará en su cuenta el 5 de marzo.</string>
+    <string name="sample_water_title">Factura del agua</string>
+    <string name="sample_water_description">Primer trimestre de 2026</string>
+    <string name="sample_water_body">Suministro de agua y alcantarillado de enero a marzo de 2026. Consumo de 21 metros cúbicos. Importe: 52,80 euros.</string>
+    <string name="sample_council_title">Impuesto municipal</string>
+    <string name="sample_council_description">Año 2026</string>
+    <string name="sample_council_body">Impuesto municipal anual del piso situado en la calle Arce, 14. Puede pagarse en dos plazos, en mayo y en octubre.</string>
+    <string name="sample_washing_title">Lavadora</string>
+    <string name="sample_washing_description">Tique de compra</string>
+    <string name="sample_washing_body">Lavadora de carga frontal de 8 kg, entregada e instalada el 3 de febrero de 2026. Este aparato tiene una garantía de tres años que cubre piezas y mano de obra.</string>
+    <string name="sample_laptop_title">Factura del portátil</string>
+    <string name="sample_laptop_description">Portátil de 14 pulgadas</string>
+    <string name="sample_laptop_body">Portátil de 14 pulgadas con 16 GB de memoria, comprado el 18 de enero de 2026. La garantía de dos años cuenta desde la fecha de esta factura. Guárdela como justificante de compra.</string>
+    <string name="sample_phone_title">Recibo del móvil</string>
+    <string name="sample_phone_description">Reparación de pantalla</string>
+    <string name="sample_phone_body">Pantalla sustituida el 9 de marzo de 2026. La reparación tiene una garantía de seis meses. No cubre los daños por caídas o líquidos.</string>
+    <string name="sample_notes_title">Apuntes de álgebra</string>
+    <string name="sample_notes_description">Álgebra lineal, tema 3</string>
+    <string name="sample_notes_body_1">Un espacio vectorial es un conjunto cerrado para la suma y para el producto por un escalar. Sus elementos se llaman vectores.</string>
+    <string name="sample_notes_body_2">Teorema. Todas las bases de un espacio vectorial de dimensión finita tienen el mismo número de elementos. Ese número es la dimensión del espacio.</string>
+    <string name="sample_notes_body_3">Ejercicio. Demuestra que los vectores (1, 0, 1), (0, 1, 1) y (1, 1, 0) son linealmente independientes y escribe (2, 3, 1) como combinación de ellos.</string>
+    <string name="sample_bank_title">Carta del banco</string>
+    <string name="sample_bank_description">Su nueva tarjeta</string>
+    <string name="sample_bank_body_1">Estimado cliente: su nueva tarjeta está en camino y llegará a su domicilio en un plazo de cinco días laborables.</string>
+    <string name="sample_bank_body_2">Puede activarla y consultar su último extracto en:</string>
+    <string name="sample_bank_body_3">Nunca le pediremos su PIN ni su contraseña por correo electrónico ni por teléfono.</string>
+</resources>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+-->
+<resources>
+    <string name="sample_folder_bills">Bollette</string>
+    <string name="sample_folder_university">Università</string>
+    <string name="sample_folder_home">Casa</string>
+    <string name="sample_folder_taxes">Tasse</string>
+    <string name="sample_tag_contract">Contratto</string>
+    <string name="sample_tag_warranty">Garanzia</string>
+    <string name="sample_search_query">garanzia</string>
+    <string name="sample_clause">Clausola %1$d</string>
+    <string name="sample_section">Sezione %1$d</string>
+    <string name="sample_contract_title">Contratto di affitto</string>
+    <string name="sample_contract_description">Appartamento in via degli Aceri, 12 mesi</string>
+    <string name="sample_contract_body_1">Il presente contratto è stipulato tra il locatore e il conduttore dell’appartamento in via degli Aceri 14. La locazione dura dodici mesi dal 1º marzo 2026.</string>
+    <string name="sample_contract_body_2">Il canone mensile è di 850 euro, da pagare entro i primi cinque giorni di ogni mese. Un deposito pari a una mensilità è trattenuto fino alla fine della locazione.</string>
+    <string name="sample_contract_body_3">Gli elettrodomestici elencati nell’inventario sono coperti dalla garanzia del produttore. Il conduttore segnalerà ogni guasto entro sette giorni.</string>
+    <string name="sample_electricity_title">Bolletta della luce</string>
+    <string name="sample_electricity_description">Febbraio 2026</string>
+    <string name="sample_electricity_body">Periodo di fatturazione dal 1º al 28 febbraio 2026. Consumo di 214 kWh. L’importo di 48,30 euro sarà addebitato sul suo conto il 10 marzo.</string>
+    <string name="sample_gas_title">Bolletta del gas</string>
+    <string name="sample_gas_description">Marzo 2026</string>
+    <string name="sample_gas_body">Periodo di fatturazione dal 1º al 31 marzo 2026. Consumo di 386 kWh. L’importo di 37,15 euro sarà addebitato sul suo conto il 12 aprile.</string>
+    <string name="sample_internet_title">Bolletta di internet</string>
+    <string name="sample_internet_description">Febbraio 2026</string>
+    <string name="sample_internet_body">Fibra a 600 Mb e telefono fisso per febbraio 2026. L’importo di 39,90 euro sarà addebitato sul suo conto il 5 marzo.</string>
+    <string name="sample_water_title">Bolletta dell’acqua</string>
+    <string name="sample_water_description">Primo trimestre 2026</string>
+    <string name="sample_water_body">Fornitura d’acqua e fognatura da gennaio a marzo 2026. Consumo di 21 metri cubi. Importo: 52,80 euro.</string>
+    <string name="sample_council_title">Imposta comunale</string>
+    <string name="sample_council_description">Anno 2026</string>
+    <string name="sample_council_body">Imposta comunale annuale per l’appartamento in via degli Aceri 14. Si può pagare in due rate, a maggio e a ottobre.</string>
+    <string name="sample_washing_title">Lavatrice</string>
+    <string name="sample_washing_description">Scontrino d’acquisto</string>
+    <string name="sample_washing_body">Lavatrice a carica frontale da 8 kg, consegnata e installata il 3 febbraio 2026. Questo apparecchio ha una garanzia di tre anni che copre ricambi e manodopera.</string>
+    <string name="sample_laptop_title">Fattura del portatile</string>
+    <string name="sample_laptop_description">Portatile da 14 pollici</string>
+    <string name="sample_laptop_body">Portatile da 14 pollici con 16 GB di memoria, acquistato il 18 gennaio 2026. La garanzia di due anni decorre dalla data di questa fattura. La conservi come prova d’acquisto.</string>
+    <string name="sample_phone_title">Ricevuta del telefono</string>
+    <string name="sample_phone_description">Riparazione dello schermo</string>
+    <string name="sample_phone_body">Schermo sostituito il 9 marzo 2026. La riparazione ha una garanzia di sei mesi. Non copre i danni dovuti a cadute o liquidi.</string>
+    <string name="sample_notes_title">Appunti di algebra</string>
+    <string name="sample_notes_description">Algebra lineare, unità 3</string>
+    <string name="sample_notes_body_1">Uno spazio vettoriale è un insieme chiuso rispetto alla somma e al prodotto per uno scalare. I suoi elementi si chiamano vettori.</string>
+    <string name="sample_notes_body_2">Teorema. Tutte le basi di uno spazio vettoriale di dimensione finita hanno lo stesso numero di elementi. Quel numero è la dimensione dello spazio.</string>
+    <string name="sample_notes_body_3">Esercizio. Dimostra che i vettori (1, 0, 1), (0, 1, 1) e (1, 1, 0) sono linearmente indipendenti e scrivi (2, 3, 1) come loro combinazione.</string>
+    <string name="sample_bank_title">Lettera della banca</string>
+    <string name="sample_bank_description">La sua nuova carta</string>
+    <string name="sample_bank_body_1">Gentile cliente, la sua nuova carta è in arrivo e sarà consegnata al suo indirizzo entro cinque giorni lavorativi.</string>
+    <string name="sample_bank_body_2">Può attivarla e consultare l’ultimo estratto conto su:</string>
+    <string name="sample_bank_body_3">Non le chiederemo mai il PIN o la password per e-mail o per telefono.</string>
+</resources>

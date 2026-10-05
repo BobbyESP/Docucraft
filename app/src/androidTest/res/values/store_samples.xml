@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+
+  The sample library the store's screenshots are taken with: its folders, its tags and what its
+  documents say. Translated like the app's own strings, so that each language's screenshots
+  show a library in that language. Only the languages the graphics are drawn in have one.
+-->
+<resources>
+    <string name="sample_folder_bills">Bills</string>
+    <string name="sample_folder_university">University</string>
+    <string name="sample_folder_home">Home</string>
+    <string name="sample_folder_taxes">Taxes</string>
+    <string name="sample_tag_contract">Contract</string>
+    <string name="sample_tag_warranty">Warranty</string>
+    <string name="sample_search_query">warranty</string>
+    <string name="sample_clause">Clause %1$d</string>
+    <string name="sample_section">Section %1$d</string>
+    <string name="sample_contract_title">Rental contract</string>
+    <string name="sample_contract_description">Flat on Maple Street, 12 months</string>
+    <string name="sample_contract_body_1">This agreement is made between the landlord and the tenant for the flat at 14 Maple Street. The lease runs for twelve months from 1 March 2026.</string>
+    <string name="sample_contract_body_2">The monthly rent is 850 euros, payable within the first five days of each month. A deposit equal to one month of rent is held until the end of the lease.</string>
+    <string name="sample_contract_body_3">The appliances listed in the inventory are covered by the manufacturer’s warranty. The tenant will report any fault within seven days.</string>
+    <string name="sample_electricity_title">Electricity bill</string>
+    <string name="sample_electricity_description">February 2026</string>
+    <string name="sample_electricity_body">Billing period from 1 to 28 February 2026. Consumption of 214 kWh. The amount of 48.30 euros will be charged to your account on 10 March.</string>
+    <string name="sample_gas_title">Gas bill</string>
+    <string name="sample_gas_description">March 2026</string>
+    <string name="sample_gas_body">Billing period from 1 to 31 March 2026. Consumption of 386 kWh. The amount of 37.15 euros will be charged to your account on 12 April.</string>
+    <string name="sample_internet_title">Internet bill</string>
+    <string name="sample_internet_description">February 2026</string>
+    <string name="sample_internet_body">Fibre 600 Mb and landline for February 2026. The amount of 39.90 euros will be charged to your account on 5 March.</string>
+    <string name="sample_water_title">Water bill</string>
+    <string name="sample_water_description">First quarter of 2026</string>
+    <string name="sample_water_body">Water supply and sewerage from January to March 2026. Consumption of 21 cubic metres. Amount due: 52.80 euros.</string>
+    <string name="sample_council_title">Council tax</string>
+    <string name="sample_council_description">Year 2026</string>
+    <string name="sample_council_body">Annual council tax for the flat at 14 Maple Street. It can be paid in two instalments, in May and in October.</string>
+    <string name="sample_washing_title">Washing machine</string>
+    <string name="sample_washing_description">Purchase receipt</string>
+    <string name="sample_washing_body">Front-loading washing machine, 8 kg, delivered and installed on 3 February 2026. This appliance has a three-year warranty that covers parts and labour.</string>
+    <string name="sample_laptop_title">Laptop invoice</string>
+    <string name="sample_laptop_description">14-inch laptop</string>
+    <string name="sample_laptop_body">14-inch laptop with 16 GB of memory, bought on 18 January 2026. The two-year warranty runs from the date of this invoice. Keep it as proof of purchase.</string>
+    <string name="sample_phone_title">Phone receipt</string>
+    <string name="sample_phone_description">Screen repair</string>
+    <string name="sample_phone_body">Screen replaced on 9 March 2026. The repair has a six-month warranty. Damage caused by drops or liquids is not covered.</string>
+    <string name="sample_notes_title">Algebra notes</string>
+    <string name="sample_notes_description">Linear algebra, unit 3</string>
+    <string name="sample_notes_body_1">A vector space is a set that is closed under addition and under multiplication by a scalar. Its elements are called vectors.</string>
+    <string name="sample_notes_body_2">Theorem. Every basis of a vector space of finite dimension has the same number of elements. That number is the dimension of the space.</string>
+    <string name="sample_notes_body_3">Exercise. Show that the vectors (1, 0, 1), (0, 1, 1) and (1, 1, 0) are linearly independent, and write (2, 3, 1) as a combination of them.</string>
+    <string name="sample_bank_title">Bank letter</string>
+    <string name="sample_bank_description">Your new card</string>
+    <string name="sample_bank_body_1">Dear customer, your new card is on its way and will reach your address within five working days.</string>
+    <string name="sample_bank_body_2">You can activate it and see your latest statement at:</string>
+    <string name="sample_bank_body_3">We will never ask for your PIN or your password by email or by phone.</string>
+</resources>
