@@ -30,7 +30,7 @@
     <string name="name">नाम</string>
     <string name="follow_system">सिस्टम का पालन करें</string>
     <string name="search_documents">दस्तावेज़ खोजें</string>
-    <string name="app_tagline">एआई के साथ आसानी से अपने दस्तावेजों को स्कैन करें</string>
+    <string name="app_tagline">अपने दस्तावेज़ स्कैन करें, व्यवस्थित करें और पढ़ें। सब कुछ आपके डिवाइस पर।</string>
     <string name="retry">पुनः प्रयास करें</string>
     <string name="sort_descending">अवरोही क्रम में क्रमबद्ध करें</string>
     <string name="doc_delete_error">दस्तावेज़ को हटाने में एक त्रुटि हुई</string>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
+    <!-- Listing: title (30), short description (80), full description (4000) -->
+    <string name="store_title">Docucraft : Scanner PDF et OCR</string>
+    <string name="store_short_description">Numérisez, rangez et retrouvez vos documents. Sans filigrane, compte ni cloud.</string>
+    <string name="store_full_description">Docucraft transforme vos papiers en documents que vous retrouvez vraiment. Numérisez une facture, un contrat ou vos notes, et quelques jours plus tard, retrouvez-les grâce à un mot écrit dedans. Tout se passe sur votre téléphone : sans compte, sans cloud, sans filigrane.\n\nDES NUMÉRISATIONS NETTES\nL\'appareil photo détecte les bords de la page, la recadre et la nettoie pour vous. Numérisez plusieurs pages dans un seul PDF, avec l\'appareil photo ou à partir de photos existantes. Le résultat est un PDF propre, sans filigrane. C\'est votre document, pas le nôtre.\n\nCHERCHEZ DANS LE CONTENU\nDocucraft lit le texte de vos documents, y compris celui des numérisations une fois la reconnaissance de texte activée. Cherchez « loyer » ou « garantie » : il vous montre la page exacte où le mot apparaît, avec les mots qui l\'entourent. Accents et majuscules ne comptent pas.\n\nRANGEZ À VOTRE FAÇON\nDes dossiers dans des dossiers, chacun avec sa couleur et son icône. Des étiquettes, des favoris, et Récents pour ce que vous avez ouvert en dernier. Épinglez à l\'accueil les dossiers que vous utilisez le plus et donnez à vos étiquettes leur propre section.\n\nLISEZ À VOTRE RYTHME\nLa visionneuse se souvient exactement où vous vous êtes arrêté, à la ligne près. Sélectionnez et copiez du texte, imprimez, partagez ou passez en mode nuit. Elle ouvre aussi les PDF reçus dans d\'autres applis.\n\nDES LIENS SANS SURPRISE\nAvant d\'ouvrir un lien dans un PDF, Docucraft vous montre où il mène vraiment. Une adresse qui en imite une autre ne peut pas se faire passer pour la vraie.\n\nPRIVÉ PAR CONCEPTION\nLa numérisation et la reconnaissance de texte fonctionnent sur votre appareil. Vos documents et leur texte ne le quittent jamais, sauf si vous les partagez. Et si vous supprimez quelque chose par erreur, la corbeille le garde 30 jours.\n\nCONÇU AVEC SOIN\nUne interface Material You au fini verre dépoli qui adopte les couleurs de votre téléphone, pensée aussi pour les tablettes et les pliables, et conçue pour que gérer ses documents devienne un plaisir.\n\nGRATUIT ET OUVERT\nSans publicité, sans abonnement, sans inscription. Docucraft est open source sous licence GPL-3.0 : github.com/BobbyESP/Docucraft</string>
+
+    <!-- Screenshots -->
+    <string name="store_screenshot_01_headline">Vos papiers, bien rangés.</string>
+    <string name="store_screenshot_01_supporting">Numérisez, rangez et retrouvez chaque document.</string>
+
+    <string name="store_screenshot_02_headline">Numérisé en quelques secondes.</string>
+    <string name="store_screenshot_02_supporting">Bords détectés, recadrés et nettoyés pour vous.</string>
+
+    <string name="store_screenshot_03_headline">Aucun filigrane. Jamais.</string>
+    <string name="store_screenshot_03_supporting">Votre document porte votre nom, pas le nôtre.</string>
+
+    <string name="store_screenshot_04_headline">Retrouvez-le par son contenu.</string>
+    <string name="store_screenshot_04_supporting">Cherchez dans chaque page, accents compris.</string>
+
+    <string name="store_screenshot_05_headline">Dossiers, étiquettes, favoris.</string>
+    <string name="store_screenshot_05_supporting">Organisés à votre façon.</string>
+
+    <string name="store_screenshot_06_headline">Reprenez où vous en étiez.</string>
+    <string name="store_screenshot_06_supporting">À la ligne près, de jour comme de nuit.</string>
+
+    <string name="store_screenshot_07_headline">Voyez avant de toucher.</string>
+    <string name="store_screenshot_07_supporting">Chaque lien montre où il mène vraiment.</string>
+
+    <string name="store_screenshot_08_headline">Reste sur votre téléphone.</string>
+    <string name="store_screenshot_08_supporting">Sans compte. Sans cloud. Open source.</string>
+
+    <!-- Feature graphic -->
+    <string name="store_feature_headline">Numérisez une fois. Retrouvez toujours.</string>
+    <string name="store_feature_supporting">Sans filigrane. Sans compte. Sans cloud.</string>
+</resources>

@@ -1,0 +1,5 @@
+# Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+# The Play Console service account's key never enters the repository: point PLAY_STORE_JSON_KEY at
+# it, or leave it at fastlane/play-store-key.json, which git ignores.
+json_key_file(ENV.fetch("PLAY_STORE_JSON_KEY", "fastlane/play-store-key.json"))
+package_name("com.bobbyesp.docucraft")

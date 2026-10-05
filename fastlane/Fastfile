@@ -1,0 +1,99 @@
+# Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+#
+# The Google Play listing, written from the app's strings and uploaded without touching any release.
+#   bundle exec fastlane store_text     the title and descriptions, in every language that has them
+#   bundle exec fastlane store          the same, plus the screenshots and the feature graphic
+# What is written, and from where, is in scripts/store/README.md.
+#
+# Pass track:<name> to pick the track whose release supply anchors the edit to, e.g.
+#   bundle exec fastlane store_text track:internal
+
+default_platform(:android)
+
+ROOT = File.expand_path("..", __dir__)
+METADATA = File.join(ROOT, "fastlane/metadata/android")
+
+# Tracks searched, in order, when no track is given.
+LISTING_TRACKS = %w[production beta alpha internal].freeze
+
+platform :android do
+  # supply only writes the listing after finding a release, even when nothing but text is uploaded:
+  # without a version code it looks in the 'production' track and fails if that track is empty
+  # ("Could not find release for version code ''"). The release is only used to locate the edit,
+  # so any existing one will do: this returns the first track that has one, and its newest code.
+  private_lane :listing_release do |options|
+    tracks = options[:track] ? [options[:track].to_s] : LISTING_TRACKS
+    found = tracks.lazy.map do |track|
+      codes = begin
+        google_play_track_version_codes(track: track)
+      rescue StandardError => e
+        UI.important("Skipping track '#{track}': #{e.message}")
+        []
+      end
+      [track, codes.max] unless codes.empty?
+    end.find(&:itself)
+
+    UI.user_error!("No release found in #{tracks.join(', ')}. The listing can only be uploaded once a release exists.") unless found
+    UI.success("Anchoring the listing upload to version code #{found[1]} in track '#{found[0]}'")
+    found
+  end
+
+  desc "List every track in Google Play with its releases, without changing anything"
+  lane :tracks do
+    require "supply"
+    require "supply/options"
+
+    # Lanes run inside fastlane/, but the Appfile's key path is relative to the project root.
+    Dir.chdir(ROOT) do
+      Supply.config = FastlaneCore::Configuration.create(Supply::Options.available_options, {})
+      client = Supply::Client.make_from_config
+      client.begin_edit(package_name: Supply.config[:package_name])
+      begin
+        client.tracks.each do |track|
+          releases = track.releases || []
+          UI.header(track.track)
+          UI.message("  (no releases)") if releases.empty?
+          releases.each do |release|
+            codes = (release.version_codes || []).join(", ")
+            rollout = release.user_fraction ? " · rollout #{(release.user_fraction * 100).round}%" : ""
+            UI.message("  #{release.name || '(unnamed)'} · #{release.status} · version codes [#{codes}]#{rollout}")
+          end
+        end
+      ensure
+        client.abort_current_edit
+      end
+    end
+  end
+
+  desc "Write the listing's text from store_listing.xml and upload it"
+  lane :store_text do |options|
+    sh("node", File.join(ROOT, "scripts/store/listing.mjs"))
+    track, version_code = listing_release(options)
+    upload_to_play_store(
+      metadata_path: METADATA,
+      track: track,
+      version_code: version_code,
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+
+  desc "Write the listing's text, draw the screenshots and the feature graphic, and upload them all"
+  lane :store do |options|
+    sh("node", File.join(ROOT, "scripts/store/listing.mjs"))
+    sh("node", File.join(ROOT, "scripts/store/render.mjs"))
+    track, version_code = listing_release(options)
+    upload_to_play_store(
+      metadata_path: METADATA,
+      track: track,
+      version_code: version_code,
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: true,
+      sync_image_upload: true
+    )
+  end
+end

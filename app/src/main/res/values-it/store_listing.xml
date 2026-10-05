@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
+    <!-- Listing: title (30), short description (80), full description (4000) -->
+    <string name="store_title">Docucraft: Scanner PDF e OCR</string>
+    <string name="store_short_description">Scansiona, organizza e ritrova i documenti. Senza filigrana, account né cloud.</string>
+    <string name="store_full_description">Docucraft trasforma i tuoi documenti cartacei in file che puoi davvero ritrovare. Scansiona una fattura, un contratto o i tuoi appunti e, giorni dopo, ritrovali con una parola scritta al loro interno. Tutto avviene sul tuo telefono: niente account, niente cloud, niente filigrana.\n\nSCANSIONI PULITE\nLa fotocamera rileva i bordi della pagina, la ritaglia e la ripulisce per te. Scansiona più pagine in un solo PDF, dalla fotocamera o da foto che hai già. Il risultato è un PDF pulito, senza filigrana. È il tuo documento, non il nostro.\n\nCERCA NEL CONTENUTO\nDocucraft legge il testo dei tuoi documenti, anche quello delle scansioni quando attivi il riconoscimento del testo. Cerca «affitto» o «garanzia» e ti mostra la pagina esatta in cui compare la parola, con le parole intorno. Accenti e maiuscole non contano.\n\nORGANIZZA A MODO TUO\nCartelle dentro cartelle, ognuna con il suo colore e la sua icona. Etichette, preferiti e Recenti per ciò che hai aperto per ultimo. Fissa nella Home le cartelle che usi di più e dai alle tue etichette una sezione tutta loro.\n\nLEGGI CON CALMA\nIl visualizzatore ricorda esattamente dove eri rimasto, fino alla riga. Seleziona e copia il testo, stampa, condividi o passa alla modalità notte. Apre anche i PDF che ricevi in altre app.\n\nLINK SENZA SORPRESE\nPrima di aprire un link in un PDF, Docucraft ti mostra dove porta davvero. Un indirizzo che ne imita un altro non può spacciarsi per quello vero.\n\nPRIVATO PER SCELTA\nLa scansione e il riconoscimento del testo avvengono sul tuo dispositivo. I tuoi documenti e il loro testo non lo lasciano mai, a meno che non sia tu a condividerli. E se elimini qualcosa per errore, il cestino lo conserva per 30 giorni.\n\nFATTO CON CURA\nUn\'interfaccia Material You con finitura in vetro satinato che prende i colori del tuo telefono, pensata anche per tablet e pieghevoli, e progettata per rendere piacevole la gestione dei documenti.\n\nGRATUITO E APERTO\nNiente pubblicità, niente abbonamenti, nessuna registrazione. Docucraft è open source con licenza GPL-3.0: github.com/BobbyESP/Docucraft</string>
+
+    <!-- Screenshots -->
+    <string name="store_screenshot_01_headline">I tuoi documenti, in ordine.</string>
+    <string name="store_screenshot_01_supporting">Scansiona, organizza e ritrova ogni documento.</string>
+
+    <string name="store_screenshot_02_headline">Scansionato in pochi secondi.</string>
+    <string name="store_screenshot_02_supporting">Bordi rilevati, ritagliati e puliti per te.</string>
+
+    <string name="store_screenshot_03_headline">Nessuna filigrana. Mai.</string>
+    <string name="store_screenshot_03_supporting">Il documento porta il tuo nome, non il nostro.</string>
+
+    <string name="store_screenshot_04_headline">Trovalo da ciò che dice.</string>
+    <string name="store_screenshot_04_supporting">Cerca in ogni pagina, accenti compresi.</string>
+
+    <string name="store_screenshot_05_headline">Cartelle, etichette, preferiti.</string>
+    <string name="store_screenshot_05_supporting">Organizzati come pensi tu.</string>
+
+    <string name="store_screenshot_06_headline">Riprendi da dove eri rimasto.</string>
+    <string name="store_screenshot_06_supporting">Fino alla riga, di giorno o di notte.</string>
+
+    <string name="store_screenshot_07_headline">Guarda prima di toccare.</string>
+    <string name="store_screenshot_07_supporting">Ogni link mostra dove porta davvero.</string>
+
+    <string name="store_screenshot_08_headline">Resta sul tuo telefono.</string>
+    <string name="store_screenshot_08_supporting">Nessun account. Nessun cloud. Open source.</string>
+
+    <!-- Feature graphic -->
+    <string name="store_feature_headline">Scansiona una volta. Ritrova sempre.</string>
+    <string name="store_feature_supporting">Nessuna filigrana. Nessun account. Nessun cloud.</string>
+</resources>

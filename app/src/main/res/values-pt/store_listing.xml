@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
+    <!-- Listing: title (30), short description (80), full description (4000) -->
+    <string name="store_title">Docucraft: Scanner PDF e OCR</string>
+    <string name="store_short_description">Escaneie, organize e encontre seus documentos. Sem marca d\'água, conta ou nuvem.</string>
+    <string name="store_full_description">O Docucraft transforma seus papéis em arquivos que você realmente consegue encontrar. Escaneie uma fatura, um contrato ou suas anotações e, dias depois, encontre-os por uma palavra escrita neles. Tudo acontece no seu celular: sem conta, sem nuvem, sem marca d\'água.\n\nDIGITALIZAÇÕES LIMPAS\nA câmera detecta as bordas da página, recorta e limpa para você. Escaneie várias páginas em um único PDF, pela câmera ou a partir de fotos que você já tem. O resultado é um PDF limpo, sem marca d\'água. O documento é seu, não nosso.\n\nPESQUISE PELO CONTEÚDO\nO Docucraft lê o texto dos seus documentos, inclusive das digitalizações quando você ativa o reconhecimento de texto. Pesquise \"aluguel\" ou \"garantia\" e ele mostra a página exata em que a palavra aparece, com as palavras ao redor. Acentos e maiúsculas não atrapalham.\n\nORGANIZE DO SEU JEITO\nPastas dentro de pastas, cada uma com sua cor e seu ícone. Etiquetas, favoritos e Recentes para o que você abriu por último. Fixe na tela inicial as pastas que mais usa e dê às suas etiquetas seções próprias.\n\nLEIA COM CALMA\nO leitor lembra exatamente onde você parou, até a linha. Selecione e copie texto, imprima, compartilhe ou ative o modo noturno. Ele também abre os PDFs que você recebe em outros apps.\n\nLINKS SEM SURPRESAS\nAntes de abrir um link de um PDF, o Docucraft mostra para onde ele leva de verdade. Um endereço parecido não consegue se passar pelo verdadeiro.\n\nPRIVADO POR PADRÃO\nA digitalização e o reconhecimento de texto acontecem no seu dispositivo. Seus documentos e o texto deles nunca saem dele, a menos que você os compartilhe. E se você apagar algo sem querer, a lixeira guarda por 30 dias.\n\nFEITO COM CUIDADO\nUma interface Material You com acabamento de vidro fosco que assume as cores do seu celular, feita também para tablets e dobráveis, e pensada para que lidar com documentos seja um prazer.\n\nGRATUITO E ABERTO\nSem anúncios, sem assinaturas, sem cadastro. O Docucraft é código aberto sob a licença GPL-3.0: github.com/BobbyESP/Docucraft</string>
+
+    <!-- Screenshots -->
+    <string name="store_screenshot_01_headline">Seus papéis, em ordem.</string>
+    <string name="store_screenshot_01_supporting">Escaneie, organize e encontre qualquer documento.</string>
+
+    <string name="store_screenshot_02_headline">Escaneado em segundos.</string>
+    <string name="store_screenshot_02_supporting">Bordas detectadas, recortadas e limpas para você.</string>
+
+    <string name="store_screenshot_03_headline">Sem marca d\'água. Nunca.</string>
+    <string name="store_screenshot_03_supporting">Seu documento leva o seu nome, não o nosso.</string>
+
+    <string name="store_screenshot_04_headline">Encontre pelo que está escrito.</string>
+    <string name="store_screenshot_04_supporting">Pesquise em cada página, com ou sem acentos.</string>
+
+    <string name="store_screenshot_05_headline">Pastas, etiquetas, favoritos.</string>
+    <string name="store_screenshot_05_supporting">Organizado do seu jeito.</string>
+
+    <string name="store_screenshot_06_headline">Continue de onde parou.</string>
+    <string name="store_screenshot_06_supporting">Até a mesma linha, de dia ou de noite.</string>
+
+    <string name="store_screenshot_07_headline">Veja antes de tocar.</string>
+    <string name="store_screenshot_07_supporting">Cada link mostra para onde leva de verdade.</string>
+
+    <string name="store_screenshot_08_headline">Fica no seu celular.</string>
+    <string name="store_screenshot_08_supporting">Sem conta. Sem nuvem. Código aberto.</string>
+
+    <!-- Feature graphic -->
+    <string name="store_feature_headline">Escaneie uma vez. Encontre sempre.</string>
+    <string name="store_feature_supporting">Sem marca d\'água. Sem conta. Sem nuvem.</string>
+</resources>

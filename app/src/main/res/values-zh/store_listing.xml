@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
+    <!-- Listing: title (30), short description (80), full description (4000) -->
+    <string name="store_title">Docucraft：PDF 扫描与 OCR</string>
+    <string name="store_short_description">扫描、整理、查找你的文档。无水印、无需账户、不上云。</string>
+    <string name="store_full_description">Docucraft 把纸质文档变成真正找得到的文件。扫描一张发票、一份合同或你的笔记，几天后，凭里面写着的一个词就能找到它。一切都在你的手机上完成：无需账户，不上云，没有水印。\n\n干净的扫描\n相机会识别页面边缘，替你裁剪并清理。可将多页扫描成一个 PDF，用相机拍摄或从已有照片导入。得到的是一份没有水印的干净 PDF。文档属于你，而不是我们。\n\n按内容搜索\nDocucraft 会读取文档中的文字；开启文字识别后，扫描件也包括在内。搜索“租金”或“保修”，它会显示该词出现的确切页面以及前后文。\n\n按你的方式整理\n文件夹可层层嵌套，每个都有自己的颜色和图标。还有标签、收藏，以及最近打开的文档。把常用文件夹固定到主页，并为标签设置专属分区。\n\n从容阅读\n阅读器会精确记住你读到的位置，细到某一行。可选择并复制文字、打印、分享或切换到夜间模式。也能打开你在其他应用中收到的 PDF。\n\n链接不再有意外\n在打开 PDF 中的链接之前，Docucraft 会先显示它真正的去向。仿冒的网址无法冒充真的。\n\n隐私从设计开始\n扫描和文字识别都在你的设备上进行。除非你主动分享，文档及其文字绝不会离开设备。误删了也不怕，回收站会保留 30 天。\n\n用心打造\n采用磨砂玻璃质感的 Material You 界面，随手机配色变化，同样适配平板和折叠屏，让处理文档成为一种享受。\n\n免费且开源\n没有广告，没有订阅，无需注册。Docucraft 以 GPL-3.0 许可证开源：github.com/BobbyESP/Docucraft</string>
+</resources>

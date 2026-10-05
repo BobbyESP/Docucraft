@@ -1,0 +1,15 @@
+{
+  "en": { "play": "en-US", "graphics": true },
+  "es": { "play": "es-ES", "graphics": true },
+  "fr": { "play": "fr-FR", "graphics": true },
+  "de": { "play": "de-DE", "graphics": true },
+  "it": { "play": "it-IT", "graphics": true },
+  "pt": { "play": "pt-BR", "graphics": true },
+  "nl": { "play": "nl-NL", "graphics": true },
+  "ar": { "play": "ar", "graphics": false },
+  "hi": { "play": "hi-IN", "graphics": false },
+  "ja": { "play": "ja-JP", "graphics": false },
+  "ko": { "play": "ko-KR", "graphics": false },
+  "ru": { "play": "ru-RU", "graphics": false },
+  "zh": { "play": "zh-CN", "graphics": false }
+}

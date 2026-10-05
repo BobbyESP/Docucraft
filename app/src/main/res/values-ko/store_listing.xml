@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
+    <!-- Listing: title (30), short description (80), full description (4000) -->
+    <string name="store_title">Docucraft: PDF 스캐너 &amp; OCR</string>
+    <string name="store_short_description">문서를 스캔하고 정리하고 찾으세요. 워터마크도, 계정도, 클라우드도 없이.</string>
+    <string name="store_full_description">Docucraft는 종이 문서를 정말로 다시 찾을 수 있는 파일로 바꿔 줍니다. 영수증, 계약서, 필기를 스캔해 두면 며칠 뒤에도 안에 적힌 단어로 찾을 수 있습니다. 모든 것이 휴대폰 안에서 이루어집니다. 계정도, 클라우드도, 워터마크도 없습니다.\n\n깔끔한 스캔\n카메라가 페이지 가장자리를 감지해 잘라 내고 깨끗하게 정리합니다. 여러 페이지를 하나의 PDF로, 카메라로 찍거나 이미 있는 사진에서 만들 수 있습니다. 결과물은 워터마크 없는 깔끔한 PDF입니다. 문서는 여러분의 것입니다.\n\n내용으로 검색\nDocucraft는 문서의 텍스트를 읽습니다. 텍스트 인식을 켜면 스캔한 문서도 포함됩니다. \'월세\'나 \'보증\'을 검색하면 그 단어가 나오는 정확한 페이지와 주변 문장을 보여 줍니다.\n\n내 방식대로 정리\n폴더 안의 폴더, 각각 고유한 색상과 아이콘. 태그, 즐겨찾기, 그리고 최근에 연 문서. 자주 쓰는 폴더는 홈에 고정하고 태그마다 섹션을 만들 수 있습니다.\n\n여유롭게 읽기\n뷰어가 마지막으로 읽던 위치를 줄 단위까지 기억합니다. 텍스트 선택과 복사, 인쇄, 공유, 야간 모드를 지원합니다. 다른 앱에서 받은 PDF도 열 수 있습니다.\n\n놀랄 일 없는 링크\nPDF 속 링크를 열기 전에 Docucraft가 실제로 어디로 가는지 보여 줍니다. 비슷하게 꾸민 주소가 진짜 행세를 할 수 없습니다.\n\n처음부터 프라이빗\n스캔과 텍스트 인식은 기기에서 처리됩니다. 문서와 그 텍스트는 직접 공유하지 않는 한 기기를 떠나지 않습니다. 실수로 삭제해도 휴지통에 30일 동안 보관됩니다.\n\n정성껏 만든 앱\n휴대폰 색상을 따르는 반투명 유리 질감의 Material You 인터페이스. 태블릿과 폴더블에도 맞춰, 문서 관리가 즐거워지도록 디자인했습니다.\n\n무료이자 오픈 소스\n광고도, 구독도, 가입도 없습니다. Docucraft는 GPL-3.0 라이선스의 오픈 소스입니다: github.com/BobbyESP/Docucraft</string>
+</resources>

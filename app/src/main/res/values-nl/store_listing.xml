@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
+    <!-- Listing: title (30), short description (80), full description (4000) -->
+    <string name="store_title">Docucraft: PDF-scanner &amp; OCR</string>
+    <string name="store_short_description">Scan, orden en vind uw documenten. Geen watermerk, geen account, geen cloud.</string>
+    <string name="store_full_description">Docucraft maakt van uw papieren documenten bestanden die u echt terugvindt. Scan een factuur, een contract of uw aantekeningen en vind ze dagen later terug via een woord dat erin staat. Alles gebeurt op uw telefoon: geen account, geen cloud, geen watermerk.\n\nSCHONE SCANS\nDe camera herkent de randen van de pagina, snijdt die bij en maakt hem voor u schoon. Scan meerdere pagina\'s naar één pdf, met de camera of vanuit foto\'s die u al hebt. Het resultaat is een schone pdf zonder watermerk. Het is uw document, niet het onze.\n\nZOEK OP INHOUD\nDocucraft leest de tekst in uw documenten, ook die van scans zodra u tekstherkenning inschakelt. Zoek op \'huur\' of \'garantie\' en u ziet de precieze pagina waar het woord staat, met de woorden eromheen. Accenten en hoofdletters maken niet uit.\n\nORDEN HET OP UW MANIER\nMappen in mappen, elk met een eigen kleur en pictogram. Labels, favorieten en Recent voor wat u het laatst hebt geopend. Zet de mappen die u het meest gebruikt vast op het startscherm en geef uw labels een eigen sectie.\n\nLEES IN ALLE RUST\nDe viewer onthoudt precies waar u was gebleven, tot op de regel. Selecteer en kopieer tekst, druk af, deel of schakel over naar de nachtmodus. Hij opent ook de pdf\'s die u in andere apps ontvangt.\n\nLINKS ZONDER VERRASSINGEN\nVoordat een link in een pdf opent, laat Docucraft zien waar hij echt naartoe gaat. Een adres dat op een ander lijkt, kan zich niet voordoen als het echte.\n\nPRIVÉ VAN BEGIN AF AAN\nScannen en tekstherkenning gebeuren op uw apparaat. Uw documenten en hun tekst verlaten het nooit, tenzij u ze deelt. En als u per ongeluk iets verwijdert, bewaart de prullenbak het 30 dagen.\n\nMET ZORG GEMAAKT\nEen Material You-interface met een matglazen afwerking die de kleuren van uw telefoon overneemt, ook gemaakt voor tablets en vouwbare toestellen, en ontworpen om het beheren van documenten prettig te maken.\n\nGRATIS EN OPEN\nGeen advertenties, geen abonnementen, geen registratie. Docucraft is open source onder de GPL-3.0-licentie: github.com/BobbyESP/Docucraft</string>
+
+    <!-- Screenshots -->
+    <string name="store_screenshot_01_headline">Uw papieren, op orde.</string>
+    <string name="store_screenshot_01_supporting">Scan, orden en vind elk document.</string>
+
+    <string name="store_screenshot_02_headline">In seconden gescand.</string>
+    <string name="store_screenshot_02_supporting">Randen gevonden, bijgesneden en opgeschoond.</string>
+
+    <string name="store_screenshot_03_headline">Geen watermerk. Nooit.</string>
+    <string name="store_screenshot_03_supporting">Uw document draagt uw naam, niet de onze.</string>
+
+    <string name="store_screenshot_04_headline">Vind het op wat erin staat.</string>
+    <string name="store_screenshot_04_supporting">Zoek in elke pagina, met of zonder accenten.</string>
+
+    <string name="store_screenshot_05_headline">Mappen, labels, favorieten.</string>
+    <string name="store_screenshot_05_supporting">Geordend zoals u denkt.</string>
+
+    <string name="store_screenshot_06_headline">Ga verder waar u was.</string>
+    <string name="store_screenshot_06_supporting">Tot op de regel, dag en nacht.</string>
+
+    <string name="store_screenshot_07_headline">Kijk voordat u tikt.</string>
+    <string name="store_screenshot_07_supporting">Elke link toont waar hij echt naartoe gaat.</string>
+
+    <string name="store_screenshot_08_headline">Blijft op uw telefoon.</string>
+    <string name="store_screenshot_08_supporting">Geen account. Geen cloud. Open source.</string>
+
+    <!-- Feature graphic -->
+    <string name="store_feature_headline">Eén keer scannen. Altijd terugvinden.</string>
+    <string name="store_feature_supporting">Geen watermerk. Geen account. Geen cloud.</string>
+</resources>

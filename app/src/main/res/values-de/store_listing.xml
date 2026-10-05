@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
+    <!-- Listing: title (30), short description (80), full description (4000) -->
+    <string name="store_title">Docucraft: PDF-Scanner &amp; OCR</string>
+    <string name="store_short_description">Dokumente scannen, ordnen und finden. Ohne Wasserzeichen, Konto oder Cloud.</string>
+    <string name="store_full_description">Docucraft macht aus Ihren Papierdokumenten Dateien, die Sie wirklich wiederfinden. Scannen Sie eine Rechnung, einen Vertrag oder Ihre Notizen und finden Sie sie Tage später über ein Wort, das darin steht. Alles geschieht auf Ihrem Handy: ohne Konto, ohne Cloud, ohne Wasserzeichen.\n\nSAUBERE SCANS\nDie Kamera erkennt die Ränder der Seite, schneidet sie zu und bereinigt sie für Sie. Scannen Sie mehrere Seiten in ein PDF, mit der Kamera oder aus vorhandenen Fotos. Das Ergebnis ist ein sauberes PDF ohne Wasserzeichen. Es ist Ihr Dokument, nicht unseres.\n\nSUCHE NACH INHALT\nDocucraft liest den Text Ihrer Dokumente, auch den von Scans, sobald Sie die Texterkennung einschalten. Suchen Sie nach „Miete“ oder „Garantie“, und Sie sehen die genaue Seite, auf der das Wort steht, mit den Wörtern drumherum. Akzente und Großschreibung spielen keine Rolle.\n\nORDNUNG NACH IHRER ART\nOrdner in Ordnern, jeder mit eigener Farbe und eigenem Symbol. Tags, Favoriten und „Zuletzt verwendet“ für das, was Sie zuletzt geöffnet haben. Heften Sie Ihre wichtigsten Ordner an die Startseite und geben Sie Ihren Tags eigene Bereiche.\n\nLESEN IN RUHE\nDer Viewer merkt sich genau, wo Sie aufgehört haben, bis auf die Zeile. Text auswählen und kopieren, drucken, teilen oder in den Nachtmodus wechseln. Er öffnet auch PDFs, die Sie in anderen Apps erhalten.\n\nLINKS OHNE ÜBERRASCHUNGEN\nBevor sich ein Link in einem PDF öffnet, zeigt Docucraft Ihnen, wohin er wirklich führt. Eine nachgeahmte Adresse kann sich nicht als die echte ausgeben.\n\nPRIVAT VON GRUND AUF\nScannen und Texterkennung laufen auf Ihrem Gerät. Ihre Dokumente und deren Text verlassen es nie, außer Sie teilen sie. Und wenn Sie versehentlich etwas löschen, bewahrt der Papierkorb es 30 Tage lang auf.\n\nMIT SORGFALT GEMACHT\nEine Material-You-Oberfläche mit Milchglas-Optik, die die Farben Ihres Handys übernimmt, auch für Tablets und Foldables gemacht und so gestaltet, dass der Umgang mit Dokumenten Freude macht.\n\nKOSTENLOS UND OFFEN\nKeine Werbung, keine Abos, keine Anmeldung. Docucraft ist Open Source unter der GPL-3.0-Lizenz: github.com/BobbyESP/Docucraft</string>
+
+    <!-- Screenshots -->
+    <string name="store_screenshot_01_headline">Ihre Papiere, in Ordnung.</string>
+    <string name="store_screenshot_01_supporting">Scannen, ordnen und finden Sie jedes Dokument.</string>
+
+    <string name="store_screenshot_02_headline">In Sekunden gescannt.</string>
+    <string name="store_screenshot_02_supporting">Ränder erkannt, zugeschnitten und bereinigt.</string>
+
+    <string name="store_screenshot_03_headline">Kein Wasserzeichen. Niemals.</string>
+    <string name="store_screenshot_03_supporting">Ihr Dokument trägt Ihren Namen, nicht unseren.</string>
+
+    <string name="store_screenshot_04_headline">Finden Sie es am Inhalt.</string>
+    <string name="store_screenshot_04_supporting">Durchsuchen Sie jede Seite, mit oder ohne Akzente.</string>
+
+    <string name="store_screenshot_05_headline">Ordner, Tags, Favoriten.</string>
+    <string name="store_screenshot_05_supporting">Geordnet, wie Sie denken.</string>
+
+    <string name="store_screenshot_06_headline">Weiterlesen, wo Sie waren.</string>
+    <string name="store_screenshot_06_supporting">Bis auf die Zeile, bei Tag und Nacht.</string>
+
+    <string name="store_screenshot_07_headline">Erst sehen, dann tippen.</string>
+    <string name="store_screenshot_07_supporting">Jeder Link zeigt, wohin er wirklich führt.</string>
+
+    <string name="store_screenshot_08_headline">Bleibt auf Ihrem Handy.</string>
+    <string name="store_screenshot_08_supporting">Kein Konto. Keine Cloud. Open Source.</string>
+
+    <!-- Feature graphic -->
+    <string name="store_feature_headline">Einmal scannen. Jederzeit finden.</string>
+    <string name="store_feature_supporting">Kein Wasserzeichen. Kein Konto. Keine Cloud.</string>
+</resources>

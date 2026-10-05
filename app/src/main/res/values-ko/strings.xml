@@ -41,7 +41,7 @@
     <string name="doc_save_error_with_reason">문서 저장 중 오류가 발생했습니다: %1$s</string>
     <string name="doc_saving_cancelled">저장 프로세스가 취소되었습니다.</string>
     <string name="results">결과</string>
-    <string name="app_tagline">AI로 간편하게 문서를 스캔하세요</string>
+    <string name="app_tagline">문서를 스캔하고, 정리하고, 읽으세요. 모든 것이 기기 안에서.</string>
     <string name="doc_open_in_viewer">뷰어에서 문서 열기</string>
     <string name="scan">스캔</string>
     <string name="save">저장</string>
