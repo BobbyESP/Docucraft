@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+-->
+<resources>
+    <string name="sample_folder_bills">Contas</string>
+    <string name="sample_folder_university">Universidade</string>
+    <string name="sample_folder_home">Casa</string>
+    <string name="sample_folder_taxes">Impostos</string>
+    <string name="sample_tag_contract">Contrato</string>
+    <string name="sample_tag_warranty">Garantia</string>
+    <string name="sample_search_query">garantia</string>
+    <string name="sample_clause">Cláusula %1$d</string>
+    <string name="sample_section">Seção %1$d</string>
+    <string name="sample_contract_title">Contrato de aluguel</string>
+    <string name="sample_contract_description">Apartamento na Rua dos Ipês, 12 meses</string>
+    <string name="sample_contract_body_1">Este contrato é firmado entre o locador e o locatário do apartamento na Rua dos Ipês, 14. A locação dura doze meses a partir de 1º de março de 2026.</string>
+    <string name="sample_contract_body_2">O aluguel mensal é de 850 euros, pago nos cinco primeiros dias de cada mês. Um depósito equivalente a um mês de aluguel fica retido até o fim da locação.</string>
+    <string name="sample_contract_body_3">Os eletrodomésticos listados no inventário são cobertos pela garantia do fabricante. O locatário avisará sobre qualquer defeito em até sete dias.</string>
+    <string name="sample_electricity_title">Conta de luz</string>
+    <string name="sample_electricity_description">Fevereiro de 2026</string>
+    <string name="sample_electricity_body">Período de faturamento de 1º a 28 de fevereiro de 2026. Consumo de 214 kWh. O valor de 48,30 euros será debitado da sua conta em 10 de março.</string>
+    <string name="sample_gas_title">Conta de gás</string>
+    <string name="sample_gas_description">Março de 2026</string>
+    <string name="sample_gas_body">Período de faturamento de 1º a 31 de março de 2026. Consumo de 386 kWh. O valor de 37,15 euros será debitado da sua conta em 12 de abril.</string>
+    <string name="sample_internet_title">Conta de internet</string>
+    <string name="sample_internet_description">Fevereiro de 2026</string>
+    <string name="sample_internet_body">Fibra de 600 Mb e telefone fixo de fevereiro de 2026. O valor de 39,90 euros será debitado da sua conta em 5 de março.</string>
+    <string name="sample_water_title">Conta de água</string>
+    <string name="sample_water_description">Primeiro trimestre de 2026</string>
+    <string name="sample_water_body">Fornecimento de água e esgoto de janeiro a março de 2026. Consumo de 21 metros cúbicos. Valor: 52,80 euros.</string>
+    <string name="sample_council_title">Imposto municipal</string>
+    <string name="sample_council_description">Ano de 2026</string>
+    <string name="sample_council_body">Imposto municipal anual do apartamento na Rua dos Ipês, 14. Pode ser pago em duas parcelas, em maio e em outubro.</string>
+    <string name="sample_washing_title">Máquina de lavar</string>
+    <string name="sample_washing_description">Comprovante de compra</string>
+    <string name="sample_washing_body">Máquina de lavar de abertura frontal de 8 kg, entregue e instalada em 3 de fevereiro de 2026. Este aparelho tem garantia de três anos, que cobre peças e mão de obra.</string>
+    <string name="sample_laptop_title">Nota fiscal do notebook</string>
+    <string name="sample_laptop_description">Notebook de 14 polegadas</string>
+    <string name="sample_laptop_body">Notebook de 14 polegadas com 16 GB de memória, comprado em 18 de janeiro de 2026. A garantia de dois anos vale a partir da data desta nota. Guarde-a como comprovante de compra.</string>
+    <string name="sample_phone_title">Recibo do celular</string>
+    <string name="sample_phone_description">Conserto da tela</string>
+    <string name="sample_phone_body">Tela trocada em 9 de março de 2026. O conserto tem garantia de seis meses. Danos causados por quedas ou líquidos não são cobertos.</string>
+    <string name="sample_notes_title">Anotações de álgebra</string>
+    <string name="sample_notes_description">Álgebra linear, unidade 3</string>
+    <string name="sample_notes_body_1">Um espaço vetorial é um conjunto fechado para a soma e para a multiplicação por um escalar. Seus elementos são chamados de vetores.</string>
+    <string name="sample_notes_body_2">Teorema. Todas as bases de um espaço vetorial de dimensão finita têm o mesmo número de elementos. Esse número é a dimensão do espaço.</string>
+    <string name="sample_notes_body_3">Exercício. Mostre que os vetores (1, 0, 1), (0, 1, 1) e (1, 1, 0) são linearmente independentes e escreva (2, 3, 1) como combinação deles.</string>
+    <string name="sample_bank_title">Carta do banco</string>
+    <string name="sample_bank_description">Seu novo cartão</string>
+    <string name="sample_bank_body_1">Prezado cliente, seu novo cartão está a caminho e chegará ao seu endereço em até cinco dias úteis.</string>
+    <string name="sample_bank_body_2">Você pode ativá-lo e ver seu último extrato em:</string>
+    <string name="sample_bank_body_3">Nunca pediremos sua senha por e-mail ou por telefone.</string>
+</resources>

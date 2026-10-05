@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+-->
+<resources>
+    <string name="sample_folder_bills">Factures</string>
+    <string name="sample_folder_university">Université</string>
+    <string name="sample_folder_home">Maison</string>
+    <string name="sample_folder_taxes">Impôts</string>
+    <string name="sample_tag_contract">Contrat</string>
+    <string name="sample_tag_warranty">Garantie</string>
+    <string name="sample_search_query">garantie</string>
+    <string name="sample_clause">Clause %1$d</string>
+    <string name="sample_section">Section %1$d</string>
+    <string name="sample_contract_title">Contrat de location</string>
+    <string name="sample_contract_description">Appartement rue des Érables, 12 mois</string>
+    <string name="sample_contract_body_1">Le présent contrat est conclu entre le bailleur et le locataire de l’appartement situé 14, rue des Érables. Le bail dure douze mois à compter du 1er mars 2026.</string>
+    <string name="sample_contract_body_2">Le loyer mensuel est de 850 euros, payable dans les cinq premiers jours de chaque mois. Un dépôt égal à un mois de loyer est conservé jusqu’à la fin du bail.</string>
+    <string name="sample_contract_body_3">Les appareils figurant à l’inventaire sont couverts par la garantie du fabricant. Le locataire signalera toute panne dans un délai de sept jours.</string>
+    <string name="sample_electricity_title">Facture d’électricité</string>
+    <string name="sample_electricity_description">Février 2026</string>
+    <string name="sample_electricity_body">Période de facturation du 1er au 28 février 2026. Consommation de 214 kWh. Le montant de 48,30 euros sera prélevé sur votre compte le 10 mars.</string>
+    <string name="sample_gas_title">Facture de gaz</string>
+    <string name="sample_gas_description">Mars 2026</string>
+    <string name="sample_gas_body">Période de facturation du 1er au 31 mars 2026. Consommation de 386 kWh. Le montant de 37,15 euros sera prélevé sur votre compte le 12 avril.</string>
+    <string name="sample_internet_title">Facture internet</string>
+    <string name="sample_internet_description">Février 2026</string>
+    <string name="sample_internet_body">Fibre 600 Mb et ligne fixe pour février 2026. Le montant de 39,90 euros sera prélevé sur votre compte le 5 mars.</string>
+    <string name="sample_water_title">Facture d’eau</string>
+    <string name="sample_water_description">Premier trimestre 2026</string>
+    <string name="sample_water_body">Fourniture d’eau et assainissement de janvier à mars 2026. Consommation de 21 mètres cubes. Montant : 52,80 euros.</string>
+    <string name="sample_council_title">Taxe foncière</string>
+    <string name="sample_council_description">Année 2026</string>
+    <string name="sample_council_body">Taxe foncière annuelle de l’appartement situé 14, rue des Érables. Elle peut être payée en deux fois, en mai et en octobre.</string>
+    <string name="sample_washing_title">Lave-linge</string>
+    <string name="sample_washing_description">Ticket d’achat</string>
+    <string name="sample_washing_body">Lave-linge à chargement frontal de 8 kg, livré et installé le 3 février 2026. Cet appareil bénéficie d’une garantie de trois ans, pièces et main-d’œuvre.</string>
+    <string name="sample_laptop_title">Facture de l’ordinateur</string>
+    <string name="sample_laptop_description">Portable 14 pouces</string>
+    <string name="sample_laptop_body">Ordinateur portable 14 pouces avec 16 Go de mémoire, acheté le 18 janvier 2026. La garantie de deux ans court à partir de la date de cette facture. Conservez-la comme preuve d’achat.</string>
+    <string name="sample_phone_title">Reçu du téléphone</string>
+    <string name="sample_phone_description">Réparation de l’écran</string>
+    <string name="sample_phone_body">Écran remplacé le 9 mars 2026. La réparation bénéficie d’une garantie de six mois. Les dommages dus aux chutes ou aux liquides ne sont pas couverts.</string>
+    <string name="sample_notes_title">Notes d’algèbre</string>
+    <string name="sample_notes_description">Algèbre linéaire, chapitre 3</string>
+    <string name="sample_notes_body_1">Un espace vectoriel est un ensemble stable par addition et par multiplication par un scalaire. Ses éléments sont appelés vecteurs.</string>
+    <string name="sample_notes_body_2">Théorème. Toutes les bases d’un espace vectoriel de dimension finie ont le même nombre d’éléments. Ce nombre est la dimension de l’espace.</string>
+    <string name="sample_notes_body_3">Exercice. Montrez que les vecteurs (1, 0, 1), (0, 1, 1) et (1, 1, 0) sont linéairement indépendants et écrivez (2, 3, 1) comme combinaison de ceux-ci.</string>
+    <string name="sample_bank_title">Lettre de la banque</string>
+    <string name="sample_bank_description">Votre nouvelle carte</string>
+    <string name="sample_bank_body_1">Cher client, votre nouvelle carte est en route et arrivera à votre domicile sous cinq jours ouvrés.</string>
+    <string name="sample_bank_body_2">Vous pouvez l’activer et consulter votre dernier relevé sur :</string>
+    <string name="sample_bank_body_3">Nous ne vous demanderons jamais votre code ni votre mot de passe par e-mail ou par téléphone.</string>
+</resources>

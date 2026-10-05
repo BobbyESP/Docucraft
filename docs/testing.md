@@ -39,6 +39,17 @@
   names cannot hold spaces, and throughout `:composepdf`, most of whose tests are device tests.
 - **Comments explain why a case matters**, in present tense. The history of a bug belongs in git.
 
+## The one device test that tests nothing
+
+`StoreCaptureTest` (`:app`, package `store`) takes the app's screens for the Google Play
+screenshots. It is a device test because that is what can put the app's screens on a device, over
+a sample library and in the brand's colors. It is skipped unless `storeCaptures=true` is passed,
+which only `scripts/store/capture.mjs` does, so `connectedDebugAndroidTest` neither takes
+screenshots nor touches the status bar. What it does and why: [`scripts/store/README.md`](../scripts/store/README.md#the-apps-screens).
+
+It starts the app's graph anew (`appModules`, with the catalogue and the settings replaced), which
+is why it must not share a run with the tests that read the graph the app started.
+
 ## Running
 
 ```sh

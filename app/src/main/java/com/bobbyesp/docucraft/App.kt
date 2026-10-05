@@ -30,6 +30,24 @@ import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.core.qualifier.named
 
+/**
+ * Every module of the app's graph. A list of its own so that whatever starts the graph anew, such
+ * as the store's screenshots with their sample library, starts the same one.
+ */
+internal val appModules =
+    listOf(
+        commonModule,
+        preferencesModule,
+        notificationsServiceModule,
+        scannedDocumentsDatabaseModule,
+        documentScannerDataModule,
+        documentScannerModule,
+        documentScannerViewModels,
+        pdfViewerModule,
+        pageContentModule,
+        analyticsModule,
+    )
+
 class App : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
@@ -37,18 +55,7 @@ class App : Application(), ImageLoaderFactory {
         startKoin {
             androidLogger()
             androidContext(this@App)
-            modules(
-                commonModule,
-                preferencesModule,
-                notificationsServiceModule,
-                scannedDocumentsDatabaseModule,
-                documentScannerDataModule,
-                documentScannerModule,
-                documentScannerViewModels,
-                pdfViewerModule,
-                pageContentModule,
-                analyticsModule,
-            )
+            modules(appModules)
         }
         // Reading the text of the documents is picked up where it was left: a library just brought
         // over from an older catalogue, or a document saved as the app was closed. Never in the way

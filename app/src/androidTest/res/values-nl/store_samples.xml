@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+-->
+<resources>
+    <string name="sample_folder_bills">Rekeningen</string>
+    <string name="sample_folder_university">Universiteit</string>
+    <string name="sample_folder_home">Thuis</string>
+    <string name="sample_folder_taxes">Belastingen</string>
+    <string name="sample_tag_contract">Contract</string>
+    <string name="sample_tag_warranty">Garantie</string>
+    <string name="sample_search_query">garantie</string>
+    <string name="sample_clause">Artikel %1$d</string>
+    <string name="sample_section">Deel %1$d</string>
+    <string name="sample_contract_title">Huurcontract</string>
+    <string name="sample_contract_description">Appartement aan de Esdoornstraat, 12 maanden</string>
+    <string name="sample_contract_body_1">Deze overeenkomst wordt gesloten tussen de verhuurder en de huurder van het appartement aan de Esdoornstraat 14. De huur loopt twaalf maanden vanaf 1 maart 2026.</string>
+    <string name="sample_contract_body_2">De maandelijkse huur bedraagt 850 euro en wordt betaald binnen de eerste vijf dagen van elke maand. Een borg van één maand huur wordt aangehouden tot het einde van de huur.</string>
+    <string name="sample_contract_body_3">Voor de apparaten in de inventaris geldt de garantie van de fabrikant. De huurder meldt elk defect binnen zeven dagen.</string>
+    <string name="sample_electricity_title">Stroomrekening</string>
+    <string name="sample_electricity_description">Februari 2026</string>
+    <string name="sample_electricity_body">Factuurperiode van 1 tot en met 28 februari 2026. Verbruik van 214 kWh. Het bedrag van 48,30 euro wordt op 10 maart van uw rekening afgeschreven.</string>
+    <string name="sample_gas_title">Gasrekening</string>
+    <string name="sample_gas_description">Maart 2026</string>
+    <string name="sample_gas_body">Factuurperiode van 1 tot en met 31 maart 2026. Verbruik van 386 kWh. Het bedrag van 37,15 euro wordt op 12 april van uw rekening afgeschreven.</string>
+    <string name="sample_internet_title">Internetrekening</string>
+    <string name="sample_internet_description">Februari 2026</string>
+    <string name="sample_internet_body">Glasvezel 600 Mb en vaste lijn voor februari 2026. Het bedrag van 39,90 euro wordt op 5 maart van uw rekening afgeschreven.</string>
+    <string name="sample_water_title">Waterrekening</string>
+    <string name="sample_water_description">Eerste kwartaal 2026</string>
+    <string name="sample_water_body">Waterlevering en riolering van januari tot en met maart 2026. Verbruik van 21 kubieke meter. Bedrag: 52,80 euro.</string>
+    <string name="sample_council_title">Gemeentebelasting</string>
+    <string name="sample_council_description">Jaar 2026</string>
+    <string name="sample_council_body">Jaarlijkse gemeentebelasting voor het appartement aan de Esdoornstraat 14. Betalen kan in twee termijnen, in mei en in oktober.</string>
+    <string name="sample_washing_title">Wasmachine</string>
+    <string name="sample_washing_description">Aankoopbon</string>
+    <string name="sample_washing_body">Wasmachine met voorlader van 8 kg, geleverd en aangesloten op 3 februari 2026. Op dit apparaat zit drie jaar garantie op onderdelen en arbeid.</string>
+    <string name="sample_laptop_title">Factuur van de laptop</string>
+    <string name="sample_laptop_description">Laptop van 14 inch</string>
+    <string name="sample_laptop_body">Laptop van 14 inch met 16 GB geheugen, gekocht op 18 januari 2026. De garantie van twee jaar gaat in op de datum van deze factuur. Bewaar haar als aankoopbewijs.</string>
+    <string name="sample_phone_title">Bon van de telefoon</string>
+    <string name="sample_phone_description">Schermreparatie</string>
+    <string name="sample_phone_body">Scherm vervangen op 9 maart 2026. Op de reparatie zit zes maanden garantie. Schade door vallen of vloeistoffen valt er niet onder.</string>
+    <string name="sample_notes_title">Algebra-aantekeningen</string>
+    <string name="sample_notes_description">Lineaire algebra, hoofdstuk 3</string>
+    <string name="sample_notes_body_1">Een vectorruimte is een verzameling die gesloten is onder optelling en onder vermenigvuldiging met een scalair. De elementen heten vectoren.</string>
+    <string name="sample_notes_body_2">Stelling. Alle bases van een vectorruimte van eindige dimensie hebben evenveel elementen. Dat aantal is de dimensie van de ruimte.</string>
+    <string name="sample_notes_body_3">Opgave. Toon aan dat de vectoren (1, 0, 1), (0, 1, 1) en (1, 1, 0) lineair onafhankelijk zijn en schrijf (2, 3, 1) als combinatie ervan.</string>
+    <string name="sample_bank_title">Brief van de bank</string>
+    <string name="sample_bank_description">Uw nieuwe kaart</string>
+    <string name="sample_bank_body_1">Geachte klant, uw nieuwe kaart is onderweg en komt binnen vijf werkdagen bij u aan.</string>
+    <string name="sample_bank_body_2">U kunt de kaart activeren en uw laatste afschrift bekijken op:</string>
+    <string name="sample_bank_body_3">Wij vragen u nooit per e-mail of telefoon om uw pincode of uw wachtwoord.</string>
+</resources>
