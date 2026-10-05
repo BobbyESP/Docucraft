@@ -50,6 +50,10 @@ google-services.json
 # Store screenshots tooling
 scripts/store/node_modules/
 
+# Google Play upload
+fastlane/play-store-key.json
+fastlane/report.xml
+
 # Written by scripts/store from store_listing.xml, and by fastlane itself
 fastlane/metadata/
 fastlane/README.md
