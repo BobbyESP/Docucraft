@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy for the Google Play listing. The app does not use these strings: scripts/store reads them to
+  write the listing's text (listing.mjs) and to draw the screenshots and the feature graphic
+  (render.mjs). They live here so they are translated with the rest of the app.
+  - The listing's text is published in every language that has it.
+  - The graphics are drawn only for languages written in the Latin alphabet
+    (scripts/store/locales.json); the others show the English ones.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources,MissingTranslation">
+    <!-- Listing: title (30), short description (80), full description (4000) -->
+    <string name="store_title">Docucraft: PDF Scanner &amp; OCR</string>
+    <string name="store_short_description">Scan, organize and find your documents. No watermark, no account, no cloud.</string>
+    <string name="store_full_description">Docucraft turns your paper documents into files you can actually find. Scan an invoice, a contract or your notes, and days later, find them by a word written inside. It all happens right on your phone: no account, no cloud, no watermark.\n\nCLEAN SCANS\nThe camera detects the edges of the page, crops it and cleans it up for you. Scan several pages into one PDF, from the camera or from photos you already have. The result is a clean PDF with no watermark. It\'s your document, not ours.\n\nSEARCH BY CONTENT\nDocucraft reads the text in your documents, scans included once you turn on text recognition. Search for \"rent\" or \"warranty\" and it shows you the exact page where the word appears, with the words around it. Accents and capitals don\'t get in the way.\n\nORGANIZE YOUR WAY\nFolders inside folders, each with its own color and icon. Tags, favorites, and Recents for what you opened last. Pin the folders you use most to Home, and give your tags sections of their own.\n\nREAD AT YOUR LEISURE\nThe viewer remembers exactly where you left off, down to the line. Select and copy text, print, share or switch to night mode. It also opens the PDFs you receive in other apps.\n\nLINKS WITHOUT SURPRISES\nBefore a link in a PDF opens, Docucraft shows you where it really leads. A look-alike address can\'t pass for the real one.\n\nPRIVATE BY DESIGN\nScanning and text recognition run on your device. Your documents and their text never leave it unless you share them. And if you delete something by mistake, the bin keeps it safe for 30 days.\n\nCRAFTED WITH CARE\nA Material You interface with a frosted-glass finish that takes on your phone\'s colors, made for tablets and foldables too, and designed to make handling documents a pleasure.\n\nFREE AND OPEN\nNo ads, no subscriptions, no sign-up. Docucraft is open source under the GPL-3.0 license: github.com/BobbyESP/Docucraft</string>
+
+    <!-- Screenshots -->
+    <string name="store_screenshot_01_headline">Your paper, in order.</string>
+    <string name="store_screenshot_01_supporting">Scan, organize and find every document.</string>
+
+    <string name="store_screenshot_02_headline">Scanned in seconds.</string>
+    <string name="store_screenshot_02_supporting">Edges found, cropped and cleaned for you.</string>
+
+    <string name="store_screenshot_03_headline">No watermark. Ever.</string>
+    <string name="store_screenshot_03_supporting">Your document carries your name, not ours.</string>
+
+    <string name="store_screenshot_04_headline">Find it by what it says.</string>
+    <string name="store_screenshot_04_supporting">Search inside every page, accents and all.</string>
+
+    <string name="store_screenshot_05_headline">Folders, tags, favorites.</string>
+    <string name="store_screenshot_05_supporting">Organized the way you think.</string>
+
+    <string name="store_screenshot_06_headline">Pick up where you left off.</string>
+    <string name="store_screenshot_06_supporting">Down to the line, day or night.</string>
+
+    <string name="store_screenshot_07_headline">See before you tap.</string>
+    <string name="store_screenshot_07_supporting">Every link shows where it really goes.</string>
+
+    <string name="store_screenshot_08_headline">Stays on your phone.</string>
+    <string name="store_screenshot_08_supporting">No account. No cloud. Open source.</string>
+
+    <!-- Feature graphic -->
+    <string name="store_feature_headline">Scan it once. Find it anytime.</string>
+    <string name="store_feature_supporting">No watermark. No account. No cloud.</string>
+</resources>

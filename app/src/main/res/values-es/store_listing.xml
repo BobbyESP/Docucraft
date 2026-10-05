@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
+    <!-- Listing: title (30), short description (80), full description (4000) -->
+    <string name="store_title">Docucraft: Escáner PDF y OCR</string>
+    <string name="store_short_description">Escanea, ordena y encuentra tus documentos. Sin marca de agua, cuenta ni nube.</string>
+    <string name="store_full_description">Docucraft convierte tus papeles en documentos que de verdad puedes encontrar. Escanea una factura, un contrato o tus apuntes y, días después, encuéntralos por una palabra que aparezca dentro. Todo ocurre en tu móvil: sin cuenta, sin nube y sin marca de agua.\n\nESCANEOS LIMPIOS\nLa cámara detecta los bordes de la página, la recorta y la limpia por ti. Escanea varias páginas en un solo PDF, con la cámara o desde fotos que ya tengas. El resultado es un PDF limpio, sin marca de agua. Es tu documento, no el nuestro.\n\nBUSCA POR CONTENIDO\nDocucraft lee el texto de tus documentos, también el de los escaneos si activas el reconocimiento de texto. Busca «alquiler» o «garantía» y te lleva a la página exacta donde aparece, con las palabras de alrededor. Da igual que escribas con o sin tildes.\n\nORDÉNALO A TU MANERA\nCarpetas dentro de carpetas, cada una con su color y su icono. Etiquetas, favoritos y Recientes para lo último que abriste. Ancla en Inicio las carpetas que más usas y dale a tus etiquetas su propia sección.\n\nLEE CON CALMA\nEl visor recuerda exactamente dónde lo dejaste, hasta la línea. Selecciona y copia texto, imprime, comparte o pasa al modo noche. También abre los PDF que te llegan desde otras apps.\n\nENLACES SIN SORPRESAS\nAntes de abrir un enlace de un PDF, Docucraft te enseña adónde lleva de verdad. Una dirección que imita a otra no puede hacerse pasar por la auténtica.\n\nPRIVADO POR DISEÑO\nEl escaneo y el reconocimiento de texto funcionan en tu dispositivo. Tus documentos y su texto nunca salen de él, salvo que tú los compartas. Y si borras algo sin querer, la papelera lo guarda 30 días.\n\nHECHO CON CUIDADO\nUna interfaz Material You con acabado de cristal esmerilado que toma los colores de tu móvil, pensada también para tablets y plegables, y diseñada para que manejar documentos sea un placer.\n\nGRATIS Y ABIERTO\nSin anuncios, sin suscripciones y sin registro. Docucraft es código abierto con licencia GPL-3.0: github.com/BobbyESP/Docucraft</string>
+
+    <!-- Screenshots -->
+    <string name="store_screenshot_01_headline">Tu papel, en orden.</string>
+    <string name="store_screenshot_01_supporting">Escanea, ordena y encuentra cualquier documento.</string>
+
+    <string name="store_screenshot_02_headline">Escaneado en segundos.</string>
+    <string name="store_screenshot_02_supporting">Bordes detectados, recortados y limpios.</string>
+
+    <string name="store_screenshot_03_headline">Sin marca de agua. Nunca.</string>
+    <string name="store_screenshot_03_supporting">Tu documento lleva tu nombre, no el nuestro.</string>
+
+    <string name="store_screenshot_04_headline">Encuéntralo por lo que dice.</string>
+    <string name="store_screenshot_04_supporting">Busca dentro de cada página, con o sin tildes.</string>
+
+    <string name="store_screenshot_05_headline">Carpetas, etiquetas, favoritos.</string>
+    <string name="store_screenshot_05_supporting">Ordenado como tú piensas.</string>
+
+    <string name="store_screenshot_06_headline">Sigue donde lo dejaste.</string>
+    <string name="store_screenshot_06_supporting">En la misma línea, de día o de noche.</string>
+
+    <string name="store_screenshot_07_headline">Mira antes de tocar.</string>
+    <string name="store_screenshot_07_supporting">Cada enlace muestra adónde lleva de verdad.</string>
+
+    <string name="store_screenshot_08_headline">Se queda en tu móvil.</string>
+    <string name="store_screenshot_08_supporting">Sin cuenta. Sin nube. Código abierto.</string>
+
+    <!-- Feature graphic -->
+    <string name="store_feature_headline">Escanéalo hoy. Encuéntralo siempre.</string>
+    <string name="store_feature_supporting">Sin marca de agua. Sin cuenta. Sin nube.</string>
+</resources>
