@@ -86,7 +86,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.LabelColor
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Tag
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.labelColor
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.normalizedNameOf
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.rememberIsFabExpanded
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.rememberFabExpansionState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FormSectionLabel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FormSpacer
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.LabelColorPicker
@@ -225,7 +225,7 @@ fun ManageTagsScreen(
             uiState.isEmpty -> TagsPage.Empty
             else -> TagsPage.Tags
         }
-    val isFabExpanded by rememberIsFabExpanded(listState)
+    val fabExpansion = rememberFabExpansionState(listState)
     val haloStrength by
         animateFloatAsState(
             targetValue = if (page == TagsPage.Tags) 1f else 0f,
@@ -234,7 +234,10 @@ fun ManageTagsScreen(
         )
 
     Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier =
+            modifier
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .nestedScroll(fabExpansion.nestedScrollConnection),
         topBar = {
             FrostedLargeTopAppBar(
                 title = stringResource(R.string.tags),
@@ -261,7 +264,7 @@ fun ManageTagsScreen(
                     )
                 },
                 onClick = onCreateTag,
-                expanded = isFabExpanded,
+                expanded = fabExpansion.isExpanded,
                 modifier =
                     Modifier.blurHalo(
                             state = hazeState,

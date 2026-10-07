@@ -25,15 +25,19 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -41,6 +45,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.presentation.common.ScrollHeading
+import com.bobbyesp.docucraft.core.presentation.common.ScrollHeadingThreshold
+import com.bobbyesp.docucraft.core.presentation.common.ScrollHeadingTracker
 import com.bobbyesp.docucraft.core.presentation.components.FrostedMenuGroup
 import com.bobbyesp.docucraft.core.presentation.components.HaloDropdownMenuPopup
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
@@ -54,27 +61,56 @@ import dev.chrisbanes.haze.HazeState
 
 /**
  * Whether the button floating over a list shows its label: not while the list is read downwards,
- * and again as soon as the user heads back up or is at the top.
+ * and again once the user heads back up or is at the top.
  *
- * Remembered rather than derived from the list's last scroll. `lastScrolledForward` is false after
- * any scroll that moved nothing, such as a drag past the end of the list, so a button derived from
- * it grew back by itself there, and shrank again on the next pixel.
+ * It listens through [nestedScrollConnection], which only watches what the list scrolled and never
+ * consumes any of it, and follows where that scroll is heading rather than its last pixel. Derived
+ * from the list's last scroll instead, the button changed on any movement at all: it shrank and
+ * grew under a finger that was only settling, and grew back by itself after a drag past the end of
+ * the list, which scrolls nothing.
  */
-@Composable
-fun rememberIsFabExpanded(listState: LazyListState): State<Boolean> {
-    val isExpanded = remember(listState) { mutableStateOf(true) }
-    LaunchedEffect(listState) {
-        snapshotFlow {
-            when {
-                !listState.canScrollBackward || listState.lastScrolledBackward -> true
-                listState.lastScrolledForward -> false
-                // A scroll that moved nothing says nothing about where the user is heading.
-                else -> null
+@Stable
+class FabExpansionState
+internal constructor(private val listState: LazyListState, thresholdPx: Float) {
+
+    private val heading = ScrollHeadingTracker(thresholdPx)
+    private var isHeadingBack by mutableStateOf(true)
+
+    val isExpanded: Boolean
+        get() = isHeadingBack || !listState.canScrollBackward
+
+    val nestedScrollConnection: NestedScrollConnection =
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
+                when (heading.onScrolled(consumed.y)) {
+                    ScrollHeading.Forward -> isHeadingBack = false
+                    ScrollHeading.Backward -> isHeadingBack = true
+                    null -> Unit
+                }
+                return Offset.Zero
             }
         }
-            .collect { heading -> if (heading != null) isExpanded.value = heading }
+
+    /** At the top there is nothing to head back to: leaving it takes the whole threshold again. */
+    internal fun onReachedTop() {
+        isHeadingBack = true
+        heading.reset()
     }
-    return isExpanded
+}
+
+@Composable
+fun rememberFabExpansionState(listState: LazyListState): FabExpansionState {
+    val thresholdPx = with(LocalDensity.current) { ScrollHeadingThreshold.toPx() }
+    val state = remember(listState, thresholdPx) { FabExpansionState(listState, thresholdPx) }
+    LaunchedEffect(state) {
+        snapshotFlow { listState.canScrollBackward }
+            .collect { canScrollBackward -> if (!canScrollBackward) state.onReachedTop() }
+    }
+    return state
 }
 
 /**

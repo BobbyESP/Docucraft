@@ -136,6 +136,10 @@ shadowed:
   tap toggles them.
   - They watch the viewer's nested scroll without consuming it. A top app bar's own scroll
     behaviour would consume the scroll, and stop the document while the bar moves.
+  - They follow where the scroll is heading, not its last pixel: the document has to travel
+    `ScrollHeadingThreshold` one way first (`ScrollHeadingTracker`, shared with the buttons that
+    float over the app's lists). A finger that settles moves the pages back a little without the
+    reader having turned around.
   - They are the viewer's constant content padding, so the document never moves when they do.
 - **Fast scroller.** On documents of 3 or more pages it sits on the trailing edge, inside the
   padding. It shows while the document moves and fades after 1.2 s. Dragging its thumb jumps

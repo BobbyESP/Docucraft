@@ -124,7 +124,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.Tag
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.labelColor
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SortMenu
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.rememberIsFabExpanded
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.rememberFabExpansionState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderBadge
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderCard
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.TagDot
@@ -187,11 +187,14 @@ fun HomeContent(
     // the sort menu. It fills the whole scaffold and scrolls beneath them, padded, not inset.
     val hazeState = rememberHazeState()
 
-    // Collapsed while the user reads down the list, extended again as soon as they head back up.
-    val isScanButtonExpanded by rememberIsFabExpanded(listState)
+    // Collapsed while the user reads down the list, extended again once they head back up.
+    val scanButtonExpansion = rememberFabExpansionState(listState)
 
     Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier =
+            modifier
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .nestedScroll(scanButtonExpansion.nestedScrollConnection),
         topBar = {
             FrostedLargeTopAppBar(
                 title = stringResource(id = R.string.app_name),
@@ -221,7 +224,7 @@ fun HomeContent(
                     // The empty state carries its own scan button, and there is nothing to search.
                     visible = page == HomePage.Documents,
                     isScanning = uiState.isScanning,
-                    isScanButtonExpanded = isScanButtonExpanded,
+                    isScanButtonExpanded = scanButtonExpansion.isExpanded,
                     onOpenSearch = onOpenSearch,
                     onScan = { onAction(HomeIntent.LaunchScanner) },
                     hazeState = hazeState,

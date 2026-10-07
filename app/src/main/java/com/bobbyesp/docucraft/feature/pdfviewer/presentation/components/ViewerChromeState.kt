@@ -14,8 +14,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
-import kotlin.math.sign
+import com.bobbyesp.docucraft.core.presentation.common.ScrollHeading
+import com.bobbyesp.docucraft.core.presentation.common.ScrollHeadingThreshold
+import com.bobbyesp.docucraft.core.presentation.common.ScrollHeadingTracker
 
 /**
  * Whether the viewer's bars are showing. One value for both, because they are one piece of chrome:
@@ -27,22 +28,24 @@ import kotlin.math.sign
  * stall the document for as long as the bar is moving.
  */
 @Stable
-class ViewerChromeState(initiallyVisible: Boolean, private val thresholdPx: Float) {
+class ViewerChromeState(initiallyVisible: Boolean, thresholdPx: Float) {
 
     var isVisible: Boolean by mutableStateOf(initiallyVisible)
         private set
 
-    /** Distance scrolled in one direction since the last change, so a jitter does not flicker. */
-    private var travel = 0f
+    /**
+     * The bars follow where the scroll is heading, not its last pixel, so a jitter cannot flicker.
+     */
+    private val heading = ScrollHeadingTracker(thresholdPx)
 
     fun toggle() {
         isVisible = !isVisible
-        travel = 0f
+        heading.reset()
     }
 
     fun show() {
         isVisible = true
-        travel = 0f
+        heading.reset()
     }
 
     val nestedScrollConnection: NestedScrollConnection =
@@ -59,12 +62,10 @@ class ViewerChromeState(initiallyVisible: Boolean, private val thresholdPx: Floa
 
     /** [deltaY] is what the document moved: negative while reading forward. */
     internal fun onScrolled(deltaY: Float) {
-        if (deltaY == 0f) return
-        if (sign(deltaY) != sign(travel)) travel = 0f
-        travel += deltaY
-        when {
-            travel <= -thresholdPx && isVisible -> isVisible = false
-            travel >= thresholdPx && !isVisible -> isVisible = true
+        when (heading.onScrolled(deltaY)) {
+            ScrollHeading.Forward -> isVisible = false
+            ScrollHeading.Backward -> isVisible = true
+            null -> Unit
         }
     }
 
@@ -77,11 +78,8 @@ class ViewerChromeState(initiallyVisible: Boolean, private val thresholdPx: Floa
 /** Survives rotation and process death, like the rest of what the reader sees. */
 @Composable
 fun rememberViewerChromeState(): ViewerChromeState {
-    val thresholdPx = with(LocalDensity.current) { HideThreshold.toPx() }
+    val thresholdPx = with(LocalDensity.current) { ScrollHeadingThreshold.toPx() }
     return rememberSaveable(saver = ViewerChromeState.saver(thresholdPx)) {
         ViewerChromeState(initiallyVisible = true, thresholdPx = thresholdPx)
     }
 }
-
-/** How far the document must travel one way before the bars follow. */
-private val HideThreshold = 24.dp

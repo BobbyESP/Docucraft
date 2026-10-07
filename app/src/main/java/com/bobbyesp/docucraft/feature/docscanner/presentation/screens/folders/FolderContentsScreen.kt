@@ -66,7 +66,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.Folder
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.LabelColor
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.SortMenu
-import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.rememberIsFabExpanded
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.rememberFabExpansionState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.LabelColorTheme
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
@@ -154,10 +154,13 @@ fun FolderContentsContent(
             else -> FolderPage.Contents
         }
 
-    val isFabExpanded by rememberIsFabExpanded(listState)
+    val fabExpansion = rememberFabExpansionState(listState)
 
     Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier =
+            modifier
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .nestedScroll(fabExpansion.nestedScrollConnection),
         topBar = {
             FrostedLargeTopAppBar(
                 title = folder?.name ?: stringResource(R.string.folders),
@@ -226,7 +229,7 @@ fun FolderContentsContent(
             NewFolderButton(
                 // The empty state carries its own button.
                 visible = uiState.canCreateFolder && page == FolderPage.Contents,
-                expanded = isFabExpanded,
+                expanded = fabExpansion.isExpanded,
                 onClick = navigation.onCreateFolder,
                 hazeState = hazeState,
             )

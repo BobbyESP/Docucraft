@@ -114,7 +114,7 @@ sealed class Version(
     }
 }
 
-val currentVersion: Version = Version.Beta(major = 1, minor = 0, patch = 0, build = 19)
+val currentVersion: Version = Version.Beta(major = 1, minor = 0, patch = 0, build = 20)
 
 extra.set("versionCode", currentVersion.toVersionCode())
 
