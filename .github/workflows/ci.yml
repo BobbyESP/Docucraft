@@ -101,34 +101,6 @@ jobs:
         with:
           cache-read-only: ${{ env.GRADLE_CACHE_READ_ONLY }}
 
-      # google-services.json is not in the repository and the Google services plugin fails
-      # without it: CI writes a placeholder with the app's ids, so the build runs and Firebase
-      # is configured with keys that reach nothing.
-      - name: Add a placeholder Firebase configuration
-        run: |
-          cat > app/google-services.json <<'JSON'
-          {
-            "project_info": {"project_number": "0", "project_id": "ci-placeholder"},
-            "client": [
-              {
-                "client_info": {
-                  "mobilesdk_app_id": "1:0:android:0000000000000000",
-                  "android_client_info": {"package_name": "com.bobbyesp.docucraft"}
-                },
-                "api_key": [{"current_key": "ci-placeholder"}]
-              },
-              {
-                "client_info": {
-                  "mobilesdk_app_id": "1:0:android:0000000000000001",
-                  "android_client_info": {"package_name": "com.bobbyesp.docucraft.debug"}
-                },
-                "api_key": [{"current_key": "ci-placeholder"}]
-              }
-            ],
-            "configuration_version": "1"
-          }
-          JSON
-
       - name: Build the debug APK
         run: ./gradlew :app:assembleDebug
 

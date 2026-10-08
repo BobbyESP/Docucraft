@@ -49,6 +49,7 @@ jobs:
       - uses: ./.github/actions/setup-build
         with:
           cache-read-only: 'true'
+          firebase-placeholder: 'false'
 
       - name: Decode the keystore
         run: |

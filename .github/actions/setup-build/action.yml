@@ -6,6 +6,10 @@ inputs:
     description: Whether this run may only read the Gradle cache.
     required: false
     default: 'true'
+  firebase-placeholder:
+    description: Whether to write a placeholder app/google-services.json (a release brings the real one).
+    required: false
+    default: 'true'
 
 runs:
   using: composite
@@ -23,3 +27,33 @@ runs:
       uses: gradle/actions/setup-gradle@v6
       with:
         cache-read-only: ${{ inputs.cache-read-only }}
+
+    # google-services.json is not in the repository and the Google services plugin fails without
+    # it, in the build, the unit tests and lint alike: this one has the app's ids, so Gradle runs
+    # and Firebase is configured with keys that reach nothing.
+    - name: Add a placeholder Firebase configuration
+      if: ${{ inputs.firebase-placeholder == 'true' }}
+      shell: bash
+      run: |
+        cat > app/google-services.json <<'JSON'
+        {
+          "project_info": {"project_number": "0", "project_id": "ci-placeholder"},
+          "client": [
+            {
+              "client_info": {
+                "mobilesdk_app_id": "1:0:android:0000000000000000",
+                "android_client_info": {"package_name": "com.bobbyesp.docucraft"}
+              },
+              "api_key": [{"current_key": "ci-placeholder"}]
+            },
+            {
+              "client_info": {
+                "mobilesdk_app_id": "1:0:android:0000000000000001",
+                "android_client_info": {"package_name": "com.bobbyesp.docucraft.debug"}
+              },
+              "api_key": [{"current_key": "ci-placeholder"}]
+            }
+          ],
+          "configuration_version": "1"
+        }
+        JSON
