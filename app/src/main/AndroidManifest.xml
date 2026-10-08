@@ -103,6 +103,23 @@
                 android:resource="@xml/filepathsprovider" />
         </provider>
 
+        <!--
+            WorkManager is not started with the process. Its startup initializer runs before the app
+            does and a failure in it ends the process before any screen: on a device whose system
+            lacks a method the version says it has, that was a crash on every launch. It starts the
+            first time it is asked for instead (see App and WorkManagerGateway).
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
         <receiver
             android:name=".feature.docscanner.presentation.widgets.ScanDocumentWidgetReceiver"
             android:exported="true">

@@ -23,6 +23,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentStorageImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.CachedDocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.DocumentThumbnailComponent
+import com.bobbyesp.docucraft.feature.docscanner.data.work.WorkManagerGateway
 import com.bobbyesp.docucraft.feature.docscanner.domain.indexing.DocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.domain.maintenance.LibraryMaintenance
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentActivityRepository
@@ -125,7 +126,14 @@ val documentScannerDataModule = module {
     }
 
     // Where documents wait to have their text read.
-    single<DocumentIndexQueue> { WorkManagerDocumentIndexQueue(context = androidContext()) }
+    single { WorkManagerGateway(context = androidContext()) }
+    single<DocumentIndexQueue> {
+        WorkManagerDocumentIndexQueue(
+            workManager = get(),
+            indexDocumentText = { get() },
+            fallbackScope = get(qualifier = named("AppMainSupervisedScope")),
+        )
+    }
     // How the library is searched: the one line that changes for another search engine.
     single<SearchIndex> { Fts4SearchIndex(searchDao = get()) }
 
@@ -180,7 +188,14 @@ val documentScannerDataModule = module {
             pages = get(),
         )
     }
-    single<LibraryMaintenance> { WorkManagerLibraryMaintenance(context = androidContext()) }
+    single<LibraryMaintenance> {
+        WorkManagerLibraryMaintenance(
+            workManager = get(),
+            purgeExpiredBin = { get() },
+            reconcileStorage = { get() },
+            fallbackScope = get(qualifier = named("AppMainSupervisedScope")),
+        )
+    }
 
     factory {
         SaveScanDraftUseCase(
