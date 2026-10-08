@@ -8,12 +8,15 @@ import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.bobbyesp.docucraft.feature.docscanner.data.work.WorkManagerGateway
 import com.bobbyesp.docucraft.feature.docscanner.domain.maintenance.LibraryMaintenance
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.PurgeExpiredBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ReconcileStorageUseCase
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
@@ -22,19 +25,43 @@ import org.koin.core.component.inject
  * the app and of the device. The bin's 30 days are therefore kept to within a day, which is as
  * exact as a bin needs to be.
  */
-class WorkManagerLibraryMaintenance(private val context: Context) : LibraryMaintenance {
+class WorkManagerLibraryMaintenance(
+    private val workManager: WorkManagerGateway,
+    private val purgeExpiredBin: () -> PurgeExpiredBinUseCase,
+    private val reconcileStorage: () -> ReconcileStorageUseCase,
+    private val fallbackScope: CoroutineScope,
+) : LibraryMaintenance {
 
     override fun schedule() {
-        WorkManager.getInstance(context)
-            .enqueueUniquePeriodicWork(
-                WORK_NAME,
-                // What is scheduled keeps its turn: replacing it on every start of the app would
-                // push the next run a day further each time.
-                ExistingPeriodicWorkPolicy.KEEP,
-                PeriodicWorkRequestBuilder<LibraryMaintenanceWorker>(1, TimeUnit.DAYS)
-                    .setConstraints(Constraints.Builder().setRequiresBatteryNotLow(true).build())
-                    .build(),
-            )
+        val scheduled =
+            runCatching {
+                workManager
+                    .get()
+                    ?.enqueueUniquePeriodicWork(
+                        WORK_NAME,
+                        // What is scheduled keeps its turn: replacing it on every start of the
+                        // app would push the next run a day further each time.
+                        ExistingPeriodicWorkPolicy.KEEP,
+                        PeriodicWorkRequestBuilder<LibraryMaintenanceWorker>(1, TimeUnit.DAYS)
+                            .setConstraints(
+                                Constraints.Builder().setRequiresBatteryNotLow(true).build()
+                            )
+                            .build(),
+                    )
+            }
+                .getOrNull() != null
+        if (!scheduled) runInApp()
+    }
+
+    /**
+     * Without WorkManager nothing keeps the turn across restarts, so the upkeep runs each time the
+     * app starts instead: it only does what is due, so doing it more often costs nothing but time.
+     */
+    private fun runInApp() {
+        fallbackScope.launch(Dispatchers.Default) {
+            runCatching { purgeExpiredBin()() }
+            runCatching { reconcileStorage()() }
+        }
     }
 
     internal companion object {

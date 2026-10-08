@@ -318,6 +318,14 @@ page of the library is read in the background and kept (`IndexDocumentTextUseCas
   is WorkManager, one piece of unique work per document (`index/<uuid>`, `KEEP`), so the reading
   outlives the screen and the process. `IndexDocumentWorker` only gives the use case somewhere to
   run.
+- **WorkManager may not start, and that never stops the app.** Its startup initializer is removed
+  in the manifest and `App` is its `Configuration.Provider`, so it is built the first time
+  `WorkManagerGateway` asks for it, not before the app exists. Some devices report an Android
+  version whose system lacks a method WorkManager calls there (`JobScheduler.forNamespace`, API
+  34); started by the initializer, that ended the process on every launch. The gateway answers
+  `null` for such a device, and the queue then reads the document in the app, one reading per
+  document at a time, lasting only as long as the process (the start finds what is left). The
+  daily upkeep (`WorkManagerLibraryMaintenance`) does the same: it runs at each start.
 - **When a document is queued.** When a scan is saved, when another app's document is saved into
   the library, and when the app starts (`ResumeTextIndexingUseCase`, from `App`), for every
   document of the library with a page still pending. The start is what covers a library just

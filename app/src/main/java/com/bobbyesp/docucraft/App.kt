@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import androidx.work.Configuration
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import com.bobbyesp.docucraft.core.di.analyticsModule
@@ -48,7 +49,15 @@ internal val appModules =
         analyticsModule,
     )
 
-class App : Application(), ImageLoaderFactory {
+class App : Application(), ImageLoaderFactory, Configuration.Provider {
+
+    /**
+     * How WorkManager starts. The app removes its startup initializer (see the manifest), so it is
+     * built when something first asks for it, through `WorkManagerGateway`, which is where a device
+     * that cannot run it is found out about without the app failing to open.
+     */
+    override val workManagerConfiguration: Configuration = Configuration.Builder().build()
+
     override fun onCreate() {
         super.onCreate()
 
