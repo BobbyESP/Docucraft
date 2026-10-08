@@ -343,7 +343,8 @@ A new Koin module is registered in `App.kt`, in `appModules`.
     without them a release build is unsigned.
   - `scripts/set-release-secrets.ps1 <keystore> <password> -GoogleServicesJson app/google-services.json`
     checks the keystore with `keytool` and sets the five secrets the release needs with `gh`.
-  - Actions are pinned to a commit; Dependabot keeps the pins and the Gradle versions current.
+  - Actions are pinned to a major version tag; Dependabot keeps them and the Gradle versions
+    current.
 - Named APK copies go to `app/build/outputs/apk_custom/<variant>/` (`buildSrc/CopyApkPlugin.kt`).
 
 ---

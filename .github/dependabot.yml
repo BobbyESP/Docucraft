@@ -1,7 +1,7 @@
 version: 2
 
 updates:
-  # The workflows pin every action to a commit; this keeps those pins current.
+  # The workflows pin every action to a major version tag; this keeps those tags current.
   - package-ecosystem: github-actions
     directories:
       - /
