@@ -332,6 +332,19 @@ A new Koin module is registered in `App.kt`, in `appModules`.
   ([README](scripts/store/README.md)). Its screenshots are drawn around the app's own screens,
   taken on an emulator by `node scripts/store/capture.mjs` (the device test `StoreCaptureTest`,
   skipped in any other run).
+- **GitHub workflows** (`.github/`):
+  - `ci.yml` runs on every pull request and on `main`: format, unit tests and the debug build. The
+    `CI` job is the one check to require in branch protection. Lint is reported but not required
+    until the `NewApi` gap above is fixed. The build runs with a placeholder
+    `google-services.json`, because the real one is not in the repository.
+  - `release.yml` is started by hand: it runs the same checks, then builds the signed APK and
+    bundle and keeps them as artifacts. The signing is read from `SIGNING_KEY_STORE_PATH`,
+    `SIGNING_STORE_PASSWORD`, `SIGNING_KEY_ALIAS` and `SIGNING_KEY_PASSWORD` (`app/build.gradle.kts`);
+    without them a release build is unsigned.
+  - `scripts/set-release-secrets.ps1 <keystore> <password> -GoogleServicesJson app/google-services.json`
+    checks the keystore with `keytool` and sets the five secrets the release needs with `gh`.
+  - Actions are pinned to a major version tag; Dependabot keeps them and the Gradle versions
+    current.
 - Named APK copies go to `app/build/outputs/apk_custom/<variant>/` (`buildSrc/CopyApkPlugin.kt`).
 
 ---

@@ -1,0 +1,85 @@
+name: Release
+
+# Builds the signed release APK and bundle of the chosen branch or tag and keeps them as artifacts.
+# Needs the secrets SIGNING_KEY_STORE_BASE64, SIGNING_STORE_PASSWORD, SIGNING_KEY_ALIAS,
+# SIGNING_KEY_PASSWORD and GOOGLE_SERVICES_JSON_BASE64; scripts/set-release-secrets.ps1 sets them.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Not named after the workflow: the checks it calls take that group, and would wait on this one.
+concurrency:
+  group: signed-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    name: Checks
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    name: Signed release
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      SIGNING_KEY_STORE_BASE64: ${{ secrets.SIGNING_KEY_STORE_BASE64 }}
+      SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+      SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+      SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+      GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+    steps:
+      # Without a keystore the build succeeds and leaves an unsigned APK: stop before that.
+      - name: Check the secrets
+        run: |
+          missing=0
+          for name in SIGNING_KEY_STORE_BASE64 SIGNING_STORE_PASSWORD SIGNING_KEY_ALIAS SIGNING_KEY_PASSWORD GOOGLE_SERVICES_JSON_BASE64; do
+            if [ -z "${!name}" ]; then
+              echo "::error::The secret $name is not set."
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - uses: actions/checkout@v7
+
+      # A release never writes the cache the checks read.
+      - uses: ./.github/actions/setup-build
+        with:
+          cache-read-only: 'true'
+          firebase-placeholder: 'false'
+
+      - name: Decode the keystore
+        run: |
+          base64 -d <<< "$SIGNING_KEY_STORE_BASE64" > "$RUNNER_TEMP/keystore.jks"
+          echo "SIGNING_KEY_STORE_PATH=$RUNNER_TEMP/keystore.jks" >> "$GITHUB_ENV"
+
+      - name: Add the Firebase configuration
+        run: base64 -d <<< "$GOOGLE_SERVICES_JSON_BASE64" > app/google-services.json
+
+      - name: Build
+        run: ./gradlew :app:assembleRelease :app:bundleRelease
+
+      - name: Check that the APK is signed
+        run: |
+          unsigned=$(find app/build/outputs/apk -name '*-unsigned.apk')
+          if [ -n "$unsigned" ]; then
+            echo "::error::Unsigned APKs: $unsigned"
+            exit 1
+          fi
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: docucraft-release-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: Upload the bundle
+        uses: actions/upload-artifact@v7
+        with:
+          name: docucraft-release-bundle
+          path: app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
