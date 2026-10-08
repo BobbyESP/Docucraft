@@ -1,0 +1,161 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  merge_group:
+  workflow_dispatch:
+  # The release workflow runs these checks before it builds.
+  workflow_call:
+
+permissions:
+  contents: read
+
+# A new push to a pull request replaces its run. Runs on main are left to finish, so every commit
+# has a result.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Only main writes the Gradle cache: a pull request reads the cache of its base branch and
+  # cannot fill the repository's quota, or the cache others read, with its own.
+  GRADLE_CACHE_READ_ONLY: ${{ github.event_name != 'push' }}
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/setup-build
+        with:
+          cache-read-only: ${{ env.GRADLE_CACHE_READ_ONLY }}
+
+      - name: Check formatting
+        run: ./gradlew spotlessCheck
+
+  test:
+    name: Unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/setup-build
+        with:
+          cache-read-only: ${{ env.GRADLE_CACHE_READ_ONLY }}
+
+      # --continue: one module's failure does not hide another's. Instrumented tests need a
+      # device and are not run here.
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest :scanner-api:test :document-content-api:test --continue
+
+      - name: Upload the test reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: test-reports
+          path: |
+            **/build/reports/tests/
+            **/build/test-results/
+          retention-days: 7
+
+  # Reported, but not required: lint fails today on NewApi (BlurHalo.kt calls
+  # RuntimeShader.setFloatUniform, API 33, behind a check lint does not see). Once that is fixed,
+  # add it to the `ci` job's needs and drop continue-on-error.
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/setup-build
+        with:
+          cache-read-only: ${{ env.GRADLE_CACHE_READ_ONLY }}
+
+      - name: Lint
+        run: ./gradlew :app:lintDebug --continue
+
+      - name: Upload the lint reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lint-reports
+          path: '**/build/reports/lint-results-*'
+          retention-days: 7
+
+  build:
+    name: Debug build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/setup-build
+        with:
+          cache-read-only: ${{ env.GRADLE_CACHE_READ_ONLY }}
+
+      # google-services.json is not in the repository and the Google services plugin fails
+      # without it: CI writes a placeholder with the app's ids, so the build runs and Firebase
+      # is configured with keys that reach nothing.
+      - name: Add a placeholder Firebase configuration
+        run: |
+          cat > app/google-services.json <<'JSON'
+          {
+            "project_info": {"project_number": "0", "project_id": "ci-placeholder"},
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:0:android:0000000000000000",
+                  "android_client_info": {"package_name": "com.bobbyesp.docucraft"}
+                },
+                "api_key": [{"current_key": "ci-placeholder"}]
+              },
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:0:android:0000000000000001",
+                  "android_client_info": {"package_name": "com.bobbyesp.docucraft.debug"}
+                },
+                "api_key": [{"current_key": "ci-placeholder"}]
+              }
+            ],
+            "configuration_version": "1"
+          }
+          JSON
+
+      - name: Build the debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Upload the debug APK
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: docucraft-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  # The one check to require in branch protection: it stays the same when jobs are added or
+  # renamed, and it fails when a job it waits for failed, was cancelled or was skipped.
+  ci:
+    name: CI
+    if: ${{ always() }}
+    needs: [format, test, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check that every job passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: $RESULTS"
+          for result in $RESULTS; do
+            if [ "$result" != "success" ]; then
+              exit 1
+            fi
+          done

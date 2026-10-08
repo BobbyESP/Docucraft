@@ -13,6 +13,10 @@ plugins {
     id("copy-apk-plugin")
 }
 
+// Set by the release workflow, which decodes the keystore into the runner's temp directory.
+// Without it a release build is left unsigned.
+val signingStorePath: String? = System.getenv("SIGNING_KEY_STORE_PATH")
+
 android {
     namespace = "com.bobbyesp.docucraft"
 
@@ -24,8 +28,20 @@ android {
         versionName = rootProject.extra["versionName"] as String
     }
 
+    signingConfigs {
+        if (signingStorePath != null) {
+            create("release") {
+                storeFile = file(signingStorePath)
+                storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+                keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+                keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (signingStorePath != null) signingConfig = signingConfigs.getByName("release")
             ndk { debugSymbolLevel = "FULL" }
             isShrinkResources = true
             isMinifyEnabled = true
