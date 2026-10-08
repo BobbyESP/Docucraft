@@ -1,8 +1,8 @@
 [versions]
 # Tooling
 androidGradlePlugin = "9.4.1"
-kotlin = "2.4.0"
-ksp = "2.3.7"
+kotlin = "2.4.20"
+ksp = "2.3.12"
 ktfmt = "0.27.0"
 googleServices = "4.5.0"
 firebaseCrashlyticsPlugin = "3.0.8"
@@ -37,7 +37,7 @@ mlKitTextRecognition = "19.0.1"
 # Architecture
 koin = "4.2.2"
 room = "2.8.5"
-work = "2.11.0"
+work = "2.12.0"
 datastore = "1.2.1"
 
 # KotlinX
@@ -49,7 +49,7 @@ kotlinxCollectionsImmutable = "0.5.2"
 # UI Libraries
 materialKolor = "5.0.1"
 landscapist = "2.13.2"
-haze = "2.0.0"
+haze = "2.0.1"
 sonner = "0.4.0"
 filekit = "0.16.0"
 
