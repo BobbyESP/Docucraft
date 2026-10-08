@@ -10,7 +10,7 @@ A document scanner, a searchable library and a PDF reader in one Android app.<br
 No account, no cloud, no watermarks.
 
 <p>
-  <img src="https://img.shields.io/badge/Google_Play-coming_soon-414141?style=for-the-badge&logo=googleplay&logoColor=white" alt="Coming soon to Google Play" />
+  <a href="https://play.google.com/store/apps/details?id=com.bobbyesp.docucraft"><img src="https://img.shields.io/badge/Google_Play-open_beta-414141?style=for-the-badge&logo=googleplay&logoColor=white" alt="Open beta on Google Play" /></a>
 </p>
 
 <p>
@@ -26,7 +26,7 @@ No account, no cloud, no watermarks.
 
 <br/>
 
-<img src="./assets/horizontal/Docucraft Functions Banner.png" alt="Docucraft: an AI-powered document scanner. Fast, intuitive, private, no watermarks." width="820" />
+<img src="./assets/feature-graphic.png" alt="Docucraft: scan it once, find it anytime. No watermark, no account, no cloud." width="820" />
 
 </div>
 
@@ -137,7 +137,7 @@ Docucraft is local-first: **your documents never leave your device unless you sh
 
 ### Tech stack
 
-| | |
+| Area | Technology |
 |:--|:--|
 | **Language** | [Kotlin](https://kotlinlang.org/), with coroutines and Flow |
 | **UI** | [Jetpack Compose](https://developer.android.com/jetpack/compose), Material 3 Expressive, Material 3 Adaptive, [Glance](https://developer.android.com/develop/ui/compose/glance) for the widget |
@@ -178,7 +178,7 @@ graph TD
 
 How each part works, and why it was built that way, is written down in [`docs/`](docs/README.md):
 
-| | |
+| Document | Covers |
 |:--|:--|
 | [Architecture](docs/architecture.md) | Modules, layers, ports, ViewModels, theme and blur |
 | [Navigation](docs/navigation.md) | One back stack, scenes, modal destinations |
@@ -208,7 +208,7 @@ Firebase is part of the build and its configuration is not in the repository. Cr
 Then open the project in Android Studio and run it, or from a terminal (on Windows,
 `.\gradlew.bat`):
 
-| | |
+| Task | Command |
 |:--|:--|
 | Debug APK | `./gradlew :app:assembleDebug` |
 | Unit tests | `./gradlew testDebugUnitTest :scanner-api:test :document-content-api:test` |
