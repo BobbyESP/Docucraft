@@ -358,4 +358,6 @@
     <string name="document_details_file_name">اسم الملف</string>
     <string name="document_details_format">التنسيق</string>
     <string name="document_details_pdf_version">PDF %1$s</string>
+    <string name="widget_recents_description">أحدث مستنداتك على بُعد نقرة واحدة</string>
+    <string name="widget_recents_empty">ستظهر مستنداتك هنا</string>
 </resources>

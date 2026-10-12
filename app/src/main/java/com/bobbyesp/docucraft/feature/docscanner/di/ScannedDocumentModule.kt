@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
+import android.content.ComponentName
 import com.bobbyesp.docucraft.core.data.image.ImageLoaderComponent
 import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
 import com.bobbyesp.docucraft.feature.docscanner.data.indexing.WorkManagerDocumentIndexQueue
@@ -23,6 +24,7 @@ import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentLocations
 import com.bobbyesp.docucraft.feature.docscanner.data.storage.DocumentStorageImpl
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.CachedDocumentThumbnails
 import com.bobbyesp.docucraft.feature.docscanner.data.thumbnail.DocumentThumbnailComponent
+import com.bobbyesp.docucraft.feature.docscanner.data.widgets.AppWidgetHomeScreenWidgets
 import com.bobbyesp.docucraft.feature.docscanner.data.work.WorkManagerGateway
 import com.bobbyesp.docucraft.feature.docscanner.domain.indexing.DocumentIndexQueue
 import com.bobbyesp.docucraft.feature.docscanner.domain.maintenance.LibraryMaintenance
@@ -48,6 +50,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ForgetLinkedDocu
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.IndexDocumentTextUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.KeepWidgetsCurrentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.MoveDocumentToBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentsUseCase
@@ -55,6 +58,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveHomeSecti
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveLibraryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveNotFoundDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveRecentDocumentsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveWidgetDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.PurgeExpiredBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ReconcileStorageUseCase
@@ -74,6 +78,9 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentTextR
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetReadingPositionMemoryUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.TagDocumentByNameUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
+import com.bobbyesp.docucraft.feature.docscanner.domain.widgets.HomeScreenWidgets
+import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.RecentDocumentsWidgetReceiver
+import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.RecentDocumentsWidgetRenderer
 import com.bobbyesp.docucraft.feature.pdfviewer.di.EMBEDDED_TEXT
 import com.bobbyesp.docucraft.feature.pdfviewer.di.TEXT_RECOGNITION
 import org.koin.android.ext.koin.androidContext
@@ -145,6 +152,26 @@ val documentScannerDataModule = module {
     factory { ProcessDocumentsUseCase() }
     factory { SearchDocumentsUseCase(searchIndex = get()) }
     factory { ObserveRecentDocumentsUseCase(activity = get()) }
+
+    // Home-screen widgets. The receivers listed are the widgets that show the library and so
+    // have to be drawn again when it changes. The scan widget shows nothing of it.
+    single<HomeScreenWidgets> {
+        AppWidgetHomeScreenWidgets(
+            context = androidContext(),
+            libraryWidgets =
+                listOf(ComponentName(androidContext(), RecentDocumentsWidgetReceiver::class.java)),
+        )
+    }
+    factory {
+        RecentDocumentsWidgetRenderer(
+            context = androidContext(),
+            observeWidgetDocuments = get(),
+            thumbnails = get(),
+            imageLoader = get(),
+        )
+    }
+    factory { ObserveWidgetDocumentsUseCase(activity = get()) }
+    factory { KeepWidgetsCurrentUseCase(observeWidgetDocuments = get(), widgets = get()) }
     factory { RecordDocumentOpenedUseCase(activity = get()) }
     factory { RecordDocumentAvailabilityUseCase(activity = get()) }
     factory { RegisterLinkedDocumentUseCase(access = get(), linked = get()) }

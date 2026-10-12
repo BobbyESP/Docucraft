@@ -358,4 +358,6 @@
     <string name="document_details_file_name">파일 이름</string>
     <string name="document_details_format">형식</string>
     <string name="document_details_pdf_version">PDF %1$s</string>
+    <string name="widget_recents_description">최근 문서를 한 번의 탭으로</string>
+    <string name="widget_recents_empty">문서가 여기에 표시됩니다</string>
 </resources>

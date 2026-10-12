@@ -491,7 +491,6 @@ class PdfViewerViewModel(
     override fun onCleared() {
         contentSession?.cancel()
         openedSession?.close()
-        super.onCleared()
     }
 
     private fun openDocument(): BasicDocument? =

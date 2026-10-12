@@ -17,6 +17,7 @@ import com.bobbyesp.docucraft.core.presentation.navigation.overlay.rememberOverl
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.sharingTheWindow
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsSection
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
+import com.bobbyesp.docucraft.feature.docscanner.navigation.LibraryEntryRequestNavigation
 import com.bobbyesp.docucraft.feature.docscanner.navigation.ScanRequestNavigation
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.homeSection
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
@@ -58,6 +59,7 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
     val openDocumentId by remember { derivedStateOf { backStack.openDocumentId() } }
 
     ScanRequestNavigation(navigator)
+    LibraryEntryRequestNavigation(navigator)
 
     DocucraftNavDisplay(
         backStack = backStack,

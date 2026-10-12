@@ -70,4 +70,29 @@ class ScanRequestBusTest {
         assertTrue(bus.take())
         assertFalse(bus.take())
     }
+
+    /**
+     * The catalogue listens whenever it is in the back stack, on screen or not, so it takes the
+     * scan first. The shell still has to learn that the catalogue is wanted on screen.
+     */
+    @Test
+    fun `taking the scan leaves the catalogue still wanted`() {
+        val bus = ScanRequestBus()
+        bus.request()
+
+        bus.take()
+
+        assertTrue(bus.isCatalogueWanted.value)
+        assertTrue(bus.takeCatalogueWanted())
+    }
+
+    @Test
+    fun `the catalogue is brought forward once for each request`() {
+        val bus = ScanRequestBus()
+        bus.request()
+
+        assertTrue(bus.takeCatalogueWanted())
+        assertFalse(bus.takeCatalogueWanted())
+        assertTrue("Bringing the catalogue forward is not running the scan", bus.isPending.value)
+    }
 }

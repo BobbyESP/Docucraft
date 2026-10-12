@@ -8,7 +8,7 @@
 
 | Module | JVM (`src/test`) | On a device (`src/androidTest`) |
 |---|---|---|
-| `:app` | use cases, ViewModels, the D2 settings table, link resolution, selection decisions, navigation rules, text splitting, layered content, the path a migration gives an old document | the platform content provider against the fixtures; the catalogue: migrations from every exported schema, a migrated schema against a new one, the triggers, search |
+| `:app` | use cases, ViewModels, the D2 settings table, link resolution, selection decisions, navigation rules, text splitting, layered content, the path a migration gives an old document, what a widget shows for its size and what it lists | the platform content provider against the fixtures; the catalogue: migrations from every exported schema, a migrated schema against a new one, the triggers, search; the widgets' views, inflated as a launcher does |
 | `:composepdf` | layout geometry, tile planning, zoom steps, viewport, load-error classification | fixtures, restoration, layout changes, content padding, gestures, extension points, scroll-to, load errors, platform content APIs |
 | `:document-content-api` | selection: carets, runs, layouts, right-to-left, across pages | — |
 | `:scanner-mlkit` | the scan result decision table, the activity-result host and process death | — |
@@ -66,6 +66,8 @@ is why it must not share a run with the tests that read the graph the app starte
   `@SdkSuppress(minSdkVersion = 35)`.
 - **The catalogue's tests also run on API 24**, the oldest SQLite the app meets (3.9), where SQL
   that works everywhere else can fail. The AVD used for it is a Google APIs image of API 24.
+- **And the widgets' tests**: a launcher of that age refuses things in a layout that a recent one
+  takes, and reports a widget's size differently ([widgets.md](widgets.md#tests)).
 - **So do the tests that open PDFs.** Android 7's renderer crashes the process, and with it the
   whole run, after a document that fails to open or when two are drawn at once
   ([pdf-engine.md](pdf-engine.md#android-7)). A test opens its renderers through `PdfRenderers`,

@@ -13,7 +13,7 @@ This file is the map and the rules. How each subsystem works, and why, is in
 
 | Module | What it is | Rule |
 |---|---|---|
-| `:app` | The product: storage, UI, navigation, widget, analytics. | Depends on everything below; nothing depends on it. |
+| `:app` | The product: storage, UI, navigation, widgets, analytics. | Depends on everything below; nothing depends on it. |
 | `:composepdf` | The PDF engine: rendering, layout, gestures. Public API in `com.composepdf`, internals in `com.composepdf.internal`. | Generic. It knows pages, pixels and fingers, **never** text or links. |
 | `:scanner-api` | The scanning contract (`DocumentScanner`, `ScanRequest`, `ScanOutcome`, `ContentRef`…). | Plain Kotlin, zero dependencies. |
 | `:scanner-mlkit` | ML Kit's implementation of that contract. | ML Kit is an `implementation` dependency, so no ML Kit type ever reaches `:app`'s classpath. |
@@ -39,7 +39,7 @@ core/                      shared by features
   presentation/            navigation shell, theme, settings screens, common components
   util/                    BaseViewModel, UiEvent, date/time
   di/                      commonModule, preferencesModule, notificationsServiceModule, analyticsModule
-feature/docscanner/        scanning, the catalogue (Room), Home, folders and tags, document actions, the widget
+feature/docscanner/        scanning, the catalogue (Room), Home, folders and tags, document actions, the widgets
 feature/pdfviewer/         the viewer: settings, details, text selection, links, the external-PDF activity
 feature/shared/            what both features need (BasicDocument)
 ```
@@ -161,6 +161,26 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 - ML Kit options are derived from a `ScanRequest` inside `MlKitDocumentScanner`.
 - `:app` sees only the contract and `ActivityResultHostImpl`, the host `MainActivity` lends its
   launcher to.
+
+### Widgets
+
+- **Widgets are platform `RemoteViews`, never Glance** (`feature/docscanner/presentation/widgets`,
+  layouts in `res/layout/widget_*`): the scan widget and the recent documents widget. Glance draws through WorkManager, which some devices cannot
+  start, and brings components of its own that crash outside the app's control. See
+  [docs/widgets.md](docs/widgets.md).
+- A press opens an activity directly (`PendingIntent.getActivity`), a widget asks for no periodic
+  update, and a widget's receiver never lets an exception out.
+- What a press can ask `MainActivity` for is in `feature/docscanner/navigation/EntryIntents.kt`.
+  Each becomes a standing request (`ScanRequestBus`, `LibraryEntryRequests`) that the shell acts
+  on; see [docs/navigation.md](docs/navigation.md#requests-from-outside-the-ui).
+- **A widget receiver is never renamed or moved**: its class name is how the system knows the
+  widgets people have placed.
+- **A widget's views are built apart from its receiver** (`ScanWidgetViews`,
+  `RecentDocumentsWidgetViews`) and inflated in `WidgetViewsTest`, on API 24 too: a layout a
+  launcher refuses is found nowhere else before a home screen.
+- **A widget that shows the library** lists `WidgetDocument`s from `ObserveWidgetDocumentsUseCase`,
+  and its receiver is listed in the `HomeScreenWidgets` binding (`ScannedDocumentModule`) so that
+  `KeepWidgetsCurrentUseCase` has it drawn again when the library changes.
 
 ### PDF viewer and engine
 

@@ -18,6 +18,7 @@ part got here is in git.
 | [pdf-engine.md](pdf-engine.md) | `:composepdf`: rendering, layout, gestures, extension points, reading position |
 | [pdf-viewer.md](pdf-viewer.md) | The viewer feature: screen, settings, details, errors, the external viewer |
 | [text-and-links.md](text-and-links.md) | Page content, text selection, OCR readiness, safe links |
+| [widgets.md](widgets.md) | Home-screen widgets: how they are drawn, why they do not use Glance, the scan widget and the recent documents widget |
 | [testing.md](testing.md) | What is tested where, running tests, fixtures, checking by hand |
 
 ## Decisions referenced in the code

@@ -30,8 +30,13 @@ import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.navigation.DocucraftApp
 import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
+import com.bobbyesp.docucraft.feature.docscanner.domain.LibraryEntryRequest
+import com.bobbyesp.docucraft.feature.docscanner.domain.LibraryEntryRequests
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
-import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.ACTION_SCAN_DOCUMENT
+import com.bobbyesp.docucraft.feature.docscanner.navigation.ACTION_OPEN_DOCUMENT
+import com.bobbyesp.docucraft.feature.docscanner.navigation.ACTION_SCAN_DOCUMENT
+import com.bobbyesp.docucraft.feature.docscanner.navigation.ACTION_SEARCH_DOCUMENTS
+import com.bobbyesp.docucraft.feature.docscanner.navigation.EXTRA_DOCUMENT_UUID
 import com.bobbyesp.scanner.mlkit.ActivityResultHostImpl
 import com.dokar.sonner.Toaster
 import io.github.vinceglb.filekit.FileKit
@@ -49,6 +54,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
     private val mainViewModel: MainViewModel by viewModel()
 
     private val scanRequests: ScanRequestBus by inject()
+    private val entryRequests: LibraryEntryRequests by inject()
 
     /**
      * Registered here because only an Activity can, then lent to whoever needs it. This Activity
@@ -170,11 +176,24 @@ class MainActivity : ComponentActivity(), KoinComponent {
         }
     }
 
+    /**
+     * What a home-screen widget asks for. Each becomes a standing request, because this runs before
+     * anything that could act on it is composed.
+     */
     private fun handleIntent(intent: Intent?) {
-        if (intent?.action == ACTION_SCAN_DOCUMENT) {
-            scanRequests.request()
-            intent.action = null
+        when (intent?.action) {
+            ACTION_SCAN_DOCUMENT -> scanRequests.request()
+            ACTION_SEARCH_DOCUMENTS -> entryRequests.request(LibraryEntryRequest.Search)
+            ACTION_OPEN_DOCUMENT ->
+                intent
+                    .getStringExtra(EXTRA_DOCUMENT_UUID)
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { entryRequests.request(LibraryEntryRequest.OpenDocument(it)) }
+            else -> return
         }
+        // The Activity keeps its Intent, and would be asked the same thing again each time it is
+        // recreated.
+        intent.action = null
     }
 
     private companion object {

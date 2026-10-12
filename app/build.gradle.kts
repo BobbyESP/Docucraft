@@ -91,7 +91,6 @@ dependencies {
     implementation(libs.bundles.navigation3)
     implementation(libs.bundles.koin)
     implementation(libs.bundles.coroutines)
-    implementation(libs.bundles.glance)
     implementation(libs.bundles.filekit)
     implementation(libs.bundles.accompanist)
 
