@@ -140,7 +140,7 @@ Docucraft is local-first: **your documents never leave your device unless you sh
 | Area | Technology |
 |:--|:--|
 | **Language** | [Kotlin](https://kotlinlang.org/), with coroutines and Flow |
-| **UI** | [Jetpack Compose](https://developer.android.com/jetpack/compose), Material 3 Expressive, Material 3 Adaptive, platform `RemoteViews` for the widget |
+| **UI** | [Jetpack Compose](https://developer.android.com/jetpack/compose), Material 3 Expressive, Material 3 Adaptive, platform `RemoteViews` for the widgets |
 | **Navigation** | [Navigation 3](https://developer.android.com/guide/navigation/navigation-3): one back stack, typed keys, sheets and dialogs as destinations |
 | **Architecture** | Clean architecture by feature, MVI ViewModels, ports and sealed results |
 | **Dependency injection** | [Koin](https://insert-koin.io/) |
@@ -158,7 +158,7 @@ replaced by changing one line of dependency injection, and no ML Kit type ever r
 
 ```mermaid
 graph TD
-    app[":app<br/><i>library, UI, navigation, widget</i>"]
+    app[":app<br/><i>library, UI, navigation, widgets</i>"]
     composepdf[":composepdf<br/><i>PDF engine: rendering, layout, gestures</i>"]
     scannerApi[":scanner-api<br/><i>scanning contract</i>"]
     scannerMlkit[":scanner-mlkit<br/><i>ML Kit document scanner</i>"]

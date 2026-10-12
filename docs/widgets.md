@@ -103,9 +103,10 @@ library changes. Three pieces do that, and none of them knows what any widget lo
 
 `RecentDocumentsWidgetReceiver` is asked to draw by the system, when the widget is placed or resized,
 and by the app, when the library changes. The drawing is `RecentDocumentsWidgetRenderer`'s: it reads
-the documents, loads their previews and sends the launcher the views. It reads the library, so the
-receiver asks the system to wait (`goAsync`) and gives up before the few seconds a receiver is given
-run out, leaving the widget as it was.
+the documents, loads their previews and sends the launcher the views, which
+`RecentDocumentsWidgetViews` builds from them. It reads the library, so the receiver asks the system
+to wait (`goAsync`) and gives up before the few seconds a receiver is given run out, leaving the
+widget as it was.
 
 - **It does not scroll.** It shows the rows that fit its height (`RecentWidgetLayout.rowsFor`), each
   added to the layout as a view. A list that scrolls on a home screen has to be fed through a
@@ -126,10 +127,29 @@ run out, leaving the widget as it was.
 ## The scan widget
 
 `ScanDocumentWidgetReceiver` sends `ACTION_SCAN_DOCUMENT` to `MainActivity`; what happens from there
-is in [scanning.md](scanning.md#entry-points). It has three layouts:
+is in [scanning.md](scanning.md#entry-points). It has three layouts, which `ScanWidgetViews` turns
+into what the launcher is sent:
 
 | Layout | When | Shows |
 |---|---|---|
 | `widget_scan_small` | Narrower than two cells | The icon |
 | `widget_scan_wide` | Two cells wide or more, one tall | The icon and the title |
 | `widget_scan_large` | Two cells or more each way | The title, and the button in the corner |
+
+## Tests
+
+- **What a widget shows for a size, and what it lists, are decided in plain code and tested on the
+  JVM**: `ScanWidgetLayoutTest`, `RecentWidgetLayoutTest`, `WidgetUseCasesTest`, and the requests a
+  press becomes (`ScanRequestBusTest`, `LibraryEntryRequestsTest`, `EnterFromHomeTest`).
+- **The views are inflated on a device as a launcher inflates them** (`WidgetViewsTest`): a layout
+  that uses something a launcher refuses compiles, installs, and shows "Can't load widget" on the
+  home screen. The views are built apart from the receivers (`ScanWidgetViews`,
+  `RecentDocumentsWidgetViews`) so that a test can do this with no widget placed. It also applies
+  an update over views already inflated, which is how rows left from the last time would show.
+- **`WidgetSizesTest`** reads what a launcher says about size, in both of the ways it is said.
+- **`WidgetRegistrationTest`** has the receivers' names written out, and fails when one is renamed
+  or moved. It also checks that each press is a pending intent of its own.
+- **They run on API 24 as well as a recent version** ([testing.md](testing.md#running)): what a
+  launcher accepts in a layout, and how it reports sizes, are what changed between them.
+- **What no test sees is the widget on a home screen**: its colors over a wallpaper, its text in
+  the space a launcher really gives it, a press. That is checked by hand, by placing it.
