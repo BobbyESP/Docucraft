@@ -170,6 +170,9 @@ A new Koin module is registered in `App.kt`, in `appModules`.
   [docs/widgets.md](docs/widgets.md).
 - A press opens an activity directly (`PendingIntent.getActivity`), a widget asks for no periodic
   update, and a widget's receiver never lets an exception out.
+- What a press can ask `MainActivity` for is in `feature/docscanner/navigation/EntryIntents.kt`.
+  Each becomes a standing request (`ScanRequestBus`, `LibraryEntryRequests`) that the shell acts
+  on; see [docs/navigation.md](docs/navigation.md#requests-from-outside-the-ui).
 - **A widget receiver is never renamed or moved**: its class name is how the system knows the
   widgets people have placed.
 

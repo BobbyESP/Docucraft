@@ -17,9 +17,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.os.BundleCompat
 import com.bobbyesp.docucraft.MainActivity
 import com.bobbyesp.docucraft.R
-
-/** What the scan widget sends [MainActivity] when it is pressed. */
-const val ACTION_SCAN_DOCUMENT = "com.bobbyesp.docucraft.ACTION_SCAN_DOCUMENT"
+import com.bobbyesp.docucraft.feature.docscanner.navigation.ACTION_SCAN_DOCUMENT
 
 /**
  * The home-screen widget that starts a scan.

@@ -136,13 +136,26 @@ after a process death. It is UI state, not an entry.
 
 ## Requests from outside the UI
 
-Something outside the composition may need a destination: the home-screen widget asking for a scan,
-or *Go to page* returning a page to the viewer. It leaves a **standing request** in a small holder
-that lives in Koin (`ScanRequestBus`, `ViewerPageRequests`). Whoever can act on it takes it when it
-can, and consumes it.
+Something outside the composition may need a destination: a home-screen widget asking for a scan,
+a document or the search, or *Go to page* returning a page to the viewer. It leaves a **standing
+request** in a small holder that lives in Koin (`ScanRequestBus`, `LibraryEntryRequests`,
+`ViewerPageRequests`). Whoever can act on it takes it when it can, and consumes it.
 
 A one-shot event is lost when nobody is listening at that moment. It then fires later, out of
 context.
+
+What `MainActivity` can be asked by an Intent is listed in
+`feature/docscanner/navigation/EntryIntents.kt`: `ACTION_SCAN_DOCUMENT`, `ACTION_OPEN_DOCUMENT` (with
+the document's uuid) and `ACTION_SEARCH_DOCUMENTS`. The Activity turns each into its standing
+request and does nothing else, because it runs before anything is composed.
+
+`LibraryEntryRequestNavigation`, hosted by the shell next to `ScanRequestNavigation`, acts on a
+document or the search:
+
+- It goes there **as if from Home**, leaving whatever was open. Back from a document a widget opened
+  leads to the library, not to a screen left open days before.
+- It looks a document up first. A widget shows the library as it was when it was last drawn, so the
+  document may have gone to the bin since: the user is told so, and nothing opens.
 
 ## The external viewer's stack
 

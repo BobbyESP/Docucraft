@@ -53,6 +53,15 @@ nothing changing runs no code at all between the moment it is placed and the mom
   the root of each layout is `@android:id/background`, which is what the launcher animates from when
   the widget opens the app.
 
+## What a press asks for
+
+A widget asks `MainActivity` with one of the Intents in
+`feature/docscanner/navigation/EntryIntents.kt`: start a scan, open a document, open the search.
+How each reaches its destination is in
+[navigation.md](navigation.md#requests-from-outside-the-ui). The Activity is exported, so these are
+not only the widgets' to send: none carries more than a document's uuid, which is only ever looked
+up in the catalogue.
+
 ## The scan widget
 
 `ScanDocumentWidgetReceiver` sends `ACTION_SCAN_DOCUMENT` to `MainActivity`; what happens from there

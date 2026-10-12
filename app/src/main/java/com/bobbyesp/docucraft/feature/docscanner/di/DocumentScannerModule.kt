@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
+import com.bobbyesp.docucraft.feature.docscanner.domain.LibraryEntryRequests
 import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
 import com.bobbyesp.scanner.DocumentScanner
 import com.bobbyesp.scanner.mlkit.ActivityResultHost
@@ -19,4 +20,5 @@ val documentScannerModule = module {
     single<DocumentScanner> { MlKitDocumentScanner(host = get()) }
 
     single { ScanRequestBus() }
+    single { LibraryEntryRequests() }
 }
