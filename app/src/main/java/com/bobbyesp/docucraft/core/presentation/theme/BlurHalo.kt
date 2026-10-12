@@ -153,6 +153,7 @@ private class HaloGeometry {
      * Haze asks at the size it blurs at, which is smaller than the layout when it samples down, so
      * every length is scaled to it.
      */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     fun shader(size: Size): RuntimeShader {
         // Only reached where isHaloSupported, which is Android 13 and up.
         @Suppress("NewApi") val shader = shader ?: haloShader().also { shader = it }
