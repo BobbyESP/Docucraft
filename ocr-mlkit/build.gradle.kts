@@ -23,7 +23,7 @@ android {
 
     // The same test PDFs as the engine and the app, described by the same manifest.
     sourceSets {
-        getByName("androidTest") { assets.srcDir("../composepdf/src/androidTest/assets") }
+        getByName("androidTest") { assets.directories += "../composepdf/src/androidTest/assets" }
     }
 }
 
