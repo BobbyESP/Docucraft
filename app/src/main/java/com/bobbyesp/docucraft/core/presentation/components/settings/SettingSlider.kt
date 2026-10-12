@@ -59,11 +59,12 @@ fun SettingSlider(
         }
 
         Slider(
-            state = rememberSliderState(
-                value = value,
-                steps = steps,
-                trackRange = valueRange
-            ),
+            state =
+                rememberSliderState(
+                    value = value,
+                    steps = steps,
+                    trackRange = valueRange,
+                ),
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
             enabled = true,
