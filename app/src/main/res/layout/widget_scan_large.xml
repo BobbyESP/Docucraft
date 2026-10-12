@@ -12,13 +12,20 @@
     tools:ignore="UseAppTint">
 
     <TextView
+        android:id="@+id/widget_scan_title"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|start"
+        android:layout_height="match_parent"
         android:layout_marginStart="4dp"
         android:layout_marginTop="2dp"
+        android:layout_marginBottom="52dp"
+        android:autoSizeMaxTextSize="20sp"
+        android:autoSizeMinTextSize="12sp"
+        android:autoSizeStepGranularity="1sp"
+        android:autoSizeTextType="uniform"
         android:ellipsize="end"
         android:fontFamily="sans-serif"
+        android:gravity="top|start"
+        android:hyphenationFrequency="none"
         android:maxLines="2"
         android:text="@string/widget_scan_title"
         android:textColor="@color/widget_on_primary_container"

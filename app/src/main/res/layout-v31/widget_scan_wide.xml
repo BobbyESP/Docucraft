@@ -28,12 +28,19 @@
     </FrameLayout>
 
     <TextView
+        android:id="@+id/widget_scan_title"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_marginStart="12dp"
         android:layout_weight="1"
+        android:autoSizeMaxTextSize="14sp"
+        android:autoSizeMinTextSize="10sp"
+        android:autoSizeStepGranularity="1sp"
+        android:autoSizeTextType="uniform"
         android:ellipsize="end"
         android:fontFamily="sans-serif-medium"
+        android:gravity="center_vertical"
+        android:hyphenationFrequency="none"
         android:maxLines="2"
         android:text="@string/widget_scan_title"
         android:textColor="@color/widget_on_primary_container"

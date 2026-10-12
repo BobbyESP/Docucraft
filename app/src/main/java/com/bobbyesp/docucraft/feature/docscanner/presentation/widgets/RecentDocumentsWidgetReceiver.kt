@@ -5,18 +5,18 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.widgets
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
-import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.qualifier.named
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * The home-screen widget that lists the documents used last.
@@ -29,6 +29,16 @@ class RecentDocumentsWidgetReceiver : AppWidgetProvider(), KoinComponent {
 
     private val renderer: RecentDocumentsWidgetRenderer by inject()
     private val scope: CoroutineScope by inject(named("AppMainSupervisedScope"))
+
+    override fun onReceive(context: Context, intent: Intent) {
+        // Its rows are written in the app's language when they are drawn, so a new language is a
+        // reason to draw them again.
+        if (intent.action == Intent.ACTION_LOCALE_CHANGED) {
+            placedWidgets(context)?.let { (_, ids) -> render(ids) }
+        } else {
+            super.onReceive(context, intent)
+        }
+    }
 
     override fun onUpdate(
         context: Context,
@@ -55,8 +65,9 @@ class RecentDocumentsWidgetReceiver : AppWidgetProvider(), KoinComponent {
         val pending: PendingResult? = goAsync()
         scope.launch {
             try {
-                withTimeoutOrNull(RENDER_BUDGET_MILLIS.milliseconds) { renderer.render(appWidgetIds) }
-                    ?: Log.w(TAG, "The widget was not drawn in time and keeps what it showed")
+                withTimeoutOrNull(RENDER_BUDGET_MILLIS.milliseconds) {
+                    renderer.render(appWidgetIds)
+                } ?: Log.w(TAG, "The widget was not drawn in time and keeps what it showed")
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

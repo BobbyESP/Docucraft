@@ -21,9 +21,9 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.KeepWidgetsCurre
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveWidgetDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.widgets.WidgetDocument
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Draws the recent-documents widget: reads what it lists, and sends the launcher the views.
@@ -61,6 +61,22 @@ class RecentDocumentsWidgetRenderer(
 
     private fun views(documents: List<WidgetDocument>, previews: Map<String, Bitmap>): RemoteViews =
         RemoteViews(context.packageName, R.layout.widget_recents).apply {
+            // Said from here, and not left to the layout: the launcher reads a layout's strings in
+            // the language of the system, and the rows are written in the app's.
+            setTextViewText(R.id.widget_recents_title, context.getString(R.string.recents))
+            setTextViewText(
+                R.id.widget_recents_empty,
+                context.getString(R.string.widget_recents_empty),
+            )
+            setContentDescription(
+                R.id.widget_recents_search,
+                context.getString(R.string.search_documents),
+            )
+            setContentDescription(
+                R.id.widget_recents_scan,
+                context.getString(R.string.widget_scan_title),
+            )
+
             setOnClickPendingIntent(R.id.widget_recents_title, WidgetIntents.openApp(context))
             setOnClickPendingIntent(R.id.widget_recents_search, WidgetIntents.search(context))
             setOnClickPendingIntent(R.id.widget_recents_scan, WidgetIntents.scan(context))

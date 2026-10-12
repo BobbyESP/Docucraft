@@ -51,6 +51,16 @@ nothing changing runs no code at all between the moment it is placed and the mom
 - **Every press is built in `WidgetIntents`.** Two pending intents that differ only in their extras
   are the same one to the system, so a press that names a document carries its uuid in the Intent's
   data as well.
+- **Every word a widget shows is set by its receiver**, with `setTextViewText` and
+  `setContentDescription`, and never left to `android:text` in the layout. The launcher reads a
+  layout's strings in the language of the system. The app can be given a language of its own
+  (Android 13 and later), and a widget that takes some of its words from each ends up in two
+  languages at once. The text in the layouts is only what shows before the first update.
+- **A widget is drawn again when the language changes.** Both receivers listen for
+  `ACTION_LOCALE_CHANGED`, which the system also sends an app when its own language is changed.
+- **A title that may not fit shrinks before it is cut** (`autoSizeTextType`, from Android 8). The
+  scan widget's is two words in English and much longer in others, in a space the user can make as
+  small as two cells.
 - **Colors are resources, `widget_*` in `colors.xml`**: the wallpaper's on Android 12 and later
   (`values-v31`, `values-night-v31`), the app's default palette before. A widget cannot follow the
   color the user picks in the app's settings, because it is drawn from resources by the launcher.

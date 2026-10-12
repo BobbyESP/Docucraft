@@ -6,6 +6,7 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.widgets
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.SizeF
@@ -21,6 +22,15 @@ import com.bobbyesp.docucraft.R
  * here depends on a background service that a device may not be able to run.
  */
 class ScanDocumentWidgetReceiver : AppWidgetProvider() {
+
+    override fun onReceive(context: Context, intent: Intent) {
+        // The widget names what it does, and has to say it again in the new language.
+        if (intent.action == Intent.ACTION_LOCALE_CHANGED) {
+            placedWidgets(context)?.let { (manager, ids) -> onUpdate(context, manager, ids) }
+        } else {
+            super.onReceive(context, intent)
+        }
+    }
 
     override fun onUpdate(
         context: Context,
@@ -62,7 +72,15 @@ class ScanDocumentWidgetReceiver : AppWidgetProvider() {
                 ScanWidgetLayout.Wide -> R.layout.widget_scan_wide
                 ScanWidgetLayout.Large -> R.layout.widget_scan_large
             }
+        // Said from here, and not left to the layout: the launcher reads a layout's strings in the
+        // language of the system, which is not the app's when the user has given it its own.
+        val title = context.getString(R.string.widget_scan_title)
         return RemoteViews(context.packageName, layoutId).apply {
+            if (layout == ScanWidgetLayout.Small) {
+                setContentDescription(android.R.id.background, title)
+            } else {
+                setTextViewText(R.id.widget_scan_title, title)
+            }
             setOnClickPendingIntent(android.R.id.background, WidgetIntents.scan(context))
         }
     }

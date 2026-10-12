@@ -4,6 +4,9 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.widgets
 
 import android.appwidget.AppWidgetManager
+import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.util.SizeF
@@ -80,3 +83,16 @@ private constructor(
         }
     }
 }
+
+/**
+ * The widgets of this receiver that are on a home screen, with what updates them. `null` when there
+ * are none, or on a device with no home screen that takes widgets.
+ */
+internal fun AppWidgetProvider.placedWidgets(context: Context): Pair<AppWidgetManager, IntArray>? =
+    try {
+        val manager = AppWidgetManager.getInstance(context)
+        val ids = manager?.getAppWidgetIds(ComponentName(context, javaClass))
+        if (manager == null || ids == null || ids.isEmpty()) null else manager to ids
+    } catch (e: RuntimeException) {
+        null
+    }
