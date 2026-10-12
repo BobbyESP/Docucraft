@@ -45,7 +45,7 @@ No account, no cloud, no watermarks.
   retake any page before saving.
 - **Review as you save**: name the scan, describe it, file it in a folder and tag it. Or skip, and
   it is saved as it came.
-- **A home-screen widget** that goes straight to the scanner.
+- **Home-screen widgets**: one goes straight to the scanner, one lists your recent documents.
 
 </td>
 <td width="50%" valign="top">

@@ -407,4 +407,6 @@
     <string name="document_details_file_name">File name</string>
     <string name="document_details_format">Format</string>
     <string name="document_details_pdf_version">PDF %1$s</string>
+    <string name="widget_recents_description">Your latest documents, one tap away</string>
+    <string name="widget_recents_empty">Your documents will show here</string>
 </resources>

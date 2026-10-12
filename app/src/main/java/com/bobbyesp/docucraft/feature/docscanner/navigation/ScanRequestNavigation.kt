@@ -17,17 +17,17 @@ import org.koin.compose.koinInject
  * Scanning is run by the catalogue's state holder, which exists only while the catalogue is on
  * screen — a silent dependency on where the user happened to be. Where a request has to be honoured
  * is a navigation question, so it is answered here rather than by a state holder that cannot see
- * the back stack. Hosted by the shell; draws nothing, and leaves the request standing for the
- * catalogue to take.
+ * the back stack. Hosted by the shell; draws nothing, and takes only its own half of the request:
+ * the scan itself is the catalogue's to take, which it may do before or after this.
  */
 @Composable
 fun ScanRequestNavigation(navigator: Navigator) {
     val scanRequests: ScanRequestBus = koinInject()
-    val isPending by scanRequests.isPending.collectAsStateWithLifecycle()
+    val isCatalogueWanted by scanRequests.isCatalogueWanted.collectAsStateWithLifecycle()
 
-    LaunchedEffect(isPending) {
-        // Overlays included: a scan cannot start underneath a sheet asking about some other
-        // document.
-        if (isPending) navigator.goBackWhile { it != Home }
+    LaunchedEffect(isCatalogueWanted) {
+        if (isCatalogueWanted && scanRequests.takeCatalogueWanted()) {
+            navigator.goBackWhile { it != Home }
+        }
     }
 }

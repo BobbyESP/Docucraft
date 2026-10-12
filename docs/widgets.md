@@ -4,8 +4,9 @@
 
 # Home-screen widgets
 
-The app's widgets live in `feature/docscanner/presentation/widgets`. There is one: the scan widget,
-which starts a scan from the home screen.
+The app's widgets live in `feature/docscanner/presentation/widgets`. There are two: the scan widget,
+which starts a scan from the home screen, and the recent documents widget, which lists the documents
+used last.
 
 ## How a widget is drawn
 
@@ -43,12 +44,19 @@ nothing changing runs no code at all between the moment it is placed and the mom
   the app that runs when the user is not looking at it.
 - **The receiver's class name is the widget's identity.** Renaming or moving it removes the widgets
   people have placed.
-- **The layout is chosen from the size, as plain logic** (`ScanWidgetLayout`). From Android 12 the
-  launcher reports every size the widget can be shown at, and gets a layout for each; before, it
-  reports a range, and gets one layout for portrait and one for landscape.
+- **What a widget shows is chosen from its size, as plain logic** (`ScanWidgetLayout`,
+  `RecentWidgetLayout`). From Android 12 the launcher reports every size the widget can be shown
+  at, and gets views for each; before, it reports a range, and gets views for portrait and for
+  landscape. `WidgetSizes` reads either and builds the views.
+- **Every press is built in `WidgetIntents`.** Two pending intents that differ only in their extras
+  are the same one to the system, so a press that names a document carries its uuid in the Intent's
+  data as well.
 - **Colors are resources, `widget_*` in `colors.xml`**: the wallpaper's on Android 12 and later
   (`values-v31`, `values-night-v31`), the app's default palette before. A widget cannot follow the
   color the user picks in the app's settings, because it is drawn from resources by the launcher.
+- **An icon is tinted with `android:tint`**, and the layout tells lint so (`UseAppTint`). The
+  launcher inflates a widget's layout, not AppCompat, so the `app:tint` lint asks for would be
+  ignored there.
 - **Corners are `@dimen/widget_corner_radius`**, which from Android 12 is the launcher's own, and
   the root of each layout is `@android:id/background`, which is what the launcher animates from when
   the widget opens the app.
@@ -79,7 +87,31 @@ library changes. Three pieces do that, and none of them knows what any widget lo
 - **`HomeScreenWidgets`** is the port it asks. `AppWidgetHomeScreenWidgets` sends each receiver of
   a widget that shows the library the same update broadcast the system sends, so a widget is drawn
   by one piece of code whoever asks. It does nothing when no such widget is placed. The receivers
-  are listed where it is bound, in `ScannedDocumentModule`; there is none yet.
+  are listed where it is bound, in `ScannedDocumentModule`.
+
+## The recent documents widget
+
+`RecentDocumentsWidgetReceiver` is asked to draw by the system, when the widget is placed or resized,
+and by the app, when the library changes. The drawing is `RecentDocumentsWidgetRenderer`'s: it reads
+the documents, loads their previews and sends the launcher the views. It reads the library, so the
+receiver asks the system to wait (`goAsync`) and gives up before the few seconds a receiver is given
+run out, leaving the widget as it was.
+
+- **It does not scroll.** It shows the rows that fit its height (`RecentWidgetLayout.rowsFor`), each
+  added to the layout as a view. A list that scrolls on a home screen has to be fed through a
+  service the launcher binds to and asks one row at a time, differently before and after
+  Android 12; rows that are part of the widget are drawn with it, the same way everywhere.
+- **A row** (`widget_recents_row`) shows the first page, the name, and the page count with the day
+  the document was last used. It is a date and never "2 hours ago": the widget is drawn when the
+  library changes, and words that depend on the time would go on saying what was true then.
+- **Previews** come from `DocumentThumbnails`, are made small and rounded with the app's image
+  loader, and travel to the launcher as bitmaps. One that is not ready in time is left out, and its
+  row shows a placeholder.
+- **Presses**: a row opens its document, the header's buttons open the search and start a scan, and
+  the title opens the app as it was left.
+- **With no document to list** it says so, and the scan button is still there.
+- **In the widget picker** it shows rows that name no document (`widget_recents_preview`): a picker
+  cannot be given the library, and an invented name would have to be written in every language.
 
 ## The scan widget
 

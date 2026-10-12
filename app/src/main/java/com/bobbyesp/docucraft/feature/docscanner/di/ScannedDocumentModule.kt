@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
+import android.content.ComponentName
 import com.bobbyesp.docucraft.core.data.image.ImageLoaderComponent
 import com.bobbyesp.docucraft.feature.docscanner.data.db.DocumentsDatabase
 import com.bobbyesp.docucraft.feature.docscanner.data.indexing.WorkManagerDocumentIndexQueue
@@ -78,6 +79,8 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetReadingPositi
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.TagDocumentByNameUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.widgets.HomeScreenWidgets
+import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.RecentDocumentsWidgetReceiver
+import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.RecentDocumentsWidgetRenderer
 import com.bobbyesp.docucraft.feature.pdfviewer.di.EMBEDDED_TEXT
 import com.bobbyesp.docucraft.feature.pdfviewer.di.TEXT_RECOGNITION
 import org.koin.android.ext.koin.androidContext
@@ -151,9 +154,21 @@ val documentScannerDataModule = module {
     factory { ObserveRecentDocumentsUseCase(activity = get()) }
 
     // Home-screen widgets. The receivers listed are the widgets that show the library and so
-    // have to be drawn again when it changes..
+    // have to be drawn again when it changes. The scan widget shows nothing of it.
     single<HomeScreenWidgets> {
-        AppWidgetHomeScreenWidgets(context = androidContext(), libraryWidgets = emptyList())
+        AppWidgetHomeScreenWidgets(
+            context = androidContext(),
+            libraryWidgets =
+                listOf(ComponentName(androidContext(), RecentDocumentsWidgetReceiver::class.java)),
+        )
+    }
+    factory {
+        RecentDocumentsWidgetRenderer(
+            context = androidContext(),
+            observeWidgetDocuments = get(),
+            thumbnails = get(),
+            imageLoader = get(),
+        )
     }
     factory { ObserveWidgetDocumentsUseCase(activity = get()) }
     factory { KeepWidgetsCurrentUseCase(observeWidgetDocuments = get(), widgets = get()) }

@@ -75,6 +75,10 @@ Swapping the engine means changing the `DocumentScanner` binding in
     - `HomeViewModel` takes the request and scans.
   - With a one-shot signal only the first reader learnt of it. A widget tap while a document was
     open did nothing, and then scanned, unasked, when the user pressed back.
+  - Each of the two takes its own half of the request (`take`, `takeCatalogueWanted`). The
+    catalogue's ViewModel listens whenever Home is anywhere in the back stack, so with one shared
+    flag it took the request before the shell had seen it, and a scan asked for from another
+    screen ran with that screen still in front.
 
 ## Saving a scan
 

@@ -136,6 +136,19 @@
                 android:resource="@xml/scan_document_widget_info" />
         </receiver>
 
+        <!-- As above: its name is the identity of the widgets people have placed. -->
+        <receiver
+            android:name=".feature.docscanner.presentation.widgets.RecentDocumentsWidgetReceiver"
+            android:exported="true"
+            android:label="@string/recents">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/recent_documents_widget_info" />
+        </receiver>
+
     </application>
 
 </manifest>
