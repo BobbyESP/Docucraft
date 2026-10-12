@@ -62,6 +62,25 @@ How each reaches its destination is in
 not only the widgets' to send: none carries more than a document's uuid, which is only ever looked
 up in the catalogue.
 
+## Widgets that show the library
+
+A widget is a picture the launcher keeps, so one that lists documents has to be told when the
+library changes. Three pieces do that, and none of them knows what any widget looks like:
+
+- **`ObserveWidgetDocumentsUseCase`** gives the documents a widget lists, as `WidgetDocument`: the
+  library's own, used last, most recent first. It is narrower than Recents in the app. A document
+  of another app is left out, because a home screen is read by anyone holding the phone and that
+  name is not the library's to put there. So is one whose file is missing, because a row has no
+  room to say why it would not open.
+- **`KeepWidgetsCurrentUseCase`** runs for the life of the process, started by `App`. When what a
+  widget lists has changed and stayed still for a moment, it asks for a refresh. Waiting matters:
+  saving a scan writes the document several times over, and each refresh is the launcher drawing
+  every widget again.
+- **`HomeScreenWidgets`** is the port it asks. `AppWidgetHomeScreenWidgets` sends each receiver of
+  a widget that shows the library the same update broadcast the system sends, so a widget is drawn
+  by one piece of code whoever asks. It does nothing when no such widget is placed. The receivers
+  are listed where it is bound, in `ScannedDocumentModule`; there is none yet.
+
 ## The scan widget
 
 `ScanDocumentWidgetReceiver` sends `ACTION_SCAN_DOCUMENT` to `MainActivity`; what happens from there
