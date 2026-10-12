@@ -132,7 +132,6 @@
     <!-- ════════════════════════════════════════════════
          WIDGET — Scan
          ════════════════════════════════════════════════ -->
-    <string name="widget_app_name" translatable="false">Docucraft</string>
     <string name="widget_scan_title">Scan document</string>
     <string name="widget_scan_subtitle">Tap to start scanning</string>
 

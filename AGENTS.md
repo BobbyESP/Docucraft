@@ -162,6 +162,17 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 - `:app` sees only the contract and `ActivityResultHostImpl`, the host `MainActivity` lends its
   launcher to.
 
+### Widgets
+
+- **Widgets are platform `RemoteViews`, never Glance** (`feature/docscanner/presentation/widgets`,
+  layouts in `res/layout/widget_*`). Glance draws through WorkManager, which some devices cannot
+  start, and brings components of its own that crash outside the app's control. See
+  [docs/widgets.md](docs/widgets.md).
+- A press opens an activity directly (`PendingIntent.getActivity`), a widget asks for no periodic
+  update, and a widget's receiver never lets an exception out.
+- **A widget receiver is never renamed or moved**: its class name is how the system knows the
+  widgets people have placed.
+
 ### PDF viewer and engine
 
 - **`:composepdf` stays generic.** Features plug into it through two hooks, and never through

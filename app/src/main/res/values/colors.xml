@@ -6,5 +6,8 @@
     <color name="ic_foreground">#333333</color>
     <color name="ic_background">#FFFDF0</color>
 
-    <color name="widget_preview_background">#FFFDF0</color>
+    <color name="widget_primary">#6750A4</color>
+    <color name="widget_on_primary">#FFFFFF</color>
+    <color name="widget_primary_container">#EADDFF</color>
+    <color name="widget_on_primary_container">#21005D</color>
 </resources>

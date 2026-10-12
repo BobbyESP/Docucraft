@@ -120,12 +120,16 @@
                 tools:node="remove" />
         </provider>
 
+        <!--
+            Its name is how the system knows the widgets people have already placed: renaming or
+            moving this class removes them from their home screens.
+        -->
         <receiver
             android:name=".feature.docscanner.presentation.widgets.ScanDocumentWidgetReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_scan_title">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

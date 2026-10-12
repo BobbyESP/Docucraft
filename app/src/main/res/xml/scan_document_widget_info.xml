@@ -1,7 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Placed two cells wide and one tall, and resizable down to one cell and up to anything. It never
+    asks to be updated on a timer: nothing it shows changes with time, and each update would start
+    the process of the app to draw the same thing.
+-->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:description="@string/widget_scan_subtitle"
+    android:initialLayout="@layout/widget_scan_wide"
     android:minWidth="110dp"
     android:minHeight="40dp"
-    android:updatePeriodMillis="60"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:previewImage="@drawable/widget_scan_preview"
+    android:previewLayout="@layout/widget_scan_wide"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen" />
+    android:targetCellWidth="2"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen"
+    tools:targetApi="s" />
