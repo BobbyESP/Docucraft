@@ -3,7 +3,6 @@
 
     <string name="search">検索</string>
     <string name="follow_system">システムに従う</string>
-    <string name="doc_scan_to_see_document_list">ドキュメントをスキャンすると、ここに一覧表示されます。</string>
     <string name="doc_scan_error">スキャン中にエラーが発生しました</string>
     <string name="doc_save">ドキュメントを保存</string>
     <string name="off">オフ</string>
@@ -12,16 +11,12 @@
     <string name="doc_delete_warning_message">%1$s をデバイスとアプリのデータベースから削除しようとしています。\n\nページ数は %2$s ページで、サイズは %3$s です。\n\n本当に削除しますか？</string>
     <string name="on">オン</string>
     <string name="exit_search">検索を終了</string>
-    <string name="doc_saved_successfully">ドキュメントが正常に保存されました</string>
     <string name="retry">再試行</string>
     <string name="doc_delete_error">ドキュメントの削除中にエラーが発生しました</string>
-    <string name="no_scanned_documents">スキャンされたドキュメントはありません</string>
-    <string name="error_loading_docs">ドキュメントのロードエラー</string>
     <string name="file_size">ファイルサイズ</string>
     <string name="scan_cancelled">スキャン処理がキャンセルされました</string>
     <string name="doc_open_in_viewer">ドキュメントをビューアで開く</string>
     <string name="doc_saving_cancelled">保存プロセスがキャンセルされました</string>
-    <string name="doc_scan_new">新しいドキュメントをスキャン</string>
     <string name="clear_filters">フィルターをクリア</string>
     <string name="filter">フィルター</string>
     <string name="app_tagline">ドキュメントをスキャン、整理、閲覧。すべてあなたの端末の中で。</string>
@@ -43,12 +38,4 @@
 	<string name="fit_proportional">縦横比を維持</string>
 	<string name="fit_width">幅に合わせる</string>
     <string name="pages_count">%1$d ページ</string>
-    <string name="see_all">すべて表示</string>
-    <string name="pinned_folders_empty_title">フォルダをすぐ手の届くところに</string>
-    <string name="pinned_folders_empty_desc">固定したフォルダがここに表示されます。</string>
-    <string name="tags_manage">タグを編集</string>
-    <string name="tag_section_empty">このタグが付いたドキュメントはまだありません</string>
-    <string name="favorites">お気に入り</string>
-    <string name="filters_no_matches">これらのフィルターに一致するドキュメントはありません</string>
-    <string name="filters_clear">フィルターをクリア</string>
 </resources>

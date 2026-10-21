@@ -105,7 +105,6 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
@@ -136,6 +135,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeInten
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
+import com.bobbyesp.docucraft.feature.home.R
 import com.bobbyesp.docucraft.feature.shared.presentation.Measurements
 import com.skydoves.landscapist.ImageOptions
 import dev.chrisbanes.haze.HazeState

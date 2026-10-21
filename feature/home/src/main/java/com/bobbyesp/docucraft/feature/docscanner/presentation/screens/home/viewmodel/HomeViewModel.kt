@@ -4,7 +4,6 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
@@ -28,6 +27,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveScanDraftUse
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeIntent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeStatus
 import com.bobbyesp.docucraft.feature.docscanner.presentation.contract.HomeUiState
+import com.bobbyesp.docucraft.feature.home.R
 import com.bobbyesp.scanner.DocumentScanner
 import com.bobbyesp.scanner.ScanDraft
 import com.bobbyesp.scanner.ScanError

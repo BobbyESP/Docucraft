@@ -4,13 +4,10 @@
     <string name="on">Encendido</string>
     <string name="off">Apagado</string>
     <string name="home">Inicio</string>
-    <string name="doc_scan_new">Escanear nuevo documento</string>
-    <string name="doc_saved_successfully">El documento se ha guardado correctamente</string>
     <string name="doc_scan_error">Ha ocurrido un error durante el escaneo</string>
     <string name="doc_open_in_viewer">Abrir documento en el visor</string>
     <string name="issue_opening_doc_viewer">Ocurrió un problema al intentar abrir el visor de documentos</string>
     <string name="doc_share">Compartir documento</string>
-    <string name="error_loading_docs">Error al cargar los documentos</string>
     <string name="file_size">Tamaño del archivo</string>
     <string name="page_count">Cantidad de páginas</string>
     <string name="doc_save">Guardar documento</string>
@@ -19,8 +16,6 @@
     <string name="doc_delete_warning_message">Estás a punto de eliminar %1$s de tu dispositivo y base de datos de la aplicación.\n\nTiene %2$s páginas y un tamaño de %3$s.\n\n¿Estás seguro de que quieres eliminarlo?</string>
     <string name="doc_saving_cancelled">El proceso de guardado ha sido cancelado</string>
     <string name="retry">Reintentar</string>
-    <string name="doc_scan_to_see_document_list">Escanea tus documentos para verlos aquí listados.</string>
-    <string name="no_scanned_documents">No hay documentos escaneados</string>
     <string name="scan_cancelled">Proceso de escaneo cancelado</string>
     <string name="filter">Filtro</string>
     <string name="clear_filters">Limpiar filtros</string>
@@ -43,13 +38,5 @@
 	<string name="page_input_label">Página</string>
 
 
-    <string name="see_all">Ver todo</string>
-    <string name="pinned_folders_empty_title">Ten tus carpetas a mano</string>
-    <string name="pinned_folders_empty_desc">Las carpetas fijadas aparecen aquí.</string>
-    <string name="tags_manage">Editar etiquetas</string>
-    <string name="tag_section_empty">Ningún documento tiene aún esta etiqueta</string>
-    <string name="favorites">Favoritos</string>
-    <string name="filters_no_matches">Ningún documento coincide con estos filtros</string>
-    <string name="filters_clear">Quitar filtros</string>
     <string name="pages_count">%1$d páginas</string>
 </resources>

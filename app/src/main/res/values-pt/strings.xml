@@ -7,20 +7,15 @@
     <string name="clear_filters">Limpar filtros</string>
     <string name="search">Pesquisar</string>
     <string name="doc_delete_error">Ocorreu um erro ao excluir o documento</string>
-    <string name="no_scanned_documents">Nenhum documento escaneado</string>
     <string name="filter">Filtrar</string>
     <string name="off">Desligado</string>
-    <string name="doc_scan_new">Escanear novo documento</string>
     <string name="home">Início</string>
     <string name="scan_cancelled">Processo de digitalização cancelado</string>
     <string name="retry">Tentar novamente</string>
     <string name="exit_search">Sair da pesquisa</string>
     <string name="doc_saving_cancelled">O processo de salvamento foi cancelado</string>
     <string name="page_count">Número de páginas</string>
-    <string name="doc_saved_successfully">O documento foi salvo com sucesso</string>
     <string name="app_tagline">Digitalize, organize e leia seus documentos. Tudo no seu dispositivo.</string>
-    <string name="error_loading_docs">Erro ao carregar documentos</string>
-    <string name="doc_scan_to_see_document_list">Escanear seus documentos para vê-los listados aqui.</string>
     <string name="doc_delete_warning_message">Você está prestes a excluir %1$s do seu dispositivo e banco de dados do app.\n\nEle tem %2$s páginas e %3$s de tamanho.\n\nTem certeza de que deseja excluí-lo?</string>
     <string name="issue_opening_doc_viewer">Ocorreu um problema ao tentar abrir o visualizador de documentos</string>
     <string name="doc_open_in_viewer">Abrir documento no visualizador</string>
@@ -43,12 +38,4 @@
 	<string name="page_of">%1$s de %2$s</string>
 	<string name="fit_height">Ajustar à altura</string>
     <string name="pages_count">%1$d páginas</string>
-    <string name="see_all">Ver tudo</string>
-    <string name="pinned_folders_empty_title">Mantenha suas pastas à mão</string>
-    <string name="pinned_folders_empty_desc">As pastas fixadas aparecem aqui.</string>
-    <string name="tags_manage">Editar etiquetas</string>
-    <string name="tag_section_empty">Nenhum documento tem esta etiqueta ainda</string>
-    <string name="favorites">Favoritos</string>
-    <string name="filters_no_matches">Nenhum documento corresponde a estes filtros</string>
-    <string name="filters_clear">Limpar filtros</string>
 </resources>

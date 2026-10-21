@@ -8,17 +8,13 @@
     <string name="results">Результаты</string>
     <string name="clear_filters">Очистить фильтры</string>
     <string name="doc_delete_warning_message">Вы собираетесь удалить %1$s с вашего устройства и из базы данных приложения.\n\nОн содержит %2$s страниц и имеет размер %3$s.\n\nВы уверены, что хотите его удалить?</string>
-    <string name="error_loading_docs">Ошибка загрузки документов</string>
     <string name="search">Поиск</string>
     <string name="doc_share">Поделиться документом</string>
     <string name="retry">Повторить</string>
-    <string name="doc_scan_new">Сканировать новый документ</string>
     <string name="scan_cancelled">Процесс сканирования отменен</string>
     <string name="file_size">Размер файла</string>
-    <string name="doc_scan_to_see_document_list">Отсканируйте ваши документы, чтобы увидеть их здесь в списке.</string>
     <string name="off">Выкл</string>
     <string name="doc_save">Сохранить документ</string>
-    <string name="doc_saved_successfully">Документ успешно сохранен</string>
     <string name="doc_delete_error">Произошла ошибка при удалении документа</string>
     <string name="app_tagline">Сканируйте, упорядочивайте и читайте документы. Всё — на вашем устройстве.</string>
     <string name="home">Главная</string>
@@ -28,7 +24,6 @@
     <string name="doc_save_error_with_reason">Произошла ошибка при сохранении документа: %1$s</string>
     <string name="filter">Фильтр</string>
     <string name="exit_search">Выйти из поиска</string>
-    <string name="no_scanned_documents">Нет отсканированных документов</string>
 	<string name="field_required">Это поле обязательно для заполнения</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="clear_field">Очистить поле</string>
@@ -43,12 +38,4 @@
 	<string name="fit_width">По ширине</string>
 	<string name="next_page">Следующая страница</string>
     <string name="pages_count">Страниц: %1$d</string>
-    <string name="see_all">Показать все</string>
-    <string name="pinned_folders_empty_title">Держите папки под рукой</string>
-    <string name="pinned_folders_empty_desc">Закреплённые папки отображаются здесь.</string>
-    <string name="tags_manage">Изменить теги</string>
-    <string name="tag_section_empty">Пока ни у одного документа нет этого тега</string>
-    <string name="favorites">Избранное</string>
-    <string name="filters_no_matches">Этим фильтрам не соответствует ни один документ</string>
-    <string name="filters_clear">Сбросить фильтры</string>
 </resources>

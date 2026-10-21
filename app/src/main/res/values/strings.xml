@@ -17,19 +17,14 @@
 
     <string name="file_size">File size</string>
     <string name="page_count">Page count</string>
-    <string name="no_scanned_documents">No scanned documents</string>
-    <string name="error_loading_docs">Error loading documents</string>
 
-    <string name="doc_scan_new">Scan new document</string>
     <string name="doc_scan_error">An error has occurred during the scan</string>
-    <string name="doc_scan_to_see_document_list">Scan your first document to see it here.</string>
     <string name="scan_cancelled">Scan process cancelled</string>
 
     <!-- ════════════════════════════════════════════════
          DOCUMENT — Save / Export
          ════════════════════════════════════════════════ -->
     <string name="doc_save">Save document</string>
-    <string name="doc_saved_successfully">The document has been saved successfully</string>
     <string name="doc_save_error_with_reason">An error occurred while saving the document: %1$s</string>
     <string name="doc_saving_cancelled">The saving process has been cancelled</string>
 
@@ -67,12 +62,4 @@
     <string name="page_of">%1$s of %2$s</string>
     <string name="pages_count">%1$d pages</string>
 
-    <string name="see_all">See all</string>
-    <string name="pinned_folders_empty_title">Keep your folders at hand</string>
-    <string name="pinned_folders_empty_desc">Pinned folders show here.</string>
-    <string name="tags_manage">Edit tags</string>
-    <string name="tag_section_empty">No documents have this tag yet</string>
-    <string name="favorites">Favorites</string>
-    <string name="filters_no_matches">No documents match these filters</string>
-    <string name="filters_clear">Clear filters</string>
 </resources>

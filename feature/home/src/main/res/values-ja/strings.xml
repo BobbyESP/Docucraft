@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="doc_scan_to_see_document_list">ドキュメントをスキャンすると、ここに一覧表示されます。</string>
+    <string name="doc_saved_successfully">ドキュメントが正常に保存されました</string>
+    <string name="no_scanned_documents">スキャンされたドキュメントはありません</string>
+    <string name="error_loading_docs">ドキュメントのロードエラー</string>
+    <string name="doc_scan_new">新しいドキュメントをスキャン</string>
+    <string name="see_all">すべて表示</string>
+    <string name="pinned_folders_empty_title">フォルダをすぐ手の届くところに</string>
+    <string name="pinned_folders_empty_desc">固定したフォルダがここに表示されます。</string>
+    <string name="tags_manage">タグを編集</string>
+    <string name="tag_section_empty">このタグが付いたドキュメントはまだありません</string>
+    <string name="favorites">お気に入り</string>
+    <string name="filters_no_matches">これらのフィルターに一致するドキュメントはありません</string>
+    <string name="filters_clear">フィルターをクリア</string>
+</resources>

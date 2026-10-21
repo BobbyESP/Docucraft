@@ -13,16 +13,11 @@
     <string name="off">Aus</string>
     <string name="doc_delete_error">Beim Löschen des Dokuments ist ein Fehler aufgetreten</string>
     <string name="app_tagline">Scannen, ordnen und lesen Sie Ihre Dokumente. Alles auf Ihrem Gerät.</string>
-    <string name="error_loading_docs">Fehler beim Laden der Dokumente</string>
-    <string name="doc_scan_to_see_document_list">Scannen Sie Ihre Dokumente, um sie hier aufgelistet zu sehen.</string>
     <string name="doc_saving_cancelled">Der Speichervorgang wurde abgebrochen</string>
     <string name="doc_scan_error">Beim Scannen ist ein Fehler aufgetreten</string>
     <string name="issue_opening_doc_viewer">Beim Öffnen des Dokumentenviewers ist ein Problem aufgetreten</string>
     <string name="results">Ergebnisse</string>
-    <string name="doc_scan_new">Neues Dokument scannen</string>
-    <string name="doc_saved_successfully">Das Dokument wurde erfolgreich gespeichert</string>
     <string name="page_count">Seitenanzahl</string>
-    <string name="no_scanned_documents">Keine gescannten Dokumente</string>
     <string name="home">Startseite</string>
     <string name="filter">Filtern</string>
     <string name="retry">Wiederholen</string>
@@ -43,12 +38,4 @@
 	<string name="previous_page">Vorherige Seite</string>
 	<string name="next_page">Nächste Seite</string>
     <string name="pages_count">%1$d Seiten</string>
-    <string name="see_all">Alle anzeigen</string>
-    <string name="pinned_folders_empty_title">Ordner griffbereit halten</string>
-    <string name="pinned_folders_empty_desc">Angeheftete Ordner erscheinen hier.</string>
-    <string name="tags_manage">Tags bearbeiten</string>
-    <string name="tag_section_empty">Noch kein Dokument hat dieses Tag</string>
-    <string name="favorites">Favoriten</string>
-    <string name="filters_no_matches">Kein Dokument passt zu diesen Filtern</string>
-    <string name="filters_clear">Filter löschen</string>
 </resources>

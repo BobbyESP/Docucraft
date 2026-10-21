@@ -3,23 +3,18 @@
 
     <string name="retry">재시도</string>
     <string name="doc_save">문서 저장</string>
-    <string name="doc_scan_new">새 문서 스캔</string>
     <string name="off">꺼짐</string>
     <string name="page_count">페이지 수</string>
-    <string name="doc_scan_to_see_document_list">문서를 스캔하여 여기에 목록으로 표시하십시오.</string>
     <string name="filter">필터</string>
     <string name="search">검색</string>
     <string name="follow_system">시스템 설정 따르기</string>
     <string name="doc_share">문서 공유</string>
-    <string name="error_loading_docs">문서 로딩 오류</string>
-    <string name="doc_saved_successfully">문서가 성공적으로 저장되었습니다.</string>
     <string name="doc_delete_warning_message">기기 및 앱 데이터베이스에서 %1$s을(를) 삭제하려고 합니다.\n\n이 문서는 %2$s 페이지이며 크기는 %3$s입니다.\n\n정말로 삭제하시겠습니까?</string>
     <string name="doc_scan_error">스캔 중 오류가 발생했습니다.</string>
     <string name="issue_opening_doc_viewer">문서 뷰어를 여는 데 문제가 발생했습니다.</string>
     <string name="home">홈</string>
     <string name="doc_delete_error">문서 삭제 중 오류가 발생했습니다.</string>
     <string name="scan_cancelled">스캔 프로세스가 취소되었습니다.</string>
-    <string name="no_scanned_documents">스캔한 문서가 없습니다.</string>
     <string name="doc_save_error_with_reason">문서 저장 중 오류가 발생했습니다: %1$s</string>
     <string name="doc_saving_cancelled">저장 프로세스가 취소되었습니다.</string>
     <string name="results">결과</string>
@@ -43,12 +38,4 @@
 	<string name="previous_page">이전 페이지</string>
 	<string name="fit_width">너비에 맞춤</string>
     <string name="pages_count">%1$d페이지</string>
-    <string name="see_all">모두 보기</string>
-    <string name="pinned_folders_empty_title">폴더를 가까이에 두세요</string>
-    <string name="pinned_folders_empty_desc">고정한 폴더가 여기에 표시됩니다.</string>
-    <string name="tags_manage">태그 수정</string>
-    <string name="tag_section_empty">아직 이 태그가 있는 문서가 없습니다</string>
-    <string name="favorites">즐겨찾기</string>
-    <string name="filters_no_matches">이 필터와 일치하는 문서가 없습니다</string>
-    <string name="filters_clear">필터 지우기</string>
 </resources>

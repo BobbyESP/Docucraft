@@ -3,18 +3,14 @@
 
     <string name="filter">筛选</string>
     <string name="doc_save_error_with_reason">保存文档时发生错误: %1$s</string>
-    <string name="no_scanned_documents">没有扫描的文档</string>
     <string name="on">开启</string>
-    <string name="doc_scan_new">扫描新文档</string>
     <string name="follow_system">跟随系统</string>
     <string name="doc_delete_error">删除文档时发生错误</string>
     <string name="doc_scan_error">扫描时发生错误</string>
-    <string name="doc_scan_to_see_document_list">扫描您的文档，以便在此处查看列表。</string>
     <string name="off">关闭</string>
     <string name="doc_save">保存文档</string>
     <string name="doc_open_in_viewer">在查看器中打开文档</string>
     <string name="scan_cancelled">扫描过程已取消</string>
-    <string name="error_loading_docs">加载文档出错</string>
     <string name="app_tagline">扫描、整理和阅读您的文档。一切都在您的设备上完成。</string>
     <string name="search">搜索</string>
     <string name="issue_opening_doc_viewer">尝试打开文档查看器时出现问题</string>
@@ -26,7 +22,6 @@
     <string name="file_size">文件大小</string>
     <string name="page_count">页数</string>
     <string name="home">主页</string>
-    <string name="doc_saved_successfully">文档已成功保存</string>
     <string name="exit_search">退出搜索</string>
     <string name="doc_share">分享文档</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
@@ -43,12 +38,4 @@
 	<string name="fit_proportional">比例</string>
 	<string name="zoom_reset">重置缩放</string>
     <string name="pages_count">%1$d 页</string>
-    <string name="see_all">查看全部</string>
-    <string name="pinned_folders_empty_title">让文件夹触手可及</string>
-    <string name="pinned_folders_empty_desc">固定的文件夹会显示在这里。</string>
-    <string name="tags_manage">编辑标签</string>
-    <string name="tag_section_empty">还没有文档使用此标签</string>
-    <string name="favorites">收藏</string>
-    <string name="filters_no_matches">没有符合这些筛选条件的文档</string>
-    <string name="filters_clear">清除筛选</string>
 </resources>
