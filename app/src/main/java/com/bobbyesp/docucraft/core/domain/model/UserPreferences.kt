@@ -3,10 +3,9 @@
  */
 package com.bobbyesp.docucraft.core.domain.model
 
-import androidx.compose.runtime.Immutable
-import com.bobbyesp.docucraft.core.presentation.theme.DEFAULT_SEED_COLOR
+/** The seed color of the generated theme, until the user picks one. */
+const val DEFAULT_SEED_COLOR = 0xFF6200EE.toInt()
 
-@Immutable
 data class UserPreferences(
     val themeConfig: ThemeConfig = ThemeConfig.FOLLOW_SYSTEM,
     val useDynamicColoring: Boolean = true,

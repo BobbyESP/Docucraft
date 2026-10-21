@@ -50,7 +50,6 @@ class SonnerNotificationServiceImpl(private val coroutineScope: CoroutineScope) 
             Toast(
                 id = notification.id,
                 message = displayMessage,
-                icon = notification.icon,
                 action =
                     notification.action?.let { action ->
                         TextToastAction(

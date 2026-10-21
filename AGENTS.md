@@ -63,10 +63,9 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 
 ### Layers
 
-- **Feature domains are plain Kotlin.** `feature/*/domain` imports no Android, no Compose and no
-  data layer. Locations are `ContentRef` or URI strings, never `android.net.Uri`. Two known
-  exceptions, in `core/domain`: `UserPreferences` and `InAppNotification` carry Compose types
-  (stabilization phase 4, pending).
+- **Domains are plain Kotlin.** `core/domain` and `feature/*/domain` import no Android, no Compose
+  and no data layer. Locations are `ContentRef` or URI strings, never `android.net.Uri`. A domain
+  model Compose should treat as stable is listed in `compose_stability_main.conf`, not annotated.
 - **Business logic is a use case** in `feature/<feature>/domain/usecase`, registered in that
   feature's DI module. For the scanner that is `ScannedDocumentModule.kt`; for the viewer,
   `PdfViewerModule.kt`.

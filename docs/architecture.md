@@ -37,9 +37,9 @@ data           port implementations: Room, DataStore, files, platform APIs, othe
 
 - **The domain is plain Kotlin.** It imports no Android, no Compose and no data layer. That keeps
   every rule testable on the JVM. A location is a `ContentRef` (a URI as a string), never an
-  `android.net.Uri`, which cannot even be built in a plain JVM test. Two classes in `core/domain`
-  still carry Compose types (`UserPreferences`, `InAppNotification`); moving them out is part of the
-  preferences stabilization, still pending.
+  `android.net.Uri`, which cannot even be built in a plain JVM test. A model the UI needs Compose
+  to treat as stable (`UserPreferences`, `InAppNotification`) is listed in the Compose compiler's
+  stability configuration instead of carrying `@Immutable`.
 - **Anything the framework does goes behind a port**: an interface in the domain, implemented in
   data. Examples: `DocumentStorage`, `DocumentThumbnails`, `SearchIndex`, `DocumentSharer`,
   `DocumentExporter`, `DocumentOpener`, `DocumentPrinter`, `LinkOpener`, `PageContentProvider`,
