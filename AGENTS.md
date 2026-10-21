@@ -182,7 +182,7 @@ A new Koin module is registered in `App.kt`, in `appModules`.
   `RecentDocumentsWidgetViews`) and inflated in `WidgetViewsTest`, on API 24 too: a layout a
   launcher refuses is found nowhere else before a home screen.
 - **A widget that shows the library** lists `WidgetDocument`s from `ObserveWidgetDocumentsUseCase`,
-  and its receiver is listed in the `HomeScreenWidgets` binding (`ScannedDocumentModule`) so that
+  and its receiver is listed in the `HomeScreenWidgets` binding (`WidgetsModule`) so that
   `KeepWidgetsCurrentUseCase` has it drawn again when the library changes.
 
 ### PDF viewer and engine

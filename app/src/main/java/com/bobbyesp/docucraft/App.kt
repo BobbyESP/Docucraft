@@ -23,6 +23,7 @@ import com.bobbyesp.docucraft.feature.docscanner.di.organizationViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.scanReviewViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.scannedDocumentsDatabaseModule
 import com.bobbyesp.docucraft.feature.docscanner.di.searchViewModels
+import com.bobbyesp.docucraft.feature.docscanner.di.widgetsModule
 import com.bobbyesp.docucraft.feature.docscanner.domain.maintenance.LibraryMaintenance
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.KeepWidgetsCurrentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ResumeTextIndexingUseCase
@@ -54,6 +55,7 @@ internal val appModules =
         organizationViewModels,
         binViewModels,
         scanReviewViewModels,
+        widgetsModule,
         pdfViewerModule,
         pageContentModule,
         analyticsModule,

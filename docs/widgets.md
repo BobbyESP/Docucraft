@@ -97,7 +97,7 @@ library changes. Three pieces do that, and none of them knows what any widget lo
 - **`HomeScreenWidgets`** is the port it asks. `AppWidgetHomeScreenWidgets` sends each receiver of
   a widget that shows the library the same update broadcast the system sends, so a widget is drawn
   by one piece of code whoever asks. It does nothing when no such widget is placed. The receivers
-  are listed where it is bound, in `ScannedDocumentModule`.
+  are listed where it is bound, in `WidgetsModule`.
 
 ## The recent documents widget
 
