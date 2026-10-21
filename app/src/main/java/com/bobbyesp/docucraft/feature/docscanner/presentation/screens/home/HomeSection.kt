@@ -19,12 +19,6 @@ import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.docscanner.navigation.ManageTags
 import com.bobbyesp.docucraft.feature.docscanner.navigation.ReviewScan
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.pane.NoDocumentOpenPane
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.bin.binSection
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.foldersSection
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.documentActionsSection
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.review.scanReviewSection
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.documentSearchSection
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.tags.tagsSection
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 
 /**
@@ -66,11 +60,4 @@ fun EntryProviderScope<NavKey>.homeSection(
             actionsInTopBar = !LocalPaneContext.current.isSolePane,
         )
     }
-
-    documentSearchSection(navigator, selectedDocumentId)
-    documentActionsSection(navigator)
-    foldersSection(navigator, selectedDocumentId)
-    tagsSection(navigator)
-    binSection(navigator)
-    scanReviewSection(navigator)
 }

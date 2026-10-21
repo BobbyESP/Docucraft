@@ -10,6 +10,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -19,7 +20,13 @@ import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsSect
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.docscanner.navigation.LibraryEntryRequestNavigation
 import com.bobbyesp.docucraft.feature.docscanner.navigation.ScanRequestNavigation
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.bin.binSection
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.foldersSection
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.documentActionsSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.homeSection
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.review.scanReviewSection
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.documentSearchSection
+import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.tags.tagsSection
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
 
@@ -67,14 +74,28 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
         sceneStrategies = sceneStrategies,
         modifier = modifier,
         entryProvider =
-            entryProvider {
-                homeSection(navigator, selectedDocumentId = openDocumentId)
-
-                pdfViewerSection(navigator)
-
-                settingsSection(navigator)
-            },
+            entryProvider { docucraftSections(navigator, openDocumentId = openDocumentId) },
     )
+}
+
+/**
+ * Every destination of the app's stack, from the features that own them. The one list of them,
+ * which the store's screenshots draw the app with too.
+ *
+ * @param openDocumentId The document showing in the detail pane, which the lists mark as selected.
+ */
+fun EntryProviderScope<NavKey>.docucraftSections(navigator: Navigator, openDocumentId: String?) {
+    homeSection(navigator, selectedDocumentId = openDocumentId)
+    documentSearchSection(navigator, selectedDocumentId = openDocumentId)
+    documentActionsSection(navigator)
+    foldersSection(navigator, selectedDocumentId = openDocumentId)
+    tagsSection(navigator)
+    binSection(navigator)
+    scanReviewSection(navigator)
+
+    pdfViewerSection(navigator)
+
+    settingsSection(navigator)
 }
 
 /**

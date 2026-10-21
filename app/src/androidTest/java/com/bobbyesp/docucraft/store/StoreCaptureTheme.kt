@@ -33,15 +33,13 @@ import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.presentation.common.LocalSettingsRepository
 import com.bobbyesp.docucraft.core.presentation.navigation.DocucraftNavDisplay
+import com.bobbyesp.docucraft.core.presentation.navigation.docucraftSections
 import com.bobbyesp.docucraft.core.presentation.navigation.openDocumentId
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.rememberOverlaySceneStrategy
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.sharingTheWindow
 import com.bobbyesp.docucraft.core.presentation.navigation.rememberNavigator
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsSection
 import com.bobbyesp.docucraft.core.presentation.theme.createTypography
 import com.bobbyesp.docucraft.core.presentation.theme.toFontFamily
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.homeSection
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
 import com.skydoves.landscapist.coil.LocalCoilImageLoader
 import org.koin.core.Koin
 
@@ -234,9 +232,7 @@ internal fun StoreCaptureApp(stack: List<NavKey>) {
         sceneStrategies = sceneStrategies,
         entryProvider =
             entryProvider {
-                homeSection(navigator, selectedDocumentId = backStack.openDocumentId())
-                pdfViewerSection(navigator)
-                settingsSection(navigator)
+                docucraftSections(navigator, openDocumentId = backStack.openDocumentId())
             },
     )
 }

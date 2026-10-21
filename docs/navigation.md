@@ -15,8 +15,9 @@ One back stack, one Navigation 3 `NavDisplay`, typed keys. Code:
   - Back, including the predictive gesture, pops it.
   - The stack is only ever exited at Home, so back closes an open document, never the app.
 - **Features contribute entries and say where they want to go. Nothing else.**
-  - Each registers its destinations in `entryProvider` (`homeSection`, `pdfViewerSection`,
-    `settingsSection`).
+  - Each registers its own destinations in a section (`homeSection`, `foldersSection`,
+    `pdfViewerSection`…), and only its own: no feature registers another's. `docucraftSections`, in
+    `DocucraftApp.kt`, is the one list of them, which the store's screenshots use too.
   - Each receives a `Navigator`. The shell does not know the shape of the graph, and a feature
     never reads or reorders the stack.
 - **`Navigator`**:
