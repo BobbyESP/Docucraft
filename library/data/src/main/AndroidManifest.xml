@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
         <!-- A FileProvider that names a shared document as the catalogue does, not by its file. -->
@@ -12,23 +11,6 @@
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/filepathsprovider" />
-        </provider>
-
-        <!--
-            WorkManager is not started with the process. Its startup initializer runs before the app
-            does and a failure in it ends the process before any screen: on a device whose system
-            lacks a method the version says it has, that was a crash on every launch. It starts the
-            first time it is asked for instead (see the app's App and WorkManagerGateway).
-        -->
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="${applicationId}.androidx-startup"
-            android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="androidx.work.WorkManagerInitializer"
-                android:value="androidx.startup"
-                tools:node="remove" />
         </provider>
     </application>
 
