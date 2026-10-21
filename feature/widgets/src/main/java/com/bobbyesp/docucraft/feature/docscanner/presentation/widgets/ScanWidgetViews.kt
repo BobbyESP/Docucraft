@@ -5,7 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.widgets
 
 import android.content.Context
 import android.widget.RemoteViews
-import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.feature.widgets.R
 
 /**
  * What the scan widget sends the launcher for one of its layouts.

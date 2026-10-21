@@ -32,8 +32,6 @@
 	<string name="field_required">このフィールドは必須です</string>
 	<string name="clear_field">フィールドをクリア</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
-	<string name="widget_scan_subtitle">タップしてスキャンを開始</string>
-	<string name="widget_scan_title">ドキュメントをスキャン</string>
 	<string name="next_page">次のページ</string>
 	<string name="page_input_label">ページ</string>
 	<string name="page_of">%2$sページ中%1$sページ</string>
@@ -53,6 +51,4 @@
     <string name="favorites">お気に入り</string>
     <string name="filters_no_matches">これらのフィルターに一致するドキュメントはありません</string>
     <string name="filters_clear">フィルターをクリア</string>
-    <string name="widget_recents_description">最近のドキュメントをワンタップで</string>
-    <string name="widget_recents_empty">ドキュメントはここに表示されます</string>
 </resources>

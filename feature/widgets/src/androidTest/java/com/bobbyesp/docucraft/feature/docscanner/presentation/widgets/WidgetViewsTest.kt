@@ -14,10 +14,10 @@ import android.widget.RemoteViews
 import android.widget.TextView
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentThumbnail
 import com.bobbyesp.docucraft.feature.docscanner.domain.widgets.WidgetDocument
+import com.bobbyesp.docucraft.feature.widgets.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

@@ -32,8 +32,6 @@
 	<string name="field_required">Это поле обязательно для заполнения</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="clear_field">Очистить поле</string>
-	<string name="widget_scan_subtitle">Нажмите, чтобы начать сканирование</string>
-	<string name="widget_scan_title">Сканировать документ</string>
 	<string name="fit_proportional">Пропорционально</string>
 	<string name="previous_page">Предыдущая страница</string>
 	<string name="page_navigation">Навигация по страницам</string>
@@ -53,6 +51,4 @@
     <string name="favorites">Избранное</string>
     <string name="filters_no_matches">Этим фильтрам не соответствует ни один документ</string>
     <string name="filters_clear">Сбросить фильтры</string>
-    <string name="widget_recents_description">Последние документы — в одно касание</string>
-    <string name="widget_recents_empty">Здесь появятся ваши документы</string>
 </resources>

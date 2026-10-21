@@ -8,9 +8,9 @@ import android.graphics.Bitmap
 import android.text.format.DateUtils
 import android.view.View
 import android.widget.RemoteViews
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.feature.docscanner.domain.widgets.WidgetDocument
+import com.bobbyesp.docucraft.feature.widgets.R
 
 /**
  * What the recent-documents widget sends the launcher for the documents it has room for.

@@ -32,8 +32,6 @@
 	<string name="field_required">هذا الحقل مطلوب</string>
 	<string name="clear_field">مسح الحقل</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
-	<string name="widget_scan_title">مسح المستند ضوئيًا</string>
-	<string name="widget_scan_subtitle">انقر لبدء المسح الضوئي</string>
 	<string name="fit_proportional">تناسبي</string>
 	<string name="fit_height">احتواء الارتفاع</string>
 	<string name="previous_page">الصفحة السابقة</string>
@@ -53,6 +51,4 @@
     <string name="favorites">المفضَّلة</string>
     <string name="filters_no_matches">لا توجد مستندات تطابق عوامل التصفية هذه</string>
     <string name="filters_clear">مسح عوامل التصفية</string>
-    <string name="widget_recents_description">أحدث مستنداتك على بُعد نقرة واحدة</string>
-    <string name="widget_recents_empty">ستظهر مستنداتك هنا</string>
 </resources>

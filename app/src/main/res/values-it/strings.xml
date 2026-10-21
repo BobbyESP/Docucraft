@@ -32,8 +32,6 @@
 	<string name="field_required">Questo campo è obbligatorio</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="clear_field">Cancella campo</string>
-	<string name="widget_scan_title">Scansiona documento</string>
-	<string name="widget_scan_subtitle">Tocca per iniziare la scansione</string>
 	<string name="fit_height">Adatta all\'altezza</string>
 	<string name="fit_proportional">Proporzionale</string>
 	<string name="previous_page">Pagina precedente</string>
@@ -53,6 +51,4 @@
     <string name="favorites">Preferiti</string>
     <string name="filters_no_matches">Nessun documento corrisponde a questi filtri</string>
     <string name="filters_clear">Cancella filtri</string>
-    <string name="widget_recents_description">I tuoi ultimi documenti, a portata di tocco</string>
-    <string name="widget_recents_empty">I tuoi documenti appariranno qui</string>
 </resources>

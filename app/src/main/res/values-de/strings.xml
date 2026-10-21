@@ -32,8 +32,6 @@
 	<string name="clear_field">Feld leeren</string>
 	<string name="field_required">Dieses Feld ist erforderlich</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
-	<string name="widget_scan_title">Dokument scannen</string>
-	<string name="widget_scan_subtitle">Zum Scannen tippen</string>
 	<string name="page_of">%1$s von %2$s</string>
 	<string name="page_navigation">Seitennavigation</string>
 	<string name="fit_height">Höhe anpassen</string>
@@ -53,6 +51,4 @@
     <string name="favorites">Favoriten</string>
     <string name="filters_no_matches">Kein Dokument passt zu diesen Filtern</string>
     <string name="filters_clear">Filter löschen</string>
-    <string name="widget_recents_description">Ihre neuesten Dokumente, nur einen Fingertipp entfernt</string>
-    <string name="widget_recents_empty">Ihre Dokumente erscheinen hier</string>
 </resources>

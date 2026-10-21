@@ -32,8 +32,6 @@
 	<string name="clear_field">필드 지우기</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="field_required">필수 입력 항목입니다</string>
-	<string name="widget_scan_title">문서 스캔</string>
-	<string name="widget_scan_subtitle">스캔을 시작하려면 누르세요</string>
 	<string name="page_of">%2$s 중 %1$s</string>
 	<string name="fit_height">높이에 맞춤</string>
 	<string name="page_navigation">페이지 탐색</string>
@@ -53,6 +51,4 @@
     <string name="favorites">즐겨찾기</string>
     <string name="filters_no_matches">이 필터와 일치하는 문서가 없습니다</string>
     <string name="filters_clear">필터 지우기</string>
-    <string name="widget_recents_description">최근 문서를 한 번의 탭으로</string>
-    <string name="widget_recents_empty">문서가 여기에 표시됩니다</string>
 </resources>

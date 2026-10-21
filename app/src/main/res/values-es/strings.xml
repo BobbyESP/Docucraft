@@ -31,8 +31,6 @@
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="clear_field">Borrar campo</string>
 	<string name="field_required">Este campo es obligatorio</string>
-	<string name="widget_scan_subtitle">Toca para empezar a escanear</string>
-	<string name="widget_scan_title">Escanear documento</string>
 	<string name="next_page">Página siguiente</string>
 	<string name="page_of">%1$s de %2$s</string>
 	<string name="previous_page">Página anterior</string>
@@ -54,6 +52,4 @@
     <string name="filters_no_matches">Ningún documento coincide con estos filtros</string>
     <string name="filters_clear">Quitar filtros</string>
     <string name="pages_count">%1$d páginas</string>
-    <string name="widget_recents_description">Tus últimos documentos, a un toque</string>
-    <string name="widget_recents_empty">Tus documentos aparecerán aquí</string>
 </resources>

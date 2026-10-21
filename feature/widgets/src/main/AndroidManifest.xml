@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+            Its name is how the system knows the widgets people have already placed: renaming this
+            class or changing its package removes them from their home screens. Which module it is
+            in does not matter.
+        -->
+        <receiver
+            android:name="com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.ScanDocumentWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_scan_title">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/scan_document_widget_info" />
+        </receiver>
+
+        <!-- As above: its name is the identity of the widgets people have placed. -->
+        <receiver
+            android:name="com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.RecentDocumentsWidgetReceiver"
+            android:exported="true"
+            android:label="@string/recents">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.LOCALE_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/recent_documents_widget_info" />
+        </receiver>
+    </application>
+
+</manifest>

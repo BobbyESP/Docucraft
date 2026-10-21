@@ -32,8 +32,6 @@
 	<string name="field_required">Dit veld is verplicht</string>
 	<string name="clear_field">Veld leegmaken</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
-	<string name="widget_scan_title">Document scannen</string>
-	<string name="widget_scan_subtitle">Tik om te beginnen met scannen</string>
 	<string name="fit_page">Aanpassen aan pagina</string>
 	<string name="fit_width">Aanpassen aan breedte</string>
 	<string name="page_of">%1$s van %2$s</string>
@@ -53,6 +51,4 @@
     <string name="favorites">Favorieten</string>
     <string name="filters_no_matches">Geen documenten komen overeen met deze filters</string>
     <string name="filters_clear">Filters wissen</string>
-    <string name="widget_recents_description">Uw nieuwste documenten, één tik verwijderd</string>
-    <string name="widget_recents_empty">Uw documenten verschijnen hier</string>
 </resources>
