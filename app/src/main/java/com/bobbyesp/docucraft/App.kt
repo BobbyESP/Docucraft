@@ -14,10 +14,15 @@ import com.bobbyesp.docucraft.core.di.analyticsModule
 import com.bobbyesp.docucraft.core.di.commonModule
 import com.bobbyesp.docucraft.core.di.notificationsServiceModule
 import com.bobbyesp.docucraft.core.di.preferencesModule
+import com.bobbyesp.docucraft.feature.docscanner.di.binViewModels
+import com.bobbyesp.docucraft.feature.docscanner.di.documentActionsViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerDataModule
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerModule
-import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerViewModels
+import com.bobbyesp.docucraft.feature.docscanner.di.homeViewModels
+import com.bobbyesp.docucraft.feature.docscanner.di.organizationViewModels
+import com.bobbyesp.docucraft.feature.docscanner.di.scanReviewViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.scannedDocumentsDatabaseModule
+import com.bobbyesp.docucraft.feature.docscanner.di.searchViewModels
 import com.bobbyesp.docucraft.feature.docscanner.domain.maintenance.LibraryMaintenance
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.KeepWidgetsCurrentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ResumeTextIndexingUseCase
@@ -43,7 +48,12 @@ internal val appModules =
         scannedDocumentsDatabaseModule,
         documentScannerDataModule,
         documentScannerModule,
-        documentScannerViewModels,
+        homeViewModels,
+        searchViewModels,
+        documentActionsViewModels,
+        organizationViewModels,
+        binViewModels,
+        scanReviewViewModels,
         pdfViewerModule,
         pageContentModule,
         analyticsModule,
