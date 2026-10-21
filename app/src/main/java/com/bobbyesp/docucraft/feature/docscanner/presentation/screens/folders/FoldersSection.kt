@@ -30,7 +30,7 @@ import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderContents
 import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderEditor
 import com.bobbyesp.docucraft.feature.docscanner.navigation.MoveToFolder
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.ShowMessages
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.NoDocumentOpenPane
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.pane.NoDocumentOpenPane
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel

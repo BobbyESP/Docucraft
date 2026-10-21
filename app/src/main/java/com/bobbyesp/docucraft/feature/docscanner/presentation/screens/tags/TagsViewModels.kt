@@ -15,7 +15,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.repository.TagsRepositor
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ArrangeHomeSectionsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveTagUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.TagDocumentByNameUseCase
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.NameError
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.NameError
 import kotlinx.coroutines.flow.combine
 
 // ---------------- The tags of one document ----------------

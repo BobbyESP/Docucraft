@@ -15,7 +15,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.bobbyesp.docucraft.R
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.NameError
 
 /**
  * The field a folder or a tag is named in. What is wrong with the name is said under it, in place:
@@ -63,3 +62,9 @@ fun NameField(
 }
 
 private const val NameMaxLength = 40
+
+/** Why a name was not taken. Each is something the user typed, so each is said beside the field. */
+enum class NameError {
+    Empty,
+    Taken,
+}

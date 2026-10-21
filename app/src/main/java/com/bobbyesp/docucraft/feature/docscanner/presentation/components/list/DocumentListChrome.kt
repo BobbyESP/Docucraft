@@ -51,7 +51,6 @@ import com.bobbyesp.docucraft.core.presentation.common.ScrollHeadingTracker
 import com.bobbyesp.docucraft.core.presentation.components.FrostedMenuGroup
 import com.bobbyesp.docucraft.core.presentation.components.HaloDropdownMenuPopup
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.label
 import dev.chrisbanes.haze.HazeState
 
 /*

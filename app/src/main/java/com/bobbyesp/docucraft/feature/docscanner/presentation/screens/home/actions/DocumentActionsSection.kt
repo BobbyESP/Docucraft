@@ -30,6 +30,7 @@ import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentTags
 import com.bobbyesp.docucraft.feature.docscanner.navigation.EditDocument
 import com.bobbyesp.docucraft.feature.docscanner.navigation.MoveToFolder
 import com.bobbyesp.docucraft.feature.docscanner.navigation.ReviewScan
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.details.EditDocumentUiState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsContent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.LinkedDocumentActionsContent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.DeleteDocumentDialog

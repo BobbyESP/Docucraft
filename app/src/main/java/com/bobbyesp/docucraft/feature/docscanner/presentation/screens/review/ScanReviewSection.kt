@@ -18,7 +18,7 @@ import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.S
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentTags
 import com.bobbyesp.docucraft.feature.docscanner.navigation.MoveToFolder
 import com.bobbyesp.docucraft.feature.docscanner.navigation.ReviewScan
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.EditDocumentUiState
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.details.EditDocumentUiState
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf

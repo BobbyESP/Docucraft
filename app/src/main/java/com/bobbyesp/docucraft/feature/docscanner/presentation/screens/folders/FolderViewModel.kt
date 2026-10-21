@@ -14,6 +14,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.LabelColor
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.FolderChange
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.FoldersRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveFolderUseCase
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.NameError
 
 sealed interface FolderIntent {
     /** Create the folder, or change it, as the form now says. */
@@ -37,12 +38,6 @@ sealed interface FolderEffect {
 
     /** The folder is gone, so every overlay standing on it must go too. */
     data object CloseAll : FolderEffect
-}
-
-/** Why a name was not taken. Each is something the user typed, so each is said beside the field. */
-enum class NameError {
-    Empty,
-    Taken,
 }
 
 /**

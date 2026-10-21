@@ -11,7 +11,7 @@ import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.SharedElementMotion
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentSearch
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.NoDocumentOpenPane
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.pane.NoDocumentOpenPane
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 
 /**

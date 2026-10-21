@@ -86,11 +86,11 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.Tag
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.folderIcon
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.labelColor
 import com.bobbyesp.docucraft.feature.docscanner.domain.suggestions.DocumentSuggestions
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.details.EditDocumentDetailsContent
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.details.EditDocumentUiState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderBadge
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.TagDot
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions.EditDocumentUiState
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.dialogs.EditDocumentDetailsContent
 import com.bobbyesp.docucraft.feature.shared.presentation.DocumentHeroCard
 import com.bobbyesp.docucraft.feature.shared.presentation.DocumentHeroFact
 import dev.chrisbanes.haze.HazeState

@@ -61,6 +61,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organiz
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FormSectionLabel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FormSpacer
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.LabelColorPicker
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.NameError
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.NameField
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.folderSummary
 

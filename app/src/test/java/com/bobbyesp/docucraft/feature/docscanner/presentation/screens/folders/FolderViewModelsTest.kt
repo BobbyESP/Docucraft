@@ -13,6 +13,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.FolderDepth
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveNotFoundDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ProcessDocumentsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveFolderUseCase
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.NameError
 import com.bobbyesp.docucraft.feature.docscanner.testDocument
 import com.bobbyesp.docucraft.feature.docscanner.testFolder
 import io.mockk.mockk

@@ -10,7 +10,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.model.Tag
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ArrangeHomeSectionsUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveTagUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.TagDocumentByNameUseCase
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.NameError
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.NameError
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

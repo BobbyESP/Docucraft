@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
@@ -30,11 +28,9 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.union
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -54,7 +50,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,7 +75,6 @@ import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.isDestinationSettled
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.sharedBoundsAcrossDestinations
-import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.presentation.theme.blurHalo
@@ -88,77 +82,12 @@ import com.bobbyesp.docucraft.core.presentation.theme.frosted
 import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SearchResult
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.search.SearchBarElement
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.blur.HazeBlurStyle
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import org.koin.androidx.compose.koinViewModel
-
-/**
- * Both ends of the search bar's morph: Home's button and this screen's field. One key and one
- * shape, so the container that travels between them is recognisably the same one.
- */
-private object SearchBarElement {
-    const val KEY = "document-search-bar"
-    val Shape = CircleShape
-    val Height = 56.dp
-
-    /** Frosted on both ends too, so the container that travels does not change material halfway. */
-    @Composable
-    @ReadOnlyComposable
-    fun frostedStyle(): HazeBlurStyle =
-        DocucraftBlurDefaults.surfaceStyle(MaterialTheme.colorScheme.surfaceContainerHigh)
-}
-
-/**
- * Home's way into search: looks like the search bar it becomes, and is not one. Typing happens on
- * the search screen, which this grows into.
- *
- * Kept at the bottom beside the scan button, where the thumb already is, and floating over the list
- * like it. Frosted rather than shadowed: the documents scrolling beneath show through it, blurred.
- * What lifts it is the blur halo its caller draws around it and the scan button together; where
- * there is none, the shadow it used to have.
- *
- * @param hazeState Where the content it floats over is recorded.
- */
-@Composable
-fun DocumentSearchBarButton(
-    onClick: () -> Unit,
-    hazeState: HazeState,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        onClick = onClick,
-        modifier =
-            modifier
-                .sharedBoundsAcrossDestinations(SearchBarElement.KEY, SearchBarElement.Shape)
-                .height(SearchBarElement.Height)
-                .frosted(
-                    state = hazeState,
-                    style = SearchBarElement.frostedStyle(),
-                    shape = SearchBarElement.Shape,
-                ),
-        shape = SearchBarElement.Shape,
-        color = Color.Transparent,
-        shadowElevation = if (DocucraftBlurDefaults.isHaloSupported) 0.dp else 6.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(imageVector = Icons.Rounded.Search, contentDescription = null)
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = stringResource(R.string.search_documents),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
 
 @Composable
 fun DocumentSearchScreen(
@@ -481,18 +410,6 @@ private fun DocumentSearchHintPreview() {
             onBack = {},
             onOpenDocument = {},
             onOpenDocumentActions = {},
-        )
-    }
-}
-
-@PreviewLightDark
-@Composable
-private fun DocumentSearchBarButtonPreview() {
-    DocucraftTheme {
-        DocumentSearchBarButton(
-            onClick = {},
-            hazeState = rememberHazeState(),
-            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

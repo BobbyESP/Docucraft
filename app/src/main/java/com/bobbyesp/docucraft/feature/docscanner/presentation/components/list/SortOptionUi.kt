@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home
+package com.bobbyesp.docucraft.feature.docscanner.presentation.components.list
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource

@@ -90,10 +90,10 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.components.list.re
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FormSectionLabel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FormSpacer
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.LabelColorPicker
+import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.NameError
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.NameField
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.TagDot
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.TagFilterChip
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.NameError
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 
