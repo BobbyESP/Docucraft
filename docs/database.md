@@ -62,7 +62,7 @@ no `RENAME COLUMN`, and no `WITH` inside a trigger.
 
 ## Migrations
 
-In `DocumentsDatabaseMigrations.kt`, with the schemas exported to `app/schemas/`. A schema change
+In `DocumentsDatabaseMigrations.kt`, with the schemas exported to `library/data/schemas/`. A schema change
 means: bump the version, add the migration, and commit the new schema JSON.
 
 - **There is no destructive fallback.** A version nothing migrates from stops the app rather than

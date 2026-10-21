@@ -303,7 +303,7 @@ A new Koin module is registered in `App.kt`, in `appModules`.
     but the bin, it is gone.
   - `DocumentsDatabase` is currently version 5, in the file `scanned_pdfs.db`. Migrations are in
     `DocumentsDatabaseMigrations.kt`. Build it with `DocumentsDatabase.builder`, in tests too.
-  - Schemas are exported to `app/schemas/`. A schema change means: bump the version, add a
+  - Schemas are exported to `library/data/schemas/`. A schema change means: bump the version, add a
     migration, and commit the new schema JSON.
   - **Never a destructive fallback.** A migration keeps every document and its uuid, and only
     touches the database: it moves no files.

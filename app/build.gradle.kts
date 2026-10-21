@@ -4,7 +4,6 @@
 plugins {
     id("docucraft.android.application")
     id("docucraft.android.compose")
-    id("docucraft.android.room")
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.google.gms)
@@ -74,10 +73,9 @@ composeCompiler {
     )
 }
 
-ksp { arg("KOIN_CONFIG_CHECK", "true") }
-
 dependencies {
     // Modules split out of the app
+    implementation(project(":library:data"))
     testImplementation(project(":library:testing"))
     implementation(project(":library:domain"))
     implementation(project(":core:ui"))
@@ -108,8 +106,7 @@ dependencies {
     implementation(libs.sonner)
     implementation(libs.bundles.haze)
 
-    // Storage (Room itself comes with `docucraft.android.room`)
-    implementation(libs.room.paging)
+    // Storage
     implementation(libs.datastore.preferences)
 
     // Background work: reading the text of documents
@@ -148,6 +145,8 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
     androidTestImplementation(libs.androidx.test.ext.junit)
+    // The device tests build the catalogue themselves (DocumentsDatabase.builder).
+    androidTestImplementation(libs.room.runtime)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 
