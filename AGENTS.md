@@ -14,17 +14,15 @@ This file is the map and the rules. How each subsystem works, and why, is in
 ```
 :app                                the shell: App, MainActivity, the one back stack, the engines' bindings
  ├─ :feature:<name>                 a feature's screens, ViewModels, its own domain and data if any, its DI
- │   └─ :feature:<name>:api          the keys other features open it with (only where some feature does)
  ├─ :library:{domain,data,ui}        the catalogue: its rules, Room and files, the UI several features share
- ├─ :core:{domain,data,designsystem,navigation,ui}
+ ├─ :core:{domain,data,designsystem,navigation,ui}   :core:navigation also holds the keys features open each other by
  └─ engines: :composepdf, :scanner-api/-mlkit, :document-content-api/-platform, :ocr-mlkit
 ```
 
 | Module | What it is | Rule |
 |---|---|---|
 | `:app` | The shell: `App`, `MainActivity`, `DocucraftApp` (the back stack and `docucraftSections`), the requests from outside the UI, and the engines' bindings (`DocumentScannerModule`, `PageContentModule`). | Depends on everything; nothing depends on it. The only module that sees the engines' implementations. |
-| `:feature:home`, `:feature:search`, `:feature:organization` (folders, tags), `:feature:bin`, `:feature:scan` (the review of a scan), `:feature:document-actions`, `:feature:viewer`, `:feature:settings`, `:feature:widgets` | One feature each: its screens, ViewModels and Koin module; the viewer and the widgets also hold their own domain and data. | Depends on `:library:*` (never `:library:data`), `:core:*` (never `:core:data`) and other features' `:api`, **never on another feature**. |
-| `:feature:<name>:api` | The navigation keys other features open that feature with. Only where some feature does: viewer, search, organization, bin, scan, document-actions, settings. | Keys only, plain `@Serializable` `NavKey`s. |
+| `:feature:home`, `:feature:search`, `:feature:organization` (folders, tags), `:feature:bin`, `:feature:scan` (the review of a scan), `:feature:document-actions`, `:feature:pdfviewer`, `:feature:settings`, `:feature:widgets` | One feature each: its screens, ViewModels and Koin module; the viewer and the widgets also hold their own domain and data. | Depends on `:library:*` (never `:library:data`) and `:core:*` (never `:core:data`), **never on another feature**: it opens another by a key of `:core:navigation`. |
 | `:library:domain` | The catalogue's models, ports and use cases, which the scanner's screens and the viewer share. | Plain Kotlin (JVM module). |
 | `:library:data` | Room and its schemas (`library/data/schemas/`), files, thumbnails, the search index, text indexing, the bin's upkeep. | Only `:app` depends on it: features reach it through the domain's ports. |
 | `:library:ui` | UI several library features draw: a document's card, folder and tag badges, the details form, the search bar's button. | |
@@ -32,7 +30,7 @@ This file is the map and the rules. How each subsystem works, and why, is in
 | `:core:domain` | `SettingsRepository`, `StringProvider`, notifications and analytics ports, preferences models. | Plain Kotlin (JVM module). |
 | `:core:data` | DataStore preferences, Firebase analytics. | Only `:app` and `:library:data` depend on it. |
 | `:core:designsystem` | The theme, blur, the shared components, fonts, and the strings used across modules. | Knows no feature and no navigation. |
-| `:core:navigation` | `Navigator`, the display, overlay and pane strategies, transitions. | |
+| `:core:navigation` | `Navigator`, the display, overlay and pane strategies, transitions, and the keys features open each other by (`keys/`). | Keys are plain `@Serializable` `NavKey`s, with uuids at most. |
 | `:core:ui` | `BaseViewModel` and its events, composition locals, in-app notifications, `MainViewModel`. | |
 | `:composepdf` | The PDF engine: rendering, layout, gestures. Public API in `com.composepdf`, internals in `com.composepdf.internal`. | Generic. It knows pages, pixels and fingers, **never** text or links. |
 | `:scanner-api` | The scanning contract (`DocumentScanner`, `ScanRequest`, `ScanOutcome`, `ContentRef`…). | Plain Kotlin, zero dependencies. |
@@ -41,10 +39,16 @@ This file is the map and the rules. How each subsystem works, and why, is in
 | `:document-content-platform` | The PDF's own text layer, through the platform's content APIs (API 35+). | The only module that uses those APIs. |
 | `:ocr-mlkit` | ML Kit's text recognition, as a `PageContentProvider`. | ML Kit is an `implementation` dependency, so no ML Kit type reaches any other module. |
 
-**Files kept their packages when they moved into modules**, so a package does not name its module:
-`feature.docscanner.*` is spread over the library and its features. Some class names are stored
-outside the code (the widget receivers, `IndexDocumentWorker`, the activities, the Room schema
-folder), and renaming them breaks installed apps. A new file goes in the package of its neighbors.
+**A module's code lives under its namespace**: `com.bobbyesp.docucraft` plus the module's path
+(`core.designsystem`, `library.data`, `feature.home`, `feature.documentactions`…), then the layer
+packages. Engines keep their own roots (`com.composepdf`, `com.bobbyesp.scanner`,
+`com.bobbyesp.documentcontent`, `com.bobbyesp.ocr`).
+
+**Four classes are the exception, and never move or rename**, because the system stores their
+names: the widget receivers (`ScanDocumentWidgetReceiver`, `RecentDocumentsWidgetReceiver`: the
+widgets people have placed) and the workers (`IndexDocumentWorker`, `LibraryMaintenanceWorker`: the
+work WorkManager has queued). They stay in `feature.docscanner.*`. The activities need no exception:
+`MainActivity` is in the app's root package and `PdfViewerActivity` in `:feature:pdfviewer`'s.
 
 Build setup:
 - SDKs and JVM target: `build-logic/convention/src/main/kotlin/ProjectConfig.kt`. Currently
@@ -60,13 +64,13 @@ Build setup:
 
 ## 2. Where things live
 
-Every module keeps the layer packages it came with: `domain/` (models, ports, use cases), `data/`
+Inside its namespace, a module is split by layer: `domain/` (models, ports, use cases), `data/`
 (implementations of the ports), `presentation/` (ViewModels, screens, components), `di/` (Koin
-modules) and `navigation/` (keys).
+modules) and `navigation/` (keys only that feature opens).
 
 - **A feature's ViewModels are bound in its own Koin module** (`homeViewModels`,
   `searchViewModels`, `settingsViewModels`, `pdfViewerModule`…), a library's ports in
-  `ScannedDocumentModule` (`:library:data`), and app-wide services in `core/di/CoreModules.kt`
+  `ScannedDocumentModule` (`:library:data`), and app-wide services in `di/CoreModules.kt`
   (`:app`). Every Koin module is registered in `App.kt`, in `appModules`.
 - **Every destination is registered in `docucraftSections`** (`DocucraftApp.kt`, `:app`). A feature
   registers only its own destinations, in its section; none registers another's.
@@ -103,7 +107,7 @@ modules) and `navigation/` (keys).
 
 ### ViewModels
 
-- Screens use MVI on `core/util/viewModel/BaseViewModel<Intent, State, Effect>`:
+- Screens use MVI on `core/ui/viewmodel/BaseViewModel<Intent, State, Effect>`:
   - `state` is a `StateFlow`;
   - `effects` are commands for whoever is on screen *now*, and are **dropped** if nobody listens;
   - `defaultEvents` are messages for the user, and are **buffered** until shown.
@@ -118,19 +122,18 @@ modules) and `navigation/` (keys).
 
 - **One back stack, one Navigation 3 `NavDisplay`**: `DocucraftApp.kt` (`:app`), rendered by
   `DocucraftNavDisplay.kt` (`:core:navigation`). `PdfViewerActivity` reuses that display with its own stack.
-- **Keys are typed and `@Serializable`, and each feature owns its own.** A key another feature
-  opens lives in the owner's `:api` module, and a feature opens another only through it:
-  - `:feature:search:api` `DocumentSearchKey.kt`, `:feature:document-actions:api`
-    `DocumentActionKeys.kt`, `:feature:scan:api` `ScanKeys.kt`, `:feature:organization:api`
-    `OrganizationKeys.kt`, `:feature:bin:api` `BinKeys.kt`, `:feature:settings:api`
-    `SettingsKeys.kt`, `:feature:viewer:api` `PdfViewerKey.kt`.
+- **Keys are typed and `@Serializable`.** A key one feature opens another by lives in
+  `:core:navigation`, in `core/navigation/keys/`, one file per feature that owns it
+  (`DocumentSearchKey.kt`, `DocumentActionKeys.kt`, `ScanKeys.kt`, `OrganizationKeys.kt`,
+  `BinKeys.kt`, `SettingsKeys.kt`, `PdfViewerKey.kt`). That is how a feature opens another
+  without depending on it. Such a key carries uuids at most, never a feature's types.
   - Keys nobody else opens stay in the feature: `HomeKey.kt` (`:feature:home`, opened by the
-    shell) and the viewer's own `ViewerKeys.kt`.
+    shell) and the viewer's own `ViewerKeys.kt`, which carry the viewer's own types.
 - **Features never touch the stack.** They get a `Navigator`
-  (`core/presentation/navigation/Navigator.kt`: `goTo`, `goBack`, `goBackWhile`,
+  (`core/navigation/Navigator.kt`: `goTo`, `goBack`, `goBackWhile`,
   `removeDestination`).
 - **A sheet or dialog the user can reach, leave and come back to is a destination on that same
-  stack.** Give it a key, and let `OverlaySceneStrategy` (`core/presentation/navigation/overlay/`)
+  stack.** Give it a key, and let `OverlaySceneStrategy` (`core/navigation/overlay/`)
   choose its container. **Never put a `NavDisplay` inside a sheet or dialog.** A nested display is
   only for a self-contained flow that is discarded whole and survives nothing. This is the decision
   that caused the most bugs in this codebase; see
@@ -141,19 +144,19 @@ modules) and `navigation/` (keys).
   - `LocalPaneContext` says whether it shares the window.
   - `LocalOverlayContext` says which container it landed in, and whether there is room to stack.
   - Reading `currentWindowAdaptiveInfo` or the device orientation from a screen is a bug.
-- **Transitions live in one file**: `core/presentation/navigation/motion/NavigationMotion.kt`.
+- **Transitions live in one file**: `core/navigation/motion/NavigationMotion.kt`.
   Screens contribute nothing to them. A destination reached through a shared element uses
   `SharedElementMotion` from that file, and marks the element with
   `Modifier.sharedBoundsAcrossDestinations`. One that interrupts what the user was doing, rather
   than following from it, uses `RisingMotion`.
 - **App-wide services reach the UI as composition locals**, from
-  `core/presentation/common/CompositionLocals.kt`: `LocalDarkTheme`, `LocalSettingsRepository`,
+  `core/ui/common/CompositionLocals.kt`: `LocalDarkTheme`, `LocalSettingsRepository`,
   `LocalNotificationsService` and `LocalAnalyticsHelper`.
 
 ### Theme
 
 - **A theme change moves the color scheme itself, in a fixed number of steps**
-  (`core/presentation/theme/ThemeTransition.kt`). Every scheme given to Material recomposes
+  (`core/designsystem/theme/ThemeTransition.kt`). Every scheme given to Material recomposes
   everything under the theme, so the steps are the cost: never pass `animate = true` to
   MaterialKolor, or animate `ColorScheme` frame by frame. Never fade a picture of the screen
   either: it stands still over whatever moves under it.
@@ -185,14 +188,14 @@ modules) and `navigation/` (keys).
   `ScannedDocumentModule`. None is bound yet. One that is runs only on text the document's pages
   gave, never on a scan whose text recognition is off, and proposes: the user applies.
 - **The engine is swapped at one line**: the `DocumentScanner` binding in
-  `feature/docscanner/di/DocumentScannerModule.kt`.
+  `di/DocumentScannerModule.kt` (`:app`).
 - ML Kit options are derived from a `ScanRequest` inside `MlKitDocumentScanner`.
 - `:app` sees only the contract and `ActivityResultHostImpl`, the host `MainActivity` lends its
   launcher to.
 
 ### Widgets
 
-- **Widgets are platform `RemoteViews`, never Glance** (`feature/docscanner/presentation/widgets`,
+- **Widgets are platform `RemoteViews`, never Glance** (`feature/widgets/presentation`,
   layouts in `res/layout/widget_*`): the scan widget and the recent documents widget. Glance draws through WorkManager, which some devices cannot
   start, and brings components of its own that crash outside the app's control. See
   [docs/widgets.md](docs/widgets.md).
@@ -222,7 +225,7 @@ modules) and `navigation/` (keys).
 
   `PdfViewerState` is the public state, with `hitTest`, `panBy`, `animateScrollTo`,
   `pageRectInViewer` and more. Keep new engine API generic in the same way.
-- **Page content is bound in one file**, `feature/pdfviewer/di/PageContentModule.kt`: the two
+- **Page content is bound in one file**, `di/PageContentModule.kt` (`:app`): the two
   readers by name (`EMBEDDED_TEXT`, `TEXT_RECOGNITION`), what the viewer reads with,
   `LayeredPageContentProvider(embedded, CatalogueRecognizedTextProvider)`, and the reading of a
   document to search it (`IndexDocumentTextUseCase`), which takes both readers.
@@ -314,7 +317,7 @@ modules) and `navigation/` (keys).
   - The provider is `CatalogueFileProvider`, which names a document as the catalogue does. It
     serves `documents/` (files named `<uuid>.pdf`) and `scans/pdf/` (documents saved before files
     were named by uuid, which are never moved).
-- **Firebase Analytics and Crashlytics** are on (`core/di/AnalyticsModule.kt`,
+- **Firebase Analytics and Crashlytics** are on (`core/data/di/AnalyticsModule.kt`,
   `google-services.json`).
 - **Room** (the model, its rules and decisions DB1–DB11 are in
   [docs/database.md](docs/database.md)):

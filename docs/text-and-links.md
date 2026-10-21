@@ -7,7 +7,9 @@
 How the viewer reads what is on a page, lets the reader select and copy it, and follows links
 safely. Code:
 - `:document-content-api`: the contract and the pure selection logic;
-- `app/.../feature/pdfviewer`: the providers, the ViewModel and the UI.
+- `:document-content-platform` and `:ocr-mlkit`: the two readers of a page;
+- `:library:data` (`content/`): the layered provider and the text recognized for the catalogue;
+- `:feature:pdfviewer`: the ViewModel and the UI.
 
 ## The contract (`:document-content-api`)
 

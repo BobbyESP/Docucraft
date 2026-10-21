@@ -4,8 +4,8 @@
 
 # Navigation
 
-One back stack, one Navigation 3 `NavDisplay`, typed keys. Code:
-`app/.../core/presentation/navigation/` and each feature's `navigation/` package.
+One back stack, one Navigation 3 `NavDisplay`, typed keys. Code: `:core:navigation`, the shell's
+`navigation/` package in `:app`, and each feature's section.
 
 ## The model
 
@@ -32,22 +32,24 @@ One back stack, one Navigation 3 `NavDisplay`, typed keys. Code:
   `removeDestination` is for a destination whose subject is gone, such as a deleted document. It
   is not `goBack`: wanting yourself gone is not the same as popping whatever is on top, which need
   not be you. Confusing the two once closed the wrong screen.
-- **Keys are `@Serializable` and owned by their feature**:
+- **Keys are `@Serializable`.** A key one feature opens another by lives in `:core:navigation`
+  (`core/navigation/keys/`), so the opener depends on keys, never on screens; a key only its own
+  feature opens stays in that feature:
 
-  | Module | File | Keys |
-  |---|---|---|
-  | `:feature:home` | `HomeKey.kt` | `Home` |
-  | `:feature:search:api` | `DocumentSearchKey.kt` | `DocumentSearch` |
-  | `:feature:document-actions:api` | `DocumentActionKeys.kt` | `DocumentActions`, `EditDocument`, `DeleteDocument` |
-  | `:feature:scan:api` | `ScanKeys.kt` | `ReviewScan` |
-  | `:feature:bin:api` | `BinKeys.kt` | `Bin`, `BinDocumentActions`, `DeleteForever`, `EmptyBin` |
-  | `:feature:organization:api` | `OrganizationKeys.kt` | `FolderContents`, `FolderEditor`, `FolderActions`, `DeleteFolder`, `MoveToFolder`, `DocumentTags`, `ManageTags`, `TagEditor`, `DeleteTag` |
-  | `:feature:viewer:api` | `PdfViewerKey.kt` | `PdfViewer`, the one other features open |
-  | `:feature:viewer` | `ViewerKeys.kt` | `ExternalPdfViewer`, `PdfDocumentDetails`, `SaveCopyToLibrary`, `GoToPage` |
-  | `:feature:settings:api` | `SettingsKeys.kt` | `Settings`, `AppearanceSettings`, `DocumentViewerSettings`, `AboutSettings` |
+  | Module | File | Keys | Destination of |
+  |---|---|---|---|
+  | `:feature:home` | `HomeKey.kt` | `Home` | `:feature:home` |
+  | `:core:navigation` | `DocumentSearchKey.kt` | `DocumentSearch` | `:feature:search` |
+  | `:core:navigation` | `DocumentActionKeys.kt` | `DocumentActions`, `EditDocument`, `DeleteDocument` | `:feature:document-actions` |
+  | `:core:navigation` | `ScanKeys.kt` | `ReviewScan` | `:feature:scan` |
+  | `:core:navigation` | `BinKeys.kt` | `Bin`, `BinDocumentActions`, `DeleteForever`, `EmptyBin` | `:feature:bin` |
+  | `:core:navigation` | `OrganizationKeys.kt` | `FolderContents`, `FolderEditor`, `FolderActions`, `DeleteFolder`, `MoveToFolder`, `DocumentTags`, `ManageTags`, `TagEditor`, `DeleteTag` | `:feature:organization` |
+  | `:core:navigation` | `PdfViewerKey.kt` | `PdfViewer`, the one other features open | `:feature:pdfviewer` |
+  | `:feature:pdfviewer` | `ViewerKeys.kt` | `ExternalPdfViewer`, `PdfDocumentDetails`, `SaveCopyToLibrary`, `GoToPage` | `:feature:pdfviewer` |
+  | `:core:navigation` | `SettingsKeys.kt` | `Settings`, `AppearanceSettings`, `DocumentViewerSettings`, `AboutSettings` | `:feature:settings` |
 
-  A key another feature opens lives in its owner's `:api` module, so the opener depends on keys,
-  never on screens.
+  A key in `:core:navigation` carries uuids at most. The viewer's own keys carry its
+  `ViewerDocumentRef`, which is why they stay with it.
 
 - **`DocucraftNavDisplay` is the one way a back stack is rendered.** Both `MainActivity`'s shell
   and `PdfViewerActivity`'s own stack use it, so every entry keeps its state and moves the same

@@ -4,8 +4,9 @@
 
 # Home-screen widgets
 
-The app's widgets live in `:feature:widgets`, package `feature/docscanner/presentation/widgets`. There are two: the scan widget,
-which starts a scan from the home screen, and the recent documents widget, which lists the documents
+The app's widgets live in `:feature:widgets`, package `feature.widgets`; their two receivers keep
+the package they were placed with (`feature.docscanner.presentation.widgets`, see below). There are
+two: the scan widget, which starts a scan from the home screen, and the recent documents widget, which lists the documents
 used last.
 
 ## How a widget is drawn
