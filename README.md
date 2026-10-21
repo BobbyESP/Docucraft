@@ -153,25 +153,35 @@ Docucraft is local-first: **your documents never leave your device unless you sh
 
 ### Modules
 
-Every SDK sits behind a contract in plain Kotlin, so the scanner and the text recognizer can each be
-replaced by changing one line of dependency injection, and no ML Kit type ever reaches the app.
+The app is a shell over feature modules, which share the library's domain and UI and open each
+other only through small `:api` modules of navigation keys. Domains are plain Kotlin modules, and
+every SDK sits behind a contract, so the scanner and the text recognizer can each be replaced by
+changing one line of dependency injection, and no ML Kit type ever reaches a feature.
 
 ```mermaid
 graph TD
-    app[":app<br/><i>library, UI, navigation, widgets</i>"]
-    composepdf[":composepdf<br/><i>PDF engine: rendering, layout, gestures</i>"]
-    scannerApi[":scanner-api<br/><i>scanning contract</i>"]
-    scannerMlkit[":scanner-mlkit<br/><i>ML Kit document scanner</i>"]
-    contentApi[":document-content-api<br/><i>page text, links, selection logic</i>"]
-    ocrMlkit[":ocr-mlkit<br/><i>ML Kit text recognition</i>"]
+    app[":app<br/><i>shell: activities, back stack, engine bindings</i>"]
+    features[":feature:*<br/><i>home, search, organization, bin, scan,<br/>document-actions, viewer, settings, widgets</i>"]
+    apis[":feature:*:api<br/><i>navigation keys</i>"]
+    library[":library:domain · :library:ui<br/><i>the catalogue's rules and shared UI</i>"]
+    libraryData[":library:data<br/><i>Room, files, search, indexing</i>"]
+    core[":core:domain · :designsystem · :navigation · :ui"]
+    coreData[":core:data<br/><i>preferences, analytics</i>"]
+    composepdf[":composepdf<br/><i>PDF engine</i>"]
+    scanner[":scanner-api ← :scanner-mlkit"]
+    content[":document-content-api ← :document-content-platform, :ocr-mlkit"]
 
-    app --> composepdf
-    app --> scannerApi
-    app --> scannerMlkit
-    app --> contentApi
-    app --> ocrMlkit
-    scannerMlkit -. implements .-> scannerApi
-    ocrMlkit -. implements .-> contentApi
+    app --> features
+    app --> libraryData
+    app --> coreData
+    app --> scanner
+    app --> content
+    features --> apis
+    features --> library
+    features --> core
+    features --> composepdf
+    libraryData --> library
+    library --> core
 ```
 
 ### Documentation
@@ -212,7 +222,7 @@ Then open the project in Android Studio and run it, or from a terminal (on Windo
 |:--|:--|
 | Debug APK | `./gradlew :app:assembleDebug` |
 | Unit tests | `./gradlew testDebugUnitTest` |
-| Instrumented tests | `./gradlew :app:connectedDebugAndroidTest :composepdf:connectedDebugAndroidTest` |
+| Instrumented tests | `./gradlew connectedDebugAndroidTest` |
 | Format | `./gradlew spotlessApply` |
 
 > [!NOTE]

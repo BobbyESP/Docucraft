@@ -17,7 +17,7 @@ navigation/     PdfViewerKey.kt: PdfViewer, the key other features open
 domain/         ViewerDocumentRef, display-settings use cases, details, hand-off ports, links
 data/           platform content provider, Custom Tabs opener, printer, session memory
 presentation/   PdfViewerViewModel, PdfViewerScreen, sections, components
-di/             PdfViewerModule, PageContentModule
+di/             PdfViewerModule (PageContentModule, which chooses the page readers, is the app's)
 ```
 
 - **One ViewModel per open document** (`PdfViewerViewModel`), keyed by a `ViewerDocumentRef`:

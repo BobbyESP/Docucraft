@@ -10,20 +10,43 @@ each subsystem has its own document, listed in the [index](README.md).
 ## Modules
 
 ```
-:app ─────────────┬──> :composepdf               PDF engine (Android library)
-                  ├──> :document-content-api     page text and links, selection (plain Kotlin)
-                  ├──> :scanner-api              scanning contract (plain Kotlin)
-                  └──> :scanner-mlkit ──> :scanner-api
-                                  └──> ML Kit (implementation: hidden from :app)
+:app  the shell ─────────────┬──> :feature:home, :search, :organization, :bin, :scan,
+  │                          │      :document-actions, :viewer, :settings, :widgets
+  │                          │        └──> :feature:<other>:api   keys only, never another feature
+  │                          ├──> :library:ui ──> :library:domain   (plain Kotlin)
+  │                          ├──> :library:data ──> :library:domain, :core:data
+  │                          └──> :core:ui ──> :core:navigation ──> :core:designsystem ──> :core:domain
+  │
+  └──> engines, bound only here: :scanner-mlkit ──> :scanner-api
+                                 :document-content-platform, :ocr-mlkit ──> :document-content-api
+                                 :composepdf
 ```
 
 The module graph enforces what conventions would only ask for:
-- **ML Kit is replaceable.** `:scanner-mlkit` depends on ML Kit as `implementation`, so no ML Kit
-  type can appear in `:app`. Swapping the engine means another module and one line of DI.
-- **Text recognition will slot in the same way.** A future `:ocr-mlkit` would implement
-  `:document-content-api` without the viewer knowing.
+- **Domains are plain Kotlin.** `:core:domain` and `:library:domain` are JVM modules: an Android
+  or Compose import there does not compile, so every rule they hold is testable on the JVM.
+- **Screens do not reach storage.** Only the app depends on `:library:data` and `:core:data`; a
+  feature sees the catalogue through the ports of `:library:domain`, bound by the app's DI.
+- **Features do not know each other.** A feature that opens another depends on its `:api` module,
+  which holds the keys and nothing else. Two features that open each other (Home and folders, by
+  way of the document actions) would otherwise be a cycle Gradle refuses to build. A change inside
+  a feature recompiles that feature and the app, nothing else.
+- **Engines are replaceable.** `:scanner-mlkit` and `:ocr-mlkit` depend on ML Kit as
+  `implementation`, and `:document-content-platform` is the only module that uses the platform's
+  content APIs. Only the app names them, in `DocumentScannerModule` and `PageContentModule`:
+  swapping an engine means another module and one line of DI.
 - **The engine stays generic.** `:composepdf` knows nothing of the app: no text, no links, no
   Koin. The viewer extends it through public hooks ([pdf-engine.md](pdf-engine.md)).
+
+Files kept their packages when they moved into modules, so `feature.docscanner.*` is spread over
+the library and the features made from it. Some class names are stored outside the code: the
+widgets people placed know their receivers by name, WorkManager stores the class of pending work,
+and Room's schemas are filed under the database's. Renaming them would break installed apps, and
+keeping every package unchanged kept that risk out of the split.
+
+The build logic is the included build `build-logic`: one convention plugin per kind of module
+(Android library, Compose, Room, plain Kotlin), so a module's build file names only what is its
+own.
 
 ## Layers inside a feature
 
@@ -82,8 +105,9 @@ against whatever the user is doing by then, is a wrong action.
 
 ## Dependency injection
 
-Koin, started in `App.kt`. Each feature has its own modules in `feature/*/di`, and core services
-have theirs in `core/di`. A new module is added to the list in `App.kt`.
+Koin, started in `App.kt`. Each feature binds its ViewModels in a module of its own, the library
+binds its ports in `:library:data`, and the app binds the app-wide services and the engines. A new
+module is added to the list in `App.kt`.
 
 **Swapping an implementation is always one binding:**
 - the scanner: `DocumentScannerModule.kt`;

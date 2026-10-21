@@ -60,7 +60,7 @@ LayeredPageContentProvider(
 - **`MlKitTextRecognitionProvider`** (`:ocr-mlkit`) reads a page from its image: the page is drawn
   at about 200 dpi on white, recognized on the device with ML Kit, and each word's box is given as
   a fraction of the page. ML Kit is an `implementation` dependency of that module, so none of its
-  types reach `:app`; the engine is swapped at the `TEXT_RECOGNITION` binding.
+  types reach any other module; the engine is swapped at the `TEXT_RECOGNITION` binding.
   - The model is Google Play services'. A page read before it has arrived fails, and is read again
     later.
   - The document is opened for each page with `PdfRenderers.use`, never held: a renderer that is

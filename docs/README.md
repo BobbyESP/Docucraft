@@ -48,6 +48,7 @@ The app has been through a stabilization, one subsystem at a time.
 | Database | Done. The catalogue is on schema version 5, reached by a migration that keeps every document ([database.md](database.md)). Documents the app keeps and documents it only refers to, files named by uuid, ranked search over names and page text ([scanning.md](scanning.md)), Recents and reading position ([pdf-viewer.md](pdf-viewer.md#reading-position)), text recognition on the device, folders, tags and favorites ([organization.md](organization.md)), and a bin with daily upkeep. Still to check on a phone: an upgrade from version 4 with real documents, and recognition below API 35. |
 | Preferences and theme | Done. The theme changes smoothly with the tradeoff of "screenshotting" the app                                                             |
 | Search and filtering | Pending                                                                                                                                    |
+| Modules | Done. The app is a shell over feature, library and core modules ([architecture.md](architecture.md#modules)). |
 | Analytics | Pending                                                                                                                                    |
 
 ## How a subsystem is stabilized

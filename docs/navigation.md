@@ -34,17 +34,20 @@ One back stack, one Navigation 3 `NavDisplay`, typed keys. Code:
   not be you. Confusing the two once closed the wrong screen.
 - **Keys are `@Serializable` and owned by their feature**:
 
-  | File | Keys |
-  |---|---|
-  | `feature/docscanner/navigation/HomeKey.kt` | `Home` |
-  | `feature/docscanner/navigation/DocumentSearchKey.kt` | `DocumentSearch` |
-  | `feature/docscanner/navigation/DocumentActionKeys.kt` | `DocumentActions`, `EditDocument`, `DeleteDocument` |
-  | `feature/docscanner/navigation/ScanKeys.kt` | `ReviewScan` |
-  | `feature/docscanner/navigation/BinKeys.kt` | `Bin`, `BinDocumentActions`, `DeleteForever`, `EmptyBin` |
-  | `feature/docscanner/navigation/OrganizationKeys.kt` | `FolderContents`, `FolderEditor`, `FolderActions`, `DeleteFolder`, `MoveToFolder`, `DocumentTags`, `ManageTags`, `TagEditor`, `DeleteTag` |
-  | `feature/pdfviewer/navigation/PdfViewerKey.kt` | `PdfViewer`, the one other features open |
-  | `feature/pdfviewer/navigation/ViewerKeys.kt` | `ExternalPdfViewer`, `PdfDocumentDetails`, `SaveCopyToLibrary`, `GoToPage` |
-  | `core/.../preferences/navigation/SettingsKeys.kt` | `Settings`, `AppearanceSettings`, `DocumentViewerSettings`, `AboutSettings` |
+  | Module | File | Keys |
+  |---|---|---|
+  | `:feature:home` | `HomeKey.kt` | `Home` |
+  | `:feature:search:api` | `DocumentSearchKey.kt` | `DocumentSearch` |
+  | `:feature:document-actions:api` | `DocumentActionKeys.kt` | `DocumentActions`, `EditDocument`, `DeleteDocument` |
+  | `:feature:scan:api` | `ScanKeys.kt` | `ReviewScan` |
+  | `:feature:bin:api` | `BinKeys.kt` | `Bin`, `BinDocumentActions`, `DeleteForever`, `EmptyBin` |
+  | `:feature:organization:api` | `OrganizationKeys.kt` | `FolderContents`, `FolderEditor`, `FolderActions`, `DeleteFolder`, `MoveToFolder`, `DocumentTags`, `ManageTags`, `TagEditor`, `DeleteTag` |
+  | `:feature:viewer:api` | `PdfViewerKey.kt` | `PdfViewer`, the one other features open |
+  | `:feature:viewer` | `ViewerKeys.kt` | `ExternalPdfViewer`, `PdfDocumentDetails`, `SaveCopyToLibrary`, `GoToPage` |
+  | `:feature:settings:api` | `SettingsKeys.kt` | `Settings`, `AppearanceSettings`, `DocumentViewerSettings`, `AboutSettings` |
+
+  A key another feature opens lives in its owner's `:api` module, so the opener depends on keys,
+  never on screens.
 
 - **`DocucraftNavDisplay` is the one way a back stack is rendered.** Both `MainActivity`'s shell
   and `PdfViewerActivity`'s own stack use it, so every entry keeps its state and moves the same
@@ -148,7 +151,7 @@ A one-shot event is lost when nobody is listening at that moment. It then fires 
 context.
 
 What `MainActivity` can be asked by an Intent is listed in
-`feature/docscanner/navigation/EntryIntents.kt`: `ACTION_SCAN_DOCUMENT`, `ACTION_OPEN_DOCUMENT` (with
+`EntryIntents.kt` (`:feature:widgets`): `ACTION_SCAN_DOCUMENT`, `ACTION_OPEN_DOCUMENT` (with
 the document's uuid) and `ACTION_SEARCH_DOCUMENTS`. The Activity turns each into its standing
 request and does nothing else, because it runs before anything is composed.
 

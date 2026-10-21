@@ -4,7 +4,7 @@
 
 # Home-screen widgets
 
-The app's widgets live in `feature/docscanner/presentation/widgets`. There are two: the scan widget,
+The app's widgets live in `:feature:widgets`, package `feature/docscanner/presentation/widgets`. There are two: the scan widget,
 which starts a scan from the home screen, and the recent documents widget, which lists the documents
 used last.
 
@@ -74,7 +74,7 @@ nothing changing runs no code at all between the moment it is placed and the mom
 ## What a press asks for
 
 A widget asks `MainActivity` with one of the Intents in
-`feature/docscanner/navigation/EntryIntents.kt`: start a scan, open a document, open the search.
+`EntryIntents.kt` (`:feature:widgets`): start a scan, open a document, open the search.
 How each reaches its destination is in
 [navigation.md](navigation.md#requests-from-outside-the-ui). The Activity is exported, so these are
 not only the widgets' to send: none carries more than a document's uuid, which is only ever looked

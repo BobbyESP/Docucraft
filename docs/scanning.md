@@ -62,7 +62,7 @@ still scanning.
   activity restores that flag; `restorePendingLaunch` does not overwrite a result already received.
 
 Swapping the engine means changing the `DocumentScanner` binding in
-`feature/docscanner/di/DocumentScannerModule.kt`.
+`DocumentScannerModule.kt`, in the app: the only module that sees the engine.
 
 ## Entry points
 
@@ -174,8 +174,9 @@ are on screen without scrolling.
   - Rules the tables cannot state are triggers, in `DatabaseTriggers.ALL`. A new database gets
     them when it is created and an old one from the migration, from that same list.
   - Migrations are in `DocumentsDatabaseMigrations.kt`, and schemas are exported to
-    `library/data/schemas/`. A schema change means: bump the version, add the migration, and commit the new
-    schema JSON. There is no destructive fallback: a migration keeps every document and its uuid.
+    `library/data/schemas/`. A schema change means: bump the version, add the migration, and commit
+    the new schema JSON. There is no destructive fallback: a migration keeps every document and its
+    uuid.
 - **Home's list.** `HomeViewModel.observeDocuments` takes the library, or what carries the chosen
   tags (`ObserveLibraryUseCase`), and hands it with the filters to `ProcessDocumentsUseCase`:
   **filter**, then **sort**. What else Home shows, and how the library is organized, is in
