@@ -63,3 +63,17 @@ include(":library:data")
 include(":library:ui")
 
 include(":document-content-platform")
+
+include(":feature:bin:api")
+
+include(":feature:document-actions:api")
+
+include(":feature:search:api")
+
+include(":feature:organization:api")
+
+include(":feature:settings:api")
+
+include(":feature:viewer:api")
+
+include(":feature:scan:api")
