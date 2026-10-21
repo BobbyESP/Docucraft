@@ -37,7 +37,8 @@ One back stack, one Navigation 3 `NavDisplay`, typed keys. Code:
   |---|---|
   | `feature/docscanner/navigation/HomeKey.kt` | `Home` |
   | `feature/docscanner/navigation/DocumentSearchKey.kt` | `DocumentSearch` |
-  | `feature/docscanner/navigation/DocumentActionKeys.kt` | `DocumentActions`, `EditDocument`, `DeleteDocument`, `ReviewScan` |
+  | `feature/docscanner/navigation/DocumentActionKeys.kt` | `DocumentActions`, `EditDocument`, `DeleteDocument` |
+  | `feature/docscanner/navigation/ScanKeys.kt` | `ReviewScan` |
   | `feature/docscanner/navigation/BinKeys.kt` | `Bin`, `BinDocumentActions`, `DeleteForever`, `EmptyBin` |
   | `feature/docscanner/navigation/OrganizationKeys.kt` | `FolderContents`, `FolderEditor`, `FolderActions`, `DeleteFolder`, `MoveToFolder`, `DocumentTags`, `ManageTags`, `TagEditor`, `DeleteTag` |
   | `feature/pdfviewer/navigation/PdfViewerKey.kt` | `PdfViewer`, the one other features open |

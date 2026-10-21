@@ -98,7 +98,7 @@ A new Koin module is registered in `App.kt`, in `appModules`.
   rendered by `DocucraftNavDisplay.kt`. `PdfViewerActivity` reuses that display with its own stack.
 - **Keys are typed and `@Serializable`, and each feature owns its own.**
   - Scanner: `feature/docscanner/navigation/HomeKey.kt`, `DocumentSearchKey.kt`,
-    `DocumentActionKeys.kt`, `OrganizationKeys.kt` and `BinKeys.kt`.
+    `DocumentActionKeys.kt`, `ScanKeys.kt`, `OrganizationKeys.kt` and `BinKeys.kt`.
   - Viewer: `feature/pdfviewer/navigation/PdfViewerKey.kt`, the one key other features open, and
     `ViewerKeys.kt`, the viewer's own destinations.
   - Settings: `core/presentation/screens/preferences/navigation/SettingsKeys.kt`.
