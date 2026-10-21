@@ -49,7 +49,6 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.EmptyBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ForgetLinkedDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetDocumentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.GetReadingPositionUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.IndexDocumentTextUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.KeepWidgetsCurrentUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.MoveDocumentToBinUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
@@ -81,8 +80,6 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFi
 import com.bobbyesp.docucraft.feature.docscanner.domain.widgets.HomeScreenWidgets
 import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.RecentDocumentsWidgetReceiver
 import com.bobbyesp.docucraft.feature.docscanner.presentation.widgets.RecentDocumentsWidgetRenderer
-import com.bobbyesp.docucraft.feature.pdfviewer.di.EMBEDDED_TEXT
-import com.bobbyesp.docucraft.feature.pdfviewer.di.TEXT_RECOGNITION
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
@@ -230,15 +227,6 @@ val documentScannerDataModule = module {
             repository = get(),
             indexQueue = get(),
             settings = get(),
-        )
-    }
-    factory {
-        IndexDocumentTextUseCase(
-            documents = get(),
-            pages = get(),
-            storage = get(),
-            embedded = get(named(EMBEDDED_TEXT)),
-            recognized = get(named(TEXT_RECOGNITION)),
         )
     }
     factory { SetDocumentTextRecognitionUseCase(pages = get(), queue = get()) }

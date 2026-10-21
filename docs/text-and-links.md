@@ -34,8 +34,9 @@ PageLink.External(bounds, uri) · PageLink.Internal(bounds, pageIndex, position?
 
 ## Providers
 
-They are bound in `PageContentModule.kt`. The two readers have a name each, `EMBEDDED_TEXT` and
-`TEXT_RECOGNITION`, and the viewer reads with the unnamed one:
+They are bound in `PageContentModule.kt`, and nowhere else. The two readers have a name each,
+`EMBEDDED_TEXT` and `TEXT_RECOGNITION`, known only to that file: reading a document to search it
+(`IndexDocumentTextUseCase`) is bound there too, with both. The viewer reads with the unnamed one:
 
 ```kotlin
 LayeredPageContentProvider(

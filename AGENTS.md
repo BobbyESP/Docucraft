@@ -198,8 +198,9 @@ A new Koin module is registered in `App.kt`, in `appModules`.
   `PdfViewerState` is the public state, with `hitTest`, `panBy`, `animateScrollTo`,
   `pageRectInViewer` and more. Keep new engine API generic in the same way.
 - **Page content is bound in one file**, `feature/pdfviewer/di/PageContentModule.kt`: the two
-  readers by name (`EMBEDDED_TEXT`, `TEXT_RECOGNITION`), and what the viewer reads with,
-  `LayeredPageContentProvider(embedded, CatalogueRecognizedTextProvider)`.
+  readers by name (`EMBEDDED_TEXT`, `TEXT_RECOGNITION`), what the viewer reads with,
+  `LayeredPageContentProvider(embedded, CatalogueRecognizedTextProvider)`, and the reading of a
+  document to search it (`IndexDocumentTextUseCase`), which takes both readers.
   - The recognition engine is swapped at one line: the `TEXT_RECOGNITION` binding.
   - **Text recognition is the user's choice, per document** (`ocr_enabled`). Nothing recognizes a
     page of a document that has it off: not the background reading, not the viewer.
