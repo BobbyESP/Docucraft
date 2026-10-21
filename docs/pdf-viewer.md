@@ -12,7 +12,8 @@ for other apps' PDFs. Code: `app/.../feature/pdfviewer`. It draws with the engin
 ## Structure
 
 ```
-navigation/     PdfViewerKey.kt: PdfViewer, ExternalPdfViewer, PdfDocumentDetails, GoToPage
+navigation/     PdfViewerKey.kt: PdfViewer, the key other features open
+                ViewerKeys.kt: ExternalPdfViewer, PdfDocumentDetails, SaveCopyToLibrary, GoToPage
 domain/         ViewerDocumentRef, display-settings use cases, details, hand-off ports, links
 data/           platform content provider, Custom Tabs opener, printer, session memory
 presentation/   PdfViewerViewModel, PdfViewerScreen, sections, components

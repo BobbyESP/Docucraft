@@ -99,7 +99,8 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 - **Keys are typed and `@Serializable`, and each feature owns its own.**
   - Scanner: `feature/docscanner/navigation/HomeKey.kt`, `DocumentSearchKey.kt`,
     `DocumentActionKeys.kt`, `OrganizationKeys.kt` and `BinKeys.kt`.
-  - Viewer: `feature/pdfviewer/navigation/PdfViewerKey.kt`.
+  - Viewer: `feature/pdfviewer/navigation/PdfViewerKey.kt`, the one key other features open, and
+    `ViewerKeys.kt`, the viewer's own destinations.
   - Settings: `core/presentation/screens/preferences/navigation/SettingsKeys.kt`.
 - **Features never touch the stack.** They get a `Navigator`
   (`core/presentation/navigation/Navigator.kt`: `goTo`, `goBack`, `goBackWhile`,
