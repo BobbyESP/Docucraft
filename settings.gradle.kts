@@ -89,3 +89,5 @@ include(":feature:organization")
 include(":feature:scan")
 
 include(":feature:document-actions")
+
+include(":feature:viewer")

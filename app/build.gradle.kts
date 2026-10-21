@@ -75,6 +75,7 @@ composeCompiler {
 
 dependencies {
     // Modules split out of the app
+    implementation(project(":feature:viewer"))
     implementation(project(":feature:document-actions"))
     implementation(project(":feature:scan"))
     implementation(project(":feature:organization"))

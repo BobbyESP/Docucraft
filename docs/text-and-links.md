@@ -208,8 +208,8 @@ would open outside the app, and back would not return to the document.
   theme, in the app's own task, so back returns to the document. If no browser offers Custom
   Tabs: `ACTION_VIEW`. With nothing at all: "No app can open this link".
 - **Email**: `ACTION_SENDTO`. **Phone**: `ACTION_DIAL`, which types the number and calls nothing.
-- **`<queries>`.** The manifest declares these intents. Since API 30, without them no browser would
-  ever seem to offer Custom Tabs.
+- **`<queries>`.** The viewer's manifest declares these intents. Since API 30, without them no
+  browser would ever seem to offer Custom Tabs.
 
 ### Accessibility
 

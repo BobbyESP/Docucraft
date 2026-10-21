@@ -22,7 +22,6 @@ import androidx.navigation3.runtime.NavKey
 import androidx.test.core.app.ActivityScenario
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
-import com.bobbyesp.docucraft.R as AppR
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentSearch
@@ -32,6 +31,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.settings.ViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
+import com.bobbyesp.docucraft.feature.viewer.R as ViewerR
 import com.bobbyesp.docucraft.test.R
 import java.io.File
 import java.util.Locale
@@ -205,12 +205,12 @@ class StoreCaptureTest(private val language: String) {
             device.waitFor(SampleLibrary.BANK_HOST)
             settle()
             device.tap(SampleLibrary.BANK_HOST)
-            device.waitFor(appStrings.getString(AppR.string.link_open))
+            device.waitFor(appStrings.getString(ViewerR.string.link_open))
             capture("07")
 
             // 08 · The details of a document.
             show("08", Home, PdfViewer(library.contract), PdfDocumentDetails(contract))
-            device.waitFor(appStrings.getString(AppR.string.document_details))
+            device.waitFor(appStrings.getString(ViewerR.string.document_details))
             capture("08")
         }
 
@@ -243,7 +243,7 @@ class StoreCaptureTest(private val language: String) {
          * tall, until some text is taken.
          */
         private fun selectSomeText() {
-            val handle = appStrings.getString(AppR.string.viewer_selection_end_handle)
+            val handle = appStrings.getString(ViewerR.string.viewer_selection_end_handle)
             val size = device.screenSize()
             var start = 0.36f
             while (start < 0.5f) {

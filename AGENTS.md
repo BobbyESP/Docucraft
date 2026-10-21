@@ -314,7 +314,7 @@ A new Koin module is registered in `App.kt`, in `appModules`.
     `RENAME COLUMN`, and no `WITH` inside a trigger.
   - The database keeps paths relative to the files directory, never `FileProvider` URIs or
     absolute paths.
-- **`<queries>` in the manifest** declares which other apps the viewer may look for: Custom Tabs,
+- **`<queries>` in the viewer's manifest** declares which other apps it may look for: Custom Tabs,
   browsers, email, dialler. A new intent to another app needs its entry there, or on API 30+ the app
   will seem not to exist.
 - **Known gaps, so they are not mistaken for regressions:**
