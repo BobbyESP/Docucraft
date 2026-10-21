@@ -59,3 +59,5 @@ include(":library:domain")
 include(":library:testing")
 
 include(":library:data")
+
+include(":library:ui")

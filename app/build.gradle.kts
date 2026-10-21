@@ -75,6 +75,7 @@ composeCompiler {
 
 dependencies {
     // Modules split out of the app
+    implementation(project(":library:ui"))
     implementation(project(":library:data"))
     testImplementation(project(":library:testing"))
     implementation(project(":library:domain"))

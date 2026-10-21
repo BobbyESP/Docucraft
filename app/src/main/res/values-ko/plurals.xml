@@ -1,10 +1,4 @@
 <resources>
-    <plurals name="n_documents">
-        <item quantity="other">문서 %d개</item>
-    </plurals>
-    <plurals name="n_folders">
-        <item quantity="other">폴더 %d개</item>
-    </plurals>
     <plurals name="bin_days_left">
         <item quantity="other">%d일 남음</item>
     </plurals>

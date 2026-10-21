@@ -1,12 +1,4 @@
 <resources>
-    <plurals name="n_documents">
-        <item quantity="one">%d दस्तावेज़</item>
-        <item quantity="other">%d दस्तावेज़</item>
-    </plurals>
-    <plurals name="n_folders">
-        <item quantity="one">%d फ़ोल्डर</item>
-        <item quantity="other">%d फ़ोल्डर</item>
-    </plurals>
     <plurals name="bin_days_left">
         <item quantity="one">%d दिन बाकी</item>
         <item quantity="other">%d दिन बाकी</item>

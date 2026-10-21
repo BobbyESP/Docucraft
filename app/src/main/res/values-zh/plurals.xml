@@ -1,10 +1,4 @@
 <resources>
-    <plurals name="n_documents">
-        <item quantity="other">%d 个文档</item>
-    </plurals>
-    <plurals name="n_folders">
-        <item quantity="other">%d 个文件夹</item>
-    </plurals>
     <plurals name="bin_days_left">
         <item quantity="other">剩余 %d 天</item>
     </plurals>
