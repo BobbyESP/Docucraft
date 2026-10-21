@@ -9,6 +9,7 @@ firebaseCrashlyticsPlugin = "3.0.8"
 
 # AndroidX
 androidxActivity = "1.13.0"
+androidxAnnotation = "1.10.0"
 androidxAppCompat = "1.8.0"
 androidxCore = "1.19.1"
 androidxBrowser = "1.10.0"
@@ -73,6 +74,7 @@ ksp-gradle-plugin = { group = "com.google.devtools.ksp", name = "symbol-processi
 
 # AndroidX
 androidx-activity = { group = "androidx.activity", name = "activity-ktx", version.ref = "androidxActivity" }
+androidx-annotation = { group = "androidx.annotation", name = "annotation", version.ref = "androidxAnnotation" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidxActivity" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidxAppCompat" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCore" }

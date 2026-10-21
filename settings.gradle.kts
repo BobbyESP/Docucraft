@@ -43,3 +43,5 @@ include(":scanner-mlkit")
 include(":document-content-api")
 
 include(":ocr-mlkit")
+
+include(":core:domain")

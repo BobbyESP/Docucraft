@@ -77,6 +77,9 @@ composeCompiler {
 ksp { arg("KOIN_CONFIG_CHECK", "true") }
 
 dependencies {
+    // Modules split out of the app
+    implementation(project(":core:domain"))
+
     // Bundles
     implementation(libs.bundles.androidx.core)
     implementation(libs.bundles.androidx.lifecycle)
