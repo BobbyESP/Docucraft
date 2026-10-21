@@ -4,6 +4,7 @@
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions
 
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
@@ -98,7 +99,7 @@ class DocumentActionsViewModel(
             .onFailure {
                 sendUiEvent(
                     UiEvent.ShowMessage(
-                        stringProvider.get(R.string.issue_sharing_doc),
+                        stringProvider.get(DesignsystemR.string.issue_sharing_doc),
                         NotificationType.Error,
                     )
                 )

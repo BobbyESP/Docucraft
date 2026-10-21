@@ -1,10 +1,4 @@
 <resources>
-    <plurals name="doc_n_pages">
-        <item quantity="one">%d страница</item>
-        <item quantity="few">%d страницы</item>
-        <item quantity="many">%d страниц</item>
-        <item quantity="other">%d страницы</item>
-    </plurals>
     <plurals name="n_documents">
         <item quantity="one">%d документ</item>
         <item quantity="few">%d документа</item>

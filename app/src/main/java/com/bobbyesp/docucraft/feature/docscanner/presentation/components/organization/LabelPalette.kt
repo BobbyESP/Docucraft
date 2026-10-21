@@ -41,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftAccentTheme
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.FolderIcon
@@ -203,7 +204,9 @@ private fun LabelColorThemePreview() {
                                 modifier = Modifier.weight(1f),
                                 style = MaterialTheme.typography.titleMedium,
                             )
-                            Button(onClick = {}) { Text(text = stringResource(R.string.scan)) }
+                            Button(onClick = {}) {
+                                Text(text = stringResource(DesignsystemR.string.scan))
+                            }
                         }
                     }
                 }

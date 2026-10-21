@@ -1,8 +1,4 @@
 <resources>
-    <plurals name="doc_n_pages">
-        <item quantity="one">%d Seite</item>
-        <item quantity="other">%d Seiten</item>
-    </plurals>
     <plurals name="n_documents">
         <item quantity="one">%d Dokument</item>
         <item quantity="other">%d Dokumente</item>

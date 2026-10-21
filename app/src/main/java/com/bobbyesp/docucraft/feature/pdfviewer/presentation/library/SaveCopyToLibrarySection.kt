@@ -30,6 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.LocalOverlayContext
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPresentation
@@ -83,7 +84,7 @@ fun EntryProviderScope<NavKey>.saveCopyToLibrarySection(navigator: Navigator) {
                     },
                     dismissButton = {
                         TextButton(onClick = navigator::goBack) {
-                            Text(stringResource(R.string.cancel))
+                            Text(stringResource(DesignsystemR.string.cancel))
                         }
                     },
                 )
@@ -127,7 +128,7 @@ private fun SaveCopySheet(isSaving: Boolean, onConfirm: () -> Unit, onCancel: ()
             shapes = ButtonDefaults.shapes(),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(stringResource(R.string.cancel))
+            Text(stringResource(DesignsystemR.string.cancel))
         }
     }
 }

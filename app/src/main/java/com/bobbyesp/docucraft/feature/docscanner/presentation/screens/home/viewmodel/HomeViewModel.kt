@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.view
 
 import androidx.lifecycle.SavedStateHandle
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
@@ -402,7 +403,7 @@ class HomeViewModel(
         val message =
             when (error) {
                 is ScanError.Engine -> stringProvider.getError(error.cause)
-                else -> stringProvider.get(R.string.unknown_error)
+                else -> stringProvider.get(DesignsystemR.string.unknown_error)
             }
 
         sendUiEvent(UiEvent.ShowMessage(message, NotificationType.Error))

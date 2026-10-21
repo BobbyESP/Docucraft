@@ -55,6 +55,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
@@ -85,7 +86,7 @@ private object AboutLinks {
 fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier, showBackButton: Boolean = true) {
     val uriHandler = LocalUriHandler.current
     val notifications = LocalNotificationsService.current
-    val noAppMessage = stringResource(R.string.link_no_app)
+    val noAppMessage = stringResource(DesignsystemR.string.link_no_app)
 
     // A device without a browser has nothing to open these with: said, rather than thrown.
     val open = { url: String ->
@@ -139,7 +140,7 @@ fun AboutScreenContent(
                         IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
                             Icon(
                                 Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = stringResource(R.string.back),
+                                contentDescription = stringResource(DesignsystemR.string.back),
                             )
                         }
                     }
@@ -244,7 +245,7 @@ private fun AppHero(modifier: Modifier = Modifier) {
             )
         }
         Text(
-            text = stringResource(R.string.app_name),
+            text = stringResource(DesignsystemR.string.app_name),
             style = MaterialTheme.typography.headlineMediumEmphasized,
         )
         if (versionName != null) {

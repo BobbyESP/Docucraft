@@ -9,6 +9,7 @@ import android.text.format.DateUtils
 import android.view.View
 import android.widget.RemoteViews
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.feature.docscanner.domain.widgets.WidgetDocument
 
 /**
@@ -24,14 +25,17 @@ internal class RecentDocumentsWidgetViews(private val context: Context) {
         RemoteViews(context.packageName, R.layout.widget_recents).apply {
             // Said from here, and not left to the layout: the launcher reads a layout's strings in
             // the language of the system, and the rows are written in the app's.
-            setTextViewText(R.id.widget_recents_title, context.getString(R.string.recents))
+            setTextViewText(
+                R.id.widget_recents_title,
+                context.getString(DesignsystemR.string.recents),
+            )
             setTextViewText(
                 R.id.widget_recents_empty,
                 context.getString(R.string.widget_recents_empty),
             )
             setContentDescription(
                 R.id.widget_recents_search,
-                context.getString(R.string.search_documents),
+                context.getString(DesignsystemR.string.search_documents),
             )
             setContentDescription(
                 R.id.widget_recents_scan,
@@ -79,7 +83,7 @@ internal class RecentDocumentsWidgetViews(private val context: Context) {
             )
         val pages =
             document.pageCount?.let {
-                context.resources.getQuantityString(R.plurals.doc_n_pages, it, it)
+                context.resources.getQuantityString(DesignsystemR.plurals.doc_n_pages, it, it)
             }
         return listOfNotNull(pages, date).joinToString(SEPARATOR)
     }

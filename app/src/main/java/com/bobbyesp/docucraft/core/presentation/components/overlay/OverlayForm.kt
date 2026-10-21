@@ -28,7 +28,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.LocalOverlayContext
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPresentation
 
@@ -53,7 +53,7 @@ fun OverlayForm(
     confirmText: String? = null,
     onConfirm: () -> Unit = {},
     confirmEnabled: Boolean = true,
-    dismissText: String = stringResource(R.string.cancel),
+    dismissText: String = stringResource(DesignsystemR.string.cancel),
     destructive: Boolean = false,
     content: @Composable () -> Unit,
 ) {

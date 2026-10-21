@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.isDestinationSettled
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.sharedBoundsAcrossDestinations
@@ -254,7 +255,7 @@ private fun SearchField(
                 .focusRequester(focusRequester),
         placeholder = {
             Text(
-                text = stringResource(R.string.search_documents),
+                text = stringResource(DesignsystemR.string.search_documents),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -263,7 +264,7 @@ private fun SearchField(
             IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(R.string.back),
+                    contentDescription = stringResource(DesignsystemR.string.back),
                 )
             }
         },

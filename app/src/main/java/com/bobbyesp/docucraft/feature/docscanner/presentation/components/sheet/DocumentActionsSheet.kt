@@ -57,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.divider.AnimatedWavyDivider
 import com.bobbyesp.docucraft.core.presentation.components.divider.defaults.AnimatedWavyDividerDefaults
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
@@ -261,13 +262,13 @@ private fun rememberDocumentActions(
         persistentListOf(
             DocumentAction(
                 icon = Icons.Rounded.SaveAs,
-                title = R.string.save,
+                title = DesignsystemR.string.save,
                 importance = ActionImportance.PRIMARY,
                 action = onSave,
             ),
             DocumentAction(
                 icon = Icons.Rounded.Share,
-                title = R.string.share,
+                title = DesignsystemR.string.share,
                 importance = ActionImportance.PRIMARY,
                 action = onShare,
             ),
@@ -281,19 +282,19 @@ private fun rememberDocumentActions(
             // the document is a favorite.
             DocumentAction(
                 icon = if (isFavorite) Icons.Rounded.Star else Icons.Rounded.StarBorder,
-                title = R.string.favorite,
+                title = DesignsystemR.string.favorite,
                 importance = ActionImportance.ORGANIZE,
                 action = { onFavoriteChange(!isFavorite) },
             ),
             DocumentAction(
                 icon = Icons.AutoMirrored.Rounded.DriveFileMove,
-                title = R.string.move,
+                title = DesignsystemR.string.move,
                 importance = ActionImportance.ORGANIZE,
                 action = onMove,
             ),
             DocumentAction(
                 icon = Icons.AutoMirrored.Rounded.Label,
-                title = R.string.tags,
+                title = DesignsystemR.string.tags,
                 importance = ActionImportance.ORGANIZE,
                 action = onEditTags,
             ),
@@ -303,14 +304,14 @@ private fun rememberDocumentActions(
                 icon = Icons.Rounded.TextFields,
                 title =
                     if (recognizesText) R.string.text_recognition_turn_off
-                    else R.string.text_recognition_turn_on,
+                    else DesignsystemR.string.text_recognition_turn_on,
                 importance = ActionImportance.SECONDARY,
                 fullWidth = true,
                 action = { onTextRecognitionChange(!recognizesText) },
             ),
             DocumentAction(
                 icon = Icons.Rounded.DeleteForever,
-                title = R.string.delete,
+                title = DesignsystemR.string.delete,
                 importance = ActionImportance.DESTRUCTIVE,
                 action = onDelete,
             ),
@@ -404,7 +405,7 @@ private fun DocumentTagsRow(
     val context = LocalContext.current
 
     val pageCountLabel = pageCount?.let {
-        pluralStringResource(id = R.plurals.doc_n_pages, count = it, it)
+        pluralStringResource(id = DesignsystemR.plurals.doc_n_pages, count = it, it)
     }
 
     FlowRow(

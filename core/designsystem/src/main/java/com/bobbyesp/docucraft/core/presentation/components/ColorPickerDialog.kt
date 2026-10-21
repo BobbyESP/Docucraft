@@ -28,7 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

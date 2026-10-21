@@ -48,6 +48,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.model.ViewerDefaults
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
@@ -137,7 +138,7 @@ fun DocumentViewerSettingsContent(
                         IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
                             Icon(
                                 Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = stringResource(R.string.back),
+                                contentDescription = stringResource(DesignsystemR.string.back),
                             )
                         }
                     }
@@ -199,7 +200,7 @@ fun DocumentViewerSettingsContent(
 
             item(key = "night_mode", contentType = "settings_item") {
                 SettingSwitch(
-                    title = stringResource(R.string.night_mode),
+                    title = stringResource(DesignsystemR.string.night_mode),
                     supportingText = stringResource(R.string.night_mode_desc),
                     icon = Icons.Rounded.DarkMode,
                     isChecked = defaults.settings.nightMode,
@@ -237,7 +238,7 @@ private fun FitModeSection(
 ) {
     val fitModes = ViewerFitMode.entries
 
-    SettingsCategory(title = stringResource(R.string.fit_mode), modifier = modifier) {
+    SettingsCategory(title = stringResource(DesignsystemR.string.fit_mode), modifier = modifier) {
         Column(
             modifier = Modifier.selectableGroup(),
             verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
@@ -277,19 +278,19 @@ private fun FitModeSection(
 private val ViewerFitMode.label: Int
     get() =
         when (this) {
-            ViewerFitMode.WIDTH -> R.string.fit_mode_width
-            ViewerFitMode.HEIGHT -> R.string.fit_mode_height
-            ViewerFitMode.BOTH -> R.string.fit_mode_page
-            ViewerFitMode.PROPORTIONAL -> R.string.fit_mode_proportional
+            ViewerFitMode.WIDTH -> DesignsystemR.string.fit_mode_width
+            ViewerFitMode.HEIGHT -> DesignsystemR.string.fit_mode_height
+            ViewerFitMode.BOTH -> DesignsystemR.string.fit_mode_page
+            ViewerFitMode.PROPORTIONAL -> DesignsystemR.string.fit_mode_proportional
         }
 
 @Composable
 private fun ViewerFitMode.icon(): ImageVector =
     when (this) {
-        ViewerFitMode.WIDTH -> ImageVector.vectorResource(R.drawable.fit_page_width)
-        ViewerFitMode.HEIGHT -> ImageVector.vectorResource(R.drawable.fit_page_height)
+        ViewerFitMode.WIDTH -> ImageVector.vectorResource(DesignsystemR.drawable.fit_page_width)
+        ViewerFitMode.HEIGHT -> ImageVector.vectorResource(DesignsystemR.drawable.fit_page_height)
         ViewerFitMode.BOTH -> Icons.Rounded.FitScreen
-        ViewerFitMode.PROPORTIONAL -> ImageVector.vectorResource(R.drawable.fit_page)
+        ViewerFitMode.PROPORTIONAL -> ImageVector.vectorResource(DesignsystemR.drawable.fit_page)
     }
 
 @PreviewLightDark

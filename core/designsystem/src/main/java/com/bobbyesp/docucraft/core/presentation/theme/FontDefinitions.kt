@@ -8,7 +8,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.googlefonts.Font as GoogleFontFile
 import androidx.compose.ui.text.googlefonts.GoogleFont
-import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R
 
 /** The weights the type scale asks for (see [createTypography]). */
 private val TypeScaleWeights =

@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.FrostedMenuGroup
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
@@ -95,7 +96,7 @@ fun PdfViewerTopBar(
         if (showBackButton) {
             TooltipIconButton(
                 icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                label = stringResource(R.string.back),
+                label = stringResource(DesignsystemR.string.back),
                 onClick = onBack,
             )
         }
@@ -114,7 +115,11 @@ fun PdfViewerTopBar(
                 )
             },
             onShare?.let {
-                ViewerAction(Icons.Rounded.Share, stringResource(R.string.share), onClick = it)
+                ViewerAction(
+                    Icons.Rounded.Share,
+                    stringResource(DesignsystemR.string.share),
+                    onClick = it,
+                )
             },
             onPrint?.let {
                 ViewerAction(Icons.Rounded.Print, stringResource(R.string.print), onClick = it)
@@ -200,7 +205,7 @@ private fun ViewerActions(
     Box {
         TooltipIconButton(
             icon = Icons.Rounded.MoreVert,
-            label = stringResource(R.string.more_options),
+            label = stringResource(DesignsystemR.string.more_options),
             onClick = { expanded = true },
         )
 

@@ -6,6 +6,7 @@ package com.bobbyesp.docucraft.feature.docscanner.presentation.components.list
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 
 /**
@@ -16,6 +17,6 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.SortOption
 fun SortOption.Criteria.label(): String =
     when (this) {
         SortOption.Criteria.DATE -> stringResource(R.string.date)
-        SortOption.Criteria.NAME -> stringResource(R.string.name)
+        SortOption.Criteria.NAME -> stringResource(DesignsystemR.string.name)
         SortOption.Criteria.SIZE -> stringResource(R.string.size)
     }

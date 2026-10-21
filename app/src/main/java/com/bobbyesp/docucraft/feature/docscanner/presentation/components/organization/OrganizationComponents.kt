@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Folder
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.FolderIcon
@@ -158,7 +159,7 @@ fun FolderCard(
                     interactionSource = interactionSource,
                     indication = LocalIndication.current,
                     role = Role.Button,
-                    onLongClickLabel = stringResource(R.string.more_options),
+                    onLongClickLabel = stringResource(DesignsystemR.string.more_options),
                     onLongClick = onLongClick,
                     onClick = onClick,
                 )
@@ -208,7 +209,7 @@ fun FolderListItem(
         shapes = shapes,
         modifier = modifier,
         onLongClick = onOpenActions,
-        onLongClickLabel = stringResource(R.string.more_options),
+        onLongClickLabel = stringResource(DesignsystemR.string.more_options),
         verticalAlignment = Alignment.CenterVertically,
         colors =
             ListItemDefaults.segmentedColors(
@@ -232,7 +233,7 @@ fun FolderListItem(
                     IconButton(onClick = onOpenActions, shapes = IconButtonDefaults.shapes()) {
                         Icon(
                             imageVector = Icons.Rounded.MoreVert,
-                            contentDescription = stringResource(R.string.more_options),
+                            contentDescription = stringResource(DesignsystemR.string.more_options),
                         )
                     }
                 }

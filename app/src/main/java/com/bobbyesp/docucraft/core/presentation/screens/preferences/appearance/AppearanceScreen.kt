@@ -71,6 +71,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.model.FontConfig
 import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
 import com.bobbyesp.docucraft.core.domain.model.ThemeConfig
@@ -240,7 +241,7 @@ fun AppearanceScreenContent(
                         IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
                             Icon(
                                 Icons.AutoMirrored.Rounded.ArrowBack,
-                                contentDescription = stringResource(R.string.back),
+                                contentDescription = stringResource(DesignsystemR.string.back),
                             )
                         }
                     }
@@ -407,7 +408,7 @@ private fun CustomColorsSection(
             colors = SettingsItemDefaults.colors(),
         ) {
             Text(
-                text = stringResource(R.string.seed_color),
+                text = stringResource(DesignsystemR.string.seed_color),
                 style = MaterialTheme.typography.bodyLargeEmphasized,
             )
         }
@@ -557,7 +558,7 @@ private fun FontSelectionDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes()) {
-                Text(stringResource(R.string.confirm))
+                Text(stringResource(DesignsystemR.string.confirm))
             }
         },
         title = { Text(stringResource(category.title)) },

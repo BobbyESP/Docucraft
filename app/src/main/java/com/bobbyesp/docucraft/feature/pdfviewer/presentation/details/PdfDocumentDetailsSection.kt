@@ -54,6 +54,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.overlay.OverlayForm
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlaySceneStrategy
@@ -144,7 +145,8 @@ fun PdfDocumentDetailsContent(
                 details.pageCount?.let { pages ->
                     DocumentHeroFact(
                         icon = Icons.Rounded.FileCopy,
-                        text = pluralStringResource(R.plurals.doc_n_pages, pages, pages),
+                        text =
+                            pluralStringResource(DesignsystemR.plurals.doc_n_pages, pages, pages),
                     )
                 }
                 details.sizeBytes?.let { size ->
@@ -156,7 +158,7 @@ fun PdfDocumentDetailsContent(
                 if (library?.isFavorite == true) {
                     DocumentHeroFact(
                         icon = Icons.Rounded.Star,
-                        text = stringResource(R.string.favorite),
+                        text = stringResource(DesignsystemR.string.favorite),
                     )
                 }
             }
@@ -174,8 +176,8 @@ private fun LibraryGroup(library: LibraryDetails) {
     val rows = buildList {
         add(
             DetailRow(
-                label = stringResource(R.string.folder),
-                value = library.folder?.name ?: stringResource(R.string.library),
+                label = stringResource(DesignsystemR.string.folder),
+                value = library.folder?.name ?: stringResource(DesignsystemR.string.library),
                 leading = {
                     FolderBadge(
                         icon = library.folder?.folderIcon ?: FolderIcon.Default,
@@ -188,7 +190,7 @@ private fun LibraryGroup(library: LibraryDetails) {
         if (library.tags.isNotEmpty()) {
             add(
                 DetailRow(
-                    label = stringResource(R.string.tags),
+                    label = stringResource(DesignsystemR.string.tags),
                     icon = Icons.AutoMirrored.Rounded.Label,
                     content = { TagNames(tags = library.tags) },
                 )

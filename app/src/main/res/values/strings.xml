@@ -1,8 +1,4 @@
 <resources>
-    <!-- ════════════════════════════════════════════════
-         APP
-         ════════════════════════════════════════════════ -->
-    <string name="app_name" translatable="false">Docucraft</string>
     <string name="app_tagline">Scan, organize and read your documents. All of it on your device.</string>
 
     <!-- ════════════════════════════════════════════════
@@ -12,20 +8,11 @@
     <string name="follow_system">Follow system</string>
     <string name="on">On</string>
     <string name="off">Off</string>
-    <string name="save">Save</string>
-    <string name="share">Share</string>
-    <string name="delete">Delete</string>
-    <string name="cancel">Cancel</string>
-    <string name="confirm">Confirm</string>
     <string name="retry">Retry</string>
     <string name="search">Search</string>
     <string name="filter">Filter</string>
     <string name="date">Date</string>
-    <string name="name">Name</string>
-    <string name="title">Title</string>
-    <string name="description">Description</string>
     <string name="results">Results</string>
-    <string name="unknown_error">Unknown error</string>
 
     <!-- ═══════════════════════════════════════════════
          SETTINGS
@@ -39,7 +26,6 @@
     <string name="dynamic_coloring">Dynamic coloring</string>
     <string name="dynamic_coloring_desc">Use wallpaper colors for the app theme</string>
     <string name="custom_colors">Custom colors</string>
-    <string name="seed_color">Seed color</string>
     <string name="palette_style">Palette style</string>
     <string name="high_contrast">High contrast</string>
     <string name="high_contrast_desc">Optimized for AMOLED screens</string>
@@ -64,16 +50,11 @@
     <string name="page_count">Page count</string>
     <string name="size">Size</string>
     <string name="no_description">No description</string>
-    <string name="more_options">More options</string>
     <string name="no_scanned_documents">No scanned documents</string>
     <string name="error_loading_docs">Error loading documents</string>
     <string name="select_document_to_preview">Select a document to preview it here</string>
     <string name="select_setting_to_open">Select a setting to open it here</string>
 
-    <!-- ════════════════════════════════════════════════
-         DOCUMENT — Scan
-         ════════════════════════════════════════════════ -->
-    <string name="scan">Scan</string>
     <string name="doc_scan_new">Scan new document</string>
     <string name="doc_scan_error">An error has occurred during the scan</string>
     <string name="doc_scan_to_see_document_list">Scan your first document to see it here.</string>
@@ -92,7 +73,6 @@
          DOCUMENT — Share
          ════════════════════════════════════════════════ -->
     <string name="doc_share">Share document</string>
-    <string name="issue_sharing_doc">An issue occurred while trying to share the document</string>
 
     <!-- ════════════════════════════════════════════════
          DOCUMENT — View
@@ -119,10 +99,6 @@
     <string name="doc_delete_warning_message">You are about to delete %1$s from your device and app database.\n\nIt has %2$s pages and is %3$s in size.\n\nAre you sure you want to delete it?</string>
     <string name="doc_delete_error">An error occurred while deleting the document</string>
 
-    <!-- ════════════════════════════════════════════════
-         SEARCH & FILTER
-         ════════════════════════════════════════════════ -->
-    <string name="search_documents">Search documents</string>
     <string name="clear_search">Clear search</string>
     <string name="exit_search">Exit search</string>
     <string name="clear_filters">Clean filters</string>
@@ -138,7 +114,6 @@
     <string name="zoom_out">Zoom out</string>
     <string name="zoom_in">Zoom in</string>
     <string name="zoom_reset">Reset zoom</string>
-    <string name="fit_mode">Fit mode</string>
     <string name="fit_width">Fit width</string>
     <string name="fit_height">Fit height</string>
     <string name="fit_page">Fit page</string>
@@ -147,7 +122,6 @@
     <string name="go_to_page">Go to page</string>
     <string name="previous_page">Previous page</string>
     <string name="next_page">Next page</string>
-    <string name="night_mode">Night mode</string>
     <string name="page_input_label">Page</string>
     <string name="page_of">%1$s of %2$s</string>
     <string name="print">Print</string>
@@ -155,7 +129,6 @@
     <string name="document_details">Document details</string>
     <string name="pages_count">%1$d pages</string>
     <string name="cannot_open_pdf">Couldn\'t open this document</string>
-    <string name="settings">Settings</string>
     <string name="general">General</string>
     <string name="version_format">Version %1$s</string>
     <string name="about">About</string>
@@ -187,12 +160,7 @@
     <string name="viewer_remember_position">Remember where I left off</string>
     <string name="viewer_remember_position_on_desc">Documents open on the page you were reading</string>
     <string name="viewer_remember_position_off_desc">Documents always open at the beginning</string>
-    <string name="fit_mode_width">Fit width</string>
-    <string name="fit_mode_height">Fit height</string>
-    <string name="fit_mode_page">Whole page</string>
-    <string name="fit_mode_proportional">Proportional</string>
     <string name="night_mode_desc">Invert page colours to read in the dark</string>
-    <string name="back">Back</string>
     <string name="close">Close</string>
     <string name="go">Go</string>
     <string name="page_number">Page number</string>
@@ -203,7 +171,6 @@
     <string name="page_indicator">%1$d / %2$d</string>
     <string name="fast_scroller">Page scroller</string>
     <string name="viewer_open_elsewhere">Open with another app</string>
-    <string name="viewer_error_not_found">This document is no longer here</string>
     <string name="viewer_error_not_found_desc">It may have been moved or deleted.</string>
     <string name="viewer_error_access_denied">Docucraft can\'t read this document</string>
     <string name="viewer_error_access_denied_desc">The app that shared it didn\'t give permission, or has taken it back. Try opening it again from that app.</string>
@@ -236,7 +203,6 @@
     <string name="link_blocked_scheme">Links of this kind can be harmful.</string>
     <string name="link_blocked_malformed">The link isn\'t valid.</string>
     <string name="link_blocked_outside">It leads to a page this document doesn\'t have.</string>
-    <string name="link_no_app">No app can open this link</string>
     <string name="link_went_to_page">Page %1$d</string>
     <string name="link_back_to_page">Back to page %1$d</string>
     <string name="link_a11y_web">Link: %1$s</string>
@@ -247,9 +213,6 @@
     <string name="link_a11y_action">Show link</string>
     <string name="doc_no_matches">No matching documents</string>
     <string name="doc_no_matches_desc">Nothing matches “%1$s”. Try another name or word from the description.</string>
-    <string name="open">Open</string>
-    <string name="recents">Recents</string>
-    <string name="documents">Documents</string>
     <string name="sort_by">Sort by</string>
     <string name="search_hint_title">Search your documents</string>
     <string name="search_result_page">Page %1$d</string>
@@ -265,7 +228,6 @@
     <string name="recognize_text_in_new_documents">Recognize text in new documents</string>
     <string name="recognize_text_in_new_documents_on_desc">Scans you save can be found by what they say. It is read on your device</string>
     <string name="recognize_text_in_new_documents_off_desc">Scans you save are only found by their name. You can turn it on for each document</string>
-    <string name="text_recognition_turn_on">Recognize text</string>
     <string name="text_recognition_turn_off">Stop recognizing text</string>
     <string name="text_recognition_turned_on">Its text is being recognized in the background</string>
     <string name="text_recognition_turned_off">The recognized text was removed</string>
@@ -274,14 +236,10 @@
     <string name="done">Done</string>
     <string name="color">Color</string>
     <string name="icon">Icon</string>
-    <string name="move">Move</string>
     <string name="see_all">See all</string>
-    <string name="library">Library</string>
     <string name="move_up">Move up</string>
     <string name="move_down">Move down</string>
     <string name="name_empty">Give it a name</string>
-    <string name="folders">Folders</string>
-    <string name="folder_new">New folder</string>
     <string name="folder_edit">Edit folder</string>
     <string name="folder_delete">Delete folder</string>
     <string name="folder_delete_confirmation">“%1$s” will be deleted.</string>
@@ -310,8 +268,6 @@
     <string name="move_no_folders_here">No folders here</string>
     <string name="moved_to_folder">Moved to %1$s</string>
     <string name="moved_to_library">Moved out of its folder</string>
-    <string name="tags">Tags</string>
-    <string name="tag_new">New tag</string>
     <string name="tag_edit">Edit tag</string>
     <string name="tag_delete">Delete tag</string>
     <string name="tag_delete_confirmation">“%1$s” will be deleted.</string>
@@ -330,7 +286,6 @@
     <string name="tag_find_or_create">Find or create a tag</string>
     <string name="tag_create_named">Create “%1$s”</string>
     <string name="document_tags_desc">Tap a tag to put it on the document or take it off.</string>
-    <string name="favorite">Favorite</string>
     <string name="favorites">Favorites</string>
     <string name="filters_no_matches">No documents match these filters</string>
     <string name="filters_clear">Clear filters</string>
@@ -359,7 +314,6 @@
     <string name="icon_family">Family</string>
     <string name="icon_heart">Heart</string>
     <string name="icon_star">Star</string>
-    <string name="bin">Bin</string>
     <string name="bin_empty">Empty bin</string>
     <string name="bin_nothing_title">The bin is empty</string>
     <string name="bin_nothing_desc">Documents you delete stay here for %1$d days, in case you want them back.</string>
@@ -382,7 +336,6 @@
     <string name="folder_deleted_with_contents">Folder deleted. Its documents are in the bin</string>
     <string name="document_text_unknown">Not known</string>
     <string name="skip">Skip</string>
-    <string name="folder">Folder</string>
     <string name="scan_review_title">Scan saved</string>
     <string name="scan_review_desc">It is in your library. Name it now, or skip and do it later.</string>
     <string name="scan_review_recognize_text_desc">So it can be found by what it says</string>

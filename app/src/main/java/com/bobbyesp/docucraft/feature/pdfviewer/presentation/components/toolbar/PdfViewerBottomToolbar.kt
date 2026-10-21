@@ -50,6 +50,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
@@ -198,7 +199,7 @@ private fun ZoomChip(zoom: Float, onClick: () -> Unit) {
 @Composable
 private fun FitModeButton(fitMode: ViewerFitMode, onFitModeChange: (ViewerFitMode) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    val label = stringResource(R.string.fit_mode)
+    val label = stringResource(DesignsystemR.string.fit_mode)
     val current = stringResource(fitMode.label)
 
     Box {
@@ -231,7 +232,7 @@ private fun FitModeButton(fitMode: ViewerFitMode, onFitModeChange: (ViewerFitMod
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun NightModeButton(nightMode: Boolean, onToggle: () -> Unit) {
-    val label = stringResource(R.string.night_mode)
+    val label = stringResource(DesignsystemR.string.night_mode)
     WithTooltip(label = label, position = TooltipAnchorPosition.Above) {
         FilledTonalIconToggleButton(
             checked = nightMode,
@@ -248,19 +249,19 @@ private fun Float.isFitted(): Boolean = kotlin.math.abs(this - 1f) < 0.02f
 private val ViewerFitMode.label: Int
     get() =
         when (this) {
-            ViewerFitMode.WIDTH -> R.string.fit_mode_width
-            ViewerFitMode.HEIGHT -> R.string.fit_mode_height
-            ViewerFitMode.BOTH -> R.string.fit_mode_page
-            ViewerFitMode.PROPORTIONAL -> R.string.fit_mode_proportional
+            ViewerFitMode.WIDTH -> DesignsystemR.string.fit_mode_width
+            ViewerFitMode.HEIGHT -> DesignsystemR.string.fit_mode_height
+            ViewerFitMode.BOTH -> DesignsystemR.string.fit_mode_page
+            ViewerFitMode.PROPORTIONAL -> DesignsystemR.string.fit_mode_proportional
         }
 
 @Composable
 private fun ViewerFitMode.icon(): ImageVector =
     when (this) {
-        ViewerFitMode.WIDTH -> ImageVector.vectorResource(R.drawable.fit_page_width)
-        ViewerFitMode.HEIGHT -> ImageVector.vectorResource(R.drawable.fit_page_height)
+        ViewerFitMode.WIDTH -> ImageVector.vectorResource(DesignsystemR.drawable.fit_page_width)
+        ViewerFitMode.HEIGHT -> ImageVector.vectorResource(DesignsystemR.drawable.fit_page_height)
         ViewerFitMode.BOTH -> Icons.Rounded.FitScreen
-        ViewerFitMode.PROPORTIONAL -> ImageVector.vectorResource(R.drawable.fit_page)
+        ViewerFitMode.PROPORTIONAL -> ImageVector.vectorResource(DesignsystemR.drawable.fit_page)
     }
 
 /** From here the zoom buttons fit without crowding the rest: Material's medium width. */

@@ -1,7 +1,4 @@
 <resources>
-    <plurals name="doc_n_pages">
-        <item quantity="other">%d페이지</item>
-    </plurals>
     <plurals name="n_documents">
         <item quantity="other">문서 %d개</item>
     </plurals>

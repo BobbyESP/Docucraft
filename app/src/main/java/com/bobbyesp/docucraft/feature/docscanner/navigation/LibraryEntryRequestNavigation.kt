@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavKey
-import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
@@ -32,7 +32,7 @@ fun LibraryEntryRequestNavigation(navigator: Navigator) {
     val requests: LibraryEntryRequests = koinInject()
     val observeDocument: ObserveDocumentUseCase = koinInject()
     val notifications = LocalNotificationsService.current
-    val documentGone = stringResource(R.string.viewer_error_not_found)
+    val documentGone = stringResource(DesignsystemR.string.viewer_error_not_found)
 
     // Collected rather than keyed on the request: taking it changes it, and an effect keyed on it
     // would cancel itself halfway through looking the document up.

@@ -48,6 +48,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.image.AsyncImage
 import com.bobbyesp.docucraft.core.presentation.components.others.Placeholder
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
@@ -96,7 +97,7 @@ fun ScannedDocumentListItem(
         shapes = shapes,
         modifier = modifier,
         onLongClick = onItemLongClick,
-        onLongClickLabel = stringResource(id = R.string.more_options),
+        onLongClickLabel = stringResource(id = DesignsystemR.string.more_options),
         // The thumbnail is taller than two lines of text: top-aligned, a document without a
         // description left its title stranded above an empty band.
         verticalAlignment = Alignment.CenterVertically,
@@ -117,7 +118,7 @@ fun ScannedDocumentListItem(
             IconButton(onClick = onItemLongClick, shapes = IconButtonDefaults.shapes()) {
                 Icon(
                     imageVector = Icons.Rounded.MoreVert,
-                    contentDescription = stringResource(id = R.string.more_options),
+                    contentDescription = stringResource(id = DesignsystemR.string.more_options),
                 )
             }
         },
@@ -138,7 +139,7 @@ fun ScannedDocumentListItem(
             if (pdf.isFavorite) {
                 Icon(
                     imageVector = Icons.Rounded.Star,
-                    contentDescription = stringResource(R.string.favorite),
+                    contentDescription = stringResource(DesignsystemR.string.favorite),
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.tertiary,
                 )
@@ -162,7 +163,8 @@ private fun DocumentSummary(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val pages = pdf.pageCount?.let { pluralStringResource(R.plurals.doc_n_pages, it, it) }
+    val pages =
+        pdf.pageCount?.let { pluralStringResource(DesignsystemR.plurals.doc_n_pages, it, it) }
     val facts =
         remember(pdf.sizeBytes, pdf.createdAtEpochMillis, pages) {
             listOfNotNull(

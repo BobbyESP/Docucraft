@@ -47,3 +47,5 @@ include(":ocr-mlkit")
 include(":core:domain")
 
 include(":core:data")
+
+include(":core:designsystem")

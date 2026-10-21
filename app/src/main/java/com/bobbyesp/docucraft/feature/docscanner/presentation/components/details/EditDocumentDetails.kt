@@ -40,6 +40,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 
 private const val TITLE_MAX_LENGTH = 60
@@ -63,7 +64,7 @@ fun EditDocumentDetailsContent(
         LimitedTextField(
             value = state.title,
             onValueChange = onTitleChange,
-            label = stringResource(R.string.title),
+            label = stringResource(DesignsystemR.string.title),
             maxLength = TITLE_MAX_LENGTH,
             isError = state.isTitleError,
             supportingText =
@@ -74,7 +75,7 @@ fun EditDocumentDetailsContent(
         LimitedTextField(
             value = state.description,
             onValueChange = onDescriptionChange,
-            label = stringResource(R.string.description),
+            label = stringResource(DesignsystemR.string.description),
             maxLength = DESCRIPTION_MAX_LENGTH,
             isError = state.isDescriptionError,
             supportingText =

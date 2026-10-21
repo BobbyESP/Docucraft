@@ -34,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingSwitch
 import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsCategory
@@ -94,7 +95,7 @@ fun SettingsScreen(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             FrostedLargeTopAppBar(
-                title = stringResource(R.string.settings),
+                title = stringResource(DesignsystemR.string.settings),
                 isContentScrolled = listState.canScrollBackward,
                 scrollBehavior = scrollBehavior,
                 hazeState = hazeState,
@@ -102,7 +103,7 @@ fun SettingsScreen(
                     IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
+                            contentDescription = stringResource(DesignsystemR.string.back),
                         )
                     }
                 },
@@ -132,7 +133,7 @@ fun SettingsScreen(
             }
             item(key = "documents", contentType = "settings_section") {
                 SettingsCategory(
-                    title = stringResource(R.string.documents),
+                    title = stringResource(DesignsystemR.string.documents),
                     modifier = Modifier.settingsContentWidth(),
                 ) {
                     SettingSwitch(

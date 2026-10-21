@@ -26,7 +26,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import coil.ImageLoader
-import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
 import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
@@ -206,7 +206,7 @@ internal fun StoreCaptureTheme(koin: Koin, dark: Boolean, content: @Composable (
 private class ReleaseNameResources(base: Resources) :
     Resources(base.assets, base.displayMetrics, base.configuration) {
     override fun getText(id: Int): CharSequence =
-        if (id == R.string.app_name) "Docucraft" else super.getText(id)
+        if (id == DesignsystemR.string.app_name) "Docucraft" else super.getText(id)
 }
 
 /**

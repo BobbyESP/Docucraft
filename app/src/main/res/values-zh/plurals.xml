@@ -1,7 +1,4 @@
 <resources>
-    <plurals name="doc_n_pages">
-        <item quantity="other">%d 页</item>
-    </plurals>
     <plurals name="n_documents">
         <item quantity="other">%d 个文档</item>
     </plurals>

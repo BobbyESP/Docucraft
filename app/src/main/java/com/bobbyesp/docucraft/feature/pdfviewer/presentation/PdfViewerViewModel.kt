@@ -6,6 +6,7 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
@@ -345,7 +346,7 @@ class PdfViewerViewModel(
             .onFailure {
                 sendUiEvent(
                     UiEvent.ShowMessage(
-                        stringProvider.get(R.string.issue_sharing_doc),
+                        stringProvider.get(DesignsystemR.string.issue_sharing_doc),
                         NotificationType.Error,
                     )
                 )

@@ -106,6 +106,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.components.SectionHeader
@@ -198,7 +199,7 @@ fun HomeContent(
                 .nestedScroll(scanButtonExpansion.nestedScrollConnection),
         topBar = {
             FrostedLargeTopAppBar(
-                title = stringResource(id = R.string.app_name),
+                title = stringResource(id = DesignsystemR.string.app_name),
                 isContentScrolled = listState.canScrollBackward,
                 scrollBehavior = scrollBehavior,
                 hazeState = hazeState,
@@ -213,7 +214,7 @@ fun HomeContent(
                     IconButton(onClick = onOpenSettings, shapes = IconButtonDefaults.shapes()) {
                         Icon(
                             imageVector = Icons.Rounded.Settings,
-                            contentDescription = stringResource(id = R.string.settings),
+                            contentDescription = stringResource(id = DesignsystemR.string.settings),
                         )
                     }
                 },
@@ -295,7 +296,7 @@ private fun TopBarDocumentActions(
     IconButton(onClick = onOpenSearch, shapes = IconButtonDefaults.shapes()) {
         Icon(
             imageVector = Icons.Rounded.Search,
-            contentDescription = stringResource(id = R.string.search_documents),
+            contentDescription = stringResource(id = DesignsystemR.string.search_documents),
         )
     }
     FilledIconButton(
@@ -355,7 +356,7 @@ private fun HomeBottomActions(
         )
 
         SmallExtendedFloatingActionButton(
-            text = { Text(text = stringResource(id = R.string.scan)) },
+            text = { Text(text = stringResource(id = DesignsystemR.string.scan)) },
             icon = {
                 if (isScanning) {
                     LoadingIndicator(
@@ -495,7 +496,7 @@ private fun DocumentsPage(
     ) {
         if (recentDocuments.isNotEmpty()) {
             item(key = "recents-header", contentType = "section-header") {
-                SectionHeader(title = stringResource(R.string.recents))
+                SectionHeader(title = stringResource(DesignsystemR.string.recents))
             }
             item(key = "recents", contentType = "recents") {
                 RecentDocumentsCarousel(
@@ -510,7 +511,7 @@ private fun DocumentsPage(
         // Always here, pinned folders or not: it is also the way into the folders.
         item(key = "folders-header", contentType = "section-header") {
             SectionHeader(
-                title = stringResource(R.string.folders),
+                title = stringResource(DesignsystemR.string.folders),
                 trailing = {
                     TextButton(
                         onClick = { organization.onOpenFolder(null) },
@@ -565,7 +566,7 @@ private fun DocumentsPage(
 
         item(key = "documents-header", contentType = "section-header") {
             SectionHeader(
-                title = stringResource(R.string.documents),
+                title = stringResource(DesignsystemR.string.documents),
                 trailing = {
                     SortMenu(
                         currentSortOption = filters.sortBy,
@@ -665,7 +666,7 @@ private fun PinnedFoldersRow(
                 ) {
                     Icon(
                         imageVector = Icons.Rounded.CreateNewFolder,
-                        contentDescription = stringResource(R.string.folder_new),
+                        contentDescription = stringResource(DesignsystemR.string.folder_new),
                     )
                 }
             }
@@ -726,7 +727,7 @@ private fun TagShelf(
                         .clip(MaterialTheme.shapes.large)
                         .combinedClickable(
                             role = Role.Button,
-                            onLongClickLabel = stringResource(R.string.more_options),
+                            onLongClickLabel = stringResource(DesignsystemR.string.more_options),
                             onLongClick = { onOpenDocumentActions(document.uuid) },
                             onClick = { onOpenDocument(document.uuid) },
                         )
@@ -828,7 +829,8 @@ private fun LibraryFilters(
                     Text(
                         text =
                             stringResource(
-                                if (tags.isEmpty()) R.string.tag_new else R.string.tags_manage
+                                if (tags.isEmpty()) DesignsystemR.string.tag_new
+                                else R.string.tags_manage
                             )
                     )
                 },
@@ -882,8 +884,8 @@ private fun RecentDocumentsCarousel(
     modifier: Modifier = Modifier,
 ) {
     val carouselState = rememberCarouselState { documents.size }
-    val openLabel = stringResource(R.string.open)
-    val moreOptionsLabel = stringResource(R.string.more_options)
+    val openLabel = stringResource(DesignsystemR.string.open)
+    val moreOptionsLabel = stringResource(DesignsystemR.string.more_options)
 
     HorizontalMultiBrowseCarousel(
         state = carouselState,
@@ -1037,7 +1039,7 @@ private fun EmptyStateScreen(onScanDocument: () -> Unit, modifier: Modifier = Mo
 private fun ErrorContent(errorMessage: String?) {
     ScreenPlaceholderCard(
         modifier = Modifier.padding(24.dp),
-        title = stringResource(id = R.string.unknown_error),
+        title = stringResource(id = DesignsystemR.string.unknown_error),
         description = errorMessage ?: stringResource(id = R.string.error_loading_docs),
         icon = Icons.Rounded.Warning,
         isError = true,

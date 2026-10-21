@@ -15,6 +15,7 @@ import android.widget.TextView
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentThumbnail
 import com.bobbyesp.docucraft.feature.docscanner.domain.widgets.WidgetDocument
 import org.junit.Assert.assertEquals
@@ -107,7 +108,7 @@ class WidgetViewsTest {
             root.findViewById<ViewGroup>(R.id.widget_recents_rows).children().map {
                 it.text(R.id.widget_row_subtitle)
             }
-        val pages = context.resources.getQuantityString(R.plurals.doc_n_pages, 3, 3)
+        val pages = context.resources.getQuantityString(DesignsystemR.plurals.doc_n_pages, 3, 3)
         assertTrue(counted, counted.startsWith("$pages · "))
         // Only the day it was last used: no separator with nothing before it.
         assertTrue(uncounted, uncounted.isNotBlank())

@@ -72,6 +72,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.components.SectionHeader
@@ -124,7 +125,7 @@ fun DocumentTagsForm(
     val canCreate = wanted.isNotEmpty() && state.tags.none { normalizedNameOf(it.name) == wanted }
 
     OverlayForm(
-        title = stringResource(R.string.tags),
+        title = stringResource(DesignsystemR.string.tags),
         icon = Icons.AutoMirrored.Rounded.Label,
         onDismiss = onDismiss,
         modifier = modifier,
@@ -240,7 +241,7 @@ fun ManageTagsScreen(
                 .nestedScroll(fabExpansion.nestedScrollConnection),
         topBar = {
             FrostedLargeTopAppBar(
-                title = stringResource(R.string.tags),
+                title = stringResource(DesignsystemR.string.tags),
                 isContentScrolled = listState.canScrollBackward,
                 scrollBehavior = scrollBehavior,
                 hazeState = hazeState,
@@ -248,7 +249,7 @@ fun ManageTagsScreen(
                     IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
+                            contentDescription = stringResource(DesignsystemR.string.back),
                         )
                     }
                 },
@@ -256,7 +257,7 @@ fun ManageTagsScreen(
         },
         floatingActionButton = {
             SmallExtendedFloatingActionButton(
-                text = { Text(text = stringResource(R.string.tag_new)) },
+                text = { Text(text = stringResource(DesignsystemR.string.tag_new)) },
                 icon = {
                     Icon(
                         imageVector = Icons.Rounded.NewLabel,
@@ -310,7 +311,7 @@ fun ManageTagsScreen(
                             title = stringResource(R.string.tags_none_title),
                             description = stringResource(R.string.tags_none_desc),
                             icon = Icons.AutoMirrored.Rounded.Label,
-                            actionText = stringResource(R.string.tag_new),
+                            actionText = stringResource(DesignsystemR.string.tag_new),
                             iconAction = Icons.Rounded.NewLabel,
                             onAction = onCreateTag,
                         )
@@ -505,11 +506,11 @@ fun TagEditorForm(
     modifier: Modifier = Modifier,
 ) {
     OverlayForm(
-        title = stringResource(if (isNew) R.string.tag_new else R.string.tag_edit),
+        title = stringResource(if (isNew) DesignsystemR.string.tag_new else R.string.tag_edit),
         icon = if (isNew) Icons.Rounded.NewLabel else Icons.Rounded.Edit,
         onDismiss = onDismiss,
         modifier = modifier,
-        confirmText = stringResource(if (isNew) R.string.create else R.string.save),
+        confirmText = stringResource(if (isNew) R.string.create else DesignsystemR.string.save),
         onConfirm = onConfirm,
         confirmEnabled = name.isNotBlank(),
     ) {
@@ -521,7 +522,7 @@ fun TagEditorForm(
             NameField(
                 value = name,
                 onValueChange = onNameChange,
-                label = stringResource(R.string.name),
+                label = stringResource(DesignsystemR.string.name),
                 error = nameError,
                 takenMessage = stringResource(R.string.tag_name_taken),
                 onDone = { if (name.isNotBlank()) onConfirm() },
@@ -571,7 +572,7 @@ fun DeleteTagForm(
         icon = Icons.Rounded.DeleteForever,
         onDismiss = onDismiss,
         modifier = modifier,
-        confirmText = stringResource(R.string.delete),
+        confirmText = stringResource(DesignsystemR.string.delete),
         onConfirm = onConfirm,
         destructive = true,
     ) {

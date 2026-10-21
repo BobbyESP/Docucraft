@@ -2,22 +2,14 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
     <string name="no_description">Nessuna descrizione</string>
-    <string name="issue_sharing_doc">Si è verificato un problema durante il tentativo di condividere il documento</string>
     <string name="sort_descending">Ordina in ordine decrescente</string>
     <string name="no_scanned_documents">Nessun documento scansionato</string>
-    <string name="scan">Scansiona</string>
     <string name="edit_fields">Modifica i campi</string>
-    <string name="more_options">Altre opzioni</string>
     <string name="scan_cancelled">Processo di scansione annullato</string>
-    <string name="delete">Elimina</string>
     <string name="doc_saving_cancelled">Il processo di salvataggio è stato annullato</string>
-    <string name="confirm">Conferma</string>
-    <string name="description">Descrizione</string>
     <string name="clear_search">Cancella ricerca</string>
-    <string name="share">Condividi</string>
     <string name="home">Home</string>
     <string name="doc_modify_details_description">Aggiorna il titolo e la descrizione del documento qui sotto per rifletterne il contenuto e i dettagli.</string>
-    <string name="cancel">Annulla</string>
     <string name="filter">Filtra</string>
     <string name="doc_scan_new">Scansiona nuovo documento</string>
     <string name="clear_filters">Pulisci filtri</string>
@@ -26,7 +18,6 @@
     <string name="results">Risultati</string>
     <string name="file_icon">Icona file</string>
     <string name="doc_save">Salva documento</string>
-    <string name="save">Salva</string>
     <string name="exit_search">Esci dalla ricerca</string>
     <string name="date">Data</string>
     <string name="doc_saved_successfully">Il documento è stato salvato correttamente</string>
@@ -34,17 +25,13 @@
     <string name="page_count">Numero di pagine</string>
     <string name="doc_modify_details">Modifica i dettagli del documento</string>
     <string name="issue_opening_doc_viewer">Si è verificato un problema durante il tentativo di aprire il visualizzatore di documenti</string>
-    <string name="title">Titolo</string>
     <string name="follow_system">Segui il sistema</string>
     <string name="size">Dimensione</string>
-    <string name="unknown_error">Errore sconosciuto</string>
     <string name="search">Cerca</string>
     <string name="doc_delete_warning_message">Stai per eliminare %1$s dal tuo dispositivo e dal database dell\'app.\n\nHa %2$s pagine e una dimensione di %3$s.\n\nSei sicuro di volerlo eliminare?</string>
     <string name="sort_ascending">Ordina in ordine crescente</string>
     <string name="doc_scan_to_see_document_list">Scansiona i tuoi documenti per vederli elencati qui.</string>
-    <string name="name">Nome</string>
     <string name="doc_share">Condividi documento</string>
-    <string name="search_documents">Cerca documenti</string>
     <string name="doc_delete_error">Si è verificato un errore durante l\'eliminazione del documento</string>
     <string name="doc_open_in_viewer">Apri documento nel visualizzatore</string>
     <string name="off">Spento</string>
@@ -66,13 +53,11 @@
 	<string name="zoom_in">Zoom avanti</string>
 	<string name="fit_proportional">Proporzionale</string>
 	<string name="previous_page">Pagina precedente</string>
-	<string name="fit_mode">Modalità di adattamento</string>
 	<string name="page_input_label">Pagina</string>
 	<string name="fit_page">Adatta alla pagina</string>
 	<string name="fit_width">Adatta alla larghezza</string>
 	<string name="page_navigation">Navigazione tra le pagine</string>
 	<string name="go_to_page">Vai alla pagina</string>
-	<string name="night_mode">Modalità notte</string>
 	<string name="page_of">%1$s di %2$s</string>
 	<string name="next_page">Pagina successiva</string>
 	<string name="zoom_out">Zoom indietro</string>
@@ -86,7 +71,6 @@
     <string name="dynamic_coloring">Colori dinamici</string>
     <string name="dynamic_coloring_desc">Usa i colori dello sfondo per il tema dell\'app</string>
     <string name="custom_colors">Colori personalizzati</string>
-    <string name="seed_color">Colore di base</string>
     <string name="palette_style">Stile della tavolozza</string>
     <string name="high_contrast">Contrasto elevato</string>
     <string name="high_contrast_desc">Ottimizzato per schermi AMOLED</string>
@@ -107,7 +91,6 @@
     <string name="document_details">Dettagli del documento</string>
     <string name="pages_count">%1$d pagine</string>
     <string name="cannot_open_pdf">Impossibile aprire questo documento</string>
-    <string name="settings">Impostazioni</string>
     <string name="general">Generali</string>
     <string name="version_format">Versione %1$s</string>
     <string name="about">Informazioni</string>
@@ -138,12 +121,7 @@
     <string name="viewer_remember_position">Ricorda dove ero arrivato</string>
     <string name="viewer_remember_position_on_desc">I documenti si aprono alla pagina che stavi leggendo</string>
     <string name="viewer_remember_position_off_desc">I documenti si aprono sempre dall\'inizio</string>
-    <string name="fit_mode_width">Adatta alla larghezza</string>
-    <string name="fit_mode_height">Adatta all\'altezza</string>
-    <string name="fit_mode_page">Pagina intera</string>
-    <string name="fit_mode_proportional">Proporzionale</string>
     <string name="night_mode_desc">Inverte i colori delle pagine per leggere al buio</string>
-    <string name="back">Indietro</string>
     <string name="close">Chiudi</string>
     <string name="go">Vai</string>
     <string name="page_number">Numero di pagina</string>
@@ -154,7 +132,6 @@
     <string name="page_indicator">%1$d / %2$d</string>
     <string name="fast_scroller">Scorrimento delle pagine</string>
     <string name="viewer_open_elsewhere">Apri con un\'altra app</string>
-    <string name="viewer_error_not_found">Questo documento non è più qui</string>
     <string name="viewer_error_not_found_desc">Potrebbe essere stato spostato o eliminato.</string>
     <string name="viewer_error_access_denied">Docucraft non può leggere questo documento</string>
     <string name="viewer_error_access_denied_desc">L\'app che lo ha condiviso non ha concesso l\'autorizzazione oppure l\'ha revocata. Prova a riaprirlo da quell\'app.</string>
@@ -187,7 +164,6 @@
     <string name="link_blocked_scheme">I link di questo tipo possono essere pericolosi.</string>
     <string name="link_blocked_malformed">Il link non è valido.</string>
     <string name="link_blocked_outside">Porta a una pagina che questo documento non ha.</string>
-    <string name="link_no_app">Nessuna app può aprire questo link</string>
     <string name="link_went_to_page">Pagina %1$d</string>
     <string name="link_back_to_page">Torna a pagina %1$d</string>
     <string name="link_a11y_web">Link: %1$s</string>
@@ -198,9 +174,6 @@
     <string name="link_a11y_action">Mostra link</string>
     <string name="doc_no_matches">Nessun documento corrispondente</string>
     <string name="doc_no_matches_desc">Nessun risultato per “%1$s”. Prova con un altro nome o una parola della descrizione.</string>
-    <string name="open">Apri</string>
-    <string name="recents">Recenti</string>
-    <string name="documents">Documenti</string>
     <string name="sort_by">Ordina per</string>
     <string name="search_hint_title">Cerca nei tuoi documenti</string>
     <string name="search_result_page">Pagina %1$d</string>
@@ -216,7 +189,6 @@
     <string name="recognize_text_in_new_documents">Riconosci il testo nei nuovi documenti</string>
     <string name="recognize_text_in_new_documents_on_desc">Le scansioni che salvi si possono trovare in base a ciò che contengono. Il testo viene letto sul tuo dispositivo</string>
     <string name="recognize_text_in_new_documents_off_desc">Le scansioni che salvi si trovano solo per nome. Puoi attivarlo per ogni documento</string>
-    <string name="text_recognition_turn_on">Riconosci testo</string>
     <string name="text_recognition_turn_off">Non riconoscere più il testo</string>
     <string name="text_recognition_turned_on">Il testo viene riconosciuto in background</string>
     <string name="text_recognition_turned_off">Il testo riconosciuto è stato rimosso</string>
@@ -225,14 +197,10 @@
     <string name="done">Fine</string>
     <string name="color">Colore</string>
     <string name="icon">Icona</string>
-    <string name="move">Sposta</string>
     <string name="see_all">Mostra tutto</string>
-    <string name="library">Libreria</string>
     <string name="move_up">Sposta su</string>
     <string name="move_down">Sposta giù</string>
     <string name="name_empty">Inserisci un nome</string>
-    <string name="folders">Cartelle</string>
-    <string name="folder_new">Nuova cartella</string>
     <string name="folder_edit">Modifica cartella</string>
     <string name="folder_delete">Elimina cartella</string>
     <string name="folder_delete_confirmation">“%1$s” verrà eliminata.</string>
@@ -261,8 +229,6 @@
     <string name="move_no_folders_here">Qui non ci sono cartelle</string>
     <string name="moved_to_folder">Spostato in %1$s</string>
     <string name="moved_to_library">Tolto dalla sua cartella</string>
-    <string name="tags">Etichette</string>
-    <string name="tag_new">Nuova etichetta</string>
     <string name="tag_edit">Modifica etichetta</string>
     <string name="tag_delete">Elimina etichetta</string>
     <string name="tag_delete_confirmation">“%1$s” verrà eliminata.</string>
@@ -281,7 +247,6 @@
     <string name="tag_find_or_create">Cerca o crea un\'etichetta</string>
     <string name="tag_create_named">Crea “%1$s”</string>
     <string name="document_tags_desc">Tocca un\'etichetta per assegnarla al documento o toglierla.</string>
-    <string name="favorite">Preferito</string>
     <string name="favorites">Preferiti</string>
     <string name="filters_no_matches">Nessun documento corrisponde a questi filtri</string>
     <string name="filters_clear">Cancella filtri</string>
@@ -310,7 +275,6 @@
     <string name="icon_family">Famiglia</string>
     <string name="icon_heart">Cuore</string>
     <string name="icon_star">Stella</string>
-    <string name="bin">Cestino</string>
     <string name="bin_empty">Svuota cestino</string>
     <string name="bin_nothing_title">Il cestino è vuoto</string>
     <string name="bin_nothing_desc">I documenti che elimini restano qui per %1$d giorni, nel caso volessi recuperarli.</string>
@@ -333,7 +297,6 @@
     <string name="folder_deleted_with_contents">Cartella eliminata. I suoi documenti sono nel cestino</string>
     <string name="document_text_unknown">Sconosciuto</string>
     <string name="skip">Salta</string>
-    <string name="folder">Cartella</string>
     <string name="scan_review_title">Scansione salvata</string>
     <string name="scan_review_desc">È nella tua libreria. Dalle un nome adesso oppure salta e fallo più tardi.</string>
     <string name="scan_review_recognize_text_desc">Per poterla trovare in base a ciò che contiene</string>

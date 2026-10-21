@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.overlay.OverlaySheetSkeleton
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
@@ -84,7 +85,7 @@ fun DeleteDocumentSheet(
                     modifier =
                         Modifier.fillMaxWidth().sizeIn(minHeight = ButtonDefaults.MinHeight * 1.5f),
                 ) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(DesignsystemR.string.cancel))
                 }
             }
         },
@@ -122,7 +123,9 @@ fun DeleteDocumentDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.cancel)) }
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(DesignsystemR.string.cancel))
+            }
         },
     )
 }

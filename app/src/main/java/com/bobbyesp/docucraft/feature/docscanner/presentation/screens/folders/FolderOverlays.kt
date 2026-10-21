@@ -44,6 +44,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.divider.AnimatedWavyDivider
 import com.bobbyesp.docucraft.core.presentation.components.divider.defaults.AnimatedWavyDividerDefaults
 import com.bobbyesp.docucraft.core.presentation.components.others.GridMenu
@@ -84,11 +85,12 @@ fun FolderEditorForm(
     modifier: Modifier = Modifier,
 ) {
     OverlayForm(
-        title = stringResource(if (isNew) R.string.folder_new else R.string.folder_edit),
+        title =
+            stringResource(if (isNew) DesignsystemR.string.folder_new else R.string.folder_edit),
         icon = if (isNew) Icons.Rounded.CreateNewFolder else Icons.Rounded.Edit,
         onDismiss = onDismiss,
         modifier = modifier,
-        confirmText = stringResource(if (isNew) R.string.create else R.string.save),
+        confirmText = stringResource(if (isNew) R.string.create else DesignsystemR.string.save),
         onConfirm = onConfirm,
         confirmEnabled = name.isNotBlank(),
     ) {
@@ -100,7 +102,7 @@ fun FolderEditorForm(
             NameField(
                 value = name,
                 onValueChange = onNameChange,
-                label = stringResource(R.string.name),
+                label = stringResource(DesignsystemR.string.name),
                 error = nameError,
                 takenMessage = stringResource(R.string.folder_name_taken),
                 onDone = { if (name.isNotBlank()) onConfirm() },
@@ -183,13 +185,13 @@ fun FolderActionsContent(
                 )
                 GridMenuItem(
                     icon = Icons.AutoMirrored.Rounded.DriveFileMove,
-                    title = R.string.move,
+                    title = DesignsystemR.string.move,
                     containerColor = { MaterialTheme.colorScheme.secondary },
                     onClick = onMove,
                 )
                 GridMenuItem(
                     icon = Icons.Rounded.DeleteForever,
-                    title = R.string.delete,
+                    title = DesignsystemR.string.delete,
                     containerColor = { MaterialTheme.colorScheme.error },
                     span = { GridItemSpan(maxLineSpan) },
                     onClick = onDelete,
@@ -243,7 +245,7 @@ fun DeleteFolderForm(
         icon = Icons.Rounded.DeleteForever,
         onDismiss = onDismiss,
         modifier = modifier,
-        confirmText = stringResource(R.string.delete),
+        confirmText = stringResource(DesignsystemR.string.delete),
         onConfirm = onConfirm,
         destructive = true,
     ) {
@@ -297,7 +299,7 @@ fun MoveToFolderForm(
     onConfirm: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val library = stringResource(R.string.library)
+    val library = stringResource(DesignsystemR.string.library)
     val location = state.location
     val motionScheme = MaterialTheme.motionScheme
 
@@ -387,7 +389,7 @@ fun MoveToFolderForm(
                             modifier = Modifier.size(ButtonDefaults.IconSize),
                         )
                         Text(
-                            text = stringResource(R.string.folder_new),
+                            text = stringResource(DesignsystemR.string.folder_new),
                             modifier = Modifier.padding(start = ButtonDefaults.IconSpacing),
                         )
                     }

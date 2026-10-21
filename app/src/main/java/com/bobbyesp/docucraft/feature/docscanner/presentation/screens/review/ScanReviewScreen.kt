@@ -73,6 +73,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.SectionHeader
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
@@ -187,7 +188,12 @@ fun ScanReviewScreen(
                     document.pageCount?.let { pages ->
                         DocumentHeroFact(
                             icon = Icons.Rounded.FileCopy,
-                            text = pluralStringResource(R.plurals.doc_n_pages, pages, pages),
+                            text =
+                                pluralStringResource(
+                                    DesignsystemR.plurals.doc_n_pages,
+                                    pages,
+                                    pages,
+                                ),
                         )
                     }
                     document.sizeBytes?.let { size ->
@@ -322,7 +328,7 @@ private fun ReviewActions(
                 )
                 Spacer(modifier = Modifier.width(ButtonDefaults.iconSpacingFor(height)))
                 Text(
-                    text = stringResource(R.string.save),
+                    text = stringResource(DesignsystemR.string.save),
                     style = ButtonDefaults.textStyleFor(height),
                 )
             }
@@ -371,14 +377,14 @@ private fun Organization(
             },
             supportingContent = {
                 Text(
-                    text = folder?.name ?: stringResource(R.string.library),
+                    text = folder?.name ?: stringResource(DesignsystemR.string.library),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             },
             trailingContent = { OpensIndicator() },
         ) {
-            Text(text = stringResource(R.string.folder))
+            Text(text = stringResource(DesignsystemR.string.folder))
         }
         SegmentedListItem(
             onClick = onChooseTags,
@@ -412,7 +418,7 @@ private fun Organization(
             },
             trailingContent = { OpensIndicator() },
         ) {
-            Text(text = stringResource(R.string.tags))
+            Text(text = stringResource(DesignsystemR.string.tags))
         }
         SegmentedListItem(
             checked = textRecognition,
@@ -426,7 +432,7 @@ private fun Organization(
             },
             trailingContent = { Switch(checked = textRecognition, onCheckedChange = null) },
         ) {
-            Text(text = stringResource(R.string.text_recognition_turn_on))
+            Text(text = stringResource(DesignsystemR.string.text_recognition_turn_on))
         }
     }
 }
@@ -532,21 +538,21 @@ private fun Suggestions(
                             ),
                         modifier = Modifier.align(Alignment.End),
                     ) {
-                        Text(text = stringResource(R.string.settings))
+                        Text(text = stringResource(DesignsystemR.string.settings))
                     }
                 }
                 is SuggestionsUiState.Ready -> {
                     val suggestions = state.suggestions
                     suggestions.title?.let { suggested ->
                         SuggestedText(
-                            label = stringResource(R.string.title),
+                            label = stringResource(DesignsystemR.string.title),
                             text = suggested,
                             onUse = { onUseTitle(suggested) },
                         )
                     }
                     suggestions.description?.let { suggested ->
                         SuggestedText(
-                            label = stringResource(R.string.description),
+                            label = stringResource(DesignsystemR.string.description),
                             text = suggested,
                             onUse = { onUseDescription(suggested) },
                         )

@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.LocalOverlayContext
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPresentation
@@ -107,7 +108,7 @@ fun EntryProviderScope<NavKey>.goToPageSection(navigator: Navigator) {
                     },
                     dismissButton = {
                         TextButton(onClick = navigator::goBack) {
-                            Text(stringResource(R.string.cancel))
+                            Text(stringResource(DesignsystemR.string.cancel))
                         }
                     },
                 )
@@ -152,7 +153,7 @@ private fun GoToPageSheet(
             shapes = ButtonDefaults.shapes(),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(stringResource(R.string.cancel))
+            Text(stringResource(DesignsystemR.string.cancel))
         }
     }
 }

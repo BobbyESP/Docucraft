@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
-    <string name="issue_sharing_doc">Произошла ошибка при попытке поделиться документом</string>
     <string name="doc_scan_error">Произошла ошибка во время сканирования</string>
     <string name="doc_saving_cancelled">Процесс сохранения был отменен</string>
     <string name="no_description">Нет описания</string>
@@ -12,7 +11,6 @@
     <string name="clear_filters">Очистить фильтры</string>
     <string name="file_icon">Значок файла</string>
     <string name="doc_delete_warning_message">Вы собираетесь удалить %1$s с вашего устройства и из базы данных приложения.\n\nОн содержит %2$s страниц и имеет размер %3$s.\n\nВы уверены, что хотите его удалить?</string>
-    <string name="name">Имя</string>
     <string name="doc_modify_details">Изменить детали документа</string>
     <string name="error_loading_docs">Ошибка загрузки документов</string>
     <string name="select_document_to_preview">Выберите документ, чтобы просмотреть его здесь</string>
@@ -26,22 +24,13 @@
     <string name="doc_scan_to_see_document_list">Отсканируйте ваши документы, чтобы увидеть их здесь в списке.</string>
     <string name="off">Выкл</string>
     <string name="doc_save">Сохранить документ</string>
-    <string name="scan">Сканировать</string>
-    <string name="delete">Удалить</string>
     <string name="doc_saved_successfully">Документ успешно сохранен</string>
-    <string name="search_documents">Поиск документов</string>
-    <string name="cancel">Отмена</string>
     <string name="doc_delete_error">Произошла ошибка при удалении документа</string>
     <string name="date">Дата</string>
     <string name="app_tagline">Сканируйте, упорядочивайте и читайте документы. Всё — на вашем устройстве.</string>
-    <string name="unknown_error">Неизвестная ошибка</string>
     <string name="home">Главная</string>
-    <string name="description">Описание</string>
-    <string name="more_options">Другие опции</string>
     <string name="follow_system">Следовать системной</string>
-    <string name="save">Сохранить</string>
     <string name="issue_opening_doc_viewer">Произошла ошибка при попытке открыть просмотрщик документов</string>
-    <string name="title">Название</string>
     <string name="doc_modify_details_description">Обновите название и описание документа ниже, чтобы отразить его содержание и детали.</string>
     <string name="page_count">Количество страниц</string>
     <string name="size">Размер</string>
@@ -52,8 +41,6 @@
     <string name="sort_ascending">Сортировать по возрастанию</string>
     <string name="exit_search">Выйти из поиска</string>
     <string name="no_scanned_documents">Нет отсканированных документов</string>
-    <string name="confirm">Подтвердить</string>
-    <string name="share">Поделиться</string>
     <string name="sort_descending">Сортировать по убыванию</string>
 	<string name="doc_updated_successfully">Документ успешно обновлен</string>
 	<string name="field_required">Это поле обязательно для заполнения</string>
@@ -67,8 +54,6 @@
 	<string name="zoom_in">Увеличить</string>
 	<string name="page_navigation">Навигация по страницам</string>
 	<string name="go_to_page">Перейти к странице</string>
-	<string name="fit_mode">Режим масштабирования</string>
-	<string name="night_mode">Ночной режим</string>
 	<string name="fit_page">По странице</string>
 	<string name="fit_height">По высоте</string>
 	<string name="zoom_reset">Сбросить масштаб</string>
@@ -86,7 +71,6 @@
     <string name="dynamic_coloring">Динамические цвета</string>
     <string name="dynamic_coloring_desc">Использовать цвета обоев для темы приложения</string>
     <string name="custom_colors">Свои цвета</string>
-    <string name="seed_color">Основной цвет</string>
     <string name="palette_style">Стиль палитры</string>
     <string name="high_contrast">Высокая контрастность</string>
     <string name="high_contrast_desc">Оптимизировано для экранов AMOLED</string>
@@ -107,7 +91,6 @@
     <string name="document_details">Сведения о документе</string>
     <string name="pages_count">Страниц: %1$d</string>
     <string name="cannot_open_pdf">Не удалось открыть этот документ</string>
-    <string name="settings">Настройки</string>
     <string name="general">Общие</string>
     <string name="version_format">Версия %1$s</string>
     <string name="about">О приложении</string>
@@ -138,12 +121,7 @@
     <string name="viewer_remember_position">Запоминать, где я остановился</string>
     <string name="viewer_remember_position_on_desc">Документы открываются на странице, которую вы читали</string>
     <string name="viewer_remember_position_off_desc">Документы всегда открываются с начала</string>
-    <string name="fit_mode_width">По ширине</string>
-    <string name="fit_mode_height">По высоте</string>
-    <string name="fit_mode_page">Страница целиком</string>
-    <string name="fit_mode_proportional">Пропорционально</string>
     <string name="night_mode_desc">Инвертировать цвета страниц для чтения в темноте</string>
-    <string name="back">Назад</string>
     <string name="close">Закрыть</string>
     <string name="go">Перейти</string>
     <string name="page_number">Номер страницы</string>
@@ -154,7 +132,6 @@
     <string name="page_indicator">%1$d / %2$d</string>
     <string name="fast_scroller">Прокрутка страниц</string>
     <string name="viewer_open_elsewhere">Открыть в другом приложении</string>
-    <string name="viewer_error_not_found">Этого документа здесь больше нет</string>
     <string name="viewer_error_not_found_desc">Возможно, он был перемещён или удалён.</string>
     <string name="viewer_error_access_denied">Docucraft не может прочитать этот документ</string>
     <string name="viewer_error_access_denied_desc">Приложение, которое им поделилось, не дало разрешения или отозвало его. Попробуйте снова открыть его из того приложения.</string>
@@ -187,7 +164,6 @@
     <string name="link_blocked_scheme">Ссылки такого типа могут быть опасны.</string>
     <string name="link_blocked_malformed">Ссылка недействительна.</string>
     <string name="link_blocked_outside">Она ведёт на страницу, которой нет в этом документе.</string>
-    <string name="link_no_app">Нет приложения, которое может открыть эту ссылку</string>
     <string name="link_went_to_page">Страница %1$d</string>
     <string name="link_back_to_page">Вернуться на страницу %1$d</string>
     <string name="link_a11y_web">Ссылка: %1$s</string>
@@ -198,9 +174,6 @@
     <string name="link_a11y_action">Показать ссылку</string>
     <string name="doc_no_matches">Подходящих документов нет</string>
     <string name="doc_no_matches_desc">По запросу «%1$s» ничего не найдено. Попробуйте другое название или слово из описания.</string>
-    <string name="open">Открыть</string>
-    <string name="recents">Недавние</string>
-    <string name="documents">Документы</string>
     <string name="sort_by">Сортировать по</string>
     <string name="search_hint_title">Поиск по вашим документам</string>
     <string name="search_result_page">Страница %1$d</string>
@@ -216,7 +189,6 @@
     <string name="recognize_text_in_new_documents">Распознавать текст в новых документах</string>
     <string name="recognize_text_in_new_documents_on_desc">Сохранённые сканы можно находить по их содержимому. Текст читается на вашем устройстве</string>
     <string name="recognize_text_in_new_documents_off_desc">Сохранённые сканы находятся только по названию. Распознавание можно включить для каждого документа</string>
-    <string name="text_recognition_turn_on">Распознать текст</string>
     <string name="text_recognition_turn_off">Больше не распознавать текст</string>
     <string name="text_recognition_turned_on">Текст распознаётся в фоновом режиме</string>
     <string name="text_recognition_turned_off">Распознанный текст удалён</string>
@@ -225,14 +197,10 @@
     <string name="done">Готово</string>
     <string name="color">Цвет</string>
     <string name="icon">Значок</string>
-    <string name="move">Переместить</string>
     <string name="see_all">Показать все</string>
-    <string name="library">Библиотека</string>
     <string name="move_up">Переместить вверх</string>
     <string name="move_down">Переместить вниз</string>
     <string name="name_empty">Введите название</string>
-    <string name="folders">Папки</string>
-    <string name="folder_new">Новая папка</string>
     <string name="folder_edit">Изменить папку</string>
     <string name="folder_delete">Удалить папку</string>
     <string name="folder_delete_confirmation">Папка «%1$s» будет удалена.</string>
@@ -261,8 +229,6 @@
     <string name="move_no_folders_here">Здесь нет папок</string>
     <string name="moved_to_folder">Перемещено в «%1$s»</string>
     <string name="moved_to_library">Убрано из папки</string>
-    <string name="tags">Теги</string>
-    <string name="tag_new">Новый тег</string>
     <string name="tag_edit">Изменить тег</string>
     <string name="tag_delete">Удалить тег</string>
     <string name="tag_delete_confirmation">Тег «%1$s» будет удалён.</string>
@@ -281,7 +247,6 @@
     <string name="tag_find_or_create">Найдите или создайте тег</string>
     <string name="tag_create_named">Создать «%1$s»</string>
     <string name="document_tags_desc">Нажмите на тег, чтобы добавить его к документу или убрать.</string>
-    <string name="favorite">Избранное</string>
     <string name="favorites">Избранное</string>
     <string name="filters_no_matches">Этим фильтрам не соответствует ни один документ</string>
     <string name="filters_clear">Сбросить фильтры</string>
@@ -310,7 +275,6 @@
     <string name="icon_family">Семья</string>
     <string name="icon_heart">Сердце</string>
     <string name="icon_star">Звезда</string>
-    <string name="bin">Корзина</string>
     <string name="bin_empty">Очистить корзину</string>
     <string name="bin_nothing_title">Корзина пуста</string>
     <string name="bin_nothing_desc">Удалённые документы хранятся здесь %1$d дн. на случай, если вы захотите их вернуть.</string>
@@ -333,7 +297,6 @@
     <string name="folder_deleted_with_contents">Папка удалена. Её документы в корзине</string>
     <string name="document_text_unknown">Неизвестно</string>
     <string name="skip">Пропустить</string>
-    <string name="folder">Папка</string>
     <string name="scan_review_title">Скан сохранён</string>
     <string name="scan_review_desc">Он в вашей библиотеке. Дайте ему название сейчас или пропустите и сделайте это позже.</string>
     <string name="scan_review_recognize_text_desc">Чтобы его можно было найти по содержимому</string>

@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.overlay.OverlaySheetSkeleton
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.details.EditDocumentDetailsContent
@@ -78,7 +79,7 @@ fun EditDocumentDetailsSheet(
                     shapes = ButtonDefaults.shapes(),
                     modifier = Modifier.weight(1f),
                 ) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(DesignsystemR.string.cancel))
                 }
 
                 Button(
@@ -87,7 +88,7 @@ fun EditDocumentDetailsSheet(
                     shapes = ButtonDefaults.shapes(),
                     enabled = state.canConfirm,
                 ) {
-                    Text(stringResource(R.string.confirm))
+                    Text(stringResource(DesignsystemR.string.confirm))
                 }
             }
         },
@@ -149,11 +150,11 @@ fun EditDocumentDetailsDialog(
         },
         confirmButton = {
             TextButton(onClick = onConfirmEdit, enabled = state.canConfirm) {
-                Text(stringResource(R.string.confirm))
+                Text(stringResource(DesignsystemR.string.confirm))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+            TextButton(onClick = onDismiss) { Text(stringResource(DesignsystemR.string.cancel)) }
         },
     )
 }

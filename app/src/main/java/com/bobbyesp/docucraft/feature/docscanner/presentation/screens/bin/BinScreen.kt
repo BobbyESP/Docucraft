@@ -52,6 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.components.divider.AnimatedWavyDivider
@@ -105,7 +106,7 @@ fun BinScreen(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             FrostedLargeTopAppBar(
-                title = stringResource(R.string.bin),
+                title = stringResource(DesignsystemR.string.bin),
                 isContentScrolled = listState.canScrollBackward,
                 scrollBehavior = scrollBehavior,
                 hazeState = hazeState,
@@ -113,7 +114,7 @@ fun BinScreen(
                     IconButton(onClick = onBack, shapes = IconButtonDefaults.shapes()) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
+                            contentDescription = stringResource(DesignsystemR.string.back),
                         )
                     }
                 },
@@ -336,7 +337,7 @@ fun DeleteForeverForm(
         icon = Icons.Rounded.DeleteForever,
         onDismiss = onDismiss,
         modifier = modifier,
-        confirmText = stringResource(R.string.delete),
+        confirmText = stringResource(DesignsystemR.string.delete),
         onConfirm = onConfirm,
         destructive = true,
     ) {

@@ -53,6 +53,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
 import com.bobbyesp.docucraft.core.presentation.components.SectionHeader
@@ -163,7 +164,7 @@ fun FolderContentsContent(
                 .nestedScroll(fabExpansion.nestedScrollConnection),
         topBar = {
             FrostedLargeTopAppBar(
-                title = folder?.name ?: stringResource(R.string.folders),
+                title = folder?.name ?: stringResource(DesignsystemR.string.folders),
                 // Where the folder is, which its name alone does not say two levels down.
                 subtitle =
                     uiState.path
@@ -177,7 +178,7 @@ fun FolderContentsContent(
                     IconButton(onClick = navigation.onBack, shapes = IconButtonDefaults.shapes()) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
+                            contentDescription = stringResource(DesignsystemR.string.back),
                         )
                     }
                 },
@@ -191,7 +192,7 @@ fun FolderContentsContent(
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.DeleteOutline,
-                                contentDescription = stringResource(R.string.bin),
+                                contentDescription = stringResource(DesignsystemR.string.bin),
                             )
                         }
                     }
@@ -218,7 +219,8 @@ fun FolderContentsContent(
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.MoreVert,
-                                contentDescription = stringResource(R.string.more_options),
+                                contentDescription =
+                                    stringResource(DesignsystemR.string.more_options),
                             )
                         }
                     }
@@ -264,7 +266,7 @@ fun FolderContentsContent(
                                 ),
                             icon = Icons.Rounded.FolderOpen,
                             actionText =
-                                stringResource(R.string.folder_new).takeIf {
+                                stringResource(DesignsystemR.string.folder_new).takeIf {
                                     uiState.canCreateFolder
                                 },
                             iconAction = Icons.Rounded.CreateNewFolder,
@@ -321,7 +323,7 @@ private fun FolderContentsList(
             // At the root every folder is listed, so the screen's own title already names them.
             if (!uiState.isRoot) {
                 item(key = "folders-header", contentType = "section-header") {
-                    SectionHeader(title = stringResource(R.string.folders))
+                    SectionHeader(title = stringResource(DesignsystemR.string.folders))
                 }
             }
             itemsIndexed(
@@ -352,7 +354,7 @@ private fun FolderContentsList(
                     title =
                         stringResource(
                             if (uiState.isRoot) R.string.documents_without_folder
-                            else R.string.documents
+                            else DesignsystemR.string.documents
                         ),
                     modifier = Modifier.padding(top = if (subfolders.isEmpty()) 0.dp else 16.dp),
                     trailing = {
@@ -410,7 +412,7 @@ private fun NewFolderButton(
         )
 
     SmallExtendedFloatingActionButton(
-        text = { Text(text = stringResource(R.string.folder_new)) },
+        text = { Text(text = stringResource(DesignsystemR.string.folder_new)) },
         icon = { Icon(imageVector = Icons.Rounded.CreateNewFolder, contentDescription = null) },
         onClick = onClick,
         expanded = expanded,

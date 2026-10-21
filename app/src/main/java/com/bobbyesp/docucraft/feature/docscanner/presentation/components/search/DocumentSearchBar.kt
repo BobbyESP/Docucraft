@@ -27,7 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.sharedBoundsAcrossDestinations
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
@@ -91,7 +91,7 @@ fun DocumentSearchBarButton(
             Icon(imageVector = Icons.Rounded.Search, contentDescription = null)
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = stringResource(R.string.search_documents),
+                text = stringResource(DesignsystemR.string.search_documents),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,

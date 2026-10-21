@@ -78,6 +78,7 @@ ksp { arg("KOIN_CONFIG_CHECK", "true") }
 
 dependencies {
     // Modules split out of the app
+    implementation(project(":core:designsystem"))
     implementation(project(":core:data"))
     implementation(project(":core:domain"))
 

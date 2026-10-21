@@ -23,6 +23,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.bobbyesp.docucraft.R as AppR
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentSearch
 import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderContents
@@ -232,7 +233,8 @@ class StoreCaptureTest(private val language: String) {
         }
 
         /** The document is open once its bars are: they are only drawn for a document that is. */
-        private fun waitForViewer() = device.waitFor(appStrings.getString(AppR.string.night_mode))
+        private fun waitForViewer() =
+            device.waitFor(appStrings.getString(DesignsystemR.string.night_mode))
 
         /**
          * Presses on a line of the page and drags down and across, as a reader selecting a few

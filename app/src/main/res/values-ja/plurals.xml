@@ -1,7 +1,4 @@
 <resources>
-    <plurals name="doc_n_pages">
-        <item quantity="other">%d ページ</item>
-    </plurals>
     <plurals name="n_documents">
         <item quantity="other">%d 件のドキュメント</item>
     </plurals>

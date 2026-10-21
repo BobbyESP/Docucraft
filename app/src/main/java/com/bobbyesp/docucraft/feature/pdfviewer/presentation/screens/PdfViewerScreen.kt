@@ -61,6 +61,7 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
@@ -524,7 +525,7 @@ private fun HandlePdfViewerEffects(
     val notifications = LocalNotificationsService.current
     val clipboard = LocalClipboard.current
     val copied = stringResource(R.string.viewer_text_copied)
-    val noApp = stringResource(R.string.link_no_app)
+    val noApp = stringResource(DesignsystemR.string.link_no_app)
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
     // The browser bar takes the app's colors (D4).
@@ -546,7 +547,9 @@ private fun HandlePdfViewerEffects(
                             message = resources.getString(R.string.already_in_library_title),
                             type = NotificationType.Info,
                             action =
-                                NotificationAction(label = resources.getString(R.string.open)) {
+                                NotificationAction(
+                                    label = resources.getString(DesignsystemR.string.open)
+                                ) {
                                     openInLibrary(effect.documentUuid)
                                 },
                             duration = AlreadyInLibraryNotice,

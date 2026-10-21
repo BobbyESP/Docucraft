@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.composepdf.PdfLoadException
 
 /**
@@ -47,7 +48,11 @@ enum class ViewerLoadError(
      */
     val worthOpeningElsewhere: Boolean,
 ) {
-    NotFound(R.string.viewer_error_not_found, R.string.viewer_error_not_found_desc, false),
+    NotFound(
+        DesignsystemR.string.viewer_error_not_found,
+        R.string.viewer_error_not_found_desc,
+        false,
+    ),
     AccessDenied(
         R.string.viewer_error_access_denied,
         R.string.viewer_error_access_denied_desc,
@@ -124,9 +129,11 @@ fun ViewerErrorContent(
                 }
                 if (onBack != null) {
                     if (openWith != null) {
-                        OutlinedButton(onClick = onBack) { Text(stringResource(R.string.back)) }
+                        OutlinedButton(onClick = onBack) {
+                            Text(stringResource(DesignsystemR.string.back))
+                        }
                     } else {
-                        Button(onClick = onBack) { Text(stringResource(R.string.back)) }
+                        Button(onClick = onBack) { Text(stringResource(DesignsystemR.string.back)) }
                     }
                 }
             }
