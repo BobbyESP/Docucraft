@@ -283,7 +283,7 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 
 ## 5. Integrations and sensitive points
 
-- **File sharing** uses `${applicationId}.fileprovider` (the manifest and `App.getAuthority`). Only
+- **File sharing** uses `${applicationId}.fileprovider` (the manifest and `DocumentLocations`). Only
   `content://` locations are ever handed to another app (`canBeHandedOff`). A `file://` PDF opened
   from outside is shown, but never re-shared.
   - The provider is `CatalogueFileProvider`, which names a document as the catalogue does. It
