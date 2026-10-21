@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="clear_search">Zoekopdracht wissen</string>
+    <string name="doc_no_matches">Geen overeenkomende documenten</string>
+    <string name="doc_no_matches_desc">Niets komt overeen met “%1$s”. Probeer een andere naam of een woord uit de beschrijving.</string>
+    <string name="search_hint_title">Zoek in uw documenten</string>
+    <string name="search_hint_desc">Op naam, of op iets uit de beschrijving.</string>
+</resources>

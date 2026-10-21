@@ -81,3 +81,7 @@ include(":feature:scan:api")
 include(":feature:settings")
 
 include(":feature:bin")
+
+include(":feature:search")
+
+include(":feature:organization")

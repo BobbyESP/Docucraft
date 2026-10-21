@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="clear_search">Limpar pesquisa</string>
+    <string name="doc_no_matches">Nenhum documento correspondente</string>
+    <string name="doc_no_matches_desc">Nada corresponde a “%1$s”. Tente outro nome ou uma palavra da descrição.</string>
+    <string name="search_hint_title">Pesquise nos seus documentos</string>
+    <string name="search_hint_desc">Por nome ou por qualquer palavra da descrição.</string>
+</resources>

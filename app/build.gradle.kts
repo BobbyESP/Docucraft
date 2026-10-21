@@ -75,6 +75,8 @@ composeCompiler {
 
 dependencies {
     // Modules split out of the app
+    implementation(project(":feature:organization"))
+    implementation(project(":feature:search"))
     implementation(project(":feature:bin"))
     implementation(project(":feature:settings"))
     implementation(project(":feature:scan:api"))

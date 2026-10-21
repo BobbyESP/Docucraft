@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="clear_search">مسح البحث</string>
+    <string name="doc_no_matches">لا توجد مستندات مطابقة</string>
+    <string name="doc_no_matches_desc">لا شيء يطابق «%1$s». جرّب اسمًا آخر أو كلمة من الوصف.</string>
+    <string name="search_hint_title">ابحث في مستنداتك</string>
+    <string name="search_hint_desc">بالاسم أو بأي شيء في الوصف.</string>
+</resources>

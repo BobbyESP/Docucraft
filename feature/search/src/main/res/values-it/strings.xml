@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="clear_search">Cancella ricerca</string>
+    <string name="doc_no_matches">Nessun documento corrispondente</string>
+    <string name="doc_no_matches_desc">Nessun risultato per “%1$s”. Prova con un altro nome o una parola della descrizione.</string>
+    <string name="search_hint_title">Cerca nei tuoi documenti</string>
+    <string name="search_hint_desc">Per nome o per qualsiasi parola della descrizione.</string>
+</resources>
