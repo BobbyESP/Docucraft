@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="bin_empty">휴지통 비우기</string>
+    <string name="bin_nothing_title">휴지통이 비어 있습니다</string>
+    <string name="bin_nothing_desc">삭제한 문서는 되돌리고 싶을 때를 대비해 %1$d일 동안 여기에 보관됩니다.</string>
+    <string name="bin_retention_notice">문서는 휴지통에서 %1$d일이 지나면 완전히 삭제됩니다.</string>
+    <string name="bin_deleted_soon">곧 완전히 삭제됩니다</string>
+    <string name="bin_restored">라이브러리로 복원됨</string>
+    <string name="bin_deleted_forever">완전히 삭제됨</string>
+    <string name="bin_emptied">휴지통을 비웠습니다</string>
+    <string name="restore">복원</string>
+    <string name="delete_forever">완전히 삭제</string>
+    <string name="delete_forever_confirmation">“%1$s”이(가) 완전히 삭제됩니다.</string>
+    <string name="delete_forever_note">이 작업은 되돌릴 수 없습니다. 내보낸 사본에는 영향이 없습니다.</string>
+</resources>

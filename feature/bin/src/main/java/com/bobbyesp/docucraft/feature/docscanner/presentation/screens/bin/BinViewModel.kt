@@ -3,11 +3,11 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.bin
 
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.util.events.UiEvent
 import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
+import com.bobbyesp.docucraft.feature.bin.R
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.repository.DocumentsRepository
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.BinRetention

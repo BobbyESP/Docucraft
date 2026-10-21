@@ -79,3 +79,5 @@ include(":feature:viewer:api")
 include(":feature:scan:api")
 
 include(":feature:settings")
+
+include(":feature:bin")

@@ -51,7 +51,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.ScreenPlaceholderCard
@@ -64,6 +63,7 @@ import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.core.util.contentRevealTransform
+import com.bobbyesp.docucraft.feature.bin.R
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.BinRetention
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.card.ScannedDocumentListItem
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData

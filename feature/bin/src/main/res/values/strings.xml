@@ -1,0 +1,14 @@
+<resources>
+    <string name="bin_empty">Empty bin</string>
+    <string name="bin_nothing_title">The bin is empty</string>
+    <string name="bin_nothing_desc">Documents you delete stay here for %1$d days, in case you want them back.</string>
+    <string name="bin_retention_notice">Documents are deleted for good after %1$d days in the bin.</string>
+    <string name="bin_deleted_soon">Deleted for good soon</string>
+    <string name="bin_restored">Restored to your library</string>
+    <string name="bin_deleted_forever">Deleted for good</string>
+    <string name="bin_emptied">The bin was emptied</string>
+    <string name="restore">Restore</string>
+    <string name="delete_forever">Delete for good</string>
+    <string name="delete_forever_confirmation">“%1$s” will be deleted for good.</string>
+    <string name="delete_forever_note">This can\'t be undone. Copies you exported are not affected.</string>
+</resources>

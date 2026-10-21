@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="bin_empty">Vider la corbeille</string>
+    <string name="bin_nothing_title">La corbeille est vide</string>
+    <string name="bin_nothing_desc">Les documents que vous supprimez restent ici pendant %1$d jours, au cas où vous voudriez les récupérer.</string>
+    <string name="bin_retention_notice">Les documents sont supprimés définitivement après %1$d jours dans la corbeille.</string>
+    <string name="bin_deleted_soon">Suppression définitive imminente</string>
+    <string name="bin_restored">Restauré dans votre bibliothèque</string>
+    <string name="bin_deleted_forever">Supprimé définitivement</string>
+    <string name="bin_emptied">La corbeille a été vidée</string>
+    <string name="restore">Restaurer</string>
+    <string name="delete_forever">Supprimer définitivement</string>
+    <string name="delete_forever_confirmation">« %1$s » sera supprimé définitivement.</string>
+    <string name="delete_forever_note">Cette action est irréversible. Les copies que vous avez exportées ne sont pas concernées.</string>
+</resources>

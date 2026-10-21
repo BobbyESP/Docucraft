@@ -18,7 +18,8 @@ dependencies {
     implementation(libs.bundles.compose)
     implementation(libs.bundles.coroutines)
     implementation(libs.bundles.haze)
-    implementation(libs.kotlinx.collections.immutable)
+    // `api`: its previews and components hand out immutable lists.
+    api(libs.kotlinx.collections.immutable)
     implementation(libs.landscapist.coil)
     implementation(libs.landscapist.placeholder)
     implementation(libs.material.kolor)
