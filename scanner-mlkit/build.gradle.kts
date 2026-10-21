@@ -1,19 +1,9 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-plugins { id(libs.plugins.android.library.get().pluginId) }
+plugins { id("docucraft.android.library") }
 
-android {
-    namespace = "com.bobbyesp.scanner.mlkit"
-    compileSdk = ProjectConfig.compileSdk
-
-    defaultConfig { minSdk = ProjectConfig.minSdk }
-
-    compileOptions {
-        sourceCompatibility = ProjectConfig.javaVersion
-        targetCompatibility = ProjectConfig.javaVersion
-    }
-}
+android { namespace = "com.bobbyesp.scanner.mlkit" }
 
 dependencies {
     // `api`, because consumers speak the contract; everything below is `implementation`, so none

@@ -2,6 +2,7 @@
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             content {

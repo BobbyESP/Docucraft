@@ -21,11 +21,15 @@ This file is the map and the rules. How each subsystem works, and why, is in
 | `:ocr-mlkit` | ML Kit's text recognition, as a `PageContentProvider`. | ML Kit is an `implementation` dependency, so no ML Kit type ever reaches `:app`'s classpath. |
 
 Build setup:
-- SDKs and JVM target: `buildSrc/src/main/kotlin/ProjectConfig.kt`. Currently minSdk 24, compile
-  37.1 (Compose 1.13 requires it), target 37, Java 17.
-- `:app` and `:composepdf` apply `docucraft.android.convention` (`buildSrc`: Compose, SDKs,
-  desugaring). `:scanner-mlkit` and `:ocr-mlkit` have no UI, so they skip it, but read the same
-  `ProjectConfig`.
+- SDKs and JVM target: `build-logic/convention/src/main/kotlin/ProjectConfig.kt`. Currently
+  minSdk 24, compile 37.1 (Compose 1.13 requires it), target 37, Java 17.
+- Every module applies the convention plugins of `build-logic` (an included build), never the
+  Android or Kotlin plugins with settings of its own:
+  - `docucraft.android.application` or `docucraft.android.library`: SDKs, Java level, desugaring;
+  - `docucraft.android.compose`, added to either for a module that draws: the compiler, the BOM;
+  - `docucraft.android.room`: KSP, Room, and the schemas exported to the module's `schemas/`;
+  - `docucraft.jvm.library`: a plain Kotlin module. It also answers to `testDebugUnitTest`, so that
+    one task runs every module's unit tests.
 - Library versions: `gradle/libs.versions.toml`. The app's version: root `build.gradle.kts`.
 
 ## 2. Where things live in `:app`
@@ -331,7 +335,7 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 | What | Command (Windows: `.\gradlew.bat …`) |
 |---|---|
 | Debug APK | `./gradlew :app:assembleDebug` |
-| Unit tests, every module | `./gradlew testDebugUnitTest :scanner-api:test :document-content-api:test` |
+| Unit tests, every module | `./gradlew testDebugUnitTest` |
 | Instrumented tests | `./gradlew :app:connectedDebugAndroidTest :composepdf:connectedDebugAndroidTest` |
 | Format, then verify | `./gradlew spotlessApply`, then `./gradlew spotlessCheck` |
 

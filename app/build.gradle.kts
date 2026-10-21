@@ -2,15 +2,15 @@
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
 plugins {
-    id(libs.plugins.android.application.get().pluginId)
-    id("docucraft.android.convention")
+    id("docucraft.android.application")
+    id("docucraft.android.compose")
+    id("docucraft.android.room")
     alias(libs.plugins.kotlin.serialization)
-    id(libs.plugins.kotlin.parcelize.get().pluginId)
-    alias(libs.plugins.kotlin.ksp)
+    alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.google.gms)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.stability.analyzer)
-    id("copy-apk-plugin")
+    id("docucraft.copy-apk")
 }
 
 // Set by the release workflow, which decodes the keystore into the runner's temp directory.
@@ -22,7 +22,6 @@ android {
 
     defaultConfig {
         applicationId = "com.bobbyesp.docucraft"
-        targetSdk = ProjectConfig.targetSdk
 
         versionCode = rootProject.extra["versionCode"] as Int
         versionName = rootProject.extra["versionName"] as String
@@ -66,9 +65,6 @@ android {
 
     // The test PDFs live with the engine's tests; the viewer's content tests read the same ones.
     sourceSets.getByName("androidTest").assets.directories += "../composepdf/src/androidTest/assets"
-
-    // The exported schemas, which the migration tests build each old version of the database from.
-    sourceSets.getByName("androidTest").assets.directories += "schemas"
 }
 
 composeCompiler {
@@ -78,10 +74,7 @@ composeCompiler {
     )
 }
 
-ksp {
-    arg(RoomSchemaArgProvider(File(projectDir, "schemas")))
-    arg("KOIN_CONFIG_CHECK", "true")
-}
+ksp { arg("KOIN_CONFIG_CHECK", "true") }
 
 dependencies {
     // Bundles
@@ -106,11 +99,8 @@ dependencies {
     implementation(libs.sonner)
     implementation(libs.bundles.haze)
 
-    // Storage
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
+    // Storage (Room itself comes with `docucraft.android.room`)
     implementation(libs.room.paging)
-    ksp(libs.room.compiler)
     implementation(libs.datastore.preferences)
 
     // Background work: reading the text of documents
@@ -138,7 +128,6 @@ dependencies {
     implementation(libs.firebase.crashlytics)
 
     // Performance & Utils
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.androidx.profileinstaller)
     debugImplementation(libs.leakcanary)
 
@@ -151,20 +140,9 @@ dependencies {
     testImplementation(libs.mockk)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
 
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-}
-
-class RoomSchemaArgProvider(
-    @get:InputDirectory @get:PathSensitive(PathSensitivity.RELATIVE) val schemaDir: File
-) : CommandLineArgumentProvider {
-    override fun asArguments(): Iterable<String> {
-        if (!schemaDir.exists()) schemaDir.mkdirs()
-        return listOf("room.schemaLocation=${schemaDir.path}")
-    }
 }

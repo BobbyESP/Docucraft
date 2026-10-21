@@ -53,7 +53,7 @@ is why it must not share a run with the tests that read the graph the app starte
 ## Running
 
 ```sh
-./gradlew testDebugUnitTest :scanner-api:test :document-content-api:test      # every JVM test
+./gradlew testDebugUnitTest   # every JVM test, in every module
 ./gradlew :app:connectedDebugAndroidTest :composepdf:connectedDebugAndroidTest
 ./gradlew :composepdf:connectedDebugAndroidTest \
     -Pandroid.testInstrumentationRunnerArguments.class=com.composepdf.gesture.PdfGesturesTest

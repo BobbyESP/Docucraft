@@ -211,7 +211,7 @@ Then open the project in Android Studio and run it, or from a terminal (on Windo
 | Task | Command |
 |:--|:--|
 | Debug APK | `./gradlew :app:assembleDebug` |
-| Unit tests | `./gradlew testDebugUnitTest :scanner-api:test :document-content-api:test` |
+| Unit tests | `./gradlew testDebugUnitTest` |
 | Instrumented tests | `./gradlew :app:connectedDebugAndroidTest :composepdf:connectedDebugAndroidTest` |
 | Format | `./gradlew spotlessApply` |
 

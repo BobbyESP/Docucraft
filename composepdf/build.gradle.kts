@@ -2,8 +2,8 @@
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
 plugins {
-    id(libs.plugins.android.library.get().pluginId)
-    id("docucraft.android.convention")
+    id("docucraft.android.library")
+    id("docucraft.android.compose")
 }
 
 android {
@@ -19,12 +19,10 @@ dependencies {
     api(platform(libs.androidx.compose.bom))
 
     implementation(libs.bundles.coroutines)
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

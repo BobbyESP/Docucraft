@@ -1,25 +1,10 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-plugins { id(libs.plugins.android.library.get().pluginId) }
+plugins { id("docucraft.android.library") }
 
 android {
     namespace = "com.bobbyesp.ocr.mlkit"
-    compileSdk = ProjectConfig.compileSdk
-    // The PDF engine this draws pages with is built against the minor release.
-    compileSdkMinor = ProjectConfig.compileSdkMinor
-
-    defaultConfig {
-        minSdk = ProjectConfig.minSdk
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    compileOptions {
-        sourceCompatibility = ProjectConfig.javaVersion
-        targetCompatibility = ProjectConfig.javaVersion
-        // The PDF engine asks it of whatever depends on it.
-        isCoreLibraryDesugaringEnabled = true
-    }
 
     // The same test PDFs as the engine and the app, described by the same manifest.
     sourceSets {
@@ -38,8 +23,6 @@ dependencies {
     implementation(libs.gms.mlkit.text.recognition)
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.bundles.coroutines)
-
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     androidTestImplementation(libs.androidx.core.ktx)
     androidTestImplementation(libs.androidx.test.ext.junit)
