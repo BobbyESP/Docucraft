@@ -8,8 +8,8 @@
 
 | Module | JVM (`src/test`) | On a device (`src/androidTest`) |
 |---|---|---|
-| `:app` | that every key serializes, which document the list highlights, the requests from outside the UI, the widgets' entry | the platform content provider against the fixtures; saving and deleting a scan through the whole graph; the store's screenshots (skipped in any other run) |
-| `:library:domain`, `:library:data` | use cases; the path a migration gives an old document, search ranking, layered content | the catalogue: migrations from every exported schema, a migrated schema against a new one, the triggers, search, the repositories, storage, thumbnails and the file provider |
+| `:app` | that every key serializes, which document the list highlights, the requests from outside the UI, the widgets' entry | the platform content provider against the fixtures; saving and deleting a scan through the whole graph; the file provider, which reads the graph; the store's screenshots (skipped in any other run) |
+| `:library:domain`, `:library:data` | use cases; the path a migration gives an old document, search ranking, layered content | the catalogue: migrations from every exported schema, a migrated schema against a new one, the triggers, search, the repositories, storage and thumbnails |
 | `:feature:*` | ViewModels, the D2 settings table, link resolution, selection decisions, what a widget shows for its size and what it lists | `:feature:widgets`: the widgets' views, inflated as a launcher does |
 | `:core:*` | navigation rules and scene strategies, the theme's transitions, `BaseViewModel` | — |
 | `:document-content-platform` | text splitting | — |
