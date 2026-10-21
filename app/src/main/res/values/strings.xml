@@ -13,39 +13,12 @@
     <string name="filter">Filter</string>
     <string name="results">Results</string>
 
-    <!-- ═══════════════════════════════════════════════
-         SETTINGS
-         ════════════════════════════════════════════════ -->
-    <string name="appearance">Appearance</string>
-    <string name="appearance_desc">Theme, colors and typography</string>
-    <string name="theme">Theme</string>
-    <string name="system">System</string>
-    <string name="light">Light</string>
-    <string name="dark">Dark</string>
-    <string name="dynamic_coloring">Dynamic coloring</string>
-    <string name="dynamic_coloring_desc">Use wallpaper colors for the app theme</string>
-    <string name="custom_colors">Custom colors</string>
-    <string name="palette_style">Palette style</string>
-    <string name="high_contrast">High contrast</string>
-    <string name="high_contrast_desc">Optimized for AMOLED screens</string>
-    <string name="typography">Typography</string>
-    <string name="typography_display">Display &amp; Headlines</string>
-    <string name="typography_display_desc">Used for large splash headers, counts, and hero sections.</string>
-    <string name="typography_title">Titles &amp; Headers</string>
-    <string name="typography_title_desc">Used for list headers, card titles, and action dialogs.</string>
-    <string name="typography_body">Body &amp; Content</string>
-    <string name="typography_body_desc">Used for document descriptions, details, and general reading text.</string>
-    <string name="typography_label">Labels &amp; UI Text</string>
-    <string name="typography_label_desc">Used for button labels, settings options, and small tag badges.</string>
-    <string name="typography_monospace">Monospace &amp; Technical</string>
-    <string name="typography_monospace_desc">Used for technical details, character counts, and date formatting.</string>
 
 
     <string name="file_size">File size</string>
     <string name="page_count">Page count</string>
     <string name="no_scanned_documents">No scanned documents</string>
     <string name="error_loading_docs">Error loading documents</string>
-    <string name="select_setting_to_open">Select a setting to open it here</string>
 
     <string name="doc_scan_new">Scan new document</string>
     <string name="doc_scan_error">An error has occurred during the scan</string>
@@ -117,25 +90,8 @@
     <string name="document_details">Document details</string>
     <string name="pages_count">%1$d pages</string>
     <string name="cannot_open_pdf">Couldn\'t open this document</string>
-    <string name="general">General</string>
-    <string name="version_format">Version %1$s</string>
-    <string name="about">About</string>
-    <string name="about_desc">Version, who makes it and how to support it</string>
-    <string name="about_support_title">Support Docucraft</string>
-    <string name="about_support_desc">Docucraft is free and open source. If it is useful to you, a coffee helps me keep working on it.</string>
-    <string name="about_buy_me_a_coffee">Buy me a coffee</string>
-    <string name="about_links">Links</string>
-    <string name="about_developer_role">Designs and develops Docucraft</string>
-    <string name="about_source_code">Source code</string>
-    <string name="about_source_code_desc">Open source, under the GPL-3.0 license</string>
 
     <string name="view_document">View document</string>
-    <string name="document_viewer">Document viewer</string>
-    <string name="document_viewer_desc">How documents open</string>
-    <string name="viewer_use_defaults">Use default settings</string>
-    <string name="viewer_use_defaults_on_desc">Every document opens with the settings below</string>
-    <string name="viewer_use_defaults_off_desc">Documents open fitted to width, without night mode</string>
-    <string name="viewer_session_note">What you change while reading is kept for that document until you close the app.</string>
     <string name="save_to_docucraft">Save to Docucraft</string>
     <string name="saved_to_library">Saved to your library</string>
     <string name="save_to_library_failed">This document couldn\'t be saved. It may be protected or damaged.</string>
@@ -143,10 +99,6 @@
     <string name="already_in_library_desc">A document with the same content is already saved in Docucraft. Do you want to save another copy?</string>
     <string name="save_another_copy">Save another copy</string>
     <string name="removed_from_recents">Removed from Recents</string>
-    <string name="viewer_remember_position">Remember where I left off</string>
-    <string name="viewer_remember_position_on_desc">Documents open on the page you were reading</string>
-    <string name="viewer_remember_position_off_desc">Documents always open at the beginning</string>
-    <string name="night_mode_desc">Invert page colours to read in the dark</string>
     <string name="close">Close</string>
     <string name="go">Go</string>
     <string name="page_number">Page number</string>
@@ -201,17 +153,6 @@
     <string name="doc_no_matches_desc">Nothing matches “%1$s”. Try another name or word from the description.</string>
     <string name="search_hint_title">Search your documents</string>
     <string name="search_hint_desc">By name, or by anything in the description.</string>
-    <string name="active_font">Active: %1$s</string>
-    <string name="font_preview">Preview</string>
-    <string name="font_system">System default</string>
-    <string name="typography_display_sample">Docucraft Scanner</string>
-    <string name="typography_title_sample">Scanned Documents</string>
-    <string name="typography_body_sample">This document was processed using Docucraft with advanced layout intelligence.</string>
-    <string name="typography_label_sample">CONFIRM EDIT</string>
-    <string name="typography_monospace_sample">ID: 46F1–37FB–AC5A (60 chars)</string>
-    <string name="recognize_text_in_new_documents">Recognize text in new documents</string>
-    <string name="recognize_text_in_new_documents_on_desc">Scans you save can be found by what they say. It is read on your device</string>
-    <string name="recognize_text_in_new_documents_off_desc">Scans you save are only found by their name. You can turn it on for each document</string>
     <string name="text_recognition_turned_on">Its text is being recognized in the background</string>
     <string name="text_recognition_turned_off">The recognized text was removed</string>
     <string name="edit">Edit</string>
@@ -300,9 +241,6 @@
     <string name="suggestions_text_recognition_off">Nothing will be suggested: text recognition is off for this document, and a scan has no text without it. Turn it on below, or for every new document in Settings.</string>
     <string name="suggestion_use">Use</string>
     <string name="suggestion_move_to">Move to %1$s</string>
-    <string name="review_new_scans">Review scans when they are saved</string>
-    <string name="review_new_scans_on_desc">After scanning, you name the document and say where it goes</string>
-    <string name="review_new_scans_off_desc">Scans are saved as they come. You can edit them later</string>
     <string name="tags_add">Add tags</string>
     <string name="scan_review_section_details">Details</string>
     <string name="scan_review_section_organize">Organize</string>

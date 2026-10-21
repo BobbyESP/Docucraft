@@ -70,7 +70,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.model.FontConfig
 import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
@@ -90,6 +89,7 @@ import com.bobbyesp.docucraft.core.presentation.theme.isDynamicColoringSupported
 import com.bobbyesp.docucraft.core.presentation.theme.toFontFamily
 import com.bobbyesp.docucraft.core.util.animateItemWith
 import com.bobbyesp.docucraft.core.util.contentRevealTransform
+import com.bobbyesp.docucraft.feature.settings.R
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import org.koin.androidx.compose.koinViewModel

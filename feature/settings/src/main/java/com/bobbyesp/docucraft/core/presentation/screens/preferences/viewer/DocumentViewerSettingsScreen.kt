@@ -47,7 +47,6 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.model.ViewerDefaults
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
@@ -58,6 +57,7 @@ import com.bobbyesp.docucraft.core.presentation.components.settings.SettingsItem
 import com.bobbyesp.docucraft.core.presentation.components.settings.settingsContentWidth
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
+import com.bobbyesp.docucraft.feature.settings.R
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import org.koin.androidx.compose.koinViewModel

@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.presentation.common.LocalSettingsRepository
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.LocalPaneContext
@@ -37,6 +36,7 @@ import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.A
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.viewer.DocumentViewerSettingsScreen
+import com.bobbyesp.docucraft.feature.settings.R
 import kotlinx.coroutines.launch
 
 /**
