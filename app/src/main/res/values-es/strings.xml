@@ -14,15 +14,11 @@
     <string name="file_size">Tamaño del archivo</string>
     <string name="page_count">Cantidad de páginas</string>
     <string name="doc_save">Guardar documento</string>
-    <string name="doc_delete">Eliminar documento</string>
     <string name="doc_save_error_with_reason">Ocurrió un error al guardar el documento: %1$s</string>
-    <string name="doc_saved_successfully_to">Documento guardado correctamente en %1$s</string>
     <string name="doc_delete_error">Ocurrió un error al eliminar el documento</string>
     <string name="doc_delete_warning_message">Estás a punto de eliminar %1$s de tu dispositivo y base de datos de la aplicación.\n\nTiene %2$s páginas y un tamaño de %3$s.\n\n¿Estás seguro de que quieres eliminarlo?</string>
     <string name="doc_saving_cancelled">El proceso de guardado ha sido cancelado</string>
-    <string name="doc_modify_details">Modificar detalles del documento</string>
     <string name="retry">Reintentar</string>
-    <string name="doc_modify_details_description">Actualiza abajo el título y la descripción del documento para reflejar su contenido y detalles.</string>
     <string name="doc_scan_to_see_document_list">Escanea tus documentos para verlos aquí listados.</string>
     <string name="no_scanned_documents">No hay documentos escaneados</string>
     <string name="scan_cancelled">Proceso de escaneo cancelado</string>
@@ -32,7 +28,6 @@
     <string name="app_tagline">Escanea, ordena y lee tus documentos. Todo en tu dispositivo.</string>
     <string name="exit_search">Salir de la búsqueda</string>
     <string name="results">Resultados</string>
-	<string name="doc_updated_successfully">Documento actualizado correctamente</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
 	<string name="clear_field">Borrar campo</string>
 	<string name="field_required">Este campo es obligatorio</string>
@@ -58,7 +53,6 @@
     <string name="already_in_library_title">Ya está en tu biblioteca</string>
     <string name="already_in_library_desc">Ya hay un documento con el mismo contenido guardado en Docucraft. ¿Quieres guardar otra copia?</string>
     <string name="save_another_copy">Guardar otra copia</string>
-    <string name="removed_from_recents">Quitado de Recientes</string>
     <string name="close">Cerrar</string>
     <string name="go">Ir</string>
     <string name="page_number">Número de página</string>
@@ -110,8 +104,6 @@
     <string name="link_a11y_blocked">Enlace bloqueado</string>
     <string name="link_a11y_action">Mostrar enlace</string>
 
-    <string name="text_recognition_turned_on">Su texto se está reconociendo en segundo plano</string>
-    <string name="text_recognition_turned_off">Se ha quitado el texto reconocido</string>
     <string name="see_all">Ver todo</string>
     <string name="pinned_folders_empty_title">Ten tus carpetas a mano</string>
     <string name="pinned_folders_empty_desc">Las carpetas fijadas aparecen aquí.</string>
@@ -120,25 +112,7 @@
     <string name="favorites">Favoritos</string>
     <string name="filters_no_matches">Ningún documento coincide con estos filtros</string>
     <string name="filters_clear">Quitar filtros</string>
-    <string name="move_to_bin">Mover a la papelera</string>
-    <string name="doc_bin_confirmation">«%1$s» irá a la papelera.</string>
-    <string name="doc_bin_note">Se queda allí %1$d días y hasta entonces se puede restaurar.</string>
-    <string name="doc_moved_to_bin">Movido a la papelera</string>
     <string name="document_text_unknown">No se sabe</string>
-    <string name="skip">Omitir</string>
-    <string name="scan_review_title">Escaneo guardado</string>
-    <string name="scan_review_desc">Ya está en tu biblioteca. Ponle nombre ahora u omítelo y hazlo después.</string>
-    <string name="scan_review_recognize_text_desc">Para encontrarlo por lo que dice</string>
-    <string name="suggestions">Sugerencias</string>
-    <string name="suggestions_working">Leyendo el documento…</string>
-    <string name="suggestions_none">No hay nada que sugerir para este documento.</string>
-    <string name="suggestions_failed">Esta vez no se han podido hacer sugerencias.</string>
-    <string name="suggestions_text_recognition_off">No se va a sugerir nada: el reconocimiento de texto está desactivado para este documento y un escaneo no tiene texto sin él. Actívalo abajo, o para todos los documentos nuevos en Ajustes.</string>
-    <string name="suggestion_use">Usar</string>
-    <string name="suggestion_move_to">Mover a %1$s</string>
-    <string name="tags_add">Añadir etiquetas</string>
-    <string name="scan_review_section_details">Detalles</string>
-    <string name="scan_review_section_organize">Organizar</string>
     <string name="document_details">Detalles del documento</string>
     <string name="document_details_in_library">En tu biblioteca</string>
     <string name="document_details_file">Archivo</string>

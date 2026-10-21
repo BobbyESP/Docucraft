@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
-    <string name="doc_modify_details_description">Werk de documenttitel en -beschrijving hieronder bij om de inhoud en details weer te geven.</string>
     <string name="doc_scan_to_see_document_list">Scan uw documenten om ze hier in een lijst te zien.</string>
     <string name="doc_share">Document delen</string>
     <string name="exit_search">Zoeken afsluiten</string>
@@ -12,7 +11,6 @@
     <string name="off">Uit</string>
     <string name="on">Aan</string>
     <string name="scan_cancelled">Scanproces geannuleerd</string>
-    <string name="doc_saved_successfully_to">Document succesvol opgeslagen in %1$s</string>
     <string name="home">Home</string>
     <string name="search">Zoeken</string>
     <string name="issue_opening_doc_viewer">Er is een probleem opgetreden bij het openen van de documentviewer</string>
@@ -20,7 +18,6 @@
     <string name="doc_delete_error">Er is een fout opgetreden bij het verwijderen van het document</string>
     <string name="no_scanned_documents">Geen gescande documenten</string>
     <string name="results">Resultaten</string>
-    <string name="doc_modify_details">Documentdetails wijzigen</string>
     <string name="clear_filters">Filters wissen</string>
     <string name="filter">Filter</string>
     <string name="follow_system">Systeemvoorkeur</string>
@@ -32,8 +29,6 @@
     <string name="app_tagline">Scan, orden en lees uw documenten. Alles op uw apparaat.</string>
     <string name="doc_open_in_viewer">Document openen in viewer</string>
     <string name="doc_scan_new">Nieuw document scannen</string>
-    <string name="doc_delete">Document verwijderen</string>
-	<string name="doc_updated_successfully">Document succesvol bijgewerkt</string>
 	<string name="field_required">Dit veld is verplicht</string>
 	<string name="clear_field">Veld leegmaken</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
@@ -64,7 +59,6 @@
     <string name="already_in_library_title">Staat al in uw bibliotheek</string>
     <string name="already_in_library_desc">Er is al een document met dezelfde inhoud opgeslagen in Docucraft. Wilt u nog een kopie opslaan?</string>
     <string name="save_another_copy">Nog een kopie opslaan</string>
-    <string name="removed_from_recents">Verwijderd uit Recent</string>
     <string name="close">Sluiten</string>
     <string name="go">Ga</string>
     <string name="page_number">Paginanummer</string>
@@ -115,8 +109,6 @@
     <string name="link_a11y_page">Link naar pagina %1$d</string>
     <string name="link_a11y_blocked">Geblokkeerde link</string>
     <string name="link_a11y_action">Link tonen</string>
-    <string name="text_recognition_turned_on">De tekst wordt op de achtergrond herkend</string>
-    <string name="text_recognition_turned_off">De herkende tekst is verwijderd</string>
     <string name="see_all">Alles bekijken</string>
     <string name="pinned_folders_empty_title">Houd uw mappen bij de hand</string>
     <string name="pinned_folders_empty_desc">Vastgemaakte mappen verschijnen hier.</string>
@@ -125,25 +117,7 @@
     <string name="favorites">Favorieten</string>
     <string name="filters_no_matches">Geen documenten komen overeen met deze filters</string>
     <string name="filters_clear">Filters wissen</string>
-    <string name="move_to_bin">Naar prullenbak verplaatsen</string>
-    <string name="doc_bin_confirmation">“%1$s” gaat naar de prullenbak.</string>
-    <string name="doc_bin_note">Het blijft daar %1$d dagen en kan tot die tijd worden teruggezet.</string>
-    <string name="doc_moved_to_bin">Naar de prullenbak verplaatst</string>
     <string name="document_text_unknown">Onbekend</string>
-    <string name="skip">Overslaan</string>
-    <string name="scan_review_title">Scan opgeslagen</string>
-    <string name="scan_review_desc">De scan staat in uw bibliotheek. Geef deze nu een naam, of sla dit over en doe het later.</string>
-    <string name="scan_review_recognize_text_desc">Zodat de scan te vinden is op wat erin staat</string>
-    <string name="suggestions">Suggesties</string>
-    <string name="suggestions_working">Document wordt gelezen…</string>
-    <string name="suggestions_none">Er valt niets voor te stellen voor dit document.</string>
-    <string name="suggestions_failed">Er konden deze keer geen suggesties worden gemaakt.</string>
-    <string name="suggestions_text_recognition_off">Er wordt niets voorgesteld: tekstherkenning staat uit voor dit document, en zonder herkenning heeft een scan geen tekst. Schakel deze hieronder in, of in Instellingen voor elk nieuw document.</string>
-    <string name="suggestion_use">Gebruiken</string>
-    <string name="suggestion_move_to">Verplaatsen naar %1$s</string>
-    <string name="tags_add">Labels toevoegen</string>
-    <string name="scan_review_section_details">Details</string>
-    <string name="scan_review_section_organize">Ordenen</string>
     <string name="document_details_in_library">In uw bibliotheek</string>
     <string name="document_details_file">Bestand</string>
     <string name="document_details_scanned">Gescand</string>

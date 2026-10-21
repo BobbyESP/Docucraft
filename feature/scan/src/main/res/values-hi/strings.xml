@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="skip">छोड़ें</string>
+    <string name="scan_review_title">स्कैन सहेजा गया</string>
+    <string name="scan_review_desc">यह आपकी लाइब्रेरी में है। इसे अभी नाम दें, या छोड़ दें और बाद में करें।</string>
+    <string name="scan_review_recognize_text_desc">ताकि इसे इसमें लिखी बातों से खोजा जा सके</string>
+    <string name="suggestions">सुझाव</string>
+    <string name="suggestions_working">दस्तावेज़ पढ़ा जा रहा है…</string>
+    <string name="suggestions_none">इस दस्तावेज़ के लिए सुझाने को कुछ नहीं है।</string>
+    <string name="suggestions_failed">इस बार सुझाव नहीं बनाए जा सके।</string>
+    <string name="suggestions_text_recognition_off">कुछ भी सुझाया नहीं जाएगा: इस दस्तावेज़ के लिए टेक्स्ट पहचान बंद है, और इसके बिना स्कैन में कोई टेक्स्ट नहीं होता। इसे नीचे चालू करें, या सेटिंग में हर नए दस्तावेज़ के लिए चालू करें।</string>
+    <string name="suggestion_use">इस्तेमाल करें</string>
+    <string name="suggestion_move_to">%1$s में ले जाएं</string>
+    <string name="tags_add">टैग जोड़ें</string>
+    <string name="scan_review_section_details">जानकारी</string>
+    <string name="scan_review_section_organize">व्यवस्थित करें</string>
+</resources>

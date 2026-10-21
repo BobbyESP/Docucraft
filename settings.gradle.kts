@@ -85,3 +85,7 @@ include(":feature:bin")
 include(":feature:search")
 
 include(":feature:organization")
+
+include(":feature:scan")
+
+include(":feature:document-actions")

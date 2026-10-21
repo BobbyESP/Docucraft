@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="skip">Pular</string>
+    <string name="scan_review_title">Digitalização salva</string>
+    <string name="scan_review_desc">Ela está na sua biblioteca. Dê um nome agora ou pule e faça isso depois.</string>
+    <string name="scan_review_recognize_text_desc">Para que possa ser encontrada pelo que diz</string>
+    <string name="suggestions">Sugestões</string>
+    <string name="suggestions_working">Lendo o documento…</string>
+    <string name="suggestions_none">Não há nada a sugerir para este documento.</string>
+    <string name="suggestions_failed">Desta vez não foi possível fazer sugestões.</string>
+    <string name="suggestions_text_recognition_off">Nada será sugerido: o reconhecimento de texto está desativado para este documento, e uma digitalização não tem texto sem ele. Ative-o abaixo ou, para todos os novos documentos, em Configurações.</string>
+    <string name="suggestion_use">Usar</string>
+    <string name="suggestion_move_to">Mover para %1$s</string>
+    <string name="tags_add">Adicionar etiquetas</string>
+    <string name="scan_review_section_details">Detalhes</string>
+    <string name="scan_review_section_organize">Organizar</string>
+</resources>

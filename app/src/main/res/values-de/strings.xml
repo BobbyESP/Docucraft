@@ -3,7 +3,6 @@
 
     <string name="exit_search">Suche beenden</string>
     <string name="doc_open_in_viewer">Dokument im Viewer öffnen</string>
-    <string name="doc_modify_details_description">Aktualisieren Sie den Dokumenttitel und die Beschreibung unten, um dessen Inhalt und Details widerzuspiegeln.</string>
     <string name="search">Suchen</string>
     <string name="file_size">Dateigröße</string>
     <string name="doc_save_error_with_reason">Beim Speichern des Dokuments ist ein Fehler aufgetreten: %1$s</string>
@@ -11,7 +10,6 @@
     <string name="clear_filters">Filter löschen</string>
     <string name="on">An</string>
     <string name="scan_cancelled">Scanvorgang abgebrochen</string>
-    <string name="doc_delete">Dokument löschen</string>
     <string name="off">Aus</string>
     <string name="doc_delete_error">Beim Löschen des Dokuments ist ein Fehler aufgetreten</string>
     <string name="app_tagline">Scannen, ordnen und lesen Sie Ihre Dokumente. Alles auf Ihrem Gerät.</string>
@@ -24,16 +22,13 @@
     <string name="doc_scan_new">Neues Dokument scannen</string>
     <string name="doc_saved_successfully">Das Dokument wurde erfolgreich gespeichert</string>
     <string name="page_count">Seitenanzahl</string>
-    <string name="doc_saved_successfully_to">Dokument erfolgreich gespeichert unter %1$s</string>
     <string name="no_scanned_documents">Keine gescannten Dokumente</string>
     <string name="home">Startseite</string>
     <string name="filter">Filtern</string>
     <string name="retry">Wiederholen</string>
-    <string name="doc_modify_details">Dokumentdetails ändern</string>
     <string name="doc_delete_warning_message">Sie sind dabei, %1$s von Ihrem Gerät und der App-Datenbank zu löschen.\n\nEs hat %2$s Seiten und ist %3$s groß.\n\nSind Sie sicher, dass Sie es löschen möchten?</string>
     <string name="doc_share">Dokument teilen</string>
     <string name="follow_system">Systemeinstellung folgen</string>
-	<string name="doc_updated_successfully">Dokument erfolgreich aktualisiert</string>
 	<string name="clear_field">Feld leeren</string>
 	<string name="field_required">Dieses Feld ist erforderlich</string>
 	<string name="chars_remaining">%1$d / %2$d</string>
@@ -64,7 +59,6 @@
     <string name="already_in_library_title">Bereits in Ihrer Bibliothek</string>
     <string name="already_in_library_desc">Ein Dokument mit demselben Inhalt ist bereits in Docucraft gespeichert. Möchten Sie eine weitere Kopie speichern?</string>
     <string name="save_another_copy">Weitere Kopie speichern</string>
-    <string name="removed_from_recents">Aus „Zuletzt verwendet“ entfernt</string>
     <string name="close">Schließen</string>
     <string name="go">Los</string>
     <string name="page_number">Seitenzahl</string>
@@ -115,8 +109,6 @@
     <string name="link_a11y_page">Link zu Seite %1$d</string>
     <string name="link_a11y_blocked">Blockierter Link</string>
     <string name="link_a11y_action">Link anzeigen</string>
-    <string name="text_recognition_turned_on">Der Text wird im Hintergrund erkannt</string>
-    <string name="text_recognition_turned_off">Der erkannte Text wurde entfernt</string>
     <string name="see_all">Alle anzeigen</string>
     <string name="pinned_folders_empty_title">Ordner griffbereit halten</string>
     <string name="pinned_folders_empty_desc">Angeheftete Ordner erscheinen hier.</string>
@@ -125,25 +117,7 @@
     <string name="favorites">Favoriten</string>
     <string name="filters_no_matches">Kein Dokument passt zu diesen Filtern</string>
     <string name="filters_clear">Filter löschen</string>
-    <string name="move_to_bin">In den Papierkorb verschieben</string>
-    <string name="doc_bin_confirmation">„%1$s“ wird in den Papierkorb verschoben.</string>
-    <string name="doc_bin_note">Es bleibt %1$d Tage dort und kann bis dahin wiederhergestellt werden.</string>
-    <string name="doc_moved_to_bin">In den Papierkorb verschoben</string>
     <string name="document_text_unknown">Unbekannt</string>
-    <string name="skip">Überspringen</string>
-    <string name="scan_review_title">Scan gespeichert</string>
-    <string name="scan_review_desc">Er ist in Ihrer Bibliothek. Benennen Sie ihn jetzt oder überspringen Sie das und holen Sie es später nach.</string>
-    <string name="scan_review_recognize_text_desc">Damit er über seinen Inhalt gefunden wird</string>
-    <string name="suggestions">Vorschläge</string>
-    <string name="suggestions_working">Dokument wird gelesen…</string>
-    <string name="suggestions_none">Für dieses Dokument gibt es nichts vorzuschlagen.</string>
-    <string name="suggestions_failed">Dieses Mal konnten keine Vorschläge erstellt werden.</string>
-    <string name="suggestions_text_recognition_off">Es wird nichts vorgeschlagen: Die Texterkennung ist für dieses Dokument ausgeschaltet, und ohne sie hat ein Scan keinen Text. Schalten Sie sie unten ein oder in den Einstellungen für alle neuen Dokumente.</string>
-    <string name="suggestion_use">Verwenden</string>
-    <string name="suggestion_move_to">Nach %1$s verschieben</string>
-    <string name="tags_add">Tags hinzufügen</string>
-    <string name="scan_review_section_details">Details</string>
-    <string name="scan_review_section_organize">Organisieren</string>
     <string name="document_details_in_library">In Ihrer Bibliothek</string>
     <string name="document_details_file">Datei</string>
     <string name="document_details_scanned">Gescannt</string>

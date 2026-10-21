@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="skip">تخطٍّ</string>
+    <string name="scan_review_title">تم حفظ المسح الضوئي</string>
+    <string name="scan_review_desc">هو الآن في مكتبتك. سمِّه الآن، أو تخطَّ ذلك وافعله لاحقًا.</string>
+    <string name="scan_review_recognize_text_desc">ليمكن العثور عليه بحسب محتواه</string>
+    <string name="suggestions">اقتراحات</string>
+    <string name="suggestions_working">جارٍ قراءة المستند…</string>
+    <string name="suggestions_none">لا يوجد ما يُقترح لهذا المستند.</string>
+    <string name="suggestions_failed">تعذّر إعداد اقتراحات هذه المرة.</string>
+    <string name="suggestions_text_recognition_off">لن يُقترح شيء: التعرّف على النص متوقف لهذا المستند، والمسح الضوئي لا نص فيه بدونه. فعِّله أدناه، أو لكل المستندات الجديدة من الإعدادات.</string>
+    <string name="suggestion_use">استخدام</string>
+    <string name="suggestion_move_to">نقل إلى %1$s</string>
+    <string name="tags_add">إضافة وسوم</string>
+    <string name="scan_review_section_details">التفاصيل</string>
+    <string name="scan_review_section_organize">التنظيم</string>
+</resources>

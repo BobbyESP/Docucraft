@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="doc_modify_details">Изменить детали документа</string>
+    <string name="doc_modify_details_description">Обновите название и описание документа ниже, чтобы отразить его содержание и детали.</string>
+    <string name="doc_saved_successfully_to">Документ успешно сохранен в %1$s</string>
+    <string name="doc_delete">Удалить документ</string>
+	<string name="doc_updated_successfully">Документ успешно обновлен</string>
+    <string name="removed_from_recents">Убрано из недавних</string>
+    <string name="text_recognition_turned_on">Текст распознаётся в фоновом режиме</string>
+    <string name="text_recognition_turned_off">Распознанный текст удалён</string>
+    <string name="move_to_bin">Переместить в корзину</string>
+    <string name="doc_bin_confirmation">«%1$s» отправится в корзину.</string>
+    <string name="doc_bin_note">Он останется там %1$d дн., и до тех пор его можно восстановить.</string>
+    <string name="doc_moved_to_bin">Перемещено в корзину</string>
+</resources>

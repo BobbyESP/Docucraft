@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="doc_modify_details_description">Aktualisieren Sie den Dokumenttitel und die Beschreibung unten, um dessen Inhalt und Details widerzuspiegeln.</string>
+    <string name="doc_delete">Dokument löschen</string>
+    <string name="doc_saved_successfully_to">Dokument erfolgreich gespeichert unter %1$s</string>
+    <string name="doc_modify_details">Dokumentdetails ändern</string>
+	<string name="doc_updated_successfully">Dokument erfolgreich aktualisiert</string>
+    <string name="removed_from_recents">Aus „Zuletzt verwendet“ entfernt</string>
+    <string name="text_recognition_turned_on">Der Text wird im Hintergrund erkannt</string>
+    <string name="text_recognition_turned_off">Der erkannte Text wurde entfernt</string>
+    <string name="move_to_bin">In den Papierkorb verschieben</string>
+    <string name="doc_bin_confirmation">„%1$s“ wird in den Papierkorb verschoben.</string>
+    <string name="doc_bin_note">Es bleibt %1$d Tage dort und kann bis dahin wiederhergestellt werden.</string>
+    <string name="doc_moved_to_bin">In den Papierkorb verschoben</string>
+</resources>

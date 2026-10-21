@@ -31,13 +31,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.overlay.OverlaySheetSkeleton
 import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.BinRetention
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
+import com.bobbyesp.docucraft.feature.documentactions.R
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

@@ -3,7 +3,6 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.actions
 
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.StringProvider
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
@@ -21,6 +20,7 @@ import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentU
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentFavoriteUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SetDocumentTextRecognitionUseCase
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.UpdateDocumentFieldsUseCase
+import com.bobbyesp.docucraft.feature.documentactions.R
 
 /**
  * Everything that can be done to one document, scoped to the navigation entry acting on it.

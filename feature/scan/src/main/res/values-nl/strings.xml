@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="skip">Overslaan</string>
+    <string name="scan_review_title">Scan opgeslagen</string>
+    <string name="scan_review_desc">De scan staat in uw bibliotheek. Geef deze nu een naam, of sla dit over en doe het later.</string>
+    <string name="scan_review_recognize_text_desc">Zodat de scan te vinden is op wat erin staat</string>
+    <string name="suggestions">Suggesties</string>
+    <string name="suggestions_working">Document wordt gelezen…</string>
+    <string name="suggestions_none">Er valt niets voor te stellen voor dit document.</string>
+    <string name="suggestions_failed">Er konden deze keer geen suggesties worden gemaakt.</string>
+    <string name="suggestions_text_recognition_off">Er wordt niets voorgesteld: tekstherkenning staat uit voor dit document, en zonder herkenning heeft een scan geen tekst. Schakel deze hieronder in, of in Instellingen voor elk nieuw document.</string>
+    <string name="suggestion_use">Gebruiken</string>
+    <string name="suggestion_move_to">Verplaatsen naar %1$s</string>
+    <string name="tags_add">Labels toevoegen</string>
+    <string name="scan_review_section_details">Details</string>
+    <string name="scan_review_section_organize">Ordenen</string>
+</resources>

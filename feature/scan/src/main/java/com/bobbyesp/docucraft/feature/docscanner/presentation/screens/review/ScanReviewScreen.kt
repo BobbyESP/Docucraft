@@ -72,7 +72,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.bobbyesp.docucraft.R
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.presentation.components.FrostedLargeTopAppBar
 import com.bobbyesp.docucraft.core.presentation.components.SectionHeader
@@ -92,6 +91,7 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.components.details
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.FolderBadge
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.organization.TagDot
 import com.bobbyesp.docucraft.feature.docscanner.presentation.preview.DocumentPreviewData
+import com.bobbyesp.docucraft.feature.scan.R
 import com.bobbyesp.docucraft.feature.shared.presentation.DocumentHeroCard
 import com.bobbyesp.docucraft.feature.shared.presentation.DocumentHeroFact
 import dev.chrisbanes.haze.HazeState

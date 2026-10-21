@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="skip">Ignorer</string>
+    <string name="scan_review_title">Numérisation enregistrée</string>
+    <string name="scan_review_desc">Elle est dans votre bibliothèque. Nommez-la maintenant, ou ignorez cette étape et faites-le plus tard.</string>
+    <string name="scan_review_recognize_text_desc">Pour la retrouver par son contenu</string>
+    <string name="suggestions">Suggestions</string>
+    <string name="suggestions_working">Lecture du document…</string>
+    <string name="suggestions_none">Il n\'y a rien à suggérer pour ce document.</string>
+    <string name="suggestions_failed">Les suggestions n\'ont pas pu être générées cette fois-ci.</string>
+    <string name="suggestions_text_recognition_off">Rien ne sera suggéré : la reconnaissance de texte est désactivée pour ce document, et une numérisation n\'a pas de texte sans elle. Activez-la ci-dessous, ou pour tous les nouveaux documents dans les Paramètres.</string>
+    <string name="suggestion_use">Utiliser</string>
+    <string name="suggestion_move_to">Déplacer vers %1$s</string>
+    <string name="tags_add">Ajouter des étiquettes</string>
+    <string name="scan_review_section_details">Détails</string>
+    <string name="scan_review_section_organize">Organiser</string>
+</resources>
