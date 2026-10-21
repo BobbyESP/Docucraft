@@ -53,3 +53,7 @@ include(":core:designsystem")
 include(":core:navigation")
 
 include(":core:ui")
+
+include(":library:domain")
+
+include(":library:testing")

@@ -78,6 +78,8 @@ ksp { arg("KOIN_CONFIG_CHECK", "true") }
 
 dependencies {
     // Modules split out of the app
+    testImplementation(project(":library:testing"))
+    implementation(project(":library:domain"))
     implementation(project(":core:ui"))
     implementation(project(":core:navigation"))
     implementation(project(":core:designsystem"))

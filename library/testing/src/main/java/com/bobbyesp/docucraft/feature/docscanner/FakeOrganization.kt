@@ -141,6 +141,8 @@ class FakeFoldersRepository(
 
     override suspend fun delete(uuid: String) {
         val folder = getFolder(uuid) ?: return
+        // A local: Folder is another module's, so its property is not smart-cast.
+        val parent = folder.parentUuid
         folders.update { all ->
             all.filterNot { it.uuid == uuid }
                 .map { if (it.parentUuid == uuid) it.copy(parentUuid = folder.parentUuid) else it }
@@ -150,7 +152,7 @@ class FakeFoldersRepository(
                 .mapNotNull { (document, where) ->
                     when {
                         where != uuid -> document to where
-                        folder.parentUuid != null -> document to folder.parentUuid
+                        parent != null -> document to parent
                         else -> null
                     }
                 }
@@ -163,6 +165,7 @@ class FakeFoldersRepository(
 
     override suspend fun deleteWithContents(uuid: String) {
         val folder = getFolder(uuid) ?: return
+        val parent = folder.parentUuid
         val subtree = mutableListOf(uuid)
         var next = 0
         while (next < subtree.size) {
@@ -175,7 +178,7 @@ class FakeFoldersRepository(
                 .mapNotNull { (document, where) ->
                     when {
                         where !in subtree -> document to where
-                        folder.parentUuid != null -> document to folder.parentUuid
+                        parent != null -> document to parent
                         else -> null
                     }
                 }
