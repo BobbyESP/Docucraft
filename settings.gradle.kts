@@ -61,3 +61,5 @@ include(":library:testing")
 include(":library:data")
 
 include(":library:ui")
+
+include(":document-content-platform")
