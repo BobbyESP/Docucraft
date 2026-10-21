@@ -13,7 +13,7 @@ import coil.ImageLoaderFactory
 import com.bobbyesp.docucraft.core.di.analyticsModule
 import com.bobbyesp.docucraft.core.di.commonModule
 import com.bobbyesp.docucraft.core.di.notificationsServiceModule
-import com.bobbyesp.docucraft.core.di.preferencesModule
+import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.binViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.documentActionsViewModels
 import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerDataModule
@@ -44,7 +44,7 @@ import org.koin.core.qualifier.named
 internal val appModules =
     listOf(
         commonModule,
-        preferencesModule,
+        settingsViewModels,
         notificationsServiceModule,
         scannedDocumentsDatabaseModule,
         documentScannerDataModule,
