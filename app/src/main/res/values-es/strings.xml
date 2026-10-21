@@ -1,42 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="follow_system">Seguir el sistema</string>
     <string name="on">Encendido</string>
     <string name="off">Apagado</string>
     <string name="home">Inicio</string>
-    <string name="doc_scan_error">Ha ocurrido un error durante el escaneo</string>
-    <string name="doc_open_in_viewer">Abrir documento en el visor</string>
-    <string name="issue_opening_doc_viewer">Ocurrió un problema al intentar abrir el visor de documentos</string>
-    <string name="doc_share">Compartir documento</string>
     <string name="file_size">Tamaño del archivo</string>
     <string name="page_count">Cantidad de páginas</string>
-    <string name="doc_save">Guardar documento</string>
-    <string name="doc_save_error_with_reason">Ocurrió un error al guardar el documento: %1$s</string>
-    <string name="doc_delete_error">Ocurrió un error al eliminar el documento</string>
-    <string name="doc_delete_warning_message">Estás a punto de eliminar %1$s de tu dispositivo y base de datos de la aplicación.\n\nTiene %2$s páginas y un tamaño de %3$s.\n\n¿Estás seguro de que quieres eliminarlo?</string>
-    <string name="doc_saving_cancelled">El proceso de guardado ha sido cancelado</string>
-    <string name="retry">Reintentar</string>
     <string name="scan_cancelled">Proceso de escaneo cancelado</string>
-    <string name="filter">Filtro</string>
-    <string name="clear_filters">Limpiar filtros</string>
-    <string name="search">Buscar</string>
-    <string name="app_tagline">Escanea, ordena y lee tus documentos. Todo en tu dispositivo.</string>
-    <string name="exit_search">Salir de la búsqueda</string>
-    <string name="results">Resultados</string>
-	<string name="chars_remaining">%1$d / %2$d</string>
-	<string name="clear_field">Borrar campo</string>
-	<string name="field_required">Este campo es obligatorio</string>
-	<string name="next_page">Página siguiente</string>
-	<string name="page_of">%1$s de %2$s</string>
-	<string name="previous_page">Página anterior</string>
-	<string name="fit_height">Ajustar a la altura</string>
-	<string name="zoom_reset">Restablecer zoom</string>
-	<string name="fit_width">Ajustar al ancho</string>
-	<string name="fit_proportional">Proporcional</string>
-	<string name="page_navigation">Navegación de página</string>
-	<string name="fit_page">Ajustar a la página</string>
-	<string name="page_input_label">Página</string>
-
-
-    <string name="pages_count">%1$d páginas</string>
 </resources>

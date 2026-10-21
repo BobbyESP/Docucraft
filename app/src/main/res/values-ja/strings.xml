@@ -1,41 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
-    <string name="search">検索</string>
-    <string name="follow_system">システムに従う</string>
-    <string name="doc_scan_error">スキャン中にエラーが発生しました</string>
-    <string name="doc_save">ドキュメントを保存</string>
     <string name="off">オフ</string>
     <string name="page_count">ページ数</string>
-    <string name="results">結果</string>
-    <string name="doc_delete_warning_message">%1$s をデバイスとアプリのデータベースから削除しようとしています。\n\nページ数は %2$s ページで、サイズは %3$s です。\n\n本当に削除しますか？</string>
     <string name="on">オン</string>
-    <string name="exit_search">検索を終了</string>
-    <string name="retry">再試行</string>
-    <string name="doc_delete_error">ドキュメントの削除中にエラーが発生しました</string>
     <string name="file_size">ファイルサイズ</string>
     <string name="scan_cancelled">スキャン処理がキャンセルされました</string>
-    <string name="doc_open_in_viewer">ドキュメントをビューアで開く</string>
-    <string name="doc_saving_cancelled">保存プロセスがキャンセルされました</string>
-    <string name="clear_filters">フィルターをクリア</string>
-    <string name="filter">フィルター</string>
-    <string name="app_tagline">ドキュメントをスキャン、整理、閲覧。すべてあなたの端末の中で。</string>
-    <string name="issue_opening_doc_viewer">ドキュメントビューアを開こうとして問題が発生しました</string>
-    <string name="doc_save_error_with_reason">ドキュメントの保存中にエラーが発生しました: %1$s</string>
-    <string name="doc_share">ドキュメントを共有</string>
     <string name="home">ホーム</string>
-	<string name="field_required">このフィールドは必須です</string>
-	<string name="clear_field">フィールドをクリア</string>
-	<string name="chars_remaining">%1$d / %2$d</string>
-	<string name="next_page">次のページ</string>
-	<string name="page_input_label">ページ</string>
-	<string name="page_of">%2$sページ中%1$sページ</string>
-	<string name="fit_page">ページ全体を表示</string>
-	<string name="page_navigation">ページ移動</string>
-	<string name="zoom_reset">ズームをリセット</string>
-	<string name="fit_height">高さに合わせる</string>
-	<string name="previous_page">前のページ</string>
-	<string name="fit_proportional">縦横比を維持</string>
-	<string name="fit_width">幅に合わせる</string>
-    <string name="pages_count">%1$d ページ</string>
 </resources>

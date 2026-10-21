@@ -1,41 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
-    <string name="doc_delete_error">حدث خطأ أثناء حذف المستند</string>
-    <string name="doc_saving_cancelled">تم إلغاء عملية الحفظ</string>
-    <string name="issue_opening_doc_viewer">حدثت مشكلة أثناء محاولة فتح عارض المستندات</string>
-    <string name="app_tagline">امسح مستنداتك ضوئياً ونظّمها واقرأها. كل ذلك على جهازك.</string>
-    <string name="doc_scan_error">حدث خطأ أثناء المسح الضوئي</string>
     <string name="scan_cancelled">تم إلغاء عملية المسح الضوئي</string>
-    <string name="doc_save_error_with_reason">حدث خطأ أثناء حفظ المستند: %1$s</string>
-    <string name="exit_search">الخروج من البحث</string>
     <string name="on">تشغيل</string>
-    <string name="filter">تصفية</string>
     <string name="off">إيقاف</string>
-    <string name="doc_save">حفظ المستند</string>
     <string name="file_size">حجم الملف</string>
-    <string name="follow_system">متابعة إعدادات النظام</string>
-    <string name="doc_delete_warning_message">أنت على وشك حذف %1$s من جهازك وقاعدة بيانات التطبيق.\n\nيحتوي على %2$s صفحة وحجمه %3$s.\n\nهل أنت متأكد أنك تريد حذفه؟</string>
     <string name="home">الرئيسية</string>
-    <string name="search">بحث</string>
-    <string name="results">النتائج</string>
     <string name="page_count">عدد الصفحات</string>
-    <string name="clear_filters">مسح عوامل التصفية</string>
-    <string name="doc_open_in_viewer">فتح المستند في العارض</string>
-    <string name="doc_share">مشاركة المستند</string>
-    <string name="retry">إعادة المحاولة</string>
-	<string name="field_required">هذا الحقل مطلوب</string>
-	<string name="clear_field">مسح الحقل</string>
-	<string name="chars_remaining">%1$d / %2$d</string>
-	<string name="fit_proportional">تناسبي</string>
-	<string name="fit_height">احتواء الارتفاع</string>
-	<string name="previous_page">الصفحة السابقة</string>
-	<string name="fit_page">احتواء الصفحة</string>
-	<string name="next_page">الصفحة التالية</string>
-	<string name="zoom_reset">إعادة تعيين التكبير</string>
-	<string name="fit_width">احتواء العرض</string>
-	<string name="page_of">%1$s من %2$s</string>
-	<string name="page_input_label">صفحة</string>
-	<string name="page_navigation">التنقل بين الصفحات</string>
-    <string name="pages_count">عدد الصفحات: %1$d</string>
 </resources>

@@ -1,41 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
 
-    <string name="doc_save_error_with_reason">Ocorreu um erro ao salvar o documento: %1$s</string>
-    <string name="doc_share">Compartilhar documento</string>
     <string name="on">Ligado</string>
-    <string name="clear_filters">Limpar filtros</string>
-    <string name="search">Pesquisar</string>
-    <string name="doc_delete_error">Ocorreu um erro ao excluir o documento</string>
-    <string name="filter">Filtrar</string>
     <string name="off">Desligado</string>
     <string name="home">Início</string>
     <string name="scan_cancelled">Processo de digitalização cancelado</string>
-    <string name="retry">Tentar novamente</string>
-    <string name="exit_search">Sair da pesquisa</string>
-    <string name="doc_saving_cancelled">O processo de salvamento foi cancelado</string>
     <string name="page_count">Número de páginas</string>
-    <string name="app_tagline">Digitalize, organize e leia seus documentos. Tudo no seu dispositivo.</string>
-    <string name="doc_delete_warning_message">Você está prestes a excluir %1$s do seu dispositivo e banco de dados do app.\n\nEle tem %2$s páginas e %3$s de tamanho.\n\nTem certeza de que deseja excluí-lo?</string>
-    <string name="issue_opening_doc_viewer">Ocorreu um problema ao tentar abrir o visualizador de documentos</string>
-    <string name="doc_open_in_viewer">Abrir documento no visualizador</string>
-    <string name="results">Resultados</string>
     <string name="file_size">Tamanho do arquivo</string>
-    <string name="doc_save">Salvar documento</string>
-    <string name="doc_scan_error">Ocorreu um erro durante a digitalização</string>
-    <string name="follow_system">Seguir sistema</string>
-	<string name="chars_remaining">%1$d / %2$d</string>
-	<string name="field_required">Este campo é obrigatório</string>
-	<string name="clear_field">Limpar campo</string>
-	<string name="page_input_label">Página</string>
-	<string name="fit_proportional">Proporcional</string>
-	<string name="fit_width">Ajustar à largura</string>
-	<string name="fit_page">Ajustar à página</string>
-	<string name="page_navigation">Navegação da página</string>
-	<string name="previous_page">Página anterior</string>
-	<string name="zoom_reset">Redefinir zoom</string>
-	<string name="next_page">Próxima página</string>
-	<string name="page_of">%1$s de %2$s</string>
-	<string name="fit_height">Ajustar à altura</string>
-    <string name="pages_count">%1$d páginas</string>
 </resources>

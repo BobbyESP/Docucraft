@@ -1,65 +1,14 @@
 <resources>
-    <string name="app_tagline">Scan, organize and read your documents. All of it on your device.</string>
 
     <!-- ════════════════════════════════════════════════
          GENERAL / COMMON
          ════════════════════════════════════════════════ -->
     <string name="home">Home</string>
-    <string name="follow_system">Follow system</string>
     <string name="on">On</string>
     <string name="off">Off</string>
-    <string name="retry">Retry</string>
-    <string name="search">Search</string>
-    <string name="filter">Filter</string>
-    <string name="results">Results</string>
-
-
 
     <string name="file_size">File size</string>
     <string name="page_count">Page count</string>
 
-    <string name="doc_scan_error">An error has occurred during the scan</string>
     <string name="scan_cancelled">Scan process cancelled</string>
-
-    <!-- ════════════════════════════════════════════════
-         DOCUMENT — Save / Export
-         ════════════════════════════════════════════════ -->
-    <string name="doc_save">Save document</string>
-    <string name="doc_save_error_with_reason">An error occurred while saving the document: %1$s</string>
-    <string name="doc_saving_cancelled">The saving process has been cancelled</string>
-
-    <!-- ════════════════════════════════════════════════
-         DOCUMENT — Share
-         ════════════════════════════════════════════════ -->
-    <string name="doc_share">Share document</string>
-
-    <!-- ════════════════════════════════════════════════
-         DOCUMENT — View
-         ════════════════════════════════════════════════ -->
-    <string name="doc_open_in_viewer">Open document in viewer</string>
-    <string name="issue_opening_doc_viewer">An issue occurred while trying to open the document viewer</string>
-
-    <string name="field_required">This field is required</string>
-    <string name="chars_remaining">%1$d / %2$d</string>
-    <string name="clear_field">Clear field</string>
-
-    <string name="doc_delete_warning_message">You are about to delete %1$s from your device and app database.\n\nIt has %2$s pages and is %3$s in size.\n\nAre you sure you want to delete it?</string>
-    <string name="doc_delete_error">An error occurred while deleting the document</string>
-
-    <string name="exit_search">Exit search</string>
-    <string name="clear_filters">Clean filters</string>
-
-
-    <string name="zoom_reset">Reset zoom</string>
-    <string name="fit_width">Fit width</string>
-    <string name="fit_height">Fit height</string>
-    <string name="fit_page">Fit page</string>
-    <string name="fit_proportional">Proportional</string>
-    <string name="page_navigation">Page navigation</string>
-    <string name="previous_page">Previous page</string>
-    <string name="next_page">Next page</string>
-    <string name="page_input_label">Page</string>
-    <string name="page_of">%1$s of %2$s</string>
-    <string name="pages_count">%1$d pages</string>
-
 </resources>
