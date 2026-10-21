@@ -75,7 +75,7 @@ dependencies {
     implementation(project(":feature:bin"))
     implementation(project(":feature:scan"))
     implementation(project(":feature:document-actions"))
-    implementation(project(":feature:viewer"))
+    implementation(project(":feature:pdfviewer"))
     implementation(project(":feature:settings"))
     implementation(project(":feature:widgets"))
     implementation(project(":library:domain"))

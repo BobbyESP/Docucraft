@@ -31,7 +31,7 @@ import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.settings.ViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
-import com.bobbyesp.docucraft.feature.viewer.R as ViewerR
+import com.bobbyesp.docucraft.feature.pdfviewer.R as ViewerR
 import com.bobbyesp.docucraft.test.R
 import java.io.File
 import java.util.Locale

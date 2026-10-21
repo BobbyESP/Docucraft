@@ -76,7 +76,7 @@ include(":feature:scan")
 
 include(":feature:document-actions")
 
-include(":feature:viewer")
+include(":feature:pdfviewer")
 
 include(":feature:widgets")
 
