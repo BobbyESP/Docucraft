@@ -4,7 +4,6 @@
 package com.bobbyesp.docucraft
 
 import android.app.Application
-import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
@@ -100,9 +99,5 @@ class App : Application(), ImageLoaderFactory, Configuration.Provider {
 
     companion object {
         lateinit var packageInfo: PackageInfo
-
-        fun getAuthority(context: Context): String {
-            return "${context.packageName}.fileprovider"
-        }
     }
 }

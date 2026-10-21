@@ -6,7 +6,6 @@ package com.bobbyesp.docucraft.feature.docscanner.data.storage
 import android.content.Context
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import com.bobbyesp.docucraft.App
 import com.bobbyesp.scanner.ContentRef
 import java.io.File
 
@@ -19,12 +18,15 @@ import java.io.File
  */
 class DocumentLocations(private val context: Context) {
 
+    /** The provider's authority, as the manifest declares it: `${applicationId}.fileprovider`. */
+    private val authority = "${context.packageName}.fileprovider"
+
     /** The URI to open the document kept at [filePath], relative to the files directory. */
     fun locationOf(filePath: String): ContentRef {
         val file = File(context.filesDir, filePath)
         val uri =
             try {
-                FileProvider.getUriForFile(context, App.getAuthority(context), file)
+                FileProvider.getUriForFile(context, authority, file)
             } catch (_: IllegalArgumentException) {
                 // A path the provider does not serve: the catalogue entry of a file that is not
                 // there. It still has to be listed, and opening it then says the file is missing.
