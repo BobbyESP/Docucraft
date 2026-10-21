@@ -14,9 +14,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalDensity
-import com.bobbyesp.docucraft.core.presentation.common.ScrollHeading
-import com.bobbyesp.docucraft.core.presentation.common.ScrollHeadingThreshold
-import com.bobbyesp.docucraft.core.presentation.common.ScrollHeadingTracker
+import com.bobbyesp.docucraft.core.designsystem.common.ScrollHeading
+import com.bobbyesp.docucraft.core.designsystem.common.ScrollHeadingThreshold
+import com.bobbyesp.docucraft.core.designsystem.common.ScrollHeadingTracker
 
 /**
  * Whether the viewer's bars are showing. One value for both, because they are one piece of chrome:

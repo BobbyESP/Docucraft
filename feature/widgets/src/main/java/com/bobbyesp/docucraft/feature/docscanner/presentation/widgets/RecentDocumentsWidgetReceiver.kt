@@ -9,6 +9,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import com.bobbyesp.docucraft.feature.widgets.presentation.RecentDocumentsWidgetRenderer
+import com.bobbyesp.docucraft.feature.widgets.presentation.placedWidgets
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope

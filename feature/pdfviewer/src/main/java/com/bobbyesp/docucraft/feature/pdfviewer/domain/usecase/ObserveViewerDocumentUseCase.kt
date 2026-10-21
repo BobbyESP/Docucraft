@@ -3,10 +3,10 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
-import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import com.bobbyesp.docucraft.library.domain.model.BasicDocument
+import com.bobbyesp.docucraft.library.domain.model.Document
+import com.bobbyesp.docucraft.library.domain.usecase.ObserveDocumentUseCase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map

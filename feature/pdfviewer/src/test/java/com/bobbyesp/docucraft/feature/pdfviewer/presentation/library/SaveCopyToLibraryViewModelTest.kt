@@ -5,16 +5,16 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation.library
 
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.usecase.NotifyUserUseCase
-import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentIndexQueue
-import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentStorage
-import com.bobbyesp.docucraft.feature.docscanner.FakeDocumentsRepository
-import com.bobbyesp.docucraft.feature.docscanner.FakeExternalDocumentAccess
-import com.bobbyesp.docucraft.feature.docscanner.FakeLinkedDocumentsRepository
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveLinkedToLibraryUseCase
-import com.bobbyesp.docucraft.feature.docscanner.testDocument
-import com.bobbyesp.docucraft.feature.docscanner.testLinkedDocument
-import com.bobbyesp.docucraft.feature.docscanner.testSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.R
+import com.bobbyesp.docucraft.library.domain.usecase.SaveLinkedToLibraryUseCase
+import com.bobbyesp.docucraft.library.testing.FakeDocumentIndexQueue
+import com.bobbyesp.docucraft.library.testing.FakeDocumentStorage
+import com.bobbyesp.docucraft.library.testing.FakeDocumentsRepository
+import com.bobbyesp.docucraft.library.testing.FakeExternalDocumentAccess
+import com.bobbyesp.docucraft.library.testing.FakeLinkedDocumentsRepository
+import com.bobbyesp.docucraft.library.testing.testDocument
+import com.bobbyesp.docucraft.library.testing.testLinkedDocument
+import com.bobbyesp.docucraft.library.testing.testSettings
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers

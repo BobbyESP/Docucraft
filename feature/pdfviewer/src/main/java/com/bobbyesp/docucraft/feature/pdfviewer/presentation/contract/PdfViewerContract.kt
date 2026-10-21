@@ -5,14 +5,14 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract
 
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.canBeHandedOff
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.BlockReason
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerLoadError
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
-import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
+import com.bobbyesp.docucraft.library.domain.model.BasicDocument
+import com.bobbyesp.docucraft.library.domain.model.ReadingPosition
 import com.bobbyesp.documentcontent.DocumentSelection
 import com.bobbyesp.documentcontent.NormalizedPoint
 import com.bobbyesp.documentcontent.NormalizedRect

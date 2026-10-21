@@ -3,7 +3,7 @@
  */
 package com.bobbyesp.docucraft
 
-import com.bobbyesp.docucraft.feature.docscanner.navigation.ENTRY_ACTIVITY
+import com.bobbyesp.docucraft.feature.widgets.presentation.ENTRY_ACTIVITY
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

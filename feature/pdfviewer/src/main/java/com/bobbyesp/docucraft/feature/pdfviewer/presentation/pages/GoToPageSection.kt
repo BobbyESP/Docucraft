@@ -41,12 +41,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
-import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
-import com.bobbyesp.docucraft.core.presentation.navigation.overlay.LocalOverlayContext
-import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPresentation
-import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlaySceneStrategy
-import com.bobbyesp.docucraft.feature.pdfviewer.navigation.GoToPage
+import com.bobbyesp.docucraft.core.navigation.Navigator
+import com.bobbyesp.docucraft.core.navigation.overlay.LocalOverlayContext
+import com.bobbyesp.docucraft.core.navigation.overlay.OverlayPresentation
+import com.bobbyesp.docucraft.core.navigation.overlay.OverlaySceneStrategy
 import com.bobbyesp.docucraft.feature.pdfviewer.R
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.GoToPage
 import org.koin.compose.koinInject
 
 /**

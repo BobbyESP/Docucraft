@@ -11,6 +11,10 @@ import android.os.Bundle
 import android.util.Log
 import android.util.SizeF
 import android.widget.RemoteViews
+import com.bobbyesp.docucraft.feature.widgets.presentation.ScanWidgetLayout
+import com.bobbyesp.docucraft.feature.widgets.presentation.ScanWidgetViews
+import com.bobbyesp.docucraft.feature.widgets.presentation.WidgetSizes
+import com.bobbyesp.docucraft.feature.widgets.presentation.placedWidgets
 
 /**
  * The home-screen widget that starts a scan.

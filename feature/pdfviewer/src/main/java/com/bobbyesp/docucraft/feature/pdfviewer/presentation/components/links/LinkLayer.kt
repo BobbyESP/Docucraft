@@ -45,10 +45,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.bobbyesp.docucraft.feature.pdfviewer.R
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.BlockReason
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.LinkPreview
-import com.bobbyesp.docucraft.feature.pdfviewer.R
 import com.bobbyesp.documentcontent.NormalizedRect
 import com.bobbyesp.documentcontent.PageLink
 import com.composepdf.PdfOverlayScope

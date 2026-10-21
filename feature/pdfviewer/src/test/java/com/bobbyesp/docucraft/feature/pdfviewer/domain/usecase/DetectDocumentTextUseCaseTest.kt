@@ -3,8 +3,8 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase
 
-import com.bobbyesp.docucraft.feature.pdfviewer.FakePageContentProvider
-import com.bobbyesp.docucraft.feature.pdfviewer.textPage
+import com.bobbyesp.docucraft.library.testing.FakePageContentProvider
+import com.bobbyesp.docucraft.library.testing.textPage
 import com.bobbyesp.documentcontent.ContentOrigin
 import com.bobbyesp.documentcontent.DocumentSource
 import com.bobbyesp.documentcontent.PageContentResult

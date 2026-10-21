@@ -10,9 +10,9 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import com.bobbyesp.docucraft.core.navigation.Navigator
 import com.bobbyesp.docucraft.core.navigation.keys.PdfViewer
-import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
-import com.bobbyesp.docucraft.core.presentation.navigation.pane.LocalPaneContext
+import com.bobbyesp.docucraft.core.navigation.pane.LocalPaneContext
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.ExternalPdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.GoToPage

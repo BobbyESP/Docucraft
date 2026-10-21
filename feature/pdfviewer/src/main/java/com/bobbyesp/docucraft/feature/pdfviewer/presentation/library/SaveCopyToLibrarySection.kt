@@ -30,12 +30,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
-import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
-import com.bobbyesp.docucraft.core.presentation.navigation.overlay.LocalOverlayContext
-import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPresentation
-import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlaySceneStrategy
-import com.bobbyesp.docucraft.feature.pdfviewer.navigation.SaveCopyToLibrary
+import com.bobbyesp.docucraft.core.navigation.Navigator
+import com.bobbyesp.docucraft.core.navigation.overlay.LocalOverlayContext
+import com.bobbyesp.docucraft.core.navigation.overlay.OverlayPresentation
+import com.bobbyesp.docucraft.core.navigation.overlay.OverlaySceneStrategy
 import com.bobbyesp.docucraft.feature.pdfviewer.R
+import com.bobbyesp.docucraft.feature.pdfviewer.navigation.SaveCopyToLibrary
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf

@@ -3,14 +3,14 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.domain.details
 
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.Document
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentOrigin
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.DocumentThumbnail
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.Folder
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.Tag
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.DocumentText
+import com.bobbyesp.docucraft.library.domain.model.Document
+import com.bobbyesp.docucraft.library.domain.model.DocumentOrigin
+import com.bobbyesp.docucraft.library.domain.model.DocumentThumbnail
+import com.bobbyesp.docucraft.library.domain.model.Folder
+import com.bobbyesp.docucraft.library.domain.model.Tag
+import com.bobbyesp.docucraft.library.domain.usecase.ObserveDocumentUseCase
 import com.bobbyesp.documentcontent.DocumentSource
 import com.bobbyesp.scanner.ContentRef
 import kotlinx.coroutines.ExperimentalCoroutinesApi

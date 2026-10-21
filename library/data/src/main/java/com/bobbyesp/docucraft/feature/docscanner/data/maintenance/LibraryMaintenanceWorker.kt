@@ -6,8 +6,8 @@ package com.bobbyesp.docucraft.feature.docscanner.data.maintenance
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.PurgeExpiredBinUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ReconcileStorageUseCase
+import com.bobbyesp.docucraft.library.domain.usecase.PurgeExpiredBinUseCase
+import com.bobbyesp.docucraft.library.domain.usecase.ReconcileStorageUseCase
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 

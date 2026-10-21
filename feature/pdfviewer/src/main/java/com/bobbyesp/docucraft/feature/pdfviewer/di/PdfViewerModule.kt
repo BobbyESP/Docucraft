@@ -4,8 +4,6 @@
 package com.bobbyesp.docucraft.feature.pdfviewer.di
 
 import android.app.Activity
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.FoldersRepository
-import com.bobbyesp.docucraft.feature.docscanner.domain.repository.TagsRepository
 import com.bobbyesp.docucraft.feature.pdfviewer.data.actions.AndroidDocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.data.actions.AndroidDocumentPrinter
 import com.bobbyesp.docucraft.feature.pdfviewer.data.details.AndroidDocumentFactsReader
@@ -27,6 +25,8 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.PdfViewerViewModel
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.details.PdfDocumentDetailsViewModel
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.library.SaveCopyToLibraryViewModel
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.ViewerPageRequests
+import com.bobbyesp.docucraft.library.domain.repository.FoldersRepository
+import com.bobbyesp.docucraft.library.domain.repository.TagsRepository
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.qualifier.named

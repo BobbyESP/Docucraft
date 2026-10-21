@@ -66,9 +66,9 @@ import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationAction
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
-import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
-import com.bobbyesp.docucraft.core.util.events.UiEvent
-import com.bobbyesp.docucraft.feature.docscanner.domain.model.ReadingPosition
+import com.bobbyesp.docucraft.core.ui.common.LocalNotificationsService
+import com.bobbyesp.docucraft.core.ui.events.UiEvent
+import com.bobbyesp.docucraft.feature.pdfviewer.R
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentPrinter
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkLook
@@ -91,8 +91,8 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerI
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.ViewerPageRequests
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.LongPressOutcome
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.SelectionInteraction
-import com.bobbyesp.docucraft.feature.shared.domain.BasicDocument
-import com.bobbyesp.docucraft.feature.pdfviewer.R
+import com.bobbyesp.docucraft.library.domain.model.BasicDocument
+import com.bobbyesp.docucraft.library.domain.model.ReadingPosition
 import com.bobbyesp.documentcontent.NormalizedPoint
 import com.bobbyesp.documentcontent.PageLink
 import com.composepdf.FitMode

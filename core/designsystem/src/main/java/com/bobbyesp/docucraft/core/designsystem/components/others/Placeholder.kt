@@ -1,0 +1,78 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
+package com.bobbyesp.docucraft.core.designsystem.components.others
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Lyrics
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+
+@Stable
+@Composable
+fun Placeholder(
+    icon: ImageVector?,
+    colorful: Boolean,
+    modifier: Modifier = Modifier,
+    contentDescription: String? = null,
+) {
+    Surface(
+        tonalElevation = if (colorful) 0.dp else 8.dp,
+        color =
+            if (colorful) MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.surface,
+        modifier = modifier,
+    ) {
+        icon?.let {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(
+                    modifier = Modifier.fillMaxSize().padding(8.dp),
+                    imageVector = icon,
+                    contentDescription = contentDescription,
+                    tint =
+                        if (colorful) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun PlaceholderPreview() {
+    MaterialTheme {
+        Placeholder(
+            modifier = Modifier.width(200.dp).aspectRatio(1f),
+            icon = Icons.Rounded.Lyrics,
+            colorful = true,
+            contentDescription = "Song cover",
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PlaceholderPreviewNonColourful() {
+    MaterialTheme {
+        Placeholder(
+            modifier = Modifier.width(200.dp).aspectRatio(1f),
+            icon = Icons.Rounded.Lyrics,
+            colorful = false,
+            contentDescription = "Song cover",
+        )
+    }
+}

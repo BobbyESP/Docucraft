@@ -44,10 +44,10 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.bobbyesp.docucraft.feature.pdfviewer.R
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PagePoint
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.SelectionInteraction
-import com.bobbyesp.docucraft.feature.pdfviewer.R
 import com.bobbyesp.documentcontent.DocumentSelection
 import com.bobbyesp.documentcontent.NormalizedPoint
 import com.bobbyesp.documentcontent.TextCaret

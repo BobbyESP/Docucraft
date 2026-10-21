@@ -27,19 +27,19 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import coil.ImageLoader
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
+import com.bobbyesp.docucraft.core.designsystem.theme.createTypography
+import com.bobbyesp.docucraft.core.designsystem.theme.toFontFamily
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
-import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
-import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
-import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
-import com.bobbyesp.docucraft.core.presentation.common.LocalSettingsRepository
-import com.bobbyesp.docucraft.core.presentation.navigation.DocucraftNavDisplay
-import com.bobbyesp.docucraft.core.presentation.navigation.docucraftSections
-import com.bobbyesp.docucraft.core.presentation.navigation.openDocumentId
-import com.bobbyesp.docucraft.core.presentation.navigation.overlay.rememberOverlaySceneStrategy
-import com.bobbyesp.docucraft.core.presentation.navigation.pane.sharingTheWindow
-import com.bobbyesp.docucraft.core.presentation.navigation.rememberNavigator
-import com.bobbyesp.docucraft.core.presentation.theme.createTypography
-import com.bobbyesp.docucraft.core.presentation.theme.toFontFamily
+import com.bobbyesp.docucraft.core.navigation.DocucraftNavDisplay
+import com.bobbyesp.docucraft.core.navigation.overlay.rememberOverlaySceneStrategy
+import com.bobbyesp.docucraft.core.navigation.pane.sharingTheWindow
+import com.bobbyesp.docucraft.core.navigation.rememberNavigator
+import com.bobbyesp.docucraft.core.ui.common.LocalAnalyticsHelper
+import com.bobbyesp.docucraft.core.ui.common.LocalDarkTheme
+import com.bobbyesp.docucraft.core.ui.common.LocalNotificationsService
+import com.bobbyesp.docucraft.core.ui.common.LocalSettingsRepository
+import com.bobbyesp.docucraft.navigation.docucraftSections
+import com.bobbyesp.docucraft.navigation.openDocumentId
 import com.skydoves.landscapist.coil.LocalCoilImageLoader
 import org.koin.core.Koin
 

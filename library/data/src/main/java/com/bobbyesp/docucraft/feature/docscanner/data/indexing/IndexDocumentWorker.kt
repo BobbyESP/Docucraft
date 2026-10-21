@@ -6,7 +6,7 @@ package com.bobbyesp.docucraft.feature.docscanner.data.indexing
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.IndexDocumentTextUseCase
+import com.bobbyesp.docucraft.library.domain.usecase.IndexDocumentTextUseCase
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 

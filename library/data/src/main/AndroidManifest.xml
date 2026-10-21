@@ -4,7 +4,7 @@
     <application>
         <!-- A FileProvider that names a shared document as the catalogue does, not by its file. -->
         <provider
-            android:name="com.bobbyesp.docucraft.feature.docscanner.data.sharing.CatalogueFileProvider"
+            android:name="com.bobbyesp.docucraft.library.data.sharing.CatalogueFileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:grantUriPermissions="true"
             android:exported="false">

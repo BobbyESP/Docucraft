@@ -5,10 +5,10 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation.library
 
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
 import com.bobbyesp.docucraft.core.domain.usecase.NotifyUserUseCase
-import com.bobbyesp.docucraft.core.util.viewModel.BaseViewModel
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveLinkedToLibraryUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.SaveToLibraryOutcome
+import com.bobbyesp.docucraft.core.ui.viewmodel.BaseViewModel
 import com.bobbyesp.docucraft.feature.pdfviewer.R
+import com.bobbyesp.docucraft.library.domain.usecase.SaveLinkedToLibraryUseCase
+import com.bobbyesp.docucraft.library.domain.usecase.SaveToLibraryOutcome
 
 sealed interface SaveCopyIntent {
     /** Save it although the library already has a document with the same content. */

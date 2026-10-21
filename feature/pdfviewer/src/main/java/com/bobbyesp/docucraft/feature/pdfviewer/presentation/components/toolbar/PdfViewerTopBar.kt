@@ -41,12 +41,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
-import com.bobbyesp.docucraft.core.presentation.components.FrostedMenuGroup
-import com.bobbyesp.docucraft.core.presentation.theme.DocucraftBlurDefaults
-import com.bobbyesp.docucraft.core.presentation.theme.DocucraftTheme
-import com.bobbyesp.docucraft.core.presentation.theme.frosted
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.TooltipIconButton
+import com.bobbyesp.docucraft.core.designsystem.components.FrostedMenuGroup
+import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftBlurDefaults
+import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.designsystem.theme.frosted
 import com.bobbyesp.docucraft.feature.pdfviewer.R
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.TooltipIconButton
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.rememberHazeState
 
