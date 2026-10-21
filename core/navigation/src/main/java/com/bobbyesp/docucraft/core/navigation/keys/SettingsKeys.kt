@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation
+package com.bobbyesp.docucraft.core.navigation.keys
 
 import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable

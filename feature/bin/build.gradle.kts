@@ -9,7 +9,6 @@ plugins {
 android { namespace = "com.bobbyesp.docucraft.feature.bin" }
 
 dependencies {
-    implementation(project(":feature:bin:api"))
     implementation(project(":core:domain"))
     implementation(project(":core:ui"))
     implementation(project(":core:designsystem"))

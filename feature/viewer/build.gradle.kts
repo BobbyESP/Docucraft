@@ -16,7 +16,6 @@ dependencies {
     implementation(project(":library:domain"))
     implementation(project(":library:ui"))
     implementation(project(":core:navigation"))
-    implementation(project(":feature:viewer:api"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.annotation)
     implementation(libs.androidx.browser)

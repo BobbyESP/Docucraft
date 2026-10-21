@@ -24,13 +24,13 @@ import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentSearch
-import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderContents
+import com.bobbyesp.docucraft.core.navigation.keys.DocumentSearch
+import com.bobbyesp.docucraft.core.navigation.keys.FolderContents
+import com.bobbyesp.docucraft.core.navigation.keys.PdfViewer
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.settings.ViewerSessionSettings
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
-import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import com.bobbyesp.docucraft.feature.viewer.R as ViewerR
 import com.bobbyesp.docucraft.test.R
 import java.io.File

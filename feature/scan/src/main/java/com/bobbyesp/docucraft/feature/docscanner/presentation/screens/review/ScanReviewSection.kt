@@ -12,12 +12,12 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import com.bobbyesp.docucraft.core.navigation.keys.DocumentTags
+import com.bobbyesp.docucraft.core.navigation.keys.MoveToFolder
+import com.bobbyesp.docucraft.core.navigation.keys.ReviewScan
+import com.bobbyesp.docucraft.core.navigation.keys.Settings
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.motion.RisingMotion
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentTags
-import com.bobbyesp.docucraft.feature.docscanner.navigation.MoveToFolder
-import com.bobbyesp.docucraft.feature.docscanner.navigation.ReviewScan
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.details.EditDocumentUiState
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel

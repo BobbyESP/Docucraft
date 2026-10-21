@@ -4,13 +4,16 @@
 plugins {
     id("docucraft.android.library")
     id("docucraft.android.compose")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android { namespace = "com.bobbyesp.docucraft.core.navigation" }
 
 dependencies {
     api(project(":core:designsystem"))
-    implementation(libs.androidx.navigation3.runtime)
+    // `api`: every key is a NavKey.
+    api(libs.androidx.navigation3.runtime)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.bundles.compose)
     implementation(libs.bundles.navigation3)
     testImplementation(libs.junit)

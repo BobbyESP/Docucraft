@@ -10,12 +10,13 @@ import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
+import com.bobbyesp.docucraft.core.navigation.keys.DocumentSearch
+import com.bobbyesp.docucraft.core.navigation.keys.PdfViewer
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.feature.docscanner.domain.LibraryEntryRequest
 import com.bobbyesp.docucraft.feature.docscanner.domain.LibraryEntryRequests
 import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ObserveDocumentUseCase
-import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import kotlinx.coroutines.flow.first
 import org.koin.compose.koinInject
 

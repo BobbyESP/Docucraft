@@ -14,6 +14,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.bobbyesp.docucraft.core.navigation.keys.PdfViewer
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.rememberOverlaySceneStrategy
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.sharingTheWindow
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsSection
@@ -27,7 +28,6 @@ import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.homeS
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.review.scanReviewSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.search.documentSearchSection
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.tags.tagsSection
-import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
 
 /**

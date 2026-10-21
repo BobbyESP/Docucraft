@@ -3,7 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.docscanner.di
 
-import com.bobbyesp.docucraft.feature.docscanner.navigation.MoveToFolder
+import com.bobbyesp.docucraft.core.navigation.keys.MoveToFolder
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.FolderContentsViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.FolderViewModel
 import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.folders.MoveToFolderViewModel

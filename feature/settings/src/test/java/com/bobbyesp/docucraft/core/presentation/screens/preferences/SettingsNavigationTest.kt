@@ -5,12 +5,12 @@ package com.bobbyesp.docucraft.core.presentation.screens.preferences
 
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.bobbyesp.docucraft.core.navigation.keys.AboutSettings
+import com.bobbyesp.docucraft.core.navigation.keys.AppearanceSettings
+import com.bobbyesp.docucraft.core.navigation.keys.DocumentViewerSettings
+import com.bobbyesp.docucraft.core.navigation.keys.PdfViewer
+import com.bobbyesp.docucraft.core.navigation.keys.Settings
 import com.bobbyesp.docucraft.core.presentation.navigation.BackStackNavigator
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AboutSettings
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
-import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

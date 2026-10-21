@@ -4,19 +4,19 @@
 package com.bobbyesp.docucraft.core.presentation.navigation
 
 import androidx.navigation3.runtime.NavKey
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AboutSettings
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DeleteDocument
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
-import com.bobbyesp.docucraft.feature.docscanner.navigation.EditDocument
+import com.bobbyesp.docucraft.core.navigation.keys.AboutSettings
+import com.bobbyesp.docucraft.core.navigation.keys.AppearanceSettings
+import com.bobbyesp.docucraft.core.navigation.keys.DeleteDocument
+import com.bobbyesp.docucraft.core.navigation.keys.DocumentActions
+import com.bobbyesp.docucraft.core.navigation.keys.DocumentViewerSettings
+import com.bobbyesp.docucraft.core.navigation.keys.EditDocument
+import com.bobbyesp.docucraft.core.navigation.keys.PdfViewer
+import com.bobbyesp.docucraft.core.navigation.keys.Settings
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.ExternalPdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.GoToPage
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfDocumentDetails
-import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.SaveCopyToLibrary
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer

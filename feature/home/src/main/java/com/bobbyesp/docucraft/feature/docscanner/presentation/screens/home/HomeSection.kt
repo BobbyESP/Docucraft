@@ -7,19 +7,19 @@ import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import com.bobbyesp.docucraft.core.navigation.keys.DocumentActions
+import com.bobbyesp.docucraft.core.navigation.keys.DocumentSearch
+import com.bobbyesp.docucraft.core.navigation.keys.FolderActions
+import com.bobbyesp.docucraft.core.navigation.keys.FolderContents
+import com.bobbyesp.docucraft.core.navigation.keys.FolderEditor
+import com.bobbyesp.docucraft.core.navigation.keys.ManageTags
+import com.bobbyesp.docucraft.core.navigation.keys.PdfViewer
+import com.bobbyesp.docucraft.core.navigation.keys.ReviewScan
+import com.bobbyesp.docucraft.core.navigation.keys.Settings
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.LocalPaneContext
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentSearch
-import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderActions
-import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderContents
-import com.bobbyesp.docucraft.feature.docscanner.navigation.FolderEditor
 import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
-import com.bobbyesp.docucraft.feature.docscanner.navigation.ManageTags
-import com.bobbyesp.docucraft.feature.docscanner.navigation.ReviewScan
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.pane.NoDocumentOpenPane
-import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 
 /**
  * Home is the list pane of the app's list-detail layout: on expanded windows it stays visible next

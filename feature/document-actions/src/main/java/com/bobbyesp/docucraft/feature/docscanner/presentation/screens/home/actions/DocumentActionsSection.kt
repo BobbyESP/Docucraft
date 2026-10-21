@@ -17,6 +17,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
+import com.bobbyesp.docucraft.core.navigation.keys.DeleteDocument
+import com.bobbyesp.docucraft.core.navigation.keys.DocumentActions
+import com.bobbyesp.docucraft.core.navigation.keys.DocumentTags
+import com.bobbyesp.docucraft.core.navigation.keys.EditDocument
+import com.bobbyesp.docucraft.core.navigation.keys.MoveToFolder
+import com.bobbyesp.docucraft.core.navigation.keys.ReviewScan
 import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
 import com.bobbyesp.docucraft.core.presentation.navigation.Navigator
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.LocalOverlayContext
@@ -24,12 +30,6 @@ import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPrefer
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPresentation
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlaySceneStrategy
 import com.bobbyesp.docucraft.core.util.events.UiEvent
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DeleteDocument
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentTags
-import com.bobbyesp.docucraft.feature.docscanner.navigation.EditDocument
-import com.bobbyesp.docucraft.feature.docscanner.navigation.MoveToFolder
-import com.bobbyesp.docucraft.feature.docscanner.navigation.ReviewScan
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.details.EditDocumentUiState
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.DocumentActionsContent
 import com.bobbyesp.docucraft.feature.docscanner.presentation.components.sheet.LinkedDocumentActionsContent
