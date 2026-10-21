@@ -10,7 +10,6 @@ import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.A
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
-import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -23,6 +22,9 @@ import org.junit.Test
  * are up together, and `goBack` there closes the detail beside the user rather than the settings
  * they asked to leave — a back affordance that appears to do nothing.
  */
+/** Stands for Home, the root the settings are opened from, which the settings do not depend on. */
+private data object Home : NavKey
+
 class SettingsNavigationTest {
 
     private fun backStack(vararg keys: NavKey) = NavBackStack(*keys)

@@ -5,11 +5,6 @@ package com.bobbyesp.docucraft.core.presentation.navigation
 
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DeleteDocument
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
-import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
-import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

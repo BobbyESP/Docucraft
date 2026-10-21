@@ -44,8 +44,12 @@ interface Navigator {
 fun rememberNavigator(backStack: NavBackStack<NavKey>): Navigator =
     remember(backStack) { BackStackNavigator(backStack) }
 
-/** Internal rather than private so its rules can be asserted without a composition. */
-internal class BackStackNavigator(private val backStack: NavBackStack<NavKey>) : Navigator {
+/**
+ * The [Navigator] over a back stack. Public so that its rules, and those of the navigation built on
+ * it in the app and in features, can be asserted without a composition. A feature never builds one:
+ * it is handed a [Navigator], and the back stack it would need belongs to the app's shell.
+ */
+class BackStackNavigator(private val backStack: NavBackStack<NavKey>) : Navigator {
 
     override fun goTo(key: NavKey) {
         if (backStack.lastOrNull() == key) return

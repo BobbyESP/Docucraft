@@ -10,9 +10,6 @@ import androidx.navigation3.scene.Scene
 import androidx.navigation3.scene.SceneStrategyScope
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlayPreference
 import com.bobbyesp.docucraft.core.presentation.navigation.overlay.OverlaySceneStrategy
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DeleteDocument
-import com.bobbyesp.docucraft.feature.docscanner.navigation.DocumentActions
-import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull

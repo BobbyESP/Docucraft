@@ -12,8 +12,6 @@ import androidx.navigation3.scene.SceneStrategyScope
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.PaneAwareScene
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.PaneContext
 import com.bobbyesp.docucraft.core.presentation.navigation.pane.sharingTheWindow
-import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
-import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals

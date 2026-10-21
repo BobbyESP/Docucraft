@@ -12,10 +12,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.scene.SceneStrategyScope
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.AppearanceSettings
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.navigation.Settings
-import com.bobbyesp.docucraft.feature.docscanner.navigation.Home
-import com.bobbyesp.docucraft.feature.pdfviewer.navigation.PdfViewer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
