@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.ocr.mlkit
+package com.bobbyesp.documentcontent.mlkit
 
 import androidx.core.net.toUri
 import androidx.test.ext.junit.runners.AndroidJUnit4

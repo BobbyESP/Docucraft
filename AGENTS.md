@@ -16,7 +16,7 @@ This file is the map and the rules. How each subsystem works, and why, is in
  ├─ :feature:<name>                 a feature's screens, ViewModels, its own domain and data if any, its DI
  ├─ :library:{domain,data,ui}        the catalogue: its rules, Room and files, the UI several features share
  ├─ :core:{domain,data,designsystem,navigation,ui}   :core:navigation also holds the keys features open each other by
- └─ engines: :composepdf, :scanner-api/-mlkit, :document-content-api/-platform, :ocr-mlkit
+ └─ engines: :composepdf, :scanner:{api,mlkit}, :content:{api,platform,mlkit}
 ```
 
 | Module | What it is | Rule |
@@ -33,16 +33,21 @@ This file is the map and the rules. How each subsystem works, and why, is in
 | `:core:navigation` | `Navigator`, the display, overlay and pane strategies, transitions, and the keys features open each other by (`keys/`). | Keys are plain `@Serializable` `NavKey`s, with uuids at most. |
 | `:core:ui` | `BaseViewModel` and its events, composition locals, in-app notifications, `MainViewModel`. | |
 | `:composepdf` | The PDF engine: rendering, layout, gestures. Public API in `com.composepdf`, internals in `com.composepdf.internal`. | Generic. It knows pages, pixels and fingers, **never** text or links. |
-| `:scanner-api` | The scanning contract (`DocumentScanner`, `ScanRequest`, `ScanOutcome`, `ContentRef`…). | Plain Kotlin, zero dependencies. |
-| `:scanner-mlkit` | ML Kit's implementation of that contract. | ML Kit is an `implementation` dependency, so no ML Kit type reaches any other module. |
-| `:document-content-api` | What is on a document's pages (words with their boxes, links) and the pure text-selection logic. | Plain Kotlin. `:document-content-platform` and `:ocr-mlkit` implement it. |
-| `:document-content-platform` | The PDF's own text layer, through the platform's content APIs (API 35+). | The only module that uses those APIs. |
-| `:ocr-mlkit` | ML Kit's text recognition, as a `PageContentProvider`. | ML Kit is an `implementation` dependency, so no ML Kit type reaches any other module. |
+| `:scanner:api` | The scanning contract (`DocumentScanner`, `ScanRequest`, `ScanOutcome`, `ContentRef`…). | Plain Kotlin, zero dependencies. |
+| `:scanner:mlkit` | ML Kit's implementation of that contract. | ML Kit is an `implementation` dependency, so no ML Kit type reaches any other module. |
+| `:content:api` | What is on a document's pages (words with their boxes, links) and the pure text-selection logic. | Plain Kotlin. `:content:platform` and `:content:mlkit` implement it. |
+| `:content:platform` | The PDF's own text layer, through the platform's content APIs (API 35+). | The only module that uses those APIs. |
+| `:content:mlkit` | ML Kit's text recognition, as a `PageContentProvider`. | ML Kit is an `implementation` dependency, so no ML Kit type reaches any other module. |
 
 **A module's code lives under its namespace**: `com.bobbyesp.docucraft` plus the module's path
 (`core.designsystem`, `library.data`, `feature.home`, `feature.documentactions`…), then the layer
 packages. Engines keep their own roots (`com.composepdf`, `com.bobbyesp.scanner`,
-`com.bobbyesp.documentcontent`, `com.bobbyesp.ocr`).
+`com.bobbyesp.documentcontent`), with the implementation's name after it (`scanner.mlkit`,
+`documentcontent.platform`, `documentcontent.mlkit`).
+
+**An engine is a folder**: its contract, `:api`, beside its implementations, each named after what
+it is built on (`:scanner:mlkit`, `:content:platform`). A feature may see an `:api`, never what is
+beside it.
 
 **Four classes are the exception, and never move or rename**, because the system stores their
 names: the widget receivers (`ScanDocumentWidgetReceiver`, `RecentDocumentsWidgetReceiver`: the
@@ -244,7 +249,7 @@ modules) and `navigation/` (keys only that feature opens).
   Android 7 a document that fails to open, or two documents drawn at once, crash the process in
   native code; see [docs/pdf-engine.md](docs/pdf-engine.md#android-7).
 - **Selection logic is pure and tested; the UI only draws it.**
-  - `TextSelection` and `DocumentSelection`, in `:document-content-api`, work in carets over the
+  - `TextSelection` and `DocumentSelection`, in `:content:api`, work in carets over the
     page's text, character by character, across pages, and handle vertical and multi-column
     layouts.
   - `SelectionInteraction`, in the viewer, decides what a touch does.
@@ -366,7 +371,7 @@ modules) and `navigation/` (keys only that feature opens).
 |---|---|
 | Debug APK | `./gradlew :app:assembleDebug` |
 | Unit tests, every module | `./gradlew testDebugUnitTest` |
-| Instrumented tests | `./gradlew connectedDebugAndroidTest` (`:app`, `:composepdf`, `:library:data`, `:feature:widgets`, `:ocr-mlkit`) |
+| Instrumented tests | `./gradlew connectedDebugAndroidTest` (`:app`, `:composepdf`, `:library:data`, `:feature:widgets`, `:content:mlkit`) |
 | Format, then verify | `./gradlew spotlessApply`, then `./gradlew spotlessCheck` |
 
 - **Instrumented tests need a device, and run on every attached device.** A phone connected over
@@ -376,7 +381,7 @@ modules) and `navigation/` (keys only that feature opens).
 - **Test PDFs** live in `composepdf/src/androidTest/assets/fixtures/`, together with a
   `manifest.json` of what each one contains, down to the position of every word.
   - `testing/pdf-fixtures/generate_fixtures.py` regenerates them.
-  - The instrumented tests of `:app`, `:library:data` and `:ocr-mlkit` read the same folder.
+  - The instrumented tests of `:app`, `:library:data` and `:content:mlkit` read the same folder.
   - **Never commit a document with personal data** as a fixture. Build an equivalent one with
     invented content.
 - **Spotless** formats Kotlin with ktfmt (Kotlin-lang style) and adds the license header from

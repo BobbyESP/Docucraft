@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-package com.bobbyesp.ocr.mlkit
+package com.bobbyesp.documentcontent.mlkit
 
 import android.content.Context
 import android.graphics.Bitmap

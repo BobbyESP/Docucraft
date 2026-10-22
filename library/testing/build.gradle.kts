@@ -10,6 +10,6 @@ dependencies {
     api(project(":library:domain"))
     api(libs.kotlinx.coroutines.core)
     api(libs.mockk)
-    api(project(":document-content-api"))
-    api(project(":scanner-api"))
+    api(project(":content:api"))
+    api(project(":scanner:api"))
 }

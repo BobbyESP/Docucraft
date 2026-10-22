@@ -89,11 +89,11 @@ dependencies {
 
     // The engines, named only by the Koin modules that bind them (DocumentScannerModule,
     // PageContentModule), so no ML Kit or platform content type is on any feature's classpath.
-    implementation(project(":scanner-api"))
-    implementation(project(":scanner-mlkit"))
-    implementation(project(":document-content-api"))
-    implementation(project(":document-content-platform"))
-    implementation(project(":ocr-mlkit"))
+    implementation(project(":scanner:api"))
+    implementation(project(":scanner:mlkit"))
+    implementation(project(":content:api"))
+    implementation(project(":content:platform"))
+    implementation(project(":content:mlkit"))
 
     // AndroidX: the activities, the splash screen, and AppCompat's locale service in the manifest.
     implementation(libs.bundles.androidx.core)

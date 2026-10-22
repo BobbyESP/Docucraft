@@ -6,12 +6,12 @@
 
 How the viewer reads what is on a page, lets the reader select and copy it, and follows links
 safely. Code:
-- `:document-content-api`: the contract and the pure selection logic;
-- `:document-content-platform` and `:ocr-mlkit`: the two readers of a page;
+- `:content:api`: the contract and the pure selection logic;
+- `:content:platform` and `:content:mlkit`: the two readers of a page;
 - `:library:data` (`content/`): the layered provider and the text recognized for the catalogue;
 - `:feature:pdfviewer`: the ViewModel and the UI.
 
-## The contract (`:document-content-api`)
+## The contract (`:content:api`)
 
 Plain Kotlin, so that text recognition (OCR) can implement it from its own module, as ML Kit
 implements the scanning contract.
@@ -59,7 +59,7 @@ LayeredPageContentProvider(
   (`NoText`, `Unsupported`, or links only) does it ask `recognized`, opened lazily, once per
   session.
   - Recognized text keeps the document's own links.
-- **`MlKitTextRecognitionProvider`** (`:ocr-mlkit`) reads a page from its image: the page is drawn
+- **`MlKitTextRecognitionProvider`** (`:content:mlkit`) reads a page from its image: the page is drawn
   at about 200 dpi on white, recognized on the device with ML Kit, and each word's box is given as
   a fraction of the page. ML Kit is an `implementation` dependency of that module, so none of its
   types reach any other module; the engine is swapped at the `TEXT_RECOGNITION` binding.
@@ -96,7 +96,7 @@ LayeredPageContentProvider(
 
 ## Selection
 
-Pure logic in `:document-content-api`, tested on the JVM. It behaves like the reference viewers
+Pure logic in `:content:api`, tested on the JVM. It behaves like the reference viewers
 (Google Drive's among them):
 - **a long press selects the word** under the finger;
 - **from then on both ends move character by character**, whether the same finger drags on or a

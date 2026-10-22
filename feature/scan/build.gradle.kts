@@ -5,4 +5,4 @@ plugins { id("docucraft.android.feature") }
 
 android { namespace = "com.bobbyesp.docucraft.feature.scan" }
 
-dependencies { testImplementation(project(":document-content-api")) }
+dependencies { testImplementation(project(":content:api")) }

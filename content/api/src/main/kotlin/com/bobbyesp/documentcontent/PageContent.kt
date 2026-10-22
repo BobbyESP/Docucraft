@@ -5,7 +5,7 @@ package com.bobbyesp.documentcontent
 
 /**
  * Where a document lives, as a URI string. Its own type, so this module depends on nothing, not
- * even `:scanner-api`.
+ * even `:scanner:api`.
  */
 @JvmInline value class DocumentSource(val value: String)
 

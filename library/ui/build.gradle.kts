@@ -23,7 +23,7 @@ dependencies {
     implementation(libs.landscapist.coil)
     implementation(libs.landscapist.placeholder)
     implementation(libs.material.kolor)
-    implementation(project(":scanner-api"))
+    implementation(project(":scanner:api"))
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

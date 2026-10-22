@@ -34,16 +34,7 @@ rootProject.name = "Docucraft"
 
 include(":app")
 
-include(":composepdf")
-
-include(":scanner-api")
-
-include(":scanner-mlkit")
-
-include(":document-content-api")
-
-include(":ocr-mlkit")
-
+// Core: what every module builds on
 include(":core:domain")
 
 include(":core:data")
@@ -54,23 +45,36 @@ include(":core:navigation")
 
 include(":core:ui")
 
+// The library: the catalogue several features share
 include(":library:domain")
-
-include(":library:testing")
 
 include(":library:data")
 
 include(":library:ui")
 
-include(":document-content-platform")
+include(":library:testing")
 
-include(":feature:settings")
+// Engines: a contract (api) and its implementations, and the PDF engine
+include(":scanner:api")
 
-include(":feature:bin")
+include(":scanner:mlkit")
+
+include(":content:api")
+
+include(":content:platform")
+
+include(":content:mlkit")
+
+include(":composepdf")
+
+// Features: what the user sees
+include(":feature:home")
 
 include(":feature:search")
 
 include(":feature:organization")
+
+include(":feature:bin")
 
 include(":feature:scan")
 
@@ -78,6 +82,6 @@ include(":feature:document-actions")
 
 include(":feature:pdfviewer")
 
-include(":feature:widgets")
+include(":feature:settings")
 
-include(":feature:home")
+include(":feature:widgets")

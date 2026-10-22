@@ -63,7 +63,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
         if (forbidden.isNotEmpty()) {
             throw GradleException(
                 "$path depends on $forbidden. A feature sees :core:* and :library:* (never their " +
-                    ":data), the engines' contracts (*-api) and :composepdf. It opens another " +
+                    ":data), the engines' contracts (*:api) and :composepdf. It opens another " +
                     "feature by a key of :core:navigation, and implementations are bound in :app."
             )
         }
@@ -73,7 +73,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
         when {
             this == ":core:data" || this == ":library:data" -> false
             startsWith(":core:") || startsWith(":library:") -> true
-            endsWith("-api") -> true
+            endsWith(":api") -> true
             // The PDF engine is generic, and the viewer draws with it through its public hooks.
             this == ":composepdf" -> true
             else -> false

@@ -12,10 +12,10 @@
 | `:library:domain`, `:library:data` | use cases; the path a migration gives an old document, search ranking, layered content | the catalogue: migrations from every exported schema, a migrated schema against a new one, the triggers, search, the repositories, storage and thumbnails |
 | `:feature:*` | ViewModels, the D2 settings table, link resolution, selection decisions, what a widget shows for its size and what it lists | `:feature:widgets`: the widgets' views, inflated as a launcher does |
 | `:core:*` | navigation rules and scene strategies, the theme's transitions, `BaseViewModel` | — |
-| `:document-content-platform` | text splitting | — |
+| `:content:platform` | text splitting | — |
 | `:composepdf` | layout geometry, tile planning, zoom steps, viewport, load-error classification | fixtures, restoration, layout changes, content padding, gestures, extension points, scroll-to, load errors, platform content APIs |
-| `:document-content-api` | selection: carets, runs, layouts, right-to-left, across pages | — |
-| `:scanner-mlkit` | the scan result decision table, the activity-result host and process death | — |
+| `:content:api` | selection: carets, runs, layouts, right-to-left, across pages | — |
+| `:scanner:mlkit` | the scan result decision table, the activity-result host and process death | — |
 
 **The rule of thumb:**
 - **Decisions are pure and go on the JVM**: what a touch selects, what a link does, what a result

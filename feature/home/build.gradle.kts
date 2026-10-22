@@ -9,7 +9,7 @@ plugins {
 android { namespace = "com.bobbyesp.docucraft.feature.home" }
 
 dependencies {
-    implementation(project(":scanner-api"))
+    implementation(project(":scanner:api"))
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.landscapist.coil)
     implementation(libs.landscapist.placeholder)

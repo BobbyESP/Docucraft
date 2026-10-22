@@ -17,8 +17,8 @@ each subsystem has its own document, listed in the [index](README.md).
   │                          ├──> :library:data ──> :library:domain, :core:data
   │                          └──> :core:ui ──> :core:navigation ──> :core:designsystem ──> :core:domain
   │
-  └──> engines, bound only here: :scanner-mlkit ──> :scanner-api
-                                 :document-content-platform, :ocr-mlkit ──> :document-content-api
+  └──> engines, bound only here: :scanner:mlkit ──> :scanner:api
+                                 :content:platform, :content:mlkit ──> :content:api
                                  :composepdf
 ```
 
@@ -34,14 +34,16 @@ The module graph, and the build that checks it, enforce what conventions would o
   costs nothing: a change inside a feature still recompiles that feature and the app, nothing else.
 - **The build refuses what breaks these rules.** Every feature applies `docucraft.android.feature`,
   which lists what a feature may depend on: `:core:*` and `:library:*` but their `:data`, the
-  engines' contracts (`*-api`) and `:composepdf`. Anything else, another feature or an engine's
+  engines' contracts (`*:api`) and `:composepdf`. Anything else, another feature or an engine's
   implementation included, fails the build with the rule it breaks. A list of what is allowed,
   rather than of what is not, so a new module is refused until someone decides a feature may see
   it.
-- **Engines are replaceable.** `:scanner-mlkit` and `:ocr-mlkit` depend on ML Kit as
-  `implementation`, and `:document-content-platform` is the only module that uses the platform's
+- **Engines are replaceable.** `:scanner:mlkit` and `:content:mlkit` depend on ML Kit as
+  `implementation`, and `:content:platform` is the only module that uses the platform's
   content APIs. Only the app names them, in `DocumentScannerModule` and `PageContentModule`:
-  swapping an engine means another module and one line of DI.
+  swapping an engine means another module and one line of DI. An engine is a folder, its
+  contract (`:api`) beside its implementations, so what a feature may see is told by the name
+  alone.
 - **The engine stays generic.** `:composepdf` knows nothing of the app: no text, no links, no
   Koin. The viewer extends it through public hooks ([pdf-engine.md](pdf-engine.md)).
 

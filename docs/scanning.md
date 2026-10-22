@@ -5,10 +5,10 @@
 # Scanning and the catalogue
 
 How a scan becomes a document the app owns, and how the catalogue keeps, finds and removes
-documents. Code: `:scanner-api` and `:scanner-mlkit`, the catalogue in `:library:*`, and the
+documents. Code: `:scanner:api` and `:scanner:mlkit`, the catalogue in `:library:*`, and the
 screens of `:feature:home` and `:feature:scan`.
 
-## The contract (`:scanner-api`)
+## The contract (`:scanner:api`)
 
 ```kotlin
 interface DocumentScanner {
@@ -34,7 +34,7 @@ hides that. The caller writes `val outcome = scanner.scan()` and gets one answer
 - **`ContentRef`** is the contract's locator: a URI as a string. It keeps `android.net.Uri` out of
   every domain.
 
-## The ML Kit engine (`:scanner-mlkit`)
+## The ML Kit engine (`:scanner:mlkit`)
 
 - **`MlKitDocumentScanner`** is the only class that knows ML Kit. It builds the options from the
   `ScanRequest` and gets the `IntentSender`. It launches it through an `ActivityResultHost`, and

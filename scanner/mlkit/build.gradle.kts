@@ -8,7 +8,7 @@ android { namespace = "com.bobbyesp.scanner.mlkit" }
 dependencies {
     // `api`, because consumers speak the contract; everything below is `implementation`, so none
     // of it reaches them. That is what keeps ML Kit off :app's compile classpath.
-    api(project(":scanner-api"))
+    api(project(":scanner:api"))
     api(libs.androidx.activity)
 
     implementation(libs.gms.mlkit.docscanner)

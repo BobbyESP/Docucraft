@@ -167,14 +167,14 @@ graph TD
     core[":core:domain · :designsystem · :navigation · :ui"]
     coreData[":core:data<br/><i>preferences, analytics</i>"]
     composepdf[":composepdf<br/><i>PDF engine</i>"]
-    scanner[":scanner-api ← :scanner-mlkit"]
-    content[":document-content-api ← :document-content-platform, :ocr-mlkit"]
+    apis[":scanner:api · :content:api<br/><i>the engines' contracts</i>"]
+    engines[":scanner:mlkit · :content:platform · :content:mlkit<br/><i>the engines, named only by the app</i>"]
 
     app --> features
     app --> libraryData
     app --> coreData
-    app --> scanner
-    app --> content
+    app --> engines
+    engines --> apis
     features --> apis
     features --> library
     features --> core

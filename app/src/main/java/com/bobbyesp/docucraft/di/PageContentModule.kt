@@ -7,8 +7,8 @@ import com.bobbyesp.docucraft.library.data.content.CatalogueRecognizedTextProvid
 import com.bobbyesp.docucraft.library.data.content.LayeredPageContentProvider
 import com.bobbyesp.docucraft.library.domain.usecase.IndexDocumentTextUseCase
 import com.bobbyesp.documentcontent.PageContentProvider
+import com.bobbyesp.documentcontent.mlkit.MlKitTextRecognitionProvider
 import com.bobbyesp.documentcontent.platform.PlatformPageContentProvider
-import com.bobbyesp.ocr.mlkit.MlKitTextRecognitionProvider
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module

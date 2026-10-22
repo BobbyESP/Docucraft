@@ -10,8 +10,8 @@ android { namespace = "com.bobbyesp.docucraft.feature.pdfviewer" }
 
 dependencies {
     implementation(project(":composepdf"))
-    implementation(project(":document-content-api"))
-    implementation(project(":scanner-api"))
+    implementation(project(":content:api"))
+    implementation(project(":scanner:api"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.annotation)
     implementation(libs.androidx.browser)
