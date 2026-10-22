@@ -25,39 +25,34 @@
             <option value="$PROJECT_DIR$/build-logic" />
             <option value="$PROJECT_DIR$/build-logic/convention" />
             <option value="$PROJECT_DIR$/composepdf" />
+            <option value="$PROJECT_DIR$/content" />
+            <option value="$PROJECT_DIR$/content/api" />
+            <option value="$PROJECT_DIR$/content/mlkit" />
+            <option value="$PROJECT_DIR$/content/platform" />
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/core/data" />
             <option value="$PROJECT_DIR$/core/designsystem" />
             <option value="$PROJECT_DIR$/core/domain" />
             <option value="$PROJECT_DIR$/core/navigation" />
             <option value="$PROJECT_DIR$/core/ui" />
-            <option value="$PROJECT_DIR$/document-content-api" />
-            <option value="$PROJECT_DIR$/document-content-platform" />
             <option value="$PROJECT_DIR$/feature" />
             <option value="$PROJECT_DIR$/feature/bin" />
-            <option value="$PROJECT_DIR$/feature/bin/api" />
             <option value="$PROJECT_DIR$/feature/document-actions" />
-            <option value="$PROJECT_DIR$/feature/document-actions/api" />
             <option value="$PROJECT_DIR$/feature/home" />
             <option value="$PROJECT_DIR$/feature/organization" />
-            <option value="$PROJECT_DIR$/feature/organization/api" />
+            <option value="$PROJECT_DIR$/feature/pdfviewer" />
             <option value="$PROJECT_DIR$/feature/scan" />
-            <option value="$PROJECT_DIR$/feature/scan/api" />
             <option value="$PROJECT_DIR$/feature/search" />
-            <option value="$PROJECT_DIR$/feature/search/api" />
             <option value="$PROJECT_DIR$/feature/settings" />
-            <option value="$PROJECT_DIR$/feature/settings/api" />
-            <option value="$PROJECT_DIR$/feature/viewer" />
-            <option value="$PROJECT_DIR$/feature/viewer/api" />
             <option value="$PROJECT_DIR$/feature/widgets" />
             <option value="$PROJECT_DIR$/library" />
             <option value="$PROJECT_DIR$/library/data" />
             <option value="$PROJECT_DIR$/library/domain" />
             <option value="$PROJECT_DIR$/library/testing" />
             <option value="$PROJECT_DIR$/library/ui" />
-            <option value="$PROJECT_DIR$/ocr-mlkit" />
-            <option value="$PROJECT_DIR$/scanner-api" />
-            <option value="$PROJECT_DIR$/scanner-mlkit" />
+            <option value="$PROJECT_DIR$/scanner" />
+            <option value="$PROJECT_DIR$/scanner/api" />
+            <option value="$PROJECT_DIR$/scanner/mlkit" />
           </set>
         </option>
       </GradleProjectSettings>
