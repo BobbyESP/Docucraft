@@ -12,6 +12,8 @@ internal val Project.libs: VersionCatalog
 
 internal fun VersionCatalog.library(alias: String) = findLibrary(alias).get()
 
+internal fun VersionCatalog.bundle(alias: String) = findBundle(alias).get()
+
 /**
  * What every Android module shares, application or library: the SDKs, the Java level and
  * desugaring.

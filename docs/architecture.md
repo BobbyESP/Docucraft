@@ -22,7 +22,7 @@ each subsystem has its own document, listed in the [index](README.md).
                                  :composepdf
 ```
 
-The module graph enforces what conventions would only ask for:
+The module graph, and the build that checks it, enforce what conventions would only ask for:
 - **Domains are plain Kotlin.** `:core:domain` and `:library:domain` are JVM modules: an Android
   or Compose import there does not compile, so every rule they hold is testable on the JVM.
 - **Screens do not reach storage.** Only the app depends on `:library:data` and `:core:data`; a
@@ -32,6 +32,12 @@ The module graph enforces what conventions would only ask for:
   open each other (Home and folders, by way of the document actions) would otherwise be a cycle
   Gradle refuses to build. The keys are plain data, uuids at most, so one place for all of them
   costs nothing: a change inside a feature still recompiles that feature and the app, nothing else.
+- **The build refuses what breaks these rules.** Every feature applies `docucraft.android.feature`,
+  which lists what a feature may depend on: `:core:*` and `:library:*` but their `:data`, the
+  engines' contracts (`*-api`) and `:composepdf`. Anything else, another feature or an engine's
+  implementation included, fails the build with the rule it breaks. A list of what is allowed,
+  rather than of what is not, so a new module is refused until someone decides a feature may see
+  it.
 - **Engines are replaceable.** `:scanner-mlkit` and `:ocr-mlkit` depend on ML Kit as
   `implementation`, and `:document-content-platform` is the only module that uses the platform's
   content APIs. Only the app names them, in `DocumentScannerModule` and `PageContentModule`:
@@ -47,7 +53,7 @@ modules (`feature.docscanner.*`); a new name would remove the widgets, or leave 
 Room's schemas are filed under the database's class name, so they moved with it.
 
 The build logic is the included build `build-logic`: one convention plugin per kind of module
-(Android library, Compose, Room, plain Kotlin), so a module's build file names only what is its
+(Android library, Compose, feature, Room, plain Kotlin), so a module's build file names only what is its
 own.
 
 ## Layers inside a feature

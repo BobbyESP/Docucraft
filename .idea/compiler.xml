@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel target="17" />
+    <bytecodeTargetLevel target="17">
+      <module name="Docucraft.buildSrc" target="21" />
+      <module name="Docucraft.buildSrc.main" target="21" />
+      <module name="Docucraft.buildSrc.test" target="21" />
+    </bytecodeTargetLevel>
   </component>
 </project>

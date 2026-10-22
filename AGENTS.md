@@ -22,7 +22,7 @@ This file is the map and the rules. How each subsystem works, and why, is in
 | Module | What it is | Rule |
 |---|---|---|
 | `:app` | The shell: `App`, `MainActivity`, `DocucraftApp` (the back stack and `docucraftSections`), the requests from outside the UI, and the engines' bindings (`DocumentScannerModule`, `PageContentModule`). | Depends on everything; nothing depends on it. The only module that sees the engines' implementations. |
-| `:feature:home`, `:feature:search`, `:feature:organization` (folders, tags), `:feature:bin`, `:feature:scan` (the review of a scan), `:feature:document-actions`, `:feature:pdfviewer`, `:feature:settings`, `:feature:widgets` | One feature each: its screens, ViewModels and Koin module; the viewer and the widgets also hold their own domain and data. | Depends on `:library:*` (never `:library:data`) and `:core:*` (never `:core:data`), **never on another feature**: it opens another by a key of `:core:navigation`. |
+| `:feature:home`, `:feature:search`, `:feature:organization` (folders, tags), `:feature:bin`, `:feature:scan` (the review of a scan), `:feature:document-actions`, `:feature:pdfviewer`, `:feature:settings`, `:feature:widgets` | One feature each: its screens, ViewModels and Koin module; the viewer and the widgets also hold their own domain and data. | Depends on `:library:*` (never `:library:data`) and `:core:*` (never `:core:data`), **never on another feature**: it opens another by a key of `:core:navigation`. `docucraft.android.feature` fails the build otherwise. |
 | `:library:domain` | The catalogue's models, ports and use cases, which the scanner's screens and the viewer share. | Plain Kotlin (JVM module). |
 | `:library:data` | Room and its schemas (`library/data/schemas/`), files, thumbnails, the search index, text indexing, the bin's upkeep. | Only `:app` depends on it: features reach it through the domain's ports. |
 | `:library:ui` | UI several library features draw: a document's card, folder and tag badges, the details form, the search bar's button. | |
@@ -57,6 +57,8 @@ Build setup:
   Android or Kotlin plugins with settings of its own:
   - `docucraft.android.application` or `docucraft.android.library`: SDKs, Java level, desugaring;
   - `docucraft.android.compose`, added to either for a module that draws: the compiler, the BOM;
+  - `docucraft.android.feature`, the only plugin a feature applies: library and Compose, the
+    modules and libraries every feature builds on, and the check of what it may depend on;
   - `docucraft.android.room`: KSP, Room, and the schemas exported to the module's `schemas/`;
   - `docucraft.jvm.library`: a plain Kotlin module. It also answers to `testDebugUnitTest`, so that
     one task runs every module's unit tests.

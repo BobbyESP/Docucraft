@@ -28,6 +28,10 @@ gradlePlugin {
             id = "docucraft.android.compose"
             implementationClass = "AndroidComposeConventionPlugin"
         }
+        register("androidFeature") {
+            id = "docucraft.android.feature"
+            implementationClass = "AndroidFeatureConventionPlugin"
+        }
         register("androidRoom") {
             id = "docucraft.android.room"
             implementationClass = "AndroidRoomConventionPlugin"

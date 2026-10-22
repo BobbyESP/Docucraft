@@ -3,7 +3,6 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.domain.links
 
-import android.os.Build
 import com.bobbyesp.documentcontent.NormalizedPoint
 import com.bobbyesp.documentcontent.PageLink
 import java.net.IDN
@@ -136,13 +135,10 @@ class ResolveLinkUseCase {
         else LinkAction.Blocked(uri, BlockReason.Malformed)
     }
 
+    // By the charset's name: the overload taking a `Charset` is only on Android 13 and later, and
+    // this one, on every version, decodes the same.
     private fun decode(text: String): String = runCatching {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            URLDecoder.decode(text.replace("+", "%2B"), StandardCharsets.UTF_8)
-        } else {
-            // For versions lower than TIRAMISU, use the deprecated method
-            URLDecoder.decode(text.replace("+", "%2B"), "UTF-8")
-        }
+        URLDecoder.decode(text.replace("+", "%2B"), StandardCharsets.UTF_8.name())
     }
         .getOrDefault(text)
 
