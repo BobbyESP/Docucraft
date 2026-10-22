@@ -1,7 +1,7 @@
 [versions]
 # Tooling
 androidGradlePlugin = "9.4.1"
-kotlin = "2.4.20"
+kotlin = "2.4.21"
 ksp = "2.3.12"
 ktfmt = "0.27.0"
 googleServices = "4.5.0"
@@ -56,7 +56,7 @@ filekit = "0.16.0"
 leakcanary = "2.14"
 desugarJdkLibs = "2.1.5"
 stabilityCompiler = "0.15.0"
-spotless = "8.10.3"
+spotless = "8.10.4"
 
 # Testing
 junit = "4.13.2"
