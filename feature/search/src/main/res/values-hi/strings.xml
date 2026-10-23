@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="clear_search">खोज साफ़ करें</string>
+    <string name="doc_no_matches">कोई मिलता-जुलता दस्तावेज़ नहीं</string>
+    <string name="doc_no_matches_desc">“%1$s” से कुछ भी मेल नहीं खाता। कोई दूसरा नाम या विवरण का कोई शब्द आज़माएं।</string>
+    <string name="search_hint_title">अपने दस्तावेज़ों में खोजें</string>
+    <string name="search_hint_desc">नाम से, या विवरण में मौजूद किसी भी चीज़ से।</string>
+</resources>

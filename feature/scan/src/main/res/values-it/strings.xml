@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="skip">Salta</string>
+    <string name="scan_review_title">Scansione salvata</string>
+    <string name="scan_review_desc">È nella tua libreria. Dalle un nome adesso oppure salta e fallo più tardi.</string>
+    <string name="scan_review_recognize_text_desc">Per poterla trovare in base a ciò che contiene</string>
+    <string name="suggestions">Suggerimenti</string>
+    <string name="suggestions_working">Lettura del documento…</string>
+    <string name="suggestions_none">Non c\'è nulla da suggerire per questo documento.</string>
+    <string name="suggestions_failed">Questa volta non è stato possibile creare suggerimenti.</string>
+    <string name="suggestions_text_recognition_off">Non verrà suggerito nulla: il riconoscimento del testo è disattivato per questo documento e senza di esso una scansione non ha testo. Attivalo qui sotto oppure, per tutti i nuovi documenti, nelle Impostazioni.</string>
+    <string name="suggestion_use">Usa</string>
+    <string name="suggestion_move_to">Sposta in %1$s</string>
+    <string name="tags_add">Aggiungi etichette</string>
+    <string name="scan_review_section_details">Dettagli</string>
+    <string name="scan_review_section_organize">Organizza</string>
+</resources>

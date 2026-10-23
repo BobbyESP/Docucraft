@@ -1,0 +1,6 @@
+<resources>
+    <plurals name="doc_n_pages">
+        <item quantity="one">%d pagina</item>
+        <item quantity="other">%d pagina\'s</item>
+    </plurals>
+</resources>

@@ -10,20 +10,53 @@ each subsystem has its own document, listed in the [index](README.md).
 ## Modules
 
 ```
-:app ─────────────┬──> :composepdf               PDF engine (Android library)
-                  ├──> :document-content-api     page text and links, selection (plain Kotlin)
-                  ├──> :scanner-api              scanning contract (plain Kotlin)
-                  └──> :scanner-mlkit ──> :scanner-api
-                                  └──> ML Kit (implementation: hidden from :app)
+:app  the shell ─────────────┬──> :feature:home, :search, :organization, :bin, :scan,
+  │                          │      :document-actions, :pdfviewer, :settings, :widgets
+  │                          │        (never another feature)
+  │                          ├──> :library:ui ──> :library:domain   (plain Kotlin)
+  │                          ├──> :library:data ──> :library:domain, :core:data
+  │                          └──> :core:ui ──> :core:navigation ──> :core:designsystem ──> :core:domain
+  │
+  └──> engines, bound only here: :scanner:mlkit ──> :scanner:api
+                                 :content:platform, :content:mlkit ──> :content:api
+                                 :composepdf
 ```
 
-The module graph enforces what conventions would only ask for:
-- **ML Kit is replaceable.** `:scanner-mlkit` depends on ML Kit as `implementation`, so no ML Kit
-  type can appear in `:app`. Swapping the engine means another module and one line of DI.
-- **Text recognition will slot in the same way.** A future `:ocr-mlkit` would implement
-  `:document-content-api` without the viewer knowing.
+The module graph, and the build that checks it, enforce what conventions would only ask for:
+- **Domains are plain Kotlin.** `:core:domain` and `:library:domain` are JVM modules: an Android
+  or Compose import there does not compile, so every rule they hold is testable on the JVM.
+- **Screens do not reach storage.** Only the app depends on `:library:data` and `:core:data`; a
+  feature sees the catalogue through the ports of `:library:domain`, bound by the app's DI.
+- **Features do not know each other.** A feature opens another by a key, and the keys features
+  open each other by live in `:core:navigation`, which every feature depends on. Two features that
+  open each other (Home and folders, by way of the document actions) would otherwise be a cycle
+  Gradle refuses to build. The keys are plain data, uuids at most, so one place for all of them
+  costs nothing: a change inside a feature still recompiles that feature and the app, nothing else.
+- **The build refuses what breaks these rules.** Every feature applies `docucraft.android.feature`,
+  which lists what a feature may depend on: `:core:*` and `:library:*` but their `:data`, the
+  engines' contracts (`*:api`) and `:composepdf`. Anything else, another feature or an engine's
+  implementation included, fails the build with the rule it breaks. A list of what is allowed,
+  rather than of what is not, so a new module is refused until someone decides a feature may see
+  it.
+- **Engines are replaceable.** `:scanner:mlkit` and `:content:mlkit` depend on ML Kit as
+  `implementation`, and `:content:platform` is the only module that uses the platform's
+  content APIs. Only the app names them, in `DocumentScannerModule` and `PageContentModule`:
+  swapping an engine means another module and one line of DI. An engine is a folder, its
+  contract (`:api`) beside its implementations, so what a feature may see is told by the name
+  alone.
 - **The engine stays generic.** `:composepdf` knows nothing of the app: no text, no links, no
   Koin. The viewer extends it through public hooks ([pdf-engine.md](pdf-engine.md)).
+
+A module's code lives under its namespace (`core.ui`, `library.data`, `feature.home`…), so a
+package names its module. Four classes are the exception, because their names are stored outside
+the code: the widgets people placed know their receivers by name, and WorkManager stores the class
+of queued work. The two widget receivers and the two workers keep the package they had before the
+modules (`feature.docscanner.*`); a new name would remove the widgets, or leave the work failing.
+Room's schemas are filed under the database's class name, so they moved with it.
+
+The build logic is the included build `build-logic`: one convention plugin per kind of module
+(Android library, Compose, feature, Room, plain Kotlin), so a module's build file names only what is its
+own.
 
 ## Layers inside a feature
 
@@ -37,9 +70,9 @@ data           port implementations: Room, DataStore, files, platform APIs, othe
 
 - **The domain is plain Kotlin.** It imports no Android, no Compose and no data layer. That keeps
   every rule testable on the JVM. A location is a `ContentRef` (a URI as a string), never an
-  `android.net.Uri`, which cannot even be built in a plain JVM test. Two classes in `core/domain`
-  still carry Compose types (`UserPreferences`, `InAppNotification`); moving them out is part of the
-  preferences stabilization, still pending.
+  `android.net.Uri`, which cannot even be built in a plain JVM test. A model the UI needs Compose
+  to treat as stable (`UserPreferences`, `InAppNotification`) is listed in the Compose compiler's
+  stability configuration instead of carrying `@Immutable`.
 - **Anything the framework does goes behind a port**: an interface in the domain, implemented in
   data. Examples: `DocumentStorage`, `DocumentThumbnails`, `SearchIndex`, `DocumentSharer`,
   `DocumentExporter`, `DocumentOpener`, `DocumentPrinter`, `LinkOpener`, `PageContentProvider`,
@@ -63,7 +96,7 @@ that is how a cancelled scan ended up shown as an error.
 
 ## ViewModels (MVI)
 
-Every screen's ViewModel extends `core/util/viewModel/BaseViewModel<Intent, State, Effect>`:
+Every screen's ViewModel extends `core/ui/viewmodel/BaseViewModel<Intent, State, Effect>`:
 
 | Channel | For | When nobody is listening |
 |---|---|---|
@@ -82,8 +115,9 @@ against whatever the user is doing by then, is a wrong action.
 
 ## Dependency injection
 
-Koin, started in `App.kt`. Each feature has its own modules in `feature/*/di`, and core services
-have theirs in `core/di`. A new module is added to the list in `App.kt`.
+Koin, started in `App.kt`. Each feature binds its ViewModels in a module of its own, the library
+binds its ports in `:library:data`, and the app binds the app-wide services and the engines. A new
+module is added to the list in `App.kt`.
 
 **Swapping an implementation is always one binding:**
 - the scanner: `DocumentScannerModule.kt`;
@@ -94,7 +128,7 @@ If a swap needs more than one line, the design is not finished.
 
 ## App-wide services in the UI
 
-Composition locals in `core/presentation/common/CompositionLocals.kt`:
+Composition locals in `core/ui/common/CompositionLocals.kt`:
 - `LocalDarkTheme`;
 - `LocalSettingsRepository`;
 - `LocalNotificationsService`, for in-app notifications;
@@ -104,7 +138,7 @@ Screens read them instead of injecting the same services again.
 
 ## Theme
 
-`DocucraftTheme` (`core/presentation/theme/Theme.kt`) is Material 3 Expressive, with colors from the
+`DocucraftTheme` (`core/designsystem/theme/Theme.kt`) is Material 3 Expressive, with colors from the
 wallpaper (Android 12+) or generated by MaterialKolor from the user's seed color and palette style.
 The rest of the app reads `MaterialTheme` as usual. Type roles Material has no slot for, such as the
 user's monospace font, are in `DocucraftTheme.typography`, read the same way; a new one is a field
@@ -176,7 +210,7 @@ reason
 
 ### Blur
 
-Material has no blur tokens; `DocucraftBlurDefaults` (`core/presentation/theme/`) is where the app
+Material has no blur tokens; `DocucraftBlurDefaults` (`core/designsystem/theme/`) is where the app
 decides where it blurs, and by how much. There are two kinds of blur, for two jobs.
 
 **A surface floating over content that moves beneath it is frosted, not shadowed.** What is behind
@@ -188,7 +222,7 @@ built on Haze's Material 3 style. The surface's own container becomes transparen
 shadow elevation.
 - Home: the app bar once the list scrolls under it, the search bar, and the sort menu.
 - Every other screen with a list, settings included: the same app bar, `FrostedLargeTopAppBar`
-  (`core/presentation/components/ScreenChrome.kt`).
+  (`core/designsystem/components/ScreenChrome.kt`).
 - Search: the field, over the results.
 - Viewer: the top bar and the floating toolbar, over the pages.
 
@@ -241,6 +275,6 @@ thumbnail's, need Android 13.
 
 ## Integrations
 
-- **Firebase.** Analytics and Crashlytics, behind `AnalyticsHelper` (`core/di/AnalyticsModule.kt`).
+- **Firebase.** Analytics and Crashlytics, behind `AnalyticsHelper` (`core/data/di/AnalyticsModule.kt`).
 - **FileProvider.** `${applicationId}.fileprovider`, for every document the app shares. It is
   `CatalogueFileProvider`, which names a document as the catalogue does and not by its file.

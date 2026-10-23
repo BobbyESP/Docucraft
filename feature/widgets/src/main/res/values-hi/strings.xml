@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+	<string name="widget_scan_title">दस्तावेज़ स्कैन करें</string>
+	<string name="widget_scan_subtitle">स्कैन करना शुरू करने के लिए टैप करें</string>
+    <string name="widget_recents_description">आपके हाल के दस्तावेज़, बस एक टैप दूर</string>
+    <string name="widget_recents_empty">आपके दस्तावेज़ यहाँ दिखेंगे</string>
+</resources>

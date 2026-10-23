@@ -5,9 +5,10 @@
 # Scanning and the catalogue
 
 How a scan becomes a document the app owns, and how the catalogue keeps, finds and removes
-documents. Code: `:scanner-api`, `:scanner-mlkit` and `app/.../feature/docscanner`.
+documents. Code: `:scanner:api` and `:scanner:mlkit`, the catalogue in `:library:*`, and the
+screens of `:feature:home` and `:feature:scan`.
 
-## The contract (`:scanner-api`)
+## The contract (`:scanner:api`)
 
 ```kotlin
 interface DocumentScanner {
@@ -33,7 +34,7 @@ hides that. The caller writes `val outcome = scanner.scan()` and gets one answer
 - **`ContentRef`** is the contract's locator: a URI as a string. It keeps `android.net.Uri` out of
   every domain.
 
-## The ML Kit engine (`:scanner-mlkit`)
+## The ML Kit engine (`:scanner:mlkit`)
 
 - **`MlKitDocumentScanner`** is the only class that knows ML Kit. It builds the options from the
   `ScanRequest` and gets the `IntentSender`. It launches it through an `ActivityResultHost`, and
@@ -62,7 +63,7 @@ still scanning.
   activity restores that flag; `restorePendingLaunch` does not overwrite a result already received.
 
 Swapping the engine means changing the `DocumentScanner` binding in
-`feature/docscanner/di/DocumentScannerModule.kt`.
+`DocumentScannerModule.kt`, in the app: the only module that sees the engine.
 
 ## Entry points
 
@@ -122,7 +123,7 @@ are on screen without scrolling.
   scan are. The folder shows its own badge and color and the tags their dots, as they do there.
   The card takes the theme's own color, as a folder without one does on Home.
 - **The card names the document as it is typed**, so that it shows what the scan will be called
-  before it is saved. It is `DocumentHeroCard` (`feature/shared`), which the viewer's details use
+  before it is saved. It is `DocumentHeroCard` (`:library:ui`), which the viewer's details use
   too, so that a document is introduced the same way in both: its page lands a little askew and
   its badge springs in, once.
 - **Title and description are typed in the same fields that edit a document later**
@@ -174,8 +175,9 @@ are on screen without scrolling.
   - Rules the tables cannot state are triggers, in `DatabaseTriggers.ALL`. A new database gets
     them when it is created and an old one from the migration, from that same list.
   - Migrations are in `DocumentsDatabaseMigrations.kt`, and schemas are exported to
-    `app/schemas/`. A schema change means: bump the version, add the migration, and commit the new
-    schema JSON. There is no destructive fallback: a migration keeps every document and its uuid.
+    `library/data/schemas/`. A schema change means: bump the version, add the migration, and commit
+    the new schema JSON. There is no destructive fallback: a migration keeps every document and its
+    uuid.
 - **Home's list.** `HomeViewModel.observeDocuments` takes the library, or what carries the chosen
   tags (`ObserveLibraryUseCase`), and hands it with the filters to `ProcessDocumentsUseCase`:
   **filter**, then **sort**. What else Home shows, and how the library is organized, is in

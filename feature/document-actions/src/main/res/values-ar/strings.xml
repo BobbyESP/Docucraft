@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="doc_modify_details_description">قم بتحديث عنوان المستند والوصف أدناه ليعكسا محتواه وتفاصيله.</string>
+    <string name="doc_modify_details">تعديل تفاصيل المستند</string>
+    <string name="doc_delete">حذف المستند</string>
+    <string name="doc_saved_successfully_to">تم حفظ المستند بنجاح في %1$s</string>
+	<string name="doc_updated_successfully">تم تحديث المستند بنجاح</string>
+    <string name="removed_from_recents">تمت الإزالة من «الأخيرة»</string>
+    <string name="text_recognition_turned_on">يجري التعرّف على نصه في الخلفية</string>
+    <string name="text_recognition_turned_off">تمت إزالة النص المتعرَّف عليه</string>
+    <string name="move_to_bin">نقل إلى سلة المحذوفات</string>
+    <string name="doc_bin_confirmation">سينتقل «%1$s» إلى سلة المحذوفات.</string>
+    <string name="doc_bin_note">يبقى هناك لمدة %1$d يومًا ويمكن استعادته حتى ذلك الحين.</string>
+    <string name="doc_moved_to_bin">تم النقل إلى سلة المحذوفات</string>
+</resources>

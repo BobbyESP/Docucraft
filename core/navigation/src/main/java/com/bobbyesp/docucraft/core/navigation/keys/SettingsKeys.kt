@@ -1,0 +1,23 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
+package com.bobbyesp.docucraft.core.navigation.keys
+
+import androidx.navigation3.runtime.NavKey
+import kotlinx.serialization.Serializable
+
+/**
+ * The settings area, as flat siblings. Nesting the sub-screens inside `Settings` read as a
+ * hierarchy the navigation does not have: the back stack is a list. Restoration is by reflection
+ * over the class names; see `proguard-rules.pro` before moving them.
+ */
+@Serializable data object Settings : NavKey
+
+/** Theme, color and typography. */
+@Serializable data object AppearanceSettings : NavKey
+
+/** What documents open with in the viewer. */
+@Serializable data object DocumentViewerSettings : NavKey
+
+/** Which app this is, who makes it and how to support it. */
+@Serializable data object AboutSettings : NavKey

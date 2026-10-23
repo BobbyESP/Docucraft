@@ -1,0 +1,14 @@
+<resources>
+    <plurals name="bin_days_left">
+        <item quantity="one">Остался %d день</item>
+        <item quantity="few">Осталось %d дня</item>
+        <item quantity="many">Осталось %d дней</item>
+        <item quantity="other">Осталось %d дня</item>
+    </plurals>
+    <plurals name="bin_empty_confirmation">
+        <item quantity="one">%d документ будет удалён навсегда.</item>
+        <item quantity="few">%d документа будут удалены навсегда.</item>
+        <item quantity="many">%d документов будут удалены навсегда.</item>
+        <item quantity="other">%d документа будут удалены навсегда.</item>
+    </plurals>
+</resources>

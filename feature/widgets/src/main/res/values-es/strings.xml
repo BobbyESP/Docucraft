@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="widget_scan_subtitle">Toca para empezar a escanear</string>
+	<string name="widget_scan_title">Escanear documento</string>
+    <string name="widget_recents_description">Tus últimos documentos, a un toque</string>
+    <string name="widget_recents_empty">Tus documentos aparecerán aquí</string>
+</resources>

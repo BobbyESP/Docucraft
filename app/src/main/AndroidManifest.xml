@@ -2,35 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!--
-        The apps a link from a document can open in (D4). Since API 30 an app cannot see others
-        without saying which it looks for: without these, no browser would ever offer Custom Tabs,
-        and "is there an app for this link?" would always be answered "no".
-    -->
-    <queries>
-        <intent>
-            <action android:name="android.support.customtabs.action.CustomTabsService" />
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="https" />
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="http" />
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.SENDTO" />
-            <data android:scheme="mailto" />
-        </intent>
-        <intent>
-            <action android:name="android.intent.action.DIAL" />
-            <data android:scheme="tel" />
-        </intent>
-    </queries>
-
     <application
         android:name=".App"
         android:allowBackup="true"
@@ -55,34 +26,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".feature.pdfviewer.presentation.PdfViewerActivity"
-            android:exported="true"
-            android:label="@string/view_document"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-            android:launchMode="singleTask"
-            android:taskAffinity=""
-            android:autoRemoveFromRecents="true">
-            <intent-filter android:label="@string/view_document">
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="content" android:mimeType="application/pdf" />
-                <data android:scheme="file" android:mimeType="application/pdf" />
-                <data android:scheme="http" android:mimeType="application/pdf" />
-                <data android:scheme="https" android:mimeType="application/pdf" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.SEND" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-
-                <data android:mimeType="application/pdf" />
-            </intent-filter>
-        </activity>
-
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
             android:enabled="false"
@@ -91,17 +34,6 @@
                 android:name="autoStoreLocales"
                 android:value="true" />
         </service>
-
-        <!-- A FileProvider that names a shared document as the catalogue does, not by its file. -->
-        <provider
-            android:name=".feature.docscanner.data.sharing.CatalogueFileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:grantUriPermissions="true"
-            android:exported="false">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/filepathsprovider" />
-        </provider>
 
         <!--
             WorkManager is not started with the process. Its startup initializer runs before the app
@@ -119,38 +51,6 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
-
-        <!--
-            Its name is how the system knows the widgets people have already placed: renaming or
-            moving this class removes them from their home screens.
-        -->
-        <receiver
-            android:name=".feature.docscanner.presentation.widgets.ScanDocumentWidgetReceiver"
-            android:exported="true"
-            android:label="@string/widget_scan_title">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="android.intent.action.LOCALE_CHANGED" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/scan_document_widget_info" />
-        </receiver>
-
-        <!-- As above: its name is the identity of the widgets people have placed. -->
-        <receiver
-            android:name=".feature.docscanner.presentation.widgets.RecentDocumentsWidgetReceiver"
-            android:exported="true"
-            android:label="@string/recents">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="android.intent.action.LOCALE_CHANGED" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/recent_documents_widget_info" />
-        </receiver>
-
     </application>
 
 </manifest>

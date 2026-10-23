@@ -1,0 +1,16 @@
+<resources>
+    <string name="skip">Skip</string>
+    <string name="scan_review_title">Scan saved</string>
+    <string name="scan_review_desc">It is in your library. Name it now, or skip and do it later.</string>
+    <string name="scan_review_recognize_text_desc">So it can be found by what it says</string>
+    <string name="suggestions">Suggestions</string>
+    <string name="suggestions_working">Reading the document…</string>
+    <string name="suggestions_none">There is nothing to suggest for this document.</string>
+    <string name="suggestions_failed">Suggestions could not be made this time.</string>
+    <string name="suggestions_text_recognition_off">Nothing will be suggested: text recognition is off for this document, and a scan has no text without it. Turn it on below, or for every new document in Settings.</string>
+    <string name="suggestion_use">Use</string>
+    <string name="suggestion_move_to">Move to %1$s</string>
+    <string name="tags_add">Add tags</string>
+    <string name="scan_review_section_details">Details</string>
+    <string name="scan_review_section_organize">Organize</string>
+</resources>

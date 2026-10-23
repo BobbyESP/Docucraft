@@ -5,8 +5,9 @@
 # Organizing the library
 
 Folders, tags and favorites: how the user arranges the documents the app keeps, and where each of
-those shows on screen. Code: `app/.../feature/docscanner`, in `presentation/screens/folders`,
-`presentation/screens/tags` and `presentation/components/organization`.
+those shows on screen. Code: `:feature:organization` (`presentation/folders`,
+`presentation/tags`), and the badges and forms the other screens share in `:library:ui`
+(`organization/`).
 
 Only documents the app keeps are organized. A document of another app is in no folder, carries no
 tag and is never a favorite; the catalogue's triggers refuse it.
@@ -87,7 +88,7 @@ The bin's keys are in `navigation/BinKeys.kt`. It is entered from the root of th
 the library's folders start, and not from a folder: the bin is the library's. What it does is in
 [database.md](database.md#the-life-of-a-document).
 
-- **A form is written once.** `OverlayForm` (`core/presentation/components/overlay/`) renders the same heading, body and two buttons as a
+- **A form is written once.** `OverlayForm` (`core/navigation/overlay/`) renders the same heading, body and two buttons as a
   sheet or as a dialog, as `LocalOverlayContext` says.
 - **What is typed lives in the composition** (`rememberSaveable`), not in the ViewModel: it is not
   what the folder is. The ViewModel holds what the folder is, and what was wrong with the last
@@ -109,7 +110,7 @@ deletes a document.
 
 Home and a folder's screen are built from the same parts. The large app bar that frosts once the
 list scrolls under it and the section header are the ones every screen with a list has, settings
-included (`core/presentation/components/ScreenChrome.kt`); the sort menu is theirs alone
+included (`core/designsystem/components/ScreenChrome.kt`); the sort menu is theirs alone
 (`presentation/components/list/DocumentListChrome.kt`). A screen that floats a button over its list
 lifts it with a blur halo, as Home does; see [architecture.md](architecture.md#blur).
 

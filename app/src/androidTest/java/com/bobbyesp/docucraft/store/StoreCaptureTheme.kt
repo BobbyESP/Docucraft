@@ -26,22 +26,20 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import coil.ImageLoader
-import com.bobbyesp.docucraft.R
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
+import com.bobbyesp.docucraft.core.designsystem.theme.createTypography
+import com.bobbyesp.docucraft.core.designsystem.theme.toFontFamily
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
-import com.bobbyesp.docucraft.core.presentation.common.LocalAnalyticsHelper
-import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
-import com.bobbyesp.docucraft.core.presentation.common.LocalNotificationsService
-import com.bobbyesp.docucraft.core.presentation.common.LocalSettingsRepository
-import com.bobbyesp.docucraft.core.presentation.navigation.DocucraftNavDisplay
-import com.bobbyesp.docucraft.core.presentation.navigation.openDocumentId
-import com.bobbyesp.docucraft.core.presentation.navigation.overlay.rememberOverlaySceneStrategy
-import com.bobbyesp.docucraft.core.presentation.navigation.pane.sharingTheWindow
-import com.bobbyesp.docucraft.core.presentation.navigation.rememberNavigator
-import com.bobbyesp.docucraft.core.presentation.screens.preferences.settingsSection
-import com.bobbyesp.docucraft.core.presentation.theme.createTypography
-import com.bobbyesp.docucraft.core.presentation.theme.toFontFamily
-import com.bobbyesp.docucraft.feature.docscanner.presentation.screens.home.homeSection
-import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
+import com.bobbyesp.docucraft.core.navigation.DocucraftNavDisplay
+import com.bobbyesp.docucraft.core.navigation.overlay.rememberOverlaySceneStrategy
+import com.bobbyesp.docucraft.core.navigation.pane.sharingTheWindow
+import com.bobbyesp.docucraft.core.navigation.rememberNavigator
+import com.bobbyesp.docucraft.core.ui.common.LocalAnalyticsHelper
+import com.bobbyesp.docucraft.core.ui.common.LocalDarkTheme
+import com.bobbyesp.docucraft.core.ui.common.LocalNotificationsService
+import com.bobbyesp.docucraft.core.ui.common.LocalSettingsRepository
+import com.bobbyesp.docucraft.navigation.docucraftSections
+import com.bobbyesp.docucraft.navigation.openDocumentId
 import com.skydoves.landscapist.coil.LocalCoilImageLoader
 import org.koin.core.Koin
 
@@ -208,7 +206,7 @@ internal fun StoreCaptureTheme(koin: Koin, dark: Boolean, content: @Composable (
 private class ReleaseNameResources(base: Resources) :
     Resources(base.assets, base.displayMetrics, base.configuration) {
     override fun getText(id: Int): CharSequence =
-        if (id == R.string.app_name) "Docucraft" else super.getText(id)
+        if (id == DesignsystemR.string.app_name) "Docucraft" else super.getText(id)
 }
 
 /**
@@ -234,9 +232,7 @@ internal fun StoreCaptureApp(stack: List<NavKey>) {
         sceneStrategies = sceneStrategies,
         entryProvider =
             entryProvider {
-                homeSection(navigator, selectedDocumentId = backStack.openDocumentId())
-                pdfViewerSection(navigator)
-                settingsSection(navigator)
+                docucraftSections(navigator, openDocumentId = backStack.openDocumentId())
             },
     )
 }

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="bin_empty">Очистить корзину</string>
+    <string name="bin_nothing_title">Корзина пуста</string>
+    <string name="bin_nothing_desc">Удалённые документы хранятся здесь %1$d дн. на случай, если вы захотите их вернуть.</string>
+    <string name="bin_retention_notice">Документы удаляются навсегда после %1$d дн. в корзине.</string>
+    <string name="bin_deleted_soon">Скоро будет удалён навсегда</string>
+    <string name="bin_restored">Восстановлено в вашей библиотеке</string>
+    <string name="bin_deleted_forever">Удалено навсегда</string>
+    <string name="bin_emptied">Корзина очищена</string>
+    <string name="restore">Восстановить</string>
+    <string name="delete_forever">Удалить навсегда</string>
+    <string name="delete_forever_confirmation">«%1$s» будет удалён навсегда.</string>
+    <string name="delete_forever_note">Это действие нельзя отменить. Экспортированные вами копии не затрагиваются.</string>
+</resources>

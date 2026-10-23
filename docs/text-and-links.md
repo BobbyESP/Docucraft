@@ -6,10 +6,12 @@
 
 How the viewer reads what is on a page, lets the reader select and copy it, and follows links
 safely. Code:
-- `:document-content-api`: the contract and the pure selection logic;
-- `app/.../feature/pdfviewer`: the providers, the ViewModel and the UI.
+- `:content:api`: the contract and the pure selection logic;
+- `:content:platform` and `:content:mlkit`: the two readers of a page;
+- `:library:data` (`content/`): the layered provider and the text recognized for the catalogue;
+- `:feature:pdfviewer`: the ViewModel and the UI.
 
-## The contract (`:document-content-api`)
+## The contract (`:content:api`)
 
 Plain Kotlin, so that text recognition (OCR) can implement it from its own module, as ML Kit
 implements the scanning contract.
@@ -34,8 +36,9 @@ PageLink.External(bounds, uri) · PageLink.Internal(bounds, pageIndex, position?
 
 ## Providers
 
-They are bound in `PageContentModule.kt`. The two readers have a name each, `EMBEDDED_TEXT` and
-`TEXT_RECOGNITION`, and the viewer reads with the unnamed one:
+They are bound in `PageContentModule.kt`, and nowhere else. The two readers have a name each,
+`EMBEDDED_TEXT` and `TEXT_RECOGNITION`, known only to that file: reading a document to search it
+(`IndexDocumentTextUseCase`) is bound there too, with both. The viewer reads with the unnamed one:
 
 ```kotlin
 LayeredPageContentProvider(
@@ -56,10 +59,10 @@ LayeredPageContentProvider(
   (`NoText`, `Unsupported`, or links only) does it ask `recognized`, opened lazily, once per
   session.
   - Recognized text keeps the document's own links.
-- **`MlKitTextRecognitionProvider`** (`:ocr-mlkit`) reads a page from its image: the page is drawn
+- **`MlKitTextRecognitionProvider`** (`:content:mlkit`) reads a page from its image: the page is drawn
   at about 200 dpi on white, recognized on the device with ML Kit, and each word's box is given as
   a fraction of the page. ML Kit is an `implementation` dependency of that module, so none of its
-  types reach `:app`; the engine is swapped at the `TEXT_RECOGNITION` binding.
+  types reach any other module; the engine is swapped at the `TEXT_RECOGNITION` binding.
   - The model is Google Play services'. A page read before it has arrived fails, and is read again
     later.
   - The document is opened for each page with `PdfRenderers.use`, never held: a renderer that is
@@ -93,7 +96,7 @@ LayeredPageContentProvider(
 
 ## Selection
 
-Pure logic in `:document-content-api`, tested on the JVM. It behaves like the reference viewers
+Pure logic in `:content:api`, tested on the JVM. It behaves like the reference viewers
 (Google Drive's among them):
 - **a long press selects the word** under the finger;
 - **from then on both ends move character by character**, whether the same finger drags on or a
@@ -207,8 +210,8 @@ would open outside the app, and back would not return to the document.
   theme, in the app's own task, so back returns to the document. If no browser offers Custom
   Tabs: `ACTION_VIEW`. With nothing at all: "No app can open this link".
 - **Email**: `ACTION_SENDTO`. **Phone**: `ACTION_DIAL`, which types the number and calls nothing.
-- **`<queries>`.** The manifest declares these intents. Since API 30, without them no browser would
-  ever seem to offer Custom Tabs.
+- **`<queries>`.** The viewer's manifest declares these intents. Since API 30, without them no
+  browser would ever seem to offer Custom Tabs.
 
 ### Accessibility
 

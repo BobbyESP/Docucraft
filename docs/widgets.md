@@ -4,8 +4,9 @@
 
 # Home-screen widgets
 
-The app's widgets live in `feature/docscanner/presentation/widgets`. There are two: the scan widget,
-which starts a scan from the home screen, and the recent documents widget, which lists the documents
+The app's widgets live in `:feature:widgets`, package `feature.widgets`; their two receivers keep
+the package they were placed with (`feature.docscanner.presentation.widgets`, see below). There are
+two: the scan widget, which starts a scan from the home screen, and the recent documents widget, which lists the documents
 used last.
 
 ## How a widget is drawn
@@ -74,7 +75,7 @@ nothing changing runs no code at all between the moment it is placed and the mom
 ## What a press asks for
 
 A widget asks `MainActivity` with one of the Intents in
-`feature/docscanner/navigation/EntryIntents.kt`: start a scan, open a document, open the search.
+`EntryIntents.kt` (`:feature:widgets`): start a scan, open a document, open the search.
 How each reaches its destination is in
 [navigation.md](navigation.md#requests-from-outside-the-ui). The Activity is exported, so these are
 not only the widgets' to send: none carries more than a document's uuid, which is only ever looked
@@ -97,7 +98,7 @@ library changes. Three pieces do that, and none of them knows what any widget lo
 - **`HomeScreenWidgets`** is the port it asks. `AppWidgetHomeScreenWidgets` sends each receiver of
   a widget that shows the library the same update broadcast the system sends, so a widget is drawn
   by one piece of code whoever asks. It does nothing when no such widget is placed. The receivers
-  are listed where it is bound, in `ScannedDocumentModule`.
+  are listed where it is bound, in `WidgetsModule`.
 
 ## The recent documents widget
 

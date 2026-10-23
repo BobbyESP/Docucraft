@@ -5,12 +5,4 @@
 
     <color name="ic_foreground">#F5F5F0</color>
     <color name="ic_background">#1A2340</color>
-    <color name="widget_primary">#D0BCFF</color>
-    <color name="widget_on_primary">#381E72</color>
-    <color name="widget_primary_container">#4F378B</color>
-    <color name="widget_on_primary_container">#EADDFF</color>
-    <color name="widget_surface">#141218</color>
-    <color name="widget_surface_container">#2B2930</color>
-    <color name="widget_on_surface">#E6E0E9</color>
-    <color name="widget_on_surface_variant">#CAC4D0</color>
 </resources>

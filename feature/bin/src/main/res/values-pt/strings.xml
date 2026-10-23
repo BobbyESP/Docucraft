@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="bin_empty">Esvaziar lixeira</string>
+    <string name="bin_nothing_title">A lixeira está vazia</string>
+    <string name="bin_nothing_desc">Os documentos que você exclui ficam aqui por %1$d dias, caso queira recuperá-los.</string>
+    <string name="bin_retention_notice">Os documentos são excluídos definitivamente após %1$d dias na lixeira.</string>
+    <string name="bin_deleted_soon">Será excluído definitivamente em breve</string>
+    <string name="bin_restored">Restaurado na sua biblioteca</string>
+    <string name="bin_deleted_forever">Excluído definitivamente</string>
+    <string name="bin_emptied">A lixeira foi esvaziada</string>
+    <string name="restore">Restaurar</string>
+    <string name="delete_forever">Excluir definitivamente</string>
+    <string name="delete_forever_confirmation">“%1$s” será excluído definitivamente.</string>
+    <string name="delete_forever_note">Isso não pode ser desfeito. As cópias que você exportou não são afetadas.</string>
+</resources>

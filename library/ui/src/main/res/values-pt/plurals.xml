@@ -1,0 +1,12 @@
+<resources>
+    <plurals name="n_documents">
+        <item quantity="one">%d documento</item>
+        <item quantity="many">%d documentos</item>
+        <item quantity="other">%d documentos</item>
+    </plurals>
+    <plurals name="n_folders">
+        <item quantity="one">%d pasta</item>
+        <item quantity="many">%d pastas</item>
+        <item quantity="other">%d pastas</item>
+    </plurals>
+</resources>

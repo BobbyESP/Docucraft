@@ -11,47 +11,82 @@ This file is the map and the rules. How each subsystem works, and why, is in
 
 ## 1. Modules
 
+```
+:app                                the shell: App, MainActivity, the one back stack, the engines' bindings
+ ├─ :feature:<name>                 a feature's screens, ViewModels, its own domain and data if any, its DI
+ ├─ :library:{domain,data,ui}        the catalogue: its rules, Room and files, the UI several features share
+ ├─ :core:{domain,data,designsystem,navigation,ui}   :core:navigation also holds the keys features open each other by
+ └─ engines: :composepdf, :scanner:{api,mlkit}, :content:{api,platform,mlkit}
+```
+
 | Module | What it is | Rule |
 |---|---|---|
-| `:app` | The product: storage, UI, navigation, widgets, analytics. | Depends on everything below; nothing depends on it. |
+| `:app` | The shell: `App`, `MainActivity`, `DocucraftApp` (the back stack and `docucraftSections`), the requests from outside the UI, and the engines' bindings (`DocumentScannerModule`, `PageContentModule`). | Depends on everything; nothing depends on it. The only module that sees the engines' implementations. |
+| `:feature:home`, `:feature:search`, `:feature:organization` (folders, tags), `:feature:bin`, `:feature:scan` (the review of a scan), `:feature:document-actions`, `:feature:pdfviewer`, `:feature:settings`, `:feature:widgets` | One feature each: its screens, ViewModels and Koin module; the viewer and the widgets also hold their own domain and data. | Depends on `:library:*` (never `:library:data`) and `:core:*` (never `:core:data`), **never on another feature**: it opens another by a key of `:core:navigation`. `docucraft.android.feature` fails the build otherwise. |
+| `:library:domain` | The catalogue's models, ports and use cases, which the scanner's screens and the viewer share. | Plain Kotlin (JVM module). |
+| `:library:data` | Room and its schemas (`library/data/schemas/`), files, thumbnails, the search index, text indexing, the bin's upkeep. | Only `:app` depends on it: features reach it through the domain's ports. |
+| `:library:ui` | UI several library features draw: a document's card, folder and tag badges, the details form, the search bar's button. | |
+| `:library:testing` | Fakes of the library's ports, for the tests of every module. | Test dependency only. |
+| `:core:domain` | `SettingsRepository`, `StringProvider`, notifications and analytics ports, preferences models. | Plain Kotlin (JVM module). |
+| `:core:data` | DataStore preferences, Firebase analytics. | Only `:app` and `:library:data` depend on it. |
+| `:core:designsystem` | The theme, blur, the shared components, fonts, and the strings used across modules. | Knows no feature and no navigation. |
+| `:core:navigation` | `Navigator`, the display, overlay and pane strategies, transitions, and the keys features open each other by (`keys/`). | Keys are plain `@Serializable` `NavKey`s, with uuids at most. |
+| `:core:ui` | `BaseViewModel` and its events, composition locals, in-app notifications, `MainViewModel`. | |
 | `:composepdf` | The PDF engine: rendering, layout, gestures. Public API in `com.composepdf`, internals in `com.composepdf.internal`. | Generic. It knows pages, pixels and fingers, **never** text or links. |
-| `:scanner-api` | The scanning contract (`DocumentScanner`, `ScanRequest`, `ScanOutcome`, `ContentRef`…). | Plain Kotlin, zero dependencies. |
-| `:scanner-mlkit` | ML Kit's implementation of that contract. | ML Kit is an `implementation` dependency, so no ML Kit type ever reaches `:app`'s classpath. |
-| `:document-content-api` | What is on a document's pages (words with their boxes, links) and the pure text-selection logic. | Plain Kotlin. `:ocr-mlkit` implements it, as `:scanner-mlkit` implements `:scanner-api`. |
-| `:ocr-mlkit` | ML Kit's text recognition, as a `PageContentProvider`. | ML Kit is an `implementation` dependency, so no ML Kit type ever reaches `:app`'s classpath. |
+| `:scanner:api` | The scanning contract (`DocumentScanner`, `ScanRequest`, `ScanOutcome`, `ContentRef`…). | Plain Kotlin, zero dependencies. |
+| `:scanner:mlkit` | ML Kit's implementation of that contract. | ML Kit is an `implementation` dependency, so no ML Kit type reaches any other module. |
+| `:content:api` | What is on a document's pages (words with their boxes, links) and the pure text-selection logic. | Plain Kotlin. `:content:platform` and `:content:mlkit` implement it. |
+| `:content:platform` | The PDF's own text layer, through the platform's content APIs (API 35+). | The only module that uses those APIs. |
+| `:content:mlkit` | ML Kit's text recognition, as a `PageContentProvider`. | ML Kit is an `implementation` dependency, so no ML Kit type reaches any other module. |
+
+**A module's code lives under its namespace**: `com.bobbyesp.docucraft` plus the module's path
+(`core.designsystem`, `library.data`, `feature.home`, `feature.documentactions`…), then the layer
+packages. Engines keep their own roots (`com.composepdf`, `com.bobbyesp.scanner`,
+`com.bobbyesp.documentcontent`), with the implementation's name after it (`scanner.mlkit`,
+`documentcontent.platform`, `documentcontent.mlkit`).
+
+**An engine is a folder**: its contract, `:api`, beside its implementations, each named after what
+it is built on (`:scanner:mlkit`, `:content:platform`). A feature may see an `:api`, never what is
+beside it.
+
+**Four classes are the exception, and never move or rename**, because the system stores their
+names: the widget receivers (`ScanDocumentWidgetReceiver`, `RecentDocumentsWidgetReceiver`: the
+widgets people have placed) and the workers (`IndexDocumentWorker`, `LibraryMaintenanceWorker`: the
+work WorkManager has queued). They stay in `feature.docscanner.*`. The activities need no exception:
+`MainActivity` is in the app's root package and `PdfViewerActivity` in `:feature:pdfviewer`'s.
 
 Build setup:
-- SDKs and JVM target: `buildSrc/src/main/kotlin/ProjectConfig.kt`. Currently minSdk 24, compile
-  37.1 (Compose 1.13 requires it), target 37, Java 17.
-- `:app` and `:composepdf` apply `docucraft.android.convention` (`buildSrc`: Compose, SDKs,
-  desugaring). `:scanner-mlkit` and `:ocr-mlkit` have no UI, so they skip it, but read the same
-  `ProjectConfig`.
+- SDKs and JVM target: `build-logic/convention/src/main/kotlin/ProjectConfig.kt`. Currently
+  minSdk 24, compile 37.1 (Compose 1.13 requires it), target 37, Java 17.
+- Every module applies the convention plugins of `build-logic` (an included build), never the
+  Android or Kotlin plugins with settings of its own:
+  - `docucraft.android.application` or `docucraft.android.library`: SDKs, Java level, desugaring;
+  - `docucraft.android.compose`, added to either for a module that draws: the compiler, the BOM;
+  - `docucraft.android.feature`, the only plugin a feature applies: library and Compose, the
+    modules and libraries every feature builds on, and the check of what it may depend on;
+  - `docucraft.android.room`: KSP, Room, and the schemas exported to the module's `schemas/`;
+  - `docucraft.jvm.library`: a plain Kotlin module. It also answers to `testDebugUnitTest`, so that
+    one task runs every module's unit tests.
 - Library versions: `gradle/libs.versions.toml`. The app's version: root `build.gradle.kts`.
 
-## 2. Where things live in `:app`
+## 2. Where things live
 
-```
-App.kt                     composition root: startKoin with every module
-MainActivity.kt            Home and everything reached from it; lends its result launcher to the scanner
-core/                      shared by features
-  data/                    DataStore preferences, Firebase analytics
-  domain/                  SettingsRepository, StringProvider, notifications, shared models
-  presentation/            navigation shell, theme, settings screens, common components
-  util/                    BaseViewModel, UiEvent, date/time
-  di/                      commonModule, preferencesModule, notificationsServiceModule, analyticsModule
-feature/docscanner/        scanning, the catalogue (Room), Home, folders and tags, document actions, the widgets
-feature/pdfviewer/         the viewer: settings, details, text selection, links, the external-PDF activity
-feature/shared/            what both features need (BasicDocument)
-```
+Inside its namespace, a module is split by layer: `domain/` (models, ports, use cases), `data/`
+(implementations of the ports), `presentation/` (ViewModels, screens, components), `di/` (Koin
+modules) and `navigation/` (keys only that feature opens).
 
-Each feature has the same shape:
-- `domain/`: models, ports, use cases;
-- `data/`: implementations of the ports;
-- `presentation/`: ViewModels, screens, components;
-- `di/`: its Koin modules;
-- `navigation/`: its keys.
-
-A new Koin module is registered in `App.kt`, in `appModules`.
+- **A feature's ViewModels are bound in its own Koin module** (`homeViewModels`,
+  `searchViewModels`, `settingsViewModels`, `pdfViewerModule`…), a library's ports in
+  `ScannedDocumentModule` (`:library:data`), and app-wide services in `di/CoreModules.kt`
+  (`:app`). Every Koin module is registered in `App.kt`, in `appModules`.
+- **Every destination is registered in `docucraftSections`** (`DocucraftApp.kt`, `:app`). A feature
+  registers only its own destinations, in its section; none registers another's.
+- **A resource lives in the module that uses it**; one used by several, in the lowest module they
+  all depend on (`:core:designsystem` or `:library:ui`). Modules read another module's resources
+  through its `R`, imported with an alias (`import …core.designsystem.R as DesignsystemR`).
+- **A component is declared in the manifest of its module** (the viewer's activity and
+  `<queries>`, the widgets' receivers, the file provider). The app's manifest keeps the
+  application, `MainActivity`, and WorkManager's startup override, which lint requires beside `App`.
 
 ---
 
@@ -59,12 +94,13 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 
 ### Layers
 
-- **Feature domains are plain Kotlin.** `feature/*/domain` imports no Android, no Compose and no
-  data layer. Locations are `ContentRef` or URI strings, never `android.net.Uri`. Two known
-  exceptions, in `core/domain`: `UserPreferences` and `InAppNotification` carry Compose types
-  (stabilization phase 4, pending).
-- **Business logic is a use case** in `feature/<feature>/domain/usecase`, registered in that
-  feature's DI module. For the scanner that is `ScannedDocumentModule.kt`; for the viewer,
+- **Domains are plain Kotlin.** `:core:domain` and `:library:domain` are JVM modules, so an
+  Android or Compose import there does not compile; a feature's own `domain/` package follows the
+  same rule by convention. Locations are `ContentRef` or URI strings, never `android.net.Uri`. A
+  domain model Compose should treat as stable is listed in `compose_stability.conf` (applied to
+  every module by `docucraft.android.compose`), not annotated.
+- **Business logic is a use case** in a `domain/usecase` package, registered in its module's DI
+  module. For the library that is `ScannedDocumentModule.kt` (`:library:data`); for the viewer,
   `PdfViewerModule.kt`.
 - **Framework work goes behind a port.** The interface lives in the domain and the implementation
   in data. Examples: `DocumentStorage`, `DocumentThumbnails`, `SearchIndex`,
@@ -78,7 +114,7 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 
 ### ViewModels
 
-- Screens use MVI on `core/util/viewModel/BaseViewModel<Intent, State, Effect>`:
+- Screens use MVI on `core/ui/viewmodel/BaseViewModel<Intent, State, Effect>`:
   - `state` is a `StateFlow`;
   - `effects` are commands for whoever is on screen *now*, and are **dropped** if nobody listens;
   - `defaultEvents` are messages for the user, and are **buffered** until shown.
@@ -91,18 +127,20 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 
 ### Navigation
 
-- **One back stack, one Navigation 3 `NavDisplay`**: `core/presentation/navigation/DocucraftApp.kt`,
-  rendered by `DocucraftNavDisplay.kt`. `PdfViewerActivity` reuses that display with its own stack.
-- **Keys are typed and `@Serializable`, and each feature owns its own.**
-  - Scanner: `feature/docscanner/navigation/HomeKey.kt`, `DocumentSearchKey.kt`,
-    `DocumentActionKeys.kt`, `OrganizationKeys.kt` and `BinKeys.kt`.
-  - Viewer: `feature/pdfviewer/navigation/PdfViewerKey.kt`.
-  - Settings: `core/presentation/screens/preferences/navigation/SettingsKeys.kt`.
+- **One back stack, one Navigation 3 `NavDisplay`**: `DocucraftApp.kt` (`:app`), rendered by
+  `DocucraftNavDisplay.kt` (`:core:navigation`). `PdfViewerActivity` reuses that display with its own stack.
+- **Keys are typed and `@Serializable`.** A key one feature opens another by lives in
+  `:core:navigation`, in `core/navigation/keys/`, one file per feature that owns it
+  (`DocumentSearchKey.kt`, `DocumentActionKeys.kt`, `ScanKeys.kt`, `OrganizationKeys.kt`,
+  `BinKeys.kt`, `SettingsKeys.kt`, `PdfViewerKey.kt`). That is how a feature opens another
+  without depending on it. Such a key carries uuids at most, never a feature's types.
+  - Keys nobody else opens stay in the feature: `HomeKey.kt` (`:feature:home`, opened by the
+    shell) and the viewer's own `ViewerKeys.kt`, which carry the viewer's own types.
 - **Features never touch the stack.** They get a `Navigator`
-  (`core/presentation/navigation/Navigator.kt`: `goTo`, `goBack`, `goBackWhile`,
+  (`core/navigation/Navigator.kt`: `goTo`, `goBack`, `goBackWhile`,
   `removeDestination`).
 - **A sheet or dialog the user can reach, leave and come back to is a destination on that same
-  stack.** Give it a key, and let `OverlaySceneStrategy` (`core/presentation/navigation/overlay/`)
+  stack.** Give it a key, and let `OverlaySceneStrategy` (`core/navigation/overlay/`)
   choose its container. **Never put a `NavDisplay` inside a sheet or dialog.** A nested display is
   only for a self-contained flow that is discarded whole and survives nothing. This is the decision
   that caused the most bugs in this codebase; see
@@ -113,19 +151,19 @@ A new Koin module is registered in `App.kt`, in `appModules`.
   - `LocalPaneContext` says whether it shares the window.
   - `LocalOverlayContext` says which container it landed in, and whether there is room to stack.
   - Reading `currentWindowAdaptiveInfo` or the device orientation from a screen is a bug.
-- **Transitions live in one file**: `core/presentation/navigation/motion/NavigationMotion.kt`.
+- **Transitions live in one file**: `core/navigation/motion/NavigationMotion.kt`.
   Screens contribute nothing to them. A destination reached through a shared element uses
   `SharedElementMotion` from that file, and marks the element with
   `Modifier.sharedBoundsAcrossDestinations`. One that interrupts what the user was doing, rather
   than following from it, uses `RisingMotion`.
 - **App-wide services reach the UI as composition locals**, from
-  `core/presentation/common/CompositionLocals.kt`: `LocalDarkTheme`, `LocalSettingsRepository`,
+  `core/ui/common/CompositionLocals.kt`: `LocalDarkTheme`, `LocalSettingsRepository`,
   `LocalNotificationsService` and `LocalAnalyticsHelper`.
 
 ### Theme
 
 - **A theme change moves the color scheme itself, in a fixed number of steps**
-  (`core/presentation/theme/ThemeTransition.kt`). Every scheme given to Material recomposes
+  (`core/designsystem/theme/ThemeTransition.kt`). Every scheme given to Material recomposes
   everything under the theme, so the steps are the cost: never pass `animate = true` to
   MaterialKolor, or animate `ColorScheme` frame by frame. Never fade a picture of the screen
   either: it stands still over whatever moves under it.
@@ -157,20 +195,20 @@ A new Koin module is registered in `App.kt`, in `appModules`.
   `ScannedDocumentModule`. None is bound yet. One that is runs only on text the document's pages
   gave, never on a scan whose text recognition is off, and proposes: the user applies.
 - **The engine is swapped at one line**: the `DocumentScanner` binding in
-  `feature/docscanner/di/DocumentScannerModule.kt`.
+  `di/DocumentScannerModule.kt` (`:app`).
 - ML Kit options are derived from a `ScanRequest` inside `MlKitDocumentScanner`.
 - `:app` sees only the contract and `ActivityResultHostImpl`, the host `MainActivity` lends its
   launcher to.
 
 ### Widgets
 
-- **Widgets are platform `RemoteViews`, never Glance** (`feature/docscanner/presentation/widgets`,
+- **Widgets are platform `RemoteViews`, never Glance** (`feature/widgets/presentation`,
   layouts in `res/layout/widget_*`): the scan widget and the recent documents widget. Glance draws through WorkManager, which some devices cannot
   start, and brings components of its own that crash outside the app's control. See
   [docs/widgets.md](docs/widgets.md).
 - A press opens an activity directly (`PendingIntent.getActivity`), a widget asks for no periodic
   update, and a widget's receiver never lets an exception out.
-- What a press can ask `MainActivity` for is in `feature/docscanner/navigation/EntryIntents.kt`.
+- What a press can ask `MainActivity` for is in `EntryIntents.kt` (`:feature:widgets`).
   Each becomes a standing request (`ScanRequestBus`, `LibraryEntryRequests`) that the shell acts
   on; see [docs/navigation.md](docs/navigation.md#requests-from-outside-the-ui).
 - **A widget receiver is never renamed or moved**: its class name is how the system knows the
@@ -179,7 +217,7 @@ A new Koin module is registered in `App.kt`, in `appModules`.
   `RecentDocumentsWidgetViews`) and inflated in `WidgetViewsTest`, on API 24 too: a layout a
   launcher refuses is found nowhere else before a home screen.
 - **A widget that shows the library** lists `WidgetDocument`s from `ObserveWidgetDocumentsUseCase`,
-  and its receiver is listed in the `HomeScreenWidgets` binding (`ScannedDocumentModule`) so that
+  and its receiver is listed in the `HomeScreenWidgets` binding (`WidgetsModule`) so that
   `KeepWidgetsCurrentUseCase` has it drawn again when the library changes.
 
 ### PDF viewer and engine
@@ -194,9 +232,10 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 
   `PdfViewerState` is the public state, with `hitTest`, `panBy`, `animateScrollTo`,
   `pageRectInViewer` and more. Keep new engine API generic in the same way.
-- **Page content is bound in one file**, `feature/pdfviewer/di/PageContentModule.kt`: the two
-  readers by name (`EMBEDDED_TEXT`, `TEXT_RECOGNITION`), and what the viewer reads with,
-  `LayeredPageContentProvider(embedded, CatalogueRecognizedTextProvider)`.
+- **Page content is bound in one file**, `di/PageContentModule.kt` (`:app`): the two
+  readers by name (`EMBEDDED_TEXT`, `TEXT_RECOGNITION`), what the viewer reads with,
+  `LayeredPageContentProvider(embedded, CatalogueRecognizedTextProvider)`, and the reading of a
+  document to search it (`IndexDocumentTextUseCase`), which takes both readers.
   - The recognition engine is swapped at one line: the `TEXT_RECOGNITION` binding.
   - **Text recognition is the user's choice, per document** (`ocr_enabled`). Nothing recognizes a
     page of a document that has it off: not the background reading, not the viewer.
@@ -210,7 +249,7 @@ A new Koin module is registered in `App.kt`, in `appModules`.
   Android 7 a document that fails to open, or two documents drawn at once, crash the process in
   native code; see [docs/pdf-engine.md](docs/pdf-engine.md#android-7).
 - **Selection logic is pure and tested; the UI only draws it.**
-  - `TextSelection` and `DocumentSelection`, in `:document-content-api`, work in carets over the
+  - `TextSelection` and `DocumentSelection`, in `:content:api`, work in carets over the
     page's text, character by character, across pages, and handle vertical and multi-column
     layouts.
   - `SelectionInteraction`, in the viewer, decides what a touch does.
@@ -279,13 +318,13 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 
 ## 5. Integrations and sensitive points
 
-- **File sharing** uses `${applicationId}.fileprovider` (the manifest and `App.getAuthority`). Only
+- **File sharing** uses `${applicationId}.fileprovider` (the manifest and `DocumentLocations`). Only
   `content://` locations are ever handed to another app (`canBeHandedOff`). A `file://` PDF opened
   from outside is shown, but never re-shared.
   - The provider is `CatalogueFileProvider`, which names a document as the catalogue does. It
     serves `documents/` (files named `<uuid>.pdf`) and `scans/pdf/` (documents saved before files
     were named by uuid, which are never moved).
-- **Firebase Analytics and Crashlytics** are on (`core/di/AnalyticsModule.kt`,
+- **Firebase Analytics and Crashlytics** are on (`core/data/di/AnalyticsModule.kt`,
   `google-services.json`).
 - **Room** (the model, its rules and decisions DB1–DB11 are in
   [docs/database.md](docs/database.md)):
@@ -298,7 +337,7 @@ A new Koin module is registered in `App.kt`, in `appModules`.
     but the bin, it is gone.
   - `DocumentsDatabase` is currently version 5, in the file `scanned_pdfs.db`. Migrations are in
     `DocumentsDatabaseMigrations.kt`. Build it with `DocumentsDatabase.builder`, in tests too.
-  - Schemas are exported to `app/schemas/`. A schema change means: bump the version, add a
+  - Schemas are exported to `library/data/schemas/`. A schema change means: bump the version, add a
     migration, and commit the new schema JSON.
   - **Never a destructive fallback.** A migration keeps every document and its uuid, and only
     touches the database: it moves no files.
@@ -309,7 +348,7 @@ A new Koin module is registered in `App.kt`, in `appModules`.
     `RENAME COLUMN`, and no `WITH` inside a trigger.
   - The database keeps paths relative to the files directory, never `FileProvider` URIs or
     absolute paths.
-- **`<queries>` in the manifest** declares which other apps the viewer may look for: Custom Tabs,
+- **`<queries>` in the viewer's manifest** declares which other apps it may look for: Custom Tabs,
   browsers, email, dialler. A new intent to another app needs its entry there, or on API 30+ the app
   will seem not to exist.
 - **Known gaps, so they are not mistaken for regressions:**
@@ -331,8 +370,8 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 | What | Command (Windows: `.\gradlew.bat …`) |
 |---|---|
 | Debug APK | `./gradlew :app:assembleDebug` |
-| Unit tests, every module | `./gradlew testDebugUnitTest :scanner-api:test :document-content-api:test` |
-| Instrumented tests | `./gradlew :app:connectedDebugAndroidTest :composepdf:connectedDebugAndroidTest` |
+| Unit tests, every module | `./gradlew testDebugUnitTest` |
+| Instrumented tests | `./gradlew connectedDebugAndroidTest` (`:app`, `:composepdf`, `:library:data`, `:feature:widgets`, `:content:mlkit`) |
 | Format, then verify | `./gradlew spotlessApply`, then `./gradlew spotlessCheck` |
 
 - **Instrumented tests need a device, and run on every attached device.** A phone connected over
@@ -342,7 +381,7 @@ A new Koin module is registered in `App.kt`, in `appModules`.
 - **Test PDFs** live in `composepdf/src/androidTest/assets/fixtures/`, together with a
   `manifest.json` of what each one contains, down to the position of every word.
   - `testing/pdf-fixtures/generate_fixtures.py` regenerates them.
-  - `:app`'s instrumented tests read the same folder.
+  - The instrumented tests of `:app`, `:library:data` and `:content:mlkit` read the same folder.
   - **Never commit a document with personal data** as a fixture. Build an equivalent one with
     invented content.
 - **Spotless** formats Kotlin with ktfmt (Kotlin-lang style) and adds the license header from

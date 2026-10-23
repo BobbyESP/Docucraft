@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+	<string name="widget_scan_title">扫描文档</string>
+	<string name="widget_scan_subtitle">点击开始扫描</string>
+    <string name="widget_recents_description">一键打开最近的文档</string>
+    <string name="widget_recents_empty">您的文档将显示在这里</string>
+</resources>

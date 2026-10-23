@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="error_loading_docs">Fehler beim Laden der Dokumente</string>
+    <string name="doc_scan_to_see_document_list">Scannen Sie Ihre Dokumente, um sie hier aufgelistet zu sehen.</string>
+    <string name="doc_scan_new">Neues Dokument scannen</string>
+    <string name="doc_saved_successfully">Das Dokument wurde erfolgreich gespeichert</string>
+    <string name="no_scanned_documents">Keine gescannten Dokumente</string>
+    <string name="see_all">Alle anzeigen</string>
+    <string name="pinned_folders_empty_title">Ordner griffbereit halten</string>
+    <string name="pinned_folders_empty_desc">Angeheftete Ordner erscheinen hier.</string>
+    <string name="tags_manage">Tags bearbeiten</string>
+    <string name="tag_section_empty">Noch kein Dokument hat dieses Tag</string>
+    <string name="favorites">Favoriten</string>
+    <string name="filters_no_matches">Kein Dokument passt zu diesen Filtern</string>
+    <string name="filters_clear">Filter löschen</string>
+</resources>

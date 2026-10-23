@@ -42,12 +42,13 @@ The app has been through a stabilization, one subsystem at a time.
 | Subsystem | State                                                                                                                                      |
 |---|--------------------------------------------------------------------------------------------------------------------------------------------|
 | Scanning and the catalogue | Done. The process-death paths are still to be checked on a device ([scanning.md](scanning.md#not-yet-verified-on-a-device)).               |
-| Domain boundaries | Done in the features. `core/domain` keeps two Compose types, which is pending with preferences.                                            |
+| Domain boundaries | Done.                                                                                                                                      |
 | Navigation | Done.                                                                                                                                      |
 | PDF viewer, text and links | Done. Still to check on a phone and a tablet: the whole viewer, TalkBack end to end, and opening links with a browser without Custom Tabs. |
 | Database | Done. The catalogue is on schema version 5, reached by a migration that keeps every document ([database.md](database.md)). Documents the app keeps and documents it only refers to, files named by uuid, ranked search over names and page text ([scanning.md](scanning.md)), Recents and reading position ([pdf-viewer.md](pdf-viewer.md#reading-position)), text recognition on the device, folders, tags and favorites ([organization.md](organization.md)), and a bin with daily upkeep. Still to check on a phone: an upgrade from version 4 with real documents, and recognition below API 35. |
 | Preferences and theme | Done. The theme changes smoothly with the tradeoff of "screenshotting" the app                                                             |
 | Search and filtering | Pending                                                                                                                                    |
+| Modules | Done. The app is a shell over feature, library and core modules ([architecture.md](architecture.md#modules)). |
 | Analytics | Pending                                                                                                                                    |
 
 ## How a subsystem is stabilized

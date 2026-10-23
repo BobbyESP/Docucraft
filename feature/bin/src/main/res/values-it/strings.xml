@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="bin_empty">Svuota cestino</string>
+    <string name="bin_nothing_title">Il cestino è vuoto</string>
+    <string name="bin_nothing_desc">I documenti che elimini restano qui per %1$d giorni, nel caso volessi recuperarli.</string>
+    <string name="bin_retention_notice">I documenti vengono eliminati definitivamente dopo %1$d giorni nel cestino.</string>
+    <string name="bin_deleted_soon">Eliminazione definitiva a breve</string>
+    <string name="bin_restored">Ripristinato nella tua libreria</string>
+    <string name="bin_deleted_forever">Eliminato definitivamente</string>
+    <string name="bin_emptied">Il cestino è stato svuotato</string>
+    <string name="restore">Ripristina</string>
+    <string name="delete_forever">Elimina definitivamente</string>
+    <string name="delete_forever_confirmation">“%1$s” verrà eliminato definitivamente.</string>
+    <string name="delete_forever_note">L\'operazione non può essere annullata. Le copie che hai esportato non vengono toccate.</string>
+</resources>

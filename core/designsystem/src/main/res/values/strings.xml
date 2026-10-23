@@ -1,0 +1,49 @@
+<resources>
+    <!-- ════════════════════════════════════════════════
+         APP
+         ════════════════════════════════════════════════ -->
+    <string name="app_name" translatable="false">Docucraft</string>
+    <string name="save">Save</string>
+    <string name="share">Share</string>
+    <string name="delete">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="name">Name</string>
+    <string name="title">Title</string>
+    <string name="description">Description</string>
+    <string name="unknown_error">Unknown error</string>
+    <string name="seed_color">Seed color</string>
+    <string name="more_options">More options</string>
+    <!-- ════════════════════════════════════════════════
+         DOCUMENT — Scan
+         ════════════════════════════════════════════════ -->
+    <string name="scan">Scan</string>
+    <string name="issue_sharing_doc">An issue occurred while trying to share the document</string>
+    <!-- ════════════════════════════════════════════════
+         SEARCH & FILTER
+         ════════════════════════════════════════════════ -->
+    <string name="search_documents">Search documents</string>
+    <string name="fit_mode">Fit mode</string>
+    <string name="night_mode">Night mode</string>
+    <string name="settings">Settings</string>
+    <string name="fit_mode_width">Fit width</string>
+    <string name="fit_mode_height">Fit height</string>
+    <string name="fit_mode_page">Whole page</string>
+    <string name="fit_mode_proportional">Proportional</string>
+    <string name="back">Back</string>
+    <string name="viewer_error_not_found">This document is no longer here</string>
+    <string name="link_no_app">No app can open this link</string>
+    <string name="open">Open</string>
+    <string name="recents">Recents</string>
+    <string name="documents">Documents</string>
+    <string name="text_recognition_turn_on">Recognize text</string>
+    <string name="move">Move</string>
+    <string name="library">Library</string>
+    <string name="folders">Folders</string>
+    <string name="folder_new">New folder</string>
+    <string name="tags">Tags</string>
+    <string name="tag_new">New tag</string>
+    <string name="favorite">Favorite</string>
+    <string name="bin">Bin</string>
+    <string name="folder">Folder</string>
+</resources>

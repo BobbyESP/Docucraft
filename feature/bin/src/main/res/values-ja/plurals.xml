@@ -1,0 +1,8 @@
+<resources>
+    <plurals name="bin_days_left">
+        <item quantity="other">残り %d 日</item>
+    </plurals>
+    <plurals name="bin_empty_confirmation">
+        <item quantity="other">%d 件のドキュメントを完全に削除します。</item>
+    </plurals>
+</resources>

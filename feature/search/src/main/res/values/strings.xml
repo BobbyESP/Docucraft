@@ -1,0 +1,7 @@
+<resources>
+    <string name="clear_search">Clear search</string>
+    <string name="doc_no_matches">No matching documents</string>
+    <string name="doc_no_matches_desc">Nothing matches “%1$s”. Try another name or word from the description.</string>
+    <string name="search_hint_title">Search your documents</string>
+    <string name="search_hint_desc">By name, or by anything in the description.</string>
+</resources>

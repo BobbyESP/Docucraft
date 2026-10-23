@@ -1,0 +1,5 @@
+<resources>
+    <plurals name="doc_n_pages">
+        <item quantity="other">%d 页</item>
+    </plurals>
+</resources>

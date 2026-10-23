@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="no_scanned_documents">没有扫描的文档</string>
+    <string name="doc_scan_new">扫描新文档</string>
+    <string name="doc_scan_to_see_document_list">扫描您的文档，以便在此处查看列表。</string>
+    <string name="error_loading_docs">加载文档出错</string>
+    <string name="doc_saved_successfully">文档已成功保存</string>
+    <string name="see_all">查看全部</string>
+    <string name="pinned_folders_empty_title">让文件夹触手可及</string>
+    <string name="pinned_folders_empty_desc">固定的文件夹会显示在这里。</string>
+    <string name="tags_manage">编辑标签</string>
+    <string name="tag_section_empty">还没有文档使用此标签</string>
+    <string name="favorites">收藏</string>
+    <string name="filters_no_matches">没有符合这些筛选条件的文档</string>
+    <string name="filters_clear">清除筛选</string>
+</resources>

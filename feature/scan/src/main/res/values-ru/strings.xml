@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="skip">Пропустить</string>
+    <string name="scan_review_title">Скан сохранён</string>
+    <string name="scan_review_desc">Он в вашей библиотеке. Дайте ему название сейчас или пропустите и сделайте это позже.</string>
+    <string name="scan_review_recognize_text_desc">Чтобы его можно было найти по содержимому</string>
+    <string name="suggestions">Предложения</string>
+    <string name="suggestions_working">Чтение документа…</string>
+    <string name="suggestions_none">Для этого документа нечего предложить.</string>
+    <string name="suggestions_failed">В этот раз не удалось подготовить предложения.</string>
+    <string name="suggestions_text_recognition_off">Ничего не будет предложено: распознавание текста для этого документа выключено, а без него в скане нет текста. Включите его ниже или в настройках — для всех новых документов.</string>
+    <string name="suggestion_use">Использовать</string>
+    <string name="suggestion_move_to">Переместить в «%1$s»</string>
+    <string name="tags_add">Добавить теги</string>
+    <string name="scan_review_section_details">Сведения</string>
+    <string name="scan_review_section_organize">Упорядочить</string>
+</resources>

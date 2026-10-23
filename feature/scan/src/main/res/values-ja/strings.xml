@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="skip">スキップ</string>
+    <string name="scan_review_title">スキャンを保存しました</string>
+    <string name="scan_review_desc">ライブラリに保存されています。今すぐ名前を付けるか、スキップして後で付けてください。</string>
+    <string name="scan_review_recognize_text_desc">内容で検索できるようにします</string>
+    <string name="suggestions">候補</string>
+    <string name="suggestions_working">ドキュメントを読み取っています…</string>
+    <string name="suggestions_none">このドキュメントに提案できるものはありません。</string>
+    <string name="suggestions_failed">今回は候補を作成できませんでした。</string>
+    <string name="suggestions_text_recognition_off">候補は表示されません。このドキュメントではテキスト認識がオフになっており、認識しないとスキャンにはテキストがありません。下でオンにするか、設定ですべての新しいドキュメントに対してオンにしてください。</string>
+    <string name="suggestion_use">使用</string>
+    <string name="suggestion_move_to">%1$s に移動</string>
+    <string name="tags_add">タグを追加</string>
+    <string name="scan_review_section_details">詳細</string>
+    <string name="scan_review_section_organize">整理</string>
+</resources>
