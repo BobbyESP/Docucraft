@@ -8,7 +8,7 @@
     <string name="sort_ascending">आरोही क्रम में क्रमबद्ध करें</string>
     <string name="edit_fields">फ़ील्ड संपादित करें</string>
     <string name="no_description">कोई विवरण नहीं</string>
-	<string name="field_too_long">यह फ़ील्ड अधिकतम लंबाई से ज़्यादा है</string>
+    <string name="field_too_long">यह फ़ील्ड अधिकतम लंबाई से ज़्यादा है</string>
     <string name="remove_from_recents">हाल ही के से हटाएं</string>
     <string name="linked_document_desc">यह दस्तावेज़ किसी दूसरे ऐप का है। Docucraft सिर्फ़ यह याद रखता है कि यह कहाँ है।</string>
     <string name="sort_by">इसके अनुसार क्रमबद्ध करें</string>

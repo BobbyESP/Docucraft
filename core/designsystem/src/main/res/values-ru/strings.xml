@@ -13,8 +13,8 @@
     <string name="title">Название</string>
     <string name="confirm">Подтвердить</string>
     <string name="share">Поделиться</string>
-	<string name="fit_mode">Режим масштабирования</string>
-	<string name="night_mode">Ночной режим</string>
+    <string name="fit_mode">Режим масштабирования</string>
+    <string name="night_mode">Ночной режим</string>
     <string name="seed_color">Основной цвет</string>
     <string name="settings">Настройки</string>
     <string name="fit_mode_width">По ширине</string>

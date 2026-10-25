@@ -211,7 +211,10 @@ fun LinkedDocumentActionsContent(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            LinkedDocumentHeader(document, modifier = Modifier.weight(1f).padding(start = 16.dp))
+            LinkedDocumentHeader(
+                document,
+                modifier = Modifier.weight(1f).padding(start = 16.dp),
+            )
 
             Box(modifier = Modifier.weight(1f)) {
                 DocumentActionsRow(options = options, onOptionSelect = { it() })
@@ -465,6 +468,7 @@ private inline fun DocumentActionsRow(
                             option.fullWidth -> GridItemSpan(maxLineSpan)
                             option.importance == ActionImportance.DESTRUCTIVE ->
                                 GridItemSpan(maxCurrentLineSpan)
+
                             else -> GridItemSpan(1)
                         }
                     },

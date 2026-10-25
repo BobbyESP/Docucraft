@@ -8,7 +8,7 @@
     <string name="size">Размер</string>
     <string name="sort_ascending">Сортировать по возрастанию</string>
     <string name="sort_descending">Сортировать по убыванию</string>
-	<string name="field_too_long">Длина этого поля превышает максимальную</string>
+    <string name="field_too_long">Длина этого поля превышает максимальную</string>
     <string name="remove_from_recents">Убрать из недавних</string>
     <string name="linked_document_desc">Этот документ принадлежит другому приложению. Docucraft только помнит, где он находится.</string>
     <string name="sort_by">Сортировать по</string>

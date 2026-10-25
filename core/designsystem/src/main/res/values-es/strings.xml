@@ -13,8 +13,8 @@
     <string name="description">Descripción</string>
     <string name="name">Nombre</string>
     <string name="search_documents">Buscar documentos</string>
-	<string name="night_mode">Modo nocturno</string>
-	<string name="fit_mode">Modo de ajuste</string>
+    <string name="night_mode">Modo nocturno</string>
+    <string name="fit_mode">Modo de ajuste</string>
     <string name="fit_mode_width">Ajustar al ancho</string>
     <string name="fit_mode_height">Ajustar al alto</string>
     <string name="fit_mode_page">Página completa</string>

@@ -13,8 +13,8 @@
     <string name="share">Delen</string>
     <string name="issue_sharing_doc">Er is een probleem opgetreden bij het delen van het document</string>
     <string name="title">Titel</string>
-	<string name="night_mode">Nachtmodus</string>
-	<string name="fit_mode">Aanpassingsmodus</string>
+    <string name="night_mode">Nachtmodus</string>
+    <string name="fit_mode">Aanpassingsmodus</string>
     <string name="seed_color">Basiskleur</string>
     <string name="settings">Instellingen</string>
     <string name="fit_mode_width">Aanpassen aan breedte</string>

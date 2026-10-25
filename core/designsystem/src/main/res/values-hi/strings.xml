@@ -13,8 +13,8 @@
     <string name="save">सहेजें</string>
     <string name="delete">हटाएं</string>
     <string name="unknown_error">अज्ञात त्रुटि</string>
-	<string name="night_mode">नाइट मोड</string>
-	<string name="fit_mode">फिट मोड</string>
+    <string name="night_mode">नाइट मोड</string>
+    <string name="fit_mode">फिट मोड</string>
     <string name="seed_color">मूल रंग</string>
     <string name="settings">सेटिंग</string>
     <string name="fit_mode_width">चौड़ाई में फिट करें</string>

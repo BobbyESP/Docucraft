@@ -8,7 +8,7 @@
     <string name="sort_descending">내림차순 정렬</string>
     <string name="no_description">설명 없음</string>
     <string name="file_icon">파일 아이콘</string>
-	<string name="field_too_long">최대 길이를 초과했습니다</string>
+    <string name="field_too_long">최대 길이를 초과했습니다</string>
     <string name="remove_from_recents">최근 항목에서 삭제</string>
     <string name="linked_document_desc">이 문서는 다른 앱의 문서입니다. Docucraft는 문서의 위치만 기억합니다.</string>
     <string name="sort_by">정렬 기준</string>

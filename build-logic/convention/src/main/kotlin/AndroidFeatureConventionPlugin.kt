@@ -63,8 +63,8 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
         if (forbidden.isNotEmpty()) {
             throw GradleException(
                 "$path depends on $forbidden. A feature sees :core:* and :library:* (never their " +
-                    ":data), the engines' contracts (*:api) and :composepdf. It opens another " +
-                    "feature by a key of :core:navigation, and implementations are bound in :app."
+                        ":data), the engines' contracts (*:api) and :composepdf. It opens another " +
+                        "feature by a key of :core:navigation, and implementations are bound in :app."
             )
         }
     }

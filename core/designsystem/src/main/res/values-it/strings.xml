@@ -13,8 +13,8 @@
     <string name="unknown_error">Errore sconosciuto</string>
     <string name="name">Nome</string>
     <string name="search_documents">Cerca documenti</string>
-	<string name="fit_mode">Modalità di adattamento</string>
-	<string name="night_mode">Modalità notte</string>
+    <string name="fit_mode">Modalità di adattamento</string>
+    <string name="night_mode">Modalità notte</string>
     <string name="seed_color">Colore di base</string>
     <string name="settings">Impostazioni</string>
     <string name="fit_mode_width">Adatta alla larghezza</string>

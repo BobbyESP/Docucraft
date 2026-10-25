@@ -61,8 +61,10 @@ private class LayeredSession(
             is PageContentResult.Available ->
                 if (own is PageContentResult.Available) other.copy(links = own.links + other.links)
                 else other
+
             PageContentResult.NoText ->
                 if (own is PageContentResult.Available) own else PageContentResult.NoText
+
             PageContentResult.Unsupported,
             is PageContentResult.Failed -> own
         }
@@ -91,6 +93,7 @@ private val PageContentResult.lacksText: Boolean
         when (this) {
             PageContentResult.NoText,
             PageContentResult.Unsupported -> true
+
             is PageContentResult.Available -> text == null
             is PageContentResult.Failed -> false
         }

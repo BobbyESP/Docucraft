@@ -8,7 +8,7 @@
     <string name="size">Grootte</string>
     <string name="select_document_to_preview">Selecteer een document om het hier te bekijken</string>
     <string name="edit_fields">Velden bewerken</string>
-	<string name="field_too_long">Dit veld overschrijdt de maximale lengte</string>
+    <string name="field_too_long">Dit veld overschrijdt de maximale lengte</string>
     <string name="remove_from_recents">Verwijderen uit Recent</string>
     <string name="linked_document_desc">Dit document hoort bij een andere app. Docucraft onthoudt alleen waar het staat.</string>
     <string name="sort_by">Sorteren op</string>

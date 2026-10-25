@@ -13,8 +13,8 @@
     <string name="share">مشاركة</string>
     <string name="save">حفظ</string>
     <string name="search_documents">البحث عن مستندات</string>
-	<string name="fit_mode">وضع الاحتواء</string>
-	<string name="night_mode">الوضع الليلي</string>
+    <string name="fit_mode">وضع الاحتواء</string>
+    <string name="night_mode">الوضع الليلي</string>
     <string name="seed_color">اللون الأساسي</string>
     <string name="settings">الإعدادات</string>
     <string name="fit_mode_width">احتواء العرض</string>

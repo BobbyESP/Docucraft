@@ -8,7 +8,7 @@
     <string name="size">Dimensione</string>
     <string name="sort_ascending">Ordina in ordine crescente</string>
     <string name="select_document_to_preview">Seleziona un documento per visualizzarlo qui</string>
-	<string name="field_too_long">Questo campo supera la lunghezza massima</string>
+    <string name="field_too_long">Questo campo supera la lunghezza massima</string>
     <string name="remove_from_recents">Rimuovi dai Recenti</string>
     <string name="linked_document_desc">Questo documento appartiene a un\'altra app. Docucraft ricorda soltanto dove si trova.</string>
     <string name="sort_by">Ordina per</string>

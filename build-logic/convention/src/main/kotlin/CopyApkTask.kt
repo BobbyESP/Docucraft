@@ -1,5 +1,4 @@
 import com.android.build.api.variant.BuiltArtifactsLoader
-import java.io.File
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
@@ -8,18 +7,24 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import java.io.File
 
 abstract class CopyApkTask : DefaultTask() {
 
-    @get:InputFiles abstract val apkFolder: DirectoryProperty
+    @get:InputFiles
+    abstract val apkFolder: DirectoryProperty
 
-    @get:Internal abstract val builtArtifactsLoader: Property<BuiltArtifactsLoader>
+    @get:Internal
+    abstract val builtArtifactsLoader: Property<BuiltArtifactsLoader>
 
-    @get:OutputDirectory abstract val outputDirectory: DirectoryProperty
+    @get:OutputDirectory
+    abstract val outputDirectory: DirectoryProperty
 
-    @get:Input abstract val appName: Property<String>
+    @get:Input
+    abstract val appName: Property<String>
 
-    @get:Input abstract val versionNameStr: Property<String>
+    @get:Input
+    abstract val versionNameStr: Property<String>
 
     @TaskAction
     fun taskAction() {

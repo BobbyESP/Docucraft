@@ -414,6 +414,7 @@ private fun String.isRightToLeft(): Boolean {
         when (Character.getDirectionality(char)) {
             Character.DIRECTIONALITY_RIGHT_TO_LEFT,
             Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC -> return true
+
             Character.DIRECTIONALITY_LEFT_TO_RIGHT -> return false
         }
     }

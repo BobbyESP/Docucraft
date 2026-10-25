@@ -309,6 +309,7 @@ internal class PageLayoutSnapshot(
             when (fitMode) {
                 FitMode.WIDTH,
                 FitMode.PROPORTIONAL -> viewport.contentWidth / docWidth
+
                 FitMode.HEIGHT -> viewport.contentHeight / docHeight
                 FitMode.BOTH ->
                     min(viewport.contentWidth / docWidth, viewport.contentHeight / docHeight)
@@ -327,6 +328,7 @@ internal class PageLayoutSnapshot(
             when (fitMode) {
                 FitMode.WIDTH,
                 FitMode.PROPORTIONAL -> viewport.contentWidth / baseWidth
+
                 FitMode.HEIGHT -> viewport.contentHeight / baseHeight
                 FitMode.BOTH ->
                     min(viewport.contentWidth / baseWidth, viewport.contentHeight / baseHeight)
@@ -449,8 +451,10 @@ internal class PageLayoutSnapshot(
                     when (fitMode) {
                         FitMode.WIDTH ->
                             viewport.contentWidth to (viewport.contentWidth / aspectRatio)
+
                         FitMode.HEIGHT ->
                             (viewport.contentHeight * aspectRatio) to viewport.contentHeight
+
                         FitMode.BOTH -> {
                             val scale =
                                 min(

@@ -86,6 +86,7 @@ class BitmapPool(private val maxSizeBytes: Int = DEFAULT_POOL_SIZE_BYTES) {
                 Bitmap.Config.ALPHA_8 -> 1
                 Bitmap.Config.RGB_565,
                 Bitmap.Config.ARGB_4444 -> 2
+
                 else -> 4
             }
         val total = width.toLong() * height.toLong() * bytesPerPixel

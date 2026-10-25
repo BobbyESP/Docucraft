@@ -172,6 +172,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
                     .getStringExtra(EXTRA_DOCUMENT_UUID)
                     ?.takeIf { it.isNotBlank() }
                     ?.let { entryRequests.request(LibraryEntryRequest.OpenDocument(it)) }
+
             else -> return
         }
         // The Activity keeps its Intent, and would be asked the same thing again each time it is
@@ -191,6 +192,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
                         android.content.res.Configuration.UI_MODE_NIGHT_MASK
                 uiMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
             }
+
             ThemeConfig.LIGHT -> false
             ThemeConfig.DARK -> true
         }

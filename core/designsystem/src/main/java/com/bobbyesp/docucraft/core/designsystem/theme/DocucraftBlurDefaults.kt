@@ -14,6 +14,10 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftBlurDefaults.DarkContainerOpacity
+import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftBlurDefaults.HaloDropFraction
+import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftBlurDefaults.LightContainerOpacity
+import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftBlurDefaults.NoiseFactor
 import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.blur.HazeBlurDefaults

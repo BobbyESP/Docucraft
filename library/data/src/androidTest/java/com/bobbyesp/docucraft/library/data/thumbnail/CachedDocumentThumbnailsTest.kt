@@ -25,7 +25,6 @@ import com.bobbyesp.docucraft.library.domain.model.NewScan
 import java.io.File
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals

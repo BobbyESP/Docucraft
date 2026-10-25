@@ -5,7 +5,11 @@ package com.bobbyesp.docucraft.core.ui.notifications
 
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
-import com.bobbyesp.docucraft.core.domain.notifications.NotificationType.*
+import com.bobbyesp.docucraft.core.domain.notifications.NotificationType.Error
+import com.bobbyesp.docucraft.core.domain.notifications.NotificationType.Info
+import com.bobbyesp.docucraft.core.domain.notifications.NotificationType.Normal
+import com.bobbyesp.docucraft.core.domain.notifications.NotificationType.Success
+import com.bobbyesp.docucraft.core.domain.notifications.NotificationType.Warning
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
 import com.dokar.sonner.TextToastAction
 import com.dokar.sonner.Toast

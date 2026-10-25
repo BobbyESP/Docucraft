@@ -13,8 +13,8 @@
     <string name="unknown_error">未知错误</string>
     <string name="more_options">更多选项</string>
     <string name="description">描述</string>
-	<string name="night_mode">夜间模式</string>
-	<string name="fit_mode">适应模式</string>
+    <string name="night_mode">夜间模式</string>
+    <string name="fit_mode">适应模式</string>
     <string name="seed_color">基准色</string>
     <string name="settings">设置</string>
     <string name="fit_mode_width">适应宽度</string>

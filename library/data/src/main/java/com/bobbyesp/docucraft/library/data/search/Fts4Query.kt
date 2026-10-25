@@ -70,6 +70,7 @@ internal object Fts4Query {
             Character.NON_SPACING_MARK,
             Character.COMBINING_SPACING_MARK,
             Character.ENCLOSING_MARK -> true
+
             else -> false
         }
 }

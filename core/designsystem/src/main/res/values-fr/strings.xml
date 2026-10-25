@@ -13,8 +13,8 @@
     <string name="description">Description</string>
     <string name="more_options">Plus d\'options</string>
     <string name="unknown_error">Erreur inconnue</string>
-	<string name="fit_mode">Mode d\'ajustement</string>
-	<string name="night_mode">Mode nuit</string>
+    <string name="fit_mode">Mode d\'ajustement</string>
+    <string name="night_mode">Mode nuit</string>
     <string name="seed_color">Couleur de base</string>
     <string name="settings">Paramètres</string>
     <string name="fit_mode_width">Ajuster à la largeur</string>

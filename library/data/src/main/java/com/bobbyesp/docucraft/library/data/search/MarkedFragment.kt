@@ -34,6 +34,7 @@ internal object MarkedFragment {
                     }
                     openedAt = -1
                 }
+
                 else -> text.append(char)
             }
         }

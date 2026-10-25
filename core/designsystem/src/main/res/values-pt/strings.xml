@@ -13,8 +13,8 @@
     <string name="share">Compartilhar</string>
     <string name="name">Nome</string>
     <string name="description">Descrição</string>
-	<string name="fit_mode">Modo de ajuste</string>
-	<string name="night_mode">Modo noturno</string>
+    <string name="fit_mode">Modo de ajuste</string>
+    <string name="night_mode">Modo noturno</string>
     <string name="seed_color">Cor base</string>
     <string name="settings">Configurações</string>
     <string name="fit_mode_width">Ajustar à largura</string>

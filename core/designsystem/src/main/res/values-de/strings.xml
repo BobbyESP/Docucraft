@@ -13,8 +13,8 @@
     <string name="description">Beschreibung</string>
     <string name="title">Titel</string>
     <string name="delete">Löschen</string>
-	<string name="fit_mode">Anpassungsmodus</string>
-	<string name="night_mode">Nachtmodus</string>
+    <string name="fit_mode">Anpassungsmodus</string>
+    <string name="night_mode">Nachtmodus</string>
     <string name="seed_color">Ausgangsfarbe</string>
     <string name="settings">Einstellungen</string>
     <string name="fit_mode_width">An Breite anpassen</string>

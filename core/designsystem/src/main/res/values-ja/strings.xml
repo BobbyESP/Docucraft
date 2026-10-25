@@ -13,8 +13,8 @@
     <string name="scan">スキャン</string>
     <string name="confirm">確認</string>
     <string name="share">共有</string>
-	<string name="night_mode">ナイトモード</string>
-	<string name="fit_mode">表示モード</string>
+    <string name="night_mode">ナイトモード</string>
+    <string name="fit_mode">表示モード</string>
     <string name="seed_color">基準の色</string>
     <string name="settings">設定</string>
     <string name="fit_mode_width">幅に合わせる</string>

@@ -150,12 +150,14 @@ class FakePagesRepository : PagesRepository {
             when {
                 enabled && page.textStatus == PageTextStatus.OCR_DISABLED ->
                     page.copy(textStatus = PageTextStatus.PENDING)
+
                 !enabled &&
                     (page.textOrigin == ContentOrigin.RECOGNIZED ||
                         page.textStatus == PageTextStatus.NO_TEXT) -> {
                     texts -= documentUuid to index
                     page.copy(textStatus = PageTextStatus.OCR_DISABLED, textOrigin = null)
                 }
+
                 else -> page
             }
         }

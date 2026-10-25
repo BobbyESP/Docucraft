@@ -123,6 +123,7 @@ class IndexDocumentTextUseCase(
                 // Asked to look, it could not on this device: the page is as it was.
                 result is PageContentResult.Unsupported ->
                     withoutText(index, PageTextStatus.OCR_DISABLED)
+
                 else -> withoutText(index, PageTextStatus.NO_TEXT)
             }
         }

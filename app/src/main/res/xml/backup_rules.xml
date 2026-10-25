@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
     What Auto Backup leaves out, on Android 11 and lower. Android 12 and higher read
     data_extraction_rules.xml instead; keep the two lists the same.
 
@@ -12,16 +11,30 @@
 -->
 <full-backup-content>
     <!-- The catalogue, with the files SQLite keeps beside it. -->
-    <exclude domain="database" path="scanned_pdfs.db" />
-    <exclude domain="database" path="scanned_pdfs.db-journal" />
-    <exclude domain="database" path="scanned_pdfs.db-shm" />
-    <exclude domain="database" path="scanned_pdfs.db-wal" />
+    <exclude
+        domain="database"
+        path="scanned_pdfs.db" />
+    <exclude
+        domain="database"
+        path="scanned_pdfs.db-journal" />
+    <exclude
+        domain="database"
+        path="scanned_pdfs.db-shm" />
+    <exclude
+        domain="database"
+        path="scanned_pdfs.db-wal" />
 
     <!-- The documents. Both folders they can be in are named, so that neither is ever backed up by
          omission. -->
-    <exclude domain="file" path="scans" />
-    <exclude domain="file" path="documents" />
+    <exclude
+        domain="file"
+        path="scans" />
+    <exclude
+        domain="file"
+        path="documents" />
 
     <!-- Previews are a cache of the documents. -->
-    <exclude domain="file" path="previews" />
+    <exclude
+        domain="file"
+        path="previews" />
 </full-backup-content>

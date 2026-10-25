@@ -8,7 +8,7 @@
     <string name="edit_fields">Felder bearbeiten</string>
     <string name="sort_descending">Absteigend sortieren</string>
     <string name="file_icon">Datei-Symbol</string>
-	<string name="field_too_long">Dieses Feld überschreitet die maximale Länge</string>
+    <string name="field_too_long">Dieses Feld überschreitet die maximale Länge</string>
     <string name="remove_from_recents">Aus „Zuletzt verwendet“ entfernen</string>
     <string name="linked_document_desc">Dieses Dokument gehört zu einer anderen App. Docucraft merkt sich nur, wo es liegt.</string>
     <string name="sort_by">Sortieren nach</string>

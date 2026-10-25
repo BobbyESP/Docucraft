@@ -8,7 +8,7 @@
     <string name="select_document_to_preview">ここでプレビューするドキュメントを選択してください</string>
     <string name="no_description">説明なし</string>
     <string name="sort_ascending">昇順で並べ替え</string>
-	<string name="field_too_long">このフィールドは最大長を超えています</string>
+    <string name="field_too_long">このフィールドは最大長を超えています</string>
     <string name="remove_from_recents">「最近」から削除</string>
     <string name="linked_document_desc">このドキュメントは別のアプリのものです。Docucraft はその場所だけを記憶しています。</string>
     <string name="sort_by">並べ替え</string>

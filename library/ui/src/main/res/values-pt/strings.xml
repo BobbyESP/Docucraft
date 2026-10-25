@@ -8,7 +8,7 @@
     <string name="select_document_to_preview">Selecione um documento para visualizá-lo aqui</string>
     <string name="sort_descending">Ordenar decrescente</string>
     <string name="sort_ascending">Ordenar crescente</string>
-	<string name="field_too_long">Este campo excede o comprimento máximo</string>
+    <string name="field_too_long">Este campo excede o comprimento máximo</string>
     <string name="remove_from_recents">Remover de Recentes</string>
     <string name="linked_document_desc">Este documento pertence a outro app. O Docucraft só lembra onde ele está.</string>
     <string name="sort_by">Ordenar por</string>
