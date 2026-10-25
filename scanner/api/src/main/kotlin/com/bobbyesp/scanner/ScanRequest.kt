@@ -13,7 +13,7 @@ enum class ScanOutputFormat {
  * What the caller wants out of a capture session.
  *
  * An engine is free to do less than it is asked: check [ScannerCapabilities] beforehand rather than
- * assuming every request is honoured.
+ * assuming every request is honored.
  *
  * @property outputs Formats to produce.
  * @property maxPages Cap on captured pages, or `null` for no cap.

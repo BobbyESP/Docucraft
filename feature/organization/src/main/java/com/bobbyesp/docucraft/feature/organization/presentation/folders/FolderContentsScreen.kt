@@ -107,8 +107,9 @@ fun FolderContentsScreen(
         }
     }
 
-    // The folder's own color, for as long as its screen is the one showing: the root, a folder
-    // without one, and one still being read are in the app's.
+    // The color of a folder (as displayed on screen) is determined as follows: the root folder,
+    // any folder with no assigned color, and any folder currently being processed
+    // all use the application's color.
     LabelColorTheme(color = LabelColor.of(uiState.folder?.color)) {
         FolderContentsContent(
             uiState = uiState,
@@ -132,7 +133,7 @@ private enum class FolderPage {
  */
 private val FabClearance = 88.dp
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FolderContentsContent(
     uiState: FolderContentsUiState,
@@ -183,7 +184,7 @@ fun FolderContentsContent(
                     }
                 },
                 actions = {
-                    // The bin is the library's, not a folder's: it is reached from where the
+                    // The bin is the library's, not a folder's. It is reached from where the
                     // folders start.
                     if (uiState.isRoot) {
                         IconButton(
@@ -298,7 +299,6 @@ fun FolderContentsContent(
 private const val PathSeparator = "  ›  "
 
 /** The folders first, as they are fewer and lead somewhere; then the documents, in their order. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FolderContentsList(
     uiState: FolderContentsUiState,
@@ -396,7 +396,6 @@ private fun FolderContentsList(
  * Creating a folder here, floating over the list at the bottom where the thumb is. Lifted by a blur
  * halo, as Home's actions are, and shrunk to its icon while the list is read downwards.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun NewFolderButton(
     visible: Boolean,

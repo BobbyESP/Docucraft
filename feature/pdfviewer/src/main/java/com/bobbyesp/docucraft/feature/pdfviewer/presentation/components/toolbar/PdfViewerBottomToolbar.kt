@@ -23,7 +23,6 @@ import androidx.compose.material.icons.rounded.ZoomOut
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
@@ -76,7 +75,6 @@ import kotlin.math.roundToInt
  * @param zoom `1f` is the fitted size.
  * @param hazeState Where the pages are recorded.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PdfViewerBottomToolbar(
     currentPage: Int,
@@ -229,7 +227,6 @@ private fun FitModeButton(fitMode: ViewerFitMode, onFitModeChange: (ViewerFitMod
 }
 
 /** A toggle, with the Expressive shape change when it is on. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun NightModeButton(nightMode: Boolean, onToggle: () -> Unit) {
     val label = stringResource(DesignsystemR.string.night_mode)

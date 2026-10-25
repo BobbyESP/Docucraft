@@ -16,7 +16,7 @@ import org.koin.compose.koinInject
  * Puts the catalogue back on screen when something outside the UI asks for a scan.
  *
  * Scanning is run by the catalogue's state holder, which exists only while the catalogue is on
- * screen — a silent dependency on where the user happened to be. Where a request has to be honoured
+ * screen — a silent dependency on where the user happened to be. Where a request has to be honored
  * is a navigation question, so it is answered here rather than by a state holder that cannot see
  * the back stack. Hosted by the shell; draws nothing, and takes only its own half of the request:
  * the scan itself is the catalogue's to take, which it may do before or after this.

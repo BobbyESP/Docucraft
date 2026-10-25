@@ -39,7 +39,7 @@ import org.koin.dsl.module
 val pdfViewerModule = module {
     single<DocumentOpener> { AndroidDocumentOpener(context = androidContext()) }
 
-    // Links open from the screen's activity, so that a Custom Tab stays in the app's task (D4).
+    // Links open from the screen's activity, so that a Custom Tab stays in the app's task.
     factory<LinkOpener> { (activity: Activity) -> AndroidLinkOpener(activity) }
     factory { ResolveLinkUseCase() }
 
@@ -93,7 +93,7 @@ val pdfViewerModule = module {
             describeLinkedDocument = get(),
             observeCatalogueDocument = get(),
             saveToLibrary = get(),
-            // Outlives the viewer: where the reader was is written as they leave.
+            // Outlives the viewer, where the reader was is written as they leave.
             longLived = get(qualifier = named("AppMainSupervisedScope")),
         )
     }

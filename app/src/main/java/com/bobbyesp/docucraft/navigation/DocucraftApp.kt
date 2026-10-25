@@ -55,12 +55,6 @@ fun DocucraftApp(modifier: Modifier = Modifier) {
     val overlayStrategy = rememberOverlaySceneStrategy<NavKey>()
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
 
-    // Overlays first: the first strategy to claim the topmost entry wins, and a sheet or dialog has
-    // to be recognized before the layout strategies try to give it a pane.
-    //
-    // The list-detail one is wrapped so the destinations it "lays out" side by side are told so. It
-    // claims the stack only when two panes really fit, so everything it declines falls through to
-    // the single-pane fallback — where `LocalPaneContext`'s default already says the right thing.
     val sceneStrategies =
         remember(overlayStrategy, listDetailStrategy) {
             listOf(overlayStrategy, listDetailStrategy.sharingTheWindow())

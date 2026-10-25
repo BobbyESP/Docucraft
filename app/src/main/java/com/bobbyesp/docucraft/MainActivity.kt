@@ -158,22 +158,6 @@ class MainActivity : ComponentActivity(), KoinComponent {
     override fun onDestroy() {
         super.onDestroy()
         resultHost.detach(this)
-
-        // Fix for FileKit memory leak: Clear the static registry reference if it points to this
-        // activity
-        try {
-            val fileKitClass = Class.forName("io.github.vinceglb.filekit.dialogs.FileKitDialog")
-            val registryField = fileKitClass.getDeclaredField("_registry")
-            registryField.isAccessible = true
-            val currentRegistry = registryField.get(null)
-
-            if (currentRegistry === this.activityResultRegistry) {
-                Log.d("FileKit", "Clearing FileKit registry reference")
-                registryField.set(null, null)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
     }
 
     /**

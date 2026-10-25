@@ -92,7 +92,6 @@ fun EntryProviderScope<NavKey>.saveCopyToLibrarySection(navigator: Navigator) {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SaveCopySheet(isSaving: Boolean, onConfirm: () -> Unit, onCancel: () -> Unit) {
     Column(

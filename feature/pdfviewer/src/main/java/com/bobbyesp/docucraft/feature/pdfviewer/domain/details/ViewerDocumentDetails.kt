@@ -84,9 +84,9 @@ private val PdfHeader = Regex("""%PDF-(\d\.\d)""")
 /**
  * The details of the document a viewer shows, emitting `null` once it is gone.
  *
- * A catalogued document's come from the catalogue, which already knows its size and page count; the
+ * A catalogued document comes from the catalogue, which already knows its size and page count; the
  * viewer used to recompute the size through the content resolver from a composable, and to take the
- * page count from the rendering engine. An external document's are read from the file, once.
+ * page count from the rendering engine. An external document is read from the file, once.
  *
  * What takes reading the file follows: the version of PDF comes with the first details, since it is
  * in the file's first bytes, and whether the document has text takes reading some of its pages, so

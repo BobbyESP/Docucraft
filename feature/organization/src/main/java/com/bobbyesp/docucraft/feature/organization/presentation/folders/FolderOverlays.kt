@@ -133,7 +133,6 @@ fun FolderEditorForm(
  *
  * @param stacked whether there is room to put the header above the actions rather than beside them.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FolderActionsContent(
     folder: Folder,
@@ -230,7 +229,6 @@ fun FolderActionsContent(
  * folder that holds something can be deleted with it instead, which is asked for with a switch of
  * its own and never the default: it is what sends documents to the bin.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DeleteFolderForm(
     folder: Folder,
@@ -289,7 +287,6 @@ fun DeleteFolderForm(
  * The folders, walked from inside the overlay to choose where something goes. Where the user is
  * looking is named in the heading, and confirming puts the thing there.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MoveToFolderForm(
     state: MoveToFolderUiState,
@@ -324,7 +321,7 @@ fun MoveToFolderForm(
             },
             label = "MoveToFolderLocation",
         ) { shownUuid ->
-            // The old place fades out showing nothing: what it listed is no longer in the state.
+            // The old place fades out showing nothing. What it listed is no longer in the state.
             if (shownUuid != location?.uuid) return@AnimatedContent Box(Modifier.fillMaxWidth())
 
             Column(

@@ -19,7 +19,6 @@ import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
@@ -70,7 +69,7 @@ import dev.chrisbanes.haze.rememberHazeState
  * @param onOpenWith Likewise.
  * @param onPrint `null` when there is nothing to print: the document did not load.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PdfViewerTopBar(
     title: String,
@@ -176,7 +175,7 @@ private class ViewerAction(
  *
  * @param hazeState Where the pages the menu opens over are recorded.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ViewerActions(
     handOff: List<ViewerAction>,
@@ -238,7 +237,6 @@ private fun ViewerActions(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TopBar(
     description: String?,

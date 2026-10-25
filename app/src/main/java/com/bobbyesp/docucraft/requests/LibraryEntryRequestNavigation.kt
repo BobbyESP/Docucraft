@@ -34,8 +34,6 @@ fun LibraryEntryRequestNavigation(navigator: Navigator) {
     val notifications = LocalNotificationsService.current
     val documentGone = stringResource(DesignsystemR.string.viewer_error_not_found)
 
-    // Collected rather than keyed on the request: taking it changes it, and an effect keyed on it
-    // would cancel itself halfway through looking the document up.
     LaunchedEffect(requests, navigator, notifications, documentGone) {
         requests.pending.collect { pending ->
             if (pending == null) return@collect

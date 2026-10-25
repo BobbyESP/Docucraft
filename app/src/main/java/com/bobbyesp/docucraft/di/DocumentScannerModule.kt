@@ -16,7 +16,6 @@ val documentScannerModule = module {
     single { ActivityResultHostImpl() }
     single<ActivityResultHost> { get<ActivityResultHostImpl>() }
 
-    // ── The only place the app names a scanning engine ──
     single<DocumentScanner> { MlKitDocumentScanner(host = get()) }
 
     single { ScanRequestBus() }

@@ -58,7 +58,7 @@ fun EntryProviderScope<NavKey>.foldersSection(navigator: Navigator, selectedDocu
                 FolderContentsNavigation(
                     onBack = navigator::goBack,
                     onOpenDocument = { uuid ->
-                        // As from search: a document replaces the one open beside the list, and
+                        // a document replaces the one open beside the list, and
                         // the folder stays, so back returns to it.
                         navigator.goBackWhile { it is PdfViewer }
                         navigator.goTo(PdfViewer(uuid))
@@ -81,8 +81,9 @@ fun EntryProviderScope<NavKey>.foldersSection(navigator: Navigator, selectedDocu
         if (state.isLoading) return@entry
         val folder = state.folder
 
-        // What has been typed and picked, not what the folder is: held here so that it survives
-        // process death, and the sheet becoming a dialog when the window changes shape.
+        // Whatever has been written and selected (regardless of the folder in question) is preserved
+        // here so that it persists after the process has concluded; furthermore, the sheet transforms
+        // into a dialog box when the window changes shape.
         var name by rememberSaveable { mutableStateOf(folder?.name.orEmpty()) }
         var colorKey by rememberSaveable { mutableStateOf(folder?.color) }
         var iconKey by rememberSaveable { mutableStateOf(folder?.icon) }
@@ -129,8 +130,8 @@ fun EntryProviderScope<NavKey>.foldersSection(navigator: Navigator, selectedDocu
         val state by viewModel.state.collectAsStateWithLifecycle()
         val folder = state.folder ?: return@entry
 
-        // A choice being made, not what the folder is: off each time, since it is the one that
-        // sends documents to the bin.
+        // This is a choice, not an inherent property of the folder; it is something you select
+        // each time, as it is the option that sends the documents to the trash.
         var withContents by rememberSaveable { mutableStateOf(false) }
 
         DeleteFolderForm(
@@ -151,8 +152,9 @@ fun EntryProviderScope<NavKey>.foldersSection(navigator: Navigator, selectedDocu
         LaunchedEffect(viewModel) {
             viewModel.effects.collectLatest { effect ->
                 when (effect) {
-                    // The thing is where it was asked to go, so nothing more is to be done to it
-                    // from here: the picker goes, and the actions it was opened from with it.
+                    // The element moves to the location it was directed to go to, meaning there is
+                    // nothing left to do with it from this point on: the selector disappears,
+                    // along with the actions that triggered its appearance.
                     MoveToFolderEffect.Close ->
                         currentNavigator.goBackWhile {
                             it == key || it is FolderActions || it is DocumentActions

@@ -554,10 +554,10 @@ class HomeViewModelTest {
 
     /**
      * The catalogue is not always on screen when the widget is pressed. The request stands, and is
-     * honoured once this exists — rather than waiting silently and then firing unasked.
+     * honored once this exists — rather than waiting silently and then firing unasked.
      */
     @Test
-    fun `a scan requested before the catalogue existed is honoured when it arrives`() =
+    fun `a scan requested before the catalogue existed is honored when it arrives`() =
         runTest(testDispatcher) {
             scanRequests.request()
 

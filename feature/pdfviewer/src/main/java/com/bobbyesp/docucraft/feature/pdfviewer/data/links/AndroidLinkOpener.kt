@@ -56,7 +56,7 @@ class AndroidLinkOpener(private val activity: Activity) : LinkOpener {
                 tab.launchUrl(activity, uri)
                 return true
             } catch (_: ActivityNotFoundException) {
-                // The provider went away between asking and opening: fall through.
+                // The provider went away between asking and opening. Fall through.
             }
         }
         return start(Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE))

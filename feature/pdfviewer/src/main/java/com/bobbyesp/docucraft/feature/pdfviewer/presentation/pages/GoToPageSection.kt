@@ -116,7 +116,6 @@ fun EntryProviderScope<NavKey>.goToPageSection(navigator: Navigator) {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun GoToPageSheet(
     field: @Composable (Modifier) -> Unit,

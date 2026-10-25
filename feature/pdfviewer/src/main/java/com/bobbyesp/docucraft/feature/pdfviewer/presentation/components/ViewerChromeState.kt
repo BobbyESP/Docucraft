@@ -23,7 +23,7 @@ import com.bobbyesp.docucraft.core.designsystem.common.ScrollHeadingTracker
  * reading forward hides them, scrolling back shows them, and a tap toggles them.
  *
  * The bars listen through [nestedScrollConnection], which only watches what the document scrolled
- * and never consumes any of it. The components' own scroll behaviours are no good here: the top app
+ * and never consumes any of it. The components' own scroll behaviors are no good here: the top app
  * bar's collapses by consuming the scroll first, and with bars drawn over the pages that would
  * stall the document for as long as the bar is moving.
  */

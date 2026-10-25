@@ -205,8 +205,8 @@ fun PdfOverlayScope.TextSelectionLayer(
     }
     val bottomInsetPx = with(density) { contentBottomInset.toPx() }
 
-    // The viewer's own coordinates: where handles report the finger, and where the toolbar is
-    // placed from.
+    // The viewer's own coordinates.
+    // Where handles report the finger, and where the toolbar is placed from.
     Spacer(
         Modifier.matchParentSize().onPlaced {
             viewer = it
@@ -293,7 +293,7 @@ private fun PdfOverlayScope.SelectionHandle(
 ) {
     val color = LocalTextSelectionColors.current.handleColor
     var self by remember { mutableStateOf<LayoutCoordinates?>(null) }
-    // The gesture outlives recompositions: it must call the latest callbacks, which know the
+    // The gesture outlives recompositions. It must call the latest callbacks, which know the
     // latest selection.
     val latestOnDragStart by rememberUpdatedState(onDragStart)
     val latestOnDrag by rememberUpdatedState(onDrag)
@@ -322,7 +322,7 @@ private fun PdfOverlayScope.SelectionHandle(
                         val down = awaitFirstDown(requireUnconsumed = false)
                         down.consume()
                         val finger = inViewer(down.position) ?: return@awaitEachGesture
-                        // The handle's point is its top centre; aim a little above it, inside
+                        // The handle's point is its top center; aim a little above it, inside
                         // the line, so the nearest line is the right one. The offset is taken
                         // from the first touch, so the text point moves exactly as the finger.
                         val tip =

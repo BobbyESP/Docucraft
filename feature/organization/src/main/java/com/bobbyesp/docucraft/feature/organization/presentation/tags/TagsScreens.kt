@@ -104,7 +104,6 @@ import dev.chrisbanes.haze.rememberHazeState
  * The tags of a document: every tag as a chip, the document's own checked. Typing finds a tag among
  * many, and names a new one when none is called that. Nothing to confirm: each tap is the change.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocumentTagsForm(
     state: DocumentTagsUiState,
@@ -204,7 +203,7 @@ private enum class TagsPage {
  * Every tag, in two groups: those with a section of their own in Home, in Home's order and with the
  * arrows that change it, and the rest. The switch on each moves it from one group to the other.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ManageTagsScreen(
     uiState: TagsUiState,
@@ -417,7 +416,6 @@ fun ManageTagsScreen(
  * @param onMoveUp Moves the tag's section one place up in Home. `null` where it cannot go: for the
  *   first one, and for a tag without a section. The same goes for [onMoveDown].
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TagListItem(
     tag: Tag,
@@ -491,7 +489,6 @@ private fun TagListItem(
 // ---------------- One tag ----------------
 
 /** A tag's name and color, and for one that exists the way to delete it. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TagEditorForm(
     isNew: Boolean,

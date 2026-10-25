@@ -64,7 +64,7 @@ class PlatformContentTest {
     /**
      * Bounds come in points of the *displayed* page (CropBox and /Rotate applied), top-left origin,
      * so dividing by `page.width`/`height` lands in the viewer's normalized space. A link drawn
-     * over two lines comes back as one rectangle enclosing both: QuadPoints are not honoured.
+     * over two lines comes back as one rectangle enclosing both: QuadPoints are not honored.
      */
     @Test
     fun externalLinkBoundsNormalizeToTheDisplayedPage() {

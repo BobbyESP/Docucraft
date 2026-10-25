@@ -528,7 +528,7 @@ private fun HandlePdfViewerEffects(
     val noApp = stringResource(DesignsystemR.string.link_no_app)
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
-    // The browser bar takes the app's colors (D4).
+    // The browser bar takes the app's colors.
     val look =
         LinkLook(
             toolbarColor = MaterialTheme.colorScheme.surfaceContainer.toArgb(),

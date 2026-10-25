@@ -75,7 +75,7 @@ class FolderContentsViewModel(
     /** The root has no folder to remember its order in. */
     private val rootSort = MutableStateFlow(SortOption.DateDesc)
 
-    /** As in the document's actions: `null` is "not read yet" first, and "deleted" afterwards. */
+    /** As in the document's actions: `null` is "not read yet" first, and "deleted" afterward. */
     private var wasLoaded = false
 
     init {
