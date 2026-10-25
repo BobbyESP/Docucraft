@@ -85,6 +85,13 @@ PdfDocumentCanvas ◀── RenderEngine: PlanComputer ─ WorkQueue ─ workers
   - `TileStore` keeps sharp tiles on top.
 - **Zoom levels are discrete.** Tiles are rendered at steps of √2, rounded up, so the caches stay
   reusable while pinching, and content is always downscaled on screen, never upscaled.
+- **A page is tiled when its base bitmap falls short, not past a fixed zoom.** The base bitmap is
+  the page at the render quality (1.5×), but capped at 2048 px a side. For an A4 page on a phone
+  the cap hardly matters. A page much taller than wide (a OneNote or whiteboard export), or one
+  laid out wider than the cap (a tablet, a phone held sideways), gets a base far below what it
+  asked for, blurry even at zoom 1. So each page is tiled when tiles at the current step would be
+  sharper than its base, and either the zoom is past 1 or the cap shrank the base
+  (`PlanComputer.tilesSharpen`). Pages the cap leaves alone are tiled exactly as before.
 - **Memory.** Bitmaps are recycled through a 32 MB `BitmapPool` (`Bitmap.reconfigure`). A bitmap
   that may still be on screen is parked briefly before reuse.
 - **Two renderers, two workers.** `PdfDocumentManager` opens the document twice (duplicated file

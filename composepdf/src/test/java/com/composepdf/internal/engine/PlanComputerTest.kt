@@ -4,6 +4,8 @@
 package com.composepdf.internal.engine
 
 import com.composepdf.internal.logic.PageLayoutSnapshot
+import com.composepdf.internal.logic.ViewportMetrics
+import com.composepdf.internal.logic.layoutOf
 import com.composepdf.internal.logic.threePages
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -142,6 +144,67 @@ class PlanComputerTest {
     }
 
     @Test
+    fun tallPage_whoseBaseIsCapped_tilesAtZoomOne() {
+        // A 500 × 4000 page (a OneNote export): its base would be 750 × 6000, capped to 256 × 2048,
+        // half of what the screen shows. Tiles at level 0 give it its 500 px back.
+        val tall =
+            layoutOf(floatArrayOf(500f), floatArrayOf(4000f), 20f, ViewportMetrics(500f, 500f))
+        val plan = computer.compute(inputs(zoom = 1f, layout = tall), 0, never(), neverBase())
+
+        assertEquals(256, plan.desiredBaseWidths.getValue(0))
+        assertEquals(0, plan.tileLevel)
+        assertTrue(plan.desiredTilesByPage.getValue(0).isNotEmpty())
+    }
+
+    @Test
+    fun wideLayout_whoseBaseIsCapped_tilesBeforeTheQualityStep() {
+        // A 2000 px wide page, as on a tablet: the base is capped at 2048 px, so at zoom 1.2 it is
+        // already blurrier than the screen. Uncapped, the same zoom would not tile (see below).
+        val wide =
+            layoutOf(floatArrayOf(2000f), floatArrayOf(1400f), 20f, ViewportMetrics(2000f, 2000f))
+        val atOne =
+            computer.compute(
+                inputs(zoom = 1f, layout = wide, viewport = 2000f),
+                0,
+                never(),
+                neverBase(),
+            )
+        val past =
+            computer.compute(
+                inputs(zoom = 1.2f, layout = wide, viewport = 2000f),
+                0,
+                never(),
+                neverBase(),
+            )
+
+        assertNull("2048 px over 2000 is sharp enough", atOne.tileLevel)
+        assertEquals(1, past.tileLevel)
+        assertTrue(past.desiredTilesByPage.getValue(0).isNotEmpty())
+    }
+
+    @Test
+    fun qualityBelowOne_isNotOverriddenByTilesAtZoomOne() {
+        val plan = computer.compute(inputs(zoom = 1f, quality = 0.75f), 0, never(), neverBase())
+        assertNull(plan.tileLevel)
+    }
+
+    @Test
+    fun onlyThePagesThatNeedTiles_getThem() {
+        // A normal page above a tall one: at zoom 1 only the tall one falls short.
+        val mixed =
+            layoutOf(
+                floatArrayOf(500f, 500f),
+                floatArrayOf(300f, 4000f),
+                20f,
+                ViewportMetrics(500f, 500f),
+            )
+        val plan = computer.compute(inputs(zoom = 1f, layout = mixed), 0, never(), neverBase())
+
+        assertFalse(plan.desiredTilesByPage.containsKey(0))
+        assertTrue(plan.desiredTilesByPage.getValue(1).isNotEmpty())
+    }
+
+    @Test
     fun basePageTargetSize_isCappedPerAxis() {
         val (w, h) =
             PlanComputer.basePageTargetSize(baseWidth = 3000f, aspectRatio = 1.4f, quality = 1.5f)
@@ -156,22 +219,26 @@ class PlanComputerTest {
 
     private fun neverBase(): (Int, Int) -> Boolean = { _, _ -> false }
 
-    /** [layout] seen through a 500 × 500 viewport, from the top of the document. */
+    /**
+     * [layout] seen through a square [viewport], 500 px by default, from the top of the document.
+     */
     private fun inputs(
         zoom: Float,
         velocityY: Float = 0f,
         layout: PageLayoutSnapshot = threePages(),
+        viewport: Float = 500f,
+        quality: Float = 1.5f,
     ): PlanInputs =
         PlanInputs(
             layout = layout,
             panX = 0f,
             panY = 0f,
             zoom = zoom,
-            viewportWidth = 500f,
-            viewportHeight = 500f,
+            viewportWidth = viewport,
+            viewportHeight = viewport,
             velocityX = 0f,
             velocityY = velocityY,
-            renderQuality = 1.5f,
+            renderQuality = quality,
             prefetchDistance = 2,
         )
 }
