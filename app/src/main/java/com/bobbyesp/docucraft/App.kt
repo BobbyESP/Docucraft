@@ -78,9 +78,12 @@ class App : Application(), ImageLoaderFactory, Configuration.Provider {
             androidContext(this@App)
             modules(appModules)
         }
-        // Reading the text of the documents is picked up where it was left: a library just brought
-        // over from an older catalogue, or a document saved as the app was closed. Never in the way
-        // of starting: a failure here only means nothing is queued this time.
+
+        // Reading the content of documents resumes from the point where it was left off—whether it
+        // involves a library imported from a previous catalog or a document that remained saved
+        // when the application was closed. This never poses an obstacle to getting started.
+        // If something fails, it simply means that, in this instance, there are no items in the
+        // queue.
         get<CoroutineScope>(named("AppMainSupervisedScope")).launch {
             runCatching { get<ResumeTextIndexingUseCase>()() }
         }
