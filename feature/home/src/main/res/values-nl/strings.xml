@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="doc_scan_to_see_document_list">Scan uw documenten om ze hier in een lijst te zien.</string>
+    <string name="doc_saved_successfully">Het document is succesvol opgeslagen</string>
+    <string name="no_scanned_documents">Geen gescande documenten</string>
+    <string name="error_loading_docs">Fout bij het laden van documenten</string>
+    <string name="doc_scan_new">Nieuw document scannen</string>
+    <string name="see_all">Alles bekijken</string>
+    <string name="pinned_folders_empty_title">Houd uw mappen bij de hand</string>
+    <string name="pinned_folders_empty_desc">Vastgemaakte mappen verschijnen hier.</string>
+    <string name="tags_manage">Labels bewerken</string>
+    <string name="tag_section_empty">Nog geen enkel document heeft dit label</string>
+    <string name="favorites">Favorieten</string>
+    <string name="filters_no_matches">Geen documenten komen overeen met deze filters</string>
+    <string name="filters_clear">Filters wissen</string>
+</resources>

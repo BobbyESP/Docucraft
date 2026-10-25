@@ -1,0 +1,9 @@
+<resources>
+    <!-- ════════════════════════════════════════════════
+         WIDGET — Scan
+         ════════════════════════════════════════════════ -->
+    <string name="widget_scan_title">Scan document</string>
+    <string name="widget_scan_subtitle">Tap to start scanning</string>
+    <string name="widget_recents_description">Your latest documents, one tap away</string>
+    <string name="widget_recents_empty">Your documents will show here</string>
+</resources>

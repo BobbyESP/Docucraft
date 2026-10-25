@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+    What the widget picker shows from Android 12: the widget with rows that name no document. A
+    picker cannot be given the library, and an invented name would have to be written in every
+    language.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_surface"
+    android:clipToOutline="true"
+    android:orientation="vertical"
+    android:padding="8dp"
+    tools:ignore="UseAppTint">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="@string/recents"
+            android:textColor="@color/widget_on_surface"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/widget_chip_tonal"
+            android:contentDescription="@string/search_documents"
+            android:padding="9dp"
+            android:src="@drawable/widget_ic_search"
+            android:tint="@color/widget_on_primary_container" />
+
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/widget_chip_primary"
+            android:contentDescription="@string/widget_scan_title"
+            android:padding="9dp"
+            android:src="@drawable/rounded_document_scanner_24"
+            android:tint="@color/widget_on_primary" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/widget_row"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="12dp">
+
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="40dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/widget_thumbnail_placeholder" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:layout_width="120dp"
+                android:layout_height="10dp"
+                android:alpha="0.5"
+                android:background="@drawable/widget_skeleton" />
+
+            <FrameLayout
+                android:layout_width="64dp"
+                android:layout_height="8dp"
+                android:layout_marginTop="8dp"
+                android:alpha="0.25"
+                android:background="@drawable/widget_skeleton" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/widget_row"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="12dp">
+
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="40dp"
+            android:importantForAccessibility="no"
+            android:src="@drawable/widget_thumbnail_placeholder" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:layout_width="88dp"
+                android:layout_height="10dp"
+                android:alpha="0.5"
+                android:background="@drawable/widget_skeleton" />
+
+            <FrameLayout
+                android:layout_width="64dp"
+                android:layout_height="8dp"
+                android:layout_marginTop="8dp"
+                android:alpha="0.25"
+                android:background="@drawable/widget_skeleton" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

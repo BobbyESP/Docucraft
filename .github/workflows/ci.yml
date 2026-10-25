@@ -52,7 +52,7 @@ jobs:
       # --continue: one module's failure does not hide another's. Instrumented tests need a
       # device and are not run here.
       - name: Unit tests
-        run: ./gradlew testDebugUnitTest :scanner-api:test :document-content-api:test --continue
+        run: ./gradlew testDebugUnitTest --continue
 
       - name: Upload the test reports
         if: ${{ failure() }}

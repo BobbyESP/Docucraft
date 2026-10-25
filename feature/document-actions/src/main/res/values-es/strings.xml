@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doc_delete">Eliminar documento</string>
+    <string name="doc_saved_successfully_to">Documento guardado correctamente en %1$s</string>
+    <string name="doc_modify_details">Modificar detalles del documento</string>
+    <string name="doc_modify_details_description">Actualiza abajo el título y la descripción del documento para reflejar su contenido y detalles.</string>
+    <string name="doc_updated_successfully">Documento actualizado correctamente</string>
+    <string name="removed_from_recents">Quitado de Recientes</string>
+    <string name="text_recognition_turned_on">Su texto se está reconociendo en segundo plano</string>
+    <string name="text_recognition_turned_off">Se ha quitado el texto reconocido</string>
+    <string name="move_to_bin">Mover a la papelera</string>
+    <string name="doc_bin_confirmation">«%1$s» irá a la papelera.</string>
+    <string name="doc_bin_note">Se queda allí %1$d días y hasta entonces se puede restaurar.</string>
+    <string name="doc_moved_to_bin">Movido a la papelera</string>
+</resources>

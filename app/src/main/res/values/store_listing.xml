@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   Copy for the Google Play listing. The app does not use these strings: scripts/store reads them to
   write the listing's text (listing.mjs) and to draw the screenshots and the feature graphic
   (render.mjs). They live here so they are translated with the rest of the app.

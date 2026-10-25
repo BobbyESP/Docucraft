@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- A FileProvider that names a shared document as the catalogue does, not by its file. -->
+        <provider
+            android:name="com.bobbyesp.docucraft.library.data.sharing.CatalogueFileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:grantUriPermissions="true"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/filepathsprovider" />
+        </provider>
+    </application>
+
+</manifest>

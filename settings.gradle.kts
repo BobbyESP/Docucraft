@@ -2,6 +2,7 @@
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             content {
@@ -33,12 +34,54 @@ rootProject.name = "Docucraft"
 
 include(":app")
 
+// Core: what every module builds on
+include(":core:domain")
+
+include(":core:data")
+
+include(":core:designsystem")
+
+include(":core:navigation")
+
+include(":core:ui")
+
+// The library: the catalogue several features share
+include(":library:domain")
+
+include(":library:data")
+
+include(":library:ui")
+
+include(":library:testing")
+
+// Engines: a contract (api) and its implementations, and the PDF engine
+include(":scanner:api")
+
+include(":scanner:mlkit")
+
+include(":content:api")
+
+include(":content:platform")
+
+include(":content:mlkit")
+
 include(":composepdf")
 
-include(":scanner-api")
+// Features: what the user sees
+include(":feature:home")
 
-include(":scanner-mlkit")
+include(":feature:search")
 
-include(":document-content-api")
+include(":feature:organization")
 
-include(":ocr-mlkit")
+include(":feature:bin")
+
+include(":feature:scan")
+
+include(":feature:document-actions")
+
+include(":feature:pdfviewer")
+
+include(":feature:settings")
+
+include(":feature:widgets")

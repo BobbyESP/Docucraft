@@ -1,0 +1,63 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
+package com.bobbyesp.docucraft.feature.home.presentation
+
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavKey
+import com.bobbyesp.docucraft.core.navigation.Navigator
+import com.bobbyesp.docucraft.core.navigation.keys.DocumentActions
+import com.bobbyesp.docucraft.core.navigation.keys.DocumentSearch
+import com.bobbyesp.docucraft.core.navigation.keys.FolderActions
+import com.bobbyesp.docucraft.core.navigation.keys.FolderContents
+import com.bobbyesp.docucraft.core.navigation.keys.FolderEditor
+import com.bobbyesp.docucraft.core.navigation.keys.ManageTags
+import com.bobbyesp.docucraft.core.navigation.keys.PdfViewer
+import com.bobbyesp.docucraft.core.navigation.keys.ReviewScan
+import com.bobbyesp.docucraft.core.navigation.keys.Settings
+import com.bobbyesp.docucraft.core.navigation.pane.LocalPaneContext
+import com.bobbyesp.docucraft.feature.home.navigation.Home
+import com.bobbyesp.docucraft.library.ui.pane.NoDocumentOpenPane
+
+/**
+ * Home is the list pane of the app's list-detail layout: on expanded windows it stays visible next
+ * to the open document, on compact windows it fills the screen.
+ */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+fun EntryProviderScope<NavKey>.homeSection(
+    navigator: Navigator,
+    selectedDocumentId: String?,
+) {
+    entry<Home>(
+        metadata = ListDetailSceneStrategy.listPane(detailPlaceholder = { NoDocumentOpenPane() })
+    ) {
+        HomeScreen(
+            onOpenDocument = { uuid ->
+                // Picking from the list swaps the detail pane rather than stacking on it, or every
+                // tap beside the list becomes a back step that surfaces once the window narrows to
+                // one pane. Decided from the stack at the tap, not from a selection captured at the
+                // last composition. On one pane the list is only tappable at the root, so this pops
+                // nothing there.
+                navigator.goBackWhile { it !is Home }
+                navigator.goTo(PdfViewer(uuid))
+            },
+            onOpenSettings = { navigator.goTo(Settings) },
+            onOpenSearch = { navigator.goTo(DocumentSearch) },
+            onOpenDocumentActions = { uuid -> navigator.goTo(DocumentActions(uuid)) },
+            onReviewScan = { uuid -> navigator.goTo(ReviewScan(uuid)) },
+            organization =
+                HomeOrganizationActions(
+                    onOpenFolder = { uuid -> navigator.goTo(FolderContents(uuid)) },
+                    onOpenFolderActions = { uuid -> navigator.goTo(FolderActions(uuid)) },
+                    onCreateFolder = { navigator.goTo(FolderEditor()) },
+                    onManageTags = { navigator.goTo(ManageTags) },
+                ),
+            selectedDocumentId = selectedDocumentId,
+            // Beside a document, Home is a short pane, and a floating search bar and scan button
+            // cover most of it. The app bar has room for both.
+            actionsInTopBar = !LocalPaneContext.current.isSolePane,
+        )
+    }
+}

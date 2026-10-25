@@ -2,15 +2,12 @@
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
 plugins {
-    id(libs.plugins.android.application.get().pluginId)
-    id("docucraft.android.convention")
-    alias(libs.plugins.kotlin.serialization)
-    id(libs.plugins.kotlin.parcelize.get().pluginId)
-    alias(libs.plugins.kotlin.ksp)
+    id("docucraft.android.application")
+    id("docucraft.android.compose")
     alias(libs.plugins.google.gms)
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.stability.analyzer)
-    id("copy-apk-plugin")
+    id("docucraft.copy-apk")
 }
 
 // Set by the release workflow, which decodes the keystore into the runner's temp directory.
@@ -22,7 +19,6 @@ android {
 
     defaultConfig {
         applicationId = "com.bobbyesp.docucraft"
-        targetSdk = ProjectConfig.targetSdk
 
         versionCode = rootProject.extra["versionCode"] as Int
         versionName = rootProject.extra["versionName"] as String
@@ -66,25 +62,40 @@ android {
 
     // The test PDFs live with the engine's tests; the viewer's content tests read the same ones.
     sourceSets.getByName("androidTest").assets.directories += "../composepdf/src/androidTest/assets"
-
-    // The exported schemas, which the migration tests build each old version of the database from.
-    sourceSets.getByName("androidTest").assets.directories += "schemas"
 }
 
-composeCompiler {
-    reportsDestination = layout.buildDirectory.dir("compose_compiler")
-    stabilityConfigurationFiles.addAll(
-        project.layout.projectDirectory.file("compose_stability_main.conf")
-    )
-}
-
-ksp {
-    arg(RoomSchemaArgProvider(File(projectDir, "schemas")))
-    arg("KOIN_CONFIG_CHECK", "true")
-}
+composeCompiler { reportsDestination = layout.buildDirectory.dir("compose_compiler") }
 
 dependencies {
-    // Bundles
+    // The features and what they are built on. The app is their shell: it starts them, draws the
+    // one back stack they share, and chooses the engines behind their ports.
+    implementation(project(":feature:home"))
+    implementation(project(":feature:search"))
+    implementation(project(":feature:organization"))
+    implementation(project(":feature:bin"))
+    implementation(project(":feature:scan"))
+    implementation(project(":feature:document-actions"))
+    implementation(project(":feature:pdfviewer"))
+    implementation(project(":feature:settings"))
+    implementation(project(":feature:widgets"))
+    implementation(project(":library:domain"))
+    implementation(project(":library:data"))
+    implementation(project(":library:ui"))
+    implementation(project(":core:domain"))
+    implementation(project(":core:data"))
+    implementation(project(":core:designsystem"))
+    implementation(project(":core:navigation"))
+    implementation(project(":core:ui"))
+
+    // The engines, named only by the Koin modules that bind them (DocumentScannerModule,
+    // PageContentModule), so no ML Kit or platform content type is on any feature's classpath.
+    implementation(project(":scanner:api"))
+    implementation(project(":scanner:mlkit"))
+    implementation(project(":content:api"))
+    implementation(project(":content:platform"))
+    implementation(project(":content:mlkit"))
+
+    // AndroidX: the activities, the splash screen, and AppCompat's locale service in the manifest.
     implementation(libs.bundles.androidx.core)
     implementation(libs.bundles.androidx.lifecycle)
     implementation(libs.bundles.compose)
@@ -92,79 +103,34 @@ dependencies {
     implementation(libs.bundles.koin)
     implementation(libs.bundles.coroutines)
     implementation(libs.bundles.filekit)
-    implementation(libs.bundles.accompanist)
-
-    // Platforms
-    api(platform(libs.androidx.compose.bom))
-    implementation(platform(libs.firebase.bom))
-
-    // UI & Misc
-    implementation(libs.google.fonts)
-    implementation(libs.material.kolor)
     implementation(libs.landscapist.coil)
-    implementation(libs.landscapist.placeholder)
     implementation(libs.sonner)
-    implementation(libs.bundles.haze)
-
-    // Storage
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    implementation(libs.room.paging)
-    ksp(libs.room.compiler)
     implementation(libs.datastore.preferences)
-
-    // Background work: reading the text of documents
+    // WorkManager starts from App's configuration, not from its initializer.
     implementation(libs.work.runtime)
 
-    // Scanning. The engine lives behind :scanner-api and is only named by the Koin module, so
-    // no ML Kit type is on this module's compile classpath at all.
-    implementation(project(":scanner-api"))
-    implementation(project(":scanner-mlkit"))
-
-    // What is on a document's pages, behind a contract text recognition can implement too.
-    implementation(project(":document-content-api"))
-    implementation(project(":ocr-mlkit"))
-
-    // Links from documents open in a Custom Tab, which stays in the app's task (D4).
-    implementation(libs.androidx.browser)
-
-    // KotlinX
-    implementation(libs.kotlinx.collections.immutable)
-    implementation(libs.kotlinx.datetime)
-    implementation(libs.kotlinx.serialization.json)
-
-    // Firebase
+    // Firebase: the app applies its Gradle plugins.
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
 
-    // Performance & Utils
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.androidx.profileinstaller)
     debugImplementation(libs.leakcanary)
 
-    // Local Projects
-    implementation(project(":composepdf"))
-
     // Testing & Tooling
+    testImplementation(project(":library:testing"))
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.kotlinx.serialization.json)
     testImplementation(libs.mockk)
+    androidTestImplementation(project(":composepdf"))
     androidTestImplementation(libs.androidx.test.ext.junit)
+    // The device tests build the catalogue themselves (DocumentsDatabase.builder).
+    androidTestImplementation(libs.room.runtime)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
 
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-}
-
-class RoomSchemaArgProvider(
-    @get:InputDirectory @get:PathSensitive(PathSensitivity.RELATIVE) val schemaDir: File
-) : CommandLineArgumentProvider {
-    override fun asArguments(): Iterable<String> {
-        if (!schemaDir.exists()) schemaDir.mkdirs()
-        return listOf("room.schemaLocation=${schemaDir.path}")
-    }
 }

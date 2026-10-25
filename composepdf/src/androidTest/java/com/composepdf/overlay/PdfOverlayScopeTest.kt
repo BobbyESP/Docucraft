@@ -45,6 +45,7 @@ class PdfOverlayScopeTest {
     private var compositions = 0
     private var anchoredClicks = 0
     private var draws = 0
+
     /** The pages of the latest draw pass and their bounds. Pages are drawn in ascending order. */
     private val lastPass = mutableMapOf<Int, Rect>()
     private var previousPage = -1

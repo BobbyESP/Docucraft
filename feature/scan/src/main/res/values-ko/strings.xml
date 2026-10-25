@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="skip">건너뛰기</string>
+    <string name="scan_review_title">스캔 저장됨</string>
+    <string name="scan_review_desc">라이브러리에 저장되었습니다. 지금 이름을 지정하거나 건너뛰고 나중에 하세요.</string>
+    <string name="scan_review_recognize_text_desc">내용으로 찾을 수 있게 합니다</string>
+    <string name="suggestions">추천</string>
+    <string name="suggestions_working">문서를 읽는 중…</string>
+    <string name="suggestions_none">이 문서에 대해 추천할 내용이 없습니다.</string>
+    <string name="suggestions_failed">이번에는 추천을 만들지 못했습니다.</string>
+    <string name="suggestions_text_recognition_off">추천이 표시되지 않습니다. 이 문서의 텍스트 인식이 꺼져 있으며, 인식하지 않으면 스캔에는 텍스트가 없습니다. 아래에서 켜거나, 설정에서 모든 새 문서에 대해 켜세요.</string>
+    <string name="suggestion_use">사용</string>
+    <string name="suggestion_move_to">%1$s(으)로 이동</string>
+    <string name="tags_add">태그 추가</string>
+    <string name="scan_review_section_details">세부정보</string>
+    <string name="scan_review_section_organize">정리</string>
+</resources>

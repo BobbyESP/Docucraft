@@ -1,0 +1,18 @@
+<resources>
+    <plurals name="bin_days_left">
+        <item quantity="zero">بقي %d يوم</item>
+        <item quantity="one">بقي يوم واحد</item>
+        <item quantity="two">بقي يومان</item>
+        <item quantity="few">بقيت %d أيام</item>
+        <item quantity="many">بقي %d يومًا</item>
+        <item quantity="other">بقي %d يوم</item>
+    </plurals>
+    <plurals name="bin_empty_confirmation">
+        <item quantity="zero">سيُحذف %d مستند نهائيًا.</item>
+        <item quantity="one">سيُحذف مستند واحد نهائيًا.</item>
+        <item quantity="two">سيُحذف مستندان نهائيًا.</item>
+        <item quantity="few">ستُحذف %d مستندات نهائيًا.</item>
+        <item quantity="many">سيُحذف %d مستندًا نهائيًا.</item>
+        <item quantity="other">سيُحذف %d مستند نهائيًا.</item>
+    </plurals>
+</resources>

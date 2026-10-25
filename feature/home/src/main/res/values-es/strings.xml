@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="doc_scan_new">Escanear nuevo documento</string>
+    <string name="doc_saved_successfully">El documento se ha guardado correctamente</string>
+    <string name="error_loading_docs">Error al cargar los documentos</string>
+    <string name="doc_scan_to_see_document_list">Escanea tus documentos para verlos aquí listados.</string>
+    <string name="no_scanned_documents">No hay documentos escaneados</string>
+    <string name="see_all">Ver todo</string>
+    <string name="pinned_folders_empty_title">Ten tus carpetas a mano</string>
+    <string name="pinned_folders_empty_desc">Las carpetas fijadas aparecen aquí.</string>
+    <string name="tags_manage">Editar etiquetas</string>
+    <string name="tag_section_empty">Ningún documento tiene aún esta etiqueta</string>
+    <string name="favorites">Favoritos</string>
+    <string name="filters_no_matches">Ningún documento coincide con estos filtros</string>
+    <string name="filters_clear">Quitar filtros</string>
+</resources>

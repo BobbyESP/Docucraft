@@ -106,8 +106,10 @@ class PdfViewerState(
                     ),
                     initialZoom,
                 )
+
             initialPage != 0 || initialZoom != 1f ->
                 PendingPosition(PageAnchor(initialPage, 0.5f), initialZoom)
+
             else -> null
         }
 

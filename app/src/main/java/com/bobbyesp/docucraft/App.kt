@@ -4,26 +4,31 @@
 package com.bobbyesp.docucraft
 
 import android.app.Application
-import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.work.Configuration
 import coil.ImageLoader
 import coil.ImageLoaderFactory
-import com.bobbyesp.docucraft.core.di.analyticsModule
-import com.bobbyesp.docucraft.core.di.commonModule
-import com.bobbyesp.docucraft.core.di.notificationsServiceModule
-import com.bobbyesp.docucraft.core.di.preferencesModule
-import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerDataModule
-import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerModule
-import com.bobbyesp.docucraft.feature.docscanner.di.documentScannerViewModels
-import com.bobbyesp.docucraft.feature.docscanner.di.scannedDocumentsDatabaseModule
-import com.bobbyesp.docucraft.feature.docscanner.domain.maintenance.LibraryMaintenance
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.KeepWidgetsCurrentUseCase
-import com.bobbyesp.docucraft.feature.docscanner.domain.usecase.ResumeTextIndexingUseCase
-import com.bobbyesp.docucraft.feature.pdfviewer.di.pageContentModule
+import com.bobbyesp.docucraft.core.data.di.analyticsModule
+import com.bobbyesp.docucraft.di.commonModule
+import com.bobbyesp.docucraft.di.documentScannerModule
+import com.bobbyesp.docucraft.di.notificationsServiceModule
+import com.bobbyesp.docucraft.di.pageContentModule
+import com.bobbyesp.docucraft.feature.bin.di.binViewModels
+import com.bobbyesp.docucraft.feature.documentactions.di.documentActionsViewModels
+import com.bobbyesp.docucraft.feature.home.di.homeViewModels
+import com.bobbyesp.docucraft.feature.organization.di.organizationViewModels
 import com.bobbyesp.docucraft.feature.pdfviewer.di.pdfViewerModule
+import com.bobbyesp.docucraft.feature.scan.di.scanReviewViewModels
+import com.bobbyesp.docucraft.feature.search.di.searchViewModels
+import com.bobbyesp.docucraft.feature.settings.di.settingsViewModels
+import com.bobbyesp.docucraft.feature.widgets.di.widgetsModule
+import com.bobbyesp.docucraft.feature.widgets.domain.KeepWidgetsCurrentUseCase
+import com.bobbyesp.docucraft.library.data.di.documentScannerDataModule
+import com.bobbyesp.docucraft.library.data.di.scannedDocumentsDatabaseModule
+import com.bobbyesp.docucraft.library.domain.maintenance.LibraryMaintenance
+import com.bobbyesp.docucraft.library.domain.usecase.ResumeTextIndexingUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
@@ -39,12 +44,18 @@ import org.koin.core.qualifier.named
 internal val appModules =
     listOf(
         commonModule,
-        preferencesModule,
+        settingsViewModels,
         notificationsServiceModule,
         scannedDocumentsDatabaseModule,
         documentScannerDataModule,
         documentScannerModule,
-        documentScannerViewModels,
+        homeViewModels,
+        searchViewModels,
+        documentActionsViewModels,
+        organizationViewModels,
+        binViewModels,
+        scanReviewViewModels,
+        widgetsModule,
         pdfViewerModule,
         pageContentModule,
         analyticsModule,
@@ -67,9 +78,12 @@ class App : Application(), ImageLoaderFactory, Configuration.Provider {
             androidContext(this@App)
             modules(appModules)
         }
-        // Reading the text of the documents is picked up where it was left: a library just brought
-        // over from an older catalogue, or a document saved as the app was closed. Never in the way
-        // of starting: a failure here only means nothing is queued this time.
+
+        // Reading the content of documents resumes from the point where it was left off—whether it
+        // involves a library imported from a previous catalog or a document that remained saved
+        // when the application was closed. This never poses an obstacle to getting started.
+        // If something fails, it simply means that, in this instance, there are no items in the
+        // queue.
         get<CoroutineScope>(named("AppMainSupervisedScope")).launch {
             runCatching { get<ResumeTextIndexingUseCase>()() }
         }
@@ -100,9 +114,5 @@ class App : Application(), ImageLoaderFactory, Configuration.Provider {
 
     companion object {
         lateinit var packageInfo: PackageInfo
-
-        fun getAuthority(context: Context): String {
-            return "${context.packageName}.fileprovider"
-        }
     }
 }

@@ -1,0 +1,12 @@
+<resources>
+    <plurals name="bin_days_left">
+        <item quantity="one">Falta %d dia</item>
+        <item quantity="many">Faltam %d dias</item>
+        <item quantity="other">Faltam %d dias</item>
+    </plurals>
+    <plurals name="bin_empty_confirmation">
+        <item quantity="one">%d documento será excluído definitivamente.</item>
+        <item quantity="many">%d documentos serão excluídos definitivamente.</item>
+        <item quantity="other">%d documentos serão excluídos definitivamente.</item>
+    </plurals>
+</resources>

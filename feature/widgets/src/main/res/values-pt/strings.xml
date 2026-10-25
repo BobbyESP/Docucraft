@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="widget_scan_title">Digitalizar documento</string>
+    <string name="widget_scan_subtitle">Toque para começar a digitalizar</string>
+    <string name="widget_recents_description">Seus documentos mais recentes, a um toque</string>
+    <string name="widget_recents_empty">Seus documentos aparecerão aqui</string>
+</resources>

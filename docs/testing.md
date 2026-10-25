@@ -8,10 +8,14 @@
 
 | Module | JVM (`src/test`) | On a device (`src/androidTest`) |
 |---|---|---|
-| `:app` | use cases, ViewModels, the D2 settings table, link resolution, selection decisions, navigation rules, text splitting, layered content, the path a migration gives an old document, what a widget shows for its size and what it lists | the platform content provider against the fixtures; the catalogue: migrations from every exported schema, a migrated schema against a new one, the triggers, search; the widgets' views, inflated as a launcher does |
+| `:app` | that every key serializes, which document the list highlights, the requests from outside the UI, the widgets' entry | the platform content provider against the fixtures; saving and deleting a scan through the whole graph; the file provider, which reads the graph; the store's screenshots (skipped in any other run) |
+| `:library:domain`, `:library:data` | use cases; the path a migration gives an old document, search ranking, layered content | the catalogue: migrations from every exported schema, a migrated schema against a new one, the triggers, search, the repositories, storage and thumbnails |
+| `:feature:*` | ViewModels, the D2 settings table, link resolution, selection decisions, what a widget shows for its size and what it lists | `:feature:widgets`: the widgets' views, inflated as a launcher does |
+| `:core:*` | navigation rules and scene strategies, the theme's transitions, `BaseViewModel` | — |
+| `:content:platform` | text splitting | — |
 | `:composepdf` | layout geometry, tile planning, zoom steps, viewport, load-error classification | fixtures, restoration, layout changes, content padding, gestures, extension points, scroll-to, load errors, platform content APIs |
-| `:document-content-api` | selection: carets, runs, layouts, right-to-left, across pages | — |
-| `:scanner-mlkit` | the scan result decision table, the activity-result host and process death | — |
+| `:content:api` | selection: carets, runs, layouts, right-to-left, across pages | — |
+| `:scanner:mlkit` | the scan result decision table, the activity-result host and process death | — |
 
 **The rule of thumb:**
 - **Decisions are pure and go on the JVM**: what a touch selects, what a link does, what a result
@@ -26,11 +30,13 @@
 - **A test sits in the package of the class it tests**, so it reaches `internal` code and is found
   next to it.
 - **Doubles and fixtures shared by several tests** live in one place instead of being copied:
-  - `:app`: `FakeDocumentStorage`, `FakeDocumentsRepository`, `FakeDocumentThumbnails`,
-    `FakeSearchIndex` and `testDocument` (docscanner), `FakePageContentProvider` and `textPage`
-    (pdfviewer);
-  - `:app` on a device: `MigrationTestSupport.kt` builds an old version of the catalogue from its
-    exported schema and fills it with rows as that version stored them;
+  - `:library:testing`, a module every module's tests may depend on: `FakeDocumentStorage`,
+    `FakeDocumentsRepository`, `FakeDocumentThumbnails`, `FakeSearchIndex` and `testDocument`, and
+    `FakePageContentProvider` and `textPage`;
+  - `:library:data` on a device: `MigrationTestSupport.kt` builds an old version of the catalogue
+    from its exported schema and fills it with rows as that version stored them;
+  - `:core:navigation` JVM: `StandInKeys.kt`, keys shaped like the app's, so the navigation is
+    tested without the features that own the real ones;
   - `:composepdf` JVM: `layoutOf` and `threePages` build a `PageLayoutSnapshot` the way the real
     layout does;
   - `:composepdf` on a device: `LongDocument` and `waitUntilLoaded` (`ViewerTestSupport.kt`), and the
@@ -53,8 +59,8 @@ is why it must not share a run with the tests that read the graph the app starte
 ## Running
 
 ```sh
-./gradlew testDebugUnitTest :scanner-api:test :document-content-api:test      # every JVM test
-./gradlew :app:connectedDebugAndroidTest :composepdf:connectedDebugAndroidTest
+./gradlew testDebugUnitTest   # every JVM test, in every module
+./gradlew connectedDebugAndroidTest         # every module with device tests
 ./gradlew :composepdf:connectedDebugAndroidTest \
     -Pandroid.testInstrumentationRunnerArguments.class=com.composepdf.gesture.PdfGesturesTest
 ```

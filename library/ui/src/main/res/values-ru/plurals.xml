@@ -1,0 +1,14 @@
+<resources>
+    <plurals name="n_documents">
+        <item quantity="one">%d документ</item>
+        <item quantity="few">%d документа</item>
+        <item quantity="many">%d документов</item>
+        <item quantity="other">%d документа</item>
+    </plurals>
+    <plurals name="n_folders">
+        <item quantity="one">%d папка</item>
+        <item quantity="few">%d папки</item>
+        <item quantity="many">%d папок</item>
+        <item quantity="other">%d папки</item>
+    </plurals>
+</resources>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="error_loading_docs">Ошибка загрузки документов</string>
+    <string name="doc_scan_new">Сканировать новый документ</string>
+    <string name="doc_scan_to_see_document_list">Отсканируйте ваши документы, чтобы увидеть их здесь в списке.</string>
+    <string name="doc_saved_successfully">Документ успешно сохранен</string>
+    <string name="no_scanned_documents">Нет отсканированных документов</string>
+    <string name="see_all">Показать все</string>
+    <string name="pinned_folders_empty_title">Держите папки под рукой</string>
+    <string name="pinned_folders_empty_desc">Закреплённые папки отображаются здесь.</string>
+    <string name="tags_manage">Изменить теги</string>
+    <string name="tag_section_empty">Пока ни у одного документа нет этого тега</string>
+    <string name="favorites">Избранное</string>
+    <string name="filters_no_matches">Этим фильтрам не соответствует ни один документ</string>
+    <string name="filters_clear">Сбросить фильтры</string>
+</resources>

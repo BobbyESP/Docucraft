@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="more_options">Más opciones</string>
+    <string name="scan">Escanear</string>
+    <string name="issue_sharing_doc">Ocurrió un problema al intentar compartir el documento</string>
+    <string name="share">Compartir</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Eliminar</string>
+    <string name="unknown_error">Error desconocido</string>
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="title">Título</string>
+    <string name="description">Descripción</string>
+    <string name="name">Nombre</string>
+    <string name="search_documents">Buscar documentos</string>
+    <string name="night_mode">Modo nocturno</string>
+    <string name="fit_mode">Modo de ajuste</string>
+    <string name="fit_mode_width">Ajustar al ancho</string>
+    <string name="fit_mode_height">Ajustar al alto</string>
+    <string name="fit_mode_page">Página completa</string>
+    <string name="fit_mode_proportional">Proporcional</string>
+    <string name="back">Atrás</string>
+    <string name="viewer_error_not_found">Este documento ya no está aquí</string>
+    <string name="link_no_app">No hay ninguna app para abrir este enlace</string>
+    <string name="open">Abrir</string>
+    <string name="recents">Recientes</string>
+    <string name="documents">Documentos</string>
+    <!-- Ajustes -->
+    <string name="settings">Ajustes</string>
+    <string name="seed_color">Color base</string>
+    <string name="text_recognition_turn_on">Reconocer texto</string>
+    <string name="move">Mover</string>
+    <string name="library">Biblioteca</string>
+    <string name="folders">Carpetas</string>
+    <string name="folder_new">Nueva carpeta</string>
+    <string name="tags">Etiquetas</string>
+    <string name="tag_new">Nueva etiqueta</string>
+    <string name="favorite">Favorito</string>
+    <string name="bin">Papelera</string>
+    <string name="folder">Carpeta</string>
+</resources>

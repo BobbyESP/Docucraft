@@ -1,0 +1,18 @@
+<resources>
+    <plurals name="n_documents">
+        <item quantity="zero">%d مستند</item>
+        <item quantity="one">مستند واحد</item>
+        <item quantity="two">مستندان</item>
+        <item quantity="few">%d مستندات</item>
+        <item quantity="many">%d مستندًا</item>
+        <item quantity="other">%d مستند</item>
+    </plurals>
+    <plurals name="n_folders">
+        <item quantity="zero">%d مجلد</item>
+        <item quantity="one">مجلد واحد</item>
+        <item quantity="two">مجلدان</item>
+        <item quantity="few">%d مجلدات</item>
+        <item quantity="many">%d مجلدًا</item>
+        <item quantity="other">%d مجلد</item>
+    </plurals>
+</resources>

@@ -5,18 +5,19 @@
 # The PDF viewer
 
 The feature that shows a document: bars, settings, details, *Go to page*, errors, and the viewer
-for other apps' PDFs. Code: `app/.../feature/pdfviewer`. It draws with the engine
+for other apps' PDFs. Code: `:feature:pdfviewer`. It draws with the engine
 ([pdf-engine.md](pdf-engine.md)); text selection and links are in
 [text-and-links.md](text-and-links.md).
 
 ## Structure
 
 ```
-navigation/     PdfViewerKey.kt: PdfViewer, ExternalPdfViewer, PdfDocumentDetails, GoToPage
+navigation/     ViewerKeys.kt: ExternalPdfViewer, PdfDocumentDetails, SaveCopyToLibrary, GoToPage
+                (PdfViewer, the key other features open, is in :core:navigation)
 domain/         ViewerDocumentRef, display-settings use cases, details, hand-off ports, links
 data/           platform content provider, Custom Tabs opener, printer, session memory
 presentation/   PdfViewerViewModel, PdfViewerScreen, sections, components
-di/             PdfViewerModule, PageContentModule
+di/             PdfViewerModule (PageContentModule, which chooses the page readers, is the app's)
 ```
 
 - **One ViewModel per open document** (`PdfViewerViewModel`), keyed by a `ViewerDocumentRef`:

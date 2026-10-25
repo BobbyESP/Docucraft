@@ -1,0 +1,15 @@
+<resources>
+    <string name="no_scanned_documents">No scanned documents</string>
+    <string name="error_loading_docs">Error loading documents</string>
+    <string name="doc_scan_new">Scan new document</string>
+    <string name="doc_scan_to_see_document_list">Scan your first document to see it here.</string>
+    <string name="doc_saved_successfully">The document has been saved successfully</string>
+    <string name="see_all">See all</string>
+    <string name="pinned_folders_empty_title">Keep your folders at hand</string>
+    <string name="pinned_folders_empty_desc">Pinned folders show here.</string>
+    <string name="tags_manage">Edit tags</string>
+    <string name="tag_section_empty">No documents have this tag yet</string>
+    <string name="favorites">Favorites</string>
+    <string name="filters_no_matches">No documents match these filters</string>
+    <string name="filters_clear">Clear filters</string>
+</resources>

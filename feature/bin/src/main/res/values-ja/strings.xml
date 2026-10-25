@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="bin_empty">ゴミ箱を空にする</string>
+    <string name="bin_nothing_title">ゴミ箱は空です</string>
+    <string name="bin_nothing_desc">削除したドキュメントは、元に戻したくなったときのために %1$d 日間ここに残ります。</string>
+    <string name="bin_retention_notice">ドキュメントはゴミ箱に入れてから %1$d 日後に完全に削除されます。</string>
+    <string name="bin_deleted_soon">まもなく完全に削除されます</string>
+    <string name="bin_restored">ライブラリに復元しました</string>
+    <string name="bin_deleted_forever">完全に削除しました</string>
+    <string name="bin_emptied">ゴミ箱を空にしました</string>
+    <string name="restore">復元</string>
+    <string name="delete_forever">完全に削除</string>
+    <string name="delete_forever_confirmation">「%1$s」を完全に削除します。</string>
+    <string name="delete_forever_note">この操作は元に戻せません。エクスポートしたコピーには影響しません。</string>
+</resources>

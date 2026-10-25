@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="error_loading_docs">خطأ في تحميل المستندات</string>
+    <string name="doc_scan_new">مسح مستند جديد</string>
+    <string name="doc_saved_successfully">تم حفظ المستند بنجاح</string>
+    <string name="doc_scan_to_see_document_list">امسح مستنداتك ضوئياً لرؤيتها مدرجة هنا.</string>
+    <string name="no_scanned_documents">لا توجد مستندات ممسوحة ضوئياً</string>
+    <string name="see_all">عرض الكل</string>
+    <string name="pinned_folders_empty_title">اجعل مجلداتك في متناول يدك</string>
+    <string name="pinned_folders_empty_desc">تظهر المجلدات المثبَّتة هنا.</string>
+    <string name="tags_manage">تعديل الوسوم</string>
+    <string name="tag_section_empty">لا يحمل أي مستند هذا الوسم بعد</string>
+    <string name="favorites">المفضَّلة</string>
+    <string name="filters_no_matches">لا توجد مستندات تطابق عوامل التصفية هذه</string>
+    <string name="filters_clear">مسح عوامل التصفية</string>
+</resources>

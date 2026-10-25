@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="bin_empty">إفراغ سلة المحذوفات</string>
+    <string name="bin_nothing_title">سلة المحذوفات فارغة</string>
+    <string name="bin_nothing_desc">المستندات التي تحذفها تبقى هنا لمدة %1$d يومًا، في حال أردت استعادتها.</string>
+    <string name="bin_retention_notice">تُحذف المستندات نهائيًا بعد %1$d يومًا في سلة المحذوفات.</string>
+    <string name="bin_deleted_soon">سيُحذف نهائيًا قريبًا</string>
+    <string name="bin_restored">تمت الاستعادة إلى مكتبتك</string>
+    <string name="bin_deleted_forever">تم الحذف نهائيًا</string>
+    <string name="bin_emptied">تم إفراغ سلة المحذوفات</string>
+    <string name="restore">استعادة</string>
+    <string name="delete_forever">حذف نهائي</string>
+    <string name="delete_forever_confirmation">سيُحذف «%1$s» نهائيًا.</string>
+    <string name="delete_forever_note">لا يمكن التراجع عن هذا الإجراء. النسخ التي صدّرتها لا تتأثر.</string>
+</resources>

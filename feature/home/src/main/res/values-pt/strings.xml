@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="no_scanned_documents">Nenhum documento escaneado</string>
+    <string name="doc_scan_new">Escanear novo documento</string>
+    <string name="doc_saved_successfully">O documento foi salvo com sucesso</string>
+    <string name="error_loading_docs">Erro ao carregar documentos</string>
+    <string name="doc_scan_to_see_document_list">Escanear seus documentos para vê-los listados aqui.</string>
+    <string name="see_all">Ver tudo</string>
+    <string name="pinned_folders_empty_title">Mantenha suas pastas à mão</string>
+    <string name="pinned_folders_empty_desc">As pastas fixadas aparecem aqui.</string>
+    <string name="tags_manage">Editar etiquetas</string>
+    <string name="tag_section_empty">Nenhum documento tem esta etiqueta ainda</string>
+    <string name="favorites">Favoritos</string>
+    <string name="filters_no_matches">Nenhum documento corresponde a estes filtros</string>
+    <string name="filters_clear">Limpar filtros</string>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="clear_search">Limpiar búsqueda</string>
+    <string name="doc_no_matches">Ningún documento coincide</string>
+    <string name="doc_no_matches_desc">Nada coincide con «%1$s». Prueba con otro nombre o una palabra de la descripción.</string>
+    <string name="search_hint_title">Busca en tus documentos</string>
+    <string name="search_hint_desc">Por nombre, o por cualquier palabra de la descripción.</string>
+</resources>

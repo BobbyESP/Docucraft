@@ -3,6 +3,8 @@
  */
 package com.composepdf.internal.engine
 
+import com.composepdf.internal.engine.TileId.Companion.LEVEL_BIAS
+
 /**
  * Identity of a tile, packed into a single [Long].
  *

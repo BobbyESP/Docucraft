@@ -1,0 +1,21 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
+package com.bobbyesp.docucraft.library.data.di
+
+import com.bobbyesp.docucraft.library.data.db.DocumentsDatabase
+import com.bobbyesp.docucraft.library.data.db.dao.ActivityDao
+import com.bobbyesp.docucraft.library.data.db.dao.DocumentDao
+import com.bobbyesp.docucraft.library.data.db.dao.SearchDao
+import org.koin.android.ext.koin.androidContext
+import org.koin.dsl.module
+
+val scannedDocumentsDatabaseModule = module {
+    // How the catalogue is built, migrations included, is the database's own business: the tests
+    // build theirs the same way.
+    single<DocumentsDatabase> { DocumentsDatabase.builder(androidContext()).build() }
+
+    single<DocumentDao> { get<DocumentsDatabase>().documentDao() }
+    single<ActivityDao> { get<DocumentsDatabase>().activityDao() }
+    single<SearchDao> { get<DocumentsDatabase>().searchDao() }
+}

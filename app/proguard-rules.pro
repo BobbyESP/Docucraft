@@ -41,9 +41,6 @@
 # Keep QR code library
 -keep class io.github.g0dkar.qrcode.** { *; }
 
-# Keep ScannedPdf model for PDF deletion dialog
--keep class com.bobbyesp.docucraft.feature.docscanner.domain.model.ScannedDocument { *; }
-
 # Keep Parcelable implementations
 -keepclassmembers class * implements android.os.Parcelable {
     static ** CREATOR;

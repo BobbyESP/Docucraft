@@ -1,0 +1,111 @@
+/*
+ * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
+ */
+package com.bobbyesp.docucraft.navigation
+
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import com.bobbyesp.docucraft.core.navigation.DocucraftNavDisplay
+import com.bobbyesp.docucraft.core.navigation.Navigator
+import com.bobbyesp.docucraft.core.navigation.keys.PdfViewer
+import com.bobbyesp.docucraft.core.navigation.overlay.rememberOverlaySceneStrategy
+import com.bobbyesp.docucraft.core.navigation.pane.sharingTheWindow
+import com.bobbyesp.docucraft.core.navigation.rememberNavigator
+import com.bobbyesp.docucraft.feature.bin.presentation.binSection
+import com.bobbyesp.docucraft.feature.documentactions.presentation.documentActionsSection
+import com.bobbyesp.docucraft.feature.home.navigation.Home
+import com.bobbyesp.docucraft.feature.home.presentation.homeSection
+import com.bobbyesp.docucraft.feature.organization.presentation.folders.foldersSection
+import com.bobbyesp.docucraft.feature.organization.presentation.tags.tagsSection
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pdfViewerSection
+import com.bobbyesp.docucraft.feature.scan.presentation.scanReviewSection
+import com.bobbyesp.docucraft.feature.search.presentation.documentSearchSection
+import com.bobbyesp.docucraft.feature.settings.presentation.settingsSection
+import com.bobbyesp.docucraft.requests.LibraryEntryRequestNavigation
+import com.bobbyesp.docucraft.requests.ScanRequestNavigation
+
+/**
+ * The app shell: a single back stack rendered by a single `NavDisplay` ([DocucraftNavDisplay]).
+ *
+ * - The back stack is the whole navigation state. It survives configuration changes and process
+ *   death via [rememberNavBackStack], and back (including the predictive gesture) simply pops it —
+ *   an open document is closed, never the app, because the stack is only ever exited at Home.
+ * - Scene strategies decide how the stack is arranged: overlays first, then the list-detail layout.
+ *   The list-detail one lets Home and the PDF viewer share the screen on expanded windows; on
+ *   compact windows they behave as a regular stack. Everything emerges from the same back stack —
+ *   there is no separate "tablet navigation", and no second stack for sheets.
+ * - Feature sections contribute their entries via [entryProvider] and say where they want to go
+ *   through a [Navigator]. This file therefore no longer knows the shape of the navigation graph: a
+ *   new destination is a new key and a new `entry`, neither of which lives here.
+ */
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
+@Composable
+fun DocucraftApp(modifier: Modifier = Modifier) {
+    val backStack = rememberNavBackStack(Home)
+    val navigator = rememberNavigator(backStack)
+    val overlayStrategy = rememberOverlaySceneStrategy<NavKey>()
+    val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
+
+    val sceneStrategies =
+        remember(overlayStrategy, listDetailStrategy) {
+            listOf(overlayStrategy, listDetailStrategy.sharingTheWindow())
+        }
+
+    val openDocumentId by remember { derivedStateOf { backStack.openDocumentId() } }
+
+    ScanRequestNavigation(navigator)
+    LibraryEntryRequestNavigation(navigator)
+
+    DocucraftNavDisplay(
+        backStack = backStack,
+        navigator = navigator,
+        sceneStrategies = sceneStrategies,
+        modifier = modifier,
+        entryProvider =
+            entryProvider { docucraftSections(navigator, openDocumentId = openDocumentId) },
+    )
+}
+
+/**
+ * Every destination of the app's stack, from the features that own them. The one list of them,
+ * which the store's screenshots draw the app with too.
+ *
+ * @param openDocumentId The document showing in the detail pane, which the lists mark as selected.
+ */
+fun EntryProviderScope<NavKey>.docucraftSections(navigator: Navigator, openDocumentId: String?) {
+    homeSection(navigator, selectedDocumentId = openDocumentId)
+    documentSearchSection(navigator, selectedDocumentId = openDocumentId)
+    documentActionsSection(navigator)
+    foldersSection(navigator, selectedDocumentId = openDocumentId)
+    tagsSection(navigator)
+    binSection(navigator)
+    scanReviewSection(navigator)
+
+    pdfViewerSection(navigator)
+
+    settingsSection(navigator)
+}
+
+/**
+ * The document showing in the detail pane, for the list to mark as selected.
+ *
+ * The topmost viewer entry anywhere in the stack, not the top of the stack itself. Requiring it to
+ * be on top confused "above" with "instead of": opening a document's actions puts an overlay on the
+ * stack, and an overlay floats over the layout rather than replacing it, so the viewer is still on
+ * screen underneath and the list would drop the highlight of the very document the sheet is about.
+ *
+ * Anything that genuinely replaces the layout — settings, which is a scene of its own — takes the
+ * document list off-screen with it, so a highlight left pointing at a buried viewer is one nobody
+ * can see, and it is correct again by the time the list comes back.
+ */
+internal fun List<NavKey>.openDocumentId(): String? =
+    filterIsInstance<PdfViewer>().lastOrNull()?.documentUuid

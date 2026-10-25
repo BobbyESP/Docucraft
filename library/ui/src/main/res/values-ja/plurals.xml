@@ -1,0 +1,8 @@
+<resources>
+    <plurals name="n_documents">
+        <item quantity="other">%d 件のドキュメント</item>
+    </plurals>
+    <plurals name="n_folders">
+        <item quantity="other">%d 個のフォルダ</item>
+    </plurals>
+</resources>

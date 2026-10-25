@@ -5,8 +5,8 @@
 # The catalogue's database
 
 What the catalogue keeps, the rules it keeps it by, and the decisions behind both. Code:
-`app/.../feature/docscanner/data/db` (Room), with the repositories of `data/repository` over it and
-their ports in `domain/repository`.
+`:library:data`, `db/` (Room), with the repositories of `repository/` over it and their ports in
+`:library:domain`, `repository/`.
 
 How documents get in is in [scanning.md](scanning.md); how they are arranged, in
 [organization.md](organization.md). This document is the model underneath.
@@ -62,8 +62,8 @@ no `RENAME COLUMN`, and no `WITH` inside a trigger.
 
 ## Migrations
 
-In `DocumentsDatabaseMigrations.kt`, with the schemas exported to `app/schemas/`. A schema change
-means: bump the version, add the migration, and commit the new schema JSON.
+In `DocumentsDatabaseMigrations.kt`, with the schemas exported to `library/data/schemas/`. A schema
+change means: bump the version, add the migration, and commit the new schema JSON.
 
 - **There is no destructive fallback.** A version nothing migrates from stops the app rather than
   emptying the library.

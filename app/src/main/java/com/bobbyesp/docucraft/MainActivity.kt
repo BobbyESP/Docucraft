@@ -5,7 +5,6 @@ package com.bobbyesp.docucraft
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -24,19 +23,19 @@ import com.bobbyesp.docucraft.core.domain.model.ThemeConfig
 import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
 import com.bobbyesp.docucraft.core.domain.repository.AnalyticsHelper
 import com.bobbyesp.docucraft.core.domain.repository.InAppNotificationsService
-import com.bobbyesp.docucraft.core.presentation.MainActivityUiState
-import com.bobbyesp.docucraft.core.presentation.MainViewModel
-import com.bobbyesp.docucraft.core.presentation.common.AppLocalSettingsProvider
-import com.bobbyesp.docucraft.core.presentation.common.LocalDarkTheme
-import com.bobbyesp.docucraft.core.presentation.navigation.DocucraftApp
-import com.bobbyesp.docucraft.core.presentation.notifications.SonnerNotificationServiceImpl
-import com.bobbyesp.docucraft.feature.docscanner.domain.LibraryEntryRequest
-import com.bobbyesp.docucraft.feature.docscanner.domain.LibraryEntryRequests
-import com.bobbyesp.docucraft.feature.docscanner.domain.ScanRequestBus
-import com.bobbyesp.docucraft.feature.docscanner.navigation.ACTION_OPEN_DOCUMENT
-import com.bobbyesp.docucraft.feature.docscanner.navigation.ACTION_SCAN_DOCUMENT
-import com.bobbyesp.docucraft.feature.docscanner.navigation.ACTION_SEARCH_DOCUMENTS
-import com.bobbyesp.docucraft.feature.docscanner.navigation.EXTRA_DOCUMENT_UUID
+import com.bobbyesp.docucraft.core.ui.MainActivityUiState
+import com.bobbyesp.docucraft.core.ui.MainViewModel
+import com.bobbyesp.docucraft.core.ui.common.AppLocalSettingsProvider
+import com.bobbyesp.docucraft.core.ui.common.LocalDarkTheme
+import com.bobbyesp.docucraft.core.ui.notifications.SonnerNotificationServiceImpl
+import com.bobbyesp.docucraft.feature.home.domain.ScanRequestBus
+import com.bobbyesp.docucraft.feature.widgets.presentation.ACTION_OPEN_DOCUMENT
+import com.bobbyesp.docucraft.feature.widgets.presentation.ACTION_SCAN_DOCUMENT
+import com.bobbyesp.docucraft.feature.widgets.presentation.ACTION_SEARCH_DOCUMENTS
+import com.bobbyesp.docucraft.feature.widgets.presentation.EXTRA_DOCUMENT_UUID
+import com.bobbyesp.docucraft.navigation.DocucraftApp
+import com.bobbyesp.docucraft.requests.LibraryEntryRequest
+import com.bobbyesp.docucraft.requests.LibraryEntryRequests
 import com.bobbyesp.scanner.mlkit.ActivityResultHostImpl
 import com.dokar.sonner.Toaster
 import io.github.vinceglb.filekit.FileKit
@@ -158,22 +157,6 @@ class MainActivity : ComponentActivity(), KoinComponent {
     override fun onDestroy() {
         super.onDestroy()
         resultHost.detach(this)
-
-        // Fix for FileKit memory leak: Clear the static registry reference if it points to this
-        // activity
-        try {
-            val fileKitClass = Class.forName("io.github.vinceglb.filekit.dialogs.FileKitDialog")
-            val registryField = fileKitClass.getDeclaredField("_registry")
-            registryField.isAccessible = true
-            val currentRegistry = registryField.get(null)
-
-            if (currentRegistry === this.activityResultRegistry) {
-                Log.d("FileKit", "Clearing FileKit registry reference")
-                registryField.set(null, null)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
     }
 
     /**
@@ -189,6 +172,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
                     .getStringExtra(EXTRA_DOCUMENT_UUID)
                     ?.takeIf { it.isNotBlank() }
                     ?.let { entryRequests.request(LibraryEntryRequest.OpenDocument(it)) }
+
             else -> return
         }
         // The Activity keeps its Intent, and would be asked the same thing again each time it is
@@ -208,6 +192,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
                         android.content.res.Configuration.UI_MODE_NIGHT_MASK
                 uiMode == android.content.res.Configuration.UI_MODE_NIGHT_YES
             }
+
             ThemeConfig.LIGHT -> false
             ThemeConfig.DARK -> true
         }

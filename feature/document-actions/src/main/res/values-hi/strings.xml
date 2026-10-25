@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="doc_modify_details_description">इसकी सामग्री और विवरण को दर्शाने के लिए नीचे दस्तावेज़ शीर्षक और विवरण अपडेट करें।</string>
+    <string name="doc_modify_details">दस्तावेज़ विवरण संशोधित करें</string>
+    <string name="doc_delete">दस्तावेज़ हटाएं</string>
+    <string name="doc_saved_successfully_to">दस्तावेज़ सफलतापूर्वक %1$s में सहेजा गया</string>
+    <string name="doc_updated_successfully">दस्तावेज़ सफलतापूर्वक अपडेट किया गया</string>
+    <string name="removed_from_recents">हाल ही के से हटाया गया</string>
+    <string name="text_recognition_turned_on">इसका टेक्स्ट बैकग्राउंड में पहचाना जा रहा है</string>
+    <string name="text_recognition_turned_off">पहचाना गया टेक्स्ट हटा दिया गया</string>
+    <string name="move_to_bin">ट्रैश में ले जाएं</string>
+    <string name="doc_bin_confirmation">“%1$s” ट्रैश में चला जाएगा।</string>
+    <string name="doc_bin_note">यह वहाँ %1$d दिन रहता है और तब तक वापस लाया जा सकता है।</string>
+    <string name="doc_moved_to_bin">ट्रैश में ले जाया गया</string>
+</resources>

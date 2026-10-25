@@ -6,12 +6,4 @@
     <color name="ic_foreground">#333333</color>
     <color name="ic_background">#FFFDF0</color>
 
-    <color name="widget_primary">#6750A4</color>
-    <color name="widget_on_primary">#FFFFFF</color>
-    <color name="widget_primary_container">#EADDFF</color>
-    <color name="widget_on_primary_container">#21005D</color>
-    <color name="widget_surface">#F3EDF7</color>
-    <color name="widget_surface_container">#FFFFFF</color>
-    <color name="widget_on_surface">#1D1B20</color>
-    <color name="widget_on_surface_variant">#49454F</color>
 </resources>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="skip">跳过</string>
+    <string name="scan_review_title">扫描件已保存</string>
+    <string name="scan_review_desc">它已在您的文档库中。现在为它命名，或先跳过，稍后再处理。</string>
+    <string name="scan_review_recognize_text_desc">以便按内容找到它</string>
+    <string name="suggestions">建议</string>
+    <string name="suggestions_working">正在读取文档…</string>
+    <string name="suggestions_none">此文档没有可建议的内容。</string>
+    <string name="suggestions_failed">这次无法生成建议。</string>
+    <string name="suggestions_text_recognition_off">不会提供任何建议：此文档已关闭文字识别，而不识别的话扫描件就没有文字。请在下方开启，或在“设置”中为所有新文档开启。</string>
+    <string name="suggestion_use">使用</string>
+    <string name="suggestion_move_to">移动到“%1$s”</string>
+    <string name="tags_add">添加标签</string>
+    <string name="scan_review_section_details">详情</string>
+    <string name="scan_review_section_organize">整理</string>
+</resources>

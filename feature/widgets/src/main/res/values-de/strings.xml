@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="widget_scan_title">Dokument scannen</string>
+    <string name="widget_scan_subtitle">Zum Scannen tippen</string>
+    <string name="widget_recents_description">Ihre neuesten Dokumente, nur einen Fingertipp entfernt</string>
+    <string name="widget_recents_empty">Ihre Dokumente erscheinen hier</string>
+</resources>

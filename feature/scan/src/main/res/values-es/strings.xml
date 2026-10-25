@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="skip">Omitir</string>
+    <string name="scan_review_title">Escaneo guardado</string>
+    <string name="scan_review_desc">Ya está en tu biblioteca. Ponle nombre ahora u omítelo y hazlo después.</string>
+    <string name="scan_review_recognize_text_desc">Para encontrarlo por lo que dice</string>
+    <string name="suggestions">Sugerencias</string>
+    <string name="suggestions_working">Leyendo el documento…</string>
+    <string name="suggestions_none">No hay nada que sugerir para este documento.</string>
+    <string name="suggestions_failed">Esta vez no se han podido hacer sugerencias.</string>
+    <string name="suggestions_text_recognition_off">No se va a sugerir nada: el reconocimiento de texto está desactivado para este documento y un escaneo no tiene texto sin él. Actívalo abajo, o para todos los documentos nuevos en Ajustes.</string>
+    <string name="suggestion_use">Usar</string>
+    <string name="suggestion_move_to">Mover a %1$s</string>
+    <string name="tags_add">Añadir etiquetas</string>
+    <string name="scan_review_section_details">Detalles</string>
+    <string name="scan_review_section_organize">Organizar</string>
+</resources>
