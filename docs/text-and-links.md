@@ -89,10 +89,34 @@ LayeredPageContentProvider(
   **one** rectangle enclosing both (`QuadPoints` are ignored), which can cover nearby text.
 - **Internal links.** `getGotoLinks()` returns **nothing**, for every form tried: explicit
   destinations, `/GoTo` actions, ReportLab tables of contents. That held on the emulator and on a
-  Pixel. The code handles them, and `PlatformContentTest` has a canary that fails the day the
-  platform starts reporting them.
+  Pixel. `PlatformContentTest` has a canary that fails the day the platform starts reporting them.
 
 `PlatformContentTest`, in `:composepdf`, pins all of the above against the fixtures.
+
+### Internal links, read from the file
+
+Since the platform reports none, `PlatformPageContentProvider` reads them itself, with
+`InternalLinkReader` (`links/`). It is not a second PDF library (D1 still holds: nothing is read
+below API 35). It reads only what a link needs:
+- **The cross-reference**, in every form writers leave it: tables, cross-reference streams, both
+  at once, revisions chained by `/Prev`, and objects compressed in object streams (Flate, PNG
+  predictors). A file whose offsets are wrong is read as renderers read it, by finding every
+  `n g obj`, so a document the renderer shows does not lose its links.
+- **The page tree**, with the boxes and rotation each page inherits, so a link and its target are
+  placed in the same normalized space the platform uses: crop box within media box, rotation
+  applied, origin at top left. Where on the target page a link leads is known without opening that
+  page.
+- **Each page's `/Link` annotations**: explicit destinations (`/XYZ`, `/Fit*`), named ones (the
+  catalog's `/Dests`, or the `/Names` tree, as LaTeX and word processors write them), `/GoTo`
+  actions, and `/Named` actions to the next, previous, first or last page. A link over several
+  lines gives one box per line from its `/QuadPoints`.
+- **Encrypted documents** keep their explicit destinations, which encryption leaves readable. Their
+  strings and streams are not decrypted, so named destinations and object streams are not read.
+
+The file is opened a second time for it, with a descriptor of its own, and parsed on the first page
+asked for. A file it cannot parse has no internal links; the document shows all the same.
+`InternalLinkReaderTest` checks it on the JVM against the shared fixtures and against documents it
+builds in each of the forms above.
 
 ## Selection
 
@@ -221,8 +245,10 @@ it leads ("Link: example.com", "Phone link: …", "Blocked link"), and it opens 
 
 ## Known limits
 
-- A link over two lines is one rectangle that may cover nearby text.
-- Internal links are never reported by the platform.
+- A web link over two lines is one rectangle that may cover nearby text (the platform ignores
+  `QuadPoints`). Internal links, read from the file, do not have this problem.
+- Internal links need API 35, as the rest of the page's content does (D1).
+- In an encrypted document, internal links to named destinations are not found.
 - A line that mixes directions (bidi) is highlighted from its first selected character to its last.
 - Selection follows the document's order: in a form stored column by column, dragging down a
   column also takes in whatever the document stores in between.

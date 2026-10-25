@@ -355,9 +355,10 @@ modules) and `navigation/` (keys only that feature opens).
   - `PdfViewerActivity` advertises `http`/`https` PDFs, but loads through the `ContentResolver`,
     so a remote PDF ends on the error screen. The engine can download (`PdfSource.Remote`); the app
     does not use it yet.
-  - Internal links inside a PDF are never reported by the platform (`getGotoLinks()` is empty).
-    The code is ready for them.
-  - A link that spans two lines comes as one rectangle that may also cover nearby text.
+  - Internal links inside a PDF are never reported by the platform (`getGotoLinks()` is empty), so
+    `PlatformPageContentProvider` reads them from the file with `InternalLinkReader`; see
+    [docs/text-and-links.md](docs/text-and-links.md#internal-links-read-from-the-file).
+  - A web link that spans two lines comes as one rectangle that may also cover nearby text.
   - `./gradlew :app:lintDebug` fails on `NewApi`: `BlurHalo.kt` calls
     `RuntimeShader.setFloatUniform` (API 33) where lint sees no version check. Every string and
     plural is translated into the twelve languages in `res/values-*`, so a new one needs all of
