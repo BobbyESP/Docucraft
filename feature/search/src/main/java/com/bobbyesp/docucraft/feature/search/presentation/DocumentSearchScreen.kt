@@ -120,7 +120,6 @@ fun DocumentSearchScreen(
  * The field floats, frosted, over the results rather than below them, as Home's button floats over
  * the list: they scroll beneath it, and the room it takes is added to their padding.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocumentSearchContent(
     uiState: DocumentSearchUiState,
@@ -303,7 +302,6 @@ private fun SearchField(
     )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SearchResults(
     results: List<SearchResult>,

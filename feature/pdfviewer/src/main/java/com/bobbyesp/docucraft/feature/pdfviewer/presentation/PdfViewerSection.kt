@@ -103,7 +103,7 @@ fun EntryProviderScope<NavKey>.externalPdfViewerSection(
         }
     }
 
-    // The document of the library with the same content as the one handed over, when the reader
+    // The document of the library with the same content as the one-handed over, when the reader
     // asks for it: on top of that one, so that back returns to it. There is no list here to sit
     // beside, so it is a plain destination.
     entry<PdfViewer> { route ->

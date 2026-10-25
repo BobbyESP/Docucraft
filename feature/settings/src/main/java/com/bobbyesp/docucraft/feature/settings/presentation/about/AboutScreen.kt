@@ -109,7 +109,6 @@ fun AboutScreen(onBack: () -> Unit, modifier: Modifier = Modifier, showBackButto
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AboutScreenContent(
     onBack: () -> Unit,

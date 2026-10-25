@@ -77,7 +77,7 @@ import kotlinx.coroutines.launch
  *
  * It also holds what is needed to select and copy text: a content session on the document, opened
  * on first need and closed with the ViewModel, the text of the pages near what is on screen, and
- * the selection. Copying may need pages that are not near the screen any more, so it happens here.
+ * the selection. Copying may need pages that are not near the screen anymore, so it happens here.
  */
 class PdfViewerViewModel(
     private val ref: ViewerDocumentRef,
@@ -241,7 +241,7 @@ class PdfViewerViewModel(
 
     /**
      * Not in the ViewModel's own scope: the last position arrives as the viewer is leaving, and a
-     * write started then would be cancelled with it. The reader would come back to where they were
+     * write started then would be canceled with it. The reader would come back to where they were
      * a second before they left.
      */
     private fun keepPosition(position: ReadingPosition) {
