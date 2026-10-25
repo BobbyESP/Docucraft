@@ -126,6 +126,7 @@ class MoveToFolderViewModel(
             when {
                 documentUuid != null ->
                     folders.moveDocuments(listOf(documentUuid), destination?.uuid)
+
                 movedFolderUuid != null -> folders.move(movedFolderUuid, destination?.uuid)
                 else -> return@launch
             }

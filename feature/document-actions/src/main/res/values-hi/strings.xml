@@ -4,7 +4,7 @@
     <string name="doc_modify_details">दस्तावेज़ विवरण संशोधित करें</string>
     <string name="doc_delete">दस्तावेज़ हटाएं</string>
     <string name="doc_saved_successfully_to">दस्तावेज़ सफलतापूर्वक %1$s में सहेजा गया</string>
-	<string name="doc_updated_successfully">दस्तावेज़ सफलतापूर्वक अपडेट किया गया</string>
+    <string name="doc_updated_successfully">दस्तावेज़ सफलतापूर्वक अपडेट किया गया</string>
     <string name="removed_from_recents">हाल ही के से हटाया गया</string>
     <string name="text_recognition_turned_on">इसका टेक्स्ट बैकग्राउंड में पहचाना जा रहा है</string>
     <string name="text_recognition_turned_off">पहचाना गया टेक्स्ट हटा दिया गया</string>

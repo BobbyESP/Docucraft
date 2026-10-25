@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-	<string name="widget_scan_subtitle">Appuyez pour commencer à numériser</string>
-	<string name="widget_scan_title">Scanner un document</string>
+    <string name="widget_scan_subtitle">Appuyez pour commencer à numériser</string>
+    <string name="widget_scan_title">Scanner un document</string>
     <string name="widget_recents_description">Vos derniers documents, à portée de main</string>
     <string name="widget_recents_empty">Vos documents apparaîtront ici</string>
 </resources>

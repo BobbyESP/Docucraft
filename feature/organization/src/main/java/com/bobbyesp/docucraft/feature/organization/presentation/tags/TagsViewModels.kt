@@ -71,6 +71,7 @@ class DocumentTagsViewModel(
                         tags.tag(documentUuid, intent.tagUuid)
                     }
                 }
+
             is DocumentTagsIntent.AddByName -> launch { tagByName(documentUuid, intent.name) }
         }
     }
@@ -163,10 +164,12 @@ class TagsViewModel(
                 launch {
                     arrangeHomeSections.setShown(intent.tagUuid, intent.shown)
                 }
+
             is TagsIntent.MoveSection ->
                 launch {
                     arrangeHomeSections.move(intent.tagUuid, intent.by)
                 }
+
             TagsIntent.ConfirmDelete -> delete()
         }
     }

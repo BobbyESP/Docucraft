@@ -4,7 +4,7 @@
     <string name="doc_modify_details">Modifier les détails du document</string>
     <string name="doc_delete">Supprimer le document</string>
     <string name="doc_saved_successfully_to">Document enregistré avec succès dans %1$s</string>
-	<string name="doc_updated_successfully">Document mis à jour avec succès</string>
+    <string name="doc_updated_successfully">Document mis à jour avec succès</string>
     <string name="removed_from_recents">Retiré des Récents</string>
     <string name="text_recognition_turned_on">Son texte est reconnu en arrière-plan</string>
     <string name="text_recognition_turned_off">Le texte reconnu a été supprimé</string>

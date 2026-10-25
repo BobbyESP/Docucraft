@@ -4,7 +4,7 @@
     <string name="doc_modify_details_description">ドキュメントのタイトルと説明を更新して、その内容と詳細を反映させてください。</string>
     <string name="doc_modify_details">ドキュメントの詳細を変更</string>
     <string name="doc_saved_successfully_to">ドキュメントは %1$s に正常に保存されました</string>
-	<string name="doc_updated_successfully">ドキュメントを正常に更新しました</string>
+    <string name="doc_updated_successfully">ドキュメントを正常に更新しました</string>
     <string name="removed_from_recents">「最近」から削除しました</string>
     <string name="text_recognition_turned_on">テキストをバックグラウンドで認識しています</string>
     <string name="text_recognition_turned_off">認識したテキストを削除しました</string>

@@ -59,8 +59,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -524,9 +522,11 @@ private fun Suggestions(
                 SuggestionsUiState.Hidden -> Unit
                 SuggestionsUiState.Working ->
                     Text(text = stringResource(R.string.suggestions_working))
+
                 SuggestionsUiState.Nothing -> Text(text = stringResource(R.string.suggestions_none))
                 SuggestionsUiState.Failed ->
                     Text(text = stringResource(R.string.suggestions_failed))
+
                 SuggestionsUiState.TextRecognitionOff -> {
                     Text(text = stringResource(R.string.suggestions_text_recognition_off))
                     TextButton(
@@ -541,6 +541,7 @@ private fun Suggestions(
                         Text(text = stringResource(DesignsystemR.string.settings))
                     }
                 }
+
                 is SuggestionsUiState.Ready -> {
                     val suggestions = state.suggestions
                     suggestions.title?.let { suggested ->

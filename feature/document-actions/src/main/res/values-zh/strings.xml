@@ -4,7 +4,7 @@
     <string name="doc_saved_successfully_to">文档已成功保存到 %1$s</string>
     <string name="doc_modify_details">修改文档详情</string>
     <string name="doc_delete">删除文档</string>
-	<string name="doc_updated_successfully">文档更新成功</string>
+    <string name="doc_updated_successfully">文档更新成功</string>
     <string name="removed_from_recents">已从“最近”中移除</string>
     <string name="text_recognition_turned_on">正在后台识别其文字</string>
     <string name="text_recognition_turned_off">已移除识别出的文字</string>

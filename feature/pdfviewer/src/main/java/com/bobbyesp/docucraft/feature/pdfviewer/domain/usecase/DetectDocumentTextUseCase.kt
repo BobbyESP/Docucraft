@@ -48,6 +48,7 @@ class DetectDocumentTextUseCase(private val provider: PageContentProvider) {
                         }
                         sawNoText = true
                     }
+
                     PageContentResult.NoText -> sawNoText = true
                     PageContentResult.Unsupported -> return@use DocumentText.Unsupported
                     // Past the last page, or a page that could not be read.

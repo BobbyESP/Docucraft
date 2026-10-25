@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-	<string name="widget_scan_subtitle">Нажмите, чтобы начать сканирование</string>
-	<string name="widget_scan_title">Сканировать документ</string>
+    <string name="widget_scan_subtitle">Нажмите, чтобы начать сканирование</string>
+    <string name="widget_scan_title">Сканировать документ</string>
     <string name="widget_recents_description">Последние документы — в одно касание</string>
     <string name="widget_recents_empty">Здесь появятся ваши документы</string>
 </resources>

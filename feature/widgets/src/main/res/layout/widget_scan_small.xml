@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- One cell: there is room for the icon and nothing else. -->
+<?xml version="1.0" encoding="utf-8"?><!-- One cell: there is room for the icon and nothing else. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@android:id/background"

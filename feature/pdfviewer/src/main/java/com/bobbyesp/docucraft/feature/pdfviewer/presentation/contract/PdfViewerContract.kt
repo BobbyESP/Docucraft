@@ -120,6 +120,7 @@ data class LinkPreview(val page: Int, val area: NormalizedRect, val action: Link
                 is LinkAction.Dial -> action.number
                 is LinkAction.Blocked ->
                     action.target.takeUnless { action.reason == BlockReason.OutsideDocument }
+
                 is LinkAction.GoTo -> null
             }
 }

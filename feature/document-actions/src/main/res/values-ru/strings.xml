@@ -4,7 +4,7 @@
     <string name="doc_modify_details_description">Обновите название и описание документа ниже, чтобы отразить его содержание и детали.</string>
     <string name="doc_saved_successfully_to">Документ успешно сохранен в %1$s</string>
     <string name="doc_delete">Удалить документ</string>
-	<string name="doc_updated_successfully">Документ успешно обновлен</string>
+    <string name="doc_updated_successfully">Документ успешно обновлен</string>
     <string name="removed_from_recents">Убрано из недавних</string>
     <string name="text_recognition_turned_on">Текст распознаётся в фоновом режиме</string>
     <string name="text_recognition_turned_off">Распознанный текст удалён</string>

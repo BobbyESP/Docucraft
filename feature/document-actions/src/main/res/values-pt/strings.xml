@@ -4,7 +4,7 @@
     <string name="doc_modify_details_description">Atualize o título e a descrição do documento abaixo para refletir seu conteúdo e detalhes.</string>
     <string name="doc_saved_successfully_to">Documento salvo com sucesso em %1$s</string>
     <string name="doc_delete">Excluir documento</string>
-	<string name="doc_updated_successfully">Documento atualizado com sucesso</string>
+    <string name="doc_updated_successfully">Documento atualizado com sucesso</string>
     <string name="removed_from_recents">Removido de Recentes</string>
     <string name="text_recognition_turned_on">O texto está sendo reconhecido em segundo plano</string>
     <string name="text_recognition_turned_off">O texto reconhecido foi removido</string>

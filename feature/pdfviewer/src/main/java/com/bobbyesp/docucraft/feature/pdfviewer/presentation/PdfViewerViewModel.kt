@@ -213,6 +213,7 @@ class PdfViewerViewModel(
                 noteAvailability(DocumentAvailability.AVAILABLE)
                 describe(pageCount = intent.pageCount, isProtected = false)
             }
+
             is PdfViewerIntent.ReadingPositionChanged -> keepPosition(intent.position)
             is PdfViewerIntent.DocumentFailedToLoad -> {
                 noteAvailability(intent.error.availability)
@@ -220,6 +221,7 @@ class PdfViewerViewModel(
                     describe(pageCount = null, isProtected = true)
                 }
             }
+
             is PdfViewerIntent.VisiblePagesChanged -> loadTextNear(intent.pages)
             is PdfViewerIntent.Select -> setState { copy(selection = intent.selection) }
             PdfViewerIntent.SelectAll -> selectAll()
@@ -241,8 +243,8 @@ class PdfViewerViewModel(
 
     /**
      * Not in the ViewModel's own scope: the last position arrives as the viewer is leaving, and a
-     * write started then would be canceled with it. The reader would come back to where they were
-     * a second before they left.
+     * write started then would be canceled with it. The reader would come back to where they were a
+     * second before they left.
      */
     private fun keepPosition(position: ReadingPosition) {
         longLived.launch {
@@ -318,9 +320,11 @@ class PdfViewerViewModel(
                             NotificationType.Success,
                         )
                     )
+
                 is SaveToLibraryOutcome.AlreadyInLibrary ->
                     // `uuid` is not null here: nothing is found to be a duplicate without one.
                     sendEffect(PdfViewerEffect.ConfirmSaveCopy(checkNotNull(uuid)))
+
                 SaveToLibraryOutcome.NotReadable -> saveFailed()
                 // Saved from somewhere else in the meantime: the action is already gone.
                 SaveToLibraryOutcome.NothingToSave -> Unit
@@ -376,6 +380,7 @@ class PdfViewerViewModel(
                 setState { copy(linkPreview = null) }
                 sendEffect(PdfViewerEffect.GoToPage(action.pageIndex, action.position, intent.page))
             }
+
             else -> {
                 val area = intent.link.bounds.reduce(NormalizedRect::union)
                 setState {

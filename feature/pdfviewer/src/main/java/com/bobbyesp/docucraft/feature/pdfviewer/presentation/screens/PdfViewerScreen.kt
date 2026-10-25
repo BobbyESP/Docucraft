@@ -61,6 +61,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
@@ -111,6 +112,8 @@ import com.composepdf.ScrollDirection
 import com.composepdf.rememberPdfViewerState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
@@ -122,13 +125,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
-import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 
-@OptIn(
-    ExperimentalMaterial3ExpressiveApi::class,
-)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PdfViewerScreen(
     viewModel: PdfViewerViewModel,
@@ -466,11 +464,13 @@ private fun rememberSelectionHandler(
                         )
                         true
                     }
+
                     is LongPressOutcome.NoText -> {
                         haptics.performHapticFeedback(HapticFeedbackType.Reject)
                         send(PdfViewerIntent.NothingToSelect(outcome.reason))
                         false
                     }
+
                     LongPressOutcome.NoWord,
                     LongPressOutcome.NotReady -> false
                 }
@@ -586,12 +586,14 @@ private fun HandlePdfViewerEffects(
                             duration = AlreadyInLibraryNotice,
                         )
                     )
+
                 is PdfViewerEffect.OpenLink ->
                     if (!linkOpener.open(effect.action, latestLook)) {
                         notifications.show(
                             InAppNotification(message = noApp, type = NotificationType.Error)
                         )
                     }
+
                 is PdfViewerEffect.GoToPage -> {
                     // Where the reader was, to take them back: the point at the top of the
                     // content area, which is where the jump will put its target too.
@@ -624,6 +626,7 @@ private fun HandlePdfViewerEffects(
                         )
                     )
                 }
+
                 is PdfViewerEffect.CopyText -> {
                     clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(copied, effect.text)))
                     // From Android 13 the system confirms a copy itself.

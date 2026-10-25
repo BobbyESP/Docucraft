@@ -57,18 +57,22 @@ class BinViewModelTest {
         testDocument(uuid = uuid).copy(trashedAtEpochMillis = now - daysAgo * day)
 
     private fun viewModel(documents: FakeDocumentsRepository, documentUuid: String? = null) =
-        DeleteFromBinUseCase(documents, FakeDocumentStorage(), FakeDocumentThumbnails()).let {
-            deleteFromBin ->
-            BinViewModel(
-                documentUuid = documentUuid,
-                documents = documents,
-                restoreDocument = RestoreDocumentUseCase(documents, queue),
-                deleteFromBin = deleteFromBin,
-                emptyBin = EmptyBinUseCase(documents, deleteFromBin),
-                stringProvider = stringProvider,
-                now = { now },
+        DeleteFromBinUseCase(
+                documents,
+                FakeDocumentStorage(),
+                FakeDocumentThumbnails(),
             )
-        }
+            .let { deleteFromBin ->
+                BinViewModel(
+                    documentUuid = documentUuid,
+                    documents = documents,
+                    restoreDocument = RestoreDocumentUseCase(documents, queue),
+                    deleteFromBin = deleteFromBin,
+                    emptyBin = EmptyBinUseCase(documents, deleteFromBin),
+                    stringProvider = stringProvider,
+                    now = { now },
+                )
+            }
 
     private fun TestScope.effectsOf(viewModel: BinViewModel): List<BinEffect> {
         val effects = mutableListOf<BinEffect>()

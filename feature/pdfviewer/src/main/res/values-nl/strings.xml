@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-	<string name="zoom_in">Inzoomen</string>
-	<string name="go_to_page">Ga naar pagina</string>
-	<string name="zoom_out">Uitzoomen</string>
+    <string name="zoom_in">Inzoomen</string>
+    <string name="go_to_page">Ga naar pagina</string>
+    <string name="zoom_out">Uitzoomen</string>
     <string name="print">Afdrukken</string>
     <string name="open_with">Openen met</string>
     <string name="document_details">Documentdetails</string>

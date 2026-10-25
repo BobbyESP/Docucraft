@@ -4,7 +4,7 @@
     <string name="doc_saved_successfully_to">문서가 %1$s에 성공적으로 저장되었습니다.</string>
     <string name="doc_modify_details_description">문서 제목과 설명을 업데이트하여 콘텐츠와 세부 정보를 반영하십시오.</string>
     <string name="doc_delete">문서 삭제</string>
-	<string name="doc_updated_successfully">문서가 성공적으로 업데이트되었습니다.</string>
+    <string name="doc_updated_successfully">문서가 성공적으로 업데이트되었습니다.</string>
     <string name="removed_from_recents">최근 항목에서 삭제됨</string>
     <string name="text_recognition_turned_on">백그라운드에서 텍스트를 인식하고 있습니다</string>
     <string name="text_recognition_turned_off">인식된 텍스트가 삭제되었습니다</string>

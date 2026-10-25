@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
     What the widget picker shows from Android 12: the widget with rows that name no document. A
     picker cannot be given the library, and an invented name would have to be written in every
     language.

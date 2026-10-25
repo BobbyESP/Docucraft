@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
     Placed four cells wide and two tall, and no smaller than three by two: a row needs the width for
     a name. It asks for no update on a timer; the app tells it when the library changes.
 -->

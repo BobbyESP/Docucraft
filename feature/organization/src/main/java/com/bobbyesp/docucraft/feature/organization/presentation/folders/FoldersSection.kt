@@ -81,8 +81,10 @@ fun EntryProviderScope<NavKey>.foldersSection(navigator: Navigator, selectedDocu
         if (state.isLoading) return@entry
         val folder = state.folder
 
-        // Whatever has been written and selected (regardless of the folder in question) is preserved
-        // here so that it persists after the process has concluded; furthermore, the sheet transforms
+        // Whatever has been written and selected (regardless of the folder in question) is
+        // preserved
+        // here so that it persists after the process has concluded; furthermore, the sheet
+        // transforms
         // into a dialog box when the window changes shape.
         var name by rememberSaveable { mutableStateOf(folder?.name.orEmpty()) }
         var colorKey by rememberSaveable { mutableStateOf(folder?.color) }

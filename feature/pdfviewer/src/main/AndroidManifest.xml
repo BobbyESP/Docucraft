@@ -48,10 +48,18 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="content" android:mimeType="application/pdf" />
-                <data android:scheme="file" android:mimeType="application/pdf" />
-                <data android:scheme="http" android:mimeType="application/pdf" />
-                <data android:scheme="https" android:mimeType="application/pdf" />
+                <data
+                    android:scheme="content"
+                    android:mimeType="application/pdf" />
+                <data
+                    android:scheme="file"
+                    android:mimeType="application/pdf" />
+                <data
+                    android:scheme="http"
+                    android:mimeType="application/pdf" />
+                <data
+                    android:scheme="https"
+                    android:mimeType="application/pdf" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-	<string name="widget_scan_title">Document scannen</string>
-	<string name="widget_scan_subtitle">Tik om te beginnen met scannen</string>
+    <string name="widget_scan_title">Document scannen</string>
+    <string name="widget_scan_subtitle">Tik om te beginnen met scannen</string>
     <string name="widget_recents_description">Uw nieuwste documenten, één tik verwijderd</string>
     <string name="widget_recents_empty">Uw documenten verschijnen hier</string>
 </resources>

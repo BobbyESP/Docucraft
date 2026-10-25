@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-	<string name="zoom_in">放大</string>
-	<string name="zoom_out">缩小</string>
-	<string name="go_to_page">跳转到页面</string>
+    <string name="zoom_in">放大</string>
+    <string name="zoom_out">缩小</string>
+    <string name="go_to_page">跳转到页面</string>
     <string name="print">打印</string>
     <string name="open_with">打开方式</string>
     <string name="document_details">文档详情</string>

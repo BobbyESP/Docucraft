@@ -93,6 +93,7 @@ class PdfViewerViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private val catalogue = MutableStateFlow<Document?>(null)
+
     /** The document the fake catalogue registers for what another app hands over. */
     private val handedOver = MutableStateFlow<Document?>(testLinkedDocument(uuid = LINKED_UUID))
     private val observeDocument: ObserveDocumentUseCase = mockk {

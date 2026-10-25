@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-	<string name="zoom_in">ज़ूम इन करें</string>
-	<string name="zoom_out">ज़ूम आउट करें</string>
-	<string name="go_to_page">पेज पर जाएँ</string>
+    <string name="zoom_in">ज़ूम इन करें</string>
+    <string name="zoom_out">ज़ूम आउट करें</string>
+    <string name="go_to_page">पेज पर जाएँ</string>
     <string name="print">प्रिंट करें</string>
     <string name="open_with">इससे खोलें</string>
     <string name="document_details">दस्तावेज़ की जानकारी</string>

@@ -129,7 +129,6 @@ import com.bobbyesp.docucraft.library.domain.model.labelColor
 import com.bobbyesp.docucraft.library.ui.card.Measurements
 import com.bobbyesp.docucraft.library.ui.card.ScannedDocumentListItem
 import com.bobbyesp.docucraft.library.ui.list.SortMenu
-import com.bobbyesp.docucraft.library.ui.list.label
 import com.bobbyesp.docucraft.library.ui.list.rememberFabExpansionState
 import com.bobbyesp.docucraft.library.ui.organization.FolderBadge
 import com.bobbyesp.docucraft.library.ui.organization.FolderCard

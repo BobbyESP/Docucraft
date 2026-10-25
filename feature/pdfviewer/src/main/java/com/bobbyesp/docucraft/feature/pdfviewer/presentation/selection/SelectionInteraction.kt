@@ -26,6 +26,7 @@ fun PageContentResult.toTextState(): PageTextState =
     when (this) {
         is PageContentResult.Available ->
             text?.let { PageTextState.Text(TextSelection(it)) } ?: PageTextState.NoText
+
         PageContentResult.NoText -> PageTextState.NoText
         PageContentResult.Unsupported -> PageTextState.Unsupported
         is PageContentResult.Failed -> PageTextState.Failed
@@ -91,6 +92,7 @@ object SelectionInteraction {
                     )
                 }
             }
+
             PageTextState.NoText -> LongPressOutcome.NoText(TextUnavailable.ImageOnly)
             PageTextState.Unsupported -> LongPressOutcome.NoText(TextUnavailable.UnsupportedDevice)
             PageTextState.Failed,

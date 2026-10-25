@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-	<string name="zoom_in">Aumentar o zoom</string>
-	<string name="zoom_out">Diminuir o zoom</string>
-	<string name="go_to_page">Ir para a página</string>
+    <string name="zoom_in">Aumentar o zoom</string>
+    <string name="zoom_out">Diminuir o zoom</string>
+    <string name="go_to_page">Ir para a página</string>
     <string name="print">Imprimir</string>
     <string name="open_with">Abrir com</string>
     <string name="document_details">Detalhes do documento</string>

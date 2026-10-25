@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Two cells each way or more: the title at the top, the button in the corner the thumb reaches. -->
+<?xml version="1.0" encoding="utf-8"?><!-- Two cells each way or more: the title at the top, the button in the corner the thumb reaches. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@android:id/background"

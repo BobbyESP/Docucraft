@@ -228,6 +228,7 @@ private fun previewContent(action: LinkAction): PreviewContent =
                 warning = if (action.secure) null else stringResource(R.string.link_insecure),
                 open = stringResource(R.string.link_open),
             )
+
         is LinkAction.ComposeEmail ->
             PreviewContent(
                 icon = Icons.Rounded.Email,
@@ -235,6 +236,7 @@ private fun previewContent(action: LinkAction): PreviewContent =
                 detail = action.address,
                 open = stringResource(R.string.link_email_action),
             )
+
         is LinkAction.Dial ->
             PreviewContent(
                 icon = Icons.Rounded.Call,
@@ -242,6 +244,7 @@ private fun previewContent(action: LinkAction): PreviewContent =
                 detail = action.number,
                 open = stringResource(R.string.link_call),
             )
+
         is LinkAction.Blocked ->
             PreviewContent(
                 icon = Icons.Rounded.Block,

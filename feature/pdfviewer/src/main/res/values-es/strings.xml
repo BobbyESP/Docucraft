@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-	<string name="go_to_page">Ir a la página</string>
-	<string name="zoom_in">Acercar</string>
-	<string name="zoom_out">Alejar</string>
+    <string name="go_to_page">Ir a la página</string>
+    <string name="zoom_in">Acercar</string>
+    <string name="zoom_out">Alejar</string>
     <string name="save_to_docucraft">Guardar en Docucraft</string>
     <string name="saved_to_library">Guardado en tu biblioteca</string>
     <string name="save_to_library_failed">No se ha podido guardar este documento. Puede que esté protegido o dañado.</string>

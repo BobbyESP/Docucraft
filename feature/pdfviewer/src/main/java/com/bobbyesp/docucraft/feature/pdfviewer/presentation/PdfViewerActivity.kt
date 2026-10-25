@@ -135,6 +135,7 @@ class PdfViewerActivity : ComponentActivity(), KoinComponent {
             when (intent?.action) {
                 Intent.ACTION_SEND ->
                     @Suppress("DEPRECATION") intent.getParcelableExtra(Intent.EXTRA_STREAM)
+
                 else -> intent?.data
             }
         if (uri == null) return null

@@ -4,7 +4,7 @@
     <string name="doc_modify_details">تعديل تفاصيل المستند</string>
     <string name="doc_delete">حذف المستند</string>
     <string name="doc_saved_successfully_to">تم حفظ المستند بنجاح في %1$s</string>
-	<string name="doc_updated_successfully">تم تحديث المستند بنجاح</string>
+    <string name="doc_updated_successfully">تم تحديث المستند بنجاح</string>
     <string name="removed_from_recents">تمت الإزالة من «الأخيرة»</string>
     <string name="text_recognition_turned_on">يجري التعرّف على نصه في الخلفية</string>
     <string name="text_recognition_turned_off">تمت إزالة النص المتعرَّف عليه</string>
