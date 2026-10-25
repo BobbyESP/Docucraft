@@ -8,7 +8,7 @@ import java.util.zip.DataFormatException
 import java.util.zip.Inflater
 
 /**
- * The objects of a PDF, by number: the cross-reference of ISO 32000-1 §7.5, in every form a writer
+ * The objects of a PDF, by number: the cross-reference of ISO 32000-1, in every form a writer
  * may leave it (tables, cross-reference streams, both at once, several revisions), and objects
  * stored compressed in object streams.
  *
@@ -295,7 +295,7 @@ internal class PdfObjects(private val bytes: PdfBytes) {
             for (i in 0 until count) {
                 val at = row++ * rowLength
                 if (at + rowLength > data.size) return stream.dict
-                // A missing type field means type 1 (§7.5.8.2).
+                // A missing type field means type 1 in the ISO definition.
                 val type = if (widths[0] == 0) 1L else field(data, at, widths[0])
                 val second = field(data, at + widths[0], widths[1])
                 val third = field(data, at + widths[0] + widths[1], widths[2])
@@ -426,7 +426,7 @@ internal class PdfObjects(private val bytes: PdfBytes) {
         }
     }
 
-    /** Undoes a PNG predictor (§7.4.4.4), which cross-reference streams nearly always use. */
+    /** Undoes a PNG predictor, which cross-reference streams nearly always use. */
     private fun unpredict(data: ByteArray, parameters: PdfDict?): ByteArray? {
         val predictor = parameters?.get("Predictor").asInt() ?: 1
         if (predictor < 10) return data.takeIf { predictor == 1 }

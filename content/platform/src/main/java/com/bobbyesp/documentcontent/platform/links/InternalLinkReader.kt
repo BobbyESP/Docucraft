@@ -12,8 +12,8 @@ import com.bobbyesp.documentcontent.PageLink
  *
  * The platform reports none: `getGotoLinks()` comes back empty for every form of internal link (see
  * `PlatformContentTest`), so a table of contents could be seen but not followed. This reads each
- * page's `/Link` annotations (ISO 32000-1 §12.5.6.5) and where they lead:
- * - an explicit destination, `[page /XYZ left top zoom]` and the other forms of §12.3.2.2;
+ * page's `/Link` annotations (ISO 32000-1) and where they lead:
+ * - an explicit destination, `[page /XYZ left top zoom]` and other forms;
  * - a named one, looked up in the catalog's `/Dests` or in its `/Names` tree, which is how LaTeX
  *   and most word processors write them;
  * - a `/GoTo` action, or a `/Named` action to the next, previous, first or last page.
@@ -66,7 +66,7 @@ internal class InternalLinkReader(bytes: PdfBytes) {
     // ------------------------------------------------------------------------------- the pages
 
     /**
-     * The pages in order, each with the boxes and rotation it inherits (§7.7.3.4), walked without
+     * The pages in order, each with the boxes and rotation it inherits, walked without
      * recursion and without visiting a node twice: a damaged tree can loop.
      */
     private fun readPageTree(): List<PageNode> {
@@ -219,7 +219,7 @@ internal class InternalLinkReader(bytes: PdfBytes) {
     private fun named(name: String): Any? =
         namedDestinations?.get(name) ?: destinationTree?.let { lookUp(it, name) }
 
-    /** [key] in a name tree (§7.9.6), by its `/Limits` where it has them, every kid where not. */
+    /** [key] in a name tree, by its `/Limits` where it has them, every kid where not. */
     private fun lookUp(root: PdfDict, key: String): Any? {
         val visited = HashSet<PdfDict>()
         val stack = ArrayDeque<Pair<PdfDict, Int>>()

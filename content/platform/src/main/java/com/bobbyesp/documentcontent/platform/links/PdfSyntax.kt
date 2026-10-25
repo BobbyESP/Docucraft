@@ -124,7 +124,7 @@ internal fun Any?.asInt(): Int? =
 // ------------------------------------------------------------------------------------------ parser
 
 /**
- * Reads PDF objects from [bytes], starting at [position]: the syntax of ISO 32000-1 §7.2–7.3,
+ * Reads PDF objects from [bytes], starting at [position]: the syntax of ISO 32000-1,
  * forgiving where real files are sloppy (an odd hex string, a stray keyword), and bounded where a
  * damaged one could make it run away (nesting, string length).
  */
