@@ -66,8 +66,8 @@ internal class InternalLinkReader(bytes: PdfBytes) {
     // ------------------------------------------------------------------------------- the pages
 
     /**
-     * The pages in order, each with the boxes and rotation it inherits, walked without
-     * recursion and without visiting a node twice: a damaged tree can loop.
+     * The pages in order, each with the boxes and rotation it inherits, walked without recursion
+     * and without visiting a node twice: a damaged tree can loop.
      */
     private fun readPageTree(): List<PageNode> {
         val root = objects.catalog?.get("Pages") ?: return emptyList()

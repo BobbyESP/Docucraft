@@ -124,9 +124,9 @@ internal fun Any?.asInt(): Int? =
 // ------------------------------------------------------------------------------------------ parser
 
 /**
- * Reads PDF objects from [bytes], starting at [position]: the syntax of ISO 32000-1,
- * forgiving where real files are sloppy (an odd hex string, a stray keyword), and bounded where a
- * damaged one could make it run away (nesting, string length).
+ * Reads PDF objects from [bytes], starting at [position]: the syntax of ISO 32000-1, forgiving
+ * where real files are sloppy (an odd hex string, a stray keyword), and bounded where a damaged one
+ * could make it run away (nesting, string length).
  */
 internal class PdfParser(private val bytes: PdfBytes, var position: Long = 0) {
 

@@ -8,9 +8,9 @@ import java.util.zip.DataFormatException
 import java.util.zip.Inflater
 
 /**
- * The objects of a PDF, by number: the cross-reference of ISO 32000-1, in every form a writer
- * may leave it (tables, cross-reference streams, both at once, several revisions), and objects
- * stored compressed in object streams.
+ * The objects of a PDF, by number: the cross-reference of ISO 32000-1, in every form a writer may
+ * leave it (tables, cross-reference streams, both at once, several revisions), and objects stored
+ * compressed in object streams.
  *
  * A file whose cross-reference is missing or points to the wrong places is read the way PDF
  * renderers read it, pdfium included: by finding every `n g obj` in the file. A document the
