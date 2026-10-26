@@ -75,8 +75,26 @@ internal class PlanComputer(private val tileSize: Int = TILE_SIZE) {
 
         // ------------------------------------------------------------------ tiles
         val tileLevel = ZoomSteps.levelFor(zoom)
-        val tilesWorthwhile =
-            zoom > 1f && ZoomSteps.scaleFor(tileLevel) > inputs.renderQuality * 1.01f
+        val levelScale = ZoomSteps.scaleFor(tileLevel)
+        val scanFirst = (visiblePages.first - 1).coerceAtLeast(0)
+        val scanLast = (visiblePages.last + 1).coerceAtMost(pageCount - 1)
+        val tilesPage = { page: Int ->
+            tilesSharpen(
+                pageWidth = layout.pageWidthPx(page),
+                pageHeight = layout.pageHeightPx(page),
+                baseScale = baseScale,
+                levelScale = levelScale,
+                beyondBase = tileLevel > baseLevel,
+                quality = inputs.renderQuality,
+            )
+        }
+        var tilesWorthwhile = false
+        for (page in scanFirst..scanLast) {
+            if (tilesPage(page)) {
+                tilesWorthwhile = true
+                break
+            }
+        }
 
         val speed = abs(inputs.velocityX) + abs(inputs.velocityY)
         val tilesFrozen = tilesWorthwhile && speed > HIGH_SPEED_PX_PER_S
@@ -85,10 +103,10 @@ internal class PlanComputer(private val tileSize: Int = TILE_SIZE) {
         val visibleRectByPage = HashMap<Int, TileRect>()
 
         if (tilesWorthwhile && !tilesFrozen) {
-            val levelScale = ZoomSteps.scaleFor(tileLevel)
             planTiles(
                 inputs = inputs,
-                visiblePages = visiblePages,
+                pages = scanFirst..scanLast,
+                tilesPage = tilesPage,
                 tileLevel = tileLevel,
                 levelScale = levelScale,
                 desiredTilesByPage = desiredTilesByPage,
@@ -113,9 +131,16 @@ internal class PlanComputer(private val tileSize: Int = TILE_SIZE) {
         )
     }
 
+    /**
+     * @param pages Pages potentially intersecting the extended viewport: the visible range plus one
+     *   page on each side is always sufficient, because the lookahead never exceeds a viewport
+     *   dimension.
+     * @param tilesPage Whether tiles would make that page sharper than its base bitmap.
+     */
     private fun planTiles(
         inputs: PlanInputs,
-        visiblePages: IntRange,
+        pages: IntRange,
+        tilesPage: (Int) -> Boolean,
         tileLevel: Int,
         levelScale: Float,
         desiredTilesByPage: MutableMap<Int, Set<Long>>,
@@ -143,12 +168,8 @@ internal class PlanComputer(private val tileSize: Int = TILE_SIZE) {
         val extTop = if (inputs.velocityY > 0f) -lookY else -FIXED_HALO_PX
         val extBottom = inputs.viewportHeight + if (inputs.velocityY < 0f) lookY else FIXED_HALO_PX
 
-        // Pages potentially intersecting the extended viewport: visible range plus one page on
-        // each side is always sufficient because the lookahead never exceeds a viewport dimension.
-        val scanFirst = (visiblePages.first - 1).coerceAtLeast(0)
-        val scanLast = (visiblePages.last + 1).coerceAtMost(layout.pageSizes.size - 1)
-
-        for (page in scanFirst..scanLast) {
+        for (page in pages) {
+            if (!tilesPage(page)) continue
             val pageWidth = layout.pageWidthPx(page)
             val pageHeight = layout.pageHeightPx(page)
 
@@ -296,5 +317,40 @@ internal class PlanComputer(private val tileSize: Int = TILE_SIZE) {
             }
             return w.roundToInt().coerceAtLeast(1) to h.roundToInt().coerceAtLeast(1)
         }
+
+        /**
+         * Whether tiles at [levelScale] would show a page sharper than its base bitmap, judged from
+         * the bitmap's real width rather than from the zoom.
+         *
+         * The base bitmap is meant to be the page at [baseScale] × [quality], but [MAX_BITMAP_PX]
+         * caps both of its sides. A page much taller than it is wide (a OneNote or whiteboard
+         * export, a receipt) or a page laid out wider than the cap (a tablet, a phone held
+         * sideways) therefore gets a base far below what was asked for, blurry even at zoom 1.
+         * Judging by the zoom alone left those pages blurry until the reader zoomed in past the
+         * first step; judging by the bitmap tiles them as soon as it falls short.
+         *
+         * @param beyondBase The tile level is above the base page's, which is where the base stops
+         *   following the zoom. Below that, tiles only make up for the cap: a [quality] under 1 is
+         *   the lower resolution it asked for.
+         */
+        fun tilesSharpen(
+            pageWidth: Float,
+            pageHeight: Float,
+            baseScale: Float,
+            levelScale: Float,
+            beyondBase: Boolean,
+            quality: Float,
+        ): Boolean {
+            if (pageWidth <= 0f || pageHeight <= 0f) return false
+            val requested = pageWidth * baseScale * quality
+            val (baseWidth, _) =
+                basePageTargetSize(pageWidth * baseScale, pageHeight / pageWidth, quality)
+            val capped = baseWidth < requested.roundToInt()
+            if (!beyondBase && !capped) return false
+            return pageWidth * levelScale > baseWidth * MIN_TILE_GAIN
+        }
+
+        /** How much sharper tiles must be than the base bitmap to be worth rendering. */
+        private const val MIN_TILE_GAIN = 1.01f
     }
 }

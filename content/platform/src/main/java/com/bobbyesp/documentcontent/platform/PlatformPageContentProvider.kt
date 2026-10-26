@@ -22,7 +22,10 @@ import com.bobbyesp.documentcontent.PageLink
 import com.bobbyesp.documentcontent.PageText
 import com.bobbyesp.documentcontent.TextLine
 import com.bobbyesp.documentcontent.TextWord
+import com.bobbyesp.documentcontent.platform.links.ChannelBytes
+import com.bobbyesp.documentcontent.platform.links.InternalLinkReader
 import com.composepdf.PdfRenderers
+import java.io.FileInputStream
 import java.io.FileNotFoundException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +62,7 @@ class PlatformPageContentProvider(
         if (!isSupported()) return UnsupportedSession
         return withContext(Dispatchers.IO) {
             try {
-                PlatformSession(openRenderer(document), cacheSize)
+                PlatformSession(openRenderer(document), cacheSize, openLinks(document))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -83,15 +86,59 @@ class PlatformPageContentProvider(
         }
     }
 
+    /**
+     * The file again, for [DocumentLinks]: a descriptor of its own, so reading it never moves the
+     * renderer's. Without it the document still shows, only without its internal links.
+     */
+    private fun openLinks(document: DocumentSource): DocumentLinks? =
+        try {
+            contentResolver.openFileDescriptor(document.value.toUri(), "r")?.let(::DocumentLinks)
+        } catch (_: Exception) {
+            null
+        }
+
     private companion object {
         /** The pages on screen and either side, and some of a selection running over pages. */
         const val DefaultCacheSize = 12
     }
 }
 
+/**
+ * A document's internal links, which the platform does not report (see [InternalLinkReader]). The
+ * file is parsed on the first page asked for, and a file that cannot be parsed has none.
+ */
+private class DocumentLinks(private val descriptor: ParcelFileDescriptor) : AutoCloseable {
+    private val input = FileInputStream(descriptor.fileDescriptor)
+
+    private val reader: InternalLinkReader? by lazy {
+        try {
+            InternalLinkReader(ChannelBytes(input.channel))
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun page(index: Int): List<PageLink.Internal> =
+        try {
+            reader?.links(index).orEmpty()
+        } catch (_: Exception) {
+            emptyList()
+        }
+
+    override fun close() {
+        try {
+            input.close()
+        } catch (_: Exception) {}
+        descriptor.closeQuietly()
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.VANILLA_ICE_CREAM)
-private class PlatformSession(private val renderer: PdfRenderer, cacheSize: Int) :
-    PageContentSession {
+private class PlatformSession(
+    private val renderer: PdfRenderer,
+    cacheSize: Int,
+    private val internalLinks: DocumentLinks?,
+) : PageContentSession {
 
     /** A renderer has one page open at a time. */
     private val mutex = Mutex()
@@ -132,6 +179,7 @@ private class PlatformSession(private val renderer: PdfRenderer, cacheSize: Int)
                 closed = true
                 cache.clear()
                 renderer.close()
+                internalLinks?.close()
             }
         } finally {
             mutex.unlock()
@@ -143,13 +191,19 @@ private class PlatformSession(private val renderer: PdfRenderer, cacheSize: Int)
             if (index !in 0 until renderer.pageCount) {
                 PageContentResult.Failed(IndexOutOfBoundsException("No page $index"))
             } else {
-                renderer.openPage(index).use { it.content() }
+                renderer.openPage(index).use { it.content(internalLinks?.page(index).orEmpty()) }
             }
         } catch (e: Exception) {
             PageContentResult.Failed(e)
         }
 
-    private fun PdfRenderer.Page.content(): PageContentResult {
+    /**
+     * @param internalLinks Read from the file: the platform's `getGotoLinks()` reports none, for
+     *   any form of internal link (see `PlatformContentTest`), so it is not asked.
+     */
+    private fun PdfRenderer.Page.content(
+        internalLinks: List<PageLink.Internal>
+    ): PageContentResult {
         val width = width.toFloat()
         val height = height.toFloat()
         fun RectF.normalized() =
@@ -158,17 +212,7 @@ private class PlatformSession(private val renderer: PdfRenderer, cacheSize: Int)
         val links =
             linkContents.map { link ->
                 PageLink.External(bounds = link.bounds.map { it.normalized() }, uri = "${link.uri}")
-            } +
-                // The platform reports none so far, for any form of internal link (see
-                // PlatformContentTest). Where on the target page is left out: it would need that
-                // page's size, and this page has to be closed to open another.
-                gotoLinks.map { link ->
-                    PageLink.Internal(
-                        bounds = link.bounds.map { it.normalized() },
-                        pageIndex = link.destination.pageNumber,
-                        position = null,
-                    )
-                }
+            } + internalLinks
 
         val text = textContents.joinToString("") { it.text }
         val lines =

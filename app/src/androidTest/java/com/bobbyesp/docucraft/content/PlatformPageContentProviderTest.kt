@@ -172,9 +172,9 @@ class PlatformPageContentProviderTest {
     }
 
     /**
-     * The fixture's links, as the platform reads them, resolved as a tap would: the web ones by
-     * their host (plain http flagged), mail and phone to their address and number, and the
-     * `javascript:` one refused.
+     * The fixture's links resolved as a tap would: the web ones by their host (plain http flagged),
+     * mail and phone to their address and number, the `javascript:` one refused, and the internal
+     * ones to the page they lead to.
      */
     @Test
     @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM)
@@ -184,8 +184,6 @@ class PlatformPageContentProviderTest {
             val resolve = ResolveLinkUseCase()
             val actions = links.map { resolve(it, pageCount = pageCount("text-and-links.pdf")) }
 
-            // The internal ones never arrive: the platform does not report them (see
-            // PlatformContentTest).
             assertEquals(
                 listOf(
                     LinkAction.OpenWeb("https://example.com/docucraft?q=1", "example.com", true),
@@ -195,8 +193,48 @@ class PlatformPageContentProviderTest {
                     LinkAction.Blocked("javascript:alert(1)", BlockReason.Scheme),
                     LinkAction.OpenWeb("https://example.com/two-lines", "example.com", true),
                 ),
-                actions,
+                actions.filterNot { it is LinkAction.GoTo },
             )
+            assertEquals(
+                listOf(2, 2, 2),
+                actions.filterIsInstance<LinkAction.GoTo>().map { it.pageIndex },
+            )
+        }
+    }
+
+    /**
+     * The platform reports no internal link (see `PlatformContentTest`); the provider reads them
+     * from the file, and places them, and where they lead, as the manifest says.
+     */
+    @Test
+    @SdkSuppress(minSdkVersion = Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    fun internalLinksLeadWhereTheDocumentSays() = runBlocking {
+        session("text-and-links.pdf").use { session ->
+            val links =
+                (session.page(0) as PageContentResult.Available)
+                    .links
+                    .filterIsInstance<PageLink.Internal>()
+            val expected =
+                manifest
+                    .getJSONObject("text-and-links.pdf")
+                    .getJSONArray("pages")
+                    .getJSONObject(0)
+                    .getJSONArray("links")
+                    .objects()
+                    .filter { it.getString("kind") == "internal" }
+
+            assertEquals(expected.map { it.getInt("pageIndex") }, links.map { it.pageIndex })
+            for ((link, want) in links.zip(expected)) {
+                assertClose(union(want.getJSONArray("bounds")), link.bounds.single(), LinkTolerance)
+                // "XYZ 72 500" on an A4 page; a /Fit destination has no position.
+                if (want.isNull("position")) {
+                    assertEquals(null, link.position)
+                } else {
+                    val position = link.position!!
+                    assertEquals(72f / 595f, position.x, LinkTolerance)
+                    assertEquals((842f - 500f) / 842f, position.y, LinkTolerance)
+                }
+            }
         }
     }
 

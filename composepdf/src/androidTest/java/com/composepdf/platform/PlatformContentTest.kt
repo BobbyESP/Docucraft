@@ -140,9 +140,9 @@ class PlatformContentTest {
      * explicit `/Dest` arrays. Same result on the emulator and on a Pixel 9 Pro XL (API 37,
      * MediaProvider module 17).
      *
-     * The viewer therefore treats internal links as unavailable. If this starts failing, the
-     * platform has begun reporting them: wire them into the platform content provider and turn this
-     * into a real check.
+     * The content provider therefore reads them from the file itself (`InternalLinkReader`, in
+     * `:content:platform`). If this starts failing, the platform has begun reporting them: compare
+     * what it reports with what the reader finds before choosing one.
      */
     @Test
     fun internalLinksAreNotReported_revisitIfThisFails() {
