@@ -1,7 +1,7 @@
 [versions]
 # Tooling
-androidGradlePlugin = "9.4.1"
-kotlin = "2.4.20"
+androidGradlePlugin = "9.5.0"
+kotlin = "2.4.21"
 ksp = "2.3.12"
 ktfmt = "0.27.0"
 googleServices = "4.5.0"
@@ -9,7 +9,7 @@ firebaseCrashlyticsPlugin = "3.0.8"
 
 # AndroidX
 androidxActivity = "1.13.0"
-androidxAnnotation = "1.10.0"
+androidxAnnotation = "1.11.0"
 androidxAppCompat = "1.8.0"
 androidxCore = "1.19.1"
 androidxBrowser = "1.10.0"
@@ -21,7 +21,7 @@ androidxBaselineProfile = "1.5.0"
 androidxFragment = "1.9.1"
 
 # Jetpack Compose
-composeBom = "2026.09.01"
+composeBom = "2026.10.01"
 composeMaterial3 = "1.5.0-alpha29"
 composeMaterial3Adaptive = "1.3.0"
 
@@ -38,12 +38,12 @@ mlKitTextRecognition = "19.0.1"
 koin = "4.2.2"
 room = "2.8.5"
 work = "2.12.0"
-datastore = "1.2.1"
+datastore = "1.3.0"
 
 # KotlinX
 kotlinxCoroutines = "1.11.0"
 kotlinxDatetime = "0.8.0"
-kotlinxSerialization = "1.11.0"
+kotlinxSerialization = "1.12.0"
 kotlinxCollectionsImmutable = "0.5.2"
 
 # UI Libraries
@@ -57,7 +57,7 @@ filekit = "0.16.0"
 leakcanary = "2.14"
 desugarJdkLibs = "2.1.5"
 stabilityCompiler = "0.15.0"
-spotless = "8.10.3"
+spotless = "8.10.4"
 
 # Testing
 junit = "4.13.2"
