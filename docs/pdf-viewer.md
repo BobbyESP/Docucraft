@@ -100,7 +100,7 @@ Phone                                     Tablet / wide pane
 
 - A standard Material 3 `TopAppBar`: the document's name as the title, and its description as the
   subtitle.
-- **Actions**: Share, Print, Open with, Details. As many as fit in the bar's own width are buttons
+- **Actions**: Search (always a button, see [Search](#search)), then Share, Print, Open with, Details. As many as fit in the bar's own width are buttons
   and the rest go in a menu, so a phone shows one and "⋮" and a wide pane shows all four.
   - **The menu is the app's own**, not the one Material's `AppBarRow` brings: two groups, what is
     done with the document and what it is, each frosted over the pages (`FrostedMenuGroup`). It has
@@ -130,6 +130,63 @@ shadowed:
   tapping it returns to fit. Zoom always animates.
 - **Fit mode**: a menu with the four modes by name, the current one checked.
 - **Night mode**: a toggle button.
+
+### Search
+
+Finding a word in the open document. The logic (matching, reading order, why it is cheap to type
+on) is in [text-and-links.md](text-and-links.md#search-in-the-document); this is the screen.
+
+```
+Closed                     Open, typing                       After the keyboard's search key
+┌────────────────────┐     ┌────────────────────────────┐     ┌────────────────────────────┐
+│ ←  Title   🔍 ⇪ ⋮  │     │ ( ←  invoice            ✕ ) │     │ ( ←  invoice            ✕ ) │
+├────────────────────┤     ├────────────────────────────┤     ├────────────────────────────┤
+│       (pages)      │     │   …the ▓invoice▓ is due…   │     │   …the ▓invoice▓ is due…   │
+│                    │     │     ╭──────────────╮       │     │                            │
+│                    │     │     │ ⌃  2 / 14  ⌄ │       │     │     ╭──────────────╮       │
+└────────────────────┘     ├─────╰──────────────╯───────┤     │     │ ⌃  2 / 14  ⌄ │       │
+                           │        keyboard            │     │     ╰──────────────╯       │
+                           └────────────────────────────┘     └────────────────────────────┘
+```
+
+- **Opening.** A search button in the top bar, always a button of its own and never in the menu:
+  finding something is what a reader reaches for while reading, and the one action there that is
+  not about the file. It is left out until a document is on screen.
+- **The field takes the top bar's place** (`FindBar`), with its height and the same frost, status
+  bar included, so the pages, which are padded by that height, do not move when a search opens
+  (its own height is not measured for that reason). The field is a pill in it, as Home's search
+  field is, with a way back at its start and a way to clear at its end.
+- **Where it is going is at the bottom** (`FindToolbar`): the Expressive floating toolbar, in the
+  bottom toolbar's vibrant color, frosted in the same way, with the arrows and the counter. At
+  the bottom for the thumb, and above the keyboard (`WindowInsets.ime`), because the keyboard is
+  up while typing and a control at the top would be out of reach. It appears once there is a query.
+  - The counter reads "3 / 12" and slides up as the reader moves on and down as they go back. A
+    ring beside it shows how much of the document has been read while it is still being, so the
+    count is useful at once and only grows. It speaks to TalkBack when the search settles, not for
+    every page.
+  - With nothing found it says so; if the cause is the document (images only, or a device that
+    cannot read the text), it says that, and the arrows are off.
+  - It rises with the keyboard through the insets, not by being measured. Below API 30 the
+    keyboard's insets are only reported to an activity that resizes (`adjustResize`), and the
+    app's theme pans (`adjustPan`), so there the toolbar may stay under the keyboard until the
+    reader puts it away. Not checked on a device.
+- **Both bars stay while a search is open** and the page pill keeps out: moving between matches
+  scrolls the document, which would send reading's bars away. Closing puts them back.
+- **The keyboard.**
+  - Its search key puts it away and keeps the matches.
+  - Touching the document, or tapping it, puts it away too: the reader has typed and now wants to
+    read, and a keyboard over half the page is in the way.
+  - A physical Enter goes to the next match, Shift+Enter to the previous one.
+- **Back** puts the keyboard away (the system does), then closes a link's preview, then lets go of
+  a selection, then leaves the search.
+- **Bringing a match into view** (`reveal`) moves the document only if the match is not already in
+  the free area between the bars and the keyboard, so stepping between matches on one screen does
+  not make the reader lose their place. When it does move, the match lands about a third of the
+  way down, with some text before it to read it by.
+- **What survives.** Whether the bar is open and what is typed are presentation
+  (`ViewerSearchState`, saved like the bars' visibility); they are reported to the ViewModel as
+  they change, so a search restored after a rotation or a process death searches again.
+  What was found is the ViewModel's.
 
 ### Bars, scroller, indicator
 

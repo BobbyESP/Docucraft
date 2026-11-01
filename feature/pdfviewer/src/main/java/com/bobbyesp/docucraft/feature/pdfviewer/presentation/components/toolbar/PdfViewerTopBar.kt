@@ -15,6 +15,7 @@ import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Print
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
@@ -68,6 +69,8 @@ import dev.chrisbanes.haze.rememberHazeState
  * @param onShare `null` when the document cannot leave the app; the action is then left out.
  * @param onOpenWith Likewise.
  * @param onPrint `null` when there is nothing to print: the document did not load.
+ * @param onSearch Opens the search in the document; `null` while there is no document to search,
+ *   and the button is then left out. It is always a button of its own, never in the menu.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +87,7 @@ fun PdfViewerTopBar(
     modifier: Modifier = Modifier,
     onSaveToLibrary: (() -> Unit)? = null,
     isSavingToLibrary: Boolean = false,
+    onSearch: (() -> Unit)? = null,
 ) {
     val frostedStyle =
         DocucraftBlurDefaults.surfaceStyle(MaterialTheme.colorScheme.surfaceContainer)
@@ -138,8 +142,6 @@ fun PdfViewerTopBar(
             onClick = onDetails,
         )
 
-    // The bar's own width, not the window's: in a list-detail layout the viewer is one pane. A
-    // narrow bar keeps its title legible by showing one action and the menu.
     BoxWithConstraints(modifier = modifier.frosted(state = hazeState, style = frostedStyle)) {
         val shown = if (maxWidth < WideBarWidth) NarrowBarActions else Int.MAX_VALUE
         TopBar(
@@ -147,6 +149,13 @@ fun PdfViewerTopBar(
             titleContent = titleContent,
             navigationIcon = navigationIcon,
             actions = {
+                onSearch?.let {
+                    TooltipIconButton(
+                        icon = Icons.Rounded.Search,
+                        label = stringResource(R.string.search_in_document),
+                        onClick = it,
+                    )
+                }
                 ViewerActions(
                     handOff = handOff,
                     details = details,
@@ -208,9 +217,6 @@ private fun ViewerActions(
             onClick = { expanded = true },
         )
 
-        // Material's popup, not the one with a halo: a halo blurs what the pages recorded all
-        // around the menu, and this menu opens from the bar, which is not in that recording. The
-        // halo painted the pages over the bar's own buttons. The groups cast a shadow instead.
         DropdownMenuPopup(expanded = expanded, onDismissRequest = { expanded = false }) {
             menuGroups.forEachIndexed { groupIndex, group ->
                 if (groupIndex > 0) Spacer(modifier = Modifier.height(MenuDefaults.GroupSpacing))

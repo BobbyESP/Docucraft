@@ -73,4 +73,16 @@
     <string name="document_details_file_name">फ़ाइल का नाम</string>
     <string name="document_details_format">फ़ॉर्मैट</string>
     <string name="document_details_pdf_version">PDF %1$s</string>
+    <string name="search_in_document">दस्तावेज़ में खोजें</string>
+    <string name="search_close">खोज बंद करें</string>
+    <string name="search_clear">साफ़ करें</string>
+    <string name="search_previous">पिछला परिणाम</string>
+    <string name="search_next">अगला परिणाम</string>
+    <string name="search_position">%1$d / %2$d</string>
+    <string name="search_position_description">परिणाम %1$d / %2$d</string>
+    <string name="search_no_matches">कोई परिणाम नहीं</string>
+    <string name="search_searching">खोज रहे हैं…</string>
+    <string name="search_progress">%2$d में से %1$d पेज खोजे गए</string>
+    <string name="search_unavailable_image">इस दस्तावेज़ में खोजने के लिए कोई टेक्स्ट नहीं है: यह केवल छवियों से बना है।</string>
+    <string name="search_unavailable_unsupported">PDF में टेक्स्ट खोजने के लिए Android 15 या उसके बाद का संस्करण चाहिए।</string>
 </resources>

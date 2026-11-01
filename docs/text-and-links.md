@@ -194,6 +194,72 @@ The press is not claimed, so the finger can still pan.
 Selectable, Recognized, None (images only), Unsupported, or unknown. It shows "Checking…" until the
 answer arrives.
 
+## Search in the document
+
+Finding a word in the open document, with the matches counted, lit on the pages and one step away
+from each other. The screen is in [pdf-viewer.md](pdf-viewer.md#search); this is the logic.
+
+### Matching (`:content:api`)
+
+`TextSearch` and `FoldedText`, plain Kotlin and tested on the JVM, like the selection they sit
+beside. A match is a `TextSpan` of the page's `TextSelection.text`: the same offsets selection and
+highlighting speak, so a match is lit with the code that lights a selection.
+- **What counts as the same.** Case, accents, ligatures, and how whitespace is broken: `Résumé`,
+  `RESUME` and `résumé` are one word, as in the library's own search, and `ﬁle` (a PDF often hands
+  over the ligature as one character) is found by `file`. A line break, a paragraph break and a
+  no-break space are all one space, so a phrase is found across the end of a line.
+- **Why a fold that remembers.** Folding changes the length of the text (a ligature is two
+  letters, a run of whitespace one space), so `FoldedText` keeps where each folded character came
+  from and answers in the original text's offsets. The table exists only for a page that needs it.
+  Accents and invisible format characters (the soft hyphen of a broken word) fold to nothing, so
+  `é` typed as a letter and an accent finds the same as the one-piece `é`.
+- **A match never ends between a letter and its accent**, nor inside a character outside the basic
+  plane. Matches do not overlap, and do not run from one page to the next: a phrase split by a page
+  break is not on a page.
+
+### Reading the document to search it (`PdfViewerViewModel`)
+
+Reading a page's text is what costs, not searching it (the platform measures every character:
+[above](#what-the-platform-really-gives-verified-on-api-37)), so the work is arranged around that:
+- **Nearest first.** Pages are read from the reader's own onward and then from the top. The first
+  match is found without waiting for the document, and the search is a thing that *happens*:
+  `DocumentSearch.isScanning` says whether it is done, and its progress is shown.
+- **In reading order whatever the order read.** `SearchMatches` keeps the matches by page, so "the
+  third of twelve" means the same thing all the while; finding a page before the reader's only
+  moves the numbers on. Plain Kotlin, tested: it is the whole of "which match is next", wrapping
+  at either end.
+- **Read once.** What is read of a page is kept folded for as long as the search is open. Typing
+  another letter searches the pages already read at once and reads only the rest, so refining a
+  query costs nothing and a word typed fast reads the document once.
+- **After a pause.** Nothing is read until the reader has stopped typing for 250 ms. Until then
+  the previous query's matches stay lit, so the highlights do not blink out and back as they type.
+- **Where it starts.** The first query starts from the page the reader is on; typing on from a
+  match stays on it. Past the last match the search wraps to the first.
+- **The document's own answer.** A search that found nothing says *why* when the cause is the
+  document and not the query: it is made of images (and text recognition is off), or the device
+  cannot read its text (**D1**). A page that failed to read is not taken for one without text.
+- **Closing forgets.** The matches go, and so does everything read for them.
+
+Searching a long document on a phone that reads text from the PDF's own layer costs what
+selection costs for every page (see the figures above), spread over the time it takes to read it.
+The counter is meaningful from the first match, so this shows as a ring beside it, not as a wait.
+
+### Lighting the matches
+
+Drawn in the engine's overlay (E4), under the selection and the links: what the reader chose or can
+press is above what was found. Where the boxes are comes from the geometry of the pages near the
+screen, worked out when the matches or those pages change (`SearchHighlights`) and not on every
+frame, so panning and zooming only paint. A page with more than 500 matches lights the first 500
+(a one-letter query), and always the current one.
+- The current match is stronger, underlined, and rings out once from the text when the reader
+  arrives on it.
+- Colors come from the theme (tertiary for a match, primary for the current one), not from a fixed
+  yellow. Night mode uses `inversePrimary`, as the selection does.
+- **Bringing a match into view** is the screen's: a match already in the free area, between the
+  bars and the keyboard, does not move the document, so stepping through matches on one screen
+  does not make the reader lose their place. A match out of view is brought to about a third of the
+  way down.
+
 ## Links
 
 ### Deciding (`ResolveLinkUseCase`)
@@ -252,3 +318,11 @@ it leads ("Link: example.com", "Phone link: …", "Blocked link"), and it opens 
 - A line that mixes directions (bidi) is highlighted from its first selected character to its last.
 - Selection follows the document's order: in a form stored column by column, dragging down a
   column also takes in whatever the document stores in between.
+- Search reads every page's text with its geometry, as selection does, so on a dense document it
+  takes as long as reading it all would (see the figures above), shown as a ring beside the
+  counter. Reading only the text, without measuring each character, would be several times
+  faster on the platform's layer; it has not been needed yet.
+- Search does not find a phrase that a page break splits, nor a word hyphenated at the end of a
+  line (the hyphen is a character of the text).
+- On a document whose pages are images, search finds what recognition has read, as selection does;
+  a page recognition has not reached yet is read for it when the document has recognition on.

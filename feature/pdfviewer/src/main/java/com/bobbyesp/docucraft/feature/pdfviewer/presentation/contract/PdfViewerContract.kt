@@ -9,6 +9,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.canBeHandedOff
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.BlockReason
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerLoadError
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.search.DocumentSearch
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
 import com.bobbyesp.docucraft.library.domain.model.BasicDocument
@@ -50,6 +51,12 @@ data class PdfViewerUiState(
     val selection: DocumentSelection? = null,
     /** The link tapped, shown before anything opens (D3); `null` when none is. */
     val linkPreview: LinkPreview? = null,
+    /**
+     * The search in the document, from the moment the reader opens it until they close it; `null`
+     * when none is open. Whether the search bar is showing is presentation alone, like the bars:
+     * this is what the search has found.
+     */
+    val search: DocumentSearch? = null,
     /**
      * Whether *Save to Docucraft* is on offer: the document belongs to another app, and the
      * catalogue only refers to it. It stops being so the moment it is saved.
@@ -166,6 +173,18 @@ sealed interface PdfViewerIntent {
     /** A long press found no text to select, for [reason]. */
     data class NothingToSelect(val reason: TextUnavailable) : PdfViewerIntent
 
+    /**
+     * What is typed in the search changed to [query], the reader being at [fromPage]: the first
+     * match wanted is the first one from there. A query the search already has changes nothing.
+     */
+    data class SearchQueryChanged(val query: String, val fromPage: Int) : PdfViewerIntent
+
+    /** Go to the next match, or the previous one; past the last (or first) it wraps around. */
+    data class SearchStep(val forward: Boolean) : PdfViewerIntent
+
+    /** The search is over: its matches go, and so does what was read to find them. */
+    data object CloseSearch : PdfViewerIntent
+
     data class SetFitMode(val fitMode: ViewerFitMode) : PdfViewerIntent
 
     data object ToggleNightMode : PdfViewerIntent
@@ -203,6 +222,13 @@ sealed interface PdfViewerEffect {
      * want to go on reading this one.
      */
     data class AlreadyInLibrary(val documentUuid: String) : PdfViewerEffect
+
+    /**
+     * Bring the match at [area] of [page], normalized to it, into view. Not a state: it is a thing
+     * to do once, to the viewer that is on screen now, and the viewer decides whether the match is
+     * already where it can be seen.
+     */
+    data class RevealMatch(val page: Int, val area: NormalizedRect) : PdfViewerEffect
 
     /** The clipboard belongs to the UI. */
     data class CopyText(val text: String) : PdfViewerEffect

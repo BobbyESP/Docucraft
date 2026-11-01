@@ -20,6 +20,8 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.ResolveLinkUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.search.MatchRef
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.search.SearchMatches
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDisplaySettingsUseCase
@@ -30,6 +32,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerI
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerUiState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerStart
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.search.DocumentSearch
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.PageTextState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.SelectionInteraction
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
@@ -49,16 +52,20 @@ import com.bobbyesp.docucraft.library.domain.usecase.RememberReadingPositionUseC
 import com.bobbyesp.docucraft.library.domain.usecase.SaveLinkedToLibraryUseCase
 import com.bobbyesp.docucraft.library.domain.usecase.SaveToLibraryOutcome
 import com.bobbyesp.documentcontent.DocumentSource
+import com.bobbyesp.documentcontent.FoldedText
 import com.bobbyesp.documentcontent.NormalizedRect
 import com.bobbyesp.documentcontent.PageContentProvider
 import com.bobbyesp.documentcontent.PageContentResult
 import com.bobbyesp.documentcontent.PageContentSession
+import com.bobbyesp.documentcontent.TextSearch
 import com.bobbyesp.documentcontent.TextSelection
 import com.bobbyesp.scanner.ContentRef
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -181,6 +188,22 @@ class PdfViewerViewModel(
     /** Said once a document: the viewer reports that it loaded again after a rotation. */
     private var toldItIsInLibrary = false
 
+    /** How many pages the document has, once it has loaded: what a search has to read. */
+    private var pageCount = 0
+
+    private var searchJob: Job? = null
+    private var revealJob: Job? = null
+
+    /**
+     * What a search has read of each page, folded (see [FoldedText]), for as long as the search is
+     * open. It is what makes typing another letter free: no page is read again, only searched. A
+     * page that failed to read is not here, so it is tried again.
+     */
+    private val searchable = HashMap<Int, FoldedText>()
+
+    /** Pages whose text this device cannot read, which is why a search may find nothing. */
+    private val unreadablePages = mutableSetOf<Int>()
+
     /**
      * Tells the catalogue whether the file was where it says. Only the two answers that are about
      * reaching the file: a document that is protected or damaged was reached, and is still there.
@@ -210,6 +233,7 @@ class PdfViewerViewModel(
     override fun onHandleIntent(intent: PdfViewerIntent) {
         when (intent) {
             is PdfViewerIntent.DocumentLoaded -> {
+                pageCount = intent.pageCount
                 noteAvailability(DocumentAvailability.AVAILABLE)
                 describe(pageCount = intent.pageCount, isProtected = false)
             }
@@ -228,6 +252,9 @@ class PdfViewerViewModel(
             PdfViewerIntent.ClearSelection -> setState { copy(selection = null) }
             PdfViewerIntent.CopySelection -> copySelection()
             is PdfViewerIntent.NothingToSelect -> tellOnce(intent.reason)
+            is PdfViewerIntent.SearchQueryChanged -> search(intent.query, intent.fromPage)
+            is PdfViewerIntent.SearchStep -> step(intent.forward)
+            PdfViewerIntent.CloseSearch -> closeSearch()
             is PdfViewerIntent.TapLink -> tapLink(intent)
             PdfViewerIntent.OpenPreviewedLink -> openPreviewedLink()
             PdfViewerIntent.CopyPreviewedLink -> copyPreviewedLink()
@@ -425,20 +452,27 @@ class PdfViewerViewModel(
             }
             for (page in wanted) {
                 if (page in currentState.pageText) continue
-                val content = session()?.page(page) ?: return@launch
-                val text = content.toTextState()
-                // A failure is not kept, so it is tried again next time.
-                if (text != PageTextState.Failed) {
-                    val links = (content as? PageContentResult.Available)?.links.orEmpty()
-                    setState {
-                        copy(
-                            pageText = pageText + (page to text),
-                            pageLinks = pageLinks + (page to links),
-                        )
-                    }
-                }
+                load(page) ?: return@launch
             }
         }
+    }
+
+    /**
+     * Reads [page] and keeps its text and links, which go together: a page whose text was kept
+     * without its links would never have them read, since a page already here is not read again.
+     * `null` when there is no document to read.
+     */
+    private suspend fun load(page: Int): PageTextState? {
+        val content = session()?.page(page) ?: return null
+        val text = content.toTextState()
+        // A failure is not kept, so it is tried again next time.
+        if (text != PageTextState.Failed) {
+            val links = (content as? PageContentResult.Available)?.links.orEmpty()
+            setState {
+                copy(pageText = pageText + (page to text), pageLinks = pageLinks + (page to links))
+            }
+        }
+        return text
     }
 
     private fun selectAll() {
@@ -465,6 +499,203 @@ class PdfViewerViewModel(
     private suspend fun textOf(page: Int): TextSelection? =
         (currentState.pageText[page] as? PageTextState.Text)?.selection
             ?: (session()?.page(page)?.toTextState() as? PageTextState.Text)?.selection
+
+    // ------------------------------------------------------------------ search
+
+    /** Where a search begins: the page the reader is on, or the match they were last on. */
+    private data class SearchStart(val page: Int, val offset: Int)
+
+    /**
+     * Looks for [query] in the whole document, starting from [fromPage].
+     *
+     * Reading a page's text is what costs, not searching it, so the work is arranged around that:
+     * - **Nearest first.** Pages are read from the reader's own onward and then from the top, so
+     *   the first match is found without waiting for the document to be read.
+     * - **Read once.** What is read of a page is kept folded ([searchable]); typing another letter
+     *   searches the pages already read at once and reads only the ones still to come.
+     * - **After a pause.** Nothing is read until the reader has stopped typing for a moment, so a
+     *   word typed quickly reads the document once, not once for each letter.
+     *
+     * A query that is the one already searched for changes nothing, which is what lets the screen
+     * report the field's text whenever it is composed.
+     */
+    private fun search(query: String, fromPage: Int) {
+        if (pageCount == 0 || currentState.search?.query == query) return
+        searchJob?.cancel()
+
+        val needle = TextSearch.needle(query)
+        if (needle == null) {
+            revealJob?.cancel()
+            // Kept, with nothing in it, so that the same query is not searched twice.
+            setState {
+                copy(
+                    search =
+                        DocumentSearch(
+                            query = query,
+                            scannedPages = pageCount,
+                            pageCount = pageCount,
+                        )
+                )
+            }
+            return
+        }
+
+        val previous = currentState.search
+        // Typing on from a match stays on it; the first query starts where the reader is.
+        val start =
+            previous?.active?.let { ref ->
+                previous.matches.spanOf(ref)?.let { SearchStart(ref.page, it.start) }
+            } ?: SearchStart(fromPage.coerceIn(0, pageCount - 1), offset = 0)
+        // The previous query's matches stay on screen until this one has some to show instead, so
+        // typing does not make the highlights blink out and back.
+        setState {
+            copy(
+                search =
+                    (previous ?: DocumentSearch(query)).copy(
+                        query = query,
+                        scannedPages = 0,
+                        pageCount = pageCount,
+                        unsearchable = null,
+                    )
+            )
+        }
+        searchJob = launch { scan(needle, start) }
+    }
+
+    private suspend fun scan(needle: String, start: SearchStart) {
+        var matches = SearchMatches.None
+        var scanned = 0
+        var withText = 0
+        var failed = 0
+        var needsActive = true
+
+        // Whether the state still holds the previous query's matches, to be replaced by the first
+        // thing published.
+        var fresh = true
+
+        fun publish(chosen: MatchRef? = null, unsearchable: TextUnavailable? = null) {
+            setState {
+                val current = search ?: return@setState this
+                val active = chosen ?: current.active.takeUnless { fresh }
+                copy(
+                    search =
+                        current.copy(
+                            matches = matches,
+                            active = active,
+                            activeNumber = active?.let { matches.numberOf(it) } ?: 0,
+                            scannedPages = scanned,
+                            unsearchable = unsearchable,
+                        )
+                )
+            }
+            fresh = false
+            if (chosen != null) reveal(chosen)
+        }
+
+        /** The reader may have stepped to a match themselves while the pages were being read. */
+        fun mayChoose() = fresh || currentState.search?.active == null
+
+        var settled = false
+        for (page in readingOrder(start.page, pageCount)) {
+            var folded = searchable[page]
+            val wasRead = folded == null
+            if (folded == null) {
+                if (!settled) {
+                    // The cached pages found so far are shown while the reader finishes typing.
+                    publish()
+                    delay(SEARCH_SETTLE_MS.milliseconds)
+                    settled = true
+                }
+                folded =
+                    when (val text = session()?.page(page)?.toTextState() ?: break) {
+                        is PageTextState.Text -> FoldedText.of(text.selection.text)
+                        PageTextState.NoText -> FoldedText.Empty
+                        PageTextState.Unsupported -> {
+                            unreadablePages += page
+                            FoldedText.Empty
+                        }
+
+                        PageTextState.Failed -> null
+                    }
+                if (folded != null) searchable[page] = folded else failed++
+            }
+            scanned++
+            if (folded != null) {
+                if (!folded.isEmpty) withText++
+                matches = matches.with(page, TextSearch.find(folded, needle))
+            }
+
+            var chosen: MatchRef? = null
+            if (needsActive && !matches.isEmpty) {
+                if (!mayChoose()) {
+                    needsActive = false
+                } else {
+                    chosen = matches.firstFrom(start.page, start.offset)
+                    if (chosen != null) needsActive = false
+                }
+            }
+            if (chosen != null || wasRead || scanned % PUBLISH_EVERY == 0) publish(chosen)
+        }
+
+        // Nothing at or after the start: the first one from the top, as a search wraps around.
+        val wrapped = if (needsActive && mayChoose()) matches.first() else null
+        scanned = pageCount
+        val unsearchable =
+            if (matches.isEmpty && withText == 0 && failed == 0) {
+                if (unreadablePages.isEmpty()) TextUnavailable.ImageOnly
+                else TextUnavailable.UnsupportedDevice
+            } else null
+        publish(wrapped, unsearchable)
+    }
+
+    /** The pages in the order a search reads them: from [first] to the end, then from the top. */
+    private fun readingOrder(first: Int, count: Int): Sequence<Int> =
+        (first until count).asSequence() + (0 until first).asSequence()
+
+    /** Moves to the next match, or the previous one, wrapping around at either end. */
+    private fun step(forward: Boolean) {
+        val current = currentState.search ?: return
+        val target =
+            (if (forward) current.matches.next(current.active)
+            else current.matches.previous(current.active)) ?: return
+        setState {
+            copy(
+                search =
+                    search?.let {
+                        it.copy(active = target, activeNumber = it.matches.numberOf(target))
+                    }
+            )
+        }
+        reveal(target)
+    }
+
+    /**
+     * Asks the screen to bring [match] into view. Its place on the page needs the page's geometry,
+     * which may have to be read first, so a newer request replaces one still waiting.
+     */
+    private fun reveal(match: MatchRef) {
+        revealJob?.cancel()
+        revealJob = launch {
+            val span = currentState.search?.matches?.spanOf(match) ?: return@launch
+            // Kept with the other pages' text: the screen is about to show this one, and its
+            // matches are drawn from it.
+            val text =
+                (currentState.pageText[match.page] as? PageTextState.Text)
+                    ?: (load(match.page) as? PageTextState.Text)
+                    ?: return@launch
+            // The start of a match that crosses lines: that is where the eye should land.
+            val area = text.selection.highlightRects(span).firstOrNull() ?: return@launch
+            sendEffect(PdfViewerEffect.RevealMatch(match.page, area))
+        }
+    }
+
+    private fun closeSearch() {
+        searchJob?.cancel()
+        revealJob?.cancel()
+        searchable.clear()
+        unreadablePages.clear()
+        setState { copy(search = null) }
+    }
 
     private fun tellOnce(reason: TextUnavailable) {
         if (!toldAbout.add(reason)) return
@@ -519,5 +750,11 @@ class PdfViewerViewModel(
         const val SCREEN_NAME = "PdfViewer"
         const val KEY_FIT_MODE = "viewer_fit_mode"
         const val KEY_NIGHT_MODE = "viewer_night_mode"
+
+        /** How long the reader must stop typing before the pages not yet read are read. */
+        const val SEARCH_SETTLE_MS = 250L
+
+        /** How many already-read pages are searched between two updates of what is shown. */
+        const val PUBLISH_EVERY = 16
     }
 }

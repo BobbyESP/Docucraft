@@ -73,4 +73,16 @@
     <string name="open_with">Abrir con</string>
     <string name="cannot_open_pdf">No se ha podido abrir este documento</string>
     <string name="view_document">Ver documento</string>
+    <string name="search_in_document">Buscar en el documento</string>
+    <string name="search_close">Cerrar búsqueda</string>
+    <string name="search_clear">Borrar</string>
+    <string name="search_previous">Coincidencia anterior</string>
+    <string name="search_next">Coincidencia siguiente</string>
+    <string name="search_position">%1$d / %2$d</string>
+    <string name="search_position_description">Coincidencia %1$d de %2$d</string>
+    <string name="search_no_matches">Sin coincidencias</string>
+    <string name="search_searching">Buscando…</string>
+    <string name="search_progress">%1$d de %2$d páginas revisadas</string>
+    <string name="search_unavailable_image">Este documento no tiene texto en el que buscar: son solo imágenes.</string>
+    <string name="search_unavailable_unsupported">Buscar texto en PDF requiere Android 15 o posterior.</string>
 </resources>

@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -48,6 +50,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
@@ -83,6 +86,11 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerEr
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerLoadError
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.links.LinkLayer
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.rememberViewerChromeState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.search.FindBar
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.search.FindToolbar
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.search.SearchHighlightLayer
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.search.ViewerSearchState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.search.rememberViewerSearchState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.selection.SelectionDrag
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.selection.TextSelectionLayer
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.selection.rememberSelectionDrag
@@ -92,11 +100,13 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerE
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerUiState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.pages.ViewerPageRequests
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.search.DocumentSearch
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.LongPressOutcome
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.SelectionInteraction
 import com.bobbyesp.docucraft.library.domain.model.BasicDocument
 import com.bobbyesp.docucraft.library.domain.model.ReadingPosition
 import com.bobbyesp.documentcontent.NormalizedPoint
+import com.bobbyesp.documentcontent.NormalizedRect
 import com.bobbyesp.documentcontent.PageLink
 import com.composepdf.FitMode
 import com.composepdf.PdfInteractionHandler
@@ -119,6 +129,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onEach
@@ -167,6 +178,21 @@ fun PdfViewerScreen(
     val selectionDrag = rememberSelectionDrag(pdfViewerState)
     val selectionHandler = rememberSelectionHandler(state, pdfViewerState, selectionDrag, onIntent)
     val resolveLink: ResolveLinkUseCase = koinInject()
+    val search = rememberViewerSearchState()
+    val focusManager = LocalFocusManager.current
+
+    // Leaving the search puts the bars back: they may have been hidden by reading on before it.
+    val closeSearch = {
+        focusManager.clearFocus()
+        search.close()
+        chrome.show()
+    }
+    val openSearch = {
+        // Only one thing at a time is the reader's focus: a selection or a preview is let go of.
+        onIntent(PdfViewerIntent.ClearSelection)
+        onIntent(PdfViewerIntent.DismissLinkPreview)
+        search.open()
+    }
 
     ReportReadingPosition(pdfViewerState, seen) {
         onIntent(PdfViewerIntent.ReadingPositionChanged(it))
@@ -178,19 +204,29 @@ fun PdfViewerScreen(
         viewModel = viewModel,
         pdfViewerState = pdfViewerState,
         contentTop = { bars.topPx(density) },
+        revealMatch = { match ->
+            pdfViewerState.reveal(
+                page = match.page,
+                area = match.area,
+                visible = bars.visibleArea(density, searching = search.isOpen),
+                margin = with(density) { RevealMargin.toPx() },
+            )
+        },
         onConfirmSaveCopy = onConfirmSaveCopy,
         onOpenInLibrary = onOpenInLibrary,
     )
 
-    // Back closes a link's preview, then lets go of the selection, before it leaves the viewer.
+    // Back closes a link's preview, then lets go of the selection, then leaves the search, before
+    // it leaves the viewer.
     NavigationBackHandler(
         state = rememberNavigationEventState(currentInfo = NavigationEventInfo.None),
-        isBackEnabled = state.linkPreview != null || state.selection != null,
+        isBackEnabled = state.linkPreview != null || state.selection != null || search.isOpen,
         onBackCompleted = {
-            onIntent(
-                if (state.linkPreview != null) PdfViewerIntent.DismissLinkPreview
-                else PdfViewerIntent.ClearSelection
-            )
+            when {
+                state.linkPreview != null -> onIntent(PdfViewerIntent.DismissLinkPreview)
+                state.selection != null -> onIntent(PdfViewerIntent.ClearSelection)
+                else -> closeSearch()
+            }
         },
     )
 
@@ -211,7 +247,22 @@ fun PdfViewerScreen(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize().nestedScroll(chrome.nestedScrollConnection)) {
+    // After the effect above, which tells the ViewModel how many pages there are to search.
+    ReportSearchQuery(search, pdfViewerState, onIntent)
+    PutKeyboardAwayWhenReading(search, pdfViewerState)
+
+    // The bars stay while a search is open: moving between matches scrolls the document, which
+    // would otherwise send them away, and they hold the way out of the search.
+    val barsVisible = chrome.isVisible || search.isOpen
+    val searchShown = state.search?.takeIf { it.isActive }
+
+    Box(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .onSizeChanged { bars.measureViewer(it.width, it.height) }
+                .nestedScroll(chrome.nestedScrollConnection)
+    ) {
         // A viewer for each place the document is read from, like its state: the engine does not
         // take a new state under a viewer that is already laid out.
         key(documentInfo.uri) {
@@ -240,16 +291,25 @@ fun PdfViewerScreen(
                                 .verticalScroll(rememberScrollState()),
                     )
                 },
-                // Closes a link's preview, else lets go of a selection, else toggles the bars.
+                // Closes a link's preview, else lets go of a selection, else puts the keyboard
+                // away during a search, else toggles the bars.
                 onTap = {
                     when {
                         state.linkPreview != null -> onIntent(PdfViewerIntent.DismissLinkPreview)
                         state.selection != null -> onIntent(PdfViewerIntent.ClearSelection)
+                        search.isOpen -> focusManager.clearFocus()
                         else -> chrome.toggle()
                     }
                 },
                 interactionHandler = selectionHandler,
                 overlay = {
+                    // Under the selection and the links: what the reader chose, or can press,
+                    // is above what was found.
+                    SearchHighlightLayer(
+                        search = state.search,
+                        pages = state.pageText,
+                        nightMode = display.nightMode,
+                    )
                     TextSelectionLayer(
                         state = pdfViewerState,
                         pages = state.pageText,
@@ -287,7 +347,7 @@ fun PdfViewerScreen(
         PageIndicatorPill(
             currentPage = pdfViewerState.currentPage,
             pageCount = pdfViewerState.pageCount,
-            barsVisible = chrome.isVisible,
+            barsVisible = barsVisible,
             modifier =
                 Modifier.align(Alignment.TopCenter)
                     .windowInsetsPadding(WindowInsets.statusBars)
@@ -295,7 +355,7 @@ fun PdfViewerScreen(
         )
 
         ViewerBar(
-            visible = chrome.isVisible,
+            visible = barsVisible && !search.isOpen,
             fromTop = true,
             onHeightMeasured = { bars.measureTop(it, density) },
             modifier = Modifier.align(Alignment.TopCenter),
@@ -316,6 +376,25 @@ fun PdfViewerScreen(
                     if (pdfViewerState.isLoaded) ({ onIntent(PdfViewerIntent.Print) }) else null,
                 onOpenWith = openWith,
                 onDetails = onOpenDetails,
+                // Nothing to search in a document that is not on screen.
+                onSearch = if (pdfViewerState.isLoaded) openSearch else null,
+                hazeState = hazeState,
+            )
+        }
+
+        // In the top bar's place, with its height, so that the pages, which are padded by that
+        // height, do not move when a search opens. Its own height is not measured for that reason.
+        ViewerBar(
+            visible = search.isOpen,
+            fromTop = true,
+            onHeightMeasured = {},
+            modifier = Modifier.align(Alignment.TopCenter),
+        ) {
+            FindBar(
+                field = search.field,
+                focusRequests = search.focusRequests,
+                onClose = closeSearch,
+                onStep = { onIntent(PdfViewerIntent.SearchStep(it)) },
                 hazeState = hazeState,
             )
         }
@@ -324,7 +403,7 @@ fun PdfViewerScreen(
             // Nothing to page through or zoom in a failed document. Kept while loading: the
             // height is the content padding, and learning it after the layout would move a
             // restored position.
-            visible = chrome.isVisible && pdfViewerState.error == null,
+            visible = barsVisible && !search.isOpen && pdfViewerState.error == null,
             fromTop = false,
             onHeightMeasured = { bars.measureBottom(it, density) },
             modifier =
@@ -356,7 +435,36 @@ fun PdfViewerScreen(
                 hazeState = hazeState,
             )
         }
+
+        // The search's own toolbar, in the bottom one's place once something is being looked for.
+        // It rises with the keyboard, so the arrows stay within reach while still typing.
+        val lastSearch = remember { Retained<DocumentSearch>() }
+        searchShown?.let { lastSearch.value = it }
+        ViewerBar(
+            visible = search.isOpen && searchShown != null,
+            fromTop = false,
+            // Where the matches may be seen from: what it covers is not the pages' to use.
+            onHeightMeasured = { bars.measureFindToolbar(it) },
+            modifier =
+                Modifier.align(Alignment.BottomCenter)
+                    .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.navigationBars))
+                    .padding(bottom = 16.dp),
+        ) {
+            // The last search, so the toolbar can leave with its numbers when the search ends.
+            lastSearch.value?.let { shown ->
+                FindToolbar(
+                    search = shown,
+                    onStep = { onIntent(PdfViewerIntent.SearchStep(it)) },
+                    hazeState = hazeState,
+                )
+            }
+        }
     }
+}
+
+/** A value kept past the moment it stops being given, for an exit animation to still show it. */
+private class Retained<T : Any> {
+    var value: T? = null
 }
 
 /**
@@ -373,7 +481,33 @@ private class BarHeights {
     var bottom by mutableStateOf(0.dp)
         private set
 
+    // Plain values, not state: they are read when a match is brought into view, never to draw.
+    private var viewerWidth = 0
+    private var viewerHeight = 0
+    private var findToolbarHeight = 0
+
+    fun measureViewer(widthPx: Int, heightPx: Int) {
+        viewerWidth = widthPx
+        viewerHeight = heightPx
+    }
+
+    fun measureFindToolbar(heightPx: Int) {
+        if (heightPx > 0) findToolbarHeight = heightPx
+    }
+
     fun topPx(density: Density): Float = with(density) { top.toPx() }
+
+    /**
+     * The part of the viewer, in its pixels, where something is seen: below the top bar and above
+     * whatever covers the bottom. While a search is open that is its toolbar, which already
+     * includes the keyboard it rises with; otherwise the bottom toolbar.
+     */
+    fun visibleArea(density: Density, searching: Boolean): VisibleArea {
+        val covered = with(density) { bottom.toPx() }
+        val bottomEdge =
+            viewerHeight - if (searching) maxOf(covered, findToolbarHeight.toFloat()) else covered
+        return VisibleArea(top = topPx(density), bottom = bottomEdge, right = viewerWidth.toFloat())
+    }
 
     fun measureTop(heightPx: Int, density: Density) {
         top = with(density) { heightPx.toDp() }
@@ -495,6 +629,86 @@ private fun Map<Int, List<PageLink>>.linkAt(event: PdfTapEvent): Pair<Int, PageL
 }
 
 /**
+ * Tells the ViewModel what is being searched for, as it is typed, and when the search is over.
+ *
+ * Only once the document is on screen: the ViewModel searches the pages the document has, and would
+ * otherwise be told a query it could not yet act on. A search restored after a rotation or a
+ * process death is reported just the same, which is how it picks up where it was.
+ */
+@Composable
+private fun ReportSearchQuery(
+    search: ViewerSearchState,
+    pdfViewerState: PdfViewerState,
+    onIntent: (PdfViewerIntent) -> Unit,
+) {
+    val send by rememberUpdatedState(onIntent)
+    LaunchedEffect(search, pdfViewerState) {
+        snapshotFlow {
+            // `null` is "no search": closed, or the document is not there to search.
+            if (search.isOpen && pdfViewerState.isLoaded) search.field.text.toString() else null
+        }
+            .distinctUntilChanged()
+            .collect { query ->
+                if (query == null) send(PdfViewerIntent.CloseSearch)
+                else send(PdfViewerIntent.SearchQueryChanged(query, pdfViewerState.currentPage))
+            }
+    }
+}
+
+/**
+ * Puts the keyboard away when the reader takes hold of the document. They have typed, and now want
+ * to read what was found; a keyboard over half the page is in the way of that, and a touch on the
+ * page is the plainest way of saying so.
+ */
+@Composable
+private fun PutKeyboardAwayWhenReading(search: ViewerSearchState, pdfViewerState: PdfViewerState) {
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(search.isOpen, pdfViewerState) {
+        if (!search.isOpen) return@LaunchedEffect
+        snapshotFlow { pdfViewerState.isGestureActive }
+            .filter { it }
+            .collect { focusManager.clearFocus() }
+    }
+}
+
+/**
+ * Brings the match at [area] of [page] into [visible], unless it is already there.
+ *
+ * Stepping between matches that are on the same screen should not move the document: it would make
+ * the reader lose their place for nothing. A match that is not in view is brought to about a third
+ * of the way down, so that there is some of the text before it to read it by, and the text after
+ * it, which is what comes next.
+ *
+ * @param margin How close to an edge of [visible] a match may be and still count as in view.
+ */
+private suspend fun PdfViewerState.reveal(
+    page: Int,
+    area: NormalizedRect,
+    visible: VisibleArea,
+    margin: Float,
+) {
+    val bounds = pageRectInViewer(page) ?: return
+    val top = bounds.top + area.top * bounds.height
+    val bottom = bounds.top + area.bottom * bounds.height
+    val left = bounds.left + area.left * bounds.width
+    val right = bounds.left + area.right * bounds.width
+
+    val inView =
+        top >= visible.top + margin &&
+            bottom <= visible.bottom - margin &&
+            left >= 0f &&
+            right <= visible.right
+    if (inView) return
+
+    // The scroll puts a point at the top of the content area: aim that far above the match.
+    val lift = (visible.bottom - visible.top) * RevealPlacement / bounds.height
+    animateScrollTo(page, Offset((area.left + area.right) / 2f, area.top - lift))
+}
+
+/** Where on screen something can be seen: the viewer's pixels, below the bars. */
+private class VisibleArea(val top: Float, val bottom: Float, val right: Float)
+
+/**
  * Scrolls to a page asked for by *Go to page*, which cannot reach this state itself. A request is
  * taken once it has been scrolled to.
  */
@@ -545,9 +759,11 @@ private fun HandlePdfViewerEffects(
     viewModel: PdfViewerViewModel,
     pdfViewerState: PdfViewerState,
     contentTop: () -> Float,
+    revealMatch: suspend (PdfViewerEffect.RevealMatch) -> Unit,
     onConfirmSaveCopy: (documentUuid: String) -> Unit,
     onOpenInLibrary: (documentUuid: String) -> Unit,
 ) {
+    val reveal by rememberUpdatedState(revealMatch)
     val confirmSaveCopy by rememberUpdatedState(onConfirmSaveCopy)
     val openInLibrary by rememberUpdatedState(onOpenInLibrary)
     val activity = requireNotNull(LocalActivity.current) { "The PDF viewer needs an activity" }
@@ -626,6 +842,9 @@ private fun HandlePdfViewerEffects(
                         )
                     )
                 }
+
+                // Launched, so a newer match is not kept waiting behind this one's scroll.
+                is PdfViewerEffect.RevealMatch -> scope.launch { reveal(effect) }
 
                 is PdfViewerEffect.CopyText -> {
                     clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(copied, effect.text)))
@@ -768,6 +987,12 @@ private val ReadingPositionSettle = 1.seconds
 
 /** Each zoom button press scales by this much, animated. */
 private const val ZoomStep = 1.25f
+
+/** Where a match is put when it is brought into view: this share of the way down the free area. */
+private const val RevealPlacement = 0.3f
+
+/** How close to the bars or the keyboard a match may be and still count as in view. */
+private val RevealMargin = 24.dp
 
 /**
  * How long the reader is told that the library already has the document. Longer than a message that

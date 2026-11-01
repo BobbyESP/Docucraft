@@ -73,4 +73,16 @@
     <string name="document_details_file_name">اسم الملف</string>
     <string name="document_details_format">التنسيق</string>
     <string name="document_details_pdf_version">PDF %1$s</string>
+    <string name="search_in_document">البحث في المستند</string>
+    <string name="search_close">إغلاق البحث</string>
+    <string name="search_clear">مسح</string>
+    <string name="search_previous">النتيجة السابقة</string>
+    <string name="search_next">النتيجة التالية</string>
+    <string name="search_position">%1$d / %2$d</string>
+    <string name="search_position_description">النتيجة %1$d من %2$d</string>
+    <string name="search_no_matches">لا توجد نتائج</string>
+    <string name="search_searching">جارٍ البحث…</string>
+    <string name="search_progress">تم البحث في %1$d من %2$d صفحة</string>
+    <string name="search_unavailable_image">لا يحتوي هذا المستند على نص للبحث فيه: فهو مكوّن من صور فقط.</string>
+    <string name="search_unavailable_unsupported">يتطلب البحث عن النص في ملفات PDF نظام Android 15 أو أحدث.</string>
 </resources>

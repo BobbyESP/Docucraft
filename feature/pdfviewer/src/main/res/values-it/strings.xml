@@ -73,4 +73,16 @@
     <string name="document_details_file_name">Nome del file</string>
     <string name="document_details_format">Formato</string>
     <string name="document_details_pdf_version">PDF %1$s</string>
+    <string name="search_in_document">Cerca nel documento</string>
+    <string name="search_close">Chiudi ricerca</string>
+    <string name="search_clear">Cancella</string>
+    <string name="search_previous">Risultato precedente</string>
+    <string name="search_next">Risultato successivo</string>
+    <string name="search_position">%1$d / %2$d</string>
+    <string name="search_position_description">Risultato %1$d di %2$d</string>
+    <string name="search_no_matches">Nessun risultato</string>
+    <string name="search_searching">Ricerca in corso…</string>
+    <string name="search_progress">%1$d di %2$d pagine analizzate</string>
+    <string name="search_unavailable_image">Questo documento non contiene testo da cercare: è composto solo da immagini.</string>
+    <string name="search_unavailable_unsupported">La ricerca di testo nei PDF richiede Android 15 o versioni successive.</string>
 </resources>

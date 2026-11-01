@@ -314,6 +314,16 @@ modules) and `navigation/` (keys only that feature opens).
    `pageText` and `pageLinks`.
 3. A long press or a tap is decided synchronously from what has already been read.
 
+### Searching inside a document
+
+1. The search button opens `FindBar` in the top bar's place; its text reaches the ViewModel as
+   `SearchQueryChanged`, only once the document has loaded.
+2. The ViewModel reads the pages from the reader's own onward, folds each page's text once
+   (`FoldedText`, `:content:api`) and keeps matches by page (`SearchMatches`), so the count is in
+   reading order whichever page was read first. Typing on reads nothing again.
+3. `FindToolbar` shows the counter and the arrows; `SearchHighlightLayer` lights the matches in the
+   engine's overlay; a `RevealMatch` effect scrolls only if the match is not already in view.
+
 ---
 
 ## 5. Integrations and sensitive points
