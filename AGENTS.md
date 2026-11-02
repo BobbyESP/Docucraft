@@ -433,5 +433,78 @@ modules) and `navigation/` (keys only that feature opens).
   (`refactor/<subsystem>`), merged through a PR.
 - **Commits** follow `type(scope): summary` (`feat(pdfviewer): …`, `fix(content): …`,
   `docs(pdfviewer): …`). The body explains why.
-- **Comments and KDoc say why**, not what. Public API gets KDoc. A comment about a past bug says
-  what went wrong, in words: no bug numbers that only made sense in a deleted document.
+- **Comments and KDoc** follow [Comments](#comments) below. Short: code says what, a comment says
+  what the code cannot, and less is better.
+
+### Comments
+
+Comments are read far more than they are written, and every line costs the reader. **When in doubt,
+leave it out.** Do not over-document: a good name and a small function beat a paragraph.
+
+**KDoc: what goes in, in this order, and only what applies**
+
+1. **Summary**: one sentence, the first line, saying what the class or function *is* or *does*.
+2. **Why it exists**: one or two sentences, only when it is not obvious from the summary: the
+   problem it solves, or why it is separate from its neighbours.
+3. **Parameters, properties and return**: `@param`, `@property`, `@return` only for what the name
+   and type do not already say (units, valid range, what `null` means, who owns it). Never repeat
+   the name: `@param uuid the uuid` is noise. If every parameter is self-explanatory, write none.
+4. **Example**: a short fenced snippet, only when usage is not obvious (a DSL, an ordering, a
+   non-trivial contract). At most ~10 lines.
+5. **`@throws`/result notes**: only for what a caller must handle.
+
+**Where KDoc is required, and where it is not**
+
+- **Required**: public API of the engines (`:composepdf`, `:scanner:api`, `:content:api`), ports
+  and use cases of the domains, and any class whose purpose is not clear from its name.
+- **Not wanted**: overrides, `private` members, ViewModel `Intent`/`State`/`Effect` members that
+  are self-explanatory, composables whose name and parameters say it all, previews, tests, DI
+  modules, and anything that would only restate its signature.
+
+**Length limits**
+
+| Where | Maximum |
+|---|---|
+| Summary line | 1 sentence, within the 100-column limit |
+| KDoc of a function or property | 5 lines, plus `@param` lines |
+| KDoc of a class or interface | 10 lines, plus `@param`/`@property` lines |
+| Inline `//` comment | 3 lines |
+| Doc that needs more | goes in `docs/`, and the KDoc links to it |
+
+A KDoc that runs past its limit is explaining a subsystem: move the explanation to the document
+that describes it (see [`docs/README.md`](docs/README.md)) and leave a one-line pointer.
+
+**What a comment never contains**
+
+- **The past.** No "previously", "used to", "no longer", "now", "was changed to", "after the
+  refactor", "replaces the old …", no bug or ticket numbers, no decision of a deleted document.
+  History lives in git. A KDoc describes what the code is.
+- **A restatement of the code.** `// increment the counter`, or a summary that is the function name
+  in a sentence.
+- **Narration of a change** (`// added for search`), a `TODO` without an owner or reason, and
+  commented-out code.
+- **Section banners and decoration** (`// ---- Helpers ----`). Split the file instead.
+- **A mention of another feature's internals.** A comment stays true when the other side changes.
+
+**What an inline comment is for**
+
+An inline `//` comment is for the *why* the code cannot show: a hidden constraint, a platform quirk,
+an ordering that matters, a choice that looks wrong and is not. State it as a present fact, with the
+consequence of ignoring it, not as a story.
+
+```kotlin
+// Bad: tells a story.
+// This used to crash on Android 7, so we fixed it by opening the renderer differently.
+
+// Good: states the constraint.
+// Android 7 crashes in native code if two renderers are open at once:
+// always go through PdfRenderers.use.
+```
+
+**Language and style**: English, third person, present tense ("Returns the pages…", not "This
+function will return…"). Plain words. No emphasis (`IMPORTANT`, `NOTE`, `!!`), no emojis, no
+first person. Name the decisions of `docs/README.md` (D1–D5, DB1–DB11, E1–E6) by their id only
+where they already exist; never invent one in a comment.
+
+**Reviewing and touching code**: when you edit a function, trim its comments to these rules if they
+break them. Do not rewrite comments in files you are not otherwise changing.

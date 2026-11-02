@@ -10,20 +10,16 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnava
 /**
  * A search in the open document, as the screen shows it.
  *
- * A document is read page by page, starting where the reader is, so a search is a thing that
- * *happens*: what it has found grows, and [isScanning] says whether it is done. The counter is
- * meaningful all the while, because [matches] are kept in reading order whichever page was read
- * first.
+ * The document is read page by page from where the reader is, so a search grows while [isScanning];
+ * the counter is meaningful throughout because [matches] stay in reading order.
  *
- * @property query What was typed, as it was.
- * @property active The match the reader is on; `null` until the first one is found.
- * @property activeNumber Which match of the whole document [active] is, counting from 1; `0` when
- *   there is none.
- * @property scannedPages How many pages have been read for this query.
- * @property pageCount How many there are to read.
- * @property unsearchable Why a search that is over found nothing to look in, when the cause is not
- *   the query but the document: it is made of images, or the device cannot read its text. `null`
- *   when the document has text.
+ * @property query What was typed, as typed.
+ * @property active The match the reader is on; `null` until one is found.
+ * @property activeNumber Position of [active] among all matches, from 1; `0` if none.
+ * @property scannedPages Pages read for this query.
+ * @property pageCount Pages to read.
+ * @property unsearchable Why a finished search found nothing to look in (images only, or a device
+ *   that cannot read the text); `null` if the document has text.
  */
 data class DocumentSearch(
     val query: String,
@@ -46,7 +42,7 @@ data class DocumentSearch(
     val progress: Float
         get() = if (pageCount == 0) 1f else scannedPages.toFloat() / pageCount
 
-    /** Whether there is something to look for, and so something to say about how it went. */
+    /** Whether there is a query to report on. */
     val isActive: Boolean
         get() = query.isNotBlank()
 }

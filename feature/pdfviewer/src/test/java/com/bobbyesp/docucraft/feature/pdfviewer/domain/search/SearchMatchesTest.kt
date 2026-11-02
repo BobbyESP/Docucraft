@@ -18,8 +18,6 @@ class SearchMatchesTest {
 
     private fun spans(vararg starts: Int) = starts.map { TextSpan(it, it + 2) }
 
-    // ------------------------------------------------------------------ order and counting
-
     @Test
     fun `matches are counted in reading order whatever order the pages were found in`() {
         assertEquals(6, matches.total)
@@ -59,8 +57,6 @@ class SearchMatchesTest {
         assertSame(matches, matches.with(2, emptyList()))
     }
 
-    // ------------------------------------------------------------------ where to start
-
     @Test
     fun `the first match from a point is the first at or after it`() {
         assertEquals(MatchRef(1, 1), matches.firstFrom(page = 1, offset = 4))
@@ -84,8 +80,6 @@ class SearchMatchesTest {
         assertEquals(MatchRef(1, 0), matches.first())
         assertNull(SearchMatches.None.first())
     }
-
-    // ------------------------------------------------------------------ stepping
 
     @Test
     fun `next walks the matches in reading order`() {

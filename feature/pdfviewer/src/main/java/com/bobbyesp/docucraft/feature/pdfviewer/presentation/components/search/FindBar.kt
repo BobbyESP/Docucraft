@@ -65,19 +65,18 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.rememberHazeState
 
 /**
- * The field a search is typed in, in the top bar's place: the same frosted bar, status bar
- * included, with the field as a pill, as Home's. The count and the arrows are in [FindToolbar], at
- * the bottom, where the thumb reaches them while the keyboard is up.
+ * The search field, shown in the top bar's place as a frosted bar with a pill-shaped field. The
+ * count and arrows live in [FindToolbar].
  *
- * The keyboard's search key puts it away and keeps the matches; a physical Enter goes to the next
- * match, Shift+Enter to the previous one.
+ * The keyboard's search key dismisses the keyboard and keeps the matches; a hardware Enter goes to
+ * the next match, Shift+Enter to the previous one.
  *
- * @param field What is typed.
- * @param focusRequests When this goes up the field takes the focus; see
+ * @param field The typed text.
+ * @param focusRequests The field takes focus when this goes up; see
  *   [ViewerSearchState.focusRequests].
  * @param onClose Leaves the search.
  * @param onStep Moves to the next match (`true`) or the previous one.
- * @param hazeState Where the pages are recorded.
+ * @param hazeState Where the pages are recorded, for the frosted background.
  */
 @Composable
 fun FindBar(
@@ -138,7 +137,7 @@ private fun FieldPill(
                 .fillMaxWidth()
                 .height(PillHeight),
         shape = CircleShape,
-        // Solid, on a bar that is already frosted: it is a field, and has to read as one.
+        // Solid on the frosted bar, so it reads as a field.
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
     ) {
         Row(
@@ -207,13 +206,10 @@ private fun FieldPill(
     }
 }
 
-/**
- * The field's height. With the bar's 8 dp above and below it, the bar is as tall as the top app bar
- * it replaces, so the pages, which are padded by the top bar's height, do not move.
- */
+/** With the 8 dp above and below, the bar is as tall as the top bar it replaces. */
 private val PillHeight = 48.dp
 
-/** On a wide window the field does not stretch across it. */
+/** Keeps the field from stretching across a wide window. */
 private val MaxWidth = 640.dp
 
 @PreviewLightDark

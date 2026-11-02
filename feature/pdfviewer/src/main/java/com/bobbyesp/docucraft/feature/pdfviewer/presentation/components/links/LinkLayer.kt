@@ -59,9 +59,8 @@ import com.bobbyesp.documentcontent.PageLink
 import com.composepdf.PdfOverlayScope
 
 /**
- * The links over the pages: the tapped one highlighted with its preview beside it (D3), and a node
- * for each link that TalkBack can reach and open, since links are drawn into the page and are
- * otherwise invisible to it.
+ * The links over the pages: the tapped one highlighted with its preview (D3), and an accessibility
+ * node per link, since links are drawn into the page and TalkBack cannot otherwise see them.
  *
  * @param describe What a link is, for TalkBack: where it leads.
  */
@@ -122,9 +121,8 @@ fun PdfOverlayScope.LinkLayer(
 }
 
 /**
- * Where a link really leads, before anything opens (D3): the host a browser would open, in ASCII,
- * with the full address beneath it and a warning for plain `http`; the address of an email; the
- * number of a phone link; or why a link will not be followed.
+ * Where a link really leads, before anything opens (D3): the real host (ASCII) with the full
+ * address and an `http` warning, the email address, the phone number, or why it is refused.
  */
 @Composable
 private fun LinkPreviewCard(

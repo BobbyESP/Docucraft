@@ -16,8 +16,6 @@ class TextSearchTest {
         return TextSearch.find(FoldedText.of(text), needle).map { text.substring(it.start, it.end) }
     }
 
-    // ------------------------------------------------------------------ what counts as the same
-
     @Test
     fun `case does not matter`() {
         assertEquals(
@@ -66,8 +64,6 @@ class TextSearchTest {
         assertEquals(listOf("ab​cd"), found("ab​cd", "abcd"))
     }
 
-    // ------------------------------------------------------------------ finding
-
     @Test
     fun `every match is found, in reading order`() {
         val text = "one two one\nthree one"
@@ -111,8 +107,6 @@ class TextSearchTest {
         assertEquals(listOf("form"), found("information", "form"))
     }
 
-    // ------------------------------------------------------------------ what is not a search
-
     @Test
     fun `nothing is searched for an empty query or one of whitespace`() {
         assertNull(TextSearch.needle(""))
@@ -131,8 +125,6 @@ class TextSearchTest {
     fun `a query is trimmed`() {
         assertEquals(listOf("beta"), found("alpha beta", "  beta \n"))
     }
-
-    // ------------------------------------------------------------------ against a real page
 
     @Test
     fun `a match is highlighted by the page it was found in`() {

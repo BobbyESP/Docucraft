@@ -141,8 +141,6 @@ class PdfViewerViewModelTest {
         Dispatchers.resetMain()
     }
 
-    // ---------------------------------------------------------------------------------- document
-
     @Test
     fun `a catalogued document is loading until the catalogue answers`() = runTest {
         val viewModel = viewModel(ViewerDocumentRef.Catalogued(UUID))
@@ -178,8 +176,6 @@ class PdfViewerViewModelTest {
         assertEquals("a.pdf", open.document.title)
         assertEquals(EXTERNAL, open.document.uri)
     }
-
-    // --------------------------------------------------------------------------------- settings
 
     @Test
     fun `changing the fit mode is kept and reported`() = runTest {
@@ -291,8 +287,6 @@ class PdfViewerViewModelTest {
         )
     }
 
-    // ---------------------------------------------------------------------------------- actions
-
     @Test
     fun `share and open with hand the document's location over`() = runTest {
         catalogue.value = scanned()
@@ -349,8 +343,6 @@ class PdfViewerViewModelTest {
 
         assertEquals(PdfViewerEffect.Print(ContentRef(LOCATION), "Invoice"), effects.single())
     }
-
-    // ---------------------------------------------------------------------------------- text
 
     @Test
     fun `the pages on screen and either side are read`() = runTest {
@@ -447,8 +439,6 @@ class PdfViewerViewModelTest {
         assertTrue(content.sessions.single().closed)
     }
 
-    // ---------------------------------------------------------------------------------- links
-
     @Test
     fun `an external link is shown before anything opens`() = runTest {
         val viewModel = openedExternal()
@@ -538,16 +528,12 @@ class PdfViewerViewModelTest {
         assertEquals(null, viewModel.state.value.selection)
     }
 
-    // ---------------------------------------------------------------------------------- analytics
-
     @Test
     fun `the screen view is logged once per opened document`() = runTest {
         viewModel(ViewerDocumentRef.External(uri = EXTERNAL, displayName = "a.pdf"))
 
         assertEquals(1, analytics.screenViews)
     }
-
-    // ---------------------------------------------------------------------------------- activity
 
     /** What puts a document at the front of Recents. */
     @Test
@@ -606,8 +592,6 @@ class PdfViewerViewModelTest {
             activity.availability,
         )
     }
-
-    // ---------------------------------------------------------------------------------- position
 
     @Test
     fun `a document opens where it was left`() = runTest {
@@ -682,8 +666,6 @@ class PdfViewerViewModelTest {
         assertEquals(ViewerStart(position = null), viewModel.state.value.start)
         assertEquals(mapOf(UUID to ReadingPosition(1, 0.4f)), activity.positions)
     }
-
-    // ---------------------------------------------------------------------------------- external
 
     /** What makes a PDF opened from another app show in Recents. */
     @Test
@@ -795,8 +777,6 @@ class PdfViewerViewModelTest {
         assertTrue(effects.isEmpty())
     }
 
-    // ---------------------------------------------------------------------------------- library
-
     /** It is on loan: saving it is the only way to keep it. */
     @Test
     fun `a document of another app can be saved to the library`() = runTest {
@@ -861,8 +841,6 @@ class PdfViewerViewModelTest {
         assertTrue(viewModel.state.value.readyDocument != null)
         assertFalse(viewModel.state.value.isSavingToLibrary)
     }
-
-    // ---------------------------------------------------------------------------------- search
 
     // Page 0 "the cat sat", 1 "a cat", 2 a scan, 3 "cats and a dog".
     private fun searchableDocument() {
@@ -1129,8 +1107,6 @@ class PdfViewerViewModelTest {
         advanceUntilIdle()
         assertEquals(3, viewModel.state.value.search!!.total)
     }
-
-    // ---------------------------------------------------------------------------------- helpers
 
     private fun TestScope.collectEvents(viewModel: PdfViewerViewModel): List<UiEvent> {
         val events = mutableListOf<UiEvent>()

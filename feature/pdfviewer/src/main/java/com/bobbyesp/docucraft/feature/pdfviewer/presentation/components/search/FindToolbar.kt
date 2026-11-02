@@ -58,15 +58,12 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.rememberHazeState
 
 /**
- * Which match the reader is on, out of how many, and the arrows between them: the bottom toolbar
- * with what a search needs in place of what reading needs.
+ * The bottom toolbar while searching: the position among the matches and the arrows between them. A
+ * ring beside the count shows reading progress while the document is still being read.
  *
- * The count is useful from the first match: while the document is still being read a ring beside it
- * shows how much has been, and the count only grows.
- *
- * @param search A search with something being looked for.
+ * @param search A search with a query.
  * @param onStep Moves to the next match (`true`) or the previous one.
- * @param hazeState Where the pages are recorded.
+ * @param hazeState Where the pages are recorded, for the frosted background.
  */
 @Composable
 fun FindToolbar(
@@ -96,10 +93,7 @@ fun FindToolbar(
     }
 }
 
-/**
- * What the counter says. [order] is which match it is, so that the number can slide the way the
- * reader is going: up when they move on, down when they go back.
- */
+/** What the counter says; [order] sets the slide direction (up going forward, down going back). */
 @Immutable private data class CounterLabel(val text: String, val order: Int)
 
 @Composable
@@ -153,7 +147,7 @@ private fun RowScope.FindCounter(search: DocumentSearch) {
                 .padding(horizontal = 8.dp)
                 .semantics(mergeDescendants = true) {
                     contentDescription = description
-                    // Said when the search settles, not for every page it reads.
+                    // Announced when the search settles, not for every page read.
                     if (!scanning) liveRegion = LiveRegionMode.Polite
                 },
         horizontalArrangement = Arrangement.Center,
@@ -208,7 +202,7 @@ private fun RowScope.FindCounter(search: DocumentSearch) {
 
 private val CounterMinWidth = 88.dp
 
-/** Wide enough for the longest thing it says, which is why the search found nothing. */
+/** Fits the longest message, the reason a search found nothing. */
 private val CounterMaxWidth = 232.dp
 
 private const val TrackAlpha = 0.2f

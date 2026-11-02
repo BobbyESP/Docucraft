@@ -7,23 +7,21 @@ import com.bobbyesp.documentcontent.TextSpan
 import java.util.TreeMap
 
 /**
- * One match of a search: the page it is on, and which of that page's matches it is, counting from
- * the top. Stable for as long as the matches it points into are: finding more elsewhere does not
- * move it.
+ * One match of a search.
+ *
+ * @property page the page it is on.
+ * @property index which of that page's matches it is, from 0. Matches found on other pages do not
+ *   move it.
  */
 data class MatchRef(val page: Int, val index: Int)
 
 /**
- * What a search has found so far, in the document's reading order whatever order the pages were
- * read in.
+ * The matches a search has found so far, kept by page.
  *
- * Pages are read near the reader first and the rest after, so matches arrive out of order; keeping
- * them by page makes "the third of twelve" mean the same thing the whole time. Immutable: adding a
- * page's matches gives a new set, so the screen can tell that something changed by looking at the
- * reference.
- *
- * Plain Kotlin, and the whole of the "which match comes next" logic, so that it is tested without a
- * device.
+ * Pages are read near the reader first, so matches arrive out of order; keeping them by page makes
+ * "the third of twelve" mean the same thing throughout. Immutable: adding a page gives a new
+ * instance, so the screen detects changes by reference. Holds all of the next/previous logic, so it
+ * is tested without a device.
  */
 class SearchMatches private constructor(private val byPage: TreeMap<Int, List<TextSpan>>) {
 
@@ -40,7 +38,7 @@ class SearchMatches private constructor(private val byPage: TreeMap<Int, List<Te
     val pages: Set<Int>
         get() = byPage.keys
 
-    /** These matches and [spans], which are all of [page]'s. A page with none changes nothing. */
+    /** These matches plus [spans], all of [page]'s. No spans returns this instance. */
     fun with(page: Int, spans: List<TextSpan>): SearchMatches {
         if (spans.isEmpty()) return this
         val next = TreeMap(byPage)
@@ -48,10 +46,10 @@ class SearchMatches private constructor(private val byPage: TreeMap<Int, List<Te
         return SearchMatches(next)
     }
 
-    /** The span [ref] points at; `null` if it points at nothing, as after the matches changed. */
+    /** The span [ref] points at, or `null` if it points at nothing. */
     fun spanOf(ref: MatchRef): TextSpan? = byPage[ref.page]?.getOrNull(ref.index)
 
-    /** Which match of the whole document [ref] is, counting from 1; `0` if it is none. */
+    /** Position of [ref] among all matches, from 1; `0` if it points at nothing. */
     fun numberOf(ref: MatchRef): Int {
         if (spanOf(ref) == null) return 0
         var before = 0
@@ -65,10 +63,7 @@ class SearchMatches private constructor(private val byPage: TreeMap<Int, List<Te
     /** The first match of the document. */
     fun first(): MatchRef? = byPage.firstEntry()?.let { MatchRef(it.key, 0) }
 
-    /**
-     * The first match that starts at or after [offset] on [page], or on any later page. `null` if
-     * there is none: everything found so far is before.
-     */
+    /** The first match at or after [offset] on [page], or on a later page; `null` if none. */
     fun firstFrom(page: Int, offset: Int): MatchRef? {
         byPage[page]
             ?.indexOfFirst { it.start >= offset }
@@ -80,7 +75,7 @@ class SearchMatches private constructor(private val byPage: TreeMap<Int, List<Te
         return MatchRef(later.key, 0)
     }
 
-    /** The match after [ref], and the first again after the last. */
+    /** The match after [ref], wrapping to the first after the last. */
     fun next(ref: MatchRef?): MatchRef? {
         if (isEmpty) return null
         if (ref == null || spanOf(ref) == null) return first()
@@ -89,7 +84,7 @@ class SearchMatches private constructor(private val byPage: TreeMap<Int, List<Te
         return MatchRef(following.key, 0)
     }
 
-    /** The match before [ref], and the last again before the first. */
+    /** The match before [ref], wrapping to the last before the first. */
     fun previous(ref: MatchRef?): MatchRef? {
         if (isEmpty) return null
         val last = byPage.lastEntry()

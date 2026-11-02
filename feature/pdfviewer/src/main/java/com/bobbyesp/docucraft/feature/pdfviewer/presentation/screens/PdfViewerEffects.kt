@@ -56,11 +56,11 @@ import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 
 /**
- * Reports where the reader is a moment after they stop moving, and when they leave. Never on every
- * frame of a scroll, since it is written down.
+ * Reports where the reader is a moment after they stop moving, and when they leave; never on every
+ * scroll frame.
  *
- * On leaving it reports the last position seen, not one read then: by the time this is disposed the
- * engine may already have let go of the document, and would answer with the middle of the page.
+ * On leaving it reports the last position seen, because the engine may already have released the
+ * document by then and would answer with the middle of the page.
  */
 @OptIn(FlowPreview::class)
 @Composable
@@ -164,10 +164,9 @@ internal fun ReportDocumentLoad(
 /**
  * Tells the ViewModel what is being searched for as it is typed, and when the search is over.
  *
- * Nothing is said while the document is loading, since the ViewModel searches the pages it has. A
- * document still loading is not a closed search: after a rotation it is loading again, and the
- * ViewModel, which kept the search and the match the reader was on, is only told the same query,
- * which changes nothing. After a process death it is told a query it no longer has, and searches.
+ * Nothing is sent while the document loads, and loading is not a closed search: after a rotation
+ * the ViewModel keeps its search and is only told the same query, which changes nothing. After a
+ * process death it is told a query it no longer has, and searches.
  */
 @Composable
 internal fun ReportSearchQuery(
@@ -202,10 +201,7 @@ private sealed interface SearchReport {
     data object Closed : SearchReport
 }
 
-/**
- * Touching the document while searching puts the keyboard away: the reader has typed and now wants
- * to read what was found, and a keyboard over half the page is in the way.
- */
+/** Touching the document while searching dismisses the keyboard, which covers the matches. */
 @Composable
 internal fun DismissKeyboardOnTouch(screenState: PdfViewerScreenState) {
     val pdf = screenState.pdf
@@ -336,14 +332,8 @@ private fun PdfReadingPosition.toDomain() =
 
 private val VisiblePagesSettle = 150.milliseconds
 
-/**
- * Long enough that leafing through a document writes nothing; what is lost by leaving sooner is
- * written on the way out.
- */
+/** Long enough that leafing through a document writes nothing; leaving writes the last position. */
 private val ReadingPositionSettle = 1.seconds
 
-/**
- * Longer than a message that only informs: there is something to decide, and the reader has just
- * started looking at the page.
- */
+/** Longer than an informational message: it offers a decision. */
 private val AlreadyInLibraryNotice = 8.seconds

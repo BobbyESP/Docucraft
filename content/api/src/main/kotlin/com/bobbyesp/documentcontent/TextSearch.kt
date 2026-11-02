@@ -7,18 +7,14 @@ import java.text.Normalizer
 import java.util.Locale
 
 /**
- * A page's text, folded so that a search ignores what a reader does not mean by a difference: case,
- * accents, ligatures, and how whitespace happens to be broken (a line, a paragraph, a no-break
- * space). `Résumé`, `RESUME` and `résumé` are one word here, as they are in the library's own
- * search.
+ * A page's text folded so that a search ignores case, accents, ligatures and how whitespace is
+ * broken: `Résumé`, `RESUME` and `résumé` are one word, as in the library's own search.
  *
- * Folding changes the length of the text (a ligature becomes two letters, a run of whitespace one
- * space), so it remembers where each folded character came from and answers in the *original*
- * text's offsets. A match found here is a [TextSpan] of [TextSelection.text], which is what
- * highlighting and the selection speak.
+ * Folding changes the text's length (a ligature becomes two letters, a run of whitespace one
+ * space), so each folded character remembers its origin and matches are answered as [TextSpan]s of
+ * the *original* text ([TextSelection.text]), which is what highlighting and selection use.
  *
- * Built once for a page, then searched for as many queries as the reader types: it is the only
- * thing worth keeping of a page once its geometry has been let go of.
+ * Built once per page and searched for every query typed.
  */
 class FoldedText
 private constructor(
@@ -27,20 +23,17 @@ private constructor(
     /** The original index of each folded character; `null` when folding moved nothing. */
     private val origin: IntArray?,
 ) {
-    /** Whether there is anything to find in: a page of blank text has no words. */
+    /** Whether the page has no text to search. */
     val isEmpty: Boolean
         get() = text.isBlank()
 
     /** Where folded character [index] started in the original text. */
     internal fun startOf(index: Int): Int = origin?.get(index) ?: index
 
-    /**
-     * Where the original character that folded character [index] came from ends: after the accents
-     * that sit on it, so that a match never ends between a letter and its accent.
-     */
+    /** Where the original character behind folded character [index] ends, accents included. */
     internal fun endOf(index: Int): Int {
         var end = startOf(index) + 1
-        // A character outside the basic plane is two units long, and is never cut in half.
+        // A character outside the basic plane is two units long and must not be cut in half.
         if (end < source.length && Character.isHighSurrogate(source[end - 1])) end++
         while (end < source.length && source[end].isIgnorable()) end++
         return end
@@ -50,7 +43,7 @@ private constructor(
         /** A page with nothing to search. */
         val Empty = FoldedText(source = "", text = "", origin = null)
 
-        /** [original] folded; see the class documentation. */
+        /** Folds [original]. */
         fun of(original: String): FoldedText {
             if (original.isEmpty()) return Empty
             val folded = StringBuilder(original.length)
@@ -101,23 +94,17 @@ private constructor(
 /**
  * Searching a page's text.
  *
- * A match is a stretch of the page's text equal to what was typed once both are folded
- * ([FoldedText]); it is never cut inside a character, and two matches never overlap. Matches do not
- * run from one page to the next: a reader looks for a phrase, and a phrase that a page break splits
- * is not on a page.
+ * A match is a stretch of the page equal to the query once both are folded ([FoldedText]). It never
+ * cuts a character, matches never overlap, and a match never spans two pages.
  */
 object TextSearch {
 
     /**
-     * What to look for, folded the way a page is, or `null` when there is nothing to look for: an
-     * empty query, or one of only whitespace.
+     * The folded form of [query] to pass to [find], or `null` if it is empty or only whitespace.
      */
     fun needle(query: String): String? = FoldedText.of(query.trim()).text.takeIf { it.isNotBlank() }
 
-    /**
-     * Every match of [needle] (from [needle]) in [page], in reading order, as spans of the original
-     * text.
-     */
+    /** Every match of [needle] (from [needle]) in [page], in reading order, in original offsets. */
     fun find(page: FoldedText, needle: String): List<TextSpan> {
         if (needle.isEmpty() || page.isEmpty) return emptyList()
         var found: ArrayList<TextSpan>? = null
@@ -136,9 +123,8 @@ object TextSearch {
 private fun Char.isSeparator(): Boolean = isWhitespace() || Character.isSpaceChar(this)
 
 /**
- * A character folded: decomposed (`é` is `e` and an accent, `ﬁ` is `f` and `i`), stripped of its
- * accents, and in lower case. Usually one character; a ligature gives more, and a lone accent gives
- * none, so that `é` typed as a letter and an accent finds the same as the one-piece `é`.
+ * A character decomposed (`ﬁ` is `f`, `i`), stripped of accents and lower-cased. A ligature gives
+ * several characters and a lone accent none, so `e` + accent finds the same as the one-piece `é`.
  */
 private fun Char.foldedParts(): CharArray {
     if (isIgnorable()) return NoParts
@@ -150,11 +136,7 @@ private fun Char.foldedParts(): CharArray {
 
 private val NoParts = CharArray(0)
 
-/**
- * What a reader does not see as a letter: the accents that sit on the letter before them, and the
- * invisible format characters a PDF puts between letters (the soft hyphen of a broken word, a
- * zero-width space). Neither is part of a word to search for.
- */
+/** Accents and invisible format characters (soft hyphen, zero-width space): not part of a word. */
 private fun Char.isIgnorable(): Boolean =
     when (Character.getType(this).toByte()) {
         Character.NON_SPACING_MARK,

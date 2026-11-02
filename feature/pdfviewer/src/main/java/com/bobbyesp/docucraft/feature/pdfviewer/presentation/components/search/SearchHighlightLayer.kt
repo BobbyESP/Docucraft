@@ -26,18 +26,13 @@ import com.composepdf.PdfPageDrawScope
 /**
  * The matches of a search, lit on the pages.
  *
- * Every match is tinted; the one the reader is on is stronger, underlined, and, when it comes into
- * view, rings out once from the text, so the eye is taken to it rather than left to look for it
- * among the others. Drawn in the engine's overlay, in the draw phase: panning and zooming never
- * recompose it, and the ring animates without recomposing either.
+ * Every match is tinted; the active one is stronger, underlined, and rings out once when it comes
+ * into view. Drawn in the engine's overlay during the draw phase, so panning, zooming and the ring
+ * never recompose it. Box positions come from [SearchHighlights].
  *
- * Where the boxes are is worked out when the matches or the pages' text change
- * ([SearchHighlights]), which is only after the reader has stopped moving.
- *
- * @param pages The text of the pages near what is on screen: a match is lit once its page's
- *   geometry is known.
- * @param nightMode Whether the pages are drawn inverted. The colors that read on a light page
- *   vanish on a dark one, as they do for the selection.
+ * @param pages The text of the pages near the screen; a match is lit once its page's geometry is
+ *   known.
+ * @param nightMode Whether the pages are drawn inverted, which needs lighter colors.
  */
 @Composable
 fun PdfOverlayScope.SearchHighlightLayer(
@@ -53,7 +48,7 @@ fun PdfOverlayScope.SearchHighlightLayer(
     val ring = remember { Animatable(0f) }
     val spec = MaterialTheme.motionScheme.slowEffectsSpec<Float>()
     val active = search?.active
-    // Once for each match the reader arrives on; stepping on restarts it.
+    // Restarts each time the active match changes.
     LaunchedEffect(active) {
         if (active == null) return@LaunchedEffect
         ring.snapTo(1f)
@@ -72,7 +67,7 @@ fun PdfOverlayScope.SearchHighlightLayer(
         for (box in page.current) {
             val area = viewerRect(box).inflate(grow)
             drawRoundRect(look.current, area.topLeft, area.size, corner)
-            // The underline: the one mark that stays legible if the colors are close.
+            // The underline stays legible when the tint and the match color are close.
             val y = area.bottom - Underline.toPx() / 2f
             drawLine(
                 color = look.edge,
@@ -101,16 +96,15 @@ fun PdfOverlayScope.SearchHighlightLayer(
 @Immutable private class HighlightLook(val match: Color, val current: Color, val edge: Color)
 
 /**
- * Colors from the theme, not a fixed yellow: the selection's own color is for text a reader chose;
- * a match is something the app found, so it takes the tertiary accent, and the match the reader is
- * on takes the primary one.
+ * Theme colors distinct from the selection's: matches take the tertiary accent, the active match
+ * the primary one.
  */
 @Composable
 private fun highlightLook(nightMode: Boolean): HighlightLook {
     val scheme = MaterialTheme.colorScheme
     return remember(scheme.tertiary, scheme.primary, scheme.inversePrimary, nightMode) {
         if (nightMode) {
-            // Inverted pages are dark with light text: a light tint over it, as for the selection.
+            // Inverted pages are dark: a light tint reads over them.
             HighlightLook(
                 match = scheme.inversePrimary.copy(alpha = NightMatchAlpha),
                 current = scheme.inversePrimary.copy(alpha = NightCurrentAlpha),
@@ -135,7 +129,7 @@ private const val NightMatchAlpha = 0.35f
 private const val NightCurrentAlpha = 0.70f
 private const val RippleAlpha = 0.9f
 
-/** A little more than the glyphs, so the tint breathes around the text instead of cutting it. */
+/** Margin around the glyphs so the tint does not cut the text. */
 private val Grow = 1.dp
 private val Corner = 3.dp
 private val Underline = 2.5.dp

@@ -52,8 +52,7 @@ internal class PdfViewerScreenState(
     private val revealMarginPx: Float,
 ) {
     /**
-     * The bars stay while a search is open: stepping between matches scrolls the document, which
-     * would otherwise send them away, and they hold the way out of the search.
+     * Bars stay while searching: stepping scrolls, which would hide them, and they hold the exit.
      */
     val barsVisible: Boolean
         get() = chrome.isVisible || search.isOpen
@@ -63,7 +62,7 @@ internal class PdfViewerScreenState(
 
     fun dismissKeyboard() = focusManager.clearFocus()
 
-    /** Also shows the bars: reading on before the search may have hidden them. */
+    /** Closes the search and shows the bars again. */
     fun closeSearch() {
         focusManager.clearFocus()
         search.close()
@@ -86,26 +85,22 @@ internal class PdfViewerScreenState(
         scope.launch { pdf.animateScrollTo(page, position) }
     }
 
-    /** Launched, so a newer match is not kept waiting behind this one's scroll. */
+    /** Brings the match into view; launched so a newer match does not wait behind this scroll. */
     fun reveal(page: Int, area: NormalizedRect) {
         scope.launch {
             pdf.reveal(page, area, bars.visibleArea(searching = search.isOpen), revealMarginPx)
         }
     }
 
-    /**
-     * The page and point at the top of the content area: where a jump puts its target, so the way
-     * back returns the reader to the line they were on.
-     */
+    /** The page and point at the top of the content area, so "back" returns to the same line. */
     fun readingPoint(): Pair<Int, Offset>? = pdf.readingPoint(bars.topPx.toFloat())
 }
 
 /**
- * @param documentUri Where the document is read from. Saving another app's document into the
- *   library moves it, and the engine does not take a new state under a viewer already laid out, so
- *   the engine's state is keyed by it and starts where the reader was last seen.
- * @param start Where the document opens the first time. What was last seen wins over it: after a
- *   rotation or a process death it is the later of the two.
+ * @param documentUri Where the document is read from. The engine's state is keyed by it, since the
+ *   engine cannot take a new state under a laid-out viewer, and restarts where the reader was last
+ *   seen.
+ * @param start Where the document first opens; what was last seen wins over it.
  */
 @Composable
 internal fun rememberPdfViewerScreenState(
@@ -152,9 +147,7 @@ internal fun rememberPdfViewerScreenState(
 
 /**
  * The bars' measured heights, kept while they are hidden. They reach the viewer as constant content
- * padding: pages start below the top bar, end above the bottom one, and scroll underneath them. An
- * animated padding resized the viewport, and relaid the document out, on every frame the bars
- * moved.
+ * padding, so animating the bars never resizes the viewport or relays the document out.
  */
 @Stable
 internal class ViewerBarHeights {
@@ -185,9 +178,8 @@ internal class ViewerBarHeights {
     }
 
     /**
-     * Where something on the pages can be seen: below the top bar and above whatever covers the
-     * bottom. While searching that is the find toolbar, which rises with the keyboard and so
-     * includes it.
+     * Where something on the pages can be seen: below the top bar and above what covers the bottom
+     * (while searching, the find toolbar, which rises with the keyboard).
      */
     fun visibleArea(searching: Boolean): VisibleArea {
         val covered = if (searching) maxOf(bottomPx, findToolbarPx) else bottomPx
@@ -209,9 +201,8 @@ internal class LastSeen {
 }
 
 /**
- * Brings the match at [area] of [page] into [visible], unless it is already there: stepping between
- * matches on one screen should not make the reader lose their place. A match out of view lands
- * about a third of the way down, with some of the text before it to read it by.
+ * Brings the match at [area] of [page] into [visible], unless it is already there. One out of view
+ * lands about a third of the way down, with some preceding text for context.
  *
  * @param margin How close to an edge of [visible] a match may be and still count as in view.
  */
@@ -257,7 +248,7 @@ private fun ReadingPosition.toEngine() =
 
 private const val ZoomStep = 1.25f
 
-/** Where a match is put when it is brought into view: this share of the way down the free area. */
+/** Share of the free area, from the top, where a revealed match lands. */
 private const val RevealPlacement = 0.3f
 
 /** How close to the bars or the keyboard a match may be and still count as in view. */

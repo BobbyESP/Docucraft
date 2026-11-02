@@ -55,16 +55,14 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 
 /**
- * A fast scroller along the trailing edge, for documents long enough to need one. It shows while
- * the document moves and fades after a pause. Dragging its thumb jumps through the document, with
- * the page number beside it. TalkBack sees it as an adjustable control, so it works without
- * dragging too.
+ * A fast scroller along the trailing edge for long documents. It shows while the document moves and
+ * fades after a pause; dragging its thumb jumps through the document with the page number beside
+ * it. TalkBack sees it as an adjustable control.
  *
- * Built only on [PdfViewerState]'s public API. It replaces the engine's passive scroll indicator,
- * which the viewer turns off.
+ * Uses only [PdfViewerState]'s public API and replaces the engine's passive scroll indicator.
  *
- * @param contentTop Where the viewer's content area starts, from the viewer's top: its top content
- *   padding. [modifier] should place this over exactly that area.
+ * @param contentTop The viewer's top content padding. [modifier] should place this over exactly the
+ *   content area.
  */
 @Composable
 fun PdfFastScroller(state: PdfViewerState, contentTop: Dp, modifier: Modifier = Modifier) {

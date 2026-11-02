@@ -182,9 +182,8 @@ private fun ZoomChip(zoom: Float, onClick: () -> Unit) {
 }
 
 /**
- * The current fit mode's icon, opening a menu of the four by name. Frosted over the pages and with
- * a shadow rather than a blur halo, as the top bar's menu, for the same reason: the toolbar is not
- * in the pages' recording, and a halo would draw the pages over it.
+ * The current fit mode's icon, opening a menu of the four by name. Shadow instead of a blur halo,
+ * as in the top bar's menu: the toolbar is outside the pages' recording.
  */
 @Composable
 private fun FitModeButton(

@@ -16,14 +16,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 
 /**
- * Whether the search bar is open, and what is typed in it: presentation alone, like whether the
- * viewer's bars are showing. What the search *found* is the ViewModel's.
- *
- * The text is a [TextFieldState], so it keeps its cursor and selection; the field and the ViewModel
- * meet in the screen, which reports the text as it changes.
+ * Whether the search bar is open and what is typed in it. Pure UI state; what the search *found* is
+ * the ViewModel's.
  *
  * @param isOpen Whether the search bar is showing.
- * @param query What is typed, when restored.
+ * @param query The initial text, when restored.
  */
 @Stable
 class ViewerSearchState(isOpen: Boolean, query: String) {
@@ -34,9 +31,8 @@ class ViewerSearchState(isOpen: Boolean, query: String) {
     val field = TextFieldState(initialText = query)
 
     /**
-     * How many times the reader has asked to type. The field takes the focus, and so raises the
-     * keyboard, when this goes up: not when the bar comes back after a rotation, where the reader
-     * did not ask for the keyboard again.
+     * How many times the reader has asked to type. The field takes focus when this goes up, not
+     * when the bar is restored after a rotation.
      */
     var focusRequests: Int by mutableIntStateOf(0)
         private set
@@ -47,7 +43,7 @@ class ViewerSearchState(isOpen: Boolean, query: String) {
         focusRequests++
     }
 
-    /** Closes the bar and forgets what was typed: the next search starts empty. */
+    /** Closes the bar and clears the text. */
     fun close() {
         isOpen = false
         field.clearText()
@@ -62,7 +58,7 @@ class ViewerSearchState(isOpen: Boolean, query: String) {
     }
 }
 
-/** Survives rotation and process death, so a search being read is not lost to either. */
+/** A [ViewerSearchState] that survives rotation and process death. */
 @Composable
 fun rememberViewerSearchState(): ViewerSearchState =
     rememberSaveable(saver = ViewerSearchState.Saver) {

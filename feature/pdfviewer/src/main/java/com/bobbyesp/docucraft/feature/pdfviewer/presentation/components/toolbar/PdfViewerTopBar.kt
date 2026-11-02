@@ -59,8 +59,7 @@ import dev.chrisbanes.haze.rememberHazeState
  * A `null` action is left out.
  *
  * @param hazeState Where the pages are recorded.
- * @param onSaveToLibrary For another app's document. First, so that it is the one action a narrow
- *   bar shows: without it the document is only on loan.
+ * @param onSaveToLibrary For another app's document; listed first so a narrow bar shows it.
  * @param isSavingToLibrary The copy is under way; the action stays but is disabled.
  * @param onSearch Always a button of its own, never in the menu.
  */
@@ -169,9 +168,9 @@ private class ViewerAction(
 )
 
 /**
- * The first [shown] actions as buttons, the rest in a menu of frosted groups: what is done with the
- * document, and its details. It has a shadow, not a blur halo: the halo blurs the pages' recording,
- * and the bar is not in it, so it drew the pages over the bar's buttons.
+ * The first [shown] actions as buttons, the rest in a menu of frosted groups. The menu uses a
+ * shadow, not a blur halo: the bar is outside the pages' recording, so a halo would draw the pages
+ * over its buttons.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
