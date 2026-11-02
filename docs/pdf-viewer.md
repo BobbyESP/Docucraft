@@ -191,9 +191,12 @@ Closed                     Open, typing                       After the keyboard
   not make the reader lose their place. When it does move, the match lands about a third of the
   way down, with some text before it to read it by.
 - **What survives.** Whether the bar is open and what is typed are presentation
-  (`ViewerSearchState`, saved like the bars' visibility); they are reported to the ViewModel as
-  they change, so a search restored after a rotation or a process death searches again.
-  What was found is the ViewModel's.
+  (`ViewerSearchState`, saved like the bars' visibility). What was found is the ViewModel's.
+  - After a rotation the ViewModel still has the search, and the match the reader was on: the
+    screen tells it the same query, which changes nothing. Nothing is said while the document
+    loads again: loading is not closing the search, and taking it for that lost the match.
+  - After a process death the ViewModel is new, and the same query starts the search again from
+    where the reader is.
 
 ### Bars, scroller, indicator
 

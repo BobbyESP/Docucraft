@@ -164,8 +164,10 @@ internal fun ReportDocumentLoad(
 /**
  * Tells the ViewModel what is being searched for as it is typed, and when the search is over.
  *
- * Only once the document is on screen, since the ViewModel searches the pages it has. A search
- * restored after a rotation or a process death is reported the same way, which is how it resumes.
+ * Nothing is said while the document is loading, since the ViewModel searches the pages it has. A
+ * document still loading is not a closed search: after a rotation it is loading again, and the
+ * ViewModel, which kept the search and the match the reader was on, is only told the same query,
+ * which changes nothing. After a process death it is told a query it no longer has, and searches.
  */
 @Composable
 internal fun ReportSearchQuery(
@@ -175,13 +177,29 @@ internal fun ReportSearchQuery(
 ) {
     val send by rememberUpdatedState(onIntent)
     LaunchedEffect(search, pdf) {
-        snapshotFlow { if (search.isOpen && pdf.isLoaded) search.field.text.toString() else null }
+        snapshotFlow {
+            when {
+                !pdf.isLoaded -> null
+                search.isOpen -> SearchReport.Query(search.field.text.toString())
+                else -> SearchReport.Closed
+            }
+        }
+            .filterNotNull()
             .distinctUntilChanged()
-            .collect { query ->
-                if (query == null) send(PdfViewerIntent.CloseSearch)
-                else send(PdfViewerIntent.SearchQueryChanged(query, pdf.currentPage))
+            .collect { report ->
+                when (report) {
+                    is SearchReport.Query ->
+                        send(PdfViewerIntent.SearchQueryChanged(report.text, pdf.currentPage))
+                    SearchReport.Closed -> send(PdfViewerIntent.CloseSearch)
+                }
             }
     }
+}
+
+private sealed interface SearchReport {
+    data class Query(val text: String) : SearchReport
+
+    data object Closed : SearchReport
 }
 
 /**
