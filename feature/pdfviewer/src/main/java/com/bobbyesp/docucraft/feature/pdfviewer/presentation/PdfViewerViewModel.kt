@@ -180,6 +180,9 @@ class PdfViewerViewModel(
     /** Pages in the document once loaded; what a search has to read. */
     private var pageCount = 0
 
+    /** A query and its starting page, received before the document's pages were counted. */
+    private var waitingSearch: Pair<String, Int>? = null
+
     private var searchJob: Job? = null
     private var revealJob: Job? = null
 
@@ -222,6 +225,10 @@ class PdfViewerViewModel(
                 pageCount = intent.pageCount
                 noteAvailability(DocumentAvailability.AVAILABLE)
                 describe(pageCount = intent.pageCount, isProtected = false)
+                waitingSearch?.let { (query, fromPage) ->
+                    waitingSearch = null
+                    search(query, fromPage)
+                }
             }
 
             is PdfViewerIntent.ReadingPositionChanged -> keepPosition(intent.position)
@@ -239,6 +246,7 @@ class PdfViewerViewModel(
             PdfViewerIntent.CopySelection -> copySelection()
             is PdfViewerIntent.NothingToSelect -> tellOnce(intent.reason)
             is PdfViewerIntent.SearchQueryChanged -> search(intent.query, intent.fromPage)
+            is PdfViewerIntent.ShowMatches -> search(intent.query, intent.fromPage)
             is PdfViewerIntent.SearchStep -> step(intent.forward)
             PdfViewerIntent.CloseSearch -> closeSearch()
             is PdfViewerIntent.TapLink -> tapLink(intent)
@@ -488,7 +496,12 @@ class PdfViewerViewModel(
      * every composition.
      */
     private fun search(query: String, fromPage: Int) {
-        if (pageCount == 0 || currentState.search?.query == query) return
+        if (pageCount == 0) {
+            // The screen may report a query before the page count: it is searched once known.
+            waitingSearch = query to fromPage
+            return
+        }
+        if (currentState.search?.query == query) return
         searchJob?.cancel()
 
         val needle = TextSearch.needle(query)
@@ -654,6 +667,7 @@ class PdfViewerViewModel(
     }
 
     private fun closeSearch() {
+        waitingSearch = null
         searchJob?.cancel()
         revealJob?.cancel()
         searchable.clear()

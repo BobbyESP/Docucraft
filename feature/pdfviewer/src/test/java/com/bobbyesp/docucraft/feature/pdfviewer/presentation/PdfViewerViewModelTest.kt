@@ -84,6 +84,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -878,6 +879,20 @@ class PdfViewerViewModelTest {
         assertEquals(MatchRef(0, 0), search.active)
         assertEquals(1, search.activeNumber)
         assertFalse("every page was read", search.isScanning)
+    }
+
+    @Test
+    fun `a query reported before the document is counted is searched once it is`() = runTest {
+        searchableDocument()
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("cat", fromPage = 0))
+        advanceUntilIdle()
+        assertNull(viewModel.state.value.search)
+
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 4))
+        advanceUntilIdle()
+
+        assertEquals(3, viewModel.state.value.search!!.total)
     }
 
     @Test

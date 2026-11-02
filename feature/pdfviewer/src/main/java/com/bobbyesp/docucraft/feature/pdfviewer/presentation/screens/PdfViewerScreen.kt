@@ -39,7 +39,6 @@ fun PdfViewerScreen(
         rememberPdfViewerScreenState(
             documentUri = documentInfo.uri,
             start = uiState.start?.position,
-            initialQuery = initialSearchQuery,
         )
     val pdf = screenState.pdf
     val search = screenState.search
@@ -53,6 +52,7 @@ fun PdfViewerScreen(
     ReportDocumentLoad(pdf, screenState.loadError, onIntent)
     // After ReportDocumentLoad, which tells the ViewModel how many pages there are to search.
     ReportSearchQuery(search, pdf, onIntent)
+    HighlightArrivalQuery(pdf, search, initialSearchQuery, onIntent)
     DismissKeyboardOnTouch(screenState)
     HandlePdfViewerEffects(
         effects = viewModel.effects,

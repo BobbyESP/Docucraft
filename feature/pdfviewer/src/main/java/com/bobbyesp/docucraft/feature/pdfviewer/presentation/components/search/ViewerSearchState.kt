@@ -60,7 +60,7 @@ class ViewerSearchState(isOpen: Boolean, query: String) {
 
 /** A [ViewerSearchState] that survives rotation and process death. */
 @Composable
-fun rememberViewerSearchState(initialQuery: String? = null): ViewerSearchState =
+fun rememberViewerSearchState(): ViewerSearchState =
     rememberSaveable(saver = ViewerSearchState.Saver) {
-        ViewerSearchState(isOpen = !initialQuery.isNullOrBlank(), query = initialQuery.orEmpty())
+        ViewerSearchState(isOpen = false, query = "")
     }

@@ -101,14 +101,12 @@ internal class PdfViewerScreenState(
  *   engine cannot take a new state under a laid-out viewer, and restarts where the reader was last
  *   seen.
  * @param start Where the document first opens; what was last seen wins over it.
- * @param initialQuery A search the document opens on, with the find bar open and unfocused.
  */
 @Composable
 internal fun rememberPdfViewerScreenState(
     documentUri: String,
     start: ReadingPosition?,
-    initialQuery: String? = null,
-    search: ViewerSearchState = rememberViewerSearchState(initialQuery),
+    search: ViewerSearchState = rememberViewerSearchState(),
 ): PdfViewerScreenState {
     val lastSeen = remember { LastSeen() }
     val pdf =

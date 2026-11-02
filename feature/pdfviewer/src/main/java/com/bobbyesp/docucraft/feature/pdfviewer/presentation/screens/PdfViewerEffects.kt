@@ -11,7 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.luminance
@@ -176,6 +179,9 @@ internal fun ReportSearchQuery(
 ) {
     val send by rememberUpdatedState(onIntent)
     LaunchedEffect(search, pdf) {
+        // A search never opened has nothing to close; closing would also clear the highlight of
+        // the query the document was opened on.
+        var wasOpen = false
         snapshotFlow {
             when {
                 !pdf.isLoaded -> null
@@ -187,11 +193,43 @@ internal fun ReportSearchQuery(
             .distinctUntilChanged()
             .collect { report ->
                 when (report) {
-                    is SearchReport.Query ->
+                    is SearchReport.Query -> {
+                        wasOpen = true
                         send(PdfViewerIntent.SearchQueryChanged(report.text, pdf.currentPage))
-                    SearchReport.Closed -> send(PdfViewerIntent.CloseSearch)
+                    }
+                    SearchReport.Closed ->
+                        if (wasOpen) {
+                            wasOpen = false
+                            send(PdfViewerIntent.CloseSearch)
+                        }
                 }
             }
+    }
+}
+
+/**
+ * Lights the matches of the query a document was opened from, without opening the find bar, and
+ * puts them out when the reader first touches the document. It runs once per entry: after a
+ * rotation the reader has either already moved on or still sees the matches.
+ */
+@Composable
+internal fun HighlightArrivalQuery(
+    pdf: PdfViewerState,
+    search: ViewerSearchState,
+    query: String?,
+    onIntent: (PdfViewerIntent) -> Unit,
+) {
+    if (query.isNullOrBlank()) return
+    val send by rememberUpdatedState(onIntent)
+    var handled by rememberSaveable(query) { mutableStateOf(false) }
+    LaunchedEffect(pdf, query) {
+        if (handled) return@LaunchedEffect
+        snapshotFlow { pdf.isLoaded }.first { it }
+        if (search.isOpen) return@LaunchedEffect
+        send(PdfViewerIntent.ShowMatches(query, pdf.currentPage))
+        snapshotFlow { pdf.isGestureActive }.first { it }
+        handled = true
+        if (!search.isOpen) send(PdfViewerIntent.CloseSearch)
     }
 }
 
