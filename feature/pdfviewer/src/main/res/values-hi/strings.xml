@@ -82,7 +82,10 @@
     <string name="search_position_description">परिणाम %1$d / %2$d</string>
     <string name="search_no_matches">कोई परिणाम नहीं</string>
     <string name="search_searching">खोज रहे हैं…</string>
-    <string name="search_progress">%2$d में से %1$d पेज खोजे गए</string>
+    <plurals name="search_progress">
+        <item quantity="one">%2$d में से %1$d पेज खोजे गए</item>
+        <item quantity="other">%2$d में से %1$d पेज खोजे गए</item>
+    </plurals>
     <string name="search_unavailable_image">इस दस्तावेज़ में खोजने के लिए कोई टेक्स्ट नहीं है: यह केवल छवियों से बना है।</string>
     <string name="search_unavailable_unsupported">PDF में टेक्स्ट खोजने के लिए Android 15 या उसके बाद का संस्करण चाहिए।</string>
 </resources>

@@ -35,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
@@ -131,7 +132,13 @@ private fun RowScope.FindCounter(search: DocumentSearch) {
     val label = counterLabel(search)
     val motion = MaterialTheme.motionScheme
     val scanning = search.isScanning
-    val progress = stringResource(R.string.search_progress, search.scannedPages, search.pageCount)
+    val progress =
+        pluralStringResource(
+            R.plurals.search_progress,
+            search.pageCount,
+            search.scannedPages,
+            search.pageCount,
+        )
     val description =
         if (search.total > 0) {
             stringResource(R.string.search_position_description, search.activeNumber, search.total)

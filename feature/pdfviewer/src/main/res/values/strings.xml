@@ -83,7 +83,10 @@
     <string name="search_position_description">Match %1$d of %2$d</string>
     <string name="search_no_matches">No matches</string>
     <string name="search_searching">Searching…</string>
-    <string name="search_progress">Searched %1$d of %2$d pages</string>
+    <plurals name="search_progress">
+        <item quantity="one">Searched %1$d of %2$d page</item>
+        <item quantity="other">Searched %1$d of %2$d pages</item>
+    </plurals>
     <string name="search_unavailable_image">This document has no text to search: it is made of images.</string>
     <string name="search_unavailable_unsupported">Searching text in PDFs needs Android 15 or later.</string>
 </resources>

@@ -82,7 +82,12 @@
     <string name="search_position_description">Совпадение %1$d из %2$d</string>
     <string name="search_no_matches">Нет совпадений</string>
     <string name="search_searching">Идёт поиск…</string>
-    <string name="search_progress">Просмотрено страниц: %1$d из %2$d</string>
+    <plurals name="search_progress">
+        <item quantity="one">Просмотрено %1$d из %2$d страницы</item>
+        <item quantity="few">Просмотрено %1$d из %2$d страниц</item>
+        <item quantity="many">Просмотрено %1$d из %2$d страниц</item>
+        <item quantity="other">Просмотрено %1$d из %2$d страницы</item>
+    </plurals>
     <string name="search_unavailable_image">В этом документе нет текста для поиска: он состоит из изображений.</string>
     <string name="search_unavailable_unsupported">Для поиска текста в PDF нужен Android 15 или новее.</string>
 </resources>

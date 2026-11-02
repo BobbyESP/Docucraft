@@ -82,7 +82,11 @@
     <string name="search_position_description">Résultat %1$d sur %2$d</string>
     <string name="search_no_matches">Aucun résultat</string>
     <string name="search_searching">Recherche en cours…</string>
-    <string name="search_progress">%1$d pages sur %2$d analysées</string>
+    <plurals name="search_progress">
+        <item quantity="one">%1$d sur %2$d page analysée</item>
+        <item quantity="many">%1$d sur %2$d pages analysées</item>
+        <item quantity="other">%1$d sur %2$d pages analysées</item>
+    </plurals>
     <string name="search_unavailable_image">Ce document ne contient aucun texte à rechercher : il est composé d\'images.</string>
     <string name="search_unavailable_unsupported">La recherche de texte dans les PDF nécessite Android 15 ou version ultérieure.</string>
 </resources>
