@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -196,17 +197,18 @@ fun PdfOverlayScope.TextSelectionLayer(
     val density = LocalDensity.current
     var viewer by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
-    drag.pages = { latestPages }
-    drag.onSelect = { latestOnSelect(it) }
-    with(density) {
-        drag.contentTop = contentTop.toPx()
-        drag.edgeZone = EdgeZone.toPx()
-        drag.maxSpeed = EdgeScrollSpeed.toPx()
-    }
     val bottomInsetPx = with(density) { contentBottomInset.toPx() }
+    SideEffect {
+        drag.pages = { latestPages }
+        drag.onSelect = { latestOnSelect(it) }
+        with(density) {
+            drag.contentTop = contentTop.toPx()
+            drag.edgeZone = EdgeZone.toPx()
+            drag.maxSpeed = EdgeScrollSpeed.toPx()
+        }
+    }
 
-    // The viewer's own coordinates.
-    // Where handles report the finger, and where the toolbar is placed from.
+    // The viewer's own coordinates: where handles report the finger and the toolbar is placed from.
     Spacer(
         Modifier.matchParentSize().onPlaced {
             viewer = it

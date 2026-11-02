@@ -27,8 +27,6 @@ import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingToolbarDefaults
-import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,7 +35,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
@@ -47,13 +44,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftBlurDefaults
 import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
-import com.bobbyesp.docucraft.core.designsystem.theme.frosted
 import com.bobbyesp.docucraft.feature.pdfviewer.R
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.search.MatchRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.search.SearchMatches
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.TooltipIconButton
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.FrostedFloatingToolbar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.search.DocumentSearch
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.selection.TextUnavailable
 import com.bobbyesp.documentcontent.TextSpan
@@ -61,16 +57,11 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.rememberHazeState
 
 /**
- * Where a search is going: which match the reader is on, out of how many, and the arrows to move
- * between them. It is the viewer's bottom toolbar with what a search needs in place of what reading
- * needs.
+ * Which match the reader is on, out of how many, and the arrows between them: the bottom toolbar
+ * with what a search needs in place of what reading needs.
  *
- * It is at the bottom for the thumb, and rises with the keyboard, so the arrows stay within reach
- * while the query is still being typed.
- *
- * The counter is meaningful from the first match, even while the document is still being read: a
- * ring beside it shows how much has been, and the count only grows. It speaks to TalkBack once the
- * reading is over, not for every page.
+ * The count is useful from the first match: while the document is still being read a ring beside it
+ * shows how much has been, and the count only grows.
  *
  * @param search A search with something being looked for.
  * @param onStep Moves to the next match (`true`) or the previous one.
@@ -83,27 +74,9 @@ fun FindToolbar(
     hazeState: HazeState,
     modifier: Modifier = Modifier,
 ) {
-    val vibrantContainer =
-        FloatingToolbarDefaults.vibrantFloatingToolbarColors().toolbarContainerColor
-    val shape = FloatingToolbarDefaults.ContainerShape
     val canStep = search.total > 0
 
-    HorizontalFloatingToolbar(
-        expanded = true,
-        modifier =
-            modifier.frosted(
-                state = hazeState,
-                style = DocucraftBlurDefaults.surfaceStyle(vibrantContainer),
-                shape = shape,
-            ),
-        colors =
-            FloatingToolbarDefaults.vibrantFloatingToolbarColors(
-                toolbarContainerColor = Color.Transparent
-            ),
-        shape = shape,
-        expandedShadowElevation = 0.dp,
-        collapsedShadowElevation = 0.dp,
-    ) {
+    FrostedFloatingToolbar(hazeState = hazeState, modifier = modifier) {
         TooltipIconButton(
             icon = Icons.Rounded.KeyboardArrowUp,
             label = stringResource(R.string.search_previous),
@@ -181,8 +154,8 @@ private fun RowScope.FindCounter(search: DocumentSearch) {
     ) {
         AnimatedVisibility(
             visible = scanning,
-            enter = fadeIn() + expandHorizontally(),
-            exit = fadeOut() + shrinkHorizontally(),
+            enter = fadeIn(motion.fastEffectsSpec()) + expandHorizontally(motion.fastSpatialSpec()),
+            exit = fadeOut(motion.fastEffectsSpec()) + shrinkHorizontally(motion.fastSpatialSpec()),
         ) {
             CircularProgressIndicator(
                 progress = { search.progress },

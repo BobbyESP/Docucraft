@@ -65,17 +65,12 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.rememberHazeState
 
 /**
- * The field a search is typed in. It takes the place of the viewer's top bar while a search is
- * open: the same frosted bar over the pages, status bar included, so nothing about the bar moves,
- * with the field in it as a pill (the shape of Home's search field), a way back at its start and a
- * way to clear at its end.
+ * The field a search is typed in, in the top bar's place: the same frosted bar, status bar
+ * included, with the field as a pill, as Home's. The count and the arrows are in [FindToolbar], at
+ * the bottom, where the thumb reaches them while the keyboard is up.
  *
- * Where the search is *going* (how many matches, the arrows) is not here but in [FindToolbar], at
- * the bottom, where the thumb is and where the keyboard leaves room for it: the keyboard is up
- * while typing, and a control at the top would be out of reach.
- *
- * The keyboard's search key puts it away, keeping the matches; a physical Enter goes to the next
- * match, and Shift+Enter to the previous one.
+ * The keyboard's search key puts it away and keeps the matches; a physical Enter goes to the next
+ * match, Shift+Enter to the previous one.
  *
  * @param field What is typed.
  * @param focusRequests When this goes up the field takes the focus; see
@@ -196,10 +191,11 @@ private fun FieldPill(
                 },
             )
 
+            val motion = MaterialTheme.motionScheme
             AnimatedVisibility(
                 visible = hasText,
-                enter = fadeIn() + scaleIn(),
-                exit = fadeOut() + scaleOut(),
+                enter = fadeIn(motion.fastEffectsSpec()) + scaleIn(motion.fastSpatialSpec()),
+                exit = fadeOut(motion.fastEffectsSpec()) + scaleOut(motion.fastSpatialSpec()),
             ) {
                 TooltipIconButton(
                     icon = Icons.Rounded.Close,

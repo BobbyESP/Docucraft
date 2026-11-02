@@ -31,7 +31,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -44,6 +45,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import com.bobbyesp.docucraft.feature.pdfviewer.R
 import com.composepdf.PdfViewerState
 import kotlin.math.roundToInt
@@ -84,27 +86,42 @@ fun PdfFastScroller(state: PdfViewerState, contentTop: Dp, modifier: Modifier = 
             }
     }
 
-    val visible = dragging || recentlyScrolled
-    val alpha by animateFloatAsState(if (visible) 1f else 0f, label = "fastScrollerAlpha")
+    val motion = MaterialTheme.motionScheme
+    val alpha by
+        animateFloatAsState(
+            targetValue = if (dragging || recentlyScrolled) 1f else 0f,
+            animationSpec = motion.defaultEffectsSpec(),
+            label = "fastScrollerAlpha",
+        )
+    val grabbed by
+        animateFloatAsState(
+            targetValue = if (dragging) 1f else 0f,
+            animationSpec = motion.fastEffectsSpec(),
+            label = "fastScrollerGrab",
+        )
     val pageLabel = stringResource(R.string.page_indicator, state.currentPage + 1, pageCount)
     val description = stringResource(R.string.fast_scroller)
 
     BoxWithConstraints(
         modifier =
-            modifier.fillMaxHeight().width(TouchWidth).alpha(alpha).semantics {
-                contentDescription = description
-                stateDescription = pageLabel
-                progressBarRangeInfo =
-                    ProgressBarRangeInfo(
-                        current = (state.currentPage + 1).toFloat(),
-                        range = 1f..pageCount.toFloat(),
-                        steps = (pageCount - 2).coerceAtLeast(0),
-                    )
-                setProgress { target ->
-                    state.scrollToPage(target.roundToInt() - 1)
-                    true
+            modifier
+                .fillMaxHeight()
+                .width(TouchWidth)
+                .graphicsLayer { this.alpha = alpha }
+                .semantics {
+                    contentDescription = description
+                    stateDescription = pageLabel
+                    progressBarRangeInfo =
+                        ProgressBarRangeInfo(
+                            current = (state.currentPage + 1).toFloat(),
+                            range = 1f..pageCount.toFloat(),
+                            steps = (pageCount - 2).coerceAtLeast(0),
+                        )
+                    setProgress { target ->
+                        state.scrollToPage(target.roundToInt() - 1)
+                        true
+                    }
                 }
-            }
     ) {
         val density = LocalDensity.current
         val trackPx = with(density) { (maxHeight - ThumbHeight).toPx() }
@@ -141,24 +158,29 @@ fun PdfFastScroller(state: PdfViewerState, contentTop: Dp, modifier: Modifier = 
                     Modifier.align(Alignment.TopEnd)
                         .offset { IntOffset(0, thumbOffset) }
                         .padding(end = 4.dp)
-                        .size(width = if (dragging) 8.dp else 6.dp, height = ThumbHeight)
+                        .size(
+                            width = lerp(ThumbWidth, GrabbedThumbWidth, grabbed),
+                            height = ThumbHeight,
+                        )
                         .background(
                             color =
-                                if (dragging) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                                lerp(
+                                    MaterialTheme.colorScheme.onSurfaceVariant,
+                                    MaterialTheme.colorScheme.primary,
+                                    grabbed,
+                                ),
                             shape = CircleShape,
                         )
             )
         }
 
-        // The page, beside the thumb, while dragging.
         AnimatedVisibility(
             visible = dragging,
-            enter = fadeIn(),
-            exit = fadeOut(),
+            enter = fadeIn(motion.fastEffectsSpec()),
+            exit = fadeOut(motion.fastEffectsSpec()),
             modifier =
-                // The track is narrower than the label: measure it free of that width and let it
-                // overflow to the left, beside the track.
+                // The label is wider than the track: measured free of its width, it overflows to
+                // the left, beside the thumb.
                 Modifier.align(Alignment.TopEnd)
                     .offset { IntOffset(-TouchWidth.roundToPx(), thumbOffset) }
                     .wrapContentWidth(align = Alignment.End, unbounded = true),
@@ -174,44 +196,6 @@ fun PdfFastScroller(state: PdfViewerState, contentTop: Dp, modifier: Modifier = 
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 )
             }
-        }
-    }
-}
-
-/**
- * The page number, shown for a moment at the top when the page changes while the bars are hidden:
- * hiding the bars must not hide where the reader is.
- */
-@Composable
-fun PageIndicatorPill(
-    currentPage: Int,
-    pageCount: Int,
-    barsVisible: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    var showing by remember { mutableStateOf(false) }
-
-    LaunchedEffect(currentPage, barsVisible) {
-        if (barsVisible || pageCount == 0) {
-            showing = false
-            return@LaunchedEffect
-        }
-        showing = true
-        delay(HideDelay)
-        showing = false
-    }
-
-    AnimatedVisibility(visible = showing, enter = fadeIn(), exit = fadeOut(), modifier = modifier) {
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.inverseSurface,
-            contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-        ) {
-            Text(
-                text = stringResource(R.string.page_indicator, currentPage + 1, pageCount),
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
         }
     }
 }
@@ -236,4 +220,6 @@ private const val MinPages = 3
 
 private val HideDelay = 1_200.milliseconds
 private val ThumbHeight = 48.dp
+private val ThumbWidth = 6.dp
+private val GrabbedThumbWidth = 8.dp
 private val TouchWidth = 32.dp

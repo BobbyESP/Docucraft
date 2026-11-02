@@ -129,8 +129,6 @@ private fun highlightLook(nightMode: Boolean): HighlightLook {
 private fun PdfPageDrawScope.viewerRect(box: NormalizedRect): Rect =
     toViewer(Rect(box.left, box.top, box.right, box.bottom))
 
-private fun Rect.inflate(by: Float): Rect = Rect(left - by, top - by, right + by, bottom + by)
-
 private const val MatchAlpha = 0.38f
 private const val CurrentAlpha = 0.55f
 private const val NightMatchAlpha = 0.35f

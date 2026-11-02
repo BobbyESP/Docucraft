@@ -51,26 +51,18 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.rememberHazeState
 
 /**
- * The viewer's top app bar: a standard Material `TopAppBar`, with the document's name, its
- * description as the subtitle when it has one, and its actions.
+ * The viewer's top app bar, frosted over the pages that scroll beneath it.
  *
- * As many actions as fit are buttons and the rest go in a menu: a phone shows one and "more", a
- * wide pane shows them all. The bar adapts to the room it is given without the screen having to
- * measure the window. Design and reasons: `docs/pdf-viewer.md`.
+ * As many actions as the bar's own width allows are buttons and the rest go in a menu: a phone
+ * shows one and "more", a wide pane all of them. See `docs/pdf-viewer.md`.
  *
- * Frosted over the pages, which scroll beneath it: the document stays in view under the bar,
- * blurred, instead of ending at its edge.
+ * A `null` action is left out.
  *
  * @param hazeState Where the pages are recorded.
- * @param onSaveToLibrary Keeps another app's document in the library; `null` for a document that is
- *   already the app's, and the action is then left out. It comes first, so that it is the one
- *   action a narrow bar shows: it is the only way to keep a document that is otherwise on loan.
- * @param isSavingToLibrary The copy is under way; the action stays but does nothing.
- * @param onShare `null` when the document cannot leave the app; the action is then left out.
- * @param onOpenWith Likewise.
- * @param onPrint `null` when there is nothing to print: the document did not load.
- * @param onSearch Opens the search in the document; `null` while there is no document to search,
- *   and the button is then left out. It is always a button of its own, never in the menu.
+ * @param onSaveToLibrary For another app's document. First, so that it is the one action a narrow
+ *   bar shows: without it the document is only on loan.
+ * @param isSavingToLibrary The copy is under way; the action stays but is disabled.
+ * @param onSearch Always a button of its own, never in the menu.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,8 +97,7 @@ fun PdfViewerTopBar(
         }
     }
 
-    // In the order they are shown: what there is room for as buttons, the rest in the menu.
-    // Details last and apart, since it is about the document rather than something done with it.
+    // Details last and apart: it is about the document, not something done with it.
     val handOff =
         listOfNotNull(
             onSaveToLibrary?.let {
@@ -178,11 +169,9 @@ private class ViewerAction(
 )
 
 /**
- * The bar's actions: the first [shown] as buttons, and the rest in a menu behind "more". The menu
- * is the app's own, as Home's sort menu is: groups frosted over the pages it opens on. What is done
- * with the document is one group and what it is, the details, another.
- *
- * @param hazeState Where the pages the menu opens over are recorded.
+ * The first [shown] actions as buttons, the rest in a menu of frosted groups: what is done with the
+ * document, and its details. It has a shadow, not a blur halo: the halo blurs the pages' recording,
+ * and the bar is not in it, so it drew the pages over the bar's buttons.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -193,8 +182,8 @@ private fun ViewerActions(
     hazeState: HazeState,
 ) {
     val all = handOff + details
-    val buttons = if (all.size <= shown) all else all.take(shown)
-    val inMenu = all.drop(buttons.size)
+    val buttons = all.take(shown)
+    val inMenu = all.drop(shown)
 
     for (action in buttons) {
         TooltipIconButton(
@@ -207,8 +196,7 @@ private fun ViewerActions(
     if (inMenu.isEmpty()) return
 
     var expanded by remember { mutableStateOf(false) }
-    val groups = listOf(inMenu.filter { it !== details }, inMenu.filter { it === details })
-    val menuGroups = groups.filter { it.isNotEmpty() }
+    val menuGroups = inMenu.partition { it !== details }.toList().filter { it.isNotEmpty() }
 
     Box {
         TooltipIconButton(

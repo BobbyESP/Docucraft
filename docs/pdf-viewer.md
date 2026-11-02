@@ -134,7 +134,8 @@ shadowed:
 - **Zoom.** The − / % / + group appears only when the toolbar has at least 600 dp of its own width,
   such as on a tablet. Narrower, a zoom chip shows only while the zoom is not the fitted one, and
   tapping it returns to fit. Zoom always animates.
-- **Fit mode**: a menu with the four modes by name, the current one checked.
+- **Fit mode**: a menu with the four modes by name, the current one selected. It is frosted with a
+  shadow, as the top bar's menu, for the same reason: the toolbar is not in the pages' recording.
 - **Night mode**: a toggle button.
 
 ### Search

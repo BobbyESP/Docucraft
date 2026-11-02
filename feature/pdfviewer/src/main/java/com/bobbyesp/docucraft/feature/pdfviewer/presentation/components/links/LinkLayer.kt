@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.links
 
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -22,6 +24,8 @@ import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -42,9 +46,10 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.pdfviewer.R
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.BlockReason
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
@@ -154,8 +159,7 @@ private fun LinkPreviewCard(
                 Spacer(Modifier.width(12.dp))
                 Text(
                     text = content.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleMediumEmphasized,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(end = 8.dp).semantics { heading() },
@@ -198,10 +202,14 @@ private fun LinkPreviewCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
             ) {
                 if (preview.copyable != null) {
-                    TextButton(onClick = onCopy) { Text(stringResource(R.string.link_copy)) }
+                    TextButton(onClick = onCopy, shapes = ButtonDefaults.shapes()) {
+                        Text(stringResource(R.string.link_copy))
+                    }
                 }
                 if (preview.canOpen && content.open != null) {
-                    Button(onClick = onOpen) { Text(content.open) }
+                    Button(onClick = onOpen, shapes = ButtonDefaults.shapes()) {
+                        Text(content.open)
+                    }
                 }
             }
         }
@@ -263,3 +271,25 @@ private fun previewContent(action: LinkAction): PreviewContent =
 private fun NormalizedRect.toRect() = Rect(left, top, right, bottom)
 
 private const val MarkAlpha = 0.2f
+
+@PreviewLightDark
+@Composable
+private fun LinkPreviewCardPreview() {
+    DocucraftTheme {
+        LinkPreviewCard(
+            preview =
+                LinkPreview(
+                    page = 0,
+                    area = NormalizedRect(0.1f, 0.1f, 0.4f, 0.12f),
+                    action =
+                        LinkAction.OpenWeb(
+                            url = "http://example.com/invoices/march",
+                            host = "example.com",
+                            secure = false,
+                        ),
+                ),
+            onOpen = {},
+            onCopy = {},
+        )
+    }
+}

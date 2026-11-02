@@ -111,6 +111,7 @@ internal class PdfViewerScreenState(
 internal fun rememberPdfViewerScreenState(
     documentUri: String,
     start: ReadingPosition?,
+    search: ViewerSearchState = rememberViewerSearchState(),
 ): PdfViewerScreenState {
     val lastSeen = remember { LastSeen() }
     val pdf =
@@ -118,7 +119,6 @@ internal fun rememberPdfViewerScreenState(
             rememberPdfViewerState(initialPosition = lastSeen.position ?: start?.toEngine())
         }
     val chrome = rememberViewerChromeState()
-    val search = rememberViewerSearchState()
     val bars = remember { ViewerBarHeights() }
     val hazeState = rememberHazeState()
     val selectionDrag = rememberSelectionDrag(pdf)

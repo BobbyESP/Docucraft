@@ -3,6 +3,7 @@
  */
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -20,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.LoadingIndicator
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -29,12 +31,18 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.domain.model.ViewerDisplaySettings
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.feature.pdfviewer.R
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.BlockReason
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.search.MatchRef
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.search.SearchMatches
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.PageIndicatorPill
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.PdfFastScroller
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.ViewerBar
@@ -45,14 +53,19 @@ import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.links.Li
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.search.FindBar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.search.FindToolbar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.search.SearchHighlightLayer
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.search.ViewerSearchState
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.selection.TextSelectionLayer
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.selection.rememberViewerInteractionHandler
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerBottomToolbar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar.PdfViewerTopBar
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerIntent
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.PdfViewerUiState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerDocumentState
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.contract.ViewerStart
+import com.bobbyesp.docucraft.feature.pdfviewer.presentation.search.DocumentSearch
 import com.bobbyesp.docucraft.library.domain.model.BasicDocument
 import com.bobbyesp.documentcontent.PageLink
+import com.bobbyesp.documentcontent.TextSpan
 import com.composepdf.FitMode
 import com.composepdf.PdfLayoutSpec
 import com.composepdf.PdfSource
@@ -357,3 +370,81 @@ private fun ViewerFitMode.toEngine(): FitMode =
         ViewerFitMode.BOTH -> FitMode.BOTH
         ViewerFitMode.PROPORTIONAL -> FitMode.PROPORTIONAL
     }
+
+// The engine only reads the file once composed, so a preview shows the bars around the loading
+// indicator.
+private val PreviewDocument =
+    BasicDocument(
+        uuid = "preview",
+        filename = "invoice-march.pdf",
+        uri = "content://preview/invoice-march.pdf",
+        title = "Invoice March",
+        description = "Paid on 12/03",
+    )
+
+private fun previewUiState(search: DocumentSearch? = null) =
+    PdfViewerUiState(
+        document = ViewerDocumentState.Open(PreviewDocument),
+        display = ViewerDisplaySettings.Factory,
+        start = ViewerStart(position = null),
+        search = search,
+    )
+
+@Composable
+private fun PdfViewerContentPreview(uiState: PdfViewerUiState, query: String? = null) {
+    val search = remember { ViewerSearchState(isOpen = query != null, query = query.orEmpty()) }
+    val screenState =
+        rememberPdfViewerScreenState(
+            documentUri = PreviewDocument.uri,
+            start = null,
+            search = search,
+        )
+    DocucraftTheme {
+        Surface {
+            PdfViewerContent(
+                uiState = uiState,
+                documentInfo = PreviewDocument,
+                screenState = screenState,
+                resolveLink = { LinkAction.Blocked(target = "", reason = BlockReason.Scheme) },
+                showBackButton = true,
+                onBack = {},
+                onOpenDetails = {},
+                onGoToPage = { _, _ -> },
+                onIntent = {},
+            )
+        }
+    }
+}
+
+@Preview(name = "Phone", device = Devices.PHONE)
+@Preview(
+    name = "Phone, dark",
+    device = Devices.PHONE,
+    uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL,
+)
+@Preview(name = "Tablet", device = Devices.TABLET)
+@Composable
+private fun PdfViewerContentReadingPreview() {
+    PdfViewerContentPreview(uiState = previewUiState())
+}
+
+@Preview(name = "Searching", device = Devices.PHONE)
+@Composable
+private fun PdfViewerContentSearchingPreview() {
+    PdfViewerContentPreview(
+        uiState =
+            previewUiState(
+                search =
+                    DocumentSearch(
+                        query = "invoice",
+                        matches =
+                            SearchMatches.None.with(0, listOf(TextSpan(0, 7), TextSpan(20, 27))),
+                        active = MatchRef(0, 1),
+                        activeNumber = 2,
+                        scannedPages = 4,
+                        pageCount = 12,
+                    )
+            ),
+        query = "invoice",
+    )
+}
