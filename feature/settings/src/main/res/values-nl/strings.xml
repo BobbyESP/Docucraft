@@ -59,4 +59,11 @@
     <string name="review_new_scans">Scans controleren bij het opslaan</string>
     <string name="review_new_scans_on_desc">Na het scannen geeft u het document een naam en bepaalt u waar het komt</string>
     <string name="review_new_scans_off_desc">Scans worden opgeslagen zoals ze zijn. U kunt ze later bewerken</string>
+    <string name="search_arrival">Bij openen vanuit een zoekopdracht</string>
+    <string name="search_arrival_highlight">Treffers markeren</string>
+    <string name="search_arrival_highlight_desc">De gezochte woorden blijven gemarkeerd tot je het document verplaatst</string>
+    <string name="search_arrival_find_bar">Zoekbalk openen</string>
+    <string name="search_arrival_find_bar_desc">De zoekfunctie van de lezer opent met je woorden en pijltjes</string>
+    <string name="search_arrival_nothing">Niets doen</string>
+    <string name="search_arrival_nothing_desc">Het document opent zoals gewoonlijk</string>
 </resources>

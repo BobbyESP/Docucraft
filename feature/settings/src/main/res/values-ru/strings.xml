@@ -59,4 +59,11 @@
     <string name="review_new_scans">Проверять сканы при сохранении</string>
     <string name="review_new_scans_on_desc">После сканирования вы даёте документу название и указываете, куда его поместить</string>
     <string name="review_new_scans_off_desc">Сканы сохраняются как есть. Их можно изменить позже</string>
+    <string name="search_arrival">При открытии из поиска</string>
+    <string name="search_arrival_highlight">Подсвечивать совпадения</string>
+    <string name="search_arrival_highlight_desc">Найденные слова остаются выделенными, пока вы не сдвинете документ</string>
+    <string name="search_arrival_find_bar">Открывать строку поиска</string>
+    <string name="search_arrival_find_bar_desc">Поиск в просмотрщике открывается с вашими словами и стрелками</string>
+    <string name="search_arrival_nothing">Ничего не делать</string>
+    <string name="search_arrival_nothing_desc">Документ открывается как обычно</string>
 </resources>

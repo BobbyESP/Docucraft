@@ -59,4 +59,11 @@
     <string name="review_new_scans">保存時にスキャンを確認</string>
     <string name="review_new_scans_on_desc">スキャン後に、ドキュメントの名前と保存先を指定します</string>
     <string name="review_new_scans_off_desc">スキャンはそのまま保存されます。後から編集できます</string>
+    <string name="search_arrival">検索から開くとき</string>
+    <string name="search_arrival_highlight">一致箇所をハイライト</string>
+    <string name="search_arrival_highlight_desc">ドキュメントを動かすまで、検索した語が強調表示されます</string>
+    <string name="search_arrival_find_bar">検索バーを開く</string>
+    <string name="search_arrival_find_bar_desc">ビューアの検索が、入力した語と矢印付きで開きます</string>
+    <string name="search_arrival_nothing">何もしない</string>
+    <string name="search_arrival_nothing_desc">ドキュメントは通常どおり開きます</string>
 </resources>

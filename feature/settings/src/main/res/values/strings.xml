@@ -61,4 +61,11 @@
     <string name="review_new_scans">Review scans when they are saved</string>
     <string name="review_new_scans_on_desc">After scanning, you name the document and say where it goes</string>
     <string name="review_new_scans_off_desc">Scans are saved as they come. You can edit them later</string>
+    <string name="search_arrival">When opening from a search</string>
+    <string name="search_arrival_highlight">Highlight the matches</string>
+    <string name="search_arrival_highlight_desc">The words you searched for stay lit until you move the document</string>
+    <string name="search_arrival_find_bar">Open the find bar</string>
+    <string name="search_arrival_find_bar_desc">The viewer\'s search opens on your words, with its arrows</string>
+    <string name="search_arrival_nothing">Do nothing</string>
+    <string name="search_arrival_nothing_desc">The document opens as usual</string>
 </resources>

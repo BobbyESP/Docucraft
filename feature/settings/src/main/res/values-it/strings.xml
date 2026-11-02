@@ -59,4 +59,11 @@
     <string name="review_new_scans">Rivedi le scansioni al salvataggio</string>
     <string name="review_new_scans_on_desc">Dopo la scansione dai un nome al documento e indichi dove va</string>
     <string name="review_new_scans_off_desc">Le scansioni vengono salvate così come sono. Puoi modificarle in seguito</string>
+    <string name="search_arrival">Aprendo da una ricerca</string>
+    <string name="search_arrival_highlight">Evidenzia le corrispondenze</string>
+    <string name="search_arrival_highlight_desc">Le parole cercate restano evidenziate finché non sposti il documento</string>
+    <string name="search_arrival_find_bar">Apri la barra di ricerca</string>
+    <string name="search_arrival_find_bar_desc">La ricerca del lettore si apre con le tue parole e le sue frecce</string>
+    <string name="search_arrival_nothing">Non fare nulla</string>
+    <string name="search_arrival_nothing_desc">Il documento si apre come sempre</string>
 </resources>

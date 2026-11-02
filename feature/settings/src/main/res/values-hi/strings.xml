@@ -59,4 +59,11 @@
     <string name="review_new_scans">सहेजते समय स्कैन की समीक्षा करें</string>
     <string name="review_new_scans_on_desc">स्कैन करने के बाद, आप दस्तावेज़ को नाम देते हैं और बताते हैं कि वह कहाँ जाएगा</string>
     <string name="review_new_scans_off_desc">स्कैन जैसे हैं वैसे ही सहेजे जाते हैं। आप उन्हें बाद में बदल सकते हैं</string>
+    <string name="search_arrival">खोज से खोलते समय</string>
+    <string name="search_arrival_highlight">मिलान हाइलाइट करें</string>
+    <string name="search_arrival_highlight_desc">खोजे गए शब्द तब तक हाइलाइट रहते हैं जब तक आप दस्तावेज़ को हिलाते नहीं</string>
+    <string name="search_arrival_find_bar">खोज बार खोलें</string>
+    <string name="search_arrival_find_bar_desc">व्यूअर की खोज आपके शब्दों और तीरों के साथ खुलती है</string>
+    <string name="search_arrival_nothing">कुछ न करें</string>
+    <string name="search_arrival_nothing_desc">दस्तावेज़ हमेशा की तरह खुलता है</string>
 </resources>

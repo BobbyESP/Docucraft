@@ -59,4 +59,11 @@
     <string name="review_new_scans">Revisar as digitalizações ao salvar</string>
     <string name="review_new_scans_on_desc">Depois de digitalizar, você dá um nome ao documento e diz para onde ele vai</string>
     <string name="review_new_scans_off_desc">As digitalizações são salvas como estão. Você pode editá-las depois</string>
+    <string name="search_arrival">Ao abrir a partir de uma pesquisa</string>
+    <string name="search_arrival_highlight">Destacar as correspondências</string>
+    <string name="search_arrival_highlight_desc">As palavras pesquisadas ficam destacadas até você mover o documento</string>
+    <string name="search_arrival_find_bar">Abrir a barra de pesquisa</string>
+    <string name="search_arrival_find_bar_desc">A pesquisa do leitor abre com as suas palavras e as suas setas</string>
+    <string name="search_arrival_nothing">Não fazer nada</string>
+    <string name="search_arrival_nothing_desc">O documento abre como de costume</string>
 </resources>

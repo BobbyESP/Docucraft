@@ -59,4 +59,11 @@
     <string name="review_new_scans">مراجعة المسوحات عند حفظها</string>
     <string name="review_new_scans_on_desc">بعد المسح، تسمّي المستند وتحدد مكانه</string>
     <string name="review_new_scans_off_desc">تُحفظ المسوحات كما هي. يمكنك تعديلها لاحقًا</string>
+    <string name="search_arrival">عند الفتح من البحث</string>
+    <string name="search_arrival_highlight">تمييز النتائج</string>
+    <string name="search_arrival_highlight_desc">تبقى الكلمات المبحوث عنها مميزة حتى تحرّك المستند</string>
+    <string name="search_arrival_find_bar">فتح شريط البحث</string>
+    <string name="search_arrival_find_bar_desc">يفتح بحث العارض بكلماتك مع أسهمه</string>
+    <string name="search_arrival_nothing">عدم فعل شيء</string>
+    <string name="search_arrival_nothing_desc">يُفتح المستند كالمعتاد</string>
 </resources>

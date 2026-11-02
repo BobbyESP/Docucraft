@@ -59,4 +59,11 @@
     <string name="review_new_scans">Vérifier les numérisations à l\'enregistrement</string>
     <string name="review_new_scans_on_desc">Après la numérisation, vous nommez le document et indiquez où il va</string>
     <string name="review_new_scans_off_desc">Les numérisations sont enregistrées telles quelles. Vous pouvez les modifier plus tard</string>
+    <string name="search_arrival">À l\'ouverture depuis une recherche</string>
+    <string name="search_arrival_highlight">Surligner les résultats</string>
+    <string name="search_arrival_highlight_desc">Les mots recherchés restent surlignés jusqu\'à ce que vous déplaciez le document</string>
+    <string name="search_arrival_find_bar">Ouvrir la barre de recherche</string>
+    <string name="search_arrival_find_bar_desc">La recherche du lecteur s\'ouvre sur vos mots, avec ses flèches</string>
+    <string name="search_arrival_nothing">Ne rien faire</string>
+    <string name="search_arrival_nothing_desc">Le document s\'ouvre comme d\'habitude</string>
 </resources>

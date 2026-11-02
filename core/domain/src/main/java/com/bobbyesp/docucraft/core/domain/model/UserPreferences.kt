@@ -32,6 +32,8 @@ data class UserPreferences(
      * until the user turns it off; without it a scan is saved as it comes, as it always was.
      */
     val reviewNewScans: Boolean = true,
+    /** What a document does with the search it was found by. */
+    val searchArrival: SearchArrival = SearchArrival.HIGHLIGHT,
 )
 
 enum class ThemeConfig {

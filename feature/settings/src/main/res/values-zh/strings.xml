@@ -59,4 +59,11 @@
     <string name="review_new_scans">保存时检查扫描件</string>
     <string name="review_new_scans_on_desc">扫描后，由您为文档命名并指定存放位置</string>
     <string name="review_new_scans_off_desc">扫描件按原样保存。您可以稍后编辑</string>
+    <string name="search_arrival">从搜索打开时</string>
+    <string name="search_arrival_highlight">高亮匹配项</string>
+    <string name="search_arrival_highlight_desc">搜索的词会一直高亮，直到您移动文档</string>
+    <string name="search_arrival_find_bar">打开查找栏</string>
+    <string name="search_arrival_find_bar_desc">阅读器的查找栏会带着您的搜索词和箭头打开</string>
+    <string name="search_arrival_nothing">不做任何事</string>
+    <string name="search_arrival_nothing_desc">文档照常打开</string>
 </resources>

@@ -59,4 +59,11 @@
     <string name="review_new_scans">Scans beim Speichern überprüfen</string>
     <string name="review_new_scans_on_desc">Nach dem Scannen benennen Sie das Dokument und legen fest, wohin es kommt</string>
     <string name="review_new_scans_off_desc">Scans werden unverändert gespeichert. Sie können sie später bearbeiten</string>
+    <string name="search_arrival">Beim Öffnen aus einer Suche</string>
+    <string name="search_arrival_highlight">Treffer hervorheben</string>
+    <string name="search_arrival_highlight_desc">Die gesuchten Wörter bleiben markiert, bis du das Dokument bewegst</string>
+    <string name="search_arrival_find_bar">Suchleiste öffnen</string>
+    <string name="search_arrival_find_bar_desc">Die Suche des Viewers öffnet sich mit deinen Wörtern und ihren Pfeilen</string>
+    <string name="search_arrival_nothing">Nichts tun</string>
+    <string name="search_arrival_nothing_desc">Das Dokument öffnet sich wie gewohnt</string>
 </resources>

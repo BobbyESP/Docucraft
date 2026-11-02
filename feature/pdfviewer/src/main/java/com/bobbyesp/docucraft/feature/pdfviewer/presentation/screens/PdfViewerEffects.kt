@@ -26,6 +26,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
+import com.bobbyesp.docucraft.core.domain.model.SearchArrival
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationAction
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
@@ -208,28 +209,41 @@ internal fun ReportSearchQuery(
 }
 
 /**
- * Lights the matches of the query a document was opened from, without opening the find bar, and
- * puts them out when the reader first touches the document. It runs once per entry: after a
- * rotation the reader has either already moved on or still sees the matches.
+ * Does with the query a document was opened from what the reader chose ([arrival], `null` while the
+ * choice is read). It runs once per entry: after a rotation the reader has either already moved on
+ * or still sees what it showed.
+ *
+ * Highlighting lights the matches without the find bar and puts them out when the reader first
+ * touches the document.
  */
 @Composable
-internal fun HighlightArrivalQuery(
+internal fun ApplySearchArrival(
     pdf: PdfViewerState,
     search: ViewerSearchState,
     query: String?,
+    arrival: SearchArrival?,
     onIntent: (PdfViewerIntent) -> Unit,
 ) {
-    if (query.isNullOrBlank()) return
+    if (query.isNullOrBlank() || arrival == null || arrival == SearchArrival.NOTHING) return
     val send by rememberUpdatedState(onIntent)
     var handled by rememberSaveable(query) { mutableStateOf(false) }
-    LaunchedEffect(pdf, query) {
+    LaunchedEffect(pdf, query, arrival) {
         if (handled) return@LaunchedEffect
         snapshotFlow { pdf.isLoaded }.first { it }
         if (search.isOpen) return@LaunchedEffect
-        send(PdfViewerIntent.ShowMatches(query, pdf.currentPage))
-        snapshotFlow { pdf.isGestureActive }.first { it }
-        handled = true
-        if (!search.isOpen) send(PdfViewerIntent.CloseSearch)
+        when (arrival) {
+            SearchArrival.OPEN_FIND_BAR -> {
+                handled = true
+                search.show(query)
+            }
+            SearchArrival.HIGHLIGHT -> {
+                send(PdfViewerIntent.ShowMatches(query, pdf.currentPage))
+                snapshotFlow { pdf.isGestureActive }.first { it }
+                handled = true
+                if (!search.isOpen) send(PdfViewerIntent.CloseSearch)
+            }
+            SearchArrival.NOTHING -> Unit
+        }
     }
 }
 

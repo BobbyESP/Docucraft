@@ -8,6 +8,7 @@ import com.bobbyesp.docucraft.appModules
 import com.bobbyesp.docucraft.core.domain.analytics.AnalyticsEvent
 import com.bobbyesp.docucraft.core.domain.model.FontConfig
 import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
+import com.bobbyesp.docucraft.core.domain.model.SearchArrival
 import com.bobbyesp.docucraft.core.domain.model.ThemeConfig
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
@@ -214,5 +215,9 @@ private class CaptureSettings : SettingsRepository {
 
     override suspend fun setReviewNewScans(enabled: Boolean) = update {
         copy(reviewNewScans = enabled)
+    }
+
+    override suspend fun setSearchArrival(arrival: SearchArrival) = update {
+        copy(searchArrival = arrival)
     }
 }

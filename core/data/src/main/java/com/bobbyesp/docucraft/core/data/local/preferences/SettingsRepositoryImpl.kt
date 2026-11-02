@@ -12,6 +12,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.bobbyesp.docucraft.core.domain.model.FontConfig
 import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
+import com.bobbyesp.docucraft.core.domain.model.SearchArrival
 import com.bobbyesp.docucraft.core.domain.model.ThemeConfig
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.core.domain.model.ViewerDefaults
@@ -46,6 +47,7 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
         val RECOGNIZE_TEXT_IN_NEW_DOCUMENTS =
             booleanPreferencesKey("recognize_text_in_new_documents")
         val REVIEW_NEW_SCANS = booleanPreferencesKey("review_new_scans")
+        val SEARCH_ARRIVAL = stringPreferencesKey("search_arrival")
     }
 
     override val settings: Flow<UserPreferences> =
@@ -154,6 +156,10 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
                     reviewNewScans =
                         preferences[PreferencesKeys.REVIEW_NEW_SCANS]
                             ?: defaultPrefs.reviewNewScans,
+                    searchArrival =
+                        preferences[PreferencesKeys.SEARCH_ARRIVAL]?.let { name ->
+                            SearchArrival.entries.firstOrNull { it.name == name }
+                        } ?: defaultPrefs.searchArrival,
                 )
             }
 
@@ -251,6 +257,12 @@ class SettingsRepositoryImpl(private val dataStore: DataStore<Preferences>) : Se
 
     override suspend fun setReviewNewScans(enabled: Boolean) {
         dataStore.edit { preferences -> preferences[PreferencesKeys.REVIEW_NEW_SCANS] = enabled }
+    }
+
+    override suspend fun setSearchArrival(arrival: SearchArrival) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SEARCH_ARRIVAL] = arrival.name
+        }
     }
 
     private fun Preferences.viewerDefaults(default: ViewerDefaults): ViewerDefaults =

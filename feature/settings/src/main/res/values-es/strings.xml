@@ -59,4 +59,11 @@
     <string name="review_new_scans">Revisar los escaneos al guardarlos</string>
     <string name="review_new_scans_on_desc">Tras escanear, le pones nombre al documento y dices dónde va</string>
     <string name="review_new_scans_off_desc">Los escaneos se guardan tal cual. Puedes editarlos después</string>
+    <string name="search_arrival">Al abrir desde una búsqueda</string>
+    <string name="search_arrival_highlight">Resaltar las coincidencias</string>
+    <string name="search_arrival_highlight_desc">Las palabras buscadas se marcan hasta que muevas el documento</string>
+    <string name="search_arrival_find_bar">Abrir la barra de búsqueda</string>
+    <string name="search_arrival_find_bar_desc">La búsqueda del visor se abre con tus palabras y sus flechas</string>
+    <string name="search_arrival_nothing">No hacer nada</string>
+    <string name="search_arrival_nothing_desc">El documento se abre como siempre</string>
 </resources>

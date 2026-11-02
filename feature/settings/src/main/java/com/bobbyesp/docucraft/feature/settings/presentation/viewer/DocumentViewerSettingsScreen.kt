@@ -55,6 +55,7 @@ import com.bobbyesp.docucraft.core.designsystem.components.settings.SettingsItem
 import com.bobbyesp.docucraft.core.designsystem.components.settings.settingsContentWidth
 import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.domain.model.SearchArrival
 import com.bobbyesp.docucraft.core.domain.model.ViewerDefaults
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.feature.settings.R
@@ -77,10 +78,12 @@ fun DocumentViewerSettingsScreen(
 ) {
     val defaults by viewModel.defaults.collectAsStateWithLifecycle()
     val remembersReadingPosition by viewModel.remembersReadingPosition.collectAsStateWithLifecycle()
+    val searchArrival by viewModel.searchArrival.collectAsStateWithLifecycle()
 
     val current = defaults
     val remembers = remembersReadingPosition
-    if (current == null || remembers == null) {
+    val arrival = searchArrival
+    if (current == null || remembers == null || arrival == null) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             LoadingIndicator(modifier = Modifier.size(64.dp))
         }
@@ -88,8 +91,10 @@ fun DocumentViewerSettingsScreen(
         DocumentViewerSettingsContent(
             defaults = current,
             remembersReadingPosition = remembers,
+            searchArrival = arrival,
             onBack = onBack,
             showBackButton = showBackButton,
+            onSearchArrivalChange = viewModel::setSearchArrival,
             onRememberReadingPositionChange = viewModel::setRememberReadingPosition,
             onEnabledChange = viewModel::setEnabled,
             onFitModeChange = viewModel::setFitMode,
@@ -104,8 +109,10 @@ fun DocumentViewerSettingsScreen(
 fun DocumentViewerSettingsContent(
     defaults: ViewerDefaults,
     remembersReadingPosition: Boolean,
+    searchArrival: SearchArrival,
     onBack: () -> Unit,
     onRememberReadingPositionChange: (Boolean) -> Unit,
+    onSearchArrivalChange: (SearchArrival) -> Unit,
     onEnabledChange: (Boolean) -> Unit,
     onFitModeChange: (ViewerFitMode) -> Unit,
     onNightModeChange: (Boolean) -> Unit,
@@ -171,6 +178,14 @@ fun DocumentViewerSettingsContent(
                     isChecked = remembersReadingPosition,
                     onCheckedChange = onRememberReadingPositionChange,
                     modifier = settingModifier,
+                )
+            }
+
+            item(key = "search_arrival", contentType = "settings_section") {
+                SearchArrivalSection(
+                    selected = searchArrival,
+                    onSelect = onSearchArrivalChange,
+                    modifier = Modifier.settingsContentWidth(),
                 )
             }
 
@@ -275,6 +290,62 @@ private fun FitModeSection(
     }
 }
 
+/** One selectable item per [SearchArrival], each with what it does under its name. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun SearchArrivalSection(
+    selected: SearchArrival,
+    onSelect: (SearchArrival) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val options = SearchArrival.entries
+
+    SettingsCategory(title = stringResource(R.string.search_arrival), modifier = modifier) {
+        Column(
+            modifier = Modifier.selectableGroup(),
+            verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+        ) {
+            options.forEachIndexed { index, option ->
+                val isSelected = option == selected
+                SegmentedListItem(
+                    selected = isSelected,
+                    onClick = { onSelect(option) },
+                    shapes =
+                        DocucraftShapeDefaults.segmentedListItemShapes(
+                            index = index,
+                            count = options.size,
+                        ),
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingContent = { RadioButton(selected = isSelected, onClick = null) },
+                    supportingContent = { Text(text = stringResource(option.description)) },
+                    colors = SettingsItemDefaults.colors(),
+                ) {
+                    Text(
+                        text = stringResource(option.label),
+                        style = MaterialTheme.typography.bodyLargeEmphasized,
+                    )
+                }
+            }
+        }
+    }
+}
+
+private val SearchArrival.label: Int
+    get() =
+        when (this) {
+            SearchArrival.HIGHLIGHT -> R.string.search_arrival_highlight
+            SearchArrival.OPEN_FIND_BAR -> R.string.search_arrival_find_bar
+            SearchArrival.NOTHING -> R.string.search_arrival_nothing
+        }
+
+private val SearchArrival.description: Int
+    get() =
+        when (this) {
+            SearchArrival.HIGHLIGHT -> R.string.search_arrival_highlight_desc
+            SearchArrival.OPEN_FIND_BAR -> R.string.search_arrival_find_bar_desc
+            SearchArrival.NOTHING -> R.string.search_arrival_nothing_desc
+        }
+
 private val ViewerFitMode.label: Int
     get() =
         when (this) {
@@ -300,8 +371,10 @@ private fun DocumentViewerSettingsOnPreview() {
         DocumentViewerSettingsContent(
             defaults = ViewerDefaults(enabled = true),
             remembersReadingPosition = true,
+            searchArrival = SearchArrival.HIGHLIGHT,
             onBack = {},
             onRememberReadingPositionChange = {},
+            onSearchArrivalChange = {},
             onEnabledChange = {},
             onFitModeChange = {},
             onNightModeChange = {},
@@ -316,8 +389,10 @@ private fun DocumentViewerSettingsOffPreview() {
         DocumentViewerSettingsContent(
             defaults = ViewerDefaults(enabled = false),
             remembersReadingPosition = false,
+            searchArrival = SearchArrival.OPEN_FIND_BAR,
             onBack = {},
             onRememberReadingPositionChange = {},
+            onSearchArrivalChange = {},
             onEnabledChange = {},
             onFitModeChange = {},
             onNightModeChange = {},
