@@ -16,7 +16,9 @@ navigation/     ViewerKeys.kt: ExternalPdfViewer, PdfDocumentDetails, SaveCopyTo
                 (PdfViewer, the key other features open, is in :core:navigation)
 domain/         ViewerDocumentRef, display-settings use cases, details, hand-off ports, links
 data/           platform content provider, Custom Tabs opener, printer, session memory
-presentation/   PdfViewerViewModel, PdfViewerScreen, sections, components
+presentation/   PdfViewerViewModel, screens/, sections, components
+  screens/      PdfViewerScreen (the ViewModel, effects and back), PdfViewerContent (what is
+                drawn), PdfViewerScreenState (what the screen holds), PdfViewerEffects
 di/             PdfViewerModule (PageContentModule, which chooses the page readers, is the app's)
 ```
 
@@ -26,7 +28,11 @@ di/             PdfViewerModule (PageContentModule, which chooses the page reade
   - `External(uri, displayName)` is another app's file.
 - **What stays in the composition.** Page, zoom and pan are `PdfViewerState`, and whether the bars
   show is `ViewerChromeState`. None of it goes through the ViewModel: it is UI state, and a round
-  trip per frame would buy nothing.
+  trip per frame would buy nothing. `PdfViewerScreenState` holds them together with the search bar
+  and the bars' heights, and what each needs of the others: closing the search shows the bars,
+  a match is revealed between them.
+- **The screen never hands the ViewModel down.** `PdfViewerScreen` collects its state, its effects
+  and its messages, and `PdfViewerContent` draws from that state and sends intents back.
 - **What the ViewModel holds:**
   - the document;
   - the display settings;
