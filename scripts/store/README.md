@@ -7,15 +7,14 @@
 Everything the Play listing shows comes from the repository, in every language, and is uploaded
 with one command:
 - **the text**: title, short description and full description, in every language the app has;
-- **the eight phone screenshots**: one continuous panorama, 8640 × 1920 px, cut into 1080 × 1920
-  frames. Sheets of paper fall across the seams, joined by an Ink thread, and the headlines
-  alternate between the top and the bottom of the frame;
+- **the eight phone screenshots**: one panorama, 8640 × 1920 px, cut into 1080 × 1920 frames, with
+  sheets of paper falling across the seams joined by an Ink thread, and headlines alternating
+  between the top and bottom of the frame;
 - **the feature graphic**, 1024 × 500: the promise on the left, a stretch of the same paper trail
   on the right.
 
-The graphics' design is the *Store screenshots* page of the Figma file, and the reasoning is in
-*Panoramic Screenshots 0.3*. These scripts are what produce the files: Figma cannot be driven from
-a build.
+The design is the *Store screenshots* page of the Figma file (reasoning in *Panoramic Screenshots
+0.3*). These scripts produce the files, since Figma cannot be driven from a build.
 
 ## The source: `store_listing.xml`
 
@@ -111,14 +110,12 @@ What makes the screens the same on every run:
   notification icons. The device gets its own back when the run ends.
 - **A fixed clock** for the catalogue, so the dates on screen do not move.
 
-Everything else is the app as it is: its screens, reached with the back stack a user would have
-under them, its ViewModels, its catalogue, its viewer drawing real pages. The one exception is
-frame 02. The scanner is Google Play services' screen in front of a camera, which the app cannot
-show and no run could repeat, so that frame is a drawing of what it does: a page of the sample
-library in a viewfinder, with its edges found (`ScannerStandIn.kt`).
+Everything else is the real app: its screens reached with a realistic back stack, its ViewModels,
+catalogue and viewer. The exception is frame 02: the scanner is Google Play services' screen in
+front of a camera, which the app cannot show and no run could repeat, so it is a drawing of a sample
+page in a viewfinder with its edges found (`ScannerStandIn.kt`).
 
-The test is skipped unless it is asked for, so an ordinary run of the device tests takes no
-screenshots.
+The test is skipped unless asked for, so an ordinary device-test run takes no screenshots.
 
 ## Uploading
 
@@ -140,9 +137,9 @@ only re-uploaded when they changed.
 Uploading needs a Google Play service account with access to the app, and its JSON key. Point
 `PLAY_STORE_JSON_KEY` at the key, or save it as `fastlane/play-store-key.json`, which git ignores.
 
-Languages are only ever added or updated, never removed: a language in Play that the repository
-does not have keeps what it had. So do graphics: if a non-Latin language still shows screenshots
-from an older listing, delete them once in Play Console and it falls back to English.
+Languages are only added or updated, never removed: a language in Play that the repository lacks
+keeps what it had. The same holds for graphics: if a non-Latin language still shows older
+screenshots, delete them once in Play Console and it falls back to English.
 
 ## Rules the scripts enforce
 
