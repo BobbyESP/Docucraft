@@ -67,6 +67,13 @@ class NavKeySerializationTest {
         assertEquals("a-document-uuid", (restored as PdfViewer).documentUuid)
     }
 
+    @Test
+    fun `a viewer key restores the search it was opened from`() {
+        val restored = roundTrip(PdfViewer(documentUuid = "uuid", searchQuery = "invoice"))
+
+        assertEquals("invoice", (restored as PdfViewer).searchQuery)
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun roundTrip(key: NavKey): NavKey {
         val serializer = serializerForClassName(key.javaClass.name) as KSerializer<NavKey>

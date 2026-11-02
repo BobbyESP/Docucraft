@@ -32,11 +32,11 @@ fun EntryProviderScope<NavKey>.documentSearchSection(
     ) {
         DocumentSearchScreen(
             onBack = navigator::goBack,
-            onOpenDocument = { uuid ->
+            onOpenDocument = { uuid, query ->
                 // As from Home, a result replaces the document open beside the list. Only
                 // viewers go, though: search itself stays, so back returns to the results.
                 navigator.goBackWhile { it is PdfViewer }
-                navigator.goTo(PdfViewer(uuid))
+                navigator.goTo(PdfViewer(uuid, searchQuery = query))
             },
             onOpenDocumentActions = { uuid -> navigator.goTo(DocumentActions(uuid)) },
             selectedDocumentId = selectedDocumentId,

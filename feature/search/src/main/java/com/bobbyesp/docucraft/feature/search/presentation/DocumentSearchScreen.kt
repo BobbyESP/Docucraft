@@ -91,7 +91,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun DocumentSearchScreen(
     onBack: () -> Unit,
-    onOpenDocument: (String) -> Unit,
+    onOpenDocument: (uuid: String, query: String) -> Unit,
     onOpenDocumentActions: (String) -> Unit,
     modifier: Modifier = Modifier,
     selectedDocumentId: String? = null,
@@ -124,7 +124,7 @@ fun DocumentSearchContent(
     onQueryChange: (String) -> Unit,
     onClearQuery: () -> Unit,
     onBack: () -> Unit,
-    onOpenDocument: (String) -> Unit,
+    onOpenDocument: (uuid: String, query: String) -> Unit,
     onOpenDocumentActions: (String) -> Unit,
     modifier: Modifier = Modifier,
     selectedDocumentId: String? = null,
@@ -179,7 +179,7 @@ fun DocumentSearchContent(
                             results = uiState.results,
                             notFoundUuids = uiState.notFoundUuids,
                             selectedDocumentId = selectedDocumentId,
-                            onOpenDocument = onOpenDocument,
+                            onOpenDocument = { uuid -> onOpenDocument(uuid, uiState.query) },
                             onOpenDocumentActions = onOpenDocumentActions,
                             bottomClearance = fieldHeight,
                         )
@@ -391,7 +391,7 @@ private fun DocumentSearchResultsPreview() {
             onQueryChange = {},
             onClearQuery = {},
             onBack = {},
-            onOpenDocument = {},
+            onOpenDocument = { _, _ -> },
             onOpenDocumentActions = {},
         )
     }
@@ -406,7 +406,7 @@ private fun DocumentSearchHintPreview() {
             onQueryChange = {},
             onClearQuery = {},
             onBack = {},
-            onOpenDocument = {},
+            onOpenDocument = { _, _ -> },
             onOpenDocumentActions = {},
         )
     }

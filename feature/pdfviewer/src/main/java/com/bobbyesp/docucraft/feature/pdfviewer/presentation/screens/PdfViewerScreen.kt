@@ -30,6 +30,7 @@ fun PdfViewerScreen(
     onOpenInLibrary: (documentUuid: String) -> Unit,
     modifier: Modifier = Modifier,
     showBackButton: Boolean = true,
+    initialSearchQuery: String? = null,
 ) {
     val uiState by viewModel.state.collectAsStateWithLifecycle()
     val onIntent = viewModel::onSendIntent
@@ -38,6 +39,7 @@ fun PdfViewerScreen(
         rememberPdfViewerScreenState(
             documentUri = documentInfo.uri,
             start = uiState.start?.position,
+            initialQuery = initialSearchQuery,
         )
     val pdf = screenState.pdf
     val search = screenState.search
