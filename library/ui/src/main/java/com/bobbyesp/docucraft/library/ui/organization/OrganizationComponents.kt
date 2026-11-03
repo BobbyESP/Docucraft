@@ -129,7 +129,6 @@ fun folderSummary(folder: Folder): String {
  * A folder as a card in its own color, for Home's row of pinned folders. Its corners tighten while
  * it is pressed, as every expressive button's do.
  */
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FolderCard(
     folder: Folder,

@@ -625,7 +625,6 @@ private fun DocumentsPage(
  * The folders pinned to Home, as cards in their own colors, and a way to make one at the end. With
  * none pinned, the row says what goes here instead of leaving a gap under its header.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun PinnedFoldersRow(
     folders: List<Folder>,

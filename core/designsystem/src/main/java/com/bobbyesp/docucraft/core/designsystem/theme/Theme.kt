@@ -40,6 +40,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 
 /** The type roles Material's [androidx.compose.material3.Typography] has no slot for. */
 @Immutable data class DocucraftTypography(val monospace: FontFamily = FontFamily.Monospace)
@@ -144,11 +145,9 @@ fun DocucraftTheme(
  *   and go while [content] stays.
  */
 @Suppress("ModifierRequired")
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocucraftAccentTheme(accent: Color?, content: @Composable () -> Unit) {
     val appScheme = MaterialTheme.colorScheme
-    // None under a bare MaterialTheme, as in a preview: there is no source to build from.
     val themeColors = LocalThemeColors.current
 
     val scheme =
@@ -162,12 +161,9 @@ fun DocucraftAccentTheme(accent: Color?, content: @Composable () -> Unit) {
                 )
                 .scheme
         } else {
-            // The app's own scheme, step by step while it changes: the app recomposes for each
-            // step anyway, and this screen moves with it.
             appScheme
         }
 
-    // Expressive, as the app's is, to hand down its motion scheme to Material's components.
     MaterialExpressiveTheme(
         colorScheme = scheme,
         motionScheme = MaterialTheme.motionScheme,
@@ -192,7 +188,7 @@ fun PrepareAccentThemes(accents: List<Color>) {
     LaunchedEffect(themeColors, built, accents) {
         // A burst of changes, as when tapping through seed colors, builds nothing for the
         // intermediate ones.
-        delay(PrepareDelayMillis)
+        delay(PrepareDelayMillis.milliseconds)
         for (accent in accents) {
             val source = built.accentSource(accent)
             if (themeColors.cache[source] != null) continue
