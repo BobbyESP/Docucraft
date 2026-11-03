@@ -158,10 +158,12 @@ a palette color), for a destination about something the user gave a color to. A 
   back on the way out would recompose every screen twice.
 - **Its color is switched to, never stepped towards.** The screen gets its color while the
   navigation animates it in, and each step of a transition would recompose the whole screen during
-  that animation, which stutters. A known color is cached and in effect from the first frame; one
-  seen for the first time, or learnt after opening (a folder's screen reads the folder from its
-  uuid), is built in the background under the app's scheme and then swapped in. Without a color it
-  passes the app's scheme through, so it follows the app's own changes step by step.
+  that animation, which stutters. The palette's colors are built ahead of time, in the background,
+  a second after each change of the app's theme (`PrepareLabelColorThemes` in `MainActivity`), so
+  a folder's color is ready when the folder is read and arrives with its contents, in the same
+  recomposition. Any other color is built in the background under the app's scheme, then swapped
+  in. Without a color it passes the app's scheme through, so it follows the app's own changes step
+  by step; with one, it hides those steps, and the screen recomposes only once, for its new color.
 - **The color is a hue, not a value**: it is pulled towards the theme's primary and built as Tonal
   Spot, Material's default style (`AccentPaletteStyle`), in the theme's darkness, whatever style
   the user chose for the app: a color picked to tell things apart should not be loud. The tones of
