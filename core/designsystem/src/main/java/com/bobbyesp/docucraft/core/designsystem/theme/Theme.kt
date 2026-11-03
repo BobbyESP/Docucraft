@@ -128,10 +128,9 @@ fun DocucraftTheme(
 
 /**
  * The app's theme around one color, for a screen about something the user gave a color to: only
- * [content] takes it, and is recomposed once per color, never stepped towards it. The color is a
- * hue, harmonized with the app's primary and built as [AccentPaletteStyle] in the app's darkness,
- * whatever its style, with pure black surfaces when the app's are. See `docs/architecture.md`,
- * Theme.
+ * [content] takes it, once per color, never stepped towards it. The color is a hue, built as
+ * [AccentPaletteStyle] beside the app's primary, black where the app's surfaces are. See
+ * `docs/architecture.md`, Theme.
  *
  * @param accent The color, or `null` for none, which leaves the app's theme as it is. It may come
  *   and go while [content] stays.
