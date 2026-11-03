@@ -24,7 +24,6 @@
     <string name="typography_monospace">Monospace und Technisches</string>
     <string name="typography_monospace_desc">Für technische Details, Zeichenzähler und Datumsangaben.</string>
     <string name="select_setting_to_open">Wählen Sie eine Einstellung aus, um sie hier zu öffnen</string>
-    <string name="general">Allgemein</string>
     <string name="version_format">Version %1$s</string>
     <string name="about">Über</string>
     <string name="about_desc">Version, wer sie macht und wie du sie unterstützen kannst</string>
@@ -36,7 +35,7 @@
     <string name="about_source_code">Quellcode</string>
     <string name="about_source_code_desc">Quelloffen, unter der GPL-3.0-Lizenz</string>
     <string name="document_viewer">Dokument-Viewer</string>
-    <string name="document_viewer_desc">Wie Dokumente geöffnet werden</string>
+    <string name="document_viewer_desc">Wo Dokumente öffnen, Suche und Anzeige</string>
     <string name="viewer_use_defaults">Standardeinstellungen verwenden</string>
     <string name="viewer_use_defaults_on_desc">Jedes Dokument wird mit den folgenden Einstellungen geöffnet</string>
     <string name="viewer_use_defaults_off_desc">Dokumente werden an die Breite angepasst und ohne Nachtmodus geöffnet</string>
@@ -66,4 +65,10 @@
     <string name="search_arrival_find_bar_desc">Die Suche des Viewers öffnet sich mit deinen Wörtern und ihren Pfeilen</string>
     <string name="search_arrival_nothing">Nichts tun</string>
     <string name="search_arrival_nothing_desc">Das Dokument öffnet sich wie gewohnt</string>
+    <string name="scanning">Scannen</string>
+    <string name="scanning_desc">Neue Scans prüfen und lesen</string>
+    <string name="after_scanning">Wenn ein Scan gespeichert wird</string>
+    <string name="viewer_opening">Dokumente öffnen</string>
+    <string name="viewer_default_display">Standardanzeige</string>
+    <string name="color">Farbe</string>
 </resources>

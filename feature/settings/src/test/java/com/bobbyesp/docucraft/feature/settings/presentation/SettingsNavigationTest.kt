@@ -10,6 +10,7 @@ import com.bobbyesp.docucraft.core.navigation.keys.AboutSettings
 import com.bobbyesp.docucraft.core.navigation.keys.AppearanceSettings
 import com.bobbyesp.docucraft.core.navigation.keys.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.navigation.keys.PdfViewer
+import com.bobbyesp.docucraft.core.navigation.keys.ScanningSettings
 import com.bobbyesp.docucraft.core.navigation.keys.Settings
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -42,6 +43,15 @@ class SettingsNavigationTest {
     @Test
     fun `leaving settings with a detail open leaves the whole area, not just the detail`() {
         val stack = backStack(Home, Settings, AppearanceSettings)
+
+        BackStackNavigator(stack).leaveSettings()
+
+        assertEquals(listOf(Home), stack.toList())
+    }
+
+    @Test
+    fun `leaving settings works from the scanning detail too`() {
+        val stack = backStack(Home, Settings, ScanningSettings)
 
         BackStackNavigator(stack).leaveSettings()
 

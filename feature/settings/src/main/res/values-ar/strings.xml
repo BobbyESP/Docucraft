@@ -24,7 +24,6 @@
     <string name="typography_monospace">الخط الثابت العرض والتفاصيل التقنية</string>
     <string name="typography_monospace_desc">للتفاصيل التقنية وعدد الأحرف وتنسيق التواريخ.</string>
     <string name="select_setting_to_open">اختر إعدادًا لفتحه هنا</string>
-    <string name="general">عام</string>
     <string name="version_format">الإصدار %1$s</string>
     <string name="about">حول التطبيق</string>
     <string name="about_desc">الإصدار، ومن يطوّره، وكيف تدعمه</string>
@@ -36,7 +35,7 @@
     <string name="about_source_code">الشيفرة المصدرية</string>
     <string name="about_source_code_desc">مفتوح المصدر، بترخيص GPL-3.0</string>
     <string name="document_viewer">عارض المستندات</string>
-    <string name="document_viewer_desc">طريقة فتح المستندات</string>
+    <string name="document_viewer_desc">أين تُفتح المستندات، والبحث، والعرض</string>
     <string name="viewer_use_defaults">استخدام الإعدادات الافتراضية</string>
     <string name="viewer_use_defaults_on_desc">يُفتح كل مستند بالإعدادات أدناه</string>
     <string name="viewer_use_defaults_off_desc">تُفتح المستندات ملائمةً للعرض ودون الوضع الليلي</string>
@@ -66,4 +65,10 @@
     <string name="search_arrival_find_bar_desc">يفتح بحث العارض بكلماتك مع أسهمه</string>
     <string name="search_arrival_nothing">عدم فعل شيء</string>
     <string name="search_arrival_nothing_desc">يُفتح المستند كالمعتاد</string>
+    <string name="scanning">المسح الضوئي</string>
+    <string name="scanning_desc">مراجعة المسوحات الجديدة وقراءتها</string>
+    <string name="after_scanning">عند حفظ مسح</string>
+    <string name="viewer_opening">فتح المستندات</string>
+    <string name="viewer_default_display">العرض الافتراضي</string>
+    <string name="color">اللون</string>
 </resources>

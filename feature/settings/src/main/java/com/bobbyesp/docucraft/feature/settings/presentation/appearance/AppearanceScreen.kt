@@ -273,18 +273,20 @@ fun AppearanceScreenContent(
             }
 
             if (isDynamicColoringSupported()) {
-                item(key = "dynamic_coloring", contentType = "settings_item") {
-                    SettingSwitch(
-                        title = stringResource(R.string.dynamic_coloring),
-                        supportingText = stringResource(R.string.dynamic_coloring_desc),
-                        icon = Icons.Rounded.ColorLens,
-                        isChecked = preferences.useDynamicColoring,
-                        onCheckedChange = onDynamicColoringChange,
-                        modifier =
-                            animateItemWith(motionScheme)
-                                .settingsContentWidth()
-                                .padding(horizontal = SettingsItemDefaults.HorizontalMargin),
-                    )
+                item(key = "dynamic_coloring", contentType = "settings_section") {
+                    SettingsCategory(
+                        title = stringResource(R.string.color),
+                        modifier = animateItemWith(motionScheme).settingsContentWidth(),
+                    ) {
+                        SettingSwitch(
+                            title = stringResource(R.string.dynamic_coloring),
+                            supportingText = stringResource(R.string.dynamic_coloring_desc),
+                            icon = Icons.Rounded.ColorLens,
+                            isChecked = preferences.useDynamicColoring,
+                            onCheckedChange = onDynamicColoringChange,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                 }
             }
 

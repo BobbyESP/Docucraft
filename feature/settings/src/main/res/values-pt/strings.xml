@@ -24,7 +24,6 @@
     <string name="typography_monospace">Monoespaçada e técnica</string>
     <string name="typography_monospace_desc">Para detalhes técnicos, contadores de caracteres e datas.</string>
     <string name="select_setting_to_open">Selecione uma configuração para abri-la aqui</string>
-    <string name="general">Geral</string>
     <string name="version_format">Versão %1$s</string>
     <string name="about">Sobre</string>
     <string name="about_desc">Versão, quem a faz e como apoiá-la</string>
@@ -36,7 +35,7 @@
     <string name="about_source_code">Código-fonte</string>
     <string name="about_source_code_desc">Código aberto, sob a licença GPL-3.0</string>
     <string name="document_viewer">Visualizador de documentos</string>
-    <string name="document_viewer_desc">Como os documentos são abertos</string>
+    <string name="document_viewer_desc">Onde os documentos abrem, pesquisa e exibição</string>
     <string name="viewer_use_defaults">Usar configurações padrão</string>
     <string name="viewer_use_defaults_on_desc">Todos os documentos são abertos com as configurações abaixo</string>
     <string name="viewer_use_defaults_off_desc">Os documentos são abertos ajustados à largura, sem modo noturno</string>
@@ -66,4 +65,10 @@
     <string name="search_arrival_find_bar_desc">A pesquisa do leitor abre com as suas palavras e as suas setas</string>
     <string name="search_arrival_nothing">Não fazer nada</string>
     <string name="search_arrival_nothing_desc">O documento abre como de costume</string>
+    <string name="scanning">Digitalização</string>
+    <string name="scanning_desc">Revisão e leitura das novas digitalizações</string>
+    <string name="after_scanning">Ao salvar uma digitalização</string>
+    <string name="viewer_opening">Abertura de documentos</string>
+    <string name="viewer_default_display">Exibição padrão</string>
+    <string name="color">Cor</string>
 </resources>

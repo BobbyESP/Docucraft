@@ -309,7 +309,8 @@ library page is read in the background and kept (`IndexDocumentTextUseCase`).
 - **Turning it on and off** (`SetDocumentTextRecognitionUseCase`). On: waiting pages become pending
   and the document is queued. Off: in one transaction recognized text and layouts are deleted and
   those pages wait again, so they stop being found by content. The document's own text is untouched.
-- **New documents** get the setting *Recognize text in new documents* (off until chosen) when a scan
+- **New documents** get the setting *Recognize text in new documents* (Settings → Scanning, off
+  until chosen) when a scan
   or another app's document is saved.
 - **Failures are counted per page.** A failed page is retried at once up to three times, then
   `FAILED`; the others are still read. Failed pages become pending at app start, since the cause

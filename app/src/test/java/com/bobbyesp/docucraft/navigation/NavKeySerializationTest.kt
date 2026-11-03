@@ -11,6 +11,7 @@ import com.bobbyesp.docucraft.core.navigation.keys.DocumentActions
 import com.bobbyesp.docucraft.core.navigation.keys.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.navigation.keys.EditDocument
 import com.bobbyesp.docucraft.core.navigation.keys.PdfViewer
+import com.bobbyesp.docucraft.core.navigation.keys.ScanningSettings
 import com.bobbyesp.docucraft.core.navigation.keys.Settings
 import com.bobbyesp.docucraft.feature.home.navigation.Home
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
@@ -109,6 +110,7 @@ class NavKeySerializationTest {
                 DeleteDocument(documentUuid = "uuid"),
                 Settings,
                 AppearanceSettings,
+                ScanningSettings,
                 DocumentViewerSettings,
                 AboutSettings,
             )

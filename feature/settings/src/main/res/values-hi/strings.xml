@@ -24,7 +24,6 @@
     <string name="typography_monospace">मोनोस्पेस और तकनीकी</string>
     <string name="typography_monospace_desc">तकनीकी जानकारी, वर्णों की गिनती और तारीख़ों के लिए।</string>
     <string name="select_setting_to_open">कोई सेटिंग चुनें, वह यहाँ खुलेगी</string>
-    <string name="general">सामान्य</string>
     <string name="version_format">संस्करण %1$s</string>
     <string name="about">ऐप के बारे में</string>
     <string name="about_desc">संस्करण, इसे कौन बनाता है और इसका समर्थन कैसे करें</string>
@@ -36,7 +35,7 @@
     <string name="about_source_code">सोर्स कोड</string>
     <string name="about_source_code_desc">ओपन सोर्स, GPL-3.0 लाइसेंस के तहत</string>
     <string name="document_viewer">दस्तावेज़ व्यूअर</string>
-    <string name="document_viewer_desc">दस्तावेज़ कैसे खुलते हैं</string>
+    <string name="document_viewer_desc">दस्तावेज़ कहाँ खुलते हैं, खोज और डिस्प्ले</string>
     <string name="viewer_use_defaults">डिफ़ॉल्ट सेटिंग इस्तेमाल करें</string>
     <string name="viewer_use_defaults_on_desc">हर दस्तावेज़ नीचे दी गई सेटिंग के साथ खुलता है</string>
     <string name="viewer_use_defaults_off_desc">दस्तावेज़ चौड़ाई में फ़िट होकर, नाइट मोड के बिना खुलते हैं</string>
@@ -66,4 +65,10 @@
     <string name="search_arrival_find_bar_desc">व्यूअर की खोज आपके शब्दों और तीरों के साथ खुलती है</string>
     <string name="search_arrival_nothing">कुछ न करें</string>
     <string name="search_arrival_nothing_desc">दस्तावेज़ हमेशा की तरह खुलता है</string>
+    <string name="scanning">स्कैनिंग</string>
+    <string name="scanning_desc">नए स्कैन की समीक्षा और पढ़ना</string>
+    <string name="after_scanning">स्कैन सहेजे जाने पर</string>
+    <string name="viewer_opening">दस्तावेज़ खोलना</string>
+    <string name="viewer_default_display">डिफ़ॉल्ट डिस्प्ले</string>
+    <string name="color">रंग</string>
 </resources>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="document_viewer">Visor de documentos</string>
-    <string name="document_viewer_desc">Cómo se abren los documentos</string>
+    <string name="document_viewer_desc">Dónde se abren los documentos, búsqueda y visualización</string>
     <string name="viewer_use_defaults">Usar ajustes predeterminados</string>
     <string name="viewer_use_defaults_on_desc">Todos los documentos se abren con estos ajustes</string>
     <string name="viewer_use_defaults_off_desc">Los documentos se abren ajustados al ancho y sin modo nocturno</string>
@@ -10,7 +10,6 @@
     <string name="viewer_remember_position_on_desc">Los documentos se abren por la página que estabas leyendo</string>
     <string name="viewer_remember_position_off_desc">Los documentos se abren siempre por el principio</string>
     <string name="night_mode_desc">Invierte los colores de las páginas para leer a oscuras</string>
-    <string name="general">General</string>
     <string name="version_format">Versión %1$s</string>
     <string name="about">Acerca de</string>
     <string name="about_desc">Versión, quién la hace y cómo apoyarla</string>
@@ -66,4 +65,10 @@
     <string name="search_arrival_find_bar_desc">La búsqueda del visor se abre con tus palabras y sus flechas</string>
     <string name="search_arrival_nothing">No hacer nada</string>
     <string name="search_arrival_nothing_desc">El documento se abre como siempre</string>
+    <string name="scanning">Escaneo</string>
+    <string name="scanning_desc">Revisión y lectura de los escaneos nuevos</string>
+    <string name="after_scanning">Al guardar un escaneo</string>
+    <string name="viewer_opening">Al abrir documentos</string>
+    <string name="viewer_default_display">Visualización predeterminada</string>
+    <string name="color">Color</string>
 </resources>
