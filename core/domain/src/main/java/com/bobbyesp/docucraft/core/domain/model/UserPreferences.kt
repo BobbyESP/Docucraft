@@ -10,7 +10,7 @@ data class UserPreferences(
     val themeConfig: ThemeConfig = ThemeConfig.FOLLOW_SYSTEM,
     val useDynamicColoring: Boolean = true,
     val themeSeedColor: Int = DEFAULT_SEED_COLOR,
-    val paletteStyle: PaletteStyleConfig = PaletteStyleConfig.Vibrant,
+    val paletteStyle: PaletteStyleConfig = PaletteStyleConfig.TonalSpot,
     val isHighContrastModeEnabled: Boolean = false,
     val displayFont: FontConfig = FontConfig.DMSerifDisplay,
     val titleFont: FontConfig = FontConfig.DMSerifText,
