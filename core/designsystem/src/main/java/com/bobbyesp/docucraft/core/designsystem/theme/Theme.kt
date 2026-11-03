@@ -36,11 +36,11 @@ import com.materialkolor.blend.Blend
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.materialkolor.ktx.toDynamicScheme
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlin.time.Duration.Companion.milliseconds
 
 /** The type roles Material's [androidx.compose.material3.Typography] has no slot for. */
 @Immutable data class DocucraftTypography(val monospace: FontFamily = FontFamily.Monospace)
