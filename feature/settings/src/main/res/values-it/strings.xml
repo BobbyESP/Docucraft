@@ -24,7 +24,6 @@
     <string name="typography_monospace">Monospazio e tecnico</string>
     <string name="typography_monospace_desc">Per i dettagli tecnici, i contatori di caratteri e le date.</string>
     <string name="select_setting_to_open">Seleziona un\'impostazione per aprirla qui</string>
-    <string name="general">Generali</string>
     <string name="version_format">Versione %1$s</string>
     <string name="about">Informazioni</string>
     <string name="about_desc">Versione, chi la crea e come sostenerla</string>
@@ -36,7 +35,7 @@
     <string name="about_source_code">Codice sorgente</string>
     <string name="about_source_code_desc">Open source, con licenza GPL-3.0</string>
     <string name="document_viewer">Visualizzatore di documenti</string>
-    <string name="document_viewer_desc">Come si aprono i documenti</string>
+    <string name="document_viewer_desc">Dove si aprono i documenti, ricerca e visualizzazione</string>
     <string name="viewer_use_defaults">Usa le impostazioni predefinite</string>
     <string name="viewer_use_defaults_on_desc">Ogni documento si apre con le impostazioni qui sotto</string>
     <string name="viewer_use_defaults_off_desc">I documenti si aprono adattati alla larghezza, senza modalità notte</string>
@@ -59,4 +58,17 @@
     <string name="review_new_scans">Rivedi le scansioni al salvataggio</string>
     <string name="review_new_scans_on_desc">Dopo la scansione dai un nome al documento e indichi dove va</string>
     <string name="review_new_scans_off_desc">Le scansioni vengono salvate così come sono. Puoi modificarle in seguito</string>
+    <string name="search_arrival">Aprendo da una ricerca</string>
+    <string name="search_arrival_highlight">Evidenzia le corrispondenze</string>
+    <string name="search_arrival_highlight_desc">Le parole cercate restano evidenziate finché non sposti il documento</string>
+    <string name="search_arrival_find_bar">Apri la barra di ricerca</string>
+    <string name="search_arrival_find_bar_desc">La ricerca del lettore si apre con le tue parole e le sue frecce</string>
+    <string name="search_arrival_nothing">Non fare nulla</string>
+    <string name="search_arrival_nothing_desc">Il documento si apre come sempre</string>
+    <string name="scanning">Scansione</string>
+    <string name="scanning_desc">Revisione e lettura delle nuove scansioni</string>
+    <string name="after_scanning">Quando una scansione viene salvata</string>
+    <string name="viewer_opening">Apertura dei documenti</string>
+    <string name="viewer_default_display">Visualizzazione predefinita</string>
+    <string name="color">Colore</string>
 </resources>

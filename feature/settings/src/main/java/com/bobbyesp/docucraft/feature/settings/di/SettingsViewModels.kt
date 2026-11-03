@@ -4,6 +4,7 @@
 package com.bobbyesp.docucraft.feature.settings.di
 
 import com.bobbyesp.docucraft.feature.settings.presentation.appearance.AppearanceViewModel
+import com.bobbyesp.docucraft.feature.settings.presentation.scanning.ScanningSettingsViewModel
 import com.bobbyesp.docucraft.feature.settings.presentation.viewer.DocumentViewerSettingsViewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -11,5 +12,6 @@ import org.koin.dsl.module
 /** The ViewModels of the settings screens. */
 val settingsViewModels = module {
     viewModelOf(::AppearanceViewModel)
+    viewModelOf(::ScanningSettingsViewModel)
     viewModelOf(::DocumentViewerSettingsViewModel)
 }

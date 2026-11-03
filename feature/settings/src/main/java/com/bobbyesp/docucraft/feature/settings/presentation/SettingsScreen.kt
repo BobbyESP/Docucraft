@@ -8,17 +8,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.RateReview
-import androidx.compose.material.icons.rounded.TextFields
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -35,13 +33,10 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.designsystem.components.FrostedLargeTopAppBar
-import com.bobbyesp.docucraft.core.designsystem.components.settings.SettingSwitch
-import com.bobbyesp.docucraft.core.designsystem.components.settings.SettingsCategory
 import com.bobbyesp.docucraft.core.designsystem.components.settings.SettingsGroup
 import com.bobbyesp.docucraft.core.designsystem.components.settings.SettingsItem
 import com.bobbyesp.docucraft.core.designsystem.components.settings.SettingsItemDefaults
 import com.bobbyesp.docucraft.core.designsystem.components.settings.settingsContentWidth
-import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftShapeDefaults
 import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
 import com.bobbyesp.docucraft.feature.settings.R
 import dev.chrisbanes.haze.hazeSource
@@ -51,20 +46,16 @@ import kotlinx.collections.immutable.persistentListOf
 
 /**
  * The root of settings, built from what Home is built from so that it reads as the same app: its
- * app bar, its section headers and its grouped lists. Top to bottom: the screens that hold more
- * settings; the few that are set right here, each a switch; and the way to what the app says about
- * itself.
+ * app bar and its grouped lists. It only leads elsewhere: each setting lives on the screen of its
+ * subject, and what the app says about itself is set apart below them.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsScreen(
     onOpenAppearance: () -> Unit,
+    onOpenScanning: () -> Unit,
     onOpenDocumentViewer: () -> Unit,
     onOpenAbout: () -> Unit,
-    recognizesTextInNewDocuments: Boolean,
-    onRecognizeTextInNewDocumentsChange: (Boolean) -> Unit,
-    reviewsNewScans: Boolean,
-    onReviewNewScansChange: (Boolean) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -75,13 +66,19 @@ fun SettingsScreen(
     // The list, recorded for the app bar to frost once it scrolls beneath it.
     val hazeState = rememberHazeState()
 
-    val settings: PersistentList<SettingsItem> =
+    val subjects: PersistentList<SettingsItem> =
         persistentListOf(
             SettingsItem(
                 title = stringResource(R.string.appearance),
                 supportingText = stringResource(R.string.appearance_desc),
-                icon = Icons.Rounded.ColorLens,
+                icon = Icons.Rounded.Palette,
                 onClick = onOpenAppearance,
+            ),
+            SettingsItem(
+                title = stringResource(R.string.scanning),
+                supportingText = stringResource(R.string.scanning_desc),
+                icon = Icons.Rounded.DocumentScanner,
+                onClick = onOpenScanning,
             ),
             SettingsItem(
                 title = stringResource(R.string.document_viewer),
@@ -90,6 +87,20 @@ fun SettingsScreen(
                 onClick = onOpenDocumentViewer,
             ),
         )
+
+    val about: PersistentList<SettingsItem> =
+        persistentListOf(
+            SettingsItem(
+                title = stringResource(R.string.about),
+                supportingText = stringResource(R.string.about_desc),
+                icon = Icons.Rounded.Info,
+                onClick = onOpenAbout,
+            )
+        )
+
+    // A group outside a category takes the margins a category gives its own.
+    val groupModifier =
+        Modifier.settingsContentWidth().padding(horizontal = SettingsItemDefaults.HorizontalMargin)
 
     Scaffold(
         modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -117,73 +128,17 @@ fun SettingsScreen(
             contentPadding =
                 PaddingValues(
                     start = padding.calculateStartPadding(layoutDirection),
-                    top = padding.calculateTopPadding(),
+                    top = padding.calculateTopPadding() + 8.dp,
                     end = padding.calculateEndPadding(layoutDirection),
                     bottom = padding.calculateBottomPadding() + 16.dp,
                 ),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            item(key = "general", contentType = "settings_section") {
-                SettingsCategory(
-                    title = stringResource(R.string.general),
-                    modifier = Modifier.settingsContentWidth(),
-                ) {
-                    SettingsGroup(items = settings)
-                }
+            item(key = "subjects", contentType = "settings_group") {
+                SettingsGroup(items = subjects, modifier = groupModifier)
             }
-            item(key = "documents", contentType = "settings_section") {
-                SettingsCategory(
-                    title = stringResource(DesignsystemR.string.documents),
-                    modifier = Modifier.settingsContentWidth(),
-                ) {
-                    SettingSwitch(
-                        title = stringResource(R.string.recognize_text_in_new_documents),
-                        supportingText =
-                            stringResource(
-                                if (recognizesTextInNewDocuments) {
-                                    R.string.recognize_text_in_new_documents_on_desc
-                                } else {
-                                    R.string.recognize_text_in_new_documents_off_desc
-                                }
-                            ),
-                        icon = Icons.Rounded.TextFields,
-                        isChecked = recognizesTextInNewDocuments,
-                        onCheckedChange = onRecognizeTextInNewDocumentsChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        shapes =
-                            DocucraftShapeDefaults.segmentedListItemShapes(index = 0, count = 2),
-                    )
-                    SettingSwitch(
-                        title = stringResource(R.string.review_new_scans),
-                        supportingText =
-                            stringResource(
-                                if (reviewsNewScans) R.string.review_new_scans_on_desc
-                                else R.string.review_new_scans_off_desc
-                            ),
-                        icon = Icons.Rounded.RateReview,
-                        isChecked = reviewsNewScans,
-                        onCheckedChange = onReviewNewScansChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        shapes =
-                            DocucraftShapeDefaults.segmentedListItemShapes(index = 1, count = 2),
-                    )
-                }
-            }
-            item(key = "about", contentType = "settings_item") {
-                SettingsItem(
-                    item =
-                        SettingsItem(
-                            title = stringResource(R.string.about),
-                            supportingText = stringResource(R.string.about_desc),
-                            icon = Icons.Rounded.Info,
-                            onClick = onOpenAbout,
-                        ),
-                    // Apart from the settings above it: it sets nothing.
-                    modifier =
-                        Modifier.settingsContentWidth()
-                            .padding(horizontal = SettingsItemDefaults.HorizontalMargin)
-                            .padding(top = 16.dp),
-                )
+            item(key = "about", contentType = "settings_group") {
+                SettingsGroup(items = about, modifier = groupModifier)
             }
         }
     }
@@ -195,12 +150,9 @@ private fun SettingsScreenPreview() {
     DocucraftTheme {
         SettingsScreen(
             onOpenAppearance = {},
+            onOpenScanning = {},
             onOpenDocumentViewer = {},
             onOpenAbout = {},
-            recognizesTextInNewDocuments = false,
-            onRecognizeTextInNewDocumentsChange = {},
-            reviewsNewScans = true,
-            onReviewNewScansChange = {},
             onBack = {},
         )
     }

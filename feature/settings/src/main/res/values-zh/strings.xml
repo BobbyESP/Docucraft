@@ -24,7 +24,6 @@
     <string name="typography_monospace">等宽与技术信息</string>
     <string name="typography_monospace_desc">用于技术详情、字符计数和日期格式。</string>
     <string name="select_setting_to_open">选择一项设置即可在此处打开</string>
-    <string name="general">常规</string>
     <string name="version_format">版本 %1$s</string>
     <string name="about">关于</string>
     <string name="about_desc">版本、开发者以及如何支持</string>
@@ -36,7 +35,7 @@
     <string name="about_source_code">源代码</string>
     <string name="about_source_code_desc">开源，采用 GPL-3.0 许可证</string>
     <string name="document_viewer">文档查看器</string>
-    <string name="document_viewer_desc">文档的打开方式</string>
+    <string name="document_viewer_desc">文档打开位置、搜索和显示</string>
     <string name="viewer_use_defaults">使用默认设置</string>
     <string name="viewer_use_defaults_on_desc">每个文档都按以下设置打开</string>
     <string name="viewer_use_defaults_off_desc">文档以适应宽度的方式打开，不启用夜间模式</string>
@@ -59,4 +58,17 @@
     <string name="review_new_scans">保存时检查扫描件</string>
     <string name="review_new_scans_on_desc">扫描后，由您为文档命名并指定存放位置</string>
     <string name="review_new_scans_off_desc">扫描件按原样保存。您可以稍后编辑</string>
+    <string name="search_arrival">从搜索打开时</string>
+    <string name="search_arrival_highlight">高亮匹配项</string>
+    <string name="search_arrival_highlight_desc">搜索的词会一直高亮，直到您移动文档</string>
+    <string name="search_arrival_find_bar">打开查找栏</string>
+    <string name="search_arrival_find_bar_desc">阅读器的查找栏会带着您的搜索词和箭头打开</string>
+    <string name="search_arrival_nothing">不做任何事</string>
+    <string name="search_arrival_nothing_desc">文档照常打开</string>
+    <string name="scanning">扫描</string>
+    <string name="scanning_desc">检查和读取新扫描件</string>
+    <string name="after_scanning">保存扫描件后</string>
+    <string name="viewer_opening">打开文档</string>
+    <string name="viewer_default_display">默认显示</string>
+    <string name="color">颜色</string>
 </resources>

@@ -26,7 +26,6 @@
     <string name="typography_monospace">Monospace &amp; Technical</string>
     <string name="typography_monospace_desc">Used for technical details, character counts, and date formatting.</string>
     <string name="select_setting_to_open">Select a setting to open it here</string>
-    <string name="general">General</string>
     <string name="version_format">Version %1$s</string>
     <string name="about">About</string>
     <string name="about_desc">Version, who makes it and how to support it</string>
@@ -38,7 +37,7 @@
     <string name="about_source_code">Source code</string>
     <string name="about_source_code_desc">Open source, under the GPL-3.0 license</string>
     <string name="document_viewer">Document viewer</string>
-    <string name="document_viewer_desc">How documents open</string>
+    <string name="document_viewer_desc">Where documents open, search and display</string>
     <string name="viewer_use_defaults">Use default settings</string>
     <string name="viewer_use_defaults_on_desc">Every document opens with the settings below</string>
     <string name="viewer_use_defaults_off_desc">Documents open fitted to width, without night mode</string>
@@ -61,4 +60,17 @@
     <string name="review_new_scans">Review scans when they are saved</string>
     <string name="review_new_scans_on_desc">After scanning, you name the document and say where it goes</string>
     <string name="review_new_scans_off_desc">Scans are saved as they come. You can edit them later</string>
+    <string name="search_arrival">When opening from a search</string>
+    <string name="search_arrival_highlight">Highlight the matches</string>
+    <string name="search_arrival_highlight_desc">The words you searched for stay lit until you move the document</string>
+    <string name="search_arrival_find_bar">Open the find bar</string>
+    <string name="search_arrival_find_bar_desc">The viewer\'s search opens on your words, with its arrows</string>
+    <string name="search_arrival_nothing">Do nothing</string>
+    <string name="search_arrival_nothing_desc">The document opens as usual</string>
+    <string name="scanning">Scanning</string>
+    <string name="scanning_desc">Reviewing and reading new scans</string>
+    <string name="after_scanning">When a scan is saved</string>
+    <string name="viewer_opening">Opening documents</string>
+    <string name="viewer_default_display">Default display</string>
+    <string name="color">Color</string>
 </resources>

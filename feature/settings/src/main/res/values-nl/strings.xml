@@ -24,7 +24,6 @@
     <string name="typography_monospace">Monospace en technisch</string>
     <string name="typography_monospace_desc">Voor technische details, tekentellers en datums.</string>
     <string name="select_setting_to_open">Selecteer een instelling om deze hier te openen</string>
-    <string name="general">Algemeen</string>
     <string name="version_format">Versie %1$s</string>
     <string name="about">Over</string>
     <string name="about_desc">Versie, wie het maakt en hoe je het kunt steunen</string>
@@ -36,7 +35,7 @@
     <string name="about_source_code">Broncode</string>
     <string name="about_source_code_desc">Open source, onder de GPL-3.0-licentie</string>
     <string name="document_viewer">Documentviewer</string>
-    <string name="document_viewer_desc">Hoe documenten worden geopend</string>
+    <string name="document_viewer_desc">Waar documenten openen, zoeken en weergave</string>
     <string name="viewer_use_defaults">Standaardinstellingen gebruiken</string>
     <string name="viewer_use_defaults_on_desc">Elk document wordt geopend met de onderstaande instellingen</string>
     <string name="viewer_use_defaults_off_desc">Documenten worden aangepast aan de breedte geopend, zonder nachtmodus</string>
@@ -59,4 +58,17 @@
     <string name="review_new_scans">Scans controleren bij het opslaan</string>
     <string name="review_new_scans_on_desc">Na het scannen geeft u het document een naam en bepaalt u waar het komt</string>
     <string name="review_new_scans_off_desc">Scans worden opgeslagen zoals ze zijn. U kunt ze later bewerken</string>
+    <string name="search_arrival">Bij openen vanuit een zoekopdracht</string>
+    <string name="search_arrival_highlight">Treffers markeren</string>
+    <string name="search_arrival_highlight_desc">De gezochte woorden blijven gemarkeerd tot je het document verplaatst</string>
+    <string name="search_arrival_find_bar">Zoekbalk openen</string>
+    <string name="search_arrival_find_bar_desc">De zoekfunctie van de lezer opent met je woorden en pijltjes</string>
+    <string name="search_arrival_nothing">Niets doen</string>
+    <string name="search_arrival_nothing_desc">Het document opent zoals gewoonlijk</string>
+    <string name="scanning">Scannen</string>
+    <string name="scanning_desc">Nieuwe scans controleren en lezen</string>
+    <string name="after_scanning">Als een scan is opgeslagen</string>
+    <string name="viewer_opening">Documenten openen</string>
+    <string name="viewer_default_display">Standaardweergave</string>
+    <string name="color">Kleur</string>
 </resources>

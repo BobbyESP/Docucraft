@@ -44,7 +44,7 @@ One back stack, one Navigation 3 `NavDisplay`, typed keys. Code: `:core:navigati
   | `:core:navigation` | `OrganizationKeys.kt` | `FolderContents`, `FolderEditor`, `FolderActions`, `DeleteFolder`, `MoveToFolder`, `DocumentTags`, `ManageTags`, `TagEditor`, `DeleteTag` | `:feature:organization` |
   | `:core:navigation` | `PdfViewerKey.kt` | `PdfViewer`, the one other features open | `:feature:pdfviewer` |
   | `:feature:pdfviewer` | `ViewerKeys.kt` | `ExternalPdfViewer`, `PdfDocumentDetails`, `SaveCopyToLibrary`, `GoToPage` | `:feature:pdfviewer` |
-  | `:core:navigation` | `SettingsKeys.kt` | `Settings`, `AppearanceSettings`, `DocumentViewerSettings`, `AboutSettings` | `:feature:settings` |
+  | `:core:navigation` | `SettingsKeys.kt` | `Settings`, `AppearanceSettings`, `ScanningSettings`, `DocumentViewerSettings`, `AboutSettings` | `:feature:settings` |
 
   A key in `:core:navigation` carries uuids at most. The viewer's own keys carry its
   `ViewerDocumentRef`, which is why they stay with it.

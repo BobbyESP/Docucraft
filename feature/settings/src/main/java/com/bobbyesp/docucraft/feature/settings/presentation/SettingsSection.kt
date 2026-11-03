@@ -16,28 +16,25 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.bobbyesp.docucraft.core.navigation.Navigator
 import com.bobbyesp.docucraft.core.navigation.keys.AboutSettings
 import com.bobbyesp.docucraft.core.navigation.keys.AppearanceSettings
 import com.bobbyesp.docucraft.core.navigation.keys.DocumentViewerSettings
+import com.bobbyesp.docucraft.core.navigation.keys.ScanningSettings
 import com.bobbyesp.docucraft.core.navigation.keys.Settings
 import com.bobbyesp.docucraft.core.navigation.pane.LocalPaneContext
-import com.bobbyesp.docucraft.core.ui.common.LocalSettingsRepository
 import com.bobbyesp.docucraft.feature.settings.R
 import com.bobbyesp.docucraft.feature.settings.presentation.about.AboutScreen
 import com.bobbyesp.docucraft.feature.settings.presentation.appearance.AppearanceScreen
+import com.bobbyesp.docucraft.feature.settings.presentation.scanning.ScanningSettingsScreen
 import com.bobbyesp.docucraft.feature.settings.presentation.viewer.DocumentViewerSettingsScreen
-import kotlinx.coroutines.launch
 
 /**
  * Settings and its sub-screens, as a list-detail pair of their own.
@@ -56,24 +53,11 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
                 detailPlaceholder = { NoSettingOpenPane() },
             )
     ) {
-        // One switch does not make a ViewModel: it is read from the settings and written back.
-        val settingsRepository = LocalSettingsRepository.current
-        val preferences by settingsRepository.settings.collectAsStateWithLifecycle(null)
-        val scope = rememberCoroutineScope()
-
         SettingsScreen(
             onOpenAppearance = { navigator.goTo(AppearanceSettings) },
+            onOpenScanning = { navigator.goTo(ScanningSettings) },
             onOpenDocumentViewer = { navigator.goTo(DocumentViewerSettings) },
             onOpenAbout = { navigator.goTo(AboutSettings) },
-            recognizesTextInNewDocuments = preferences?.recognizeTextInNewDocuments == true,
-            onRecognizeTextInNewDocumentsChange = { enabled ->
-                scope.launch { settingsRepository.setRecognizeTextInNewDocuments(enabled) }
-            },
-            // On until the settings say otherwise, as the default is.
-            reviewsNewScans = preferences?.reviewNewScans != false,
-            onReviewNewScansChange = { enabled ->
-                scope.launch { settingsRepository.setReviewNewScans(enabled) }
-            },
             onBack = navigator::leaveSettings,
         )
     }
@@ -83,6 +67,13 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
             onBack = navigator::goBack,
             // Beside the settings list there is already a way back on screen; filling the window
             // there is not. The scene knows which of the two happened; this does not have to.
+            showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
+        )
+    }
+
+    entry<ScanningSettings>(metadata = ListDetailSceneStrategy.detailPane(SettingsScene)) {
+        ScanningSettingsScreen(
+            onBack = navigator::goBack,
             showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
         )
     }
@@ -111,7 +102,10 @@ fun EntryProviderScope<NavKey>.settingsSection(navigator: Navigator) {
  */
 internal fun Navigator.leaveSettings() {
     goBackWhile {
-        it is AppearanceSettings || it is DocumentViewerSettings || it is AboutSettings
+        it is AppearanceSettings ||
+            it is ScanningSettings ||
+            it is DocumentViewerSettings ||
+            it is AboutSettings
     }
 
     goBack()

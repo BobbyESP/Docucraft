@@ -11,7 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.luminance
@@ -23,6 +26,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
+import com.bobbyesp.docucraft.core.domain.model.SearchArrival
 import com.bobbyesp.docucraft.core.domain.notifications.InAppNotification
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationAction
 import com.bobbyesp.docucraft.core.domain.notifications.NotificationType
@@ -176,6 +180,9 @@ internal fun ReportSearchQuery(
 ) {
     val send by rememberUpdatedState(onIntent)
     LaunchedEffect(search, pdf) {
+        // A search never opened has nothing to close; closing would also clear the highlight of
+        // the query the document was opened on.
+        var wasOpen = false
         snapshotFlow {
             when {
                 !pdf.isLoaded -> null
@@ -187,11 +194,56 @@ internal fun ReportSearchQuery(
             .distinctUntilChanged()
             .collect { report ->
                 when (report) {
-                    is SearchReport.Query ->
+                    is SearchReport.Query -> {
+                        wasOpen = true
                         send(PdfViewerIntent.SearchQueryChanged(report.text, pdf.currentPage))
-                    SearchReport.Closed -> send(PdfViewerIntent.CloseSearch)
+                    }
+                    SearchReport.Closed ->
+                        if (wasOpen) {
+                            wasOpen = false
+                            send(PdfViewerIntent.CloseSearch)
+                        }
                 }
             }
+    }
+}
+
+/**
+ * Does with the query a document was opened from what the reader chose ([arrival], `null` while the
+ * choice is read). It runs once per entry: after a rotation the reader has either already moved on
+ * or still sees what it showed.
+ *
+ * Highlighting lights the matches without the find bar and puts them out when the reader first
+ * touches the document.
+ */
+@Composable
+internal fun ApplySearchArrival(
+    pdf: PdfViewerState,
+    search: ViewerSearchState,
+    query: String?,
+    arrival: SearchArrival?,
+    onIntent: (PdfViewerIntent) -> Unit,
+) {
+    if (query.isNullOrBlank() || arrival == null || arrival == SearchArrival.NOTHING) return
+    val send by rememberUpdatedState(onIntent)
+    var handled by rememberSaveable(query) { mutableStateOf(false) }
+    LaunchedEffect(pdf, query, arrival) {
+        if (handled) return@LaunchedEffect
+        snapshotFlow { pdf.isLoaded }.first { it }
+        if (search.isOpen) return@LaunchedEffect
+        when (arrival) {
+            SearchArrival.OPEN_FIND_BAR -> {
+                handled = true
+                search.show(query)
+            }
+            SearchArrival.HIGHLIGHT -> {
+                send(PdfViewerIntent.ShowMatches(query, pdf.currentPage))
+                snapshotFlow { pdf.isGestureActive }.first { it }
+                handled = true
+                if (!search.isOpen) send(PdfViewerIntent.CloseSearch)
+            }
+            SearchArrival.NOTHING -> Unit
+        }
     }
 }
 

@@ -157,6 +157,9 @@ sealed interface PdfViewerIntent {
     /** The search is over: its matches and the text read for it are dropped. */
     data object CloseSearch : PdfViewerIntent
 
+    /** Lights the matches of [query] without the find bar, as when arriving from a search. */
+    data class ShowMatches(val query: String, val fromPage: Int) : PdfViewerIntent
+
     data class SetFitMode(val fitMode: ViewerFitMode) : PdfViewerIntent
 
     data object ToggleNightMode : PdfViewerIntent

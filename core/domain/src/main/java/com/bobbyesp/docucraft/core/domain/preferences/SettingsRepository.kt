@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.core.domain.preferences
 
 import com.bobbyesp.docucraft.core.domain.model.FontConfig
 import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
+import com.bobbyesp.docucraft.core.domain.model.SearchArrival
 import com.bobbyesp.docucraft.core.domain.model.ThemeConfig
 import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
@@ -58,4 +59,6 @@ interface SettingsRepository {
 
     /** Whether a scan is shown to the user to be named and organized as soon as it is saved. */
     suspend fun setReviewNewScans(enabled: Boolean)
+
+    suspend fun setSearchArrival(arrival: SearchArrival)
 }

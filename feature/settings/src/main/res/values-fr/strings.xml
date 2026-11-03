@@ -24,7 +24,6 @@
     <string name="typography_monospace">Chasse fixe et technique</string>
     <string name="typography_monospace_desc">Pour les détails techniques, les compteurs de caractères et les dates.</string>
     <string name="select_setting_to_open">Sélectionnez un paramètre pour l\'ouvrir ici</string>
-    <string name="general">Général</string>
     <string name="version_format">Version %1$s</string>
     <string name="about">À propos</string>
     <string name="about_desc">Version, qui la crée et comment la soutenir</string>
@@ -36,7 +35,7 @@
     <string name="about_source_code">Code source</string>
     <string name="about_source_code_desc">Open source, sous licence GPL-3.0</string>
     <string name="document_viewer">Visionneuse de documents</string>
-    <string name="document_viewer_desc">Comment les documents s\'ouvrent</string>
+    <string name="document_viewer_desc">Où s\'ouvrent les documents, recherche et affichage</string>
     <string name="viewer_use_defaults">Utiliser les réglages par défaut</string>
     <string name="viewer_use_defaults_on_desc">Tous les documents s\'ouvrent avec les réglages ci-dessous</string>
     <string name="viewer_use_defaults_off_desc">Les documents s\'ouvrent ajustés à la largeur, sans mode nuit</string>
@@ -59,4 +58,17 @@
     <string name="review_new_scans">Vérifier les numérisations à l\'enregistrement</string>
     <string name="review_new_scans_on_desc">Après la numérisation, vous nommez le document et indiquez où il va</string>
     <string name="review_new_scans_off_desc">Les numérisations sont enregistrées telles quelles. Vous pouvez les modifier plus tard</string>
+    <string name="search_arrival">À l\'ouverture depuis une recherche</string>
+    <string name="search_arrival_highlight">Surligner les résultats</string>
+    <string name="search_arrival_highlight_desc">Les mots recherchés restent surlignés jusqu\'à ce que vous déplaciez le document</string>
+    <string name="search_arrival_find_bar">Ouvrir la barre de recherche</string>
+    <string name="search_arrival_find_bar_desc">La recherche du lecteur s\'ouvre sur vos mots, avec ses flèches</string>
+    <string name="search_arrival_nothing">Ne rien faire</string>
+    <string name="search_arrival_nothing_desc">Le document s\'ouvre comme d\'habitude</string>
+    <string name="scanning">Numérisation</string>
+    <string name="scanning_desc">Vérification et lecture des nouvelles numérisations</string>
+    <string name="after_scanning">Quand une numérisation est enregistrée</string>
+    <string name="viewer_opening">Ouverture des documents</string>
+    <string name="viewer_default_display">Affichage par défaut</string>
+    <string name="color">Couleur</string>
 </resources>

@@ -11,6 +11,7 @@ import com.bobbyesp.docucraft.core.navigation.keys.DocumentActions
 import com.bobbyesp.docucraft.core.navigation.keys.DocumentViewerSettings
 import com.bobbyesp.docucraft.core.navigation.keys.EditDocument
 import com.bobbyesp.docucraft.core.navigation.keys.PdfViewer
+import com.bobbyesp.docucraft.core.navigation.keys.ScanningSettings
 import com.bobbyesp.docucraft.core.navigation.keys.Settings
 import com.bobbyesp.docucraft.feature.home.navigation.Home
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
@@ -67,6 +68,13 @@ class NavKeySerializationTest {
         assertEquals("a-document-uuid", (restored as PdfViewer).documentUuid)
     }
 
+    @Test
+    fun `a viewer key restores the search it was opened from`() {
+        val restored = roundTrip(PdfViewer(documentUuid = "uuid", searchQuery = "invoice"))
+
+        assertEquals("invoice", (restored as PdfViewer).searchQuery)
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun roundTrip(key: NavKey): NavKey {
         val serializer = serializerForClassName(key.javaClass.name) as KSerializer<NavKey>
@@ -102,6 +110,7 @@ class NavKeySerializationTest {
                 DeleteDocument(documentUuid = "uuid"),
                 Settings,
                 AppearanceSettings,
+                ScanningSettings,
                 DocumentViewerSettings,
                 AboutSettings,
             )

@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.search
 
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -41,6 +42,12 @@ class ViewerSearchState(isOpen: Boolean, query: String) {
     fun open() {
         isOpen = true
         focusRequests++
+    }
+
+    /** Opens the bar on [query] without asking for focus, so the keyboard stays away. */
+    fun show(query: String) {
+        field.setTextAndPlaceCursorAtEnd(query)
+        isOpen = true
     }
 
     /** Closes the bar and clears the text. */

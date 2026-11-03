@@ -158,6 +158,12 @@ Closed                     Open, typing                       After the keyboard
 
 - **Opening.** A button of its own in the top bar, never in the menu: it is what a reader reaches
   for while reading. Hidden until a document is on screen.
+- **Arriving from a search.** Opening a document from the library's search carries the query in
+  its `PdfViewer` key, and the reader's choice (`SearchArrival`, in the viewer's settings) says
+  what the viewer does with it: light the matches and scroll to the first, without the find bar,
+  until the reader first touches the document (the factory choice); open the find bar on the
+  query, unfocused so the keyboard does not cover the matches; or nothing. The choice is read
+  once, when the document opens.
 - **`FindBar` takes the top bar's place**, with its height and frost, so the pages (padded by that
   height) do not move. The field is a pill with a back button and a clear button.
 - **`FindToolbar` is at the bottom**: the floating toolbar in the bottom toolbar's color, with the

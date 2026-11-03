@@ -16,6 +16,9 @@ import kotlinx.serialization.Serializable
 /** Theme, color and typography. */
 @Serializable data object AppearanceSettings : NavKey
 
+/** What happens to a scan once it is saved. */
+@Serializable data object ScanningSettings : NavKey
+
 /** What documents open with in the viewer. */
 @Serializable data object DocumentViewerSettings : NavKey
 

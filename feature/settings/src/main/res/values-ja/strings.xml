@@ -24,7 +24,6 @@
     <string name="typography_monospace">等幅と技術情報</string>
     <string name="typography_monospace_desc">技術的な詳細、文字数、日付の表示に使用します。</string>
     <string name="select_setting_to_open">設定を選択するとここに表示されます</string>
-    <string name="general">全般</string>
     <string name="version_format">バージョン %1$s</string>
     <string name="about">このアプリについて</string>
     <string name="about_desc">バージョン、開発者、支援の方法</string>
@@ -36,7 +35,7 @@
     <string name="about_source_code">ソースコード</string>
     <string name="about_source_code_desc">オープンソース（GPL-3.0 ライセンス）</string>
     <string name="document_viewer">ドキュメントビューア</string>
-    <string name="document_viewer_desc">ドキュメントの開き方</string>
+    <string name="document_viewer_desc">ドキュメントを開く位置、検索、表示</string>
     <string name="viewer_use_defaults">既定の設定を使用</string>
     <string name="viewer_use_defaults_on_desc">すべてのドキュメントを以下の設定で開きます</string>
     <string name="viewer_use_defaults_off_desc">ドキュメントは幅に合わせて、ナイトモードなしで開きます</string>
@@ -59,4 +58,17 @@
     <string name="review_new_scans">保存時にスキャンを確認</string>
     <string name="review_new_scans_on_desc">スキャン後に、ドキュメントの名前と保存先を指定します</string>
     <string name="review_new_scans_off_desc">スキャンはそのまま保存されます。後から編集できます</string>
+    <string name="search_arrival">検索から開くとき</string>
+    <string name="search_arrival_highlight">一致箇所をハイライト</string>
+    <string name="search_arrival_highlight_desc">ドキュメントを動かすまで、検索した語が強調表示されます</string>
+    <string name="search_arrival_find_bar">検索バーを開く</string>
+    <string name="search_arrival_find_bar_desc">ビューアの検索が、入力した語と矢印付きで開きます</string>
+    <string name="search_arrival_nothing">何もしない</string>
+    <string name="search_arrival_nothing_desc">ドキュメントは通常どおり開きます</string>
+    <string name="scanning">スキャン</string>
+    <string name="scanning_desc">新しいスキャンの確認と読み取り</string>
+    <string name="after_scanning">スキャンを保存したとき</string>
+    <string name="viewer_opening">ドキュメントを開くとき</string>
+    <string name="viewer_default_display">デフォルトの表示</string>
+    <string name="color">カラー</string>
 </resources>

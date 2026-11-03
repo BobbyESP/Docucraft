@@ -66,6 +66,7 @@ fun EntryProviderScope<NavKey>.pdfViewerSection(navigator: Navigator) {
                 // Beside the list there is already a way back on screen; filling the window there
                 // is not. The scene knows which of the two happened; this does not have to.
                 showBackButton = LocalPaneContext.current.providesOwnBackAffordance,
+                initialSearchQuery = route.searchQuery,
             )
         }
     }
@@ -128,6 +129,7 @@ fun EntryProviderScope<NavKey>.externalPdfViewerSection(
                 onConfirmSaveCopy = { uuid -> navigator.goTo(SaveCopyToLibrary(uuid)) },
                 onOpenInLibrary = { uuid -> navigator.goTo(PdfViewer(uuid)) },
                 showBackButton = true,
+                initialSearchQuery = route.searchQuery,
             )
         }
     }

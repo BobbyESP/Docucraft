@@ -24,7 +24,6 @@
     <string name="typography_monospace">Моноширинный и технический</string>
     <string name="typography_monospace_desc">Для технических сведений, счётчиков символов и дат.</string>
     <string name="select_setting_to_open">Выберите настройку, чтобы открыть её здесь</string>
-    <string name="general">Общие</string>
     <string name="version_format">Версия %1$s</string>
     <string name="about">О приложении</string>
     <string name="about_desc">Версия, автор и как поддержать проект</string>
@@ -36,7 +35,7 @@
     <string name="about_source_code">Исходный код</string>
     <string name="about_source_code_desc">Открытый исходный код, лицензия GPL-3.0</string>
     <string name="document_viewer">Просмотр документов</string>
-    <string name="document_viewer_desc">Как открываются документы</string>
+    <string name="document_viewer_desc">Где открываются документы, поиск и отображение</string>
     <string name="viewer_use_defaults">Использовать настройки по умолчанию</string>
     <string name="viewer_use_defaults_on_desc">Каждый документ открывается с настройками ниже</string>
     <string name="viewer_use_defaults_off_desc">Документы открываются по ширине, без ночного режима</string>
@@ -59,4 +58,17 @@
     <string name="review_new_scans">Проверять сканы при сохранении</string>
     <string name="review_new_scans_on_desc">После сканирования вы даёте документу название и указываете, куда его поместить</string>
     <string name="review_new_scans_off_desc">Сканы сохраняются как есть. Их можно изменить позже</string>
+    <string name="search_arrival">При открытии из поиска</string>
+    <string name="search_arrival_highlight">Подсвечивать совпадения</string>
+    <string name="search_arrival_highlight_desc">Найденные слова остаются выделенными, пока вы не сдвинете документ</string>
+    <string name="search_arrival_find_bar">Открывать строку поиска</string>
+    <string name="search_arrival_find_bar_desc">Поиск в просмотрщике открывается с вашими словами и стрелками</string>
+    <string name="search_arrival_nothing">Ничего не делать</string>
+    <string name="search_arrival_nothing_desc">Документ открывается как обычно</string>
+    <string name="scanning">Сканирование</string>
+    <string name="scanning_desc">Проверка и распознавание новых сканов</string>
+    <string name="after_scanning">После сохранения скана</string>
+    <string name="viewer_opening">Открытие документов</string>
+    <string name="viewer_default_display">Отображение по умолчанию</string>
+    <string name="color">Цвет</string>
 </resources>

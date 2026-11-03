@@ -5,6 +5,7 @@ package com.bobbyesp.docucraft.feature.settings.presentation.viewer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bobbyesp.docucraft.core.domain.model.SearchArrival
 import com.bobbyesp.docucraft.core.domain.model.ViewerDefaults
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.core.domain.preferences.SettingsRepository
@@ -56,6 +57,20 @@ class DocumentViewerSettingsViewModel(
                 started = SharingStarted.WhileSubscribed(5000),
                 initialValue = null,
             )
+
+    /** `null` until the stored preferences have been read. */
+    val searchArrival: StateFlow<SearchArrival?> =
+        settingsRepository.settings
+            .map { it.searchArrival }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = null,
+            )
+
+    fun setSearchArrival(arrival: SearchArrival) {
+        viewModelScope.launch { settingsRepository.setSearchArrival(arrival) }
+    }
 
     /** Through the use case: turning it off also forgets what was remembered. */
     fun setRememberReadingPosition(enabled: Boolean) {
