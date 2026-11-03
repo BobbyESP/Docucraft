@@ -8,6 +8,7 @@
     <string name="dark">ダーク</string>
     <string name="dynamic_coloring">ダイナミックカラー</string>
     <string name="dynamic_coloring_desc">壁紙の色をアプリのテーマに使用します</string>
+    <string name="custom_colors">カスタムカラー</string>
     <string name="palette_style">パレットのスタイル</string>
     <string name="high_contrast">ハイコントラスト</string>
     <string name="high_contrast_desc">AMOLED 画面向けに最適化</string>

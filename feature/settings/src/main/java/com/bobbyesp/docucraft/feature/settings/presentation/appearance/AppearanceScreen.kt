@@ -63,7 +63,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -84,7 +83,6 @@ import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.designsystem.theme.isDarkTheme
 import com.bobbyesp.docucraft.core.designsystem.theme.isDynamicColoringSupported
 import com.bobbyesp.docucraft.core.designsystem.theme.toFontFamily
-import com.bobbyesp.docucraft.core.designsystem.theme.wallpaperSeedColor
 import com.bobbyesp.docucraft.core.designsystem.util.animateItemWith
 import com.bobbyesp.docucraft.core.designsystem.util.contentRevealTransform
 import com.bobbyesp.docucraft.core.domain.model.FontConfig
@@ -221,6 +219,7 @@ fun AppearanceScreenContent(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val motionScheme = MaterialTheme.motionScheme
     val layoutDirection = LocalLayoutDirection.current
+    val showsCustomColors = !preferences.useDynamicColoring || !isDynamicColoringSupported()
 
     // The list, recorded for the app bar to frost once it scrolls beneath it.
     val hazeState = rememberHazeState()
@@ -250,8 +249,8 @@ fun AppearanceScreenContent(
             )
         },
     ) { paddingValues ->
-        // Switching dynamic color on or off adds or removes the seed color: the sections below
-        // glide to their new place rather than jump.
+        // Switching dynamic color on or off adds or removes whole sections: they fade, and the
+        // ones below glide to their new place rather than jump.
         LazyColumn(
             modifier = Modifier.fillMaxSize().hazeSource(hazeState),
             state = listState,
@@ -273,15 +272,37 @@ fun AppearanceScreenContent(
                 )
             }
 
-            item(key = "color", contentType = "settings_section") {
-                ColorSection(
-                    preferences = preferences,
-                    onDynamicColoringChange = onDynamicColoringChange,
-                    onSeedColorClick = { showColorPicker = true },
-                    onPaletteStyleChange = onPaletteStyleChange,
-                    onHighContrastChange = onHighContrastModeChange,
-                    modifier = animateItemWith(motionScheme).settingsContentWidth(),
-                )
+            if (isDynamicColoringSupported()) {
+                item(key = "dynamic_coloring", contentType = "settings_section") {
+                    SettingsCategory(
+                        title = stringResource(R.string.color),
+                        modifier = animateItemWith(motionScheme).settingsContentWidth(),
+                    ) {
+                        SettingSwitch(
+                            title = stringResource(R.string.dynamic_coloring),
+                            supportingText = stringResource(R.string.dynamic_coloring_desc),
+                            icon = Icons.Rounded.ColorLens,
+                            isChecked = preferences.useDynamicColoring,
+                            onCheckedChange = onDynamicColoringChange,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+
+            if (showsCustomColors) {
+                item(key = "custom_colors", contentType = "settings_section") {
+                    CustomColorsSection(
+                        seedColor = preferences.themeSeedColor,
+                        paletteStyle = preferences.paletteStyle,
+                        isDark = preferences.themeConfig.isDarkTheme(),
+                        isHighContrast = preferences.isHighContrastModeEnabled,
+                        onSeedColorClick = { showColorPicker = true },
+                        onPaletteStyleChange = onPaletteStyleChange,
+                        onHighContrastChange = onHighContrastModeChange,
+                        modifier = animateItemWith(motionScheme).settingsContentWidth(),
+                    )
+                }
             }
 
             item(key = "typography", contentType = "settings_section") {
@@ -360,66 +381,38 @@ private fun ThemeSection(
 }
 
 /**
- * Where the app's colors come from, the wallpaper or a seed color, and the palette style and
- * high-contrast variant built from either, as one segmented group.
+ * The seed color, the palette built from it and its high-contrast variant, as one segmented group:
+ * the seed opens the picker, and the palettes preview what each style makes of it.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ColorSection(
-    preferences: UserPreferences,
-    onDynamicColoringChange: (Boolean) -> Unit,
+private fun CustomColorsSection(
+    seedColor: Int,
+    paletteStyle: PaletteStyleConfig,
+    isDark: Boolean,
+    isHighContrast: Boolean,
     onSeedColorClick: () -> Unit,
     onPaletteStyleChange: (PaletteStyleConfig) -> Unit,
     onHighContrastChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val showsDynamicColoring = isDynamicColoringSupported()
-    val wallpaperSeed =
-        remember(context, preferences.useDynamicColoring) {
-            if (preferences.useDynamicColoring) wallpaperSeedColor(context) else null
-        }
-    val showsSeedColor = wallpaperSeed == null
-    val seedColor = wallpaperSeed ?: preferences.themeSeedColor
-    val count = 2 + (if (showsDynamicColoring) 1 else 0) + (if (showsSeedColor) 1 else 0)
+    val seedColorHex = remember(seedColor) { seedColor.toHexString(SeedColorHexFormat) }
 
-    SettingsCategory(title = stringResource(R.string.color), modifier = modifier) {
-        if (showsDynamicColoring) {
-            SettingSwitch(
-                title = stringResource(R.string.dynamic_coloring),
-                supportingText = stringResource(R.string.dynamic_coloring_desc),
-                icon = Icons.Rounded.ColorLens,
-                isChecked = preferences.useDynamicColoring,
-                onCheckedChange = onDynamicColoringChange,
-                shapes = DocucraftShapeDefaults.segmentedListItemShapes(index = 0, count = count),
-                modifier = Modifier.fillMaxWidth(),
+    SettingsCategory(title = stringResource(R.string.custom_colors), modifier = modifier) {
+        SegmentedListItem(
+            onClick = onSeedColorClick,
+            shapes = DocucraftShapeDefaults.segmentedListItemShapes(index = 0, count = 3),
+            modifier = Modifier.fillMaxWidth(),
+            supportingContent = { Text(seedColorHex) },
+            trailingContent = {
+                Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(Color(seedColor)))
+            },
+            colors = SettingsItemDefaults.colors(),
+        ) {
+            Text(
+                text = stringResource(DesignsystemR.string.seed_color),
+                style = MaterialTheme.typography.bodyLargeEmphasized,
             )
-        }
-
-        if (showsSeedColor) {
-            val seedColorHex = remember(seedColor) { seedColor.toHexString(SeedColorHexFormat) }
-            SegmentedListItem(
-                onClick = onSeedColorClick,
-                shapes =
-                    DocucraftShapeDefaults.segmentedListItemShapes(
-                        index = if (showsDynamicColoring) 1 else 0,
-                        count = count,
-                    ),
-                modifier = Modifier.fillMaxWidth(),
-                supportingContent = { Text(seedColorHex) },
-                trailingContent = {
-                    Box(
-                        modifier =
-                            Modifier.size(40.dp).clip(CircleShape).background(Color(seedColor))
-                    )
-                },
-                colors = SettingsItemDefaults.colors(),
-            ) {
-                Text(
-                    text = stringResource(DesignsystemR.string.seed_color),
-                    style = MaterialTheme.typography.bodyLargeEmphasized,
-                )
-            }
         }
 
         // Not a list item: it holds its own targets, and a clickable row around them would claim
@@ -438,10 +431,10 @@ private fun ColorSection(
                     style = MaterialTheme.typography.bodyLargeEmphasized,
                 )
                 PaletteStylePicker(
-                    selectedStyle = preferences.paletteStyle,
+                    selectedStyle = paletteStyle,
                     seedColor = Color(seedColor),
-                    isDark = preferences.themeConfig.isDarkTheme(),
-                    isAmoled = preferences.isHighContrastModeEnabled,
+                    isDark = isDark,
+                    isAmoled = isHighContrast,
                     onStyleSelect = onPaletteStyleChange,
                 )
             }
@@ -451,10 +444,9 @@ private fun ColorSection(
             title = stringResource(R.string.high_contrast),
             supportingText = stringResource(R.string.high_contrast_desc),
             icon = Icons.Rounded.Contrast,
-            isChecked = preferences.isHighContrastModeEnabled,
+            isChecked = isHighContrast,
             onCheckedChange = onHighContrastChange,
-            shapes =
-                DocucraftShapeDefaults.segmentedListItemShapes(index = count - 1, count = count),
+            shapes = DocucraftShapeDefaults.segmentedListItemShapes(index = 2, count = 3),
         )
     }
 }
