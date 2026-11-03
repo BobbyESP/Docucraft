@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftAccentTheme
 import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.designsystem.theme.accentChroma
 import com.bobbyesp.docucraft.library.domain.model.FolderIcon
 import com.bobbyesp.docucraft.library.domain.model.LabelColor
 import com.bobbyesp.docucraft.library.ui.R
@@ -59,9 +60,9 @@ import com.materialkolor.hct.Hct
  * The tones of this color, or the theme's primary ones for no color.
  *
  * A palette color is a hue, not a value: it is pulled towards the theme's primary so that it sits
- * beside the user's own colors, and its tones are chosen as Material chooses a container's, lighter
- * in a light theme and darker in a dark one. The same key therefore never clashes with a wallpaper
- * color it was not picked next to.
+ * beside the user's own colors, and its tones are those of [LabelColorTheme]'s primary roles, in
+ * the same chroma. The same key therefore never clashes with a wallpaper color it was not picked
+ * next to, and a badge matches the screen it opens.
  */
 @Composable
 fun LabelColor?.tones(): LabelTones {
@@ -77,21 +78,13 @@ fun LabelColor?.tones(): LabelTones {
     val dark = colorScheme.surface.luminance() < 0.5f
     return remember(this, primary, dark) {
         val seed = Hct.from(hue, SeedChroma, 50.0).toInt()
-        val harmonized = Hct.fromInt(Blend.harmonize(seed, primary.toArgb()))
-        fun tone(tone: Double, chroma: Double = harmonized.chroma) =
-            Color(Hct.from(harmonized.hue, chroma, tone).toInt())
+        val harmonizedHue = Hct.fromInt(Blend.harmonize(seed, primary.toArgb())).hue
+        val chroma = accentChroma(dark)
+        fun tone(tone: Double) = Color(Hct.from(harmonizedHue, chroma, tone).toInt())
         if (dark) {
-            LabelTones(
-                accent = tone(80.0),
-                container = tone(30.0, ContainerChroma),
-                onContainer = tone(90.0, ContainerChroma),
-            )
+            LabelTones(accent = tone(80.0), container = tone(30.0), onContainer = tone(90.0))
         } else {
-            LabelTones(
-                accent = tone(40.0),
-                container = tone(90.0, ContainerChroma),
-                onContainer = tone(10.0, ContainerChroma),
-            )
+            LabelTones(accent = tone(40.0), container = tone(90.0), onContainer = tone(10.0))
         }
     }
 }
@@ -109,8 +102,8 @@ fun LabelColorTheme(color: LabelColor?, content: @Composable () -> Unit) {
     )
 }
 
+/** Only a seed for a hue: the tones' chroma is the theme's ([accentChroma]). */
 private const val SeedChroma = 56.0
-private const val ContainerChroma = 32.0
 
 /** Where each color of the palette is on the HCT color wheel. */
 private val LabelColor.hue: Double

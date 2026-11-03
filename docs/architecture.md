@@ -154,17 +154,18 @@ of a longer animation, and more on faster displays.
 **A screen with a color of its own nests a theme** (`DocucraftAccentTheme`, and `LabelColorTheme` for
 a palette color), for a destination about something the user gave a color to. A folder's contents
 (`FolderContentsScreen`) use the folder's color; the root, and a folder without one, use the app's.
-- **Only that screen is recomposed.** Changing the app's theme on the way in and back on the way out
-  would recompose every screen twice.
-- **A known color is in effect from the first frame** once it has been shown; the navigation
-  transition takes the app from one to the other. A color seen for the first time, or learnt after
-  opening (a folder's screen reads the folder from its uuid), is built in the background and
-  reached in steps like any change.
-- **Its components keep up with its changes**: the nested theme hands down its own motion scheme
-  (below).
-- **The color is a hue, not a value**: it is pulled towards the theme's primary, and the scheme
-  keeps the theme's style and darkness, as the tones of a label do
-  ([organization.md](organization.md#colors-and-icons)).
+- **Only that screen is recomposed, once per color.** Changing the app's theme on the way in and
+  back on the way out would recompose every screen twice.
+- **Its color is switched to, never stepped towards.** The screen gets its color while the
+  navigation animates it in, and each step of a transition would recompose the whole screen during
+  that animation, which stutters. A known color is cached and in effect from the first frame; one
+  seen for the first time, or learnt after opening (a folder's screen reads the folder from its
+  uuid), is built in the background under the app's scheme and then swapped in. Without a color it
+  passes the app's scheme through, so it follows the app's own changes step by step.
+- **The color is a hue, not a value**: it is pulled towards the theme's primary and built as Tonal
+  Spot, Material's default style (`AccentPaletteStyle`), in the theme's darkness, whatever style
+  the user chose for the app: a color picked to tell things apart should not be loud. The tones of
+  a label use the same chroma ([organization.md](organization.md#colors-and-icons)).
 - Overlays opened over that screen (a folder's actions, its editor) are destinations of their own
   and stay in the app's theme.
 
