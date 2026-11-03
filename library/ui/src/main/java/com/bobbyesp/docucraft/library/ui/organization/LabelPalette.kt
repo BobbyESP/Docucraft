@@ -61,10 +61,8 @@ import com.materialkolor.hct.Hct
 /**
  * The tones of this color, or the theme's primary ones for no color.
  *
- * A palette color is a hue, not a value: it is pulled towards the theme's primary so that it sits
- * beside the user's own colors, and its tones are the primary roles [LabelColorTheme] gives it, in
- * the app's style. The same key therefore never clashes with a wallpaper color it was not picked
- * next to, and a badge matches the screen it opens.
+ * They are the primary roles [LabelColorTheme] gives the color, harmonized with the theme's primary
+ * and in the app's style: a badge never clashes with a wallpaper color, and matches its screen.
  */
 @Composable
 fun LabelColor?.tones(): LabelTones {
@@ -86,11 +84,8 @@ fun LabelColor?.tones(): LabelTones {
     )
 }
 
-/**
- * The tones of every color already shown, by color, theme primary, darkness and style. A badge in a
- * list is composed again each time it scrolls into view, and would otherwise solve its colors
- * again. Only read in composition, on the main thread.
- */
+// A badge in a list is composed again each time it scrolls into view, and would otherwise solve its
+// colors again. Only read in composition, on the main thread.
 private object LabelToneCache {
     private val tones = mutableLongObjectMapOf<LabelTones>()
 
@@ -141,7 +136,7 @@ fun PrepareLabelColorThemes() {
     PrepareAccentThemes(Seeds)
 }
 
-/** The color each key seeds a scheme with. Only its hue counts: the chroma is the style's. */
+// Only the hue of a seed counts: the chroma is the style's.
 private val Seeds: List<Color> =
     LabelColor.entries.map { Color(Hct.from(it.hue, SeedChroma, 50.0).toInt()) }
 

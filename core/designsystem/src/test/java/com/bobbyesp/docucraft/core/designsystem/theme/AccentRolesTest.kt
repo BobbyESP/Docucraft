@@ -13,10 +13,6 @@ import org.junit.Test
 
 class AccentRolesTest {
 
-    /**
-     * A folder's badge draws [accentRoles] without building a scheme: in every style, they must be
-     * the primary roles of the scheme its screen is built with.
-     */
     @Test
     fun `accent roles are the primary roles of the accent's scheme`() {
         val appPrimary = Color(0xFF6750A4)

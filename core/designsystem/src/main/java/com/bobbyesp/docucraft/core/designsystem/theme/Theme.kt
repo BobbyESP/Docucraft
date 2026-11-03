@@ -135,17 +135,10 @@ fun DocucraftTheme(
 }
 
 /**
- * The app's theme around one color, for a screen that is about something the user gave a color to:
- * everything in [content] takes that color, and the rest of the app keeps its own.
- *
- * A theme of its own rather than a change of the app's: only [content] is recomposed for it, once
- * per color. A color is switched to, never stepped towards: every step would recompose the whole
- * screen while the navigation is animating it. A color shown before is cached and ready on the
- * first frame; a new one is built in the background, under the app's scheme until it is ready.
- *
- * The color is a hue to build a scheme from, not a color to show: it is pulled towards the theme's
- * primary so that it sits beside the user's own colors, and built in the theme's style and
- * darkness.
+ * The app's theme around one color, for a screen about something the user gave a color to: only
+ * [content] takes it, and is recomposed once per color, never stepped towards it. The color is a
+ * hue, harmonized with the app's primary and built in the app's style and darkness. See
+ * `docs/architecture.md`, Theme.
  *
  * @param accent The color, or `null` for none, which leaves the app's theme as it is. It may come
  *   and go while [content] stays.
@@ -209,10 +202,8 @@ fun PrepareAccentThemes(accents: List<Color>) {
     }
 }
 
-/**
- * The source of the scheme for [accent]: its hue harmonized with the theme the app is heading to,
- * not the step it is at, so that a change of theme asks for one new scheme, not one per step.
- */
+// Harmonized with the scheme the app is heading to, not the step it is at: a change of theme
+// asks for one new scheme, not one per step.
 private fun BuiltColorScheme.accentSource(accent: Color): ColorSchemeSource =
     source.copy(
         useWallpaperColors = false,
@@ -302,10 +293,8 @@ internal class ColorSchemeCache :
     ) = size > CACHED_SCHEMES
 }
 
-/**
- * Light and dark of the current colors and of the previous ones, and the screens' own colors
- * ([PrepareAccentThemes]) in both. A scheme is some fifty colors, so this is a few kilobytes.
- */
+// Light and dark of the current colors and of the previous ones, and the palette's colors that
+// PrepareAccentThemes builds, in both.
 private const val CACHED_SCHEMES = 32
 
 /** Shared by the theme and the palette previews, so a preview shows what the theme applies. */
@@ -322,7 +311,7 @@ data class AccentRoles(
 /**
  * The primary roles [DocucraftAccentTheme] gives [accent], without building its scheme: for a mark
  * of that color outside its screen, such as a folder's badge, so that it matches the screen it
- * opens. Takes some tenths of a millisecond: callers that draw many keep the result.
+ * opens. Callers that draw many keep the result.
  *
  * @param harmonizeWith The primary [accent] is pulled towards, as the screen's is the app's.
  */

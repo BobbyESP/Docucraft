@@ -21,10 +21,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * A screen in a color of its own is recomposed once per scheme it shows: never for each step of a
- * change of the app's theme, which it would otherwise go through while the navigation animates it.
- */
 @RunWith(AndroidJUnit4::class)
 class AccentThemeRecompositionTest {
 
