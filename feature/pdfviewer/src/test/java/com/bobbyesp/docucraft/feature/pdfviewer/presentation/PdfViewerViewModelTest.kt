@@ -21,6 +21,7 @@ import com.bobbyesp.docucraft.feature.pdfviewer.domain.actions.DocumentOpener
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.LinkAction
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.links.ResolveLinkUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.model.ViewerDocumentRef
+import com.bobbyesp.docucraft.feature.pdfviewer.domain.search.MatchRef
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDisplaySettingsUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.ObserveViewerDocumentUseCase
 import com.bobbyesp.docucraft.feature.pdfviewer.domain.usecase.UpdateViewerDisplaySettingsUseCase
@@ -119,7 +120,7 @@ class PdfViewerViewModelTest {
         FakeDocumentsRepository(linked = listOf(testLinkedDocument(uuid = LINKED_UUID)))
 
     // Page 0 "alpha beta", 1 "gamma", 2 a scan, 3 "delta epsilon", 4 "zeta".
-    private val content =
+    private var content =
         FakePageContentProvider(
             mapOf(
                 0 to textPage("alpha", "beta").copy(links = listOf(LINK)),
@@ -139,8 +140,6 @@ class PdfViewerViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
-
-    // ---------------------------------------------------------------------------------- document
 
     @Test
     fun `a catalogued document is loading until the catalogue answers`() = runTest {
@@ -177,8 +176,6 @@ class PdfViewerViewModelTest {
         assertEquals("a.pdf", open.document.title)
         assertEquals(EXTERNAL, open.document.uri)
     }
-
-    // --------------------------------------------------------------------------------- settings
 
     @Test
     fun `changing the fit mode is kept and reported`() = runTest {
@@ -290,8 +287,6 @@ class PdfViewerViewModelTest {
         )
     }
 
-    // ---------------------------------------------------------------------------------- actions
-
     @Test
     fun `share and open with hand the document's location over`() = runTest {
         catalogue.value = scanned()
@@ -348,8 +343,6 @@ class PdfViewerViewModelTest {
 
         assertEquals(PdfViewerEffect.Print(ContentRef(LOCATION), "Invoice"), effects.single())
     }
-
-    // ---------------------------------------------------------------------------------- text
 
     @Test
     fun `the pages on screen and either side are read`() = runTest {
@@ -446,8 +439,6 @@ class PdfViewerViewModelTest {
         assertTrue(content.sessions.single().closed)
     }
 
-    // ---------------------------------------------------------------------------------- links
-
     @Test
     fun `an external link is shown before anything opens`() = runTest {
         val viewModel = openedExternal()
@@ -537,16 +528,12 @@ class PdfViewerViewModelTest {
         assertEquals(null, viewModel.state.value.selection)
     }
 
-    // ---------------------------------------------------------------------------------- analytics
-
     @Test
     fun `the screen view is logged once per opened document`() = runTest {
         viewModel(ViewerDocumentRef.External(uri = EXTERNAL, displayName = "a.pdf"))
 
         assertEquals(1, analytics.screenViews)
     }
-
-    // ---------------------------------------------------------------------------------- activity
 
     /** What puts a document at the front of Recents. */
     @Test
@@ -605,8 +592,6 @@ class PdfViewerViewModelTest {
             activity.availability,
         )
     }
-
-    // ---------------------------------------------------------------------------------- position
 
     @Test
     fun `a document opens where it was left`() = runTest {
@@ -681,8 +666,6 @@ class PdfViewerViewModelTest {
         assertEquals(ViewerStart(position = null), viewModel.state.value.start)
         assertEquals(mapOf(UUID to ReadingPosition(1, 0.4f)), activity.positions)
     }
-
-    // ---------------------------------------------------------------------------------- external
 
     /** What makes a PDF opened from another app show in Recents. */
     @Test
@@ -794,8 +777,6 @@ class PdfViewerViewModelTest {
         assertTrue(effects.isEmpty())
     }
 
-    // ---------------------------------------------------------------------------------- library
-
     /** It is on loan: saving it is the only way to keep it. */
     @Test
     fun `a document of another app can be saved to the library`() = runTest {
@@ -861,7 +842,271 @@ class PdfViewerViewModelTest {
         assertFalse(viewModel.state.value.isSavingToLibrary)
     }
 
-    // ---------------------------------------------------------------------------------- helpers
+    // Page 0 "the cat sat", 1 "a cat", 2 a scan, 3 "cats and a dog".
+    private fun searchableDocument() {
+        content =
+            FakePageContentProvider(
+                mapOf(
+                    0 to textPage("the", "cat", "sat"),
+                    1 to textPage("a", "cat"),
+                    2 to PageContentResult.NoText,
+                    3 to textPage("cats", "and", "a", "dog"),
+                )
+            )
+    }
+
+    /** Opens the document, tells the ViewModel it has [pages] pages, and starts a search. */
+    private fun TestScope.searching(
+        query: String,
+        fromPage: Int = 0,
+        pages: Int = 4,
+    ): PdfViewerViewModel {
+        searchableDocument()
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = pages))
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged(query, fromPage))
+        advanceUntilIdle()
+        return viewModel
+    }
+
+    @Test
+    fun `a search counts its matches over the whole document, in reading order`() = runTest {
+        val search = searching("cat").state.value.search!!
+
+        assertEquals(3, search.total)
+        assertEquals(setOf(0, 1, 3), search.matches.pages)
+        assertEquals(MatchRef(0, 0), search.active)
+        assertEquals(1, search.activeNumber)
+        assertFalse("every page was read", search.isScanning)
+    }
+
+    @Test
+    fun `it starts at the first match from the page the reader is on`() = runTest {
+        val search = searching("cat", fromPage = 1).state.value.search!!
+
+        assertEquals(MatchRef(1, 0), search.active)
+        // Page 0's match comes before it, whichever was read first.
+        assertEquals(2, search.activeNumber)
+        assertEquals(3, search.total)
+    }
+
+    @Test
+    fun `a page without a match after the start sends the search to the first one`() = runTest {
+        val viewModel = searching("sat", fromPage = 2)
+
+        assertEquals(MatchRef(0, 0), viewModel.state.value.search!!.active)
+    }
+
+    @Test
+    fun `stepping walks the matches and wraps around at either end`() = runTest {
+        val viewModel = searching("cat", fromPage = 2)
+        fun active() = viewModel.state.value.search!!.active
+
+        assertEquals(MatchRef(3, 0), active())
+        viewModel.onSendIntent(PdfViewerIntent.SearchStep(forward = true))
+        assertEquals(MatchRef(0, 0), active())
+        viewModel.onSendIntent(PdfViewerIntent.SearchStep(forward = false))
+        assertEquals(MatchRef(3, 0), active())
+        assertEquals(3, viewModel.state.value.search!!.activeNumber)
+    }
+
+    @Test
+    fun `typing on from a match stays on it`() = runTest {
+        val viewModel = searching("c", fromPage = 1)
+        assertEquals(MatchRef(1, 0), viewModel.state.value.search!!.active)
+
+        // The reader's page is 0 now, but they are on a match: the new query goes on from it.
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("ca", fromPage = 0))
+        advanceUntilIdle()
+
+        assertEquals(MatchRef(1, 0), viewModel.state.value.search!!.active)
+    }
+
+    @Test
+    fun `no page is read twice however much is typed`() = runTest {
+        searchableDocument()
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 4))
+
+        // Typed faster than the pause, so only the last one is searched.
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("c", fromPage = 0))
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("ca", fromPage = 0))
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("cat", fromPage = 0))
+        advanceUntilIdle()
+        // The four pages, and the geometry of the page the first match is on.
+        assertEquals(5, content.reads)
+
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("ca", fromPage = 0))
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("at", fromPage = 0))
+        advanceUntilIdle()
+
+        assertEquals("already read: only searched again", 5, content.reads)
+    }
+
+    @Test
+    fun `the same query again changes nothing`() = runTest {
+        val viewModel = searching("cat")
+        val reads = content.reads
+        val before = viewModel.state.value.search
+
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("cat", fromPage = 3))
+        advanceUntilIdle()
+
+        assertEquals(before, viewModel.state.value.search)
+        assertEquals(reads, content.reads)
+    }
+
+    @Test
+    fun `nothing is read for a query with nothing in it`() = runTest {
+        val viewModel = searching("   ")
+
+        val search = viewModel.state.value.search!!
+        assertEquals(0, search.total)
+        assertFalse(search.isScanning)
+        assertEquals(0, content.reads)
+    }
+
+    @Test
+    fun `a query with no match finds nothing, and the document has text`() = runTest {
+        val search = searching("zebra").state.value.search!!
+
+        assertEquals(0, search.total)
+        assertEquals(null, search.active)
+        assertEquals(null, search.unsearchable)
+        assertFalse(search.isScanning)
+    }
+
+    @Test
+    fun `accents and case do not matter`() = runTest {
+        content = FakePageContentProvider(mapOf(0 to textPage("Résumé"), 1 to textPage("RESUME")))
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 2))
+
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("resume", fromPage = 0))
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.state.value.search!!.total)
+    }
+
+    @Test
+    fun `a document made of images says so, rather than that nothing matched`() = runTest {
+        content =
+            FakePageContentProvider(
+                mapOf(0 to PageContentResult.NoText, 1 to PageContentResult.NoText)
+            )
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 2))
+
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("cat", fromPage = 0))
+        advanceUntilIdle()
+
+        assertEquals(TextUnavailable.ImageOnly, viewModel.state.value.search!!.unsearchable)
+    }
+
+    @Test
+    fun `a device that cannot read the text says so`() = runTest {
+        content =
+            FakePageContentProvider(
+                mapOf(0 to PageContentResult.Unsupported, 1 to PageContentResult.Unsupported)
+            )
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 2))
+
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("cat", fromPage = 0))
+        advanceUntilIdle()
+
+        assertEquals(TextUnavailable.UnsupportedDevice, viewModel.state.value.search!!.unsearchable)
+    }
+
+    @Test
+    fun `a page that failed to read is not taken for one without text`() = runTest {
+        // Page 1 is missing from the fake, which fails it, as a page outside the document does.
+        content = FakePageContentProvider(mapOf(0 to PageContentResult.NoText))
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 2))
+
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("cat", fromPage = 0))
+        advanceUntilIdle()
+
+        val search = viewModel.state.value.search!!
+        assertEquals("the search is over all the same", false, search.isScanning)
+        assertEquals(null, search.unsearchable)
+    }
+
+    @Test
+    fun `the first match is brought into view`() = runTest {
+        searchableDocument()
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 4))
+        val effects = collectEffects(viewModel)
+
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("cat", fromPage = 0))
+        advanceUntilIdle()
+
+        val reveal = effects.filterIsInstance<PdfViewerEffect.RevealMatch>().single()
+        assertEquals(0, reveal.page)
+        // "cat" is the second word of the line, 0.1 along.
+        assertEquals(0.1f, reveal.area.left, 0.001f)
+        assertEquals(0.18f, reveal.area.right, 0.001f)
+    }
+
+    @Test
+    fun `stepping brings the match it lands on into view, and the page's text with it`() = runTest {
+        val viewModel = searching("cat")
+        val effects = collectEffects(viewModel)
+
+        viewModel.onSendIntent(PdfViewerIntent.SearchStep(forward = true))
+        advanceUntilIdle()
+
+        assertEquals(1, effects.filterIsInstance<PdfViewerEffect.RevealMatch>().single().page)
+        // Lit from its page's geometry, which is kept with the text of the pages on screen.
+        assertTrue(viewModel.state.value.pageText[1] is PageTextState.Text)
+    }
+
+    @Test
+    fun `a page revealed by a search keeps its links readable`() = runTest {
+        content =
+            FakePageContentProvider(mapOf(0 to textPage("a", "cat").copy(links = listOf(LINK))))
+        val viewModel = openedExternal()
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 1))
+
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("cat", fromPage = 0))
+        advanceUntilIdle()
+
+        // Text kept without its links would never get them: a page already here is not read again.
+        assertEquals(listOf(LINK), viewModel.state.value.pageLinks[0])
+    }
+
+    @Test
+    fun `closing the search forgets it and what it read`() = runTest {
+        val viewModel = searching("cat")
+
+        viewModel.onSendIntent(PdfViewerIntent.CloseSearch)
+        advanceUntilIdle()
+        assertEquals(null, viewModel.state.value.search)
+
+        // A new search reads again: nothing of the old one is kept.
+        val reads = content.reads
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("cat", fromPage = 0))
+        advanceUntilIdle()
+        assertTrue(content.reads > reads)
+    }
+
+    @Test
+    fun `a search before the document has loaded waits for it`() = runTest {
+        searchableDocument()
+        val viewModel = openedExternal()
+
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("cat", fromPage = 0))
+        advanceUntilIdle()
+        assertEquals(null, viewModel.state.value.search)
+
+        // Not remembered as searched for: the screen reports it again once the document is there.
+        viewModel.onSendIntent(PdfViewerIntent.DocumentLoaded(pageCount = 4))
+        viewModel.onSendIntent(PdfViewerIntent.SearchQueryChanged("cat", fromPage = 0))
+        advanceUntilIdle()
+        assertEquals(3, viewModel.state.value.search!!.total)
+    }
 
     private fun TestScope.collectEvents(viewModel: PdfViewerViewModel): List<UiEvent> {
         val events = mutableListOf<UiEvent>()

@@ -23,40 +23,36 @@ each subsystem has its own document, listed in the [index](README.md).
 ```
 
 The module graph, and the build that checks it, enforce what conventions would only ask for:
-- **Domains are plain Kotlin.** `:core:domain` and `:library:domain` are JVM modules: an Android
-  or Compose import there does not compile, so every rule they hold is testable on the JVM.
+- **Domains are plain Kotlin.** `:core:domain` and `:library:domain` are JVM modules: an Android or
+  Compose import does not compile, so every rule they hold is testable on the JVM.
 - **Screens do not reach storage.** Only the app depends on `:library:data` and `:core:data`; a
   feature sees the catalogue through the ports of `:library:domain`, bound by the app's DI.
-- **Features do not know each other.** A feature opens another by a key, and the keys features
-  open each other by live in `:core:navigation`, which every feature depends on. Two features that
-  open each other (Home and folders, by way of the document actions) would otherwise be a cycle
-  Gradle refuses to build. The keys are plain data, uuids at most, so one place for all of them
-  costs nothing: a change inside a feature still recompiles that feature and the app, nothing else.
+- **Features do not know each other.** A feature opens another by a key, and those keys live in
+  `:core:navigation`, which every feature depends on. Two features that open each other (Home and
+  folders, by way of the document actions) would otherwise be a cycle Gradle refuses. Keys are plain
+  data, uuids at most, so one place for all of them costs nothing: a change inside a feature
+  recompiles that feature and the app, nothing else.
 - **The build refuses what breaks these rules.** Every feature applies `docucraft.android.feature`,
-  which lists what a feature may depend on: `:core:*` and `:library:*` but their `:data`, the
-  engines' contracts (`*:api`) and `:composepdf`. Anything else, another feature or an engine's
-  implementation included, fails the build with the rule it breaks. A list of what is allowed,
-  rather than of what is not, so a new module is refused until someone decides a feature may see
-  it.
+  which lists what a feature may depend on: `:core:*` and `:library:*` except their `:data`, the
+  engines' contracts (`*:api`) and `:composepdf`. Anything else fails the build with the rule it
+  breaks. It is a list of what is allowed, so a new module is refused until someone decides a
+  feature may see it.
 - **Engines are replaceable.** `:scanner:mlkit` and `:content:mlkit` depend on ML Kit as
-  `implementation`, and `:content:platform` is the only module that uses the platform's
-  content APIs. Only the app names them, in `DocumentScannerModule` and `PageContentModule`:
-  swapping an engine means another module and one line of DI. An engine is a folder, its
-  contract (`:api`) beside its implementations, so what a feature may see is told by the name
-  alone.
-- **The engine stays generic.** `:composepdf` knows nothing of the app: no text, no links, no
-  Koin. The viewer extends it through public hooks ([pdf-engine.md](pdf-engine.md)).
+  `implementation`, and `:content:platform` is the only module using the platform's content APIs.
+  Only the app names them, in `DocumentScannerModule` and `PageContentModule`: swapping an engine
+  means another module and one line of DI. An engine is a folder with its contract (`:api`) beside
+  its implementations, so what a feature may see is told by the name alone.
+- **The engine stays generic.** `:composepdf` knows nothing of the app: no text, no links, no Koin.
+  The viewer extends it through public hooks ([pdf-engine.md](pdf-engine.md)).
 
-A module's code lives under its namespace (`core.ui`, `library.data`, `feature.home`…), so a
-package names its module. Four classes are the exception, because their names are stored outside
-the code: the widgets people placed know their receivers by name, and WorkManager stores the class
-of queued work. The two widget receivers and the two workers keep the package they had before the
-modules (`feature.docscanner.*`); a new name would remove the widgets, or leave the work failing.
-Room's schemas are filed under the database's class name, so they moved with it.
+A module's code lives under its namespace (`core.ui`, `library.data`, `feature.home`…), so a package
+names its module. Four classes keep their old package (`feature.docscanner.*`) because their names
+are stored outside the code: the widgets people placed know their receivers by name, and WorkManager
+stores the class of queued work. A new name would remove the widgets or leave the work failing.
 
 The build logic is the included build `build-logic`: one convention plugin per kind of module
-(Android library, Compose, feature, Room, plain Kotlin), so a module's build file names only what is its
-own.
+(Android library, Compose, feature, Room, plain Kotlin), so a module's build file names only what is
+its own.
 
 ## Layers inside a feature
 
@@ -68,31 +64,25 @@ domain         use cases ─ ports (interfaces) ─ models          plain Kotlin
 data           port implementations: Room, DataStore, files, platform APIs, other apps
 ```
 
-- **The domain is plain Kotlin.** It imports no Android, no Compose and no data layer. That keeps
-  every rule testable on the JVM. A location is a `ContentRef` (a URI as a string), never an
-  `android.net.Uri`, which cannot even be built in a plain JVM test. A model the UI needs Compose
-  to treat as stable (`UserPreferences`, `InAppNotification`) is listed in the Compose compiler's
-  stability configuration instead of carrying `@Immutable`.
+- **The domain is plain Kotlin**: no Android, Compose or data layer, so every rule is testable on
+  the JVM. A location is a `ContentRef` (a URI as a string), never an `android.net.Uri`, which
+  cannot be built in a plain JVM test. A model Compose should treat as stable (`UserPreferences`,
+  `InAppNotification`) is listed in the Compose compiler's stability configuration instead of
+  carrying `@Immutable`.
 - **Anything the framework does goes behind a port**: an interface in the domain, implemented in
-  data. Examples: `DocumentStorage`, `DocumentThumbnails`, `SearchIndex`, `DocumentSharer`,
-  `DocumentExporter`, `DocumentOpener`, `DocumentPrinter`, `LinkOpener`, `PageContentProvider`,
-  `DocumentScanner`. Tests use fakes, not mocks of the framework.
+  data (`DocumentStorage`, `SearchIndex`, `DocumentSharer`, `LinkOpener`, `PageContentProvider`,
+  `DocumentScanner`…). Tests use fakes, not mocks of the framework.
 - **A port that needs an `Activity`** (printing, opening a link) is a Koin `factory` given the
   activity through `parametersOf`. The ViewModel emits an effect, and the screen, which has the
   activity, calls the port.
 
 ### Results, not exceptions
 
-When the user can cause it, or it is simply how things are, the answer is a sealed result. Some
-examples:
-- the user cancels a scan or an export;
-- a page is only an image;
-- the device is too old to read a PDF's text;
-- a link is not safe to open.
-
-`ScanOutcome`, `ExportOutcome`, `PageContentResult` and `LinkAction` are all sealed. A generic
-`Result<T>` would put "the user changed their mind" in the same bucket as "the disk is full", and
-that is how a cancelled scan ended up shown as an error.
+When the user can cause it, or it is simply how things are, the answer is a sealed result: a
+cancelled scan or export, a page that is only an image, a device too old to read a PDF's text, a
+link not safe to open. `ScanOutcome`, `ExportOutcome`, `PageContentResult` and `LinkAction` are all
+sealed. A generic `Result<T>` would put "the user changed their mind" in the same bucket as "the
+disk is full".
 
 ## ViewModels (MVI)
 
@@ -104,10 +94,10 @@ Every screen's ViewModel extends `core/ui/viewmodel/BaseViewModel<Intent, State,
 | `effects` (`SharedFlow`, no replay) | commands for whoever is on screen *now*: print, open a link, scroll | **dropped** |
 | `defaultEvents` (buffered `Channel`) | messages for the user | **kept** until shown |
 
-The asymmetry is deliberate. A lost message is a silent failure. A command carried out later,
+The asymmetry is deliberate: a lost message is a silent failure, while a command carried out later,
 against whatever the user is doing by then, is a wrong action.
 
-- ViewModels never hold a `Context`. Text comes from `StringProvider`.
+- ViewModels never hold a `Context`; text comes from `StringProvider`.
 - UI-only state stays in the composition: scroll, zoom, whether bars show. The viewer's
   `PdfViewerState` is to a PDF what `LazyListState` is to a list.
 - What must survive process death goes in the entry's `SavedStateHandle`. Navigation 3's entry
@@ -116,165 +106,144 @@ against whatever the user is doing by then, is a wrong action.
 ## Dependency injection
 
 Koin, started in `App.kt`. Each feature binds its ViewModels in a module of its own, the library
-binds its ports in `:library:data`, and the app binds the app-wide services and the engines. A new
+binds its ports in `:library:data`, and the app binds app-wide services and the engines. A new
 module is added to the list in `App.kt`.
 
-**Swapping an implementation is always one binding:**
-- the scanner: `DocumentScannerModule.kt`;
-- where page text comes from: `PageContentModule.kt`;
-- how the library is searched: the `SearchIndex` binding in `ScannedDocumentModule.kt`.
-
-If a swap needs more than one line, the design is not finished.
+**Swapping an implementation is always one binding:** the scanner (`DocumentScannerModule.kt`),
+where page text comes from (`PageContentModule.kt`), how the library is searched (the `SearchIndex`
+binding in `ScannedDocumentModule.kt`). If a swap needs more, the design is not finished.
 
 ## App-wide services in the UI
 
-Composition locals in `core/ui/common/CompositionLocals.kt`:
-- `LocalDarkTheme`;
-- `LocalSettingsRepository`;
-- `LocalNotificationsService`, for in-app notifications;
-- `LocalAnalyticsHelper`.
-
-Screens read them instead of injecting the same services again.
+Composition locals in `core/ui/common/CompositionLocals.kt`: `LocalDarkTheme`,
+`LocalSettingsRepository`, `LocalNotificationsService` and `LocalAnalyticsHelper`. Screens read them
+instead of injecting the same services again.
 
 ## Theme
 
 `DocucraftTheme` (`core/designsystem/theme/Theme.kt`) is Material 3 Expressive, with colors from the
 wallpaper (Android 12+) or generated by MaterialKolor from the user's seed color and palette style.
-The rest of the app reads `MaterialTheme` as usual. Type roles Material has no slot for, such as the
-user's monospace font, are in `DocucraftTheme.typography`, read the same way; a new one is a field
-there.
+The app reads `MaterialTheme` as usual. Type roles Material has no slot for, such as the user's
+monospace font, are fields of `DocucraftTheme.typography`.
 
-**The default fonts are packaged in `res/font` and never downloaded** (`ThemeMapper.kt`,
-`FontDefinitions.kt`). A downloadable font loads asynchronously, so the first frames are drawn in a
-fallback and the text visibly swaps once it arrives; for the fonts every user sees on every start,
-that swap is not acceptable. Every preset that is packaged resolves to its local files, whatever
-role it is chosen for. Only the others go to Google Fonts, and while they load they show a packaged
-font of the same kind (Inter for sans-serif, JetBrains Mono for monospace), so the swap is between
-similar shapes. A new preset has to choose one path in the exhaustive mapping.
+**The default fonts are packaged in `res/font`, never downloaded** (`ThemeMapper.kt`,
+`FontDefinitions.kt`). A downloadable font loads asynchronously, so the first frames use a fallback
+and the text visibly swaps; that is unacceptable for the fonts every user sees on every start. A
+packaged preset resolves to its local files whatever role it is chosen for. Others go to Google
+Fonts and show a packaged font of the same kind meanwhile (Inter for sans-serif, JetBrains Mono for
+monospace), so the swap is between similar shapes. A new preset must choose one path in the
+exhaustive mapping.
 
-**A color scheme is built only when its inputs change**, and away from the main thread. MaterialKolor
-takes several milliseconds per scheme, too much for the frame that switches the theme. Only the
-first scheme is built in place, because the first frame needs it. The last few are cached, so
-switching back to a previous theme builds nothing.
+**A color scheme is built only when its inputs change**, off the main thread: MaterialKolor takes
+several milliseconds per scheme, too much for the frame that switches the theme. Only the first
+scheme is built in place, since the first frame needs it. The last few are cached, so switching back
+builds nothing.
 
 **A theme change moves the scheme itself, in a fixed number of steps** (`ThemeTransition.kt`).
-Material provides the color scheme through a static composition local, so each scheme it is given
-recomposes everything under the theme, and nothing is skipped. That is the cost of a change, and it
-is bounded: the way from one scheme to the next is cut into at most 10 schemes over 100 ms, whatever
-the display's refresh rate. Animating frame by frame (MaterialKolor's `animate = true`) would hand
-the tree one for every frame of its own, longer, animation, and more of them the faster the display.
-- **The app stays live throughout.** The change used to be one fade of a picture of the last frame
-  over the new theme. It cost a single recomposition, but the picture stood still over whatever
-  moved under it: scrolling during the fade left a ghost of the old position.
-- **A change that interrupts another continues from what is showing**, so tapping through seed
-  colors never jumps back.
+Material provides the color scheme through a static composition local, so each scheme given to it
+recomposes everything under the theme. That is the cost of a change, and it is bounded: the way
+from one scheme to the next is cut into at most 10 schemes over 100 ms, whatever the display's
+refresh rate. Animating frame by frame (MaterialKolor's `animate = true`) would cost one per frame
+of a longer animation, and more on faster displays.
+- **The app stays live throughout.** Fading a picture of the last frame over the new theme would
+  cost one recomposition, but the picture stands still over whatever moves beneath it.
+- **An interrupting change continues from what is showing**, so tapping through seed colors never
+  jumps back.
 - **Colors are mixed in Oklab**, as Compose's `lerp` does, so a light theme goes dark through greys
   of its own hue.
 
-**A screen with a color of its own nests a theme** (`DocucraftAccentTheme`, and `LabelColorTheme`
-for a color of the palette). It is for a destination that is about something the user gave a color
-to: that screen takes the color and the rest of the app keeps its own. A folder's contents
-(`FolderContentsScreen`) are in the folder's color; the root, and a folder without one, are in the
-app's.
-- **Only that screen is recomposed for it.** Changing the app's theme on the way in and back on the
-  way out would recompose every screen twice.
-- **A screen that knows its color when it opens is in it from its first frame** once that color has
-  been shown, and the navigation's transition is what takes the app from one to the other. A color
-  seen for the first time is built in the background and arrived at in steps, as any change is. So
-  is one the screen learns after opening: a folder's screen is given the folder's uuid, reads the
-  folder, and moves to its color then.
-- **Its components keep up with its changes** as the app's do with the app's: the nested theme
-  hands down its own motion scheme (see below).
-- **The color is a hue, not a value**: it is pulled towards the theme's primary and the scheme
+**A screen with a color of its own nests a theme** (`DocucraftAccentTheme`, and `LabelColorTheme` for
+a palette color), for a destination about something the user gave a color to. A folder's contents
+(`FolderContentsScreen`) use the folder's color; the root, and a folder without one, use the app's.
+- **Only that screen is recomposed.** Changing the app's theme on the way in and back on the way out
+  would recompose every screen twice.
+- **A known color is in effect from the first frame** once it has been shown; the navigation
+  transition takes the app from one to the other. A color seen for the first time, or learnt after
+  opening (a folder's screen reads the folder from its uuid), is built in the background and
+  reached in steps like any change.
+- **Its components keep up with its changes**: the nested theme hands down its own motion scheme
+  (below).
+- **The color is a hue, not a value**: it is pulled towards the theme's primary, and the scheme
   keeps the theme's style and darkness, as the tones of a label do
   ([organization.md](organization.md#colors-and-icons)).
-- The overlays opened over that screen (a folder's actions, its editor) are destinations of their
-  own and stay in the app's theme.
+- Overlays opened over that screen (a folder's actions, its editor) are destinations of their own
+  and stay in the app's theme.
 
 **Components never animate colors for a theme change.** A component animates its own state (pressed,
-selected, enabled, scrolled) and reads its colors from the theme on every frame, as
-`SettingsItemIcon` and Home's top bar do with a fraction and `lerp`. Material's own components still
-animate their colors when their target changes; while the theme changes, its motion scheme hands
-them an all but immediate spring, so they do not trail behind the rest of the screen. A spring, not
-a snap: each step moves the target of an animation that is under way, and Compose keeps a
-component's own spec for an interrupted animation only when it is a spring.
+selected, enabled, scrolled) and reads colors from the theme every frame, as `SettingsItemIcon` and
+Home's top bar do with a fraction and `lerp`. Material's own components still animate colors when
+their target changes; during a theme change the motion scheme gives them an all but immediate
+spring so they do not trail the screen. It must be a spring, not a snap: each step moves the target
+of an animation under way, and Compose keeps a component's own spec for an interrupted animation
+only when it is a spring.
 
-**A motion scheme hands out the same spec every time it is asked.** Material remembers what a
-component is animating by the spec it was given: a button's shape morph is kept in a
-`remember(animationSpec)`. A scheme that builds a new spec on each call makes every recomposition
-look like a change of spec, and the button starts over from the shape it was heading to, so a press
-jumps to the pressed shape instead of morphing into it. The theme's own scheme wraps Material's to
-keep components up with a change, and hands out Material's own specs the rest of the time for that
-reason
+**A motion scheme returns the same spec every time.** Material remembers what a component is
+animating by its spec (a button's shape morph is kept in `remember(animationSpec)`). A new spec per
+call makes every recomposition look like a change of spec, so the button restarts from the shape it
+was heading to and a press jumps to the pressed shape instead of morphing. The theme's scheme wraps
+Material's to keep components up with a change, and otherwise returns Material's own specs
 (`ThemeTransitionMotionScheme`).
 
 ### Blur
 
-Material has no blur tokens; `DocucraftBlurDefaults` (`core/designsystem/theme/`) is where the app
-decides where it blurs, and by how much. There are two kinds of blur, for two jobs.
+Material has no blur tokens; `DocucraftBlurDefaults` (`core/designsystem/theme/`) decides where the
+app blurs and by how much. There are two kinds, for two jobs.
 
 **A surface floating over content that moves beneath it is frosted, not shadowed.** What is behind
-it shows through, blurred, under its Material container color made translucent. A shadow's dark
-edge separated the surface from the content; the frost does the same and keeps the content in view.
-It is [Haze](https://github.com/chrisbanes/haze): the content is recorded with `Modifier.hazeSource`,
-and the surface applies `Modifier.frosted` with `DocucraftBlurDefaults.surfaceStyle(containerRole)`,
+it shows through, blurred, under its translucent Material container color; a shadow's dark edge
+would separate it from the content, the frost does the same and keeps the content in view. It uses
+[Haze](https://github.com/chrisbanes/haze): the content is recorded with `Modifier.hazeSource`, and
+the surface applies `Modifier.frosted` with `DocucraftBlurDefaults.surfaceStyle(containerRole)`,
 built on Haze's Material 3 style. The surface's own container becomes transparent and loses its
-shadow elevation.
-- Home: the app bar once the list scrolls under it, the search bar, and the sort menu.
-- Every other screen with a list, settings included: the same app bar, `FrostedLargeTopAppBar`
-  (`core/designsystem/components/ScreenChrome.kt`).
-- Search: the field, over the results.
-- Viewer: the top bar and the floating toolbar, over the pages.
+shadow elevation. Used by Home's app bar (once the list scrolls under it), search bar and sort menu;
+every other list screen's `FrostedLargeTopAppBar` (`core/designsystem/components/ScreenChrome.kt`);
+the search field over the results; and the viewer's top bar and floating toolbar over the pages.
 
-A few rules keep it working:
-- **The source is a sibling of what frosts it, never an ancestor.** A surface inside its own source
-  would blur itself. A popup is the exception that works: it is another window, so the sort menu
-  frosts the list it was opened from.
+Rules that keep it working:
+- **The source is a sibling of what frosts it, never an ancestor**, or the surface would blur
+  itself. A popup is the exception that works: it is another window, so the sort menu frosts the
+  list it opened from.
 - **Content scrolls beneath the surface, padded rather than inset**, or there is nothing to frost:
   Home's list takes the scaffold's padding as content padding.
-- **`HazeInput.Sources`**, which also reaches across windows. Haze's native backdrop cannot.
+- **`HazeInput.Sources`** also reaches across windows; Haze's native backdrop cannot.
 
 **An element floating over content is lifted by a blur halo, not a shadow** (`Modifier.blurHalo`,
 `BlurHalo.kt`). The content around it goes out of focus, most at its edge, and is sharp again
-`HaloSpread` away (a menu's, `MenuHaloSpread`); a faint veil of the surface color fades with the
-blur, so the element still has a soft rim over a flat area. The halo is a Haze blur on an area grown
-around the element, without changing its layout. Its radius really decreases with distance: a small
-shader gives Haze the intensity at each point, from the signed distance to the element's own shape.
-A blurred copy fading over a sharp one would show a double image in between.
+`HaloSpread` away (a menu's: `MenuHaloSpread`); a faint veil of the surface color fades with the
+blur, so the element keeps a soft rim over a flat area. The halo is a Haze blur on an area grown
+around the element, without changing its layout. The radius really decreases with distance: a small
+shader gives Haze the intensity at each point from the signed distance to the element's shape. A
+blurred copy fading over a sharp one would show a double image between.
 - **The radius decays exponentially.** Text only visibly changes while the blur is a few pixels
-  wide, so a curve that stays high and drops at the end, such as a smoothstep, reads as a cut. A
-  decay spends the same distance on each halving of the radius, and the content eases back into
-  focus.
+  wide, so a curve that stays high and drops at the end (smoothstep) reads as a cut. A decay spends
+  the same distance on each halving, and the content eases back into focus.
 - **It reaches further below the element than above**, as Material's key light casts shadows
-  downwards (`haloDrop`), and blurs less of whatever the element was opened from.
-- **It comes into focus on its own**, its strength scaling the radius and the opacity together,
-  never inside the element's enter animation: in there it was scaled by the element's spring and
-  cut to its bounds while it faded.
+  downwards (`haloDrop`), and blurs less of whatever the element opened from.
+- **It comes into focus on its own**, strength scaling radius and opacity together, never inside the
+  element's enter animation: there it would be scaled by the element's spring and cut to its bounds
+  while fading.
 
-Where it is used:
-- Home: one halo around the search bar and the scan button together. Two side by side would each
-  blur over the other's button, and one follows the pair as the button changes width.
-- The sort menu (`HaloDropdownMenuPopup`). A popup's window ends at its content, so the halo takes
-  room inside it. The menu is still placed where Material would place it, and a tap on the halo
-  closes it, as a tap outside would.
-- Search: the field.
+Used by: Home, one halo around the search bar and scan button together (two side by side would each
+blur over the other's button, and one follows the pair as the button changes width); the sort menu
+(`HaloDropdownMenuPopup`: a popup's window ends at its content, so the halo takes room inside it;
+the menu is placed where Material would place it and a tap on the halo closes it); and the search
+field.
 
 The halo needs Android 13, where Haze can vary the radius (`DocucraftBlurDefaults.isHaloSupported`).
-Below that, the FAB, the search bar and the menu keep Material's shadows.
+Below that, the FAB, search bar and menu keep Material's shadows.
 
 **Content that should be out of focus uses `Modifier.blur` with a `BlurRadiusSpec`** (Compose 1.13),
-whose radius can vary across the layer.
-- Whatever is behind a sheet or a dialog destination blurs as it opens, together with the scrim
-  (see [navigation.md](navigation.md#modal-destinations)).
-- A recent document's thumbnail blurs progressively under its title: a scanned page is mostly text,
-  and a title over sharp text reads as more of it.
+whose radius can vary across the layer: whatever is behind a sheet or dialog destination blurs as
+it opens with the scrim ([navigation.md](navigation.md#modal-destinations)), and a recent
+document's thumbnail blurs progressively under its title (a scanned page is mostly text, and a title
+over sharp text reads as more of it).
 
-**Below Android 12 nothing blurs**, and the app looks as it did before blur: a frosted surface falls
-back to its container color, nearly opaque, and content stays sharp. Varying radii, such as the
-thumbnail's, need Android 13.
+**Below Android 12 nothing blurs**: a frosted surface falls back to its nearly opaque container
+color and content stays sharp. Varying radii, such as the thumbnail's, need Android 13.
 
 ## Integrations
 
-- **Firebase.** Analytics and Crashlytics, behind `AnalyticsHelper` (`core/data/di/AnalyticsModule.kt`).
+- **Firebase.** Analytics and Crashlytics, behind `AnalyticsHelper`
+  (`core/data/di/AnalyticsModule.kt`).
 - **FileProvider.** `${applicationId}.fileprovider`, for every document the app shares. It is
-  `CatalogueFileProvider`, which names a document as the catalogue does and not by its file.
+  `CatalogueFileProvider`, which names a document as the catalogue does, not by its file.

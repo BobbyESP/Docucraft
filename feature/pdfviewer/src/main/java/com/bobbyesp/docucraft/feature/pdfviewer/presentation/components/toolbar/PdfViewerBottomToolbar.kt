@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar
 
@@ -20,15 +20,15 @@ import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.FitScreen
 import androidx.compose.material.icons.rounded.ZoomIn
 import androidx.compose.material.icons.rounded.ZoomOut
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconToggleButton
-import androidx.compose.material3.FloatingToolbarDefaults
-import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.SelectableDropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TooltipAnchorPosition
@@ -39,7 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -49,27 +48,22 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
-import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftBlurDefaults
+import com.bobbyesp.docucraft.core.designsystem.components.FrostedMenuGroup
 import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
-import com.bobbyesp.docucraft.core.designsystem.theme.frosted
 import com.bobbyesp.docucraft.core.domain.model.ViewerFitMode
 import com.bobbyesp.docucraft.feature.pdfviewer.R
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.TooltipIconButton
 import com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.WithTooltip
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.rememberHazeState
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * The viewer's bottom toolbar: the Material 3 Expressive floating toolbar, with the page, zoom, fit
- * mode and night mode. Design and reasons: `docs/pdf-viewer.md`.
+ * The viewer's bottom toolbar: page, zoom, fit mode and night mode.
  *
- * The zoom buttons appear only when the toolbar has room for them. Narrower, a zoom chip remains,
- * and only while the zoom is not the fitted one. That is the toolbar's own width, so it answers
- * correctly in a list-detail pane too.
- *
- * Frosted in its vibrant color over the pages instead of lifted from them by a shadow: they scroll
- * on beneath it, blurred.
+ * The zoom buttons need the toolbar's own width, not the window's, so it answers correctly in a
+ * list-detail pane too. Narrower, a zoom chip shows only while the zoom is not the fitted one.
  *
  * @param currentPage Zero-based.
  * @param zoom `1f` is the fitted size.
@@ -93,29 +87,12 @@ fun PdfViewerBottomToolbar(
     hazeState: HazeState,
     modifier: Modifier = Modifier,
 ) {
-    val vibrantContainer =
-        FloatingToolbarDefaults.vibrantFloatingToolbarColors().toolbarContainerColor
-    val shape = FloatingToolbarDefaults.ContainerShape
+    val motion = MaterialTheme.motionScheme
 
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
         val roomForZoomButtons = maxWidth >= WideToolbarWidth
 
-        HorizontalFloatingToolbar(
-            expanded = true,
-            modifier =
-                Modifier.frosted(
-                    state = hazeState,
-                    style = DocucraftBlurDefaults.surfaceStyle(vibrantContainer),
-                    shape = shape,
-                ),
-            colors =
-                FloatingToolbarDefaults.vibrantFloatingToolbarColors(
-                    toolbarContainerColor = Color.Transparent
-                ),
-            shape = shape,
-            expandedShadowElevation = 0.dp,
-            collapsedShadowElevation = 0.dp,
-        ) {
+        FrostedFloatingToolbar(hazeState = hazeState) {
             PageChip(currentPage = currentPage, pageCount = pageCount, onClick = onPageClick)
 
             if (roomForZoomButtons) {
@@ -137,14 +114,22 @@ fun PdfViewerBottomToolbar(
             } else {
                 AnimatedVisibility(
                     visible = !zoom.isFitted(),
-                    enter = fadeIn() + expandHorizontally(),
-                    exit = fadeOut() + shrinkHorizontally(),
+                    enter =
+                        fadeIn(motion.fastEffectsSpec()) +
+                            expandHorizontally(motion.fastSpatialSpec()),
+                    exit =
+                        fadeOut(motion.fastEffectsSpec()) +
+                            shrinkHorizontally(motion.fastSpatialSpec()),
                 ) {
                     ZoomChip(zoom = zoom, onClick = onResetZoom)
                 }
             }
 
-            FitModeButton(fitMode = fitMode, onFitModeChange = onFitModeChange)
+            FitModeButton(
+                fitMode = fitMode,
+                onFitModeChange = onFitModeChange,
+                hazeState = hazeState,
+            )
 
             NightModeButton(nightMode = nightMode, onToggle = onNightModeToggle)
         }
@@ -154,6 +139,7 @@ fun PdfViewerBottomToolbar(
 /** "3 / 12", animating as the page changes. Opens *Go to page*. */
 @Composable
 private fun PageChip(currentPage: Int, pageCount: Int, onClick: () -> Unit) {
+    val motion = MaterialTheme.motionScheme
     val description =
         stringResource(R.string.page_indicator_description, currentPage + 1, pageCount)
     WithTooltip(
@@ -166,7 +152,9 @@ private fun PageChip(currentPage: Int, pageCount: Int, onClick: () -> Unit) {
         ) {
             AnimatedContent(
                 targetState = currentPage + 1,
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                transitionSpec = {
+                    fadeIn(motion.fastEffectsSpec()) togetherWith fadeOut(motion.fastEffectsSpec())
+                },
                 label = "page",
             ) { page ->
                 Text(text = "$page / $pageCount", style = MaterialTheme.typography.labelLarge)
@@ -193,40 +181,56 @@ private fun ZoomChip(zoom: Float, onClick: () -> Unit) {
     }
 }
 
-/** An icon for the current fit mode, opening a menu of all four by name. */
+/**
+ * The current fit mode's icon, opening a menu of the four by name. Shadow instead of a blur halo,
+ * as in the top bar's menu: the toolbar is outside the pages' recording.
+ */
 @Composable
-private fun FitModeButton(fitMode: ViewerFitMode, onFitModeChange: (ViewerFitMode) -> Unit) {
+private fun FitModeButton(
+    fitMode: ViewerFitMode,
+    onFitModeChange: (ViewerFitMode) -> Unit,
+    hazeState: HazeState,
+) {
     var expanded by remember { mutableStateOf(false) }
-    val label = stringResource(DesignsystemR.string.fit_mode)
     val current = stringResource(fitMode.label)
+    val modes = ViewerFitMode.entries
 
     Box {
         TooltipIconButton(
             icon = fitMode.icon(),
-            label = label,
+            label = stringResource(DesignsystemR.string.fit_mode),
             onClick = { expanded = true },
             modifier = Modifier.semantics { stateDescription = current },
             tooltipPosition = TooltipAnchorPosition.Above,
         )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            ViewerFitMode.entries.forEach { mode ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(mode.label)) },
-                    leadingIcon = { Icon(mode.icon(), contentDescription = null) },
-                    trailingIcon = {
-                        if (mode == fitMode) Icon(Icons.Rounded.Check, contentDescription = null)
-                    },
-                    onClick = {
-                        expanded = false
-                        onFitModeChange(mode)
-                    },
-                )
+        DropdownMenuPopup(expanded = expanded, onDismissRequest = { expanded = false }) {
+            FrostedMenuGroup(
+                shapes = MenuDefaults.groupShape(index = 0, count = 1),
+                hazeState = hazeState,
+                shadowElevation = MenuDefaults.ShadowElevation,
+            ) {
+                modes.forEachIndexed { index, mode ->
+                    SelectableDropdownMenuItem(
+                        selected = mode == fitMode,
+                        onClick = {
+                            expanded = false
+                            onFitModeChange(mode)
+                        },
+                        text = { Text(stringResource(mode.label)) },
+                        shapes = MenuDefaults.itemShape(index = index, count = modes.size),
+                        leadingIcon = { Icon(mode.icon(), contentDescription = null) },
+                        trailingContent = {
+                            if (mode == fitMode) {
+                                Icon(Icons.Rounded.Check, contentDescription = null)
+                            }
+                        },
+                    )
+                }
             }
         }
     }
 }
 
-/** A toggle, with the Expressive shape change when it is on. */
 @Composable
 private fun NightModeButton(nightMode: Boolean, onToggle: () -> Unit) {
     val label = stringResource(DesignsystemR.string.night_mode)
@@ -241,7 +245,7 @@ private fun NightModeButton(nightMode: Boolean, onToggle: () -> Unit) {
     }
 }
 
-private fun Float.isFitted(): Boolean = kotlin.math.abs(this - 1f) < 0.02f
+private fun Float.isFitted(): Boolean = abs(this - 1f) < FittedTolerance
 
 private val ViewerFitMode.label: Int
     get() =
@@ -261,8 +265,10 @@ private fun ViewerFitMode.icon(): ImageVector =
         ViewerFitMode.PROPORTIONAL -> ImageVector.vectorResource(DesignsystemR.drawable.fit_page)
     }
 
-/** From here the zoom buttons fit without crowding the rest: Material's medium width. */
+/** Material's medium width: from here the zoom buttons fit without crowding the rest. */
 private val WideToolbarWidth = 600.dp
+
+private const val FittedTolerance = 0.02f
 
 @PreviewLightDark
 @Composable

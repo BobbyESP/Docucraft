@@ -72,4 +72,21 @@
     <string name="document_details_file_name">File name</string>
     <string name="document_details_format">Format</string>
     <string name="document_details_pdf_version">PDF %1$s</string>
+
+    <!-- Search in the document -->
+    <string name="search_in_document">Search in document</string>
+    <string name="search_close">Close search</string>
+    <string name="search_clear">Clear</string>
+    <string name="search_previous">Previous match</string>
+    <string name="search_next">Next match</string>
+    <string name="search_position">%1$d / %2$d</string>
+    <string name="search_position_description">Match %1$d of %2$d</string>
+    <string name="search_no_matches">No matches</string>
+    <string name="search_searching">Searching…</string>
+    <plurals name="search_progress">
+        <item quantity="one">Searched %1$d of %2$d page</item>
+        <item quantity="other">Searched %1$d of %2$d pages</item>
+    </plurals>
+    <string name="search_unavailable_image">This document has no text to search: it is made of images.</string>
+    <string name="search_unavailable_unsupported">Searching text in PDFs needs Android 15 or later.</string>
 </resources>

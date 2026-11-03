@@ -73,4 +73,19 @@
     <string name="document_details_file_name">Dateiname</string>
     <string name="document_details_format">Format</string>
     <string name="document_details_pdf_version">PDF %1$s</string>
+    <string name="search_in_document">In Dokument suchen</string>
+    <string name="search_close">Suche schließen</string>
+    <string name="search_clear">Löschen</string>
+    <string name="search_previous">Vorheriger Treffer</string>
+    <string name="search_next">Nächster Treffer</string>
+    <string name="search_position">%1$d / %2$d</string>
+    <string name="search_position_description">Treffer %1$d von %2$d</string>
+    <string name="search_no_matches">Keine Treffer</string>
+    <string name="search_searching">Suche läuft…</string>
+    <plurals name="search_progress">
+        <item quantity="one">%1$d von %2$d Seite durchsucht</item>
+        <item quantity="other">%1$d von %2$d Seiten durchsucht</item>
+    </plurals>
+    <string name="search_unavailable_image">Dieses Dokument enthält keinen durchsuchbaren Text: Es besteht nur aus Bildern.</string>
+    <string name="search_unavailable_unsupported">Die Textsuche in PDFs erfordert Android 15 oder höher.</string>
 </resources>

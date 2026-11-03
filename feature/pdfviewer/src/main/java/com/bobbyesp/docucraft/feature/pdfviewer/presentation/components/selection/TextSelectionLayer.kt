@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,10 +62,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
- * A selection being dragged, by the finger of a long press or by a handle: one end stays where it
- * is (the anchor) and the other follows a point on screen. Near the top or bottom of the content
- * area the document scrolls under that point, which is how a selection runs onto pages that were
- * not on screen, and the selection follows it there even while the finger holds still.
+ * A selection being dragged by a long press or a handle: one end (the anchor) stays and the other
+ * follows a point on screen. Near the content area's top or bottom the document scrolls under that
+ * point, so the selection reaches pages not on screen even while the finger holds still.
  */
 @Stable
 class SelectionDrag
@@ -92,8 +92,8 @@ internal constructor(
     private var autoScroll: Job? = null
 
     /**
-     * Starts growing [anchor] towards [at], in viewer pixels, from [current]. The anchor stays
-     * selected: the word a long press chose, or the caret at the end a handle does not move.
+     * Starts growing [anchor] towards [at] (viewer pixels) from [current]. The anchor stays
+     * selected: the long-pressed word, or the end a handle does not move.
      */
     fun start(anchor: DocumentSelection, current: DocumentSelection, at: Offset) {
         this.anchor = anchor
@@ -146,8 +146,8 @@ internal constructor(
     }
 
     /**
-     * Pixels a second to move the document by: faster the deeper into an edge zone. Near the top
-     * the document moves down, bringing earlier text in; near the bottom, up.
+     * Pixels per second to scroll by, faster the deeper into an edge zone: down near the top, up
+     * near the bottom.
      */
     private fun edgeSpeed(y: Float): Float {
         if (edgeZone <= 0f || contentBottom <= contentTop) return 0f
@@ -169,14 +169,13 @@ fun rememberSelectionDrag(state: PdfViewerState): SelectionDrag {
 }
 
 /**
- * Everything text selection shows over the pages: the highlight, the two handles, the system's text
- * toolbar (Copy, Select all), and what TalkBack announces. It follows the document through the
- * overlay's page coordinates, so panning and zooming never recompose it.
+ * Everything selection shows over the pages: the highlight, the two handles, the system text
+ * toolbar (Copy, Select all) and the TalkBack announcement. It uses the overlay's page coordinates,
+ * so panning and zooming never recompose it.
  *
  * @param contentTop Where the content area starts, below the top bar.
  * @param contentBottomInset How much of the viewer's bottom the bottom bar covers.
- * @param nightMode Whether the pages are drawn inverted, dark: the usual selection color, made for
- *   light text fields, hardly shows on them.
+ * @param nightMode Whether the pages are drawn inverted; the usual selection color hardly shows.
  */
 @Composable
 fun PdfOverlayScope.TextSelectionLayer(
@@ -196,17 +195,18 @@ fun PdfOverlayScope.TextSelectionLayer(
     val density = LocalDensity.current
     var viewer by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
-    drag.pages = { latestPages }
-    drag.onSelect = { latestOnSelect(it) }
-    with(density) {
-        drag.contentTop = contentTop.toPx()
-        drag.edgeZone = EdgeZone.toPx()
-        drag.maxSpeed = EdgeScrollSpeed.toPx()
-    }
     val bottomInsetPx = with(density) { contentBottomInset.toPx() }
+    SideEffect {
+        drag.pages = { latestPages }
+        drag.onSelect = { latestOnSelect(it) }
+        with(density) {
+            drag.contentTop = contentTop.toPx()
+            drag.edgeZone = EdgeZone.toPx()
+            drag.maxSpeed = EdgeScrollSpeed.toPx()
+        }
+    }
 
-    // The viewer's own coordinates.
-    // Where handles report the finger, and where the toolbar is placed from.
+    // The viewer's own coordinates: where handles report the finger and the toolbar is placed from.
     Spacer(
         Modifier.matchParentSize().onPlaced {
             viewer = it
@@ -276,10 +276,9 @@ fun PdfOverlayScope.TextSelectionLayer(
 }
 
 /**
- * A selection handle: a drop whose point sits on the text, hanging below it, inside a 48 dp touch
- * target. Dragging reports the finger in the viewer's coordinates, which stay right while the
- * handle moves under the finger; the offset from the finger to the text is kept, so the text point
- * does not jump to where the finger is.
+ * A selection handle: a drop whose point sits on the text, in a 48 dp touch target. Dragging
+ * reports the finger in viewer coordinates and keeps the finger-to-text offset, so the text point
+ * does not jump to the finger.
  */
 @Composable
 private fun PdfOverlayScope.SelectionHandle(
@@ -359,8 +358,8 @@ private fun PdfOverlayScope.SelectionHandle(
 }
 
 /**
- * The system's text toolbar over the selection. Hidden while dragging and while the document moves,
- * shown again once it settles, over the part of the selection that is on screen.
+ * The system text toolbar over the on-screen part of the selection; hidden while dragging or
+ * moving.
  */
 @Composable
 private fun SelectionToolbar(
@@ -439,9 +438,8 @@ private fun selectionInRoot(
 }
 
 /**
- * Where along its touch target a handle's point is. Each handle hangs outward, the start one to the
- * left of its point and the end one to the right, as in the reference viewers, so that on a short
- * selection their targets do not sit on top of each other and a touch reaches the one it meant.
+ * Where along its touch target a handle's point is. Handles hang outward (start left, end right) so
+ * on a short selection their targets do not overlap.
  */
 private fun tipFraction(isStart: Boolean) = if (isStart) 0.75f else 0.25f
 

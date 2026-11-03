@@ -58,8 +58,8 @@ enum class ViewerLoadError(
     @StringRes val title: Int,
     @StringRes val message: Int,
     /**
-     * Whether another app might manage where this one did not. Not for a file that is gone or that
-     * this app may not read: it cannot hand over what it cannot reach.
+     * Whether another app might manage where this one did not; not for a missing file or one this
+     * app cannot read, since it cannot hand over what it cannot reach.
      */
     val worthOpeningElsewhere: Boolean,
 ) {
@@ -91,8 +91,8 @@ enum class ViewerLoadError(
 }
 
 /**
- * Shown in place of the pages when the document cannot be loaded: what happened and what the reader
- * can do about it, never the exception's name, which is what used to be shown.
+ * Shown in place of the pages when the document cannot load: what happened and what can be done,
+ * never the exception's name.
  *
  * @param onOpenWith Hands the document to another app, or `null` when it cannot leave this one.
  * @param onBack Leaves the viewer, or `null` when the viewer shows no way back.

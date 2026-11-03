@@ -73,4 +73,18 @@
     <string name="document_details_file_name">ファイル名</string>
     <string name="document_details_format">形式</string>
     <string name="document_details_pdf_version">PDF %1$s</string>
+    <string name="search_in_document">ドキュメント内を検索</string>
+    <string name="search_close">検索を閉じる</string>
+    <string name="search_clear">クリア</string>
+    <string name="search_previous">前の一致</string>
+    <string name="search_next">次の一致</string>
+    <string name="search_position">%1$d / %2$d</string>
+    <string name="search_position_description">%2$d 件中 %1$d 件目の一致</string>
+    <string name="search_no_matches">一致なし</string>
+    <string name="search_searching">検索中…</string>
+    <plurals name="search_progress">
+        <item quantity="other">%2$d ページ中 %1$d ページを検索済み</item>
+    </plurals>
+    <string name="search_unavailable_image">このドキュメントには検索できるテキストがありません。画像のみで構成されています。</string>
+    <string name="search_unavailable_unsupported">PDF内のテキスト検索にはAndroid 15以降が必要です。</string>
 </resources>

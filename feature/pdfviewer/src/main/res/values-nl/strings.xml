@@ -73,4 +73,19 @@
     <string name="document_details_file_name">Bestandsnaam</string>
     <string name="document_details_format">Indeling</string>
     <string name="document_details_pdf_version">PDF %1$s</string>
+    <string name="search_in_document">Zoeken in document</string>
+    <string name="search_close">Zoeken sluiten</string>
+    <string name="search_clear">Wissen</string>
+    <string name="search_previous">Vorige overeenkomst</string>
+    <string name="search_next">Volgende overeenkomst</string>
+    <string name="search_position">%1$d / %2$d</string>
+    <string name="search_position_description">Overeenkomst %1$d van %2$d</string>
+    <string name="search_no_matches">Geen overeenkomsten</string>
+    <string name="search_searching">Zoeken…</string>
+    <plurals name="search_progress">
+        <item quantity="one">%1$d van %2$d pagina doorzocht</item>
+        <item quantity="other">%1$d van %2$d pagina\'s doorzocht</item>
+    </plurals>
+    <string name="search_unavailable_image">Dit document bevat geen doorzoekbare tekst: het bestaat alleen uit afbeeldingen.</string>
+    <string name="search_unavailable_unsupported">Zoeken naar tekst in pdf\'s vereist Android 15 of hoger.</string>
 </resources>

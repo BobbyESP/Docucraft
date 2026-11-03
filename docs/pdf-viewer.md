@@ -16,7 +16,9 @@ navigation/     ViewerKeys.kt: ExternalPdfViewer, PdfDocumentDetails, SaveCopyTo
                 (PdfViewer, the key other features open, is in :core:navigation)
 domain/         ViewerDocumentRef, display-settings use cases, details, hand-off ports, links
 data/           platform content provider, Custom Tabs opener, printer, session memory
-presentation/   PdfViewerViewModel, PdfViewerScreen, sections, components
+presentation/   PdfViewerViewModel, screens/, sections, components
+  screens/      PdfViewerScreen (the ViewModel, effects and back), PdfViewerContent (what is
+                drawn), PdfViewerScreenState (what the screen holds), PdfViewerEffects
 di/             PdfViewerModule (PageContentModule, which chooses the page readers, is the app's)
 ```
 
@@ -26,7 +28,11 @@ di/             PdfViewerModule (PageContentModule, which chooses the page reade
   - `External(uri, displayName)` is another app's file.
 - **What stays in the composition.** Page, zoom and pan are `PdfViewerState`, and whether the bars
   show is `ViewerChromeState`. None of it goes through the ViewModel: it is UI state, and a round
-  trip per frame would buy nothing.
+  trip per frame would buy nothing. `PdfViewerScreenState` holds them together with the search bar
+  and the bars' heights, and what each needs of the others: closing the search shows the bars,
+  a match is revealed between them.
+- **The screen never hands the ViewModel down.** `PdfViewerScreen` collects its state, its effects
+  and its messages, and `PdfViewerContent` draws from that state and sends intents back.
 - **What the ViewModel holds:**
   - the document;
   - the display settings;
@@ -100,7 +106,7 @@ Phone                                     Tablet / wide pane
 
 - A standard Material 3 `TopAppBar`: the document's name as the title, and its description as the
   subtitle.
-- **Actions**: Share, Print, Open with, Details. As many as fit in the bar's own width are buttons
+- **Actions**: Search (always a button, see [Search](#search)), then Share, Print, Open with, Details. As many as fit in the bar's own width are buttons
   and the rest go in a menu, so a phone shows one and "⋮" and a wide pane shows all four.
   - **The menu is the app's own**, not the one Material's `AppBarRow` brings: two groups, what is
     done with the document and what it is, each frosted over the pages (`FrostedMenuGroup`). It has
@@ -128,8 +134,58 @@ shadowed:
 - **Zoom.** The − / % / + group appears only when the toolbar has at least 600 dp of its own width,
   such as on a tablet. Narrower, a zoom chip shows only while the zoom is not the fitted one, and
   tapping it returns to fit. Zoom always animates.
-- **Fit mode**: a menu with the four modes by name, the current one checked.
+- **Fit mode**: a menu with the four modes by name, the current one selected. It is frosted with a
+  shadow, as the top bar's menu, for the same reason: the toolbar is not in the pages' recording.
 - **Night mode**: a toggle button.
+
+### Search
+
+Finding a word in the open document. The logic is in
+[text-and-links.md](text-and-links.md#search-in-the-document); this is the screen.
+
+```
+Closed                     Open, typing                       After the keyboard's search key
+┌────────────────────┐     ┌────────────────────────────┐     ┌────────────────────────────┐
+│ ←  Title   🔍 ⇪ ⋮  │     │ ( ←  invoice            ✕ ) │     │ ( ←  invoice            ✕ ) │
+├────────────────────┤     ├────────────────────────────┤     ├────────────────────────────┤
+│       (pages)      │     │   …the ▓invoice▓ is due…   │     │   …the ▓invoice▓ is due…   │
+│                    │     │     ╭──────────────╮       │     │                            │
+│                    │     │     │ ⌃  2 / 14  ⌄ │       │     │     ╭──────────────╮       │
+└────────────────────┘     ├─────╰──────────────╯───────┤     │     │ ⌃  2 / 14  ⌄ │       │
+                           │        keyboard            │     │     ╰──────────────╯       │
+                           └────────────────────────────┘     └────────────────────────────┘
+```
+
+- **Opening.** A button of its own in the top bar, never in the menu: it is what a reader reaches
+  for while reading. Hidden until a document is on screen.
+- **`FindBar` takes the top bar's place**, with its height and frost, so the pages (padded by that
+  height) do not move. The field is a pill with a back button and a clear button.
+- **`FindToolbar` is at the bottom**: the floating toolbar in the bottom toolbar's color, with the
+  arrows and the counter. It sits above the keyboard (`WindowInsets.ime`) so the thumb reaches it
+  while typing, and appears once there is a query.
+  - The counter reads "3 / 12" and slides in the direction the reader moves. A ring beside it shows
+    reading progress. TalkBack hears it when the search settles, not for every page.
+  - With nothing found it says so, or says why when the document is the cause (images only, or a
+    device that cannot read the text); the arrows are then off.
+  - It rises through the insets, not by measuring. Below API 30 the keyboard's insets only reach an
+    activity that resizes (`adjustResize`) and the app's theme pans (`adjustPan`), so the toolbar
+    may stay under the keyboard there. Not checked on a device.
+- **Both bars stay while searching** and the page pill keeps out: stepping scrolls the document,
+  which would otherwise hide them. Closing the search brings them back.
+- **The keyboard.** Its search key dismisses it and keeps the matches; so does touching the
+  document, which the keyboard covers. A hardware Enter goes to the next match, Shift+Enter to the
+  previous.
+- **Back** dismisses the keyboard (the system does), then closes a link preview, then clears a
+  selection, then leaves the search.
+- **`reveal`** moves the document only if the match is outside the free area between the bars and
+  the keyboard, so stepping through matches on one screen keeps the reader's place. A match out of
+  view lands about a third of the way down, with some text before it.
+- **What survives.** Whether the bar is open and the typed text are presentation
+  (`ViewerSearchState`, saved like the bars' visibility); what was found is the ViewModel's.
+  - After a rotation the ViewModel still has the search and its active match; the screen tells it
+    the same query, which changes nothing, and says nothing while the document reloads.
+  - After a process death the ViewModel is new and the same query searches again from the reader's
+    page.
 
 ### Bars, scroller, indicator
 
