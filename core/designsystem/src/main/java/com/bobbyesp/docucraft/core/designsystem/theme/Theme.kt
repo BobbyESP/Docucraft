@@ -35,7 +35,6 @@ import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.materialkolor.blend.Blend
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
-import com.materialkolor.ktx.toDynamicScheme
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
@@ -51,12 +50,6 @@ private val LocalDocucraftTypography = staticCompositionLocalOf { DocucraftTypog
 object DocucraftTheme {
     val typography: DocucraftTypography
         @Composable @ReadOnlyComposable get() = LocalDocucraftTypography.current
-
-    /** The style the user chose for the app's colors, which the screens' own colors follow too. */
-    val paletteStyle: PaletteStyleConfig
-        @Composable
-        get() =
-            LocalThemeColors.current?.built?.source?.paletteStyle ?: PaletteStyleConfig.TonalSpot
 }
 
 /**
@@ -138,8 +131,9 @@ fun DocucraftTheme(
 /**
  * The app's theme around one color, for a screen about something the user gave a color to: only
  * [content] takes it, and is recomposed once per color, never stepped towards it. The color is a
- * hue, harmonized with the app's primary and built in the app's style and darkness. See
- * `docs/architecture.md`, Theme.
+ * hue, harmonized with the app's primary and built as [AccentPaletteStyle] in the app's darkness,
+ * whatever its style, with pure black surfaces when the app's are. See `docs/architecture.md`,
+ * Theme.
  *
  * @param accent The color, or `null` for none, which leaves the app's theme as it is. It may come
  *   and go while [content] stays.
@@ -199,11 +193,14 @@ fun PrepareAccentThemes(accents: List<Color>) {
 }
 
 // Harmonized with the scheme the app is heading to, not the step it is at: a change of theme
-// asks for one new scheme, not one per step.
+// asks for one new scheme, not one per step. Black follows what the app shows, not the setting:
+// the system's scheme, with dynamic color, is never black.
 private fun BuiltColorScheme.accentSource(accent: Color): ColorSchemeSource =
     source.copy(
         useWallpaperColors = false,
         seedColor = Blend.harmonize(accent.toArgb(), scheme.primary.toArgb()),
+        paletteStyle = AccentPaletteStyle,
+        pureBlack = scheme.background == Color.Black,
     )
 
 private const val PrepareDelayMillis = 1_000L
@@ -296,37 +293,14 @@ private const val CACHED_SCHEMES = 32
 /** Shared by the theme and the palette previews, so a preview shows what the theme applies. */
 internal val DocucraftColorSpec = ColorSpec.SpecVersion.SPEC_2025
 
-/** The primary roles of a scheme: what a mark in its color draws with. */
-@Immutable
-data class AccentRoles(
-    val primary: Color,
-    val primaryContainer: Color,
-    val onPrimaryContainer: Color,
-)
+/**
+ * The style of a screen's own color ([DocucraftAccentTheme]): Material's default, Tonal Spot, whose
+ * calm tones suit a color picked to tell things apart. Its chroma is [accentChroma].
+ */
+internal val AccentPaletteStyle = PaletteStyleConfig.TonalSpot
 
 /**
- * The primary roles [DocucraftAccentTheme] gives [accent], without building its scheme: for a mark
- * of that color outside its screen, such as a folder's badge, so that it matches the screen it
- * opens. Callers that draw many keep the result.
- *
- * @param harmonizeWith The primary [accent] is pulled towards, as the screen's is the app's.
+ * The chroma of [AccentPaletteStyle]'s primary tones in [DocucraftColorSpec] on a phone, so that a
+ * color shown outside its own theme, such as a folder's badge, matches the screen it opens.
  */
-fun accentRoles(
-    accent: Color,
-    harmonizeWith: Color,
-    isDark: Boolean,
-    style: PaletteStyleConfig,
-): AccentRoles {
-    val seed = Color(Blend.harmonize(accent.toArgb(), harmonizeWith.toArgb()))
-    val scheme =
-        seed.toDynamicScheme(
-            isDark = isDark,
-            style = style.toPaletteStyle(),
-            specVersion = DocucraftColorSpec,
-        )
-    return AccentRoles(
-        primary = Color(scheme.primary),
-        primaryContainer = Color(scheme.primaryContainer),
-        onPrimaryContainer = Color(scheme.onPrimaryContainer),
-    )
-}
+fun accentChroma(isDark: Boolean): Double = if (isDark) 26.0 else 32.0
