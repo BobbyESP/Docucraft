@@ -77,7 +77,6 @@ import com.bobbyesp.docucraft.library.ui.R
  *
  * @param inverted The strong tones, for a badge that sits on the folder's own container color.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FolderBadge(
     icon: FolderIcon,
@@ -193,7 +192,6 @@ private val FolderCardCorner = 28.dp
 private val FolderCardPressedCorner = 16.dp
 
 /** A folder as one segment of a grouped list, beside the documents of the folder it is in. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FolderListItem(
     folder: Folder,
@@ -254,7 +252,6 @@ fun TagDot(color: LabelColor?, modifier: Modifier = Modifier, size: Dp = 10.dp) 
 }
 
 /** A tag to narrow a list down by, or to put on a document: its dot, then a check once chosen. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TagFilterChip(
     tag: Tag,
@@ -356,7 +353,6 @@ private val SwatchSize = 48.dp
 private val SwatchSelectedCorner = 14.dp
 
 /** The icons a folder can have, each a toggle that takes its round shape square when chosen. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FolderIconPicker(
     selected: FolderIcon,

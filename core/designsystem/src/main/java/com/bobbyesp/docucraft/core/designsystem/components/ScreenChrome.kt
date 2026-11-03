@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,7 +43,6 @@ import dev.chrisbanes.haze.HazeState
  *
  * @param hazeState Where the content that scrolls beneath it is recorded.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FrostedLargeTopAppBar(
     title: String,
@@ -97,7 +94,6 @@ fun FrostedLargeTopAppBar(
  *
  * @param leading What goes before the name, such as the dot of a tag.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SectionHeader(
     title: String,

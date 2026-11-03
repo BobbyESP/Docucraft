@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
-
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.links
 
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -25,7 +23,6 @@ import androidx.compose.material.icons.rounded.Language
 import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface

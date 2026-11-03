@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularWavyProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -85,7 +84,6 @@ object PdfViewerDefaults {
         )
 
     /** Default content shown while the document loads. */
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     @Composable
     fun LoadingContent(modifier: Modifier = Modifier) {
         CircularWavyProgressIndicator(
@@ -117,7 +115,6 @@ object PdfViewerDefaults {
     }
 
     /** Default indicator centered on pages that have not rendered yet. */
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     @Composable
     fun PageLoadingIndicator(modifier: Modifier = Modifier) {
         CircularWavyProgressIndicator(

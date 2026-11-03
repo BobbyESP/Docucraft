@@ -266,7 +266,6 @@ private const val AdaptiveIconLayerRatio = 108f / 72f
  * tertiary container the app keeps for what it has to say, as the bin's notice is, and a button in
  * its accent rather than a row among rows.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SupportCard(onSupport: () -> Unit, modifier: Modifier = Modifier) {
     val buttonHeight = ButtonDefaults.MediumContainerHeight

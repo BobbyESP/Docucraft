@@ -22,7 +22,6 @@ import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -77,7 +76,6 @@ import java.util.UUID
  * @param note something to say of the document in this list in particular, such as the days it has
  *   left in the bin.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ScannedDocumentListItem(
     pdf: Document.Managed,

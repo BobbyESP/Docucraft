@@ -19,7 +19,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -206,7 +205,6 @@ fun Modifier.sharedBoundsAcrossDestinations(key: Any, shape: Shape): Modifier {
  * nothing drawn here reaches, and it stays a solid Material surface. Below Android 12 it does
  * nothing, and the scrim alone sets the overlay apart, as it always did.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun Modifier.outOfFocusBehindOverlay(overlayShowing: Boolean): Modifier {
     // An effect, not a movement: the scheme's effects spec, which never overshoots. A radius that

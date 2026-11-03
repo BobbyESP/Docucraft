@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Clear
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,7 +51,6 @@ private const val DESCRIPTION_MAX_LENGTH = 200
  * overlay that edits a document and the review of a new scan, so that a title is typed the same way
  * in both.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EditDocumentDetailsContent(
     state: EditDocumentUiState,

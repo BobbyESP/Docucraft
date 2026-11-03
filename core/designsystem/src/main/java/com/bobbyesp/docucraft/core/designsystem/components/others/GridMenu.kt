@@ -20,7 +20,6 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonShapes
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ShapeDefaults
@@ -56,7 +55,6 @@ fun GridMenu(
     )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 fun LazyGridScope.GridMenuItem(
     modifier: Modifier = Modifier,
     icon: ImageVector,

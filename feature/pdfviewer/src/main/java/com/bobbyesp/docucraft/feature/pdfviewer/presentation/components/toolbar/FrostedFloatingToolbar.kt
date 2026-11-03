@@ -4,7 +4,6 @@
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.toolbar
 
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.runtime.Composable
@@ -21,7 +20,6 @@ import dev.chrisbanes.haze.HazeState
  *
  * @param hazeState Where the pages are recorded.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun FrostedFloatingToolbar(
     hazeState: HazeState,

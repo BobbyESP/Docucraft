@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
@@ -41,7 +40,6 @@ import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
  * @param shapes where the item sits in its group; see
  *   [DocucraftShapeDefaults.segmentedListItemShapes].
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingSwitch(
     title: String,

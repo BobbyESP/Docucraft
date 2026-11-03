@@ -22,7 +22,6 @@ import androidx.compose.material.icons.rounded.Bookmark
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.FitScreen
 import androidx.compose.material.icons.rounded.Tune
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -104,7 +103,6 @@ fun DocumentViewerSettingsScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocumentViewerSettingsContent(
     defaults: ViewerDefaults,
@@ -256,7 +254,6 @@ fun DocumentViewerSettingsContent(
  * animated by the item; disabled, each keeps its container and dims its content, so the choice that
  * would apply stays readable.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FitModeSection(
     selected: ViewerFitMode,
@@ -304,7 +301,6 @@ private fun FitModeSection(
 }
 
 /** One selectable item per [SearchArrival], each with what it does under its name. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SearchArrivalSection(
     selected: SearchArrival,

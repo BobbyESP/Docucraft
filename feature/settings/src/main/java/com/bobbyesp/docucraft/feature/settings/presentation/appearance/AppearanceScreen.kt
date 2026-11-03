@@ -34,7 +34,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ButtonGroupDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -201,7 +200,6 @@ fun AppearanceScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppearanceScreenContent(
     preferences: UserPreferences,
@@ -333,7 +331,6 @@ fun AppearanceScreenContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ThemeSection(
     selected: ThemeConfig,
@@ -384,7 +381,6 @@ private fun ThemeSection(
  * The seed color, the palette built from it and its high-contrast variant, as one segmented group:
  * the seed opens the picker, and the palettes preview what each style makes of it.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun CustomColorsSection(
     seedColor: Int,
@@ -451,7 +447,6 @@ private fun CustomColorsSection(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TypographySection(
     preferences: UserPreferences,
@@ -478,7 +473,6 @@ private fun TypographySection(
 }
 
 /** One type role, led by a sample of its current font. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TypographyCategoryItem(
     category: TypographyCategory,
@@ -516,7 +510,6 @@ private fun TypographyCategoryItem(
  * "Aa" in [font] on a tonal disc, the same disc the settings list puts its icons on. A new font
  * grows in over the old one, so the change is seen even behind the dialog's scrim.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FontSample(font: FontConfig, modifier: Modifier = Modifier) {
     val motionScheme = MaterialTheme.motionScheme
@@ -545,7 +538,6 @@ private fun FontSample(font: FontConfig, modifier: Modifier = Modifier) {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FontSelectionDialog(
     category: TypographyCategory,
@@ -597,7 +589,6 @@ private fun FontSelectionDialog(
  * The category's sample in [font]. Picking another font grows the new sample in over the old one,
  * and the card follows the text's new size instead of snapping to it.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FontPreview(
     category: TypographyCategory,
@@ -649,7 +640,6 @@ private fun FontPreview(
  * A font to pick, named in itself. The selected one takes the list's selected color and shape, both
  * animated by the item.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun FontOption(
     font: FontConfig,

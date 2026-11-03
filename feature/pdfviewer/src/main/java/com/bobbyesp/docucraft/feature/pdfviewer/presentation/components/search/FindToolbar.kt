@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2026  Gabriel Fontán (BobbyESP)
  */
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components.search
 
@@ -26,7 +26,6 @@ import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.KeyboardArrowUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

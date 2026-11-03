@@ -80,7 +80,6 @@ import dev.chrisbanes.haze.hazeSource
  *
  * @param resolveLink What following a link would do, to describe it to TalkBack.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun PdfViewerContent(
     uiState: PdfViewerUiState,

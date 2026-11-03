@@ -6,7 +6,6 @@ package com.bobbyesp.docucraft.core.designsystem.theme
 import android.content.Context
 import android.util.Log
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MotionScheme
@@ -61,7 +60,6 @@ object DocucraftTheme {
  *   already worked it out.
  */
 @Suppress("ModifierRequired")
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocucraftTheme(
     userPreferences: UserPreferences = UserPreferences(),

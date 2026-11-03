@@ -4,7 +4,6 @@
 package com.bobbyesp.docucraft.core.designsystem.theme
 
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -18,7 +17,6 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 class ThemeTransitionMotionSchemeTest {
 
     /**

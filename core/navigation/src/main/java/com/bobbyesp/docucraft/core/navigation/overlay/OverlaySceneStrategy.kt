@@ -7,7 +7,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
@@ -149,7 +148,6 @@ private object OverlayBreakpoints {
     const val STACKING_HEIGHT_DP: Int = WindowSizeClass.HEIGHT_DP_MEDIUM_LOWER_BOUND
 }
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun <T : Any> rememberOverlaySceneStrategy(): OverlaySceneStrategy<T> {
     val windowSizeClass = currentWindowAdaptiveInfoV2().windowSizeClass

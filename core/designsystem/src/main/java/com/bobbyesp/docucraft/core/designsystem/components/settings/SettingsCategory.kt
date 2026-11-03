@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -32,7 +31,6 @@ import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
  *
  * Give each item its place in the group with [DocucraftShapeDefaults.segmentedListItemShapes].
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsCategory(
     title: String,
