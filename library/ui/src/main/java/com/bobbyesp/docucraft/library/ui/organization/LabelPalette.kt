@@ -45,11 +45,11 @@ import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftAccentTheme
 import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
 import com.bobbyesp.docucraft.core.designsystem.theme.PrepareAccentThemes
-import com.bobbyesp.docucraft.core.designsystem.theme.accentChroma
+import com.bobbyesp.docucraft.core.designsystem.theme.accentRoles
+import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
 import com.bobbyesp.docucraft.library.domain.model.FolderIcon
 import com.bobbyesp.docucraft.library.domain.model.LabelColor
 import com.bobbyesp.docucraft.library.ui.R
-import com.materialkolor.blend.Blend
 import com.materialkolor.hct.Hct
 
 /**
@@ -62,8 +62,8 @@ import com.materialkolor.hct.Hct
  * The tones of this color, or the theme's primary ones for no color.
  *
  * A palette color is a hue, not a value: it is pulled towards the theme's primary so that it sits
- * beside the user's own colors, and its tones are those of [LabelColorTheme]'s primary roles, in
- * the same chroma. The same key therefore never clashes with a wallpaper color it was not picked
+ * beside the user's own colors, and its tones are the primary roles [LabelColorTheme] gives it, in
+ * the app's style. The same key therefore never clashes with a wallpaper color it was not picked
  * next to, and a badge matches the screen it opens.
  */
 @Composable
@@ -78,40 +78,45 @@ fun LabelColor?.tones(): LabelTones {
             )
         }
     }
-    return LabelToneCache.get(this, colorScheme.primary, colorScheme.surface.luminance() < 0.5f)
+    return LabelToneCache.get(
+        color = this,
+        primary = colorScheme.primary,
+        dark = colorScheme.surface.luminance() < 0.5f,
+        style = DocucraftTheme.paletteStyle,
+    )
 }
 
 /**
- * The tones of every color already shown, by color, theme primary and darkness. A badge in a list
- * is composed again each time it scrolls into view, and would otherwise solve its colors again.
- * Only read in composition, on the main thread.
+ * The tones of every color already shown, by color, theme primary, darkness and style. A badge in a
+ * list is composed again each time it scrolls into view, and would otherwise solve its colors
+ * again. Only read in composition, on the main thread.
  */
 private object LabelToneCache {
     private val tones = mutableLongObjectMapOf<LabelTones>()
 
-    fun get(color: LabelColor, primary: Color, dark: Boolean): LabelTones {
-        val primaryArgb = primary.toArgb()
+    fun get(
+        color: LabelColor,
+        primary: Color,
+        dark: Boolean,
+        style: PaletteStyleConfig,
+    ): LabelTones {
         val key =
-            (primaryArgb.toLong() and 0xFFFF_FFFFL) or
+            (primary.toArgb().toLong() and 0xFFFF_FFFFL) or
                 (color.ordinal.toLong() shl 32) or
-                (if (dark) 1L shl 40 else 0L)
+                (style.ordinal.toLong() shl 40) or
+                (if (dark) 1L shl 48 else 0L)
         tones[key]?.let {
             return it
         }
         // Each step of a change of theme has a primary of its own: the old ones are dropped.
         if (tones.size >= MaxEntries) tones.clear()
-        return compute(color, primaryArgb, dark).also { tones[key] = it }
-    }
-
-    private fun compute(color: LabelColor, primaryArgb: Int, dark: Boolean): LabelTones {
-        val hue = Hct.fromInt(Blend.harmonize(color.seed.toArgb(), primaryArgb)).hue
-        val chroma = accentChroma(dark)
-        fun tone(tone: Double) = Color(Hct.from(hue, chroma, tone).toInt())
-        return if (dark) {
-            LabelTones(accent = tone(80.0), container = tone(30.0), onContainer = tone(90.0))
-        } else {
-            LabelTones(accent = tone(40.0), container = tone(90.0), onContainer = tone(10.0))
-        }
+        val roles = accentRoles(color.seed, harmonizeWith = primary, isDark = dark, style = style)
+        return LabelTones(
+                accent = roles.primary,
+                container = roles.primaryContainer,
+                onContainer = roles.onPrimaryContainer,
+            )
+            .also { tones[key] = it }
     }
 
     private const val MaxEntries = 128
@@ -136,7 +141,7 @@ fun PrepareLabelColorThemes() {
     PrepareAccentThemes(Seeds)
 }
 
-/** The color each key seeds a scheme with. Only its hue counts: the chroma is the theme's. */
+/** The color each key seeds a scheme with. Only its hue counts: the chroma is the style's. */
 private val Seeds: List<Color> =
     LabelColor.entries.map { Color(Hct.from(it.hue, SeedChroma, 50.0).toInt()) }
 

@@ -168,8 +168,8 @@ modules) and `navigation/` (keys only that feature opens).
   either: it stands still over whatever moves under it.
 - **A screen with a color of its own nests a theme, it does not change the app's**:
   `LabelColorTheme` (`DocucraftAccentTheme`) around that destination. Only that screen is
-  recomposed for it, once: its color is switched to, never stepped towards, and is built as Tonal
-  Spot whatever the app's style.
+  recomposed for it, once: its color is switched to, never stepped towards, and is built in the
+  app's palette style.
 - **Components animate their own state, never theme colors.** Animate a fraction (pressed, selected,
   enabled, scrolled) and `lerp` between colors read from `MaterialTheme`; do not
   `animateColorAsState` to a theme color. See [docs/architecture.md](docs/architecture.md#theme).

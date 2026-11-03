@@ -164,10 +164,10 @@ a palette color), for a destination about something the user gave a color to. A 
   recomposition. Any other color is built in the background under the app's scheme, then swapped
   in. Without a color it passes the app's scheme through, so it follows the app's own changes step
   by step; with one, it hides those steps, and the screen recomposes only once, for its new color.
-- **The color is a hue, not a value**: it is pulled towards the theme's primary and built as Tonal
-  Spot, Material's default style (`AccentPaletteStyle`), in the theme's darkness, whatever style
-  the user chose for the app: a color picked to tell things apart should not be loud. The tones of
-  a label use the same chroma ([organization.md](organization.md#colors-and-icons)).
+- **The color is a hue, not a value**: it is pulled towards the theme's primary and built in the
+  theme's style and darkness (`DocucraftTheme.paletteStyle`), so a screen in its own color looks
+  like the rest of the app. A label draws the same primary roles, without building the scheme
+  (`accentRoles`; [organization.md](organization.md#colors-and-icons)).
 - Overlays opened over that screen (a folder's actions, its editor) are destinations of their own
   and stay in the app's theme.
 
