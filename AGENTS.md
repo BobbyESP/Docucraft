@@ -96,9 +96,8 @@ modules) and `navigation/` (keys only that feature opens).
 
 - **Domains are plain Kotlin.** `:core:domain` and `:library:domain` are JVM modules, so an
   Android or Compose import there does not compile; a feature's own `domain/` package follows the
-  same rule by convention. Locations are `ContentRef` or URI strings, never `android.net.Uri`. A
-  domain model Compose should treat as stable is listed in `compose_stability.conf` (applied to
-  every module by `docucraft.android.compose`), not annotated.
+  same rule by convention. Locations are `ContentRef` or URI strings, never `android.net.Uri`.
+  Compose's strong skipping compares a domain model by identity, so no annotation is needed.
 - **Business logic is a use case** in a `domain/usecase` package, registered in its module's DI
   module. For the library that is `ScannedDocumentModule.kt` (`:library:data`); for the viewer,
   `PdfViewerModule.kt`.

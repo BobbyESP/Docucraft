@@ -66,9 +66,8 @@ data           port implementations: Room, DataStore, files, platform APIs, othe
 
 - **The domain is plain Kotlin**: no Android, Compose or data layer, so every rule is testable on
   the JVM. A location is a `ContentRef` (a URI as a string), never an `android.net.Uri`, which
-  cannot be built in a plain JVM test. A model Compose should treat as stable (`UserPreferences`,
-  `InAppNotification`) is listed in the Compose compiler's stability configuration instead of
-  carrying `@Immutable`.
+  cannot be built in a plain JVM test. A model is not annotated for Compose: strong skipping
+  (on by default) lets a composable that takes it skip when the instance is the same.
 - **Anything the framework does goes behind a port**: an interface in the domain, implemented in
   data (`DocumentStorage`, `SearchIndex`, `DocumentSharer`, `LinkOpener`, `PageContentProvider`,
   `DocumentScanner`…). Tests use fakes, not mocks of the framework.
