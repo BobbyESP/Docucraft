@@ -27,7 +27,6 @@ import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.DeleteSweep
 import androidx.compose.material.icons.rounded.RestoreFromTrash
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -80,7 +79,7 @@ private enum class BinPage {
  * The bin: what was deleted, each saying how long it still has. A document here is not opened; it
  * is brought back or deleted for good, so tapping one offers those two.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BinScreen(
     uiState: BinUiState,
@@ -218,7 +217,6 @@ private fun daysLeftLabel(daysLeft: Int): String =
     else pluralStringResource(R.plurals.bin_days_left, daysLeft, daysLeft)
 
 /** What the bin does on its own, said once at its top rather than on every document. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun RetentionNotice(modifier: Modifier = Modifier) {
     Surface(
@@ -247,7 +245,6 @@ private fun RetentionNotice(modifier: Modifier = Modifier) {
  *
  * @param stacked whether there is room to put the header above the actions rather than beside them.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun BinDocumentActionsContent(
     binned: BinnedDocument,

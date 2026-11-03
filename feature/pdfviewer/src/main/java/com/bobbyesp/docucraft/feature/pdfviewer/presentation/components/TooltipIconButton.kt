@@ -4,7 +4,6 @@
 package com.bobbyesp.docucraft.feature.pdfviewer.presentation.components
 
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -22,7 +21,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
  * An icon button whose [label] is both its tooltip and what TalkBack reads. Material asks every
  * icon-only button for a tooltip; tying the two to one string keeps them from drifting apart.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TooltipIconButton(
     icon: ImageVector,

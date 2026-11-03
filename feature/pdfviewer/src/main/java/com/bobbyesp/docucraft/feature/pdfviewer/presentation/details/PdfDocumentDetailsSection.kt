@@ -296,7 +296,6 @@ private class DetailRow(
 )
 
 /** A named group of rows, joined as the items of a grouped list are. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DetailGroup(title: String, rows: List<DetailRow>, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {

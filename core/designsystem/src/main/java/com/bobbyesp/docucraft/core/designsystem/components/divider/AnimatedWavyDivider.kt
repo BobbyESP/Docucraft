@@ -12,7 +12,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -27,7 +26,6 @@ import com.bobbyesp.docucraft.core.designsystem.components.divider.defaults.Wavy
 import kotlin.math.PI
 import kotlin.math.sin
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AnimatedWavyDivider(
     modifier: Modifier = Modifier,

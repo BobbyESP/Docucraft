@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -33,7 +32,7 @@ import com.bobbyesp.docucraft.core.designsystem.theme.toPaletteStyle
 import com.bobbyesp.docucraft.core.domain.model.PaletteStyleConfig
 import com.materialkolor.rememberDynamicColorScheme
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PaletteStylePicker(
     selectedStyle: PaletteStyleConfig,

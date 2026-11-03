@@ -17,7 +17,6 @@ import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.ColorLens
 import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
@@ -57,7 +56,6 @@ data class SettingsItem(
  * @param shapes where the item sits in its group; see
  *   [DocucraftShapeDefaults.segmentedListItemShapes].
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsItem(
     item: SettingsItem,
@@ -85,7 +83,6 @@ fun SettingsItem(
  * Items of one group, separated by the segmented gap rather than dividers: the page showing between
  * them is the divider, which is what lets each item morph its own corners when pressed.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsGroup(items: ImmutableList<SettingsItem>, modifier: Modifier = Modifier) {
     Column(
@@ -120,7 +117,6 @@ object SettingsItemDefaults {
      * the page's color, and a disabled item would vanish from its group instead of looking
      * unavailable.
      */
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     @Composable
     fun colors(): ListItemColors =
         ListItemDefaults.segmentedColors(
@@ -143,7 +139,6 @@ fun Modifier.settingsContentWidth(): Modifier =
  * The icon on a tonal disc, the paired container and content roles keeping it legible. Disabled, it
  * takes Material's disabled colors, eased so it fades along with the rest of the item.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsItemIcon(icon: ImageVector, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val colors = MaterialTheme.colorScheme

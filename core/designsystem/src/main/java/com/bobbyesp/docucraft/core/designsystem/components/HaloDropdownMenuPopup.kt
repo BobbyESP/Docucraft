@@ -8,7 +8,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.DropdownMenuPopupPositionProvider
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorPosition
 import androidx.compose.material3.MenuDefaults
@@ -45,7 +44,6 @@ import dev.chrisbanes.haze.HazeState
  * @param hazeState Where the content the menu opens over is recorded.
  * @param shape The outline of the menu as a whole, which the halo follows.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HaloDropdownMenuPopup(
     expanded: Boolean,

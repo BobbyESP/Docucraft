@@ -6,7 +6,6 @@ package com.bobbyesp.docucraft.core.designsystem.theme
 import android.content.Context
 import android.util.Log
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MotionScheme
@@ -17,6 +16,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,8 +34,10 @@ import com.bobbyesp.docucraft.core.domain.model.UserPreferences
 import com.materialkolor.blend.Blend
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 /** The type roles Material's [androidx.compose.material3.Typography] has no slot for. */
@@ -58,7 +60,6 @@ object DocucraftTheme {
  *   already worked it out.
  */
 @Suppress("ModifierRequired")
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocucraftTheme(
     userPreferences: UserPreferences = UserPreferences(),
@@ -82,7 +83,8 @@ fun DocucraftTheme(
             cache = cache,
         )
     val transition = rememberThemeTransition(built.scheme)
-    val themeColors = remember(built, cache) { ThemeColors(built, cache) }
+    // One object for the theme's lifetime: a new one would recompose everything under it.
+    val themeColors = remember(cache) { ThemeColors(built, cache) }.apply { this.built = built }
 
     // A new resolver makes every text lay out again, so it must outlive recompositions.
     val fontFamilyResolver =
@@ -125,60 +127,80 @@ fun DocucraftTheme(
 }
 
 /**
- * The app's theme around one color, for a screen that is about something the user gave a color to:
- * everything in [content] takes that color, and the rest of the app keeps its own.
- *
- * A theme of its own rather than a change of the app's: only [content] is recomposed for it. A
- * screen whose color was shown before opens in it, and the navigation's own transition takes the
- * app from one to the other; a color seen for the first time is built in the background and arrived
- * at as any change of theme is (see [rememberThemeTransition]).
- *
- * The color is a hue to build a scheme from, not a color to show: it is pulled towards the theme's
- * primary so that it sits beside the user's own colors, and the scheme keeps the theme's style and
- * darkness.
+ * The app's theme around one color, for a screen about something the user gave a color to: only
+ * [content] takes it, once per color, never stepped towards it. The color is a hue, built as
+ * [AccentPaletteStyle] beside the app's primary, black where the app's surfaces are. See
+ * `docs/architecture.md`, Theme.
  *
  * @param accent The color, or `null` for none, which leaves the app's theme as it is. It may come
  *   and go while [content] stays.
  */
 @Suppress("ModifierRequired")
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocucraftAccentTheme(accent: Color?, content: @Composable () -> Unit) {
     val appScheme = MaterialTheme.colorScheme
-    // None under a bare MaterialTheme, as in a preview: there is no source to build from.
     val themeColors = LocalThemeColors.current
 
-    val target =
+    val scheme =
         if (accent != null && themeColors != null) {
-            // Harmonized with the theme the app is heading to, not the step it is at: a change of
-            // theme must ask for one new scheme, not one for each step of the way.
-            val primary = themeColors.built.scheme.primary
-            val seed =
-                remember(accent, primary) { Blend.harmonize(accent.toArgb(), primary.toArgb()) }
+            val built = themeColors.built
+            val source = remember(accent, built) { built.accentSource(accent) }
             rememberColorScheme(
-                    source =
-                        themeColors.built.source.copy(useWallpaperColors = false, seedColor = seed),
+                    source = source,
                     cache = themeColors.cache,
                     placeholder = appScheme,
                 )
                 .scheme
         } else {
-            // Where the app is heading as well, not the step it is at: following its steps would
-            // start a change of this theme's own at each of them, and arrive after the app has.
-            themeColors?.built?.scheme ?: appScheme
+            appScheme
         }
-    val transition = rememberThemeTransition(target)
 
-    // Expressive, as the app's is, to hand down a motion scheme: what Material's components animate
-    // of their own has to keep up with this theme's changes too, not only with the app's.
     MaterialExpressiveTheme(
-        colorScheme = transition.colorScheme,
-        motionScheme = transition.motionScheme(MaterialTheme.motionScheme),
+        colorScheme = scheme,
+        motionScheme = MaterialTheme.motionScheme,
         shapes = MaterialTheme.shapes,
         typography = MaterialTheme.typography,
         content = content,
     )
 }
+
+/**
+ * Builds the schemes [DocucraftAccentTheme] would build for [accents], in the background, so that a
+ * screen in one of them opens in it rather than switching once it is built.
+ *
+ * Starts again for each change of the app's theme, after it has settled, and builds one scheme at a
+ * time. Belongs under the app's theme, once; [accents] should be the same list on every call.
+ */
+@Composable
+fun PrepareAccentThemes(accents: List<Color>) {
+    val themeColors = LocalThemeColors.current ?: return
+    val context = LocalContext.current
+    val built = themeColors.built
+    LaunchedEffect(themeColors, built, accents) {
+        // A burst of changes, as when tapping through seed colors, builds nothing for the
+        // intermediate ones.
+        delay(PrepareDelayMillis.milliseconds)
+        for (accent in accents) {
+            val source = built.accentSource(accent)
+            if (themeColors.cache[source] != null) continue
+            val scheme = withContext(Dispatchers.Default) { source.build(context) }
+            themeColors.cache[source] = scheme
+        }
+    }
+}
+
+// Harmonized with the scheme the app is heading to, not the step it is at: a change of theme
+// asks for one new scheme, not one per step. Black follows what the app shows, not the setting:
+// the system's scheme, with dynamic color, is never black.
+private fun BuiltColorScheme.accentSource(accent: Color): ColorSchemeSource =
+    source.copy(
+        useWallpaperColors = false,
+        seedColor = Blend.harmonize(accent.toArgb(), scheme.primary.toArgb()),
+        paletteStyle = AccentPaletteStyle,
+        pureBlack = scheme.background == Color.Black,
+    )
+
+private const val PrepareDelayMillis = 1_000L
 
 @Immutable
 internal data class ColorSchemeSource(
@@ -196,7 +218,11 @@ internal data class ColorSchemeSource(
  * What a theme nested in the app's needs to build a scheme of its own in keeping with it: the
  * scheme the app is in, or heading to, and what it was built from.
  */
-@Immutable internal class ThemeColors(val built: BuiltColorScheme, val cache: ColorSchemeCache)
+@Stable
+internal class ThemeColors(built: BuiltColorScheme, val cache: ColorSchemeCache) {
+    /** State, not a new object per scheme: only what reads it recomposes when it changes. */
+    var built: BuiltColorScheme by mutableStateOf(built)
+}
 
 private val LocalThemeColors = staticCompositionLocalOf<ThemeColors?> { null }
 
@@ -257,11 +283,21 @@ internal class ColorSchemeCache :
     ) = size > CACHED_SCHEMES
 }
 
-/**
- * Light and dark of the current colors and of the previous ones, and as many again for the screens
- * that have a color of their own.
- */
-private const val CACHED_SCHEMES = 8
+// Light and dark of the current colors and of the previous ones, and the palette's colors that
+// PrepareAccentThemes builds, in both.
+private const val CACHED_SCHEMES = 32
 
 /** Shared by the theme and the palette previews, so a preview shows what the theme applies. */
 internal val DocucraftColorSpec = ColorSpec.SpecVersion.SPEC_2025
+
+/**
+ * The style of a screen's own color ([DocucraftAccentTheme]): Material's default, Tonal Spot, whose
+ * calm tones suit a color picked to tell things apart. Its chroma is [accentChroma].
+ */
+internal val AccentPaletteStyle = PaletteStyleConfig.TonalSpot
+
+/**
+ * The chroma of [AccentPaletteStyle]'s primary tones in [DocucraftColorSpec] on a phone, so that a
+ * color shown outside its own theme, such as a folder's badge, matches the screen it opens.
+ */
+fun accentChroma(isDark: Boolean): Double = if (isDark) 26.0 else 32.0

@@ -97,7 +97,6 @@ internal data class DocumentAction(
  *   Decided by whoever owns the container — this used to read the device's orientation, which is a
  *   different question and only happens to give the same answer on a phone.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DocumentActionsContent(
     scannedDocument: Document.Managed,
@@ -170,7 +169,6 @@ fun DocumentActionsContent(
  *
  * @param stacked as in [DocumentActionsContent].
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LinkedDocumentActionsContent(
     document: Document.Linked,
@@ -224,7 +222,6 @@ fun LinkedDocumentActionsContent(
 }
 
 /** No preview: another app's file is not read to draw one. Its name, and whose it is. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun LinkedDocumentHeader(document: Document.Linked, modifier: Modifier = Modifier) {
     Column(
@@ -321,7 +318,6 @@ private fun rememberDocumentActions(
         )
     }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DocumentHeader(scannedDocument: Document.Managed, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -361,7 +357,6 @@ private fun DocumentThumbnail(thumbnail: Any?, modifier: Modifier = Modifier) {
     )
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DocumentInfo(scannedDocument: Document.Managed, modifier: Modifier = Modifier) {
     val formattedDate =

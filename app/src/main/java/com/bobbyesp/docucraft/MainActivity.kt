@@ -33,6 +33,7 @@ import com.bobbyesp.docucraft.feature.widgets.presentation.ACTION_OPEN_DOCUMENT
 import com.bobbyesp.docucraft.feature.widgets.presentation.ACTION_SCAN_DOCUMENT
 import com.bobbyesp.docucraft.feature.widgets.presentation.ACTION_SEARCH_DOCUMENTS
 import com.bobbyesp.docucraft.feature.widgets.presentation.EXTRA_DOCUMENT_UUID
+import com.bobbyesp.docucraft.library.ui.organization.PrepareLabelColorThemes
 import com.bobbyesp.docucraft.navigation.DocucraftApp
 import com.bobbyesp.docucraft.requests.LibraryEntryRequest
 import com.bobbyesp.docucraft.requests.LibraryEntryRequests
@@ -129,6 +130,7 @@ class MainActivity : ComponentActivity(), KoinComponent {
                     userPreferences = state.userPreferences,
                     analyticsHelper = analyticsHelper,
                 ) {
+                    PrepareLabelColorThemes()
                     DocucraftApp()
 
                     Toaster(

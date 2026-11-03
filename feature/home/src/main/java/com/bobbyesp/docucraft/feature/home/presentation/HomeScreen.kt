@@ -3,7 +3,6 @@
  */
 package com.bobbyesp.docucraft.feature.home.presentation
 
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,7 +20,6 @@ import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Suppress("EffectKeys")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onOpenDocument: (String) -> Unit,

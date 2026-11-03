@@ -39,9 +39,10 @@ follow the theme, and an id changes between builds. An unknown key reads as the 
 
 How a key looks is decided at the edge, in `LabelPalette.kt`. A `LabelColor` is a hue whose tones are
 computed for the current theme (`LabelColor.tones()`): the hue is harmonized towards the theme's
-primary, and the accent, container and content tones are picked as Material picks a container's,
-lighter in light and darker in dark. So no color clashes with a wallpaper color it was not chosen
-next to. No color at all is the theme's primary.
+primary, and the accent, container and content tones are those of the primary roles of a Tonal
+Spot scheme, in its chroma (`accentChroma`), lighter in light and darker in dark. So no color clashes
+with a wallpaper color it was not chosen next to, and a folder's badge matches the screen it opens
+(`LabelColorTheme`). No color at all is the theme's primary.
 
 ## Home
 

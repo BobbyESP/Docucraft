@@ -5,14 +5,12 @@ package com.bobbyesp.docucraft.core.designsystem.theme
 
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.runtime.Composable
 
 object DocucraftShapeDefaults {
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     val topListItemShape: RoundedCornerShape
         @Composable
         get() =
@@ -26,7 +24,6 @@ object DocucraftShapeDefaults {
     val middleListItemShape: RoundedCornerShape
         @Composable get() = RoundedCornerShape(shapes.extraSmall.topStart)
 
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     val bottomListItemShape: RoundedCornerShape
         @Composable
         get() =
@@ -40,7 +37,6 @@ object DocucraftShapeDefaults {
     val independentListItemShape: RoundedCornerShape
         @Composable get() = RoundedCornerShape(shapes.largeIncreased.topStart)
 
-    @OptIn(ExperimentalMaterial3ExpressiveApi::class)
     val cardShape: CornerBasedShape
         @Composable get() = shapes.largeIncreased
 

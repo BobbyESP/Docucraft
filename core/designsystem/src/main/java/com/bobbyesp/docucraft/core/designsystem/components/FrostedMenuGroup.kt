@@ -6,7 +6,6 @@ package com.bobbyesp.docucraft.core.designsystem.components
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.DropdownMenuGroup
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.MenuGroupShapes
 import androidx.compose.runtime.Composable
@@ -29,7 +28,6 @@ import dev.chrisbanes.haze.HazeState
  *   that, which is the default; a menu without one passes Material's. It is cast from outside the
  *   frost, which is clipped to the group and would cut a shadow of the group's own.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FrostedMenuGroup(
     shapes: MenuGroupShapes,

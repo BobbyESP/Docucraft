@@ -41,7 +41,6 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -109,7 +108,6 @@ import dev.chrisbanes.haze.rememberHazeState
  *
  * @param fields What has been typed, with what is wrong with it.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ScanReviewScreen(
     state: ScanReviewUiState,
@@ -254,7 +252,6 @@ private val ContentMaxWidth = 640.dp
  *
  * @param hazeState Where the content they float over is recorded.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ReviewActions(
     onSkip: () -> Unit,
@@ -341,7 +338,6 @@ private val FallbackElevation = 6.dp
  * the documents of Home are. The folder is shown by its own badge, in its own color, and the tags
  * by their dots, so that both are recognized here as they are there.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun Organization(
     folder: Folder?,
@@ -584,7 +580,6 @@ private fun Suggestions(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SuggestedText(label: String, text: String, onUse: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {

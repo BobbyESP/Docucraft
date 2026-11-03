@@ -5,7 +5,6 @@ package com.bobbyesp.docucraft.feature.home.presentation
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,7 +43,6 @@ import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
@@ -164,7 +162,7 @@ private val HomeUiState.page: HomePage
  */
 private val BottomActionsClearance = 88.dp
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeContent(
     uiState: HomeUiState,
@@ -387,7 +385,6 @@ private fun HomeBottomActions(
  * children do: the scan button stayed drawn where and as wide as it had been recorded, with the
  * search bar already grown underneath it.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun Modifier.showBottomActions(visible: Boolean): Modifier {
     val motionScheme = MaterialTheme.motionScheme
@@ -464,7 +461,6 @@ data class HomeOrganizationActions(
  * Home, top to bottom: what was used last; the folders pinned here; a shelf for each tag the user
  * chose; and then every document, in the chosen order and narrowed down by the chosen filters.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DocumentsPage(
     uiState: HomeUiState,
@@ -625,7 +621,6 @@ private fun DocumentsPage(
  * The folders pinned to Home, as cards in their own colors, and a way to make one at the end. With
  * none pinned, the row says what goes here instead of leaving a gap under its header.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun PinnedFoldersRow(
     folders: List<Folder>,
@@ -693,7 +688,6 @@ private fun PinnedFoldersRow(
  * The documents of a tag, side by side as their first pages: a shelf, shorter than Recents so that
  * the two do not read as the same thing twice.
  */
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TagShelf(
     documents: List<Document.Managed>,
@@ -772,7 +766,6 @@ private fun TagShelf(
  * What the list of documents is narrowed down by: favorites, and the tags. Chips in a row that
  * scrolls, with the way to the tags themselves at its end.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun LibraryFilters(
     tags: List<Tag>,
@@ -846,7 +839,6 @@ private fun LibraryFilters(
 }
 
 /** The library has documents, and none of them passes the filters. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun NothingMatchesFilters(onClearFilters: () -> Unit, modifier: Modifier = Modifier) {
     Column(
@@ -874,7 +866,6 @@ private fun NothingMatchesFilters(onClearFilters: () -> Unit, modifier: Modifier
  * A document whose file could not be reached the last time is shown faded, so that it says so
  * before it is tapped rather than failing afterwards.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun RecentDocumentsCarousel(
     documents: List<RecentDocument>,

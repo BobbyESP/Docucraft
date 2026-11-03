@@ -4,6 +4,7 @@
 package com.bobbyesp.docucraft.library.ui.organization
 
 import androidx.annotation.StringRes
+import androidx.collection.mutableLongObjectMapOf
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import com.bobbyesp.docucraft.core.designsystem.R as DesignsystemR
 import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftAccentTheme
 import com.bobbyesp.docucraft.core.designsystem.theme.DocucraftTheme
+import com.bobbyesp.docucraft.core.designsystem.theme.PrepareAccentThemes
+import com.bobbyesp.docucraft.core.designsystem.theme.accentChroma
 import com.bobbyesp.docucraft.library.domain.model.FolderIcon
 import com.bobbyesp.docucraft.library.domain.model.LabelColor
 import com.bobbyesp.docucraft.library.ui.R
@@ -58,42 +61,55 @@ import com.materialkolor.hct.Hct
 /**
  * The tones of this color, or the theme's primary ones for no color.
  *
- * A palette color is a hue, not a value: it is pulled towards the theme's primary so that it sits
- * beside the user's own colors, and its tones are chosen as Material chooses a container's, lighter
- * in a light theme and darker in a dark one. The same key therefore never clashes with a wallpaper
- * color it was not picked next to.
+ * They are the primary roles [LabelColorTheme] gives the color, harmonized with the theme's primary
+ * and in the same chroma: a badge never clashes with a wallpaper color, and matches its screen.
  */
 @Composable
 fun LabelColor?.tones(): LabelTones {
     val colorScheme = MaterialTheme.colorScheme
     if (this == null) {
-        return LabelTones(
-            accent = colorScheme.primary,
-            container = colorScheme.primaryContainer,
-            onContainer = colorScheme.onPrimaryContainer,
-        )
-    }
-    val primary = colorScheme.primary
-    val dark = colorScheme.surface.luminance() < 0.5f
-    return remember(this, primary, dark) {
-        val seed = Hct.from(hue, SeedChroma, 50.0).toInt()
-        val harmonized = Hct.fromInt(Blend.harmonize(seed, primary.toArgb()))
-        fun tone(tone: Double, chroma: Double = harmonized.chroma) =
-            Color(Hct.from(harmonized.hue, chroma, tone).toInt())
-        if (dark) {
+        return remember(colorScheme) {
             LabelTones(
-                accent = tone(80.0),
-                container = tone(30.0, ContainerChroma),
-                onContainer = tone(90.0, ContainerChroma),
-            )
-        } else {
-            LabelTones(
-                accent = tone(40.0),
-                container = tone(90.0, ContainerChroma),
-                onContainer = tone(10.0, ContainerChroma),
+                accent = colorScheme.primary,
+                container = colorScheme.primaryContainer,
+                onContainer = colorScheme.onPrimaryContainer,
             )
         }
     }
+    return LabelToneCache.get(this, colorScheme.primary, colorScheme.surface.luminance() < 0.5f)
+}
+
+// A badge in a list is composed again each time it scrolls into view, and would otherwise solve its
+// colors again. Only read in composition, on the main thread.
+private object LabelToneCache {
+    private val tones = mutableLongObjectMapOf<LabelTones>()
+
+    fun get(color: LabelColor, primary: Color, dark: Boolean): LabelTones {
+        val primaryArgb = primary.toArgb()
+        val key =
+            (primaryArgb.toLong() and 0xFFFF_FFFFL) or
+                (color.ordinal.toLong() shl 32) or
+                (if (dark) 1L shl 40 else 0L)
+        tones[key]?.let {
+            return it
+        }
+        // Each step of a change of theme has a primary of its own: the old ones are dropped.
+        if (tones.size >= MaxEntries) tones.clear()
+        return compute(color, primaryArgb, dark).also { tones[key] = it }
+    }
+
+    private fun compute(color: LabelColor, primaryArgb: Int, dark: Boolean): LabelTones {
+        val hue = Hct.fromInt(Blend.harmonize(color.seed.toArgb(), primaryArgb)).hue
+        val chroma = accentChroma(dark)
+        fun tone(tone: Double) = Color(Hct.from(hue, chroma, tone).toInt())
+        return if (dark) {
+            LabelTones(accent = tone(80.0), container = tone(30.0), onContainer = tone(90.0))
+        } else {
+            LabelTones(accent = tone(40.0), container = tone(90.0), onContainer = tone(10.0))
+        }
+    }
+
+    private const val MaxEntries = 128
 }
 
 /**
@@ -103,14 +119,26 @@ fun LabelColor?.tones(): LabelTones {
  */
 @Composable
 fun LabelColorTheme(color: LabelColor?, content: @Composable () -> Unit) {
-    DocucraftAccentTheme(
-        accent = color?.let { Color(Hct.from(it.hue, SeedChroma, 50.0).toInt()) },
-        content = content,
-    )
+    DocucraftAccentTheme(accent = color?.seed, content = content)
 }
 
+/**
+ * Builds the theme of every color of the palette ahead of time, so that a screen in one of them
+ * opens in it (see [PrepareAccentThemes]). Belongs under the app's theme, once.
+ */
+@Composable
+fun PrepareLabelColorThemes() {
+    PrepareAccentThemes(Seeds)
+}
+
+// Only the hue of a seed counts: the chroma is the style's.
+private val Seeds: List<Color> =
+    LabelColor.entries.map { Color(Hct.from(it.hue, SeedChroma, 50.0).toInt()) }
+
+private val LabelColor.seed: Color
+    get() = Seeds[ordinal]
+
 private const val SeedChroma = 56.0
-private const val ContainerChroma = 32.0
 
 /** Where each color of the palette is on the HCT color wheel. */
 private val LabelColor.hue: Double

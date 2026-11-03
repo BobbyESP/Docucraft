@@ -17,8 +17,6 @@ import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.DocumentScanner
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -49,7 +47,6 @@ import kotlinx.collections.immutable.persistentListOf
  * app bar and its grouped lists. It only leads elsewhere: each setting lives on the screen of its
  * subject, and what the app says about itself is set apart below them.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SettingsScreen(
     onOpenAppearance: () -> Unit,
