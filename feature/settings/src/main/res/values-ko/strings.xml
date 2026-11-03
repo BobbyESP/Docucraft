@@ -8,7 +8,6 @@
     <string name="dark">다크</string>
     <string name="dynamic_coloring">동적 색상</string>
     <string name="dynamic_coloring_desc">배경화면 색상을 앱 테마에 사용합니다</string>
-    <string name="custom_colors">맞춤 색상</string>
     <string name="palette_style">팔레트 스타일</string>
     <string name="high_contrast">고대비</string>
     <string name="high_contrast_desc">AMOLED 화면에 최적화</string>

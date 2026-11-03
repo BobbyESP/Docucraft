@@ -10,7 +10,6 @@
     <string name="dark">Dark</string>
     <string name="dynamic_coloring">Dynamic coloring</string>
     <string name="dynamic_coloring_desc">Use wallpaper colors for the app theme</string>
-    <string name="custom_colors">Custom colors</string>
     <string name="palette_style">Palette style</string>
     <string name="high_contrast">High contrast</string>
     <string name="high_contrast_desc">Optimized for AMOLED screens</string>

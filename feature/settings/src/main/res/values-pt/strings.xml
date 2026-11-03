@@ -8,7 +8,6 @@
     <string name="dark">Escuro</string>
     <string name="dynamic_coloring">Cores dinâmicas</string>
     <string name="dynamic_coloring_desc">Usar as cores do plano de fundo no tema do app</string>
-    <string name="custom_colors">Cores personalizadas</string>
     <string name="palette_style">Estilo da paleta</string>
     <string name="high_contrast">Alto contraste</string>
     <string name="high_contrast_desc">Otimizado para telas AMOLED</string>
